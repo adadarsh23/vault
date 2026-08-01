@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accessibility - Lighthouse</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f7f8;
+      --panel: #ffffff;
+      --text: #1f2328;
+      --muted: #59636e;
+      --border: #d0d7de;
+      --pass: #1a7f37;
+      --warn: #9a6700;
+      --fail: #d1242f;
+      --na: #6e7781;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111418;
+        --panel: #171b21;
+        --text: #f0f3f6;
+        --muted: #9ea7b3;
+        --border: #30363d;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+    a { color: inherit; }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: end;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    h1, h2 { line-height: 1.15; margin: 0; }
+    h1 { font-size: clamp(28px, 5vw, 44px); }
+    h2 { font-size: 20px; margin-top: 28px; margin-bottom: 12px; }
+    .muted { color: var(--muted); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .score {
+      display: inline-grid;
+      min-width: 54px;
+      min-height: 34px;
+      place-items: center;
+      border-radius: 999px;
+      border: 1px solid currentColor;
+      font-weight: 700;
+    }
+    .pass { color: var(--pass); }
+    .warn { color: var(--warn); }
+    .fail { color: var(--fail); }
+    .na { color: var(--na); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    tr:last-child td { border-bottom: 0; }
+    .audit-title { font-weight: 650; }
+    .audit-description { color: var(--muted); margin-top: 4px; }
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .links a {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      text-decoration: none;
+      background: var(--panel);
+    }
+  </style>
+</head>
+<body>
+  <main><header>
+          <div>
+            <p class="muted"><a href="./index.html">Split Lighthouse Report</a></p>
+            <h1>Accessibility</h1>
+            <p class="muted">http://127.0.0.1:4173/</p>
+          </div>
+          <span class="score pass">100</span>
+        </header>
+        <div class="links">
+          <a href="./accessibility.json">Category JSON</a>
+          <a href="../report.report.html">Full Lighthouse HTML</a>
+          <a href="../report.report.json">Full Lighthouse JSON</a>
+        </div>
+        <h2>Needs Attention</h2>
+        <p class="muted">No audits in this section.</p>
+        <h2>All Audits</h2>
+        <table>
+    <thead>
+      <tr>
+        <th>Score</th>
+        <th>Audit</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody><tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`[accesskey]` values are unique</div>
+        <div class="audit-description">Access keys let users quickly focus a part of the page. For proper navigation, each access key must be unique. Learn more about access keys.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">`[aria-*]` attributes match their roles</div>
+        <div class="audit-description">Each ARIA `role` supports a specific subset of `aria-*` attributes. Mismatching these invalidates the `aria-*` attributes. Learn how to match ARIA attributes to their roles.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`button`, `link`, and `menuitem` elements have accessible names</div>
+        <div class="audit-description">When an element doesn&#39;t have an accessible name, screen readers announce it with a generic name, making it unusable for users who rely on screen readers. Learn how to make command elements more accessible.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">ARIA attributes are used as specified for the element&#39;s role</div>
+        <div class="audit-description">Some ARIA attributes are only allowed on an element under certain conditions. Learn more about conditional ARIA attributes.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Deprecated ARIA roles were not used</div>
+        <div class="audit-description">Deprecated ARIA roles may not be processed correctly by assistive technology. Learn more about deprecated ARIA roles.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Elements with `role=&quot;dialog&quot;` or `role=&quot;alertdialog&quot;` have accessible names.</div>
+        <div class="audit-description">ARIA dialog elements without accessible names may prevent screen readers users from discerning the purpose of these elements. Learn how to make ARIA dialog elements more accessible.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">`[aria-hidden=&quot;true&quot;]` is not present on the document `&lt;body&gt;`</div>
+        <div class="audit-description">Assistive technologies, like screen readers, work inconsistently when `aria-hidden=&quot;true&quot;` is set on the document `&lt;body&gt;`. Learn how `aria-hidden` affects the document body.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">`[aria-hidden=&quot;true&quot;]` elements do not contain focusable descendents</div>
+        <div class="audit-description">Focusable descendents within an `[aria-hidden=&quot;true&quot;]` element prevent those interactive elements from being available to users of assistive technologies like screen readers. Learn how `aria-hidden` affects focusable elements.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">ARIA input fields have accessible names</div>
+        <div class="audit-description">When an input field doesn&#39;t have an accessible name, screen readers announce it with a generic name, making it unusable for users who rely on screen readers. Learn more about input field labels.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">ARIA `meter` elements have accessible names</div>
+        <div class="audit-description">When a meter element doesn&#39;t have an accessible name, screen readers announce it with a generic name, making it unusable for users who rely on screen readers. Learn how to name `meter` elements.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">ARIA `progressbar` elements have accessible names</div>
+        <div class="audit-description">When a `progressbar` element doesn&#39;t have an accessible name, screen readers announce it with a generic name, making it unusable for users who rely on screen readers. Learn how to label `progressbar` elements.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">Elements use only permitted ARIA attributes</div>
+        <div class="audit-description">Using ARIA attributes in roles where they are prohibited can mean that important information is not communicated to users of assistive technologies. Learn more about prohibited ARIA roles.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`[role]`s have all required `[aria-*]` attributes</div>
+        <div class="audit-description">Some ARIA roles have required attributes that describe the state of the element to screen readers. Learn more about roles and required attributes.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Elements with an ARIA `[role]` that require children to contain a specific `[role]` have all required children.</div>
+        <div class="audit-description">Some ARIA parent roles must contain specific child roles to perform their intended accessibility functions. Learn more about roles and required children elements.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`[role]`s are contained by their required parent element</div>
+        <div class="audit-description">Some ARIA child roles must be contained by specific parent roles to properly perform their intended accessibility functions. Learn more about ARIA roles and required parent element.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`[role]` values are valid</div>
+        <div class="audit-description">ARIA roles must have valid values in order to perform their intended accessibility functions. Learn more about valid ARIA roles.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Elements with the `role=text` attribute do not have focusable descendents.</div>
+        <div class="audit-description">Adding `role=text` around a text node split by markup enables VoiceOver to treat it as one phrase, but the element&#39;s focusable descendents will not be announced. Learn more about the `role=text` attribute.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">ARIA toggle fields have accessible names</div>
+        <div class="audit-description">When a toggle field doesn&#39;t have an accessible name, screen readers announce it with a generic name, making it unusable for users who rely on screen readers. Learn more about toggle fields.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">ARIA `tooltip` elements have accessible names</div>
+        <div class="audit-description">When a tooltip element doesn&#39;t have an accessible name, screen readers announce it with a generic name, making it unusable for users who rely on screen readers. Learn how to name `tooltip` elements.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">ARIA `treeitem` elements have accessible names</div>
+        <div class="audit-description">When a `treeitem` element doesn&#39;t have an accessible name, screen readers announce it with a generic name, making it unusable for users who rely on screen readers. Learn more about labeling `treeitem` elements.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">`[aria-*]` attributes have valid values</div>
+        <div class="audit-description">Assistive technologies, like screen readers, can&#39;t interpret ARIA attributes with invalid values. Learn more about valid values for ARIA attributes.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">`[aria-*]` attributes are valid and not misspelled</div>
+        <div class="audit-description">Assistive technologies, like screen readers, can&#39;t interpret ARIA attributes with invalid names. Learn more about valid ARIA attributes.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">Buttons have an accessible name</div>
+        <div class="audit-description">When a button doesn&#39;t have an accessible name, screen readers announce it as &quot;button&quot;, making it unusable for users who rely on screen readers. Learn how to make buttons more accessible.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">The page contains a heading, skip link, or landmark region</div>
+        <div class="audit-description">Adding ways to bypass repetitive content lets keyboard users navigate the page more efficiently. Learn more about bypass blocks.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">Background and foreground colors have a sufficient contrast ratio</div>
+        <div class="audit-description">Low-contrast text is difficult or impossible for many users to read. Learn how to provide sufficient color contrast.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`&lt;dl&gt;`&#39;s contain only properly-ordered `&lt;dt&gt;` and `&lt;dd&gt;` groups, `&lt;script&gt;`, `&lt;template&gt;` or `&lt;div&gt;` elements.</div>
+        <div class="audit-description">When definition lists are not properly marked up, screen readers may produce confusing or inaccurate output. Learn how to structure definition lists correctly.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Definition list items are wrapped in `&lt;dl&gt;` elements</div>
+        <div class="audit-description">Definition list items (`&lt;dt&gt;` and `&lt;dd&gt;`) must be wrapped in a parent `&lt;dl&gt;` element to ensure that screen readers can properly announce them. Learn how to structure definition lists correctly.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">Document has a `&lt;title&gt;` element</div>
+        <div class="audit-description">The title gives screen reader users an overview of the page, and search engine users rely on it heavily to determine if a page is relevant to their search. Learn more about document titles.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">ARIA IDs are unique</div>
+        <div class="audit-description">The value of an ARIA ID must be unique to prevent other instances from being overlooked by assistive technologies. Learn how to fix duplicate ARIA IDs.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">No form fields have multiple labels</div>
+        <div class="audit-description">Form fields with multiple labels can be confusingly announced by assistive technologies like screen readers which use either the first, the last, or all of the labels. Learn how to use form labels.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`&lt;frame&gt;` or `&lt;iframe&gt;` elements have a title</div>
+        <div class="audit-description">Screen reader users rely on frame titles to describe the contents of frames. Learn more about frame titles.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">Heading elements appear in a sequentially-descending order</div>
+        <div class="audit-description">Properly ordered headings that do not skip levels convey the semantic structure of the page, making it easier to navigate and understand when using assistive technologies. Learn more about heading order.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">`&lt;html&gt;` element has a `[lang]` attribute</div>
+        <div class="audit-description">If a page doesn&#39;t specify a `lang` attribute, a screen reader assumes that the page is in the default language that the user chose when setting up the screen reader. If the page isn&#39;t actually in the default language, then the screen reader might not announce the page&#39;s text correctly. Learn more about the `lang` attribute.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">`&lt;html&gt;` element has a valid value for its `[lang]` attribute</div>
+        <div class="audit-description">Specifying a valid BCP 47 language helps screen readers announce text properly. Learn how to use the `lang` attribute.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`&lt;html&gt;` element has an `[xml:lang]` attribute with the same base language as the `[lang]` attribute.</div>
+        <div class="audit-description">If the webpage does not specify a consistent language, then the screen reader might not announce the page&#39;s text correctly. Learn more about the `lang` attribute.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Image elements have `[alt]` attributes</div>
+        <div class="audit-description">Informative elements should aim for short, descriptive alternate text. Decorative elements can be ignored with an empty alt attribute. Learn more about the `alt` attribute.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Input buttons have discernible text.</div>
+        <div class="audit-description">Adding discernable and accessible text to input buttons may help screen reader users understand the purpose of the input button. Learn more about input buttons.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`&lt;input type=&quot;image&quot;&gt;` elements have `[alt]` text</div>
+        <div class="audit-description">When an image is being used as an `&lt;input&gt;` button, providing alternative text can help screen reader users understand the purpose of the button. Learn about input image alt text.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Form elements have associated labels</div>
+        <div class="audit-description">Labels ensure that form controls are announced properly by assistive technologies, like screen readers. Learn more about form element labels.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Links are distinguishable without relying on color.</div>
+        <div class="audit-description">Low-contrast text is difficult or impossible for many users to read. Link text that is discernible improves the experience for users with low vision. Learn how to make links distinguishable.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">Links have a discernible name</div>
+        <div class="audit-description">Link text (and alternate text for images, when used as links) that is discernible, unique, and focusable improves the navigation experience for screen reader users. Learn how to make links accessible.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Lists contain only `&lt;li&gt;` elements and script supporting elements (`&lt;script&gt;` and `&lt;template&gt;`).</div>
+        <div class="audit-description">Screen readers have a specific way of announcing lists. Ensuring proper list structure aids screen reader output. Learn more about proper list structure.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">List items (`&lt;li&gt;`) are contained within `&lt;ul&gt;`, `&lt;ol&gt;` or `&lt;menu&gt;` parent elements</div>
+        <div class="audit-description">Screen readers require list items (`&lt;li&gt;`) to be contained within a parent `&lt;ul&gt;`, `&lt;ol&gt;` or `&lt;menu&gt;` to be announced properly. Learn more about proper list structure.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">The document does not use `&lt;meta http-equiv=&quot;refresh&quot;&gt;`</div>
+        <div class="audit-description">Users do not expect a page to refresh automatically, and doing so will move focus back to the top of the page. This may create a frustrating or confusing experience. Learn more about the refresh meta tag.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">`[user-scalable=&quot;no&quot;]` is not used in the `&lt;meta name=&quot;viewport&quot;&gt;` element and the `[maximum-scale]` attribute is not less than 5.</div>
+        <div class="audit-description">Disabling zooming is problematic for users with low vision who rely on screen magnification to properly see the contents of a web page. Learn more about the viewport meta tag.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`&lt;object&gt;` elements have alternate text</div>
+        <div class="audit-description">Screen readers cannot translate non-text content. Adding alternate text to `&lt;object&gt;` elements helps screen readers convey meaning to users. Learn more about alt text for `object` elements.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Select elements have associated label elements.</div>
+        <div class="audit-description">Form elements without effective labels can create frustrating experiences for screen reader users. Learn more about the `select` element.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Skip links are focusable.</div>
+        <div class="audit-description">Including a skip link can help users skip to the main content to save time. Learn more about skip links.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">No element has a `[tabindex]` value greater than 0</div>
+        <div class="audit-description">A value greater than 0 implies an explicit navigation ordering. Although technically valid, this often creates frustrating experiences for users who rely on assistive technologies. Learn more about the `tabindex` attribute.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">Touch targets have sufficient size and spacing.</div>
+        <div class="audit-description">Touch targets with sufficient size and spacing help users who may have difficulty targeting small controls to activate the targets. Learn more about touch targets.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Cells in a `&lt;table&gt;` element that use the `[headers]` attribute refer to table cells within the same table.</div>
+        <div class="audit-description">Screen readers have features to make navigating tables easier. Ensuring `&lt;td&gt;` cells using the `[headers]` attribute only refer to other cells in the same table may improve the experience for screen reader users. Learn more about the `headers` attribute.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`&lt;th&gt;` elements and elements with `[role=&quot;columnheader&quot;/&quot;rowheader&quot;]` have data cells they describe.</div>
+        <div class="audit-description">Screen readers have features to make navigating tables easier. Ensuring table headers always refer to some set of cells may improve the experience for screen reader users. Learn more about table headers.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`[lang]` attributes have a valid value</div>
+        <div class="audit-description">Specifying a valid BCP 47 language on elements helps ensure that text is pronounced correctly by a screen reader. Learn how to use the `lang` attribute.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`&lt;video&gt;` elements contain a `&lt;track&gt;` element with `[kind=&quot;captions&quot;]`</div>
+        <div class="audit-description">When a video provides a caption it is easier for deaf and hearing impaired users to access its information. Learn more about video captions.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score pass">100</span></td>
+      <td>
+        <div class="audit-title">Document has a main landmark.</div>
+        <div class="audit-description">One main landmark helps screen reader users navigate a web page. Learn more about landmarks.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`autocomplete` attributes are used correctly</div>
+        <div class="audit-description">The `autocomplete` attribute values must be valid and correctly applied for screen readers to function correctly. Learn more about valid autocomplete values.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Elements with `role=&quot;none&quot;` or `role=&quot;presentation&quot;` do not have conflicts</div>
+        <div class="audit-description">There are certain cases where the semantic role of an element with `role=&quot;none&quot;` or `role=&quot;presentation&quot;` does not resolve to none or presentation. To ensure the element remains removed from the accessibility tree, you should not add any global ARIA attributes to the element or make it focusable. Learn more about presentation role conflict.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">SVG elements with an `img` role have an accessible text alternative</div>
+        <div class="audit-description">Ensures SVG elements with an `img`, `graphics-document` or `graphics-symbol` role have an accessible text alternative. Learn more about SVG alt text.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">Manual</span></td>
+      <td>
+        <div class="audit-title">Interactive controls are keyboard focusable</div>
+        <div class="audit-description">Custom interactive controls are keyboard focusable and display a focus indicator. Learn how to make custom controls focusable.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">Manual</span></td>
+      <td>
+        <div class="audit-title">Interactive elements indicate their purpose and state</div>
+        <div class="audit-description">Interactive elements, such as links and buttons, should indicate their state and be distinguishable from non-interactive elements. Learn how to decorate interactive elements with affordance hints.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">Manual</span></td>
+      <td>
+        <div class="audit-title">The page has a logical tab order</div>
+        <div class="audit-description">Tabbing through the page follows the visual layout. Users cannot focus elements that are offscreen. Learn more about logical tab ordering.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">Manual</span></td>
+      <td>
+        <div class="audit-title">Visual order on the page follows DOM order</div>
+        <div class="audit-description">DOM order matches the visual order, improving navigation for assistive technology. Learn more about DOM and visual ordering.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">Manual</span></td>
+      <td>
+        <div class="audit-title">User focus is not accidentally trapped in a region</div>
+        <div class="audit-description">A user can tab into and out of any control or region without accidentally trapping their focus. Learn how to avoid focus traps.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">Manual</span></td>
+      <td>
+        <div class="audit-title">The user&#39;s focus is directed to new content added to the page</div>
+        <div class="audit-description">If new content, such as a dialog, is added to the page, the user&#39;s focus is directed to it. Learn how to direct focus to new content.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">Manual</span></td>
+      <td>
+        <div class="audit-title">HTML5 landmark elements are used to improve navigation</div>
+        <div class="audit-description">Landmark elements (`&lt;main&gt;`, `&lt;nav&gt;`, etc.) are used to improve the keyboard navigation of the page for assistive technology. Learn more about landmark elements.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">Manual</span></td>
+      <td>
+        <div class="audit-title">Offscreen content is hidden from assistive technology</div>
+        <div class="audit-description">Offscreen content is hidden with display: none or aria-hidden=true. Learn how to properly hide offscreen content.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">Manual</span></td>
+      <td>
+        <div class="audit-title">Custom controls have associated labels</div>
+        <div class="audit-description">Custom interactive controls have associated labels, provided by aria-label or aria-labelledby. Learn more about custom controls and labels.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">Manual</span></td>
+      <td>
+        <div class="audit-title">Custom controls have ARIA roles</div>
+        <div class="audit-description">Custom interactive controls have appropriate ARIA roles. Learn how to add roles to custom controls.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Tables have different content in the summary attribute and `&lt;caption&gt;`.</div>
+        <div class="audit-description">The summary attribute should describe the table structure, while `&lt;caption&gt;` should have the onscreen title. Accurate table mark-up helps users of screen readers. Learn more about summary and caption.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">All heading elements contain content.</div>
+        <div class="audit-description">A heading with no content or inaccessible text prevent screen reader users from accessing information on the page&#39;s structure. Learn more about headings.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Uses ARIA roles only on compatible elements</div>
+        <div class="audit-description">Many HTML elements can only be assigned certain ARIA roles. Using ARIA roles where they are not allowed can interfere with the accessibility of the web page. Learn more about ARIA roles.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Image elements do not have `[alt]` attributes that are redundant text.</div>
+        <div class="audit-description">Informative elements should aim for short, descriptive alternative text. Alternative text that is exactly the same as the text adjacent to the link or image is potentially confusing for screen reader users, because the text will be read twice. Learn more about the `alt` attribute.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Identical links have the same purpose.</div>
+        <div class="audit-description">Links with the same destination should have the same description, to help users understand the link&#39;s purpose and decide whether to follow it. Learn more about identical links.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Elements with visible text labels have matching accessible names.</div>
+        <div class="audit-description">Visible text labels that do not match the accessible name can result in a confusing experience for screen reader users. Learn more about accessible names.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">Tables use `&lt;caption&gt;` instead of cells with the `[colspan]` attribute to indicate a caption.</div>
+        <div class="audit-description">Screen readers have features to make navigating tables easier. Ensuring that tables use the actual caption element instead of cells with the `[colspan]` attribute may improve the experience for screen reader users. Learn more about captions.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score na">N/A</span></td>
+      <td>
+        <div class="audit-title">`&lt;td&gt;` elements in a large `&lt;table&gt;` have one or more table headers.</div>
+        <div class="audit-description">Screen readers have features to make navigating tables easier. Ensuring that `&lt;td&gt;` elements in a large table (3 or more cells in width and height) have an associated table header may improve the experience for screen reader users. Learn more about table headers.</div>
+      </td>
+      <td></td>
+    </tr></tbody>
+  </table></main>
+</body>
+</html>

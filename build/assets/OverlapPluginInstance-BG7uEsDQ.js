@@ -1,0 +1,1 @@
+import{S as e}from"./vendor-BpHSCTQ6.js";export{e as OverlapPluginInstance};
