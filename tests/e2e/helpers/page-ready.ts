@@ -9,7 +9,7 @@ export async function ensureVisibleWithRecovery(
   options?: { timeout?: number; pathHint?: string },
 ) {
   const timeout = options?.timeout ?? DEFAULT_TIMEOUT_MS
-  const loadingLabel = page.getByText('Loading Vault...')
+  const loadingLabel = page.getByText(/loading vault\.\.\./i)
 
   for (let attempt = 0; attempt < MAX_RECOVERY_ATTEMPTS; attempt += 1) {
     try {

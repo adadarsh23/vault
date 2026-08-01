@@ -8,10 +8,13 @@ const isLocalhost =
   isBrowser &&
   ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
 const isEnabledFlag = env.VITE_SENTRY_ENABLED === 'true';
+const isDisabledExplicitly = env.VITE_SENTRY_ENABLED === 'false';
 const allowLocalhost = env.VITE_SENTRY_ENABLE_LOCALHOST === 'true';
 const isProd = env.PROD === true;
 const sentryEnabled =
-  Boolean(dsn) && (isEnabledFlag || (isProd && (!isLocalhost || allowLocalhost)));
+  Boolean(dsn) &&
+  !isDisabledExplicitly &&
+  (isEnabledFlag || (isProd && (!isLocalhost || allowLocalhost)));
 
 let initialized = false;
 let globalHandlersBound = false;

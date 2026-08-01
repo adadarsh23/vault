@@ -3,6 +3,9 @@ import { chromium, defineConfig, devices, firefox, webkit } from '@playwright/te
 
 process.env.NO_PROXY = process.env.NO_PROXY ?? '127.0.0.1,localhost'
 process.env.no_proxy = process.env.no_proxy ?? '127.0.0.1,localhost'
+process.env.E2E_USERNAME = process.env.E2E_USERNAME || 'demo-user'
+process.env.E2E_ACCOUNT_PASSWORD = process.env.E2E_ACCOUNT_PASSWORD || 'DemoPassword123!'
+process.env.E2E_MASTER_KEY = process.env.E2E_MASTER_KEY || 'DemoMasterKey123!'
 
 const e2ePort = process.env.PLAYWRIGHT_PORT ?? '4100'
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${e2ePort}`

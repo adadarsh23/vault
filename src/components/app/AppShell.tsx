@@ -293,11 +293,26 @@ export function AppShell({
   const [showNotifications, setShowNotifications] = React.useState(false)
 
   React.useEffect(() => {
-    void fetchNotifications()
-    const interval = setInterval(() => {
-      void fetchNotifications()
-    }, 15000)
-    return () => clearInterval(interval)
+    let isMounted = true
+    let isFetching = false
+    const pollNotifications = async () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return
+      }
+      if (isFetching) return
+      isFetching = true
+      try {
+        await fetchNotifications()
+      } finally {
+        if (isMounted) isFetching = false
+      }
+    }
+    void pollNotifications()
+    const interval = setInterval(pollNotifications, 30000)
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
   }, [fetchNotifications])
 
   const [headerProfileName, setHeaderProfileName] = React.useState('')

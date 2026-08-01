@@ -4,7 +4,7 @@ export const VAULT_KEY_CHECK_ITEM_ID = '__keycheck__'
 const VAULT_KEY_CHECK_VERSION = 1
 const VAULT_KEY_CHECK_PURPOSE = 'vault-key-check'
 const MAX_KEY_CHECK_PAYLOAD_LENGTH = 32 * 1024
-const MAX_CREATED_AT_FUTURE_SKEW_MS = 7 * 24 * 60 * 60 * 1000
+const MAX_CREATED_AT_FUTURE_SKEW_MS = 5 * 60 * 1000
 const MIN_CREATED_AT_EPOCH_MS = Date.UTC(2000, 0, 1)
 
 interface VaultKeyCheckRecord {

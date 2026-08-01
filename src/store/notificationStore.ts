@@ -29,7 +29,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   fetchNotifications: async () => {
     set({ loading: true })
     try {
-      const { data } = await apiClient.get<any>('/notifications')
+      const { data } = await apiClient.get<any>('/notifications', { timeout: 8000 })
       if (data && data.success) {
         const notifications = data.data || []
         const unreadCount = notifications.filter((n: any) => !n.isRead).length
@@ -37,8 +37,20 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       } else {
         set({ loading: false })
       }
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error)
+    } catch (error: any) {
+      const isTimeoutOrNetwork =
+        error?.code === 'NETWORK_ERROR' ||
+        error?.code === 'ECONNABORTED' ||
+        error?.status === undefined ||
+        (typeof error?.message === 'string' && error.message.toLowerCase().includes('timeout')) ||
+        error?.response?.status === 503 ||
+        error?.response?.data?.error?.code === 'SERVER_OVERLOADED'
+
+      if (isTimeoutOrNetwork) {
+        console.warn('Notification fetch deferred (timeout or network unreachable).')
+      } else {
+        console.error('Failed to fetch notifications:', error)
+      }
       set({ loading: false })
     }
   },

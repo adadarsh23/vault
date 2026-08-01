@@ -28,8 +28,8 @@ const shouldBootstrapSentry = () => {
   const dsn = env.VITE_SENTRY_DSN;
   if (!dsn) return false;
 
-  const isEnabledFlag = env.VITE_SENTRY_ENABLED === 'true';
-  if (isEnabledFlag) return true;
+  if (env.VITE_SENTRY_ENABLED === 'false') return false;
+  if (env.VITE_SENTRY_ENABLED === 'true') return true;
 
   const isLocalhost =
     window.location.hostname === 'localhost' ||

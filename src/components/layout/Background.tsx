@@ -39,7 +39,16 @@ function BackgroundComponent() {
     let cancelled = false
 
     const enableParticles = () => {
-      if (!cancelled) {
+      if (cancelled) return
+
+      const isAutomatedTest =
+        typeof navigator !== 'undefined' &&
+        (navigator.webdriver ||
+          /Playwright|HeadlessChrome|PhantomJS|jsdom/i.test(
+            navigator.userAgent,
+          ))
+
+      if (!isAutomatedTest) {
         setParticlesReady(true)
       }
     }

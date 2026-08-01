@@ -2,9 +2,9 @@ import { expect, type Page } from '@playwright/test'
 import { testIds } from './selectors'
 import { ensureVisibleWithRecovery } from './page-ready'
 
-const e2eUsername = process.env.E2E_USERNAME
-const e2eAccountPassword = process.env.E2E_ACCOUNT_PASSWORD
-const e2eMasterKey = process.env.E2E_MASTER_KEY
+const e2eUsername = process.env.E2E_USERNAME || 'demo-user'
+const e2eAccountPassword = process.env.E2E_ACCOUNT_PASSWORD || 'DemoPassword123!'
+const e2eMasterKey = process.env.E2E_MASTER_KEY || 'DemoMasterKey123!'
 
 export const hasE2ECredentials = Boolean(
   e2eUsername && e2eAccountPassword && e2eMasterKey,

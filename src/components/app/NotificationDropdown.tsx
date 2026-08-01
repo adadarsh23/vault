@@ -93,17 +93,38 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   } = useNotificationStore()
 
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all')
+  const dropdownRef = React.useRef<HTMLDivElement>(null)
 
-  // Close on Escape key press
+  // Close on click outside or Escape key press
   useEffect(() => {
     if (!isOpen) return
+
+    const handlePointerDown = (event: PointerEvent | MouseEvent | TouchEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        onClose()
+      }
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose()
       }
     }
+
+    // Delay attaching event listener so opening click doesn't immediately close
+    const timer = setTimeout(() => {
+      document.addEventListener('pointerdown', handlePointerDown)
+    }, 10)
+
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('pointerdown', handlePointerDown)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   }, [isOpen, onClose])
 
   const filteredNotifications =
@@ -127,6 +148,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
           {/* Panel */}
           <motion.div
+            ref={dropdownRef}
             key="notifications-dropdown"
             initial={{ opacity: 0, y: 8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -135,6 +157,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             className="fixed top-16 left-3 right-3 sm:absolute sm:top-full sm:left-auto sm:right-0 sm:w-96 mt-2.5 z-[100] max-h-[80vh] sm:max-h-[520px] flex flex-col rounded-2xl border border-card-border/80 bg-bg/95 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.6)] overflow-hidden text-text"
             role="dialog"
             aria-label="Notifications"
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex flex-col bg-card-bg/40 backdrop-blur-md border-b border-card-border/50">
@@ -150,11 +173,14 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   {unreadCount > 0 && (
                     <button
                       type="button"
-                      onClick={() => void markAsRead()}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void markAsRead()
+                      }}
                       className="text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors px-1.5 py-0.5 rounded hover:bg-emerald-500/10"
                       title="Mark all as read"
                     >
@@ -164,13 +190,28 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                   {notifications.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => void clearNotifications()}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void clearNotifications()
+                      }}
                       className="text-[10px] text-red-400 hover:text-red-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors px-1.5 py-0.5 rounded hover:bg-red-500/10"
                       title="Clear all notifications"
                     >
                       <Trash2 className="h-3 w-3" /> Clear
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onClose()
+                    }}
+                    className="p-1 rounded-lg text-text/50 hover:text-text hover:bg-text/10 transition-colors ml-0.5 cursor-pointer"
+                    title="Close notifications"
+                    aria-label="Close notifications"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
 
@@ -178,7 +219,10 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
               <div className="flex items-center gap-2 px-4 pb-2 pt-1 text-[11px]">
                 <button
                   type="button"
-                  onClick={() => setActiveTab('all')}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setActiveTab('all')
+                  }}
                   className={cn(
                     'px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer',
                     activeTab === 'all'
@@ -190,7 +234,10 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('unread')}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setActiveTab('unread')
+                  }}
                   className={cn(
                     'px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5',
                     activeTab === 'unread'
@@ -237,7 +284,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                       'group relative p-3.5 flex gap-3 transition-all cursor-pointer hover:bg-text/[0.04] active:bg-text/[0.07]',
                       !notification.isRead ? 'bg-emerald-500/[0.04]' : '',
                     )}
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation()
                       if (!notification.isRead) {
                         void markAsRead(notification._id)
                       }

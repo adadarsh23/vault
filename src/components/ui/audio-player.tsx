@@ -204,14 +204,20 @@ export const AudioPlayer = ({
   const isTooLarge = fileSize !== undefined && fileSize > MAX_WAVEFORM_SIZE
   const shouldShowWaveform = isWaveformEnabled && !isTooLarge
 
-  // Sync state with audio element changes from external sources
+  // Sync state with audio element changes from external sources & media keys
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
 
     const handleRateChange = () => setPlaybackSpeed(audio.playbackRate)
     const handleWaiting = () => setIsWaiting(true)
-    const handlePlaying = () => setIsWaiting(false)
+    const handlePlaying = () => {
+      setIsWaiting(false)
+      setIsLoading(false)
+      setIsPlaying(true)
+    }
+    const handlePlay = () => setIsPlaying(true)
+    const handlePause = () => setIsPlaying(false)
     const handleEnded = () => setIsPlaying(false)
     const handleCanPlay = () => setIsLoading(false)
     const syncVolume = () => {
@@ -219,9 +225,15 @@ export const AudioPlayer = ({
       setIsMuted(audio.muted)
     }
 
+    if (audio.readyState >= 2) {
+      setIsLoading(false)
+    }
+
     audio.addEventListener("ratechange", handleRateChange)
     audio.addEventListener("waiting", handleWaiting)
     audio.addEventListener("playing", handlePlaying)
+    audio.addEventListener("play", handlePlay)
+    audio.addEventListener("pause", handlePause)
     audio.addEventListener("ended", handleEnded)
     audio.addEventListener("canplay", handleCanPlay)
     audio.addEventListener("volumechange", syncVolume)
@@ -230,9 +242,27 @@ export const AudioPlayer = ({
       audio.removeEventListener("ratechange", handleRateChange)
       audio.removeEventListener("waiting", handleWaiting)
       audio.removeEventListener("playing", handlePlaying)
+      audio.removeEventListener("play", handlePlay)
+      audio.removeEventListener("pause", handlePause)
       audio.removeEventListener("ended", handleEnded)
       audio.removeEventListener("canplay", handleCanPlay)
       audio.removeEventListener("volumechange", syncVolume)
+    }
+  }, [])
+
+  // Hardware / System MediaSession API integration
+  useEffect(() => {
+    if (typeof window !== "undefined" && "mediaSession" in navigator) {
+      try {
+        navigator.mediaSession.setActionHandler("play", () => {
+          audioRef.current?.play().catch(() => {})
+        })
+        navigator.mediaSession.setActionHandler("pause", () => {
+          audioRef.current?.pause()
+        })
+      } catch {
+        /* Ignore unsupported media session actions */
+      }
     }
   }, [])
 
@@ -250,7 +280,11 @@ export const AudioPlayer = ({
       audioRef.current.pause()
       audioRef.current.currentTime = 0
       audioRef.current.playbackRate = 1
-      // Preserve volume and muted state across sources for better UX
+      try {
+        audioRef.current.load()
+      } catch {
+        /* ignore */
+      }
     }
 
     setIsPlaying(false)
@@ -302,7 +336,7 @@ export const AudioPlayer = ({
       setWaveformPeaks(peaks)
       audioCtx.close()
     } catch (err) {
-      console.error("Waveform generation failed:", err)
+      console.warn("Waveform generation failed:", err)
     } finally {
       setIsGeneratingWaveform(false)
     }
@@ -343,10 +377,11 @@ export const AudioPlayer = ({
   }, [])
 
   const handleError = useCallback(() => {
+    const mediaErr = audioRef.current?.error
     setIsPlaying(false)
     setIsLoading(false)
     setHasError(true)
-    console.error("Audio Load Error for src:", src)
+    console.error("Audio Load Error for src:", src, mediaErr ? `(MediaError code ${mediaErr.code}: ${mediaErr.message})` : "")
   }, [src])
 
   const handleSeek = useCallback((value: number) => {

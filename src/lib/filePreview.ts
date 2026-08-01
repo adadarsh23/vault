@@ -29,6 +29,7 @@ const looksLikeReadableMediaBytes = (
 
   const mt = (mimeType || '').toLowerCase();
   const isLikelyVideo = !mt || mt.startsWith('video/');
+  const isLikelyAudio = !mt || mt.startsWith('audio/');
 
   // PNG
   if (
@@ -84,9 +85,45 @@ const looksLikeReadableMediaBytes = (
     return true;
   }
 
-  // MP4 / QuickTime family: ....ftyp
+  // ID3 MP3 or MP3 sync frame
   if (
-    isLikelyVideo &&
+    isLikelyAudio &&
+    ((bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) ||
+      (bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0))
+  ) {
+    return true;
+  }
+
+  // WAV: RIFF....WAVE
+  if (
+    isLikelyAudio &&
+    bytes.length >= 12 &&
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x41 &&
+    bytes[10] === 0x56 &&
+    bytes[11] === 0x45
+  ) {
+    return true;
+  }
+
+  // FLAC: fLaC
+  if (
+    isLikelyAudio &&
+    bytes[0] === 0x66 &&
+    bytes[1] === 0x4c &&
+    bytes[2] === 0x61 &&
+    bytes[3] === 0x43
+  ) {
+    return true;
+  }
+
+  // MP4 / M4A / QuickTime family: ....ftyp
+  if (
+    (isLikelyVideo || isLikelyAudio) &&
     bytes.length >= 12 &&
     bytes[4] === 0x66 &&
     bytes[5] === 0x74 &&
@@ -114,7 +151,7 @@ const looksLikeReadableMediaBytes = (
 
   // WebM / MKV (Matroska EBML): 1A 45 DF A3
   if (
-    isLikelyVideo &&
+    (isLikelyVideo || isLikelyAudio) &&
     bytes[0] === 0x1a &&
     bytes[1] === 0x45 &&
     bytes[2] === 0xdf &&
@@ -125,7 +162,7 @@ const looksLikeReadableMediaBytes = (
 
   // Ogg container: OggS
   if (
-    isLikelyVideo &&
+    (isLikelyVideo || isLikelyAudio) &&
     bytes[0] === 0x4f &&
     bytes[1] === 0x67 &&
     bytes[2] === 0x67 &&
@@ -168,6 +205,35 @@ const normalizeMetadata = (value: unknown): Record<string, unknown> | undefined 
   return undefined;
 };
 
+export const inferMimeTypeFromItem = (item: VaultItem): string | undefined => {
+  const metadata = normalizeMetadata(item.metadata);
+  if (typeof metadata?.mimeType === 'string' && metadata.mimeType.trim()) {
+    return metadata.mimeType.trim();
+  }
+
+  const filename = item.title || (typeof metadata?.filename === 'string' ? metadata.filename : '');
+  const ext = filename.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'mp3': return 'audio/mpeg';
+    case 'wav': return 'audio/wav';
+    case 'm4a': return 'audio/mp4';
+    case 'aac': return 'audio/aac';
+    case 'ogg': return 'audio/ogg';
+    case 'flac': return 'audio/flac';
+    case 'webm': return item.type === 'audio' ? 'audio/webm' : 'video/webm';
+    case 'opus': return 'audio/opus';
+    case 'mp4': return item.type === 'audio' ? 'audio/mp4' : 'video/mp4';
+    case 'png': return 'image/png';
+    case 'jpg':
+    case 'jpeg': return 'image/jpeg';
+    case 'gif': return 'image/gif';
+    case 'webp': return 'image/webp';
+    default:
+      if (item.type === 'audio') return 'audio/mpeg';
+      return undefined;
+  }
+};
+
 const resolveServerFileUrl = (value: string): string => {
   if (isAbsoluteUrl(value) || isBlobOrDataUrl(value)) {
     return value;
@@ -208,17 +274,19 @@ export const getVaultItemPreviewUrl = async (
       : null;
   }
 
+  const effectiveMimeType = mimeType || inferMimeTypeFromItem(item);
+
   if (
     item.content instanceof Uint8Array &&
-    looksLikeReadableMediaBytes(item.content, mimeType)
+    looksLikeReadableMediaBytes(item.content, effectiveMimeType)
   ) {
     const blob = new Blob([new Uint8Array(item.content)], {
-      type: mimeType || 'application/octet-stream',
+      type: effectiveMimeType || 'application/octet-stream',
     });
     return URL.createObjectURL(blob);
   }
 
-  return decryptToFile(item.content, masterKey, mimeType, rsaPrivateKey);
+  return decryptToFile(item.content, masterKey, effectiveMimeType, rsaPrivateKey);
 };
 
 /** True when the item points at a server-side file (disk / signed URL pipeline). E2EE-only items return false. */

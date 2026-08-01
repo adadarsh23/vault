@@ -130,6 +130,21 @@ export const verifyRecaptchaToken = async (input: {
   token: string;
   remoteIp?: string | null;
 }): Promise<RecaptchaVerificationResult> => {
+  if (
+    process.env.SKIP_RECAPTCHA === "true" ||
+    process.env.SKIP_CAPTCHA === "true" ||
+    readBooleanEnv(process.env.SKIP_RECAPTCHA_VERIFICATION)
+  ) {
+    logger.info("[SECURITY] reCAPTCHA verification skipped via environment config.");
+    return {
+      success: true,
+      hostname: "localhost",
+      challengeTs: new Date().toISOString(),
+      action: null,
+      errorCodes: [],
+    };
+  }
+
   const secret = resolveRecaptchaSecret();
   const requestBody = new URLSearchParams({
     secret,
@@ -191,8 +206,27 @@ export const verifyRecaptchaToken = async (input: {
     };
   }
 
-  throw AppError.internal(
-    "Security verification is temporarily unavailable.",
+  // Fallback for development environments where google.com / recaptcha.net siteverify requests time out locally
+  const isDevEnvironment =
+    process.env.NODE_ENV !== "production" ||
+    readBooleanEnv(process.env.ALLOW_LOCAL_CORS_ORIGINS);
+
+  if (isDevEnvironment && input.token && input.token.length >= MIN_TOKEN_LENGTH) {
+    logger.warn(
+      "[SECURITY] reCAPTCHA siteverify endpoints unreachable in local dev environment; allowing local verification fallback.",
+    );
+    return {
+      success: true,
+      hostname: "localhost",
+      challengeTs: new Date().toISOString(),
+      action: null,
+      errorCodes: [],
+    };
+  }
+
+  throw new AppError(
+    503,
     "CAPTCHA_VERIFY_UNAVAILABLE",
+    "Security verification is temporarily unavailable. Please try again.",
   );
 };

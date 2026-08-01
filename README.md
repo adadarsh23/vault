@@ -3,14 +3,20 @@
     <img
       src="./public/favicon.svg"
       alt="Vault Logo"
-      width="104"
-      height="104"
-      style="padding: 18px; background: #090d16; border: 2px solid #38bdf8; border-radius: 24px; box-shadow: 0 0 30px rgba(56, 189, 248, 0.4), 0 12px 32px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.25);"
+      width="72"
+      height="72"
+      style="padding: 14px; background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.05);"
     />
   </a>
 </p>
 
-<h1 align="center">🔐 Vault</h1>
+<h1 align="center" style="font-weight: 800; letter-spacing: -0.025em;">Vault</h1>
+
+<p align="center">
+  <span style="display: inline-block; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 9999px; padding: 3px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em;">
+    ● Protected
+  </span>
+</p>
 
 <p align="center">
   <strong>Ultra-Secure Zero-Knowledge Personal Storage & Real-Time Sync Platform</strong>
@@ -40,6 +46,7 @@
 - [Key Features](#key-features)
 - [Architecture & Security Blueprint](#architecture--security-blueprint)
 - [Technology Stack](#technology-stack)
+- [Performance & Asset Optimization](#performance--asset-optimization)
 - [Environment Configuration](#environment-configuration)
 - [API Reference](#api-reference)
   - [Authentication Endpoints](#authentication-endpoints)
@@ -68,7 +75,7 @@ Built on a **Zero-Knowledge Architecture**, all sensitive client payload data (n
 - 🔒 **2FA & TOTP Vault**: Built-in time-based one-time password (TOTP) generator supporting QR code export & verification.
 - 📁 **Secure Media & File Streaming**: Encrypted file uploads with MIME-type verification, HLS.js, and Shaka Player video streaming.
 - 📲 **Device Session Management**: Granular per-device session tracking with HTTP-Only refresh cookie rotation and instant session revoking.
-- 🚦 **Hardened API Gateway**: Dynamic rate-limiting, Helmet security headers, mandatory CSRF validation, and optional IP geolocation telemetry capture.
+- ⚡ **Automated Asset Optimization**: Build-time Brotli/Gzip compression, automatic module preloading, and 1-year immutable caching for static assets.
 
 ---
 
@@ -117,7 +124,24 @@ Built on a **Zero-Knowledge Architecture**, all sensitive client payload data (n
 | **Cryptography & Security** | WebCrypto API, **AES-256-GCM**, `libsodium-wrappers`, **`pqc-kyber`**, `hash-wasm` (Argon2), `bcryptjs`, `jsonwebtoken` |
 | **Backend Framework** | **Express 5**, **Node.js 22 (LTS)**, Socket.IO 4, Helmet 8, Express Rate Limit, Multer, Cookie Parser |
 | **Database & Cache** | **MongoDB 7**, Mongoose 9, Node Cache |
+| **Asset Optimization** | **Brotli & Gzip Pre-compression**, Module Preload Polyfills, Aggressive Asset Caching |
 | **Testing & Quality** | **Vitest 4**, **Playwright E2E**, Lighthouse Runner, Sentry Error Tracking & Node Profiling |
+
+---
+
+## ⚡ Performance & Asset Optimization
+
+The platform implements an automated asset pipeline designed for fast load times and minimal network bandwidth:
+
+* **Brotli & Gzip Compression**:
+  - Static production assets are pre-compressed into `.br` and `.gz` formats during the build step ([`vite.config.ts`](file:///c:/Code/vault/vite.config.ts)).
+  - Express serves pre-compressed assets directly via compression middleware ([`server/vite.ts`](file:///c:/Code/vault/server/vite.ts)) based on the client's `Accept-Encoding` header, minimizing runtime CPU overhead.
+* **Module Preloading & Resource Hints**:
+  - `<link rel="modulepreload">` tags automatically preload critical bundle dependencies during initial HTML parse.
+  - Safe array coercion guards prevent runtime script evaluation issues across dynamic imports.
+* **Aggressive Cache-Control Headers**:
+  - Content-hashed static assets (`/assets/*.js`, `/assets/*.css`) use `Cache-Control: public, max-age=31536000, immutable`.
+  - Non-hashed entry files (`index.html`, `/sw.js`, `/sw-register.js`) enforce strict revalidation with `Cache-Control: no-cache, no-store, must-revalidate`.
 
 ---
 

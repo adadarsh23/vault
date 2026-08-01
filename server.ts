@@ -547,7 +547,9 @@ async function startServer() {
       }
 
       const isApiRequest = req.path.startsWith('/api')
-      const acceptsHtml = req.accepts('html')
+      const isHtmlNavigation =
+        req.accepts(['html', 'json']) === 'html' &&
+        !!req.headers.accept?.includes('text/html')
       const isAssetRequest = isStaticAssetRequestPath(req.path)
 
       // Never block static frontend files. Returning 503 for module/font files
@@ -556,7 +558,7 @@ async function startServer() {
         return next()
       }
 
-      if (!isApiRequest && acceptsHtml) {
+      if (!isApiRequest && isHtmlNavigation) {
         setOverloadResponseHeaders(res)
         return res.status(503).type('html').send(renderOverloadHtml())
       }

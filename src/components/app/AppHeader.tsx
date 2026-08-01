@@ -1,5 +1,12 @@
 import React from 'react'
-import { Lock, ChevronRight, ChevronLeft, Search, Bell, PanelLeft } from 'lucide-react'
+import {
+  Lock,
+  ChevronRight,
+  ChevronLeft,
+  Search,
+  Bell,
+  PanelLeft,
+} from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { NotificationDropdown } from './NotificationDropdown'
 
@@ -59,15 +66,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           type="button"
           onClick={toggleSidebar}
-          className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-text transition-colors hover:bg-text/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25"
-          aria-label={isSidebarOpen ? 'Close sidebar navigation' : 'Open sidebar navigation'}
+          className="flex items-center gap-2.5 rounded-lg text-text transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25"
+          aria-label={
+            isSidebarOpen
+              ? 'Close sidebar navigation'
+              : 'Open sidebar navigation'
+          }
           aria-controls="primary-sidebar"
           aria-expanded={isSidebarOpen}
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-text/5 border border-text/10 text-text shadow-sm">
-            <Lock className="h-4 w-4 text-text" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-text text-bg shrink-0 border border-transparent shadow-sm transition hover:shadow-md">
+            <Lock className="h-5 w-5 shrink-0 text-bg" />
           </div>
-          <span className="text-base sm:text-lg font-bold tracking-tight text-text">Vault</span>
+          <span className="text-base sm:text-lg font-bold tracking-tight text-text leading-tight">
+            Vault
+          </span>
         </button>
       </div>
 
@@ -107,13 +120,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         {/* Mobile Quick Tab Switcher Pill */}
         <div
           className={cn(
-            'flex items-center gap-1 text-xs font-medium text-text/60 lg:hidden max-w-[150px] sm:max-w-none truncate',
+            'flex items-center gap-0.1 text-xs font-medium text-text/60 lg:hidden max-w-[150px] sm:max-w-none truncate',
             sidebarPosition === 'right' && 'flex-row-reverse',
           )}
         >
           <button
             type="button"
-            className="flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full border border-text/15 bg-text/5 text-text/70 transition-all hover:bg-text/10 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
+            className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-full border border-text/15 bg-text/5 text-text/70 transition-all hover:bg-text/10 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
             onClick={handlePrevTab}
             aria-label="Go to previous tab"
             title="Previous tab"
@@ -128,7 +141,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
           <button
             type="button"
-            className="px-2 py-1 rounded-full border border-text/10 bg-text/5 text-[11px] sm:text-xs font-medium capitalize truncate max-w-[80px] sm:max-w-[120px] text-center text-text hover:bg-text/10 transition-colors focus-visible:outline-none"
+            className="px-2 py-1 text-[11px] sm:text-xs font-medium capitalize truncate max-w-[80px] sm:max-w-[120px] text-center text-text transition-colors focus-visible:outline-none"
             onClick={toggleSidebar}
             aria-label="Toggle navigation sidebar"
             title="Switch section"
@@ -138,7 +151,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
           <button
             type="button"
-            className="flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full border border-text/15 bg-text/5 text-text/70 transition-all hover:bg-text/10 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
+            className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-full border border-text/15 bg-text/5 text-text/70 transition-all hover:bg-text/10 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
             onClick={handleNextTab}
             aria-label="Go to next tab"
             title="Next tab"
@@ -156,12 +169,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           type="button"
           className="relative flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-text/15 bg-text/5 px-2.5 sm:px-3 text-text transition-all duration-200 hover:bg-text/10 hover:border-text/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
-          onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+          onClick={() =>
+            window.dispatchEvent(new CustomEvent('open-command-palette'))
+          }
           aria-label="Open search command palette"
           title="Search (Ctrl+K / Cmd+K)"
         >
           <Search className="h-4 w-4 text-text/80 transition-colors" />
-          <span className="hidden sm:inline text-xs text-text/50 font-medium">Search...</span>
+          <span className="hidden sm:inline text-xs text-text/50 font-medium">
+            Search...
+          </span>
           <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-text/15 bg-text/10 px-1.5 py-0.5 text-[10px] font-mono text-text/60">
             ⌘K
           </kbd>
@@ -173,7 +190,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             type="button"
             className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-text/15 bg-text/5 text-text transition-all duration-200 hover:bg-text/10 hover:border-text/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
             onClick={() => setShowNotifications(!showNotifications)}
-            aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
+            aria-label={
+              unreadCount > 0
+                ? `Notifications (${unreadCount} unread)`
+                : 'Notifications'
+            }
             title="Notifications"
           >
             <Bell className="h-4 w-4 text-text/80 transition-colors" />
@@ -222,4 +243,3 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     </header>
   )
 }
-

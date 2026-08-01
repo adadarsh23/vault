@@ -498,6 +498,55 @@ export const encryptFile = async (file: File, secretKey: string | CryptoKey): Pr
   }
 };
 
+export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {
+  if (!bytes || bytes.length < 4) return 'application/octet-stream';
+
+  // ID3v2 for MP3: 0x49 0x44 0x33 ("ID3")
+  if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
+    return 'audio/mpeg';
+  }
+
+  // MP3 Sync Word (without ID3 header): 0xFF 0xFB, 0xFF 0xF3, 0xFF 0xF2, 0xFF 0xE3
+  if (bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0) {
+    return 'audio/mpeg';
+  }
+
+  // RIFF container (WAV or AVI)
+  if (
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46
+  ) {
+    if (bytes.length >= 12 && bytes[8] === 0x57 && bytes[9] === 0x41 && bytes[10] === 0x56 && bytes[11] === 0x45) {
+      return 'audio/wav';
+    }
+    return 'audio/wav';
+  }
+
+  // OGG container: "OggS"
+  if (bytes[0] === 0x4f && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53) {
+    return 'audio/ogg';
+  }
+
+  // FLAC container: "fLaC"
+  if (bytes[0] === 0x66 && bytes[1] === 0x4c && bytes[2] === 0x61 && bytes[3] === 0x43) {
+    return 'audio/flac';
+  }
+
+  // ISO Media / MP4 / M4A: "ftyp" at index 4
+  if (bytes.length >= 12 && bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+    return 'audio/mp4';
+  }
+
+  // WebM / MKV (Matroska): 1A 45 DF A3
+  if (bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) {
+    return 'audio/webm';
+  }
+
+  return 'application/octet-stream';
+};
+
 /**
  * Decrypts a file bundle back to a usable URL
  */
@@ -551,7 +600,15 @@ export const decryptToFile = async (
 
     const decrypted = await decryptAesGcmWithFallback(cryptoKey, iv, ciphertext);
 
-    const blob = new Blob([decrypted], { type: mimeType || 'application/octet-stream' });
+    let finalMimeType = mimeType;
+    if (!finalMimeType || finalMimeType === 'application/octet-stream') {
+      const detected = detectMimeTypeFromBytes(new Uint8Array(decrypted));
+      if (detected !== 'application/octet-stream') {
+        finalMimeType = detected;
+      }
+    }
+
+    const blob = new Blob([decrypted], { type: finalMimeType || 'application/octet-stream' });
     return URL.createObjectURL(blob);
   } catch (error) {
     handleError(error, "File Decryption Service");

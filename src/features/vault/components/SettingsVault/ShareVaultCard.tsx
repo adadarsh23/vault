@@ -316,19 +316,19 @@ export const ShareVaultCard: React.FC = memo(() => {
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text/40">
               Social Platforms
             </p>
-            <div className="grid grid-cols-4 gap-3 sm:grid-cols-5 lg:grid-cols-4">
+            <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-6 sm:gap-3 md:grid-cols-6 lg:grid-cols-4 xl:grid-cols-6">
               {canNativeShare && (
                 <button
                   onClick={handleNativeShare}
-                  className="group relative flex aspect-square w-full items-center justify-center rounded-full bg-text text-bg transition-all hover:scale-110 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-text/40 md:h-12 md:w-12"
+                  className="group relative flex aspect-square w-full items-center justify-center rounded-full bg-text text-bg transition-all hover:scale-110 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-text/40"
                   title="System Share"
                   aria-label="Share via system menu"
                 >
                   <Share2
-                    className="h-4 w-4 md:h-5 md:w-5"
+                    className="h-4 w-4 transition-transform group-hover:scale-110 sm:h-5 sm:w-5"
                     aria-hidden="true"
                   />
-                  <span className="absolute -bottom-10 left-1/2 z-10 -translate-x-1/2 scale-0 rounded bg-text px-2 py-1 text-[10px] text-bg transition-all group-hover:scale-100 group-focus:scale-100 whitespace-nowrap pointer-events-none">
+                  <span className="pointer-events-none absolute -bottom-9 left-1/2 z-20 -translate-x-1/2 scale-0 rounded bg-text px-2 py-1 text-[10px] text-bg shadow-md transition-all group-hover:scale-100 group-focus:scale-100 whitespace-nowrap">
                     System Share
                   </span>
                 </button>
@@ -344,10 +344,10 @@ export const ShareVaultCard: React.FC = memo(() => {
                   aria-label={`Share on ${platform.name}`}
                 >
                   <platform.icon
-                    className="h-4 w-4 transition-transform group-hover:scale-110 md:h-5 md:w-5"
+                    className="h-4 w-4 transition-transform group-hover:scale-110 sm:h-5 sm:w-5"
                     aria-hidden="true"
                   />
-                  <span className="absolute -bottom-10 left-1/2 z-10 -translate-x-1/2 scale-0 rounded bg-text px-2 py-1 text-[10px] text-bg transition-all group-hover:scale-100 group-focus:scale-100 whitespace-nowrap pointer-events-none">
+                  <span className="pointer-events-none absolute -bottom-9 left-1/2 z-20 -translate-x-1/2 scale-0 rounded bg-text px-2 py-1 text-[10px] text-bg shadow-md transition-all group-hover:scale-100 group-focus:scale-100 whitespace-nowrap">
                     {platform.name}
                   </span>
                 </a>

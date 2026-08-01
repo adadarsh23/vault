@@ -25,6 +25,7 @@ import { encryptFile } from '../../lib/cryptoPrimitives'
 import {
   getVaultItemFileUrl,
   getVaultItemPreviewUrl,
+  getVaultItemPreviewRevision,
 } from '../../lib/filePreview'
 import { logActivity } from '../../lib/activity'
 import { useVaultFolders } from '../../hooks/useVaultFolders'
@@ -56,6 +57,8 @@ const SafeAudioPreview: React.FC<{
     (state) => state.preferences.isAudioWaveformEnabled,
   )
 
+  const revisionKey = useMemo(() => getVaultItemPreviewRevision(item), [item])
+
   useEffect(() => {
     let isMounted = true
     let activeBlobUrl: string | null = null
@@ -64,17 +67,27 @@ const SafeAudioPreview: React.FC<{
       setIsLoading(true)
       setErrorMessage(null)
       try {
+        const metadata = typeof item.metadata === 'string'
+          ? (() => { try { return JSON.parse(item.metadata) } catch { return null } })()
+          : item.metadata
+        const mime = metadata?.mimeType
+
         const result = await getVaultItemPreviewUrl(
           item,
           masterKey,
-          item.metadata?.mimeType,
+          mime,
           rsaKeyPair?.privateKey,
         )
         if (!result) {
           throw new Error('Preview unavailable')
         }
 
-        if (!isMounted) return
+        if (!isMounted) {
+          if (result.startsWith('blob:')) {
+            URL.revokeObjectURL(result)
+          }
+          return
+        }
 
         if (result.startsWith('blob:')) {
           activeBlobUrl = result
@@ -99,7 +112,7 @@ const SafeAudioPreview: React.FC<{
         URL.revokeObjectURL(activeBlobUrl)
       }
     }
-  }, [item, masterKey, rsaKeyPair])
+  }, [revisionKey, masterKey, rsaKeyPair])
 
   if (isLoading) {
     return (

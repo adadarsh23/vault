@@ -507,6 +507,74 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                         />
                       </div>
                     </div>
+
+                    <div className="flex items-center justify-between gap-4 px-4 xl:px-6 py-3 border-t border-card-border bg-white/[0.01] mt-auto w-full overflow-x-auto custom-scrollbar whitespace-nowrap">
+                      <div className="flex items-center gap-4 md:gap-6 shrink-0">
+                        <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0">
+                          <Calendar className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <span>
+                            <span className="text-text/60">
+                              {new Date(
+                                selectedNote.createdAt,
+                              ).toLocaleDateString()}
+                            </span>
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0">
+                          <Clock className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <span>
+                            <span className="text-text/60">
+                              {new Date(selectedNote.updatedAt).toLocaleString(
+                                undefined,
+                                { dateStyle: 'medium', timeStyle: 'short' },
+                              )}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div
+                          className="group flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/5 border border-emerald-500/10 shadow-inner max-w-[200px] shrink-0"
+                          title={selectedNote.id}
+                        >
+                          <span className="text-[10px] text-emerald-400/60 font-bold uppercase tracking-[0.2em] block max-w-[120px] truncate">
+                            ID: {selectedNote.id}
+                          </span>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(selectedNote.id)
+                              setIsIdCopied(true)
+                              toast.success('Note ID copied to clipboard')
+                              setTimeout(() => setIsIdCopied(false), 2000)
+                            }}
+                            className="shrink-0 opacity-100 group-hover:opacity-100 transition-opacity text-emerald-400/60 hover:text-emerald-400 focus:outline-none focus:opacity-100"
+                            title="Copy Note ID"
+                          >
+                            {isIdCopied ? (
+                              <Check className="h-3 w-3" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </button>
+                        </div>
+                        <motion.div
+                          initial={{ opacity: 0.7 }}
+                          animate={{ opacity: 1 }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 2,
+                            repeatType: 'reverse',
+                          }}
+                          title="End-to-end encrypted with AES-256-GCM"
+                          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold cursor-help shadow-lg shadow-emerald-500/10 shrink-0"
+                        >
+                          <ShieldCheck className="h-3 w-3" />
+                          <span className="leading-none text-[9px] uppercase tracking-wider">
+                            Secure 256
+                          </span>
+                        </motion.div>
+                      </div>
+                    </div>
                   </div>
                   <ScrollButton
                     icon={ChevronUp}
@@ -517,74 +585,6 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                     className="bottom-6 right-8"
                   />
                 </CardContent>
-
-                <div className="flex flex-wrap items-center justify-between gap-4 px-4 xl:px-6 py-3 border-t border-card-border bg-white/[0.01]">
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium">
-                      <Calendar className="h-3.5 w-3.5 text-emerald-400/40" />
-                      <span>
-                        <span className="text-text/60">
-                          {new Date(
-                            selectedNote.createdAt,
-                          ).toLocaleDateString()}
-                        </span>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium">
-                      <Clock className="h-3.5 w-3.5 text-emerald-400/40" />
-                      <span>
-                        <span className="text-text/60">
-                          {new Date(selectedNote.updatedAt).toLocaleString(
-                            undefined,
-                            { dateStyle: 'medium', timeStyle: 'short' },
-                          )}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="group flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/5 border border-emerald-500/10 shadow-inner max-w-[200px]"
-                      title={selectedNote.id}
-                    >
-                      <span className="text-[10px] text-emerald-400/60 font-bold uppercase tracking-[0.2em] block max-w-[120px] truncate">
-                        ID: {selectedNote.id}
-                      </span>
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(selectedNote.id)
-                          setIsIdCopied(true)
-                          toast.success('Note ID copied to clipboard')
-                          setTimeout(() => setIsIdCopied(false), 2000)
-                        }}
-                        className="shrink-0 opacity-100 group-hover:opacity-100 transition-opacity text-emerald-400/60 hover:text-emerald-400 focus:outline-none focus:opacity-100"
-                        title="Copy Note ID"
-                      >
-                        {isIdCopied ? (
-                          <Check className="h-3 w-3" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                      </button>
-                    </div>
-                    <motion.div
-                      initial={{ opacity: 0.7 }}
-                      animate={{ opacity: 1 }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 2,
-                        repeatType: 'reverse',
-                      }}
-                      title="End-to-end encrypted with AES-256-GCM"
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold cursor-help shadow-lg shadow-emerald-500/10"
-                    >
-                      <ShieldCheck className="h-3 w-3" />
-                      <span className="leading-none text-[9px] uppercase tracking-wider">
-                        Secure 256
-                      </span>
-                    </motion.div>
-                  </div>
-                </div>
               </Card>
             ) : null}
           </motion.div>

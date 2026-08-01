@@ -548,6 +548,52 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                         </div>
                       )}
                     </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between gap-4 px-4 xl:px-6 py-3 border-t border-card-border bg-white/[0.01] mt-auto w-full overflow-x-auto custom-scrollbar whitespace-nowrap">
+                      <div className="flex items-center gap-4 md:gap-6 shrink-0">
+                        <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0">
+                          <Calendar className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <span className="text-text/60">{new Date(selectedItem.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium tracking-tight shrink-0">
+                          <Clock className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <span className="text-text/60">{new Date(selectedItem.updatedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div
+                          className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/5 border border-emerald-500/10 shadow-inner shrink-0"
+                          title={selectedItem.id}
+                        >
+                          <span className="text-[9px] text-emerald-400/50 font-black uppercase tracking-[0.2em]">
+                            ID: {selectedItem.id.slice(0, 8)}...
+                          </span>
+                          <button
+                            onClick={() => void copyValue('id')}
+                            className="text-emerald-400/40 hover:text-emerald-400 transition-colors"
+                          >
+                            {copied === 'id' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                          </button>
+                        </div>
+                        <motion.div
+                          initial={{ opacity: 0.7 }}
+                          animate={{ opacity: 1 }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 2,
+                            repeatType: 'reverse',
+                          }}
+                          title="End-to-end encrypted with AES-256-GCM"
+                          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold cursor-help shadow-lg shadow-emerald-500/10 shrink-0"
+                        >
+                          <ShieldCheck className="h-3 w-3" />
+                          <span className="leading-none text-[9px] uppercase tracking-wider">
+                            Secure 256
+                          </span>
+                        </motion.div>
+                      </div>
+                    </div>
                   </div>
 
                   <ScrollButton
@@ -562,52 +608,6 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                     className="bottom-6 right-8"
                   />
                 </CardContent>
-
-                {/* Footer */}
-                <div className="flex flex-wrap items-center justify-between gap-4 px-4 xl:px-6 py-3 border-t border-card-border bg-white/[0.01]">
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium">
-                      <Calendar className="h-3.5 w-3.5 text-emerald-400/40" />
-                      <span className="text-text/60">{new Date(selectedItem.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium tracking-tight">
-                      <Clock className="h-3.5 w-3.5 text-emerald-400/40" />
-                      <span className="text-text/60">{new Date(selectedItem.updatedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/5 border border-emerald-500/10 shadow-inner"
-                      title={selectedItem.id}
-                    >
-                      <span className="text-[9px] text-emerald-400/50 font-black uppercase tracking-[0.2em]">
-                        ID: {selectedItem.id.slice(0, 8)}...
-                      </span>
-                      <button
-                        onClick={() => void copyValue('id')}
-                        className="text-emerald-400/40 hover:text-emerald-400 transition-colors"
-                      >
-                        {copied === 'id' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      </button>
-                    </div>
-                    <motion.div
-                      initial={{ opacity: 0.7 }}
-                      animate={{ opacity: 1 }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 2,
-                        repeatType: 'reverse',
-                      }}
-                      title="End-to-end encrypted with AES-256-GCM"
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold cursor-help shadow-lg shadow-emerald-500/10"
-                    >
-                      <ShieldCheck className="h-3 w-3" />
-                      <span className="leading-none text-[9px] uppercase tracking-wider">
-                        Secure 256
-                      </span>
-                    </motion.div>
-                  </div>
-                </div>
               </Card>
             )}
           </motion.div>

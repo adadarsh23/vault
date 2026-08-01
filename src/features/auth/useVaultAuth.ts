@@ -501,6 +501,7 @@ export const useVaultAuth = (options?: {
             status: 'failure',
           })
         } else if (
+          errorCode === 'CAPTCHA_VERIFY_UNAVAILABLE' ||
           errorCode === 'CAPTCHA_TOKEN_MISSING' ||
           errorCode === 'CAPTCHA_VERIFICATION_FAILED' ||
           errorCode === 'CAPTCHA_HOSTNAME_MISMATCH' ||
@@ -508,7 +509,9 @@ export const useVaultAuth = (options?: {
         ) {
           toast.error('Security verification required', {
             description:
-              'Please complete CAPTCHA successfully before trying again.',
+              errorCode === 'CAPTCHA_VERIFY_UNAVAILABLE'
+                ? 'Security verification service is temporarily unreachable. Please try again.'
+                : 'Please complete CAPTCHA successfully before trying again.',
           })
           logActivity({
             actionType: 'auth_login',
