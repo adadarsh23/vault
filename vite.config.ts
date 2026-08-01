@@ -1,4 +1,4 @@
-﻿import react from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import { createRequire } from 'module'
@@ -81,9 +81,48 @@ const resolveManualChunk = (id: string): string | undefined => {
   if (
     id.includes('react-markdown') ||
     id.includes('rehype-raw') ||
-    id.includes('remark')
+    id.includes('rehype-sanitize') ||
+    id.includes('remark') ||
+    id.includes('marked') ||
+    id.includes('dompurify')
   ) {
     return 'markdown'
+  }
+
+  if (id.includes('@tiptap') || id.includes('prosemirror')) {
+    return 'rich-text-editor'
+  }
+
+  if (id.includes('@tsparticles') || id.includes('particles')) {
+    return 'particles'
+  }
+
+  if (id.includes('hls.js') || id.includes('shaka-player')) {
+    return 'video-players'
+  }
+
+  if (id.includes('@sentry')) {
+    return 'sentry'
+  }
+
+  if (id.includes('emoji-mart') || id.includes('@emoji-mart')) {
+    return 'emoji'
+  }
+
+  if (id.includes('@dnd-kit')) {
+    return 'dnd-kit'
+  }
+
+  if (id.includes('sonner')) {
+    return 'sonner'
+  }
+
+  if (id.includes('qrcode') || id.includes('speakeasy')) {
+    return '2fa-qrcode'
+  }
+
+  if (id.includes('logrocket')) {
+    return 'logrocket'
   }
 
   if (id.includes('socket.io')) {
@@ -92,6 +131,15 @@ const resolveManualChunk = (id: string): string | undefined => {
 
   if (id.includes('lucide-react')) {
     return 'icons'
+  }
+
+  if (
+    id.includes('radix-ui') ||
+    id.includes('@radix-ui') ||
+    id.includes('class-variance-authority') ||
+    id.includes('tailwind-merge')
+  ) {
+    return 'ui-primitives'
   }
 
   if (
@@ -382,12 +430,15 @@ export default defineConfig(({ mode, command }) => {
       strictPort,
     },
 
+    esbuild: {
+      target: 'es2022',
+      legalComments: 'none',
+    },
+
     build: {
       outDir: 'build',
       assetsDir: 'assets',
-      modulePreload: {
-        polyfill: true,
-      },
+      modulePreload: false,
       sourcemap,
       minify,
       manifest: isProduction,
@@ -452,7 +503,7 @@ export default defineConfig(({ mode, command }) => {
       },
 
       chunkSizeWarningLimit,
-      target: 'esnext', // Use latest ES features to minimize transpilation overhead
+      target: ['es2022', 'chrome105', 'safari15', 'firefox105'],
       cssCodeSplit: true,
       assetsInlineLimit: 4096, // Keep small icons inlined
     },

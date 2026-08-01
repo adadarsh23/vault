@@ -1,2 +1,0 @@
-import{pr as e}from"./react-framework-BqDLaWSS.js";import{t}from"./utils-Dey0ucG2.js";var n=`theme-storage`,r=`system`,i={light:!0,dark:!0,system:!0},a=e=>typeof e==`string`&&e in i,o=e=>a(e)?e:r,s=e()(t((e,t)=>({theme:r,setTheme:n=>{let r=o(n);t().theme!==r&&e({theme:r})},resetTheme:()=>{t().theme!==r&&e({theme:r})}}),{name:n,partialize:e=>({theme:e.theme}),merge:(e,t)=>{let n=e?.theme;return{...t,theme:o(n)}}}));export{s as t};
-//# sourceMappingURL=themeStore-BinWN2w_.js.map

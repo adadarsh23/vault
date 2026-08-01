@@ -21,12 +21,12 @@ const shouldCompress = (req: Request, res: Response): boolean => {
 }
 
 export const deepCompressionOptions: Parameters<typeof compression>[0] = {
-  level: 9,
-  memLevel: 9,
+  level: 6,
+  memLevel: 8,
   threshold: 1024,
   brotli: {
     params: {
-      [zlibConstants.BROTLI_PARAM_QUALITY]: 11,
+      [zlibConstants.BROTLI_PARAM_QUALITY]: 4,
     },
   },
   filter: shouldCompress,

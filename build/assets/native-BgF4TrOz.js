@@ -1,1 +1,0 @@
-import{D as e,E as t,O as n,T as r,w as i}from"./vendor-C67Jz1R0.js";export{i as aliases,r as categories,e as default,t as emojis,n as sheet};

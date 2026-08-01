@@ -64,6 +64,7 @@ const vaultItemSchema = new mongoose.Schema(
 // Compound index for unique items per user
 vaultItemSchema.index({ userId: 1, itemId: 1 }, { unique: true });
 vaultItemSchema.index({ userId: 1, category: 1, isDeleted: 1 });
+vaultItemSchema.index({ userId: 1, isDeleted: 1, updatedAt: -1 });
 vaultItemSchema.index({ userId: 1, updatedAt: -1 });
 
 export type VaultItemType = mongoose.InferSchemaType<typeof vaultItemSchema>;

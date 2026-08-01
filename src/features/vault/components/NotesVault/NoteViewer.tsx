@@ -700,7 +700,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                 previewAttachmentItem.type === 'photo' ? (
                   <img
                     src={previewUrl}
-                    alt={previewAttachmentItem.title}
+                    alt={previewAttachmentItem.title || 'Attachment preview'}
                     className="max-h-[60vh] max-w-full rounded-lg object-contain shadow-lg"
                   />
                 ) : (

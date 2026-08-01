@@ -38,7 +38,7 @@ interface ScopedSaveInput {
 
 let legacyIndexesPromise: Promise<void> | null = null
 const uploadRoot = getUploadRoot()
-const GRIDFS_THRESHOLD_BYTES = 12 * 1024 * 1024
+const GRIDFS_THRESHOLD_BYTES = 256 * 1024
 const USER_VAULT_COLLECTION_CATEGORIES = [
   'notes',
   'todos',
@@ -758,50 +758,44 @@ export const listScopedVaultItemsByUsername = async (
   username: string,
 ) => {
   const DynamicVaultModel = getVaultItemModel(username);
-  const items = await DynamicVaultModel.find({ userId, isDeleted: false }).lean().exec();
+  const items = await DynamicVaultModel.find({ userId, isDeleted: false })
+    .sort({ updatedAt: -1 })
+    .lean()
+    .exec();
   
   // Map to the format expected by the frontend
-  const mappedItems = await Promise.all(
-    items.map(async (item) => {
-      // Determine payload and encoding
-      let payload = item.modernPayload || item.payload || ''
-      let encoding = item.encoding || 'utf-8'
+  return items.map((item) => {
+    // Determine payload and encoding
+    let payload = item.modernPayload || item.payload || ''
+    let encoding = item.encoding || 'utf-8'
 
-      // Important performance optimization:
-      // Never inline GridFS binary payloads into the snapshot response because
-      // that can make /api/vault/items downloads extremely large and block unlock.
-      if (item.encoding === 'gridfs-binary' && item.gridFsId) {
-        payload =
-          (item.file && typeof item.file.filePath === 'string' && item.file.filePath.trim()) ||
-          `gridfs://${item.gridFsId}`
-        encoding = 'file-reference'
-      } else if (!payload && item.file && item.file.filePath) {
-        // If it's a file saved via the dedicated file upload service
-        payload = item.file.filePath
-        encoding = 'file-reference'
-      }
+    // Important performance optimization:
+    // Never inline GridFS binary payloads into the snapshot response because
+    // that can make /api/vault/items downloads extremely large and block unlock.
+    if (item.encoding === 'gridfs-binary' && item.gridFsId) {
+      payload =
+        (item.file && typeof item.file.filePath === 'string' && item.file.filePath.trim()) ||
+        `gridfs://${item.gridFsId}`
+      encoding = 'file-reference'
+    } else if (!payload && item.file && item.file.filePath) {
+      // If it's a file saved via the dedicated file upload service
+      payload = item.file.filePath
+      encoding = 'file-reference'
+    }
 
-      return {
-        itemId: item.itemId,
-        payload,
-        encoding,
-        gridFsId: item.gridFsId,
-        category: item.category,
-        folder: item.folder ?? null,
-        title: item.title,
-        metadata: item.metadata,
-        updatedAt: item.updatedAt,
-        isPinned: item.isPinned ?? false,
-        pinnedAt: item.pinnedAt ?? null,
-      }
-    }),
-  )
-
-  return mappedItems.sort((a, b) => {
-    return (
-      new Date(b.updatedAt || 0).getTime() -
-      new Date(a.updatedAt || 0).getTime()
-    )
+    return {
+      itemId: item.itemId,
+      payload,
+      encoding,
+      gridFsId: item.gridFsId,
+      category: item.category,
+      folder: item.folder ?? null,
+      title: item.title,
+      metadata: item.metadata,
+      updatedAt: item.updatedAt,
+      isPinned: item.isPinned ?? false,
+      pinnedAt: item.pinnedAt ?? null,
+    }
   })
 }
 

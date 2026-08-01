@@ -30,6 +30,8 @@
 
   <!-- Performance & DNS -->
   <link rel="dns-prefetch" href="%VITE_DNS_PREFETCH_HOST%">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="%VITE_APP_PUBLIC_URL%" crossorigin />
@@ -159,7 +161,9 @@
     }
   </style>
 
-  <script src="/vite-preload-shim.js"></script>
+  <script>
+    window.__VITE_PRELOAD__ = window.__VITE_PRELOAD__ || ((loader) => typeof loader === "function" ? loader() : Promise.resolve(loader));
+  </script>
 
   <!-- Main App -->
   <script type="module" src="/src/main.tsx"></script>

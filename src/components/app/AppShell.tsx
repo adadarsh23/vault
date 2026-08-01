@@ -5,9 +5,6 @@ import { Sidebar } from '../layout/Sidebar'
 // import { Button } from '../ui/Button'
 import { ErrorBoundary } from '../ui/ErrorBoundary'
 import { ErrorFallback } from '../ui/ErrorFallback'
-import { MaintenanceModal } from '../vault/MaintenanceModal'
-import { CommandPalette } from '../vault/CommandPalette'
-import { LoadingScreen } from './LoadingScreen'
 import type { TabId } from './NavigationHandler'
 import { cn } from '../../lib/utils'
 import { useVaultStore } from '../../store/vaultStore'
@@ -15,6 +12,17 @@ import { getAuthenticatedProfile } from '../../lib/auth-api'
 import { useNotificationStore } from '../../store/notificationStore'
 import { Lock, X } from 'lucide-react'
 import { AppHeader } from './AppHeader'
+
+const MaintenanceModal = lazy(() =>
+  import('../vault/MaintenanceModal').then((m) => ({
+    default: m.MaintenanceModal,
+  })),
+)
+const CommandPalette = lazy(() =>
+  import('../vault/CommandPalette').then((m) => ({
+    default: m.CommandPalette,
+  })),
+)
 
 const Dashboard = lazy(() =>
   import('../../features/vault/Dashboard').then((m) => ({
@@ -510,12 +518,14 @@ export function AppShell({
 
   return (
     <>
-      <CommandPalette />
-      <MaintenanceModal
-        isOpen={maintenanceModal.isOpen}
-        onClose={onCloseMaintenance}
-        type={maintenanceModal.isOpen ? maintenanceModal.type : 'export'}
-      />
+      <Suspense fallback={null}>
+        <CommandPalette />
+        <MaintenanceModal
+          isOpen={maintenanceModal.isOpen}
+          onClose={onCloseMaintenance}
+          type={maintenanceModal.isOpen ? maintenanceModal.type : 'export'}
+        />
+      </Suspense>
 
       <AnimatePresence mode="wait">
         <motion.div

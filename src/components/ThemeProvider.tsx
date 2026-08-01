@@ -82,9 +82,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     overlay.style.setProperty('--x', `${x}px`)
     overlay.style.setProperty('--y', `${y}px`)
     overlay.classList.remove('is-active')
-    // Force reflow so repeated toggles retrigger transition consistently.
-    void overlay.getBoundingClientRect()
-    overlay.classList.add('is-active')
+    
+    // Use animation frame rather than synchronous layout thrashing
+    requestAnimationFrame(() => {
+      overlay.classList.add('is-active')
+    })
 
     if (overlayResetTimerRef.current !== null) {
       window.clearTimeout(overlayResetTimerRef.current)

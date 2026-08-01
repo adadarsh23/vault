@@ -191,7 +191,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 >
                   <img
                     src={savedProfilePhoto}
-                    alt={accountName}
+                    alt={accountName || 'User profile photo'}
                     loading="lazy"
                     decoding="async"
                     width={80}

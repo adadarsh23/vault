@@ -337,7 +337,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
       <div className="flex h-full items-center justify-center bg-black/30 p-4">
         <img
           src={url}
-          alt={item.title}
+          alt={item.title || 'Document preview'}
           loading="lazy"
           decoding="async"
           className="max-h-full max-w-full object-contain"

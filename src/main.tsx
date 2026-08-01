@@ -1,6 +1,7 @@
 import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, useLocation } from 'react-router-dom';
+import '@fontsource-variable/geist';
 import App from './App.tsx';
 import './index.css';
 import { ThemeProvider } from './components/ThemeProvider.tsx';
@@ -45,7 +46,9 @@ runWhenIdle(() => {
 });
 
 installGlobalFetchCsrfProtection();
-initTouchDragDrop();
+runWhenIdle(() => {
+  initTouchDragDrop();
+});
 
 runWhenIdle(() => {
   if (!shouldBootstrapSentry()) {
