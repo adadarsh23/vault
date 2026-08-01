@@ -1,77 +1,77 @@
 {
-  "generatedAt": "2026-07-30T09:15:56.842Z",
+  "generatedAt": "2026-08-01T11:12:04.992Z",
   "schema": "code-memory-index/v5",
   "totals": {
-    "filesScanned": 498,
-    "filesIndexed": 498,
+    "filesScanned": 500,
+    "filesIndexed": 500,
     "filesSkipped": 0,
-    "bytesIndexed": 5661273,
-    "linesIndexed": 143034,
-    "codeLines": 128629,
-    "commentLines": 3519,
-    "blankLines": 10886,
-    "symbolCount": 2515,
+    "bytesIndexed": 5358662,
+    "linesIndexed": 139645,
+    "codeLines": 125154,
+    "commentLines": 3536,
+    "blankLines": 10955,
+    "symbolCount": 2522,
     "importCount": 1635,
-    "exportCount": 1075,
+    "exportCount": 1077,
     "tagCount": 89
   },
   "quality": {
-    "commentDensity": 0.027,
-    "blankLineRatio": 0.076,
+    "commentDensity": 0.028,
+    "blankLineRatio": 0.078,
     "todoFilesRatio": 0.118,
-    "avgSymbolsPerFile": 5.05,
-    "avgImportsPerFile": 3.28,
-    "avgRiskPerFile": 19.65
+    "avgSymbolsPerFile": 5.04,
+    "avgImportsPerFile": 3.27,
+    "avgRiskPerFile": 19.66
   },
   "trend": {
-    "filesIndexedDelta": 1,
-    "linesIndexedDelta": -3256,
-    "symbolCountDelta": 0,
+    "filesIndexedDelta": 2,
+    "linesIndexedDelta": -3389,
+    "symbolCountDelta": 7,
     "importCountDelta": 0,
-    "avgRiskPerFileDelta": 0
+    "avgRiskPerFileDelta": 0.01
   },
   "history": {
-    "historyPath": "C:\\Code\\vault\\.memory\\history\\code-index-2026-07-30T09-15-56-842Z.json",
+    "historyPath": "C:\\Code\\vault\\.memory\\history\\code-index-2026-08-01T11-12-04-992Z.json",
     "historyCount": 20
   },
   "riskSummary": {
     "critical": 10,
-    "high": 33,
-    "medium": 61,
+    "high": 34,
+    "medium": 62,
     "low": 394
   },
   "extensionStats": [
     {
       "extension": ".ts",
       "files": 237,
-      "lines": 46794,
-      "bytes": 1332245,
-      "symbols": 1492,
-      "riskScore": 4631
+      "lines": 46975,
+      "bytes": 1338233,
+      "symbols": 1494,
+      "riskScore": 4645
     },
     {
       "extension": ".tsx",
       "files": 135,
-      "lines": 51441,
-      "bytes": 1835044,
-      "symbols": 819,
+      "lines": 51612,
+      "bytes": 1841831,
+      "symbols": 823,
       "riskScore": 3189
     },
     {
       "extension": ".json",
-      "files": 75,
-      "lines": 33401,
-      "bytes": 1499041,
+      "files": 77,
+      "lines": 29507,
+      "bytes": 1245459,
       "symbols": 4,
-      "riskScore": 1015
+      "riskScore": 1039
     },
     {
       "extension": ".md",
       "files": 14,
-      "lines": 2921,
-      "bytes": 89184,
-      "symbols": 5,
-      "riskScore": 234
+      "lines": 3071,
+      "bytes": 97980,
+      "symbols": 6,
+      "riskScore": 240
     },
     {
       "extension": ".mjs",
@@ -84,8 +84,8 @@
     {
       "extension": ".js",
       "files": 7,
-      "lines": 641,
-      "bytes": 33019,
+      "lines": 644,
+      "bytes": 33114,
       "symbols": 42,
       "riskScore": 104
     },
@@ -93,7 +93,7 @@
       "extension": ".html",
       "files": 6,
       "lines": 4994,
-      "bytes": 761724,
+      "bytes": 691029,
       "symbols": 61,
       "riskScore": 185
     },
@@ -144,11 +144,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 810560,
-        "hash": "61c0cb5a4a3b83b2433eabbf04681d4c8f43bd22bb57033cfb3b73b48dfa93b9",
+        "bytes": 683365,
+        "hash": "ca32532da556705fa7b653c50861b47db5dde9943d5c744ebd60ff1b99277778",
         "lines": {
-          "total": 18819,
-          "code": 18819,
+          "total": 16869,
+          "code": 16869,
           "comments": 0,
           "blanks": 0
         },
@@ -175,19 +175,19 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 18855,
-        "updatedAt": "2026-07-30T06:00:20.787Z",
+        "complexityScore": 16905,
+        "updatedAt": "2026-07-30T09:17:50.142Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 533396,
-        "hash": "363e369dd3de240bc7b0de6f6e8f1d7b56927ffc8a71bfe7ae2503b829ff43dd",
+        "bytes": 404636,
+        "hash": "78d3101bde8ce32d5cafcd2fb986eadafd7fd668566f9e66ba0195d38f741466",
         "lines": {
-          "total": 10775,
-          "code": 10774,
+          "total": 8778,
+          "code": 8777,
           "comments": 0,
           "blanks": 1
         },
@@ -213,16 +213,16 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 10804,
-        "updatedAt": "2026-07-30T06:00:21.309Z",
+        "complexityScore": 8807,
+        "updatedAt": "2026-07-30T09:17:52.807Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 675373,
-        "hash": "f184403763b10dbdb4c5423110130089492804cabf327edc87dea51cebf3edf0",
+        "bytes": 604689,
+        "hash": "aed45736ffb688f5e4f7226236b9c6601ccfe29e1c2e8f32bddf706e7c03ea8f",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -312,18 +312,18 @@
           "switchCount": 13
         },
         "complexityScore": 2778,
-        "updatedAt": "2026-07-30T06:00:20.699Z",
+        "updatedAt": "2026-07-30T09:17:50.066Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/best-practices.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 63944,
-        "hash": "779ded0b8c871672c09e963d705c2a63315f17e0189e661df04bbdddc4cfc883",
+        "bytes": 65695,
+        "hash": "3ab4f05ac876f89d834a4e5b6dd01d256d5b0cfbe42f61168913abc700359eab",
         "lines": {
-          "total": 1933,
-          "code": 1932,
+          "total": 1984,
+          "code": 1983,
           "comments": 0,
           "blanks": 1
         },
@@ -344,8 +344,8 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 1932,
-        "updatedAt": "2026-07-30T06:00:21.328Z",
+        "complexityScore": 1983,
+        "updatedAt": "2026-07-30T09:17:52.825Z",
         "riskScore": 30
       },
       {
@@ -1870,7 +1870,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "dfb8c6d9c3a4e7a26334406b16209a8854313e712ffe2e4365dd10d2dfadfe94",
+        "hash": "630851aaef9b1e36a1ef175387cb7d767a55997799b8ef92bd9cad8a64279c12",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -1897,7 +1897,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-07-30T06:00:21.324Z",
+        "updatedAt": "2026-07-30T09:17:52.821Z",
         "riskScore": 30
       },
       {
@@ -3930,44 +3930,56 @@
         "riskScore": 46
       },
       {
-        "path": "src/features/auth/useVaultAuth.ts",
-        "extension": ".ts",
-        "directory": "src/features/auth",
-        "bytes": 28139,
-        "hash": "213c929690018874629859a51f49dfbfe460ebab92c70e75b1f1726c35d2d8f3",
+        "path": "src/components/app/AppShell.tsx",
+        "extension": ".tsx",
+        "directory": "src/components/app",
+        "bytes": 27713,
+        "hash": "c707b69dba71a1eafa56c38bd4a1041e0d9f8687a3969def35276889980d7202",
         "lines": {
-          "total": 831,
-          "code": 696,
-          "comments": 68,
-          "blanks": 67
+          "total": 839,
+          "code": 772,
+          "comments": 10,
+          "blanks": 57
         },
         "imports": [
-          "import { useState, useMemo, useRef, useCallback, useEffect } from 'react'",
-          "import { toast } from 'sonner'",
+          "import React, { lazy, Suspense } from 'react'",
+          "import { motion, AnimatePresence } from 'framer-motion'",
+          "import { Route, Routes } from 'react-router-dom'",
+          "import { Sidebar } from '../layout/Sidebar'",
+          "import { ErrorBoundary } from '../ui/ErrorBoundary'",
+          "import { ErrorFallback } from '../ui/ErrorFallback'",
+          "import { MaintenanceModal } from '../vault/MaintenanceModal'",
+          "import { CommandPalette } from '../vault/CommandPalette'",
+          "import { LoadingScreen } from './LoadingScreen'",
+          "import type { TabId } from './NavigationHandler'",
+          "import { cn } from '../../lib/utils'",
           "import { useVaultStore } from '../../store/vaultStore'",
-          "import { base64ToUint8Array, deriveKey } from '../../lib/cryptoPrimitives'",
-          "import { performHybridKeyExchange } from '../../lib/encryption'",
-          "import { handleError } from '../../lib/error-handler'",
-          "import {",
-          "import { uploadKeyCheckToCloud } from '../../lib/sync'",
-          "import { logActivity } from '../../lib/activity'",
-          "import { validatePassword } from '../../lib/utils'",
-          "import { identifyLogRocketUser } from '../../lib/logrocket'"
+          "import { getAuthenticatedProfile } from '../../lib/auth-api'",
+          "import { useNotificationStore } from '../../store/notificationStore'",
+          "import { Lock, X } from 'lucide-react'",
+          "import { AppHeader } from './AppHeader'"
         ],
         "exports": [
-          "export const useVaultAuth = (options?: {"
+          "export function AppShell({"
         ],
         "importSpecifiers": [
           "react",
-          "sonner",
-          "../../store/vaultStore",
-          "../../lib/cryptoPrimitives",
-          "../../lib/encryption",
-          "../../lib/error-handler",
-          "../../lib/sync",
-          "../../lib/activity",
+          "framer-motion",
+          "react-router-dom",
+          "../layout/Sidebar",
+          "../ui/Button",
+          "../ui/ErrorBoundary",
+          "../ui/ErrorFallback",
+          "../vault/MaintenanceModal",
+          "../vault/CommandPalette",
+          "./LoadingScreen",
+          "./NavigationHandler",
           "../../lib/utils",
-          "../../lib/logrocket"
+          "../../store/vaultStore",
+          "../../lib/auth-api",
+          "../../store/notificationStore",
+          "lucide-react",
+          "./AppHeader"
         ],
         "importsDetailed": [
           {
@@ -3976,39 +3988,54 @@
             "target": null
           },
           {
-            "specifier": "sonner",
+            "specifier": "framer-motion",
             "kind": "package",
             "target": null
           },
           {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
+            "specifier": "react-router-dom",
+            "kind": "package",
+            "target": null
           },
           {
-            "specifier": "../../lib/cryptoPrimitives",
+            "specifier": "../layout/Sidebar",
             "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
+            "target": "src/components/layout/Sidebar"
           },
           {
-            "specifier": "../../lib/encryption",
+            "specifier": "../ui/Button",
             "kind": "relative",
-            "target": "src/lib/encryption"
+            "target": "src/components/ui/Button"
           },
           {
-            "specifier": "../../lib/error-handler",
+            "specifier": "../ui/ErrorBoundary",
             "kind": "relative",
-            "target": "src/lib/error-handler"
+            "target": "src/components/ui/ErrorBoundary"
           },
           {
-            "specifier": "../../lib/sync",
+            "specifier": "../ui/ErrorFallback",
             "kind": "relative",
-            "target": "src/lib/sync"
+            "target": "src/components/ui/ErrorFallback"
           },
           {
-            "specifier": "../../lib/activity",
+            "specifier": "../vault/MaintenanceModal",
             "kind": "relative",
-            "target": "src/lib/activity"
+            "target": "src/components/vault/MaintenanceModal"
+          },
+          {
+            "specifier": "../vault/CommandPalette",
+            "kind": "relative",
+            "target": "src/components/vault/CommandPalette"
+          },
+          {
+            "specifier": "./LoadingScreen",
+            "kind": "relative",
+            "target": "src/components/app/LoadingScreen"
+          },
+          {
+            "specifier": "./NavigationHandler",
+            "kind": "relative",
+            "target": "src/components/app/NavigationHandler"
           },
           {
             "specifier": "../../lib/utils",
@@ -4016,33 +4043,61 @@
             "target": "src/lib/utils"
           },
           {
-            "specifier": "../../lib/logrocket",
+            "specifier": "../../store/vaultStore",
             "kind": "relative",
-            "target": "src/lib/logrocket"
+            "target": "src/store/vaultStore"
+          },
+          {
+            "specifier": "../../lib/auth-api",
+            "kind": "relative",
+            "target": "src/lib/auth-api"
+          },
+          {
+            "specifier": "../../store/notificationStore",
+            "kind": "relative",
+            "target": "src/store/notificationStore"
+          },
+          {
+            "specifier": "lucide-react",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "./AppHeader",
+            "kind": "relative",
+            "target": "src/components/app/AppHeader"
           }
         ],
         "symbols": [
-          "AuthStatus",
-          "normalizeVaultUsername",
-          "useVaultAuth",
-          "sleep",
-          "runSecurityVerification"
+          "MaintenanceType",
+          "MaintenanceState",
+          "formatTabLabel",
+          "getAdjacentTab",
+          "nextIndex",
+          "normalizeProfilePhotoUrl",
+          "normalized",
+          "normalizeDisplayName",
+          "resolveMonogramLetter",
+          "AppShell",
+          "pollNotifications",
+          "preload",
+          "handleProfileUpdated"
         ],
-        "symbolCount": 5,
+        "symbolCount": 13,
         "tags": [],
         "tagCount": 0,
         "keywordCounts": {
           "asyncCount": 3,
-          "awaitCount": 30,
-          "tryCount": 9,
-          "catchCount": 12,
-          "throwCount": 11,
-          "ifCount": 56,
+          "awaitCount": 2,
+          "tryCount": 4,
+          "catchCount": 2,
+          "throwCount": 0,
+          "ifCount": 18,
           "switchCount": 0
         },
-        "complexityScore": 756,
-        "updatedAt": "2026-07-30T08:50:06.680Z",
-        "riskScore": 41
+        "complexityScore": 901,
+        "updatedAt": "2026-08-01T10:24:24.089Z",
+        "riskScore": 46
       }
     ],
     "largestByBytes": [
@@ -4050,11 +4105,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 810560,
-        "hash": "61c0cb5a4a3b83b2433eabbf04681d4c8f43bd22bb57033cfb3b73b48dfa93b9",
+        "bytes": 683365,
+        "hash": "ca32532da556705fa7b653c50861b47db5dde9943d5c744ebd60ff1b99277778",
         "lines": {
-          "total": 18819,
-          "code": 18819,
+          "total": 16869,
+          "code": 16869,
           "comments": 0,
           "blanks": 0
         },
@@ -4081,16 +4136,16 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 18855,
-        "updatedAt": "2026-07-30T06:00:20.787Z",
+        "complexityScore": 16905,
+        "updatedAt": "2026-07-30T09:17:50.142Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 675373,
-        "hash": "f184403763b10dbdb4c5423110130089492804cabf327edc87dea51cebf3edf0",
+        "bytes": 604689,
+        "hash": "aed45736ffb688f5e4f7226236b9c6601ccfe29e1c2e8f32bddf706e7c03ea8f",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -4180,18 +4235,18 @@
           "switchCount": 13
         },
         "complexityScore": 2778,
-        "updatedAt": "2026-07-30T06:00:20.699Z",
+        "updatedAt": "2026-07-30T09:17:50.066Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 533396,
-        "hash": "363e369dd3de240bc7b0de6f6e8f1d7b56927ffc8a71bfe7ae2503b829ff43dd",
+        "bytes": 404636,
+        "hash": "78d3101bde8ce32d5cafcd2fb986eadafd7fd668566f9e66ba0195d38f741466",
         "lines": {
-          "total": 10775,
-          "code": 10774,
+          "total": 8778,
+          "code": 8777,
           "comments": 0,
           "blanks": 1
         },
@@ -4217,19 +4272,19 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 10804,
-        "updatedAt": "2026-07-30T06:00:21.309Z",
+        "complexityScore": 8807,
+        "updatedAt": "2026-07-30T09:17:52.807Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/best-practices.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 63944,
-        "hash": "779ded0b8c871672c09e963d705c2a63315f17e0189e661df04bbdddc4cfc883",
+        "bytes": 65695,
+        "hash": "3ab4f05ac876f89d834a4e5b6dd01d256d5b0cfbe42f61168913abc700359eab",
         "lines": {
-          "total": 1933,
-          "code": 1932,
+          "total": 1984,
+          "code": 1983,
           "comments": 0,
           "blanks": 1
         },
@@ -4250,8 +4305,8 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 1932,
-        "updatedAt": "2026-07-30T06:00:21.328Z",
+        "complexityScore": 1983,
+        "updatedAt": "2026-07-30T09:17:52.825Z",
         "riskScore": 30
       },
       {
@@ -4720,7 +4775,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "dfb8c6d9c3a4e7a26334406b16209a8854313e712ffe2e4365dd10d2dfadfe94",
+        "hash": "630851aaef9b1e36a1ef175387cb7d767a55997799b8ef92bd9cad8a64279c12",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -4747,7 +4802,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-07-30T06:00:21.324Z",
+        "updatedAt": "2026-07-30T09:17:52.821Z",
         "riskScore": 30
       },
       {
@@ -6628,7 +6683,7 @@
           "switchCount": 0
         },
         "complexityScore": 755,
-        "updatedAt": "2026-07-30T06:00:21.326Z",
+        "updatedAt": "2026-07-30T09:17:52.823Z",
         "riskScore": 30
       },
       {
@@ -7728,13 +7783,13 @@
         "path": "src/features/vault/AudioVault.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault",
-        "bytes": 30518,
-        "hash": "82812e0679f00432ec18d850569613d2b9236efbe910e320c47a9b3c2e81067b",
+        "bytes": 30950,
+        "hash": "d05f077e1e32593cf65ea17ea5ae58b553e183feb307cf6e4251361bc9618210",
         "lines": {
-          "total": 816,
-          "code": 751,
+          "total": 829,
+          "code": 762,
           "comments": 4,
-          "blanks": 61
+          "blanks": 63
         },
         "imports": [
           "import React, { useEffect, useMemo, useRef, useState } from 'react'",
@@ -7889,14 +7944,14 @@
         "keywordCounts": {
           "asyncCount": 5,
           "awaitCount": 7,
-          "tryCount": 5,
-          "catchCount": 3,
+          "tryCount": 6,
+          "catchCount": 4,
           "throwCount": 2,
-          "ifCount": 37,
+          "ifCount": 38,
           "switchCount": 0
         },
-        "complexityScore": 886,
-        "updatedAt": "2026-07-20T06:38:47.092Z",
+        "complexityScore": 897,
+        "updatedAt": "2026-08-01T09:47:25.033Z",
         "riskScore": 46
       }
     ],
@@ -8179,8 +8234,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 675373,
-        "hash": "f184403763b10dbdb4c5423110130089492804cabf327edc87dea51cebf3edf0",
+        "bytes": 604689,
+        "hash": "aed45736ffb688f5e4f7226236b9c6601ccfe29e1c2e8f32bddf706e7c03ea8f",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -8270,7 +8325,7 @@
           "switchCount": 13
         },
         "complexityScore": 2778,
-        "updatedAt": "2026-07-30T06:00:20.699Z",
+        "updatedAt": "2026-07-30T09:17:50.066Z",
         "riskScore": 68
       },
       {
@@ -9504,6 +9559,106 @@
         "riskScore": 58
       },
       {
+        "path": "src/lib/encryption.ts",
+        "extension": ".ts",
+        "directory": "src/lib",
+        "bytes": 18117,
+        "hash": "473044fc5193b7737274bb38104022d39cece16dbc8802b5468638b1325ccfd9",
+        "lines": {
+          "total": 618,
+          "code": 469,
+          "comments": 66,
+          "blanks": 83
+        },
+        "imports": [
+          "import { handleError } from './error-handler';",
+          "import { deriveKey as deriveKeyFromPrimitives } from './cryptoPrimitives';"
+        ],
+        "exports": [
+          "export const uint8ArrayToBase64 = (array: Uint8Array): string => {",
+          "export const base64ToUint8Array = (base64: string): Uint8Array => {",
+          "export const encryptData = async (data: string, secretKey: string | CryptoKey): Promise<string> => {",
+          "export const decryptData = async (encryptedBundle: string, secretKey: string | CryptoKey): Promise<string | null> => {",
+          "export const deriveKey = deriveKeyFromPrimitives;",
+          "export const performHybridKeyExchange = async (peerPublicKey?: { ecc: Uint8Array, kyber: Uint8Array }) => {",
+          "export const setupMFA = async (label: string, issuer: string = 'PersonalVault') => {",
+          "export const verifyMFA = async (token: string, secret: string) => {",
+          "export const signMessage = async (message: string, privateKey: Uint8Array) => {",
+          "export const verifyMessage = async (signedMessage: Uint8Array, publicKey: Uint8Array) => {",
+          "export const generateRSAKeyPair = async (): Promise<CryptoKeyPair> => {",
+          "export const exportPublicKey = async (publicKey: CryptoKey): Promise<string> => {",
+          "export const importPublicKey = async (base64Key: string): Promise<CryptoKey> => {",
+          "export const exportPrivateKey = async (privateKey: CryptoKey): Promise<string> => {",
+          "export const importPrivateKey = async (base64Key: string): Promise<CryptoKey> => {",
+          "export const exportRSAKeyPair = async (keyPair: CryptoKeyPair): Promise<{ publicKey: string; privateKey: string }> => {",
+          "export const importRSAKeyPair = async (keys: { publicKey: string; privateKey: string }): Promise<CryptoKeyPair> => {",
+          "export const encryptFileE2EE = async (",
+          "export const decryptFileE2EE = async (",
+          "export const encryptFile = async (file: File, secretKey: string | CryptoKey): Promise<Uint8Array> => {",
+          "export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {",
+          "export const decryptToFile = async ("
+        ],
+        "importSpecifiers": [
+          "./error-handler",
+          "./cryptoPrimitives"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "./error-handler",
+            "kind": "relative",
+            "target": "src/lib/error-handler"
+          },
+          {
+            "specifier": "./cryptoPrimitives",
+            "kind": "relative",
+            "target": "src/lib/cryptoPrimitives"
+          }
+        ],
+        "symbols": [
+          "toArrayBuffer",
+          "decryptAesGcmWithFallback",
+          "uint8ArrayToBase64",
+          "base64ToUint8Array",
+          "encryptData",
+          "decryptData",
+          "performHybridKeyExchange",
+          "eccKeyPair",
+          "sharedSecretECC",
+          "setupMFA",
+          "verifyMFA",
+          "signMessage",
+          "verifyMessage",
+          "opened",
+          "generateRSAKeyPair",
+          "exportPublicKey",
+          "importPublicKey",
+          "exportPrivateKey",
+          "importPrivateKey",
+          "exportRSAKeyPair",
+          "importRSAKeyPair",
+          "encryptFileE2EE",
+          "decryptFileE2EE",
+          "encryptFile",
+          "detectMimeTypeFromBytes",
+          "decryptToFile"
+        ],
+        "symbolCount": 26,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 19,
+          "awaitCount": 39,
+          "tryCount": 9,
+          "catchCount": 9,
+          "throwCount": 5,
+          "ifCount": 29,
+          "switchCount": 0
+        },
+        "complexityScore": 631,
+        "updatedAt": "2026-08-01T10:39:16.960Z",
+        "riskScore": 41
+      },
+      {
         "path": "server/utils/auth.ts",
         "extension": ".ts",
         "directory": "server/utils",
@@ -9968,104 +10123,6 @@
         "complexityScore": 1497,
         "updatedAt": "2026-07-18T10:29:52.638Z",
         "riskScore": 60
-      },
-      {
-        "path": "src/lib/encryption.ts",
-        "extension": ".ts",
-        "directory": "src/lib",
-        "bytes": 16370,
-        "hash": "99c903a63a9d921bb90b22dfd81653b0751beb739c12f6ace5af2fc1abc1745c",
-        "lines": {
-          "total": 561,
-          "code": 429,
-          "comments": 59,
-          "blanks": 73
-        },
-        "imports": [
-          "import { handleError } from './error-handler';",
-          "import { deriveKey as deriveKeyFromPrimitives } from './cryptoPrimitives';"
-        ],
-        "exports": [
-          "export const uint8ArrayToBase64 = (array: Uint8Array): string => {",
-          "export const base64ToUint8Array = (base64: string): Uint8Array => {",
-          "export const encryptData = async (data: string, secretKey: string | CryptoKey): Promise<string> => {",
-          "export const decryptData = async (encryptedBundle: string, secretKey: string | CryptoKey): Promise<string | null> => {",
-          "export const deriveKey = deriveKeyFromPrimitives;",
-          "export const performHybridKeyExchange = async (peerPublicKey?: { ecc: Uint8Array, kyber: Uint8Array }) => {",
-          "export const setupMFA = async (label: string, issuer: string = 'PersonalVault') => {",
-          "export const verifyMFA = async (token: string, secret: string) => {",
-          "export const signMessage = async (message: string, privateKey: Uint8Array) => {",
-          "export const verifyMessage = async (signedMessage: Uint8Array, publicKey: Uint8Array) => {",
-          "export const generateRSAKeyPair = async (): Promise<CryptoKeyPair> => {",
-          "export const exportPublicKey = async (publicKey: CryptoKey): Promise<string> => {",
-          "export const importPublicKey = async (base64Key: string): Promise<CryptoKey> => {",
-          "export const exportPrivateKey = async (privateKey: CryptoKey): Promise<string> => {",
-          "export const importPrivateKey = async (base64Key: string): Promise<CryptoKey> => {",
-          "export const exportRSAKeyPair = async (keyPair: CryptoKeyPair): Promise<{ publicKey: string; privateKey: string }> => {",
-          "export const importRSAKeyPair = async (keys: { publicKey: string; privateKey: string }): Promise<CryptoKeyPair> => {",
-          "export const encryptFileE2EE = async (",
-          "export const decryptFileE2EE = async (",
-          "export const encryptFile = async (file: File, secretKey: string | CryptoKey): Promise<Uint8Array> => {",
-          "export const decryptToFile = async ("
-        ],
-        "importSpecifiers": [
-          "./error-handler",
-          "./cryptoPrimitives"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "./error-handler",
-            "kind": "relative",
-            "target": "src/lib/error-handler"
-          },
-          {
-            "specifier": "./cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          }
-        ],
-        "symbols": [
-          "toArrayBuffer",
-          "decryptAesGcmWithFallback",
-          "uint8ArrayToBase64",
-          "base64ToUint8Array",
-          "encryptData",
-          "decryptData",
-          "performHybridKeyExchange",
-          "eccKeyPair",
-          "sharedSecretECC",
-          "setupMFA",
-          "verifyMFA",
-          "signMessage",
-          "verifyMessage",
-          "opened",
-          "generateRSAKeyPair",
-          "exportPublicKey",
-          "importPublicKey",
-          "exportPrivateKey",
-          "importPrivateKey",
-          "exportRSAKeyPair",
-          "importRSAKeyPair",
-          "encryptFileE2EE",
-          "decryptFileE2EE",
-          "encryptFile",
-          "decryptToFile"
-        ],
-        "symbolCount": 25,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 19,
-          "awaitCount": 39,
-          "tryCount": 9,
-          "catchCount": 9,
-          "throwCount": 5,
-          "ifCount": 18,
-          "switchCount": 0
-        },
-        "complexityScore": 585,
-        "updatedAt": "2026-07-20T06:38:28.308Z",
-        "riskScore": 33
       },
       {
         "path": "server/controllers/legacyVaultController.ts",
@@ -10671,11 +10728,11 @@
         "path": "server.ts",
         "extension": ".ts",
         "directory": ".",
-        "bytes": 24491,
-        "hash": "0b5d67e9995f5c5976ad6bd725862797d1067d05666343adeaa0183fc0b65fd6",
+        "bytes": 24585,
+        "hash": "806dc749025b2f3ca17c9b2e7e3d350f0819dd4ac4389ffe10505cc98321c4d7",
         "lines": {
-          "total": 783,
-          "code": 683,
+          "total": 785,
+          "code": 685,
           "comments": 23,
           "blanks": 77
         },
@@ -10990,9 +11047,89 @@
           "ifCount": 36,
           "switchCount": 0
         },
-        "complexityScore": 911,
-        "updatedAt": "2026-07-18T15:23:34.915Z",
+        "complexityScore": 913,
+        "updatedAt": "2026-08-01T09:41:18.971Z",
         "riskScore": 46
+      },
+      {
+        "path": "src/components/ui/audio-player.tsx",
+        "extension": ".tsx",
+        "directory": "src/components/ui",
+        "bytes": 21398,
+        "hash": "bc95cabaf403eff1341c9bb235dd6d93f52c84f1411492a66195318a4e79f2c9",
+        "lines": {
+          "total": 658,
+          "code": 578,
+          "comments": 16,
+          "blanks": 64
+        },
+        "imports": [
+          "import { useRef, useState, useEffect, useCallback, memo } from \"react\"",
+          "import { Button } from \"./Button\"",
+          "import {",
+          "import { cn } from \"../../lib/utils\""
+        ],
+        "exports": [
+          "export const AudioPlayer = ({"
+        ],
+        "importSpecifiers": [
+          "react",
+          "./Button",
+          "../../lib/utils"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "react",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "./Button",
+            "kind": "relative",
+            "target": "src/components/ui/Button"
+          },
+          {
+            "specifier": "../../lib/utils",
+            "kind": "relative",
+            "target": "src/lib/utils"
+          }
+        ],
+        "symbols": [
+          "formatTime",
+          "CustomSlider",
+          "raw",
+          "handlePointerDown",
+          "handleKeyDown",
+          "AudioPlayer",
+          "showSpinner",
+          "handleRateChange",
+          "handleWaiting",
+          "handlePlaying",
+          "handlePlay",
+          "handlePause",
+          "handleEnded",
+          "handleCanPlay",
+          "syncVolume",
+          "generateWaveform",
+          "time",
+          "nextIndex",
+          "isPlayed"
+        ],
+        "symbolCount": 19,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 3,
+          "awaitCount": 4,
+          "tryCount": 7,
+          "catchCount": 8,
+          "throwCount": 0,
+          "ifCount": 40,
+          "switchCount": 0
+        },
+        "complexityScore": 701,
+        "updatedAt": "2026-08-01T10:39:00.495Z",
+        "riskScore": 35
       },
       {
         "path": "src/features/vault/components/ChatVault/utils.tsx",
@@ -11507,84 +11644,6 @@
         "riskScore": 52
       },
       {
-        "path": "src/components/ui/audio-player.tsx",
-        "extension": ".tsx",
-        "directory": "src/components/ui",
-        "bytes": 20327,
-        "hash": "b40d15a974f56968a5b3d9b3109afafec86537f6fbe0243a6583feb434062622",
-        "lines": {
-          "total": 623,
-          "code": 547,
-          "comments": 14,
-          "blanks": 62
-        },
-        "imports": [
-          "import { useRef, useState, useEffect, useCallback, memo } from \"react\"",
-          "import { Button } from \"./Button\"",
-          "import {",
-          "import { cn } from \"../../lib/utils\""
-        ],
-        "exports": [
-          "export const AudioPlayer = ({"
-        ],
-        "importSpecifiers": [
-          "react",
-          "./Button",
-          "../../lib/utils"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "./Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "../../lib/utils",
-            "kind": "relative",
-            "target": "src/lib/utils"
-          }
-        ],
-        "symbols": [
-          "formatTime",
-          "CustomSlider",
-          "raw",
-          "handlePointerDown",
-          "handleKeyDown",
-          "AudioPlayer",
-          "showSpinner",
-          "handleRateChange",
-          "handleWaiting",
-          "handlePlaying",
-          "handleEnded",
-          "handleCanPlay",
-          "syncVolume",
-          "generateWaveform",
-          "time",
-          "nextIndex",
-          "isPlayed"
-        ],
-        "symbolCount": 17,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 3,
-          "awaitCount": 4,
-          "tryCount": 5,
-          "catchCount": 5,
-          "throwCount": 0,
-          "ifCount": 38,
-          "switchCount": 0
-        },
-        "complexityScore": 658,
-        "updatedAt": "2026-07-18T06:50:10.077Z",
-        "riskScore": 35
-      },
-      {
         "path": "src/features/vault/ecosystemHelpers.ts",
         "extension": ".ts",
         "directory": "src/features/vault",
@@ -11912,11 +11971,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 810560,
-        "hash": "61c0cb5a4a3b83b2433eabbf04681d4c8f43bd22bb57033cfb3b73b48dfa93b9",
+        "bytes": 683365,
+        "hash": "ca32532da556705fa7b653c50861b47db5dde9943d5c744ebd60ff1b99277778",
         "lines": {
-          "total": 18819,
-          "code": 18819,
+          "total": 16869,
+          "code": 16869,
           "comments": 0,
           "blanks": 0
         },
@@ -11943,19 +12002,19 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 18855,
-        "updatedAt": "2026-07-30T06:00:20.787Z",
+        "complexityScore": 16905,
+        "updatedAt": "2026-07-30T09:17:50.142Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 533396,
-        "hash": "363e369dd3de240bc7b0de6f6e8f1d7b56927ffc8a71bfe7ae2503b829ff43dd",
+        "bytes": 404636,
+        "hash": "78d3101bde8ce32d5cafcd2fb986eadafd7fd668566f9e66ba0195d38f741466",
         "lines": {
-          "total": 10775,
-          "code": 10774,
+          "total": 8778,
+          "code": 8777,
           "comments": 0,
           "blanks": 1
         },
@@ -11981,16 +12040,16 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 10804,
-        "updatedAt": "2026-07-30T06:00:21.309Z",
+        "complexityScore": 8807,
+        "updatedAt": "2026-07-30T09:17:52.807Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 675373,
-        "hash": "f184403763b10dbdb4c5423110130089492804cabf327edc87dea51cebf3edf0",
+        "bytes": 604689,
+        "hash": "aed45736ffb688f5e4f7226236b9c6601ccfe29e1c2e8f32bddf706e7c03ea8f",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -12080,18 +12139,18 @@
           "switchCount": 13
         },
         "complexityScore": 2778,
-        "updatedAt": "2026-07-30T06:00:20.699Z",
+        "updatedAt": "2026-07-30T09:17:50.066Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/best-practices.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 63944,
-        "hash": "779ded0b8c871672c09e963d705c2a63315f17e0189e661df04bbdddc4cfc883",
+        "bytes": 65695,
+        "hash": "3ab4f05ac876f89d834a4e5b6dd01d256d5b0cfbe42f61168913abc700359eab",
         "lines": {
-          "total": 1933,
-          "code": 1932,
+          "total": 1984,
+          "code": 1983,
           "comments": 0,
           "blanks": 1
         },
@@ -12112,8 +12171,8 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 1932,
-        "updatedAt": "2026-07-30T06:00:21.328Z",
+        "complexityScore": 1983,
+        "updatedAt": "2026-07-30T09:17:52.825Z",
         "riskScore": 30
       },
       {
@@ -13478,7 +13537,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "dfb8c6d9c3a4e7a26334406b16209a8854313e712ffe2e4365dd10d2dfadfe94",
+        "hash": "630851aaef9b1e36a1ef175387cb7d767a55997799b8ef92bd9cad8a64279c12",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -13505,7 +13564,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-07-30T06:00:21.324Z",
+        "updatedAt": "2026-07-30T09:17:52.821Z",
         "riskScore": 30
       },
       {
@@ -15900,11 +15959,11 @@
         "path": "server.ts",
         "extension": ".ts",
         "directory": ".",
-        "bytes": 24491,
-        "hash": "0b5d67e9995f5c5976ad6bd725862797d1067d05666343adeaa0183fc0b65fd6",
+        "bytes": 24585,
+        "hash": "806dc749025b2f3ca17c9b2e7e3d350f0819dd4ac4389ffe10505cc98321c4d7",
         "lines": {
-          "total": 783,
-          "code": 683,
+          "total": 785,
+          "code": 685,
           "comments": 23,
           "blanks": 77
         },
@@ -16219,8 +16278,8 @@
           "ifCount": 36,
           "switchCount": 0
         },
-        "complexityScore": 911,
-        "updatedAt": "2026-07-18T15:23:34.915Z",
+        "complexityScore": 913,
+        "updatedAt": "2026-08-01T09:41:18.971Z",
         "riskScore": 46
       },
       {
@@ -16794,16 +16853,186 @@
         "riskScore": 58
       },
       {
+        "path": "src/components/app/AppShell.tsx",
+        "extension": ".tsx",
+        "directory": "src/components/app",
+        "bytes": 27713,
+        "hash": "c707b69dba71a1eafa56c38bd4a1041e0d9f8687a3969def35276889980d7202",
+        "lines": {
+          "total": 839,
+          "code": 772,
+          "comments": 10,
+          "blanks": 57
+        },
+        "imports": [
+          "import React, { lazy, Suspense } from 'react'",
+          "import { motion, AnimatePresence } from 'framer-motion'",
+          "import { Route, Routes } from 'react-router-dom'",
+          "import { Sidebar } from '../layout/Sidebar'",
+          "import { ErrorBoundary } from '../ui/ErrorBoundary'",
+          "import { ErrorFallback } from '../ui/ErrorFallback'",
+          "import { MaintenanceModal } from '../vault/MaintenanceModal'",
+          "import { CommandPalette } from '../vault/CommandPalette'",
+          "import { LoadingScreen } from './LoadingScreen'",
+          "import type { TabId } from './NavigationHandler'",
+          "import { cn } from '../../lib/utils'",
+          "import { useVaultStore } from '../../store/vaultStore'",
+          "import { getAuthenticatedProfile } from '../../lib/auth-api'",
+          "import { useNotificationStore } from '../../store/notificationStore'",
+          "import { Lock, X } from 'lucide-react'",
+          "import { AppHeader } from './AppHeader'"
+        ],
+        "exports": [
+          "export function AppShell({"
+        ],
+        "importSpecifiers": [
+          "react",
+          "framer-motion",
+          "react-router-dom",
+          "../layout/Sidebar",
+          "../ui/Button",
+          "../ui/ErrorBoundary",
+          "../ui/ErrorFallback",
+          "../vault/MaintenanceModal",
+          "../vault/CommandPalette",
+          "./LoadingScreen",
+          "./NavigationHandler",
+          "../../lib/utils",
+          "../../store/vaultStore",
+          "../../lib/auth-api",
+          "../../store/notificationStore",
+          "lucide-react",
+          "./AppHeader"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "react",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "framer-motion",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "react-router-dom",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "../layout/Sidebar",
+            "kind": "relative",
+            "target": "src/components/layout/Sidebar"
+          },
+          {
+            "specifier": "../ui/Button",
+            "kind": "relative",
+            "target": "src/components/ui/Button"
+          },
+          {
+            "specifier": "../ui/ErrorBoundary",
+            "kind": "relative",
+            "target": "src/components/ui/ErrorBoundary"
+          },
+          {
+            "specifier": "../ui/ErrorFallback",
+            "kind": "relative",
+            "target": "src/components/ui/ErrorFallback"
+          },
+          {
+            "specifier": "../vault/MaintenanceModal",
+            "kind": "relative",
+            "target": "src/components/vault/MaintenanceModal"
+          },
+          {
+            "specifier": "../vault/CommandPalette",
+            "kind": "relative",
+            "target": "src/components/vault/CommandPalette"
+          },
+          {
+            "specifier": "./LoadingScreen",
+            "kind": "relative",
+            "target": "src/components/app/LoadingScreen"
+          },
+          {
+            "specifier": "./NavigationHandler",
+            "kind": "relative",
+            "target": "src/components/app/NavigationHandler"
+          },
+          {
+            "specifier": "../../lib/utils",
+            "kind": "relative",
+            "target": "src/lib/utils"
+          },
+          {
+            "specifier": "../../store/vaultStore",
+            "kind": "relative",
+            "target": "src/store/vaultStore"
+          },
+          {
+            "specifier": "../../lib/auth-api",
+            "kind": "relative",
+            "target": "src/lib/auth-api"
+          },
+          {
+            "specifier": "../../store/notificationStore",
+            "kind": "relative",
+            "target": "src/store/notificationStore"
+          },
+          {
+            "specifier": "lucide-react",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "./AppHeader",
+            "kind": "relative",
+            "target": "src/components/app/AppHeader"
+          }
+        ],
+        "symbols": [
+          "MaintenanceType",
+          "MaintenanceState",
+          "formatTabLabel",
+          "getAdjacentTab",
+          "nextIndex",
+          "normalizeProfilePhotoUrl",
+          "normalized",
+          "normalizeDisplayName",
+          "resolveMonogramLetter",
+          "AppShell",
+          "pollNotifications",
+          "preload",
+          "handleProfileUpdated"
+        ],
+        "symbolCount": 13,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 3,
+          "awaitCount": 2,
+          "tryCount": 4,
+          "catchCount": 2,
+          "throwCount": 0,
+          "ifCount": 18,
+          "switchCount": 0
+        },
+        "complexityScore": 901,
+        "updatedAt": "2026-08-01T10:24:24.089Z",
+        "riskScore": 46
+      },
+      {
         "path": "src/features/vault/AudioVault.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault",
-        "bytes": 30518,
-        "hash": "82812e0679f00432ec18d850569613d2b9236efbe910e320c47a9b3c2e81067b",
+        "bytes": 30950,
+        "hash": "d05f077e1e32593cf65ea17ea5ae58b553e183feb307cf6e4251361bc9618210",
         "lines": {
-          "total": 816,
-          "code": 751,
+          "total": 829,
+          "code": 762,
           "comments": 4,
-          "blanks": 61
+          "blanks": 63
         },
         "imports": [
           "import React, { useEffect, useMemo, useRef, useState } from 'react'",
@@ -16958,14 +17187,14 @@
         "keywordCounts": {
           "asyncCount": 5,
           "awaitCount": 7,
-          "tryCount": 5,
-          "catchCount": 3,
+          "tryCount": 6,
+          "catchCount": 4,
           "throwCount": 2,
-          "ifCount": 37,
+          "ifCount": 38,
           "switchCount": 0
         },
-        "complexityScore": 886,
-        "updatedAt": "2026-07-20T06:38:47.092Z",
+        "complexityScore": 897,
+        "updatedAt": "2026-08-01T09:47:25.033Z",
         "riskScore": 46
       },
       {
@@ -18527,168 +18756,6 @@
         "riskScore": 46
       },
       {
-        "path": "src/components/app/AppShell.tsx",
-        "extension": ".tsx",
-        "directory": "src/components/app",
-        "bytes": 27286,
-        "hash": "72a4d150178d638a9865b6a5eb871b1035939161f0f84e903a3d4a99e7e8afad",
-        "lines": {
-          "total": 823,
-          "code": 756,
-          "comments": 10,
-          "blanks": 57
-        },
-        "imports": [
-          "import React, { lazy, Suspense } from 'react'",
-          "import { motion, AnimatePresence } from 'framer-motion'",
-          "import { Route, Routes } from 'react-router-dom'",
-          "import { Sidebar } from '../layout/Sidebar'",
-          "import { ErrorBoundary } from '../ui/ErrorBoundary'",
-          "import { ErrorFallback } from '../ui/ErrorFallback'",
-          "import { MaintenanceModal } from '../vault/MaintenanceModal'",
-          "import { CommandPalette } from '../vault/CommandPalette'",
-          "import { LoadingScreen } from './LoadingScreen'",
-          "import type { TabId } from './NavigationHandler'",
-          "import { cn } from '../../lib/utils'",
-          "import { useVaultStore } from '../../store/vaultStore'",
-          "import { getAuthenticatedProfile } from '../../lib/auth-api'",
-          "import { useNotificationStore } from '../../store/notificationStore'",
-          "import { AppHeader } from './AppHeader'"
-        ],
-        "exports": [
-          "export function AppShell({"
-        ],
-        "importSpecifiers": [
-          "react",
-          "framer-motion",
-          "react-router-dom",
-          "../layout/Sidebar",
-          "../ui/Button",
-          "../ui/ErrorBoundary",
-          "../ui/ErrorFallback",
-          "../vault/MaintenanceModal",
-          "../vault/CommandPalette",
-          "./LoadingScreen",
-          "./NavigationHandler",
-          "../../lib/utils",
-          "../../store/vaultStore",
-          "../../lib/auth-api",
-          "../../store/notificationStore",
-          "./AppHeader"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "framer-motion",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "react-router-dom",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../layout/Sidebar",
-            "kind": "relative",
-            "target": "src/components/layout/Sidebar"
-          },
-          {
-            "specifier": "../ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "../ui/ErrorBoundary",
-            "kind": "relative",
-            "target": "src/components/ui/ErrorBoundary"
-          },
-          {
-            "specifier": "../ui/ErrorFallback",
-            "kind": "relative",
-            "target": "src/components/ui/ErrorFallback"
-          },
-          {
-            "specifier": "../vault/MaintenanceModal",
-            "kind": "relative",
-            "target": "src/components/vault/MaintenanceModal"
-          },
-          {
-            "specifier": "../vault/CommandPalette",
-            "kind": "relative",
-            "target": "src/components/vault/CommandPalette"
-          },
-          {
-            "specifier": "./LoadingScreen",
-            "kind": "relative",
-            "target": "src/components/app/LoadingScreen"
-          },
-          {
-            "specifier": "./NavigationHandler",
-            "kind": "relative",
-            "target": "src/components/app/NavigationHandler"
-          },
-          {
-            "specifier": "../../lib/utils",
-            "kind": "relative",
-            "target": "src/lib/utils"
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/auth-api",
-            "kind": "relative",
-            "target": "src/lib/auth-api"
-          },
-          {
-            "specifier": "../../store/notificationStore",
-            "kind": "relative",
-            "target": "src/store/notificationStore"
-          },
-          {
-            "specifier": "./AppHeader",
-            "kind": "relative",
-            "target": "src/components/app/AppHeader"
-          }
-        ],
-        "symbols": [
-          "MaintenanceType",
-          "MaintenanceState",
-          "formatTabLabel",
-          "getAdjacentTab",
-          "nextIndex",
-          "normalizeProfilePhotoUrl",
-          "normalized",
-          "normalizeDisplayName",
-          "resolveMonogramLetter",
-          "AppShell",
-          "preload",
-          "handleProfileUpdated"
-        ],
-        "symbolCount": 12,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 2,
-          "awaitCount": 1,
-          "tryCount": 3,
-          "catchCount": 2,
-          "throwCount": 0,
-          "ifCount": 15,
-          "switchCount": 0
-        },
-        "complexityScore": 876,
-        "updatedAt": "2026-07-30T07:56:25.052Z",
-        "riskScore": 46
-      },
-      {
         "path": "src/features/vault/components/LiveCaptureModal/LiveCaptureModal.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault/components/LiveCaptureModal",
@@ -20061,13 +20128,13 @@
         "path": "src/features/vault/components/NotesVault/NoteViewer.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault/components/NotesVault",
-        "bytes": 26819,
-        "hash": "030895dca94bca2dae2c395088233e782f2d6443fd524967d24f50d937f1caaf",
+        "bytes": 28863,
+        "hash": "cd3afd18dc73d00c1dca303e9df6a60723c29d772d60c0ab096e12f968ddc764",
         "lines": {
-          "total": 695,
-          "code": 654,
+          "total": 725,
+          "code": 683,
           "comments": 7,
-          "blanks": 34
+          "blanks": 35
         },
         "imports": [
           "import React, { useRef, useState, useMemo, useEffect } from 'react'",
@@ -20190,8 +20257,8 @@
           "ifCount": 10,
           "switchCount": 0
         },
-        "complexityScore": 756,
-        "updatedAt": "2026-07-30T07:31:59.390Z",
+        "complexityScore": 785,
+        "updatedAt": "2026-08-01T10:35:59.833Z",
         "riskScore": 42
       },
       {
@@ -20328,8 +20395,8 @@
         "path": "src/main.tsx",
         "extension": ".tsx",
         "directory": "src",
-        "bytes": 3986,
-        "hash": "951ce04a4c6bed0ec033b160840c4eb87399224b0012f8e4b5ddf0bee8a410ef",
+        "bytes": 4004,
+        "hash": "8a0a6aa7d961b824e5f5e6275313d2a0ac295c929ce331107156e0e7ce0fa937",
         "lines": {
           "total": 139,
           "code": 120,
@@ -20441,11 +20508,11 @@
           "tryCount": 2,
           "catchCount": 2,
           "throwCount": 0,
-          "ifCount": 6,
+          "ifCount": 7,
           "switchCount": 0
         },
         "complexityScore": 174,
-        "updatedAt": "2026-07-17T17:17:27.820Z",
+        "updatedAt": "2026-08-01T09:46:03.831Z",
         "riskScore": 17
       },
       {
@@ -21084,8 +21151,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 675373,
-        "hash": "f184403763b10dbdb4c5423110130089492804cabf327edc87dea51cebf3edf0",
+        "bytes": 604689,
+        "hash": "aed45736ffb688f5e4f7226236b9c6601ccfe29e1c2e8f32bddf706e7c03ea8f",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -21175,18 +21242,18 @@
           "switchCount": 13
         },
         "complexityScore": 2778,
-        "updatedAt": "2026-07-30T06:00:20.699Z",
+        "updatedAt": "2026-07-30T09:17:50.066Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 533396,
-        "hash": "363e369dd3de240bc7b0de6f6e8f1d7b56927ffc8a71bfe7ae2503b829ff43dd",
+        "bytes": 404636,
+        "hash": "78d3101bde8ce32d5cafcd2fb986eadafd7fd668566f9e66ba0195d38f741466",
         "lines": {
-          "total": 10775,
-          "code": 10774,
+          "total": 8778,
+          "code": 8777,
           "comments": 0,
           "blanks": 1
         },
@@ -21212,19 +21279,19 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 10804,
-        "updatedAt": "2026-07-30T06:00:21.309Z",
+        "complexityScore": 8807,
+        "updatedAt": "2026-07-30T09:17:52.807Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 810560,
-        "hash": "61c0cb5a4a3b83b2433eabbf04681d4c8f43bd22bb57033cfb3b73b48dfa93b9",
+        "bytes": 683365,
+        "hash": "ca32532da556705fa7b653c50861b47db5dde9943d5c744ebd60ff1b99277778",
         "lines": {
-          "total": 18819,
-          "code": 18819,
+          "total": 16869,
+          "code": 16869,
           "comments": 0,
           "blanks": 0
         },
@@ -21251,8 +21318,8 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 18855,
-        "updatedAt": "2026-07-30T06:00:20.787Z",
+        "complexityScore": 16905,
+        "updatedAt": "2026-07-30T09:17:50.142Z",
         "riskScore": 44
       },
       {
@@ -23335,8 +23402,8 @@
         "path": "lighthouse/report-split/performance.html",
         "extension": ".html",
         "directory": "lighthouse/report-split",
-        "bytes": 26255,
-        "hash": "18c082f29046b6db227a199aee85488b2cbed3ebb511e707823f0840a3d26ac6",
+        "bytes": 26244,
+        "hash": "23cc125fbb7a135d386abde87d57f23e57312d91945a792b431180f25d2c347b",
         "lines": {
           "total": 647,
           "code": 645,
@@ -23363,7 +23430,7 @@
           "switchCount": 0
         },
         "complexityScore": 657,
-        "updatedAt": "2026-07-30T06:00:21.312Z",
+        "updatedAt": "2026-07-30T09:17:52.813Z",
         "riskScore": 37
       },
       {
@@ -23440,22 +23507,23 @@
         "path": "README.md",
         "extension": ".md",
         "directory": ".",
-        "bytes": 8256,
-        "hash": "57c048e01fe939976c84a0c2995725a5042e295cfea6cb2beb847b4dac10ccf4",
+        "bytes": 17052,
+        "hash": "eaa05c8107584145da0fb8dcda1fcd479fb2dd3c78d644aa9f09b389ac5743c3",
         "lines": {
-          "total": 207,
-          "code": 170,
-          "comments": 0,
-          "blanks": 37
+          "total": 357,
+          "code": 278,
+          "comments": 4,
+          "blanks": 75
         },
         "imports": [],
         "exports": [],
         "importSpecifiers": [],
         "importsDetailed": [],
         "symbols": [
-          "and"
+          "verification",
+          "configuration"
         ],
-        "symbolCount": 1,
+        "symbolCount": 2,
         "tags": [
           "NOTE"
         ],
@@ -23463,15 +23531,15 @@
         "keywordCounts": {
           "asyncCount": 0,
           "awaitCount": 0,
-          "tryCount": 1,
+          "tryCount": 0,
           "catchCount": 0,
           "throwCount": 0,
-          "ifCount": 9,
+          "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 188,
-        "updatedAt": "2026-06-21T10:33:53.833Z",
-        "riskScore": 23
+        "complexityScore": 302,
+        "updatedAt": "2026-08-01T10:05:20.466Z",
+        "riskScore": 29
       },
       {
         "path": "scripts/code-memory-index/build-index.mjs",
@@ -23641,8 +23709,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 675373,
-        "hash": "f184403763b10dbdb4c5423110130089492804cabf327edc87dea51cebf3edf0",
+        "bytes": 604689,
+        "hash": "aed45736ffb688f5e4f7226236b9c6601ccfe29e1c2e8f32bddf706e7c03ea8f",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -23732,7 +23800,7 @@
           "switchCount": 13
         },
         "complexityScore": 2778,
-        "updatedAt": "2026-07-30T06:00:20.699Z",
+        "updatedAt": "2026-07-30T09:17:50.066Z",
         "riskScore": 68
       },
       {
@@ -26403,11 +26471,11 @@
         "path": "server.ts",
         "extension": ".ts",
         "directory": ".",
-        "bytes": 24491,
-        "hash": "0b5d67e9995f5c5976ad6bd725862797d1067d05666343adeaa0183fc0b65fd6",
+        "bytes": 24585,
+        "hash": "806dc749025b2f3ca17c9b2e7e3d350f0819dd4ac4389ffe10505cc98321c4d7",
         "lines": {
-          "total": 783,
-          "code": 683,
+          "total": 785,
+          "code": 685,
           "comments": 23,
           "blanks": 77
         },
@@ -26722,8 +26790,8 @@
           "ifCount": 36,
           "switchCount": 0
         },
-        "complexityScore": 911,
-        "updatedAt": "2026-07-18T15:23:34.915Z",
+        "complexityScore": 913,
+        "updatedAt": "2026-08-01T09:41:18.971Z",
         "riskScore": 46
       },
       {
@@ -26853,11 +26921,11 @@
         "path": "src/components/app/AppShell.tsx",
         "extension": ".tsx",
         "directory": "src/components/app",
-        "bytes": 27286,
-        "hash": "72a4d150178d638a9865b6a5eb871b1035939161f0f84e903a3d4a99e7e8afad",
+        "bytes": 27713,
+        "hash": "c707b69dba71a1eafa56c38bd4a1041e0d9f8687a3969def35276889980d7202",
         "lines": {
-          "total": 823,
-          "code": 756,
+          "total": 839,
+          "code": 772,
           "comments": 10,
           "blanks": 57
         },
@@ -26876,6 +26944,7 @@
           "import { useVaultStore } from '../../store/vaultStore'",
           "import { getAuthenticatedProfile } from '../../lib/auth-api'",
           "import { useNotificationStore } from '../../store/notificationStore'",
+          "import { Lock, X } from 'lucide-react'",
           "import { AppHeader } from './AppHeader'"
         ],
         "exports": [
@@ -26897,6 +26966,7 @@
           "../../store/vaultStore",
           "../../lib/auth-api",
           "../../store/notificationStore",
+          "lucide-react",
           "./AppHeader"
         ],
         "importsDetailed": [
@@ -26976,6 +27046,11 @@
             "target": "src/store/notificationStore"
           },
           {
+            "specifier": "lucide-react",
+            "kind": "package",
+            "target": null
+          },
+          {
             "specifier": "./AppHeader",
             "kind": "relative",
             "target": "src/components/app/AppHeader"
@@ -26992,36 +27067,37 @@
           "normalizeDisplayName",
           "resolveMonogramLetter",
           "AppShell",
+          "pollNotifications",
           "preload",
           "handleProfileUpdated"
         ],
-        "symbolCount": 12,
+        "symbolCount": 13,
         "tags": [],
         "tagCount": 0,
         "keywordCounts": {
-          "asyncCount": 2,
-          "awaitCount": 1,
-          "tryCount": 3,
+          "asyncCount": 3,
+          "awaitCount": 2,
+          "tryCount": 4,
           "catchCount": 2,
           "throwCount": 0,
-          "ifCount": 15,
+          "ifCount": 18,
           "switchCount": 0
         },
-        "complexityScore": 876,
-        "updatedAt": "2026-07-30T07:56:25.052Z",
+        "complexityScore": 901,
+        "updatedAt": "2026-08-01T10:24:24.089Z",
         "riskScore": 46
       },
       {
         "path": "src/features/vault/AudioVault.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault",
-        "bytes": 30518,
-        "hash": "82812e0679f00432ec18d850569613d2b9236efbe910e320c47a9b3c2e81067b",
+        "bytes": 30950,
+        "hash": "d05f077e1e32593cf65ea17ea5ae58b553e183feb307cf6e4251361bc9618210",
         "lines": {
-          "total": 816,
-          "code": 751,
+          "total": 829,
+          "code": 762,
           "comments": 4,
-          "blanks": 61
+          "blanks": 63
         },
         "imports": [
           "import React, { useEffect, useMemo, useRef, useState } from 'react'",
@@ -27176,14 +27252,14 @@
         "keywordCounts": {
           "asyncCount": 5,
           "awaitCount": 7,
-          "tryCount": 5,
-          "catchCount": 3,
+          "tryCount": 6,
+          "catchCount": 4,
           "throwCount": 2,
-          "ifCount": 37,
+          "ifCount": 38,
           "switchCount": 0
         },
-        "complexityScore": 886,
-        "updatedAt": "2026-07-20T06:38:47.092Z",
+        "complexityScore": 897,
+        "updatedAt": "2026-08-01T09:47:25.033Z",
         "riskScore": 46
       },
       {
@@ -28730,13 +28806,13 @@
         "path": "src/lib/encryption.ts",
         "extension": ".ts",
         "directory": "src/lib",
-        "bytes": 16370,
-        "hash": "99c903a63a9d921bb90b22dfd81653b0751beb739c12f6ace5af2fc1abc1745c",
+        "bytes": 18117,
+        "hash": "473044fc5193b7737274bb38104022d39cece16dbc8802b5468638b1325ccfd9",
         "lines": {
-          "total": 561,
-          "code": 429,
-          "comments": 59,
-          "blanks": 73
+          "total": 618,
+          "code": 469,
+          "comments": 66,
+          "blanks": 83
         },
         "imports": [
           "import { handleError } from './error-handler';",
@@ -28763,6 +28839,7 @@
           "export const encryptFileE2EE = async (",
           "export const decryptFileE2EE = async (",
           "export const encryptFile = async (file: File, secretKey: string | CryptoKey): Promise<Uint8Array> => {",
+          "export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {",
           "export const decryptToFile = async ("
         ],
         "importSpecifiers": [
@@ -28806,9 +28883,10 @@
           "encryptFileE2EE",
           "decryptFileE2EE",
           "encryptFile",
+          "detectMimeTypeFromBytes",
           "decryptToFile"
         ],
-        "symbolCount": 25,
+        "symbolCount": 26,
         "tags": [],
         "tagCount": 0,
         "keywordCounts": {
@@ -28817,12 +28895,12 @@
           "tryCount": 9,
           "catchCount": 9,
           "throwCount": 5,
-          "ifCount": 18,
+          "ifCount": 29,
           "switchCount": 0
         },
-        "complexityScore": 585,
-        "updatedAt": "2026-07-20T06:38:28.308Z",
-        "riskScore": 33
+        "complexityScore": 631,
+        "updatedAt": "2026-08-01T10:39:16.960Z",
+        "riskScore": 41
       },
       {
         "path": "tests/run-tests.ts",
@@ -29448,11 +29526,11 @@
         "path": "src/features/auth/useVaultAuth.ts",
         "extension": ".ts",
         "directory": "src/features/auth",
-        "bytes": 28139,
-        "hash": "213c929690018874629859a51f49dfbfe460ebab92c70e75b1f1726c35d2d8f3",
+        "bytes": 28352,
+        "hash": "5d54744854093521760033f997a9a84f77b016bb9aaef7152d85e3874e3fd686",
         "lines": {
-          "total": 831,
-          "code": 696,
+          "total": 834,
+          "code": 699,
           "comments": 68,
           "blanks": 67
         },
@@ -29549,14 +29627,14 @@
         "keywordCounts": {
           "asyncCount": 3,
           "awaitCount": 30,
-          "tryCount": 9,
+          "tryCount": 10,
           "catchCount": 12,
           "throwCount": 11,
           "ifCount": 56,
           "switchCount": 0
         },
-        "complexityScore": 756,
-        "updatedAt": "2026-07-30T08:50:06.680Z",
+        "complexityScore": 759,
+        "updatedAt": "2026-08-01T09:32:27.867Z",
         "riskScore": 41
       },
       {
@@ -29832,11 +29910,11 @@
         "path": "server.ts",
         "extension": ".ts",
         "directory": ".",
-        "bytes": 24491,
-        "hash": "0b5d67e9995f5c5976ad6bd725862797d1067d05666343adeaa0183fc0b65fd6",
+        "bytes": 24585,
+        "hash": "806dc749025b2f3ca17c9b2e7e3d350f0819dd4ac4389ffe10505cc98321c4d7",
         "lines": {
-          "total": 783,
-          "code": 683,
+          "total": 785,
+          "code": 685,
           "comments": 23,
           "blanks": 77
         },
@@ -30151,8 +30229,8 @@
           "ifCount": 36,
           "switchCount": 0
         },
-        "complexityScore": 911,
-        "updatedAt": "2026-07-18T15:23:34.915Z",
+        "complexityScore": 913,
+        "updatedAt": "2026-08-01T09:41:18.971Z",
         "riskScore": 46
       },
       {
@@ -34978,148 +35056,212 @@
   },
   "changes": {
     "hasPreviousIndex": true,
-    "previousGeneratedAt": "2026-07-30T05:58:47.469Z",
+    "previousGeneratedAt": "2026-07-30T09:15:56.842Z",
     "counts": {
-      "added": 1,
+      "added": 2,
       "removed": 0,
-      "changed": 19,
-      "unchanged": 478
+      "changed": 32,
+      "unchanged": 466
     },
     "added": [
-      "server/types/user.ts"
+      "vault-tmp/multipart-uploads-tests/owner-user-dcd874c7-ac2f-46ab-a96e-69e9d117ac49/5e5e014510aaf51e3b9b7ce9/session.json",
+      "vault-tmp/multipart-uploads-tests/owner-user-f8c34852-d49a-4544-a802-bd8ac3d99691/0a6fb21d70838ab7e1a459fc/session.json"
     ],
     "removed": [],
     "changed": [
       {
-        "path": "lighthouse/report.report.json",
-        "previousHash": "694094f757d22233c904da5b8c6fddb71aca8e2bf8146802134ed2cd4b082b10",
-        "currentHash": "61c0cb5a4a3b83b2433eabbf04681d4c8f43bd22bb57033cfb3b73b48dfa93b9",
-        "previousLines": 20488,
-        "currentLines": 18819,
-        "deltaLines": -1669,
-        "deltaSymbols": 0
-      },
-      {
         "path": "lighthouse/report-split/performance.json",
-        "previousHash": "d2e45336d58ec9c2253582e6525cf603d2da98e7af6cb7f3cfb1bca4dd8d7cad",
-        "currentHash": "363e369dd3de240bc7b0de6f6e8f1d7b56927ffc8a71bfe7ae2503b829ff43dd",
-        "previousLines": 12362,
-        "currentLines": 10775,
-        "deltaLines": -1587,
+        "previousHash": "363e369dd3de240bc7b0de6f6e8f1d7b56927ffc8a71bfe7ae2503b829ff43dd",
+        "currentHash": "78d3101bde8ce32d5cafcd2fb986eadafd7fd668566f9e66ba0195d38f741466",
+        "previousLines": 10775,
+        "currentLines": 8778,
+        "deltaLines": -1997,
         "deltaSymbols": 0
       },
       {
-        "path": "src/components/app/AppShell.tsx",
-        "previousHash": "97b673ff10e66c10a6ac7ffac6a17571610c112e22bcdd3fd942cb6d4bcc40b5",
-        "currentHash": "72a4d150178d638a9865b6a5eb871b1035939161f0f84e903a3d4a99e7e8afad",
-        "previousLines": 971,
-        "currentLines": 823,
-        "deltaLines": -148,
+        "path": "lighthouse/report.report.json",
+        "previousHash": "61c0cb5a4a3b83b2433eabbf04681d4c8f43bd22bb57033cfb3b73b48dfa93b9",
+        "currentHash": "ca32532da556705fa7b653c50861b47db5dde9943d5c744ebd60ff1b99277778",
+        "previousLines": 18819,
+        "currentLines": 16869,
+        "deltaLines": -1950,
         "deltaSymbols": 0
       },
       {
-        "path": "src/features/auth/useVaultAuth.ts",
-        "previousHash": "fda7a9fe9bafc6cfc5c59bb2d26f20a4f9bf57f6d9116867e6d73e0c7f26d0d8",
-        "currentHash": "213c929690018874629859a51f49dfbfe460ebab92c70e75b1f1726c35d2d8f3",
-        "previousLines": 744,
-        "currentLines": 831,
-        "deltaLines": 87,
-        "deltaSymbols": 0
+        "path": "README.md",
+        "previousHash": "57c048e01fe939976c84a0c2995725a5042e295cfea6cb2beb847b4dac10ccf4",
+        "currentHash": "eaa05c8107584145da0fb8dcda1fcd479fb2dd3c78d644aa9f09b389ac5743c3",
+        "previousLines": 207,
+        "currentLines": 357,
+        "deltaLines": 150,
+        "deltaSymbols": 1
       },
       {
-        "path": "src/components/vault/CloudHealthIndicator.tsx",
-        "previousHash": "27a7657c656c1e1432724c2baa14ea62a7c00ab0dd307631df6a975176b8afb8",
-        "currentHash": "7b9c46657b6b7927a32d66c72b1101cc7a9be73e3dea893f0bdb3ef7471ea379",
-        "previousLines": 136,
-        "currentLines": 181,
-        "deltaLines": 45,
-        "deltaSymbols": 0
+        "path": "src/lib/filePreview.ts",
+        "previousHash": "e0396ecd0a142ac05bf8b301d65790e24dfbe27ca99b7aa224b953cc875ccd30",
+        "currentHash": "147ee206a583ae9bd38d3595951a188d7503c34a6a27090f2f1de78629925556",
+        "previousLines": 292,
+        "currentLines": 360,
+        "deltaLines": 68,
+        "deltaSymbols": 1
       },
       {
-        "path": "src/features/vault/components/NotesVault/NoteViewer.tsx",
-        "previousHash": "9e5bc39867cedeaa2e795b39748a3a493c277f72a0c491895590e6f4cf833a55",
-        "currentHash": "030895dca94bca2dae2c395088233e782f2d6443fd524967d24f50d937f1caaf",
-        "previousLines": 731,
-        "currentLines": 695,
-        "deltaLines": -36,
-        "deltaSymbols": 0
+        "path": "src/lib/encryption.ts",
+        "previousHash": "99c903a63a9d921bb90b22dfd81653b0751beb739c12f6ace5af2fc1abc1745c",
+        "currentHash": "473044fc5193b7737274bb38104022d39cece16dbc8802b5468638b1325ccfd9",
+        "previousLines": 561,
+        "currentLines": 618,
+        "deltaLines": 57,
+        "deltaSymbols": 1
       },
       {
         "path": "lighthouse/report-split/best-practices.json",
-        "previousHash": "c93842bf6758a61c8b9c23543f01fbe299a190489124fef0f82afae059a1d7e2",
-        "currentHash": "779ded0b8c871672c09e963d705c2a63315f17e0189e661df04bbdddc4cfc883",
-        "previousLines": 1958,
-        "currentLines": 1933,
-        "deltaLines": -25,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/features/vault/IdentitiesVault.tsx",
-        "previousHash": "45b558c2bdf3bbc8b641d64a572aa544a65e85b4a2cc5546b718f650cb315ec3",
-        "currentHash": "e31b2f902619713242c6493257a7d9343b2196aee901803075146a0fc7e2dac2",
-        "previousLines": 1072,
-        "currentLines": 1096,
-        "deltaLines": 24,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "lighthouse/report-split/best-practices.html",
-        "previousHash": "9559a0d130a1b04bf02148960d17fac4ed4d2889ddb77af7ab63c5ed9c37872f",
-        "currentHash": "8bd285fa3571060465a45905fe97a71f8d84a3fa1c1ab88e4cb6e4fc1cadb683",
-        "previousLines": 311,
-        "currentLines": 327,
-        "deltaLines": 16,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "tests/unit/env.test.ts",
-        "previousHash": "c80a641609e89d3bd60b7d90c122b9cca87b79505d46095ff9b74d50b8fb7d32",
-        "currentHash": "72173093b3f3cdbd6ee737d0af8430cf753ee4c2af2508a9b5256ba352fae0e2",
-        "previousLines": 204,
-        "currentLines": 218,
-        "deltaLines": 14,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/components/app/AppHeader.tsx",
-        "previousHash": "efd5f1736f23578f04b8c9e927f4641e55b61fc89484b0b687cd6d6c72e09bd6",
-        "currentHash": "8fe6a768d467bd3dc333172b79d56065614cfbed2fbfb9fc698c386f30b6a6f4",
-        "previousLines": 213,
-        "currentLines": 226,
-        "deltaLines": 13,
+        "previousHash": "779ded0b8c871672c09e963d705c2a63315f17e0189e661df04bbdddc4cfc883",
+        "currentHash": "3ab4f05ac876f89d834a4e5b6dd01d256d5b0cfbe42f61168913abc700359eab",
+        "previousLines": 1933,
+        "currentLines": 1984,
+        "deltaLines": 51,
         "deltaSymbols": 0
       },
       {
         "path": "src/components/app/NotificationDropdown.tsx",
-        "previousHash": "df0bc8f9c1f0af8ce0f918f975456c5e2b6b0ec4ab2fb2ffca1f1ccf73c2bdfb",
-        "currentHash": "573908a08073cef40100878aea668113474c15665ee1a353a973684ddacfa8c7",
-        "previousLines": 309,
-        "currentLines": 312,
+        "previousHash": "573908a08073cef40100878aea668113474c15665ee1a353a973684ddacfa8c7",
+        "currentHash": "81f34dda4bdf42071dda1b73c5698c1ab8a93fab8fd287dde0cec489af16419d",
+        "previousLines": 312,
+        "currentLines": 360,
+        "deltaLines": 48,
+        "deltaSymbols": 1
+      },
+      {
+        "path": "src/components/ui/audio-player.tsx",
+        "previousHash": "b40d15a974f56968a5b3d9b3109afafec86537f6fbe0243a6583feb434062622",
+        "currentHash": "bc95cabaf403eff1341c9bb235dd6d93f52c84f1411492a66195318a4e79f2c9",
+        "previousLines": 623,
+        "currentLines": 658,
+        "deltaLines": 35,
+        "deltaSymbols": 2
+      },
+      {
+        "path": "server/services/recaptchaService.ts",
+        "previousHash": "5c1482ed0880362c40fe5ad09a59008d050f29bcad761d005a6625bc0813547b",
+        "currentHash": "a99bb1c0889552952fc4ad97d6d5dddda5fd83b1af2f20441bec34ae77eeb0aa",
+        "previousLines": 199,
+        "currentLines": 233,
+        "deltaLines": 34,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "src/features/vault/components/NotesVault/NoteViewer.tsx",
+        "previousHash": "030895dca94bca2dae2c395088233e782f2d6443fd524967d24f50d937f1caaf",
+        "currentHash": "cd3afd18dc73d00c1dca303e9df6a60723c29d772d60c0ab096e12f968ddc764",
+        "previousLines": 695,
+        "currentLines": 725,
+        "deltaLines": 30,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "src/components/app/AppHeader.tsx",
+        "previousHash": "8fe6a768d467bd3dc333172b79d56065614cfbed2fbfb9fc698c386f30b6a6f4",
+        "currentHash": "6539551ab798a03f3fd2c9f20e927f6ad63f7ec7d95a593ef860fbe20eb56a9c",
+        "previousLines": 226,
+        "currentLines": 246,
+        "deltaLines": 20,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "src/components/app/AppShell.tsx",
+        "previousHash": "72a4d150178d638a9865b6a5eb871b1035939161f0f84e903a3d4a99e7e8afad",
+        "currentHash": "c707b69dba71a1eafa56c38bd4a1041e0d9f8687a3969def35276889980d7202",
+        "previousLines": 823,
+        "currentLines": 839,
+        "deltaLines": 16,
+        "deltaSymbols": 1
+      },
+      {
+        "path": "src/features/vault/AudioVault.tsx",
+        "previousHash": "82812e0679f00432ec18d850569613d2b9236efbe910e320c47a9b3c2e81067b",
+        "currentHash": "d05f077e1e32593cf65ea17ea5ae58b553e183feb307cf6e4251361bc9618210",
+        "previousLines": 816,
+        "currentLines": 829,
+        "deltaLines": 13,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "src/store/notificationStore.ts",
+        "previousHash": "c832a44163e104159ee6e6d2fc0ded553ac5942fa0b5e6c2d6418adf111062ad",
+        "currentHash": "3ca282ce2b4f45ed02eb1333722bd820715127305af148e412e4ad708535ec1f",
+        "previousLines": 89,
+        "currentLines": 101,
+        "deltaLines": 12,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "src/components/layout/Background.tsx",
+        "previousHash": "d519936e58b65b6441765f18e87b389f90cdf7216f2a9f559e498b7751ad154a",
+        "currentHash": "f19a1814b43d95aae9b2b4e02a0ed63a4f0a613dbfac550495ca7cbc2e973914",
+        "previousLines": 268,
+        "currentLines": 277,
+        "deltaLines": 9,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "server/vite.ts",
+        "previousHash": "3dbf482b0953a1ab8779cebbc5dd7931326e0f534ffdd3e65cc6b9255ebdebba",
+        "currentHash": "e75c113d87560b7342bf546eb831f03453f25c5f416923e037927222d189e4a7",
+        "previousLines": 337,
+        "currentLines": 342,
+        "deltaLines": 5,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "playwright.config.ts",
+        "previousHash": "24df74413fd4ec6c5b94797aea9499e1c60c9044c42bd3366dce11cd8ec512f7",
+        "currentHash": "f8ff9d84a9f7b66fe40dc19cdbba2cd6e28e27e0cc60a3477c24471a74f4985d",
+        "previousLines": 93,
+        "currentLines": 96,
         "deltaLines": 3,
         "deltaSymbols": 0
       },
       {
-        "path": "src/services/vaultService.ts",
-        "previousHash": "ddeabd3a62ffc83b6ff196eb944c41f89db1b4124000f987d62a7b4909bda1ad",
-        "currentHash": "38661c6602f10e3a9d8a472f6041b6a74aaa3c1fe4d131dce876f4deafdb0051",
-        "previousLines": 328,
-        "currentLines": 331,
+        "path": "src/features/auth/useVaultAuth.ts",
+        "previousHash": "213c929690018874629859a51f49dfbfe460ebab92c70e75b1f1726c35d2d8f3",
+        "currentHash": "5d54744854093521760033f997a9a84f77b016bb9aaef7152d85e3874e3fd686",
+        "previousLines": 831,
+        "currentLines": 834,
         "deltaLines": 3,
         "deltaSymbols": 0
       },
       {
-        "path": "src/store/vaultStore.ts",
-        "previousHash": "50f134e7477371e251207fe2e02905354b5a00db8e603a2065dca5a610f51d41",
-        "currentHash": "9f669eec4f59988bf3cf47b4711b5b8b4dd8c5a3f14a504f0b3c60ce86008a07",
-        "previousLines": 1487,
-        "currentLines": 1489,
+        "path": "src/lib/sentry.js",
+        "previousHash": "998da663fbb81b4b4709627231a8981e10549711f34ca7e33300d464d640a379",
+        "currentHash": "701cf116712aabf79100691fd54320a6474fe55f0f744d2681ba9e9893bd1148",
+        "previousLines": 146,
+        "currentLines": 149,
+        "deltaLines": 3,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "tests/e2e/specs/home.spec.ts",
+        "previousHash": "112ad856145a34bdd93577d92a88aac74fda54ed9033c800874f84170c0d0778",
+        "currentHash": "1e75f3f2932daf8e8be5a7db91f0df6dcb72b2d27160c80f0691156976e58f82",
+        "previousLines": 25,
+        "currentLines": 22,
+        "deltaLines": -3,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "server.ts",
+        "previousHash": "0b5d67e9995f5c5976ad6bd725862797d1067d05666343adeaa0183fc0b65fd6",
+        "currentHash": "806dc749025b2f3ca17c9b2e7e3d350f0819dd4ac4389ffe10505cc98321c4d7",
+        "previousLines": 783,
+        "currentLines": 785,
         "deltaLines": 2,
         "deltaSymbols": 0
       },
       {
         "path": "lighthouse/report-split/accessibility.json",
-        "previousHash": "d89dec0908604e8a9dedc0b2e988788669645e73ff3223b321aefc334f6dc714",
-        "currentHash": "dfb8c6d9c3a4e7a26334406b16209a8854313e712ffe2e4365dd10d2dfadfe94",
+        "previousHash": "dfb8c6d9c3a4e7a26334406b16209a8854313e712ffe2e4365dd10d2dfadfe94",
+        "currentHash": "630851aaef9b1e36a1ef175387cb7d767a55997799b8ef92bd9cad8a64279c12",
         "previousLines": 1193,
         "currentLines": 1193,
         "deltaLines": 0,
@@ -35127,8 +35269,8 @@
       },
       {
         "path": "lighthouse/report-split/performance.html",
-        "previousHash": "c4e37dff66267879b85ac249ff7290fe19d5726b7599e373e211f5f25b964ad3",
-        "currentHash": "18c082f29046b6db227a199aee85488b2cbed3ebb511e707823f0840a3d26ac6",
+        "previousHash": "18c082f29046b6db227a199aee85488b2cbed3ebb511e707823f0840a3d26ac6",
+        "currentHash": "23cc125fbb7a135d386abde87d57f23e57312d91945a792b431180f25d2c347b",
         "previousLines": 647,
         "currentLines": 647,
         "deltaLines": 0,
@@ -35136,8 +35278,8 @@
       },
       {
         "path": "lighthouse/report-split/seo.json",
-        "previousHash": "8be7007290eb57a9fa04ef1f2011acf9310d458b4672253a6d2dc1b409e7ca7c",
-        "currentHash": "ec033190c1120d24adc5345d9e340c32a2c6abca8f5d25b26c50171e716d67ad",
+        "previousHash": "ec033190c1120d24adc5345d9e340c32a2c6abca8f5d25b26c50171e716d67ad",
+        "currentHash": "0933753c57e16eda8b30e5772dbfdfc4ecfd7d939305e91e31136c167bfa0537",
         "previousLines": 242,
         "currentLines": 242,
         "deltaLines": 0,
@@ -35145,19 +35287,73 @@
       },
       {
         "path": "lighthouse/report.report.html",
-        "previousHash": "279257064ddd656f44025a9ac670530e2809527f3158a56327499fb6a59854a4",
-        "currentHash": "f184403763b10dbdb4c5423110130089492804cabf327edc87dea51cebf3edf0",
+        "previousHash": "f184403763b10dbdb4c5423110130089492804cabf327edc87dea51cebf3edf0",
+        "currentHash": "aed45736ffb688f5e4f7226236b9c6601ccfe29e1c2e8f32bddf706e7c03ea8f",
         "previousLines": 2894,
         "currentLines": 2894,
         "deltaLines": 0,
         "deltaSymbols": 0
       },
       {
+        "path": "src/components/layout/Footer.tsx",
+        "previousHash": "898c916100f784ce33a832a36bdf327ea752032febd4e9cc01c93cc2760ce904",
+        "currentHash": "3a858ae6700fdfe80ea4dcf362b910a59dc4afd316975a3f6576f267ff0a6e53",
+        "previousLines": 229,
+        "currentLines": 229,
+        "deltaLines": 0,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "src/features/vault/components/LocationVault/LocationViewer.tsx",
+        "previousHash": "7141b4204b6c025962dc6f3194ade5094580b1177c56a2ef57d6c7b745d5cbd3",
+        "currentHash": "c8a76c35afaecee17f181493e29fa13e9a4834661e6f2d07eb44b1116a02a6fa",
+        "previousLines": 632,
+        "currentLines": 632,
+        "deltaLines": 0,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "src/features/vault/components/SettingsVault/ShareVaultCard.tsx",
+        "previousHash": "4e15348e3b687922edf7e006a0e5cdf356e02351ee6ce9979e8a31f617dfe540",
+        "currentHash": "9b25d6946e0f11dac69d0e998161fb7807658765ed287112bb41cb1a92ce949e",
+        "previousLines": 406,
+        "currentLines": 406,
+        "deltaLines": 0,
+        "deltaSymbols": 0
+      },
+      {
         "path": "src/lib/vaultKeyCheck.ts",
-        "previousHash": "39ace63ba638b089090a0f7d5036e084886b942ce556061e58f3967f5e0e2f1c",
-        "currentHash": "acda2a2a4c1c7a7b49471cae83ef4ccf5e451302321561cc129c4d7059e982dc",
+        "previousHash": "acda2a2a4c1c7a7b49471cae83ef4ccf5e451302321561cc129c4d7059e982dc",
+        "currentHash": "7d539c186c1e3ef08ba56d386e84b19019aa392a1cf2aadf73d05b1f93d7195a",
         "previousLines": 137,
         "currentLines": 137,
+        "deltaLines": 0,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "src/main.tsx",
+        "previousHash": "951ce04a4c6bed0ec033b160840c4eb87399224b0012f8e4b5ddf0bee8a410ef",
+        "currentHash": "8a0a6aa7d961b824e5f5e6275313d2a0ac295c929ce331107156e0e7ce0fa937",
+        "previousLines": 139,
+        "currentLines": 139,
+        "deltaLines": 0,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "tests/e2e/helpers/auth.ts",
+        "previousHash": "060c14c1bd468c742cd3e4f71a41aa833c734e6e1303817e9e397f6b6f08b103",
+        "currentHash": "a4a5bb661785162f01f77e2d7aba41df3432545f5c046284f3435fbde9b4e026",
+        "previousLines": 42,
+        "currentLines": 42,
+        "deltaLines": 0,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "tests/e2e/helpers/page-ready.ts",
+        "previousHash": "4629ace7c9b74c9c37b582d688b69c54165d15de697bd0a59337b265b422c50d",
+        "currentHash": "b885843c52b571b392c34cb0a67bf3edc4365afc11993291da653e1ca1ce61dc",
+        "previousLines": 34,
+        "currentLines": 34,
         "deltaLines": 0,
         "deltaSymbols": 0
       }
@@ -35172,6 +35368,7 @@
       "fix.cjs",
       "fix.js",
       "lighthouse/report-split/accessibility.html",
+      "lighthouse/report-split/best-practices.html",
       "lighthouse/report-split/seo.html",
       "md/DEPLOYMENT_SECURITY_GUIDE.md",
       "md/IMPLEMENTATION_CHECKLIST.md",
@@ -35184,7 +35381,6 @@
       "metadata.json",
       "overload.html",
       "package.json",
-      "playwright.config.ts",
       "public/dashboard.svg",
       "public/favicon-dark.svg",
       "public/favicon.svg",
@@ -35193,7 +35389,6 @@
       "public/sw-register.js",
       "public/sw.js",
       "public/vite-preload-shim.js",
-      "README.md",
       "scripts/atlas-keepalive.mjs",
       "scripts/code-memory-index.mjs",
       "scripts/code-memory-index/args.mjs",
@@ -35210,7 +35405,6 @@
       "scripts/vitest-related.mjs",
       "scripts/zip-prod.mjs",
       "SECURITY.md",
-      "server.ts",
       "server/boot/logger/colors.ts",
       "server/boot/logger/console.ts",
       "server/boot/logger/health.ts",
@@ -35280,7 +35474,6 @@
       "server/services/masterKeyService.ts",
       "server/services/mediaService.ts",
       "server/services/notificationService.ts",
-      "server/services/recaptchaService.ts",
       "server/services/requestFingerprintService.ts",
       "server/services/securityDashboardService.ts",
       "server/services/storageService.ts",
@@ -35296,6 +35489,7 @@
       "server/services/vaultService.ts",
       "server/socket.ts",
       "server/types/modules.d.ts",
+      "server/types/user.ts",
       "server/utils/apiError.ts",
       "server/utils/appError.ts",
       "server/utils/asyncHandler.ts",
@@ -35315,7 +35509,6 @@
       "server/validators/contactValidator.ts",
       "server/validators/requestChainValidator.ts",
       "server/validators/twoFactorValidator.ts",
-      "server/vite.ts",
       "src/api/apiClient.ts",
       "src/api/authApi.ts",
       "src/api/securityApi.ts",
@@ -35332,13 +35525,10 @@
       "src/components/app/UnlockedVaultHost.tsx",
       "src/components/ErrorBoundary.d.ts",
       "src/components/ErrorBoundary.jsx",
-      "src/components/layout/Background.tsx",
-      "src/components/layout/Footer.tsx",
       "src/components/layout/Sidebar.tsx",
       "src/components/layout/VaultLayout.tsx",
       "src/components/security/RecaptchaField.tsx",
       "src/components/ThemeProvider.tsx",
-      "src/components/ui/audio-player.tsx",
       "src/components/ui/Button.tsx",
       "src/components/ui/Card.tsx",
       "src/components/ui/ErrorBoundary.tsx",
@@ -35351,6 +35541,7 @@
       "src/components/ui/video-player.tsx",
       "src/components/ui/VoiceInput.tsx",
       "src/components/vault/AutoLockCountdownOverlay.tsx",
+      "src/components/vault/CloudHealthIndicator.tsx",
       "src/components/vault/CommandPalette.tsx",
       "src/components/vault/DecryptedMarkdown.tsx",
       "src/components/vault/DraggableWrapper.tsx",
@@ -35381,7 +35572,6 @@
       "src/features/LandingPage.tsx",
       "src/features/LegalPage.tsx",
       "src/features/NotFoundPage.tsx",
-      "src/features/vault/AudioVault.tsx",
       "src/features/vault/CardsVault.tsx",
       "src/features/vault/ChatVault.tsx",
       "src/features/vault/components/ChatVault/ChatConversationPanel.tsx",
@@ -35404,7 +35594,6 @@
       "src/features/vault/components/LiveCaptureModal/RecordingStatus.tsx",
       "src/features/vault/components/LiveCaptureModal/types.ts",
       "src/features/vault/components/LocationVault/LocationList.tsx",
-      "src/features/vault/components/LocationVault/LocationViewer.tsx",
       "src/features/vault/components/MediaVault/ErrorBoundary.tsx",
       "src/features/vault/components/MediaVault/MediaCard.tsx",
       "src/features/vault/components/MediaVault/MediaPagination.tsx",
@@ -35430,7 +35619,6 @@
       "src/features/vault/components/SettingsVault/SecurityPreferencesCard.tsx",
       "src/features/vault/components/SettingsVault/SessionControlsCard.tsx",
       "src/features/vault/components/SettingsVault/SharedComponents.tsx",
-      "src/features/vault/components/SettingsVault/ShareVaultCard.tsx",
       "src/features/vault/components/SettingsVault/ShortcutsCard.tsx",
       "src/features/vault/components/SettingsVault/StorageMetricsCard.tsx",
       "src/features/vault/components/SettingsVault/SyncStorageCard.tsx",
@@ -35445,6 +35633,7 @@
       "src/features/vault/DeviceSessionsPage.tsx",
       "src/features/vault/DocumentsVault.tsx",
       "src/features/vault/ecosystemHelpers.ts",
+      "src/features/vault/IdentitiesVault.tsx",
       "src/features/vault/LocationVault.tsx",
       "src/features/vault/MediaVault.tsx",
       "src/features/vault/NodeDetailsModal.tsx",
@@ -35490,10 +35679,8 @@
       "src/lib/cryptoPrimitives.ts",
       "src/lib/csrf.ts",
       "src/lib/deviceFingerprint.ts",
-      "src/lib/encryption.ts",
       "src/lib/error-handler.ts",
       "src/lib/fileHandling.ts",
-      "src/lib/filePreview.ts",
       "src/lib/folderGuards.ts",
       "src/lib/fuzzy.ts",
       "src/lib/global-navigation.ts",
@@ -35502,7 +35689,6 @@
       "src/lib/passwordGenerator.ts",
       "src/lib/pinning.ts",
       "src/lib/sentry.d.ts",
-      "src/lib/sentry.js",
       "src/lib/storage.ts",
       "src/lib/sync.ts",
       "src/lib/sync/activitySync.ts",
@@ -35518,23 +35704,20 @@
       "src/lib/vaultDragDrop.ts",
       "src/lib/vaultItemContent.ts",
       "src/lib/vaultKeyRotation.ts",
-      "src/main.tsx",
       "src/security/securityIntegration.test.tsx",
       "src/security/securityIntegration.tsx",
+      "src/services/vaultService.ts",
       "src/setupTests.ts",
       "src/store/activityStore.ts",
       "src/store/globalNavigationStore.ts",
-      "src/store/notificationStore.ts",
       "src/store/themeStore.ts",
+      "src/store/vaultStore.ts",
       "src/vite-env.d.ts",
       "src/workers/derive-key.worker.ts",
       "src/workers/encrypt-file.worker.ts",
       "tests/e2e/global-setup.ts",
-      "tests/e2e/helpers/auth.ts",
-      "tests/e2e/helpers/page-ready.ts",
       "tests/e2e/helpers/selectors.ts",
       "tests/e2e/specs/api-response.spec.ts",
-      "tests/e2e/specs/home.spec.ts",
       "tests/e2e/specs/login-form.spec.ts",
       "tests/e2e/specs/navigation.spec.ts",
       "tests/e2e/specs/protected-route.spec.ts",
@@ -35552,6 +35735,7 @@
       "tests/unit/auth-validator.test.ts",
       "tests/unit/chat-vault-utils.test.ts",
       "tests/unit/encryption.test.ts",
+      "tests/unit/env.test.ts",
       "tests/unit/fuzzy.test.ts",
       "tests/unit/legacy-vault-parser.test.ts",
       "tests/unit/logrocket-backend.test.ts",
@@ -35855,13 +36039,13 @@
       "path": "lighthouse/report-split/best-practices.json",
       "extension": ".json",
       "lines": {
-        "total": 1933,
-        "code": 1932,
+        "total": 1984,
+        "code": 1983,
         "comments": 0,
         "blanks": 1
       },
       "symbolCount": 0,
-      "complexityScore": 1932,
+      "complexityScore": 1983,
       "riskScore": 30,
       "tagCount": 0,
       "tags": [],
@@ -35893,13 +36077,13 @@
       "path": "lighthouse/report-split/performance.json",
       "extension": ".json",
       "lines": {
-        "total": 10775,
-        "code": 10774,
+        "total": 8778,
+        "code": 8777,
         "comments": 0,
         "blanks": 1
       },
       "symbolCount": 1,
-      "complexityScore": 10804,
+      "complexityScore": 8807,
       "riskScore": 44,
       "tagCount": 2,
       "tags": [
@@ -35978,13 +36162,13 @@
       "path": "lighthouse/report.report.json",
       "extension": ".json",
       "lines": {
-        "total": 18819,
-        "code": 18819,
+        "total": 16869,
+        "code": 16869,
         "comments": 0,
         "blanks": 0
       },
       "symbolCount": 2,
-      "complexityScore": 18855,
+      "complexityScore": 16905,
       "riskScore": 44,
       "tagCount": 2,
       "tags": [
@@ -36206,13 +36390,13 @@
       "path": "playwright.config.ts",
       "extension": ".ts",
       "lines": {
-        "total": 93,
-        "code": 86,
+        "total": 96,
+        "code": 89,
         "comments": 0,
         "blanks": 7
       },
       "symbolCount": 0,
-      "complexityScore": 92,
+      "complexityScore": 95,
       "riskScore": 12,
       "tagCount": 0,
       "tags": [],
@@ -36362,21 +36546,22 @@
       "path": "README.md",
       "extension": ".md",
       "lines": {
-        "total": 207,
-        "code": 170,
-        "comments": 0,
-        "blanks": 37
+        "total": 357,
+        "code": 278,
+        "comments": 4,
+        "blanks": 75
       },
-      "symbolCount": 1,
-      "complexityScore": 188,
-      "riskScore": 23,
+      "symbolCount": 2,
+      "complexityScore": 302,
+      "riskScore": 29,
       "tagCount": 1,
       "tags": [
         "NOTE"
       ],
       "topSignals": [
         "NOTE",
-        "and"
+        "verification",
+        "configuration"
       ],
       "importCount": 0
     },
@@ -36747,13 +36932,13 @@
       "path": "server.ts",
       "extension": ".ts",
       "lines": {
-        "total": 783,
-        "code": 683,
+        "total": 785,
+        "code": 685,
         "comments": 23,
         "blanks": 77
       },
       "symbolCount": 19,
-      "complexityScore": 911,
+      "complexityScore": 913,
       "riskScore": 46,
       "tagCount": 0,
       "tags": [],
@@ -38362,13 +38547,13 @@
       "path": "server/services/recaptchaService.ts",
       "extension": ".ts",
       "lines": {
-        "total": 199,
-        "code": 171,
-        "comments": 1,
-        "blanks": 27
+        "total": 233,
+        "code": 201,
+        "comments": 2,
+        "blanks": 30
       },
       "symbolCount": 9,
-      "complexityScore": 234,
+      "complexityScore": 264,
       "riskScore": 16,
       "tagCount": 0,
       "tags": [],
@@ -39157,13 +39342,13 @@
       "path": "server/vite.ts",
       "extension": ".ts",
       "lines": {
-        "total": 337,
-        "code": 265,
-        "comments": 12,
-        "blanks": 60
+        "total": 342,
+        "code": 268,
+        "comments": 13,
+        "blanks": 61
       },
       "symbolCount": 16,
-      "complexityScore": 382,
+      "complexityScore": 385,
       "riskScore": 27,
       "tagCount": 0,
       "tags": [],
@@ -39312,36 +39497,36 @@
       "path": "src/components/app/AppHeader.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 226,
-        "code": 214,
+        "total": 246,
+        "code": 235,
         "comments": 0,
-        "blanks": 12
+        "blanks": 11
       },
       "symbolCount": 2,
-      "complexityScore": 238,
+      "complexityScore": 256,
       "riskScore": 16,
       "tagCount": 0,
       "tags": [],
       "topSignals": [
         "react",
-        "lucide-react",
         "../../lib/utils",
         "./NotificationDropdown",
-        "AppHeaderProps"
+        "AppHeaderProps",
+        "AppHeader"
       ],
-      "importCount": 4
+      "importCount": 3
     },
     {
       "path": "src/components/app/AppShell.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 823,
-        "code": 756,
+        "total": 839,
+        "code": 772,
         "comments": 10,
         "blanks": 57
       },
-      "symbolCount": 12,
-      "complexityScore": 876,
+      "symbolCount": 13,
+      "complexityScore": 901,
       "riskScore": 46,
       "tagCount": 0,
       "tags": [],
@@ -39352,7 +39537,7 @@
         "../layout/Sidebar",
         "../ui/Button"
       ],
-      "importCount": 16
+      "importCount": 17
     },
     {
       "path": "src/components/app/AuthManager.tsx",
@@ -39515,13 +39700,13 @@
       "path": "src/components/app/NotificationDropdown.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 312,
-        "code": 294,
-        "comments": 1,
-        "blanks": 17
+        "total": 360,
+        "code": 337,
+        "comments": 2,
+        "blanks": 21
       },
-      "symbolCount": 5,
-      "complexityScore": 336,
+      "symbolCount": 6,
+      "complexityScore": 385,
       "riskScore": 22,
       "tagCount": 0,
       "tags": [],
@@ -39604,13 +39789,13 @@
       "path": "src/components/layout/Background.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 268,
-        "code": 223,
+        "total": 277,
+        "code": 230,
         "comments": 0,
-        "blanks": 45
+        "blanks": 47
       },
       "symbolCount": 6,
-      "complexityScore": 271,
+      "complexityScore": 278,
       "riskScore": 16,
       "tagCount": 0,
       "tags": [],
@@ -39742,13 +39927,13 @@
       "path": "src/components/ui/audio-player.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 623,
-        "code": 547,
-        "comments": 14,
-        "blanks": 62
+        "total": 658,
+        "code": 578,
+        "comments": 16,
+        "blanks": 64
       },
-      "symbolCount": 17,
-      "complexityScore": 658,
+      "symbolCount": 19,
+      "complexityScore": 701,
       "riskScore": 35,
       "tagCount": 0,
       "tags": [],
@@ -40630,13 +40815,13 @@
       "path": "src/features/auth/useVaultAuth.ts",
       "extension": ".ts",
       "lines": {
-        "total": 831,
-        "code": 696,
+        "total": 834,
+        "code": 699,
         "comments": 68,
         "blanks": 67
       },
       "symbolCount": 5,
-      "complexityScore": 756,
+      "complexityScore": 759,
       "riskScore": 41,
       "tagCount": 0,
       "tags": [],
@@ -40768,13 +40953,13 @@
       "path": "src/features/vault/AudioVault.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 816,
-        "code": 751,
+        "total": 829,
+        "code": 762,
         "comments": 4,
-        "blanks": 61
+        "blanks": 63
       },
       "symbolCount": 14,
-      "complexityScore": 886,
+      "complexityScore": 897,
       "riskScore": 46,
       "tagCount": 0,
       "tags": [],
@@ -41489,13 +41674,13 @@
       "path": "src/features/vault/components/NotesVault/NoteViewer.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 695,
-        "code": 654,
+        "total": 725,
+        "code": 683,
         "comments": 7,
-        "blanks": 34
+        "blanks": 35
       },
       "symbolCount": 9,
-      "complexityScore": 756,
+      "complexityScore": 785,
       "riskScore": 42,
       "tagCount": 1,
       "tags": [
@@ -43317,14 +43502,14 @@
       "path": "src/lib/encryption.ts",
       "extension": ".ts",
       "lines": {
-        "total": 561,
-        "code": 429,
-        "comments": 59,
-        "blanks": 73
+        "total": 618,
+        "code": 469,
+        "comments": 66,
+        "blanks": 83
       },
-      "symbolCount": 25,
-      "complexityScore": 585,
-      "riskScore": 33,
+      "symbolCount": 26,
+      "complexityScore": 631,
+      "riskScore": 41,
       "tagCount": 0,
       "tags": [],
       "topSignals": [
@@ -43385,14 +43570,14 @@
       "path": "src/lib/filePreview.ts",
       "extension": ".ts",
       "lines": {
-        "total": 292,
-        "code": 240,
-        "comments": 17,
-        "blanks": 35
+        "total": 360,
+        "code": 299,
+        "comments": 20,
+        "blanks": 41
       },
-      "symbolCount": 14,
-      "complexityScore": 333,
-      "riskScore": 21,
+      "symbolCount": 15,
+      "complexityScore": 398,
+      "riskScore": 27,
       "tagCount": 0,
       "tags": [],
       "topSignals": [
@@ -43590,13 +43775,13 @@
       "path": "src/lib/sentry.js",
       "extension": ".js",
       "lines": {
-        "total": 146,
-        "code": 127,
+        "total": 149,
+        "code": 130,
         "comments": 0,
         "blanks": 19
       },
       "symbolCount": 12,
-      "complexityScore": 202,
+      "complexityScore": 205,
       "riskScore": 17,
       "tagCount": 0,
       "tags": [],
@@ -44132,13 +44317,13 @@
       "path": "src/store/notificationStore.ts",
       "extension": ".ts",
       "lines": {
-        "total": 89,
-        "code": 75,
+        "total": 101,
+        "code": 86,
         "comments": 4,
-        "blanks": 10
+        "blanks": 11
       },
       "symbolCount": 2,
-      "complexityScore": 93,
+      "complexityScore": 104,
       "riskScore": 12,
       "tagCount": 0,
       "tags": [],
@@ -44370,13 +44555,13 @@
       "path": "tests/e2e/specs/home.spec.ts",
       "extension": ".ts",
       "lines": {
-        "total": 25,
-        "code": 18,
-        "comments": 2,
+        "total": 22,
+        "code": 17,
+        "comments": 0,
         "blanks": 5
       },
       "symbolCount": 0,
-      "complexityScore": 27,
+      "complexityScore": 26,
       "riskScore": 12,
       "tagCount": 0,
       "tags": [],
@@ -46224,6 +46409,23 @@
       "importCount": 0
     },
     {
+      "path": "vault-tmp/multipart-uploads-tests/owner-user-dcd874c7-ac2f-46ab-a96e-69e9d117ac49/5e5e014510aaf51e3b9b7ce9/session.json",
+      "extension": ".json",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blanks": 0
+      },
+      "symbolCount": 0,
+      "complexityScore": 1,
+      "riskScore": 12,
+      "tagCount": 0,
+      "tags": [],
+      "topSignals": [],
+      "importCount": 0
+    },
+    {
       "path": "vault-tmp/multipart-uploads-tests/owner-user-de7a2102-e200-4cea-95d1-a6db8f771a39/5adb4b73275684d8a7f4b5c0/session.json",
       "extension": ".json",
       "lines": {
@@ -46293,6 +46495,23 @@
     },
     {
       "path": "vault-tmp/multipart-uploads-tests/owner-user-f14b3982-1adf-4cc8-b5f7-d0f5e8264924/70f31ef2a724f0649cadbab0/session.json",
+      "extension": ".json",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blanks": 0
+      },
+      "symbolCount": 0,
+      "complexityScore": 1,
+      "riskScore": 12,
+      "tagCount": 0,
+      "tags": [],
+      "topSignals": [],
+      "importCount": 0
+    },
+    {
+      "path": "vault-tmp/multipart-uploads-tests/owner-user-f8c34852-d49a-4544-a802-bd8ac3d99691/0a6fb21d70838ab7e1a459fc/session.json",
       "extension": ".json",
       "lines": {
         "total": 1,

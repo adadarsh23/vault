@@ -1,2 +1,0 @@
-import{pr as e}from"./react-framework-exhox5sd.js";var t=256,n=e=>{if(typeof e!=`string`)return null;let n=e.trim();if(!n)return null;let r=n.replace(/[\u0000-\u001f\u007f]/g,``);return r?r.slice(0,t):null},r=e(e=>({targetItemId:null,setTargetItemId:t=>e(e=>{let r=n(t);return e.targetItemId===r?e:{targetItemId:r}}),clearTargetItemId:()=>e(e=>e.targetItemId===null?e:{targetItemId:null})}));export{r as t};
-//# sourceMappingURL=globalNavigationStore-Bx2cdRXJ.js.map

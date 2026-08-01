@@ -1,2 +1,0 @@
-import{a as e}from"./rolldown-runtime-CNC7AqOf.js";import{gr as t}from"./icons-BP1Rw5si.js";import{g as n}from"./csrf-9atKLAaH.js";var r=e(t(),1),i=class extends r.Component{state={hasError:!1};static getDerivedStateFromError(){return{hasError:!0}}componentDidCatch(e,t){n.error(`ErrorBoundary caught a rendering error`,{error:e,errorInfo:t,context:`error-boundary`}),this.props.onError?.(e,t)}render(){return this.state.hasError?this.props.fallback:this.props.children}};export{i as t};
-//# sourceMappingURL=ErrorBoundary-DHWxM8Dg.js.map

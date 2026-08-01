@@ -1,7 +1,7 @@
 {
   "requestedUrl": "http://127.0.0.1:4173/",
   "finalUrl": "http://127.0.0.1:4173/",
-  "fetchTime": "2026-07-30T09:17:11.730Z",
+  "fetchTime": "2026-08-01T11:12:42.542Z",
   "category": {
     "title": "Best Practices",
     "supportedModes": [
@@ -608,7 +608,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-DPZAy9ZB.js",
+              "url": "http://127.0.0.1:4173/assets/index-EuyRloql.js",
               "urlProvider": "network",
               "line": 1,
               "column": 5951
@@ -798,7 +798,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/react-framework-exhox5sd.js",
+              "url": "http://127.0.0.1:4173/assets/react-framework-BqDLaWSS.js",
               "urlProvider": "network",
               "line": 8,
               "column": 126884
@@ -1178,7 +1178,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/vendor-BpHSCTQ6.js",
+              "url": "http://127.0.0.1:4173/assets/vendor-C67Jz1R0.js",
               "urlProvider": "network",
               "line": 0,
               "column": 1750
@@ -1197,7 +1197,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/vendor-BpHSCTQ6.js",
+              "url": "http://127.0.0.1:4173/assets/vendor-C67Jz1R0.js",
               "urlProvider": "network",
               "line": 38,
               "column": 11493
@@ -1216,7 +1216,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/vendor-BpHSCTQ6.js",
+              "url": "http://127.0.0.1:4173/assets/vendor-C67Jz1R0.js",
               "urlProvider": "network",
               "line": 166,
               "column": 10478
@@ -1235,7 +1235,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/react-framework-exhox5sd.js",
+              "url": "http://127.0.0.1:4173/assets/react-framework-BqDLaWSS.js",
               "urlProvider": "network",
               "line": 8,
               "column": 35314
@@ -1254,7 +1254,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/motion-7iN2eLLl.js",
+              "url": "http://127.0.0.1:4173/assets/motion-DSKlsAwY.js",
               "urlProvider": "network",
               "line": 0,
               "column": 3073
@@ -1444,7 +1444,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/motion-7iN2eLLl.js",
+              "url": "http://127.0.0.1:4173/assets/motion-DSKlsAwY.js",
               "urlProvider": "network",
               "line": 8,
               "column": 29203
@@ -1463,10 +1463,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/Background-C2fq4aYN.js",
+              "url": "http://127.0.0.1:4173/assets/Background-D_ukPX0v.js",
               "urlProvider": "network",
               "line": 0,
-              "column": 883
+              "column": 1000
             }
           },
           {
@@ -1482,7 +1482,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/motion-7iN2eLLl.js",
+              "url": "http://127.0.0.1:4173/assets/motion-DSKlsAwY.js",
               "urlProvider": "network",
               "line": 0,
               "column": 24431
@@ -1501,7 +1501,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/react-framework-exhox5sd.js",
+              "url": "http://127.0.0.1:4173/assets/react-framework-BqDLaWSS.js",
               "urlProvider": "network",
               "line": 31,
               "column": 42353
@@ -1520,7 +1520,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/vendor-BpHSCTQ6.js",
+              "url": "http://127.0.0.1:4173/assets/vendor-C67Jz1R0.js",
               "urlProvider": "network",
               "line": 3,
               "column": 443417
@@ -1539,7 +1539,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/vendor-BpHSCTQ6.js",
+              "url": "http://127.0.0.1:4173/assets/vendor-C67Jz1R0.js",
               "urlProvider": "network",
               "line": 3,
               "column": 445415
@@ -1626,9 +1626,9 @@
     },
     "valid-source-maps": {
       "id": "valid-source-maps",
-      "title": "Missing source maps for large first-party JavaScript",
+      "title": "Page has valid source maps",
       "description": "Source maps translate minified code to the original source code. This helps developers debug in production. In addition, Lighthouse is able to provide further insights. Consider deploying source maps to take advantage of these benefits. [Learn more about source maps](https://developer.chrome.com/docs/devtools/javascript/source-maps/).",
-      "score": 0,
+      "score": 1,
       "scoreDisplayMode": "binary",
       "details": {
         "type": "table",
@@ -1649,33 +1649,19 @@
         ],
         "items": [
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/vendor-BpHSCTQ6.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/vendor-BpHSCTQ6.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/vendor-C67Jz1R0.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/vendor-C67Jz1R0.js.map",
             "subItems": {
               "type": "subitems",
-              "items": [
-                {
-                  "error": "Large JavaScript file is missing a source map"
-                },
-                {
-                  "error": "Error: Timed out fetching resource"
-                }
-              ]
+              "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/react-framework-exhox5sd.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/react-framework-exhox5sd.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/vaultStore-BTchoP8_.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultStore-BTchoP8_.js.map",
             "subItems": {
               "type": "subitems",
-              "items": [
-                {
-                  "error": "Large JavaScript file is missing a source map"
-                },
-                {
-                  "error": "Error: Timed out fetching resource"
-                }
-              ]
+              "items": []
             }
           },
           {
@@ -1683,11 +1669,15 @@
             "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultDragDrop-BtvKIJz5.js.map",
             "subItems": {
               "type": "subitems",
-              "items": [
-                {
-                  "error": "Error: Waiting for the end of the IO stream exceeded the allotted time."
-                }
-              ]
+              "items": []
+            }
+          },
+          {
+            "scriptUrl": "http://127.0.0.1:4173/assets/utils-MDzmPlVM.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/utils-MDzmPlVM.js.map",
+            "subItems": {
+              "type": "subitems",
+              "items": []
             }
           },
           {
@@ -1695,164 +1685,52 @@
             "sourceMapUrl": "http://127.0.0.1:4173/assets/utils-Dey0ucG2.js.map",
             "subItems": {
               "type": "subitems",
-              "items": [
-                {
-                  "error": "Error: Waiting for the end of the IO stream exceeded the allotted time."
-                }
-              ]
+              "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/NavigationHandler-AigkJXHP.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/NavigationHandler-AigkJXHP.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": [
-                {
-                  "error": "Error: Waiting for the end of the IO stream exceeded the allotted time."
-                }
-              ]
-            }
-          },
-          {
-            "scriptUrl": "http://127.0.0.1:4173/assets/logrocket-DJBafnoW.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/logrocket-DJBafnoW.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": [
-                {
-                  "error": "Error: Waiting for the end of the IO stream exceeded the allotted time."
-                }
-              ]
-            }
-          },
-          {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-CjOql1dB.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-CjOql1dB.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": [
-                {
-                  "error": "Error: Waiting for the end of the IO stream exceeded the allotted time."
-                }
-              ]
-            }
-          },
-          {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LandingPage-SHRTLRDp.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LandingPage-SHRTLRDp.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": [
-                {
-                  "error": "Error: Timed out fetching resource"
-                }
-              ]
-            }
-          },
-          {
-            "scriptUrl": "http://127.0.0.1:4173/assets/globalNavigationStore-Bx2cdRXJ.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/globalNavigationStore-Bx2cdRXJ.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": [
-                {
-                  "error": "Error: Waiting for the end of the IO stream exceeded the allotted time."
-                }
-              ]
-            }
-          },
-          {
-            "scriptUrl": "http://127.0.0.1:4173/assets/global-navigation-VlBHGmpa.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/global-navigation-VlBHGmpa.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": [
-                {
-                  "error": "Error: Waiting for the end of the IO stream exceeded the allotted time."
-                }
-              ]
-            }
-          },
-          {
-            "scriptUrl": "http://127.0.0.1:4173/assets/Footer-TKslGDEf.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/Footer-TKslGDEf.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": [
-                {
-                  "error": "Error: Timed out fetching resource"
-                }
-              ]
-            }
-          },
-          {
-            "scriptUrl": "http://127.0.0.1:4173/assets/Button-DkZifFRo.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/Button-DkZifFRo.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": [
-                {
-                  "error": "Error: Timed out fetching resource"
-                }
-              ]
-            }
-          },
-          {
-            "scriptUrl": "http://127.0.0.1:4173/assets/Background-C2fq4aYN.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/Background-C2fq4aYN.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": [
-                {
-                  "error": "Error: Waiting for the end of the IO stream exceeded the allotted time."
-                }
-              ]
-            }
-          },
-          {
-            "scriptUrl": "http://127.0.0.1:4173/assets/vaultStore-CvQNrhJ_.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultStore-CvQNrhJ_.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/use-media-query-Dy-H9Wtl.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/use-media-query-Dy-H9Wtl.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/utils-nDMiVbBu.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/utils-nDMiVbBu.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/themeStore-BinWN2w_.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/themeStore-BinWN2w_.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/use-media-query-BQNZBqZb.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/use-media-query-BQNZBqZb.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/sentry-_Blg8V-d.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/sentry-_Blg8V-d.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/themeStore-YA0Fe14v.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/themeStore-YA0Fe14v.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/react-framework-BqDLaWSS.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/react-framework-BqDLaWSS.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/sentry-56XZvvR1.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/sentry-56XZvvR1.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/NavigationHandler-CBa2boJc.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/NavigationHandler-CBa2boJc.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/motion-7iN2eLLl.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/motion-7iN2eLLl.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/motion-DSKlsAwY.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/motion-DSKlsAwY.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1867,24 +1745,72 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LoadingScreen-aRTt4geu.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LoadingScreen-aRTt4geu.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/logrocket-mrHK7iTW.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/logrocket-mrHK7iTW.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/index-DPZAy9ZB.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-DPZAy9ZB.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-lFWyiQgC.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-lFWyiQgC.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/icons-BP1Rw5si.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/icons-BP1Rw5si.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/LoadingScreen-D2uOQq5s.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LoadingScreen-D2uOQq5s.js.map",
+            "subItems": {
+              "type": "subitems",
+              "items": []
+            }
+          },
+          {
+            "scriptUrl": "http://127.0.0.1:4173/assets/LandingPage-CFUdcRCT.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LandingPage-CFUdcRCT.js.map",
+            "subItems": {
+              "type": "subitems",
+              "items": []
+            }
+          },
+          {
+            "scriptUrl": "http://127.0.0.1:4173/assets/index-EuyRloql.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-EuyRloql.js.map",
+            "subItems": {
+              "type": "subitems",
+              "items": []
+            }
+          },
+          {
+            "scriptUrl": "http://127.0.0.1:4173/assets/icons-DRyUEYAz.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/icons-DRyUEYAz.js.map",
+            "subItems": {
+              "type": "subitems",
+              "items": []
+            }
+          },
+          {
+            "scriptUrl": "http://127.0.0.1:4173/assets/globalNavigationStore-BJJ8Qonj.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/globalNavigationStore-BJJ8Qonj.js.map",
+            "subItems": {
+              "type": "subitems",
+              "items": []
+            }
+          },
+          {
+            "scriptUrl": "http://127.0.0.1:4173/assets/global-navigation-VlBHGmpa.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/global-navigation-VlBHGmpa.js.map",
+            "subItems": {
+              "type": "subitems",
+              "items": []
+            }
+          },
+          {
+            "scriptUrl": "http://127.0.0.1:4173/assets/Footer-3XDL8JcT.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/Footer-3XDL8JcT.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1899,8 +1825,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/ErrorBoundary-DHWxM8Dg.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/ErrorBoundary-DHWxM8Dg.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/ErrorBoundary-C9s7UbGF.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/ErrorBoundary-C9s7UbGF.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1923,6 +1849,22 @@
             }
           },
           {
+            "scriptUrl": "http://127.0.0.1:4173/assets/Button-pXIjDjKU.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/Button-pXIjDjKU.js.map",
+            "subItems": {
+              "type": "subitems",
+              "items": []
+            }
+          },
+          {
+            "scriptUrl": "http://127.0.0.1:4173/assets/Background-D_ukPX0v.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/Background-D_ukPX0v.js.map",
+            "subItems": {
+              "type": "subitems",
+              "items": []
+            }
+          },
+          {
             "scriptUrl": "http://127.0.0.1:4173/assets/auth-api-sNHiKFeb.js",
             "sourceMapUrl": "http://127.0.0.1:4173/assets/auth-api-sNHiKFeb.js.map",
             "subItems": {
@@ -1931,24 +1873,24 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/apiClient-CLcAy3s6.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/apiClient-CLcAy3s6.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/apiClient-aJ7O_OMO.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/apiClient-aJ7O_OMO.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/activityStore-Cs34E43P.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/activityStore-Cs34E43P.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/activityStore-CZbtsRxc.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/activityStore-CZbtsRxc.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/activity-CmtEEyxK.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/activity-CmtEEyxK.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/activity-azWuML8y.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/activity-azWuML8y.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
