@@ -12,6 +12,7 @@ import { getAuthenticatedProfile } from '../../lib/auth-api'
 import { useNotificationStore } from '../../store/notificationStore'
 import { Lock, X } from 'lucide-react'
 import { AppHeader } from './AppHeader'
+import { LoadingScreen } from './LoadingScreen'
 
 const MaintenanceModal = lazy(() =>
   import('../vault/MaintenanceModal').then((m) => ({
