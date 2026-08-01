@@ -12,3 +12,4 @@ logs
 stats.html
 *.min.js
 package-lock.json
+lighthouse
