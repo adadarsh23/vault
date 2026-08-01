@@ -703,7 +703,7 @@ export const listScopedVaultItemsByUsername = async (userId: string, username: s
   const DynamicVaultModel = getVaultItemModel(username);
   const items = await DynamicVaultModel.find({ userId, isDeleted: false })
     .sort({ updatedAt: -1 })
-    .allowDiskUse()
+    .allowDiskUse(true)
     .lean()
     .exec();
 

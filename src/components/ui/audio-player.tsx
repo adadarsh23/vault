@@ -222,11 +222,18 @@ export const AudioPlayer = ({
       setIsWaiting(false);
       setIsLoading(false);
       setIsPlaying(true);
+      setHasError(false);
     };
-    const handlePlay = () => setIsPlaying(true);
+    const handlePlay = () => {
+      setIsPlaying(true);
+      setHasError(false);
+    };
     const handlePause = () => setIsPlaying(false);
     const handleEnded = () => setIsPlaying(false);
-    const handleCanPlay = () => setIsLoading(false);
+    const handleCanPlay = () => {
+      setIsLoading(false);
+      setHasError(false);
+    };
     const syncVolume = () => {
       setVolume(audio.volume);
       setIsMuted(audio.muted);
@@ -283,7 +290,14 @@ export const AudioPlayer = ({
   }, []);
 
   useEffect(() => {
-    if (audioRef.current) {
+    setHasError(false);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    setIsLoading(true);
+    setWaveformPeaks([]);
+
+    if (audioRef.current && src) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       audioRef.current.playbackRate = 1;
@@ -292,14 +306,9 @@ export const AudioPlayer = ({
       } catch {
         /* ignore */
       }
+    } else {
+      setIsLoading(false);
     }
-
-    setIsPlaying(false);
-    setCurrentTime(0);
-    setDuration(0);
-    setIsLoading(true);
-    setHasError(false);
-    setWaveformPeaks([]);
 
     if (shouldShowWaveform && src) {
       generateWaveform(src);
@@ -353,7 +362,24 @@ export const AudioPlayer = ({
 
   const togglePlay = useCallback(async () => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || !src) return;
+
+    if (hasError) {
+      setHasError(false);
+      setIsLoading(true);
+      try {
+        audio.load();
+        await audio.play();
+        setIsPlaying(true);
+      } catch (e) {
+        console.error('Audio Playback Retry Error:', e);
+        if (e instanceof Error && e.name !== 'AbortError') {
+          setHasError(true);
+        }
+        setIsLoading(false);
+      }
+      return;
+    }
 
     if (audio.paused) {
       try {
@@ -362,15 +388,15 @@ export const AudioPlayer = ({
         setHasError(false);
       } catch (e) {
         console.error('Audio Playback Error:', e);
-        if (e instanceof Error && e.name === 'NotAllowedError') {
-          // Could show a "Click to enable audio" hint
+        if (e instanceof Error && e.name !== 'AbortError' && e.name !== 'NotAllowedError') {
+          setHasError(true);
         }
       }
     } else {
       audio.pause();
       setIsPlaying(false);
     }
-  }, []);
+  }, [src, hasError]);
 
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {
@@ -382,10 +408,12 @@ export const AudioPlayer = ({
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
       setIsLoading(false);
+      setHasError(false);
     }
   }, []);
 
   const handleError = useCallback(() => {
+    if (!src) return;
     const mediaErr = audioRef.current?.error;
     setIsPlaying(false);
     setIsLoading(false);
@@ -508,9 +536,15 @@ export const AudioPlayer = ({
         controls={false}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
-        onCanPlay={() => setIsLoading(false)}
+        onCanPlay={() => {
+          setIsLoading(false);
+          setHasError(false);
+        }}
         onError={handleError}
-        onPlay={() => setIsPlaying(true)}
+        onPlay={() => {
+          setIsPlaying(true);
+          setHasError(false);
+        }}
         onPause={() => setIsPlaying(false)}
         onEnded={() => setIsPlaying(false)}
       />
@@ -626,11 +660,12 @@ export const AudioPlayer = ({
           <div className="flex items-center justify-center relative">
             <Button
               onClick={togglePlay}
-              disabled={hasError}
-              aria-label={isPlaying ? 'Pause' : 'Play'}
+              aria-label={hasError ? 'Retry loading audio' : isPlaying ? 'Pause' : 'Play'}
+              title={hasError ? 'Retry loading audio' : isPlaying ? 'Pause' : 'Play'}
               className={cn(
                 'h-14 w-14 rounded-full bg-primary text-black hover:scale-105 transition-transform shadow-xl shadow-primary/20 disabled:opacity-50 disabled:scale-100',
-                compact && 'h-10 w-10'
+                compact && 'h-10 w-10',
+                hasError && 'bg-amber-400 hover:bg-amber-300'
               )}
               size="icon"
             >

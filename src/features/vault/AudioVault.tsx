@@ -26,6 +26,7 @@ import {
   getVaultItemFileUrl,
   getVaultItemPreviewUrl,
   getVaultItemPreviewRevision,
+  describeVaultPreviewError,
 } from '../../lib/filePreview';
 import { logActivity } from '../../lib/activity';
 import { useVaultFolders } from '../../hooks/useVaultFolders';
@@ -54,12 +55,12 @@ const SafeAudioPreview: React.FC<{
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const rsaKeyPair = useVaultStore((state) => state.rsaKeyPair);
   const isAudioWaveformEnabled = useVaultStore((state) => state.preferences.isAudioWaveformEnabled);
+  const currentBlobUrlRef = useRef<string | null>(null);
 
   const revisionKey = useMemo(() => getVaultItemPreviewRevision(item), [item]);
 
   useEffect(() => {
     let isMounted = true;
-    let activeBlobUrl: string | null = null;
 
     const load = async () => {
       setIsLoading(true);
@@ -89,15 +90,25 @@ const SafeAudioPreview: React.FC<{
           return;
         }
 
+        if (
+          currentBlobUrlRef.current &&
+          currentBlobUrlRef.current !== result &&
+          currentBlobUrlRef.current.startsWith('blob:')
+        ) {
+          URL.revokeObjectURL(currentBlobUrlRef.current);
+        }
+
         if (result.startsWith('blob:')) {
-          activeBlobUrl = result;
+          currentBlobUrlRef.current = result;
+        } else {
+          currentBlobUrlRef.current = null;
         }
 
         setUrl(result);
       } catch (err: any) {
         console.error('SafeAudioPreview load error:', err);
         if (isMounted) {
-          setErrorMessage(err?.message || 'Decryption failed');
+          setErrorMessage(describeVaultPreviewError(err));
         }
       } finally {
         if (isMounted) setIsLoading(false);
@@ -108,11 +119,17 @@ const SafeAudioPreview: React.FC<{
 
     return () => {
       isMounted = false;
-      if (activeBlobUrl) {
-        URL.revokeObjectURL(activeBlobUrl);
-      }
     };
   }, [revisionKey, masterKey, rsaKeyPair]);
+
+  useEffect(() => {
+    return () => {
+      if (currentBlobUrlRef.current && currentBlobUrlRef.current.startsWith('blob:')) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = null;
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -354,10 +371,32 @@ export const AudioVault: React.FC = () => {
                 mimeType: (() => {
                   if (file.type && file.type !== 'application/octet-stream') return file.type;
                   const ext = file.name.split('.').pop()?.toLowerCase();
-                  if (ext === 'webm') return 'audio/webm';
-                  if (ext === 'mp3') return 'audio/mpeg';
-                  if (ext === 'm4a') return 'audio/mp4';
-                  return 'audio/mpeg';
+                  switch (ext) {
+                    case 'webm':
+                      return 'audio/webm';
+                    case 'mp3':
+                      return 'audio/mpeg';
+                    case 'm4a':
+                      return 'audio/mp4';
+                    case 'wav':
+                      return 'audio/wav';
+                    case 'ogg':
+                    case 'oga':
+                      return 'audio/ogg';
+                    case 'aac':
+                      return 'audio/aac';
+                    case 'flac':
+                      return 'audio/flac';
+                    case 'opus':
+                      return 'audio/opus';
+                    case 'aiff':
+                    case 'aif':
+                      return 'audio/aiff';
+                    case 'wma':
+                      return 'audio/x-ms-wma';
+                    default:
+                      return 'audio/mpeg';
+                  }
                 })(),
                 size: file.size,
                 extension: file.name.split('.').pop()?.toUpperCase() || 'AUDIO',

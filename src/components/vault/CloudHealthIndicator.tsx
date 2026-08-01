@@ -1,69 +1,191 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Database, RefreshCw, WifiOff, CheckCircle2 } from 'lucide-react';
 import { resolveApiBaseUrl } from '../../lib/apiBaseUrl';
+import { cn } from '../../lib/utils';
 
 interface CloudHealthIndicatorProps {
   compact?: boolean;
+  className?: string;
 }
 
-export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({ compact = false }) => {
+export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({
+  compact = false,
+  className,
+}) => {
   const [status, setStatus] = useState<'connected' | 'error' | 'loading'>('loading');
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [dbName, setDbName] = useState<string | null>(null);
 
   const checkHealth = useCallback(async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setStatus('error');
+      return;
+    }
+
     setIsReconnecting(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
     try {
-      const baseUrl = resolveApiBaseUrl();
-      const resp = await fetch(`${baseUrl}/health`, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-      });
-      if (resp.ok) {
+      const rawBase = resolveApiBaseUrl();
+      const baseUrl = rawBase.replace(/\/api\/?$/, '').replace(/\/+$/, '');
+
+      const targets: string[] = [`${baseUrl}/health`, `${baseUrl}/api/health`];
+
+      // On local/LAN preview sessions where UI port differs from backend API port (e.g. preview on :4173 or :5173 with API on :4000),
+      // append backend candidate URL with port 4000 if not already present.
+      if (typeof window !== 'undefined' && window.location) {
+        const { hostname, port, protocol } = window.location;
+        if (port && port !== '4000' && (protocol === 'http:' || protocol === 'https:')) {
+          const fallbackHost = `${protocol}//${hostname}:4000`;
+          if (!targets.includes(`${fallbackHost}/health`)) {
+            targets.push(`${fallbackHost}/health`);
+            targets.push(`${fallbackHost}/api/health`);
+          }
+        }
+      }
+
+      let resp: Response | null = null;
+
+      for (const targetUrl of targets) {
+        try {
+          resp = await fetch(targetUrl, {
+            method: 'GET',
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+          });
+          if (resp && resp.ok) {
+            break;
+          }
+        } catch {
+          // Try next candidate URL target
+        }
+      }
+
+      if (resp && resp.ok) {
         const data = await resp.json().catch(() => null);
         if (data && (data.status === 'connected' || data.success === true)) {
+          const newDbName = data.database?.name || null;
           setStatus('connected');
-          if (data.database?.name) {
-            setDbName(data.database.name);
+          setDbName(newDbName);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('vault-cloud-health-status', {
+                detail: { status: 'connected', dbName: newDbName },
+              })
+            );
           }
         } else {
           setStatus('error');
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('vault-cloud-health-status', {
+                detail: { status: 'error', dbName: null },
+              })
+            );
+          }
         }
       } else {
         setStatus('error');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('vault-cloud-health-status', {
+              detail: { status: 'error', dbName: null },
+            })
+          );
+        }
       }
     } catch {
       setStatus('error');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('vault-cloud-health-status', {
+            detail: { status: 'error', dbName: null },
+          })
+        );
+      }
     } finally {
+      clearTimeout(timeoutId);
       setIsReconnecting(false);
     }
   }, []);
 
+  const triggerGlobalCheck = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('vault-cloud-health-trigger'));
+    }
+    checkHealth();
+  }, [checkHealth]);
+
   useEffect(() => {
     let isMounted = true;
-    const runCheck = async () => {
-      if (isMounted) {
-        await checkHealth();
+
+    const handleSyncStatus = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        status: 'connected' | 'error' | 'loading';
+        dbName: string | null;
+      }>;
+      if (isMounted && customEvent.detail) {
+        setStatus(customEvent.detail.status);
+        if (customEvent.detail.dbName !== undefined) {
+          setDbName(customEvent.detail.dbName);
+        }
       }
     };
+
+    const handleTriggerCheck = () => {
+      if (isMounted) {
+        checkHealth();
+      }
+    };
+
+    const handleOnline = () => {
+      if (isMounted) {
+        checkHealth();
+      }
+    };
+
+    const handleOffline = () => {
+      if (isMounted) {
+        setStatus('error');
+      }
+    };
+
     runCheck();
+
+    window.addEventListener('vault-cloud-health-status', handleSyncStatus);
+    window.addEventListener('vault-cloud-health-trigger', handleTriggerCheck);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    function runCheck() {
+      if (isMounted) {
+        checkHealth();
+      }
+    }
+
     const interval = setInterval(() => {
       if (isMounted) {
         checkHealth();
       }
     }, 30000); // Check every 30s
+
     return () => {
       isMounted = false;
+      window.removeEventListener('vault-cloud-health-status', handleSyncStatus);
+      window.removeEventListener('vault-cloud-health-trigger', handleTriggerCheck);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
       clearInterval(interval);
     };
   }, [checkHealth]);
 
   if (compact) {
     return (
-      <div className="flex justify-center py-1">
+      <div className={cn('flex justify-center py-1', className)}>
         <button
           type="button"
-          onClick={checkHealth}
+          onClick={triggerGlobalCheck}
           disabled={isReconnecting}
           title={
             status === 'connected'
@@ -108,11 +230,13 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({ comp
 
   return (
     <div
-      className={`group relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all duration-200 ${
+      className={cn(
+        'group relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all duration-200',
         status === 'error'
           ? 'bg-red-500/10 border-red-500/25'
-          : 'bg-text/5 border-text/10 hover:border-text/20'
-      }`}
+          : 'bg-text/5 border-text/10 hover:border-text/20',
+        className
+      )}
     >
       <div className="relative shrink-0 flex items-center justify-center">
         {status === 'error' ? (
@@ -155,7 +279,7 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({ comp
 
       <button
         type="button"
-        onClick={checkHealth}
+        onClick={triggerGlobalCheck}
         disabled={isReconnecting}
         title={status === 'error' ? 'Click to reconnect' : 'Check connection status'}
         aria-label="Refresh cloud status"

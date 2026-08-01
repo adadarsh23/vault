@@ -576,7 +576,9 @@ async function startServer() {
     // Routes
     await runPhase('Routes Load', () => {
       app.get('/health', getHealthStatus);
+      app.get('/api/health', getHealthStatus);
       app.get('/ready', getReadinessStatus);
+      app.get('/api/ready', getReadinessStatus);
       app.use('/uploads', requireAuth, express.static(getUploadRoot()));
 
       app.use('/api', (req, res, next) => {

@@ -6,18 +6,31 @@ const readHostname = (value: string): string | null => {
     return null;
   }
 };
+
 const isPrivateNetworkHost = (hostname: string): boolean =>
   hostname === 'localhost' ||
   hostname === '127.0.0.1' ||
+  hostname.endsWith('.local') ||
   /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
   /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
   /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname);
 
 export const resolveApiBaseUrl = (): string => {
   if (typeof window !== 'undefined') {
-    const { origin, hostname } = window.location;
-    const isDev = import.meta.env.DEV;
+    const { origin, hostname, protocol } = window.location;
+    const isHttp = protocol === 'http:' || protocol === 'https:';
+
     const envBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+    const devBaseUrl = import.meta.env.VITE_DEV_API_BASE_URL?.trim();
+    const isDev = import.meta.env.DEV;
+
+    // Handle hybrid/native mobile app protocols (capacitor://, file://, app://, ionic://)
+    if (!isHttp) {
+      if (envBaseUrl) return normalizeBaseUrl(envBaseUrl);
+      if (devBaseUrl && isDev) return normalizeBaseUrl(devBaseUrl);
+      return 'http://127.0.0.1:4000';
+    }
+
     const envBaseHost = envBaseUrl ? readHostname(envBaseUrl) : null;
     const envBaseOrigin = (() => {
       if (!envBaseUrl) {
@@ -37,7 +50,6 @@ export const resolveApiBaseUrl = (): string => {
     }
 
     // In development on non-local hosts, allow explicit API override.
-    const devBaseUrl = import.meta.env.VITE_DEV_API_BASE_URL?.trim();
     if (isDev && devBaseUrl) {
       return normalizeBaseUrl(devBaseUrl);
     }

@@ -181,7 +181,7 @@ interface ContactModel extends Model<IContact> {
 }
 
 ContactSchema.statics.findActive = function () {
-  return this.find({ isDeleted: false }).sort({ createdAt: -1 }).allowDiskUse();
+  return this.find({ isDeleted: false }).sort({ createdAt: -1 }).allowDiskUse(true);
 };
 
 // ─────────────────────────────────────────────

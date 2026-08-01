@@ -50,12 +50,12 @@ export const getVaultSnapshot = async (userId: string) => {
   const DynamicLogModel = getActivityLogModel(username);
 
   const items = await DynamicVaultModel.find({ userId, isDeleted: false })
-    .allowDiskUse()
+    .allowDiskUse(true)
     .lean()
     .exec();
   const logs = await DynamicLogModel.find({ userId })
     .sort({ createdAt: -1 })
-    .allowDiskUse()
+    .allowDiskUse(true)
     .limit(100)
     .lean()
     .exec();
@@ -116,7 +116,7 @@ export const getVaultSyncChanges = async (userId: string, since?: string) => {
     userId,
     updatedAt: { $gt: sinceDate },
   })
-    .allowDiskUse()
+    .allowDiskUse(true)
     .lean()
     .exec();
 

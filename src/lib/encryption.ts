@@ -615,9 +615,13 @@ export const decryptToFile = async (
     const decrypted = await decryptAesGcmWithFallback(cryptoKey, iv, ciphertext);
 
     let finalMimeType = mimeType;
-    if (!finalMimeType || finalMimeType === 'application/octet-stream') {
-      const detected = detectMimeTypeFromBytes(new Uint8Array(decrypted));
-      if (detected !== 'application/octet-stream') {
+    const detected = detectMimeTypeFromBytes(new Uint8Array(decrypted));
+    if (detected !== 'application/octet-stream') {
+      if (
+        !finalMimeType ||
+        finalMimeType === 'application/octet-stream' ||
+        (finalMimeType === 'audio/mpeg' && detected !== 'audio/mpeg')
+      ) {
         finalMimeType = detected;
       }
     }

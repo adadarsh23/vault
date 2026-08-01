@@ -2,6 +2,7 @@ import React from 'react';
 import { Lock, ChevronRight, ChevronLeft, Search, Bell, PanelLeft } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { NotificationDropdown } from './NotificationDropdown';
+import { CloudHealthIndicator } from '../vault/CloudHealthIndicator';
 
 interface AppHeaderProps {
   showNotifications: boolean;
@@ -67,9 +68,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-text text-bg shrink-0 border border-transparent shadow-sm transition hover:shadow-md">
             <Lock className="h-5 w-5 shrink-0 text-bg" />
           </div>
-          <span className="text-base sm:text-lg font-bold tracking-tight text-text leading-tight">
-            Vault
-          </span>
+          <span className="text-lg font-bold tracking-tight text-text leading-tight">Vault</span>
         </button>
       </div>
 
@@ -147,6 +146,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             />
           </button>
         </div>
+
+        {/* Mobile Cloud Health Indicator */}
+        <CloudHealthIndicator compact={true} className="flex lg:hidden shrink-0" />
 
         {/* Search Command Palette Trigger */}
         <button

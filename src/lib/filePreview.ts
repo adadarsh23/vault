@@ -1,4 +1,4 @@
-import { decryptToFile } from './encryption';
+import { decryptToFile, detectMimeTypeFromBytes } from './encryption';
 import { VaultItem } from './storage';
 import { resolveApiBaseUrl } from './apiBaseUrl';
 
@@ -288,12 +288,22 @@ export const getVaultItemPreviewUrl = async (
       : null;
   }
 
-  const effectiveMimeType = mimeType || inferMimeTypeFromItem(item);
+  let effectiveMimeType = mimeType || inferMimeTypeFromItem(item);
 
   if (
     item.content instanceof Uint8Array &&
     looksLikeReadableMediaBytes(item.content, effectiveMimeType)
   ) {
+    const detected = detectMimeTypeFromBytes(item.content);
+    if (detected !== 'application/octet-stream') {
+      if (
+        !effectiveMimeType ||
+        effectiveMimeType === 'application/octet-stream' ||
+        (effectiveMimeType === 'audio/mpeg' && detected !== 'audio/mpeg')
+      ) {
+        effectiveMimeType = detected;
+      }
+    }
     const blob = new Blob([new Uint8Array(item.content)], {
       type: effectiveMimeType || 'application/octet-stream',
     });
