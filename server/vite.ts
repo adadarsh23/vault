@@ -297,6 +297,11 @@ const setupProductionMiddleware = (app: Express): void => {
       return next()
     }
 
+    // Return 404 for missing static assets instead of serving index.html (text/html)
+    if (/\.(js|mjs|cjs|css|json|wasm|svg|jpg|jpeg|png|gif|ico|woff2?|ttf|eot|map)$/i.test(req.path)) {
+      return res.status(404).type('text/plain').send('Asset not found')
+    }
+
     setSecurityHeaders(res)
 
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
