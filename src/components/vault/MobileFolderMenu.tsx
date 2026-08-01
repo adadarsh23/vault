@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '../../lib/utils';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Plus, X, Folder, Edit2, Trash2, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isSavedFolderName } from '../../lib/folderGuards';
+import { getDraggedVaultItem, clearDraggedVaultItem } from '../../lib/vaultDragDrop';
 
 export interface MobileFolderMenuProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export interface MobileFolderMenuProps {
   setEditingFolderName?: (name: string) => void;
   handleRenameFolder?: (oldName: string) => void;
   handleDeleteFolder?: (folderName: string) => void;
+  handleMoveToFolder?: (itemId: string, folderName: string | null) => Promise<void> | void;
   title?: string;
   allItemLabel?: string;
   allItemIcon?: React.ReactNode;
@@ -47,10 +49,65 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
   setEditingFolderName,
   handleRenameFolder,
   handleDeleteFolder,
+  handleMoveToFolder,
   title = 'Folders',
   allItemLabel = 'All Items',
   allItemIcon,
 }) => {
+  const [dropTarget, setDropTarget] = useState<string | null | undefined>(undefined);
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleGlobalDragStart = (e: DragEvent) => {
+      const itemId = getDraggedVaultItem({ dataTransfer: e.dataTransfer });
+      if (itemId) {
+        setDraggedItemId(itemId);
+      }
+    };
+
+    const handleGlobalDragEnd = () => {
+      setDraggedItemId(null);
+      clearDraggedVaultItem();
+    };
+
+    window.addEventListener('dragstart', handleGlobalDragStart);
+    window.addEventListener('dragend', handleGlobalDragEnd);
+
+    return () => {
+      window.removeEventListener('dragstart', handleGlobalDragStart);
+      window.removeEventListener('dragend', handleGlobalDragEnd);
+    };
+  }, []);
+
+  const handleDragOver = (event: React.DragEvent<HTMLElement>, folder: string | null) => {
+    if (!handleMoveToFolder || !getDraggedVaultItem(event)) return;
+
+    const itemId = getDraggedVaultItem(event);
+    const dragged = items.find((item) => item.id === itemId);
+    const sourceFolder = dragged ? (dragged.folder ?? null) : undefined;
+
+    if (sourceFolder === folder) return;
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    setDropTarget(folder);
+  };
+
+  const handleDrop = async (event: React.DragEvent<HTMLElement>, folder: string | null) => {
+    if (!handleMoveToFolder) return;
+    event.preventDefault();
+    const itemId = getDraggedVaultItem(event);
+    setDropTarget(undefined);
+    if (!itemId) return;
+
+    const dragged = items.find((item) => item.id === itemId);
+    const sourceFolder = dragged ? (dragged.folder ?? null) : undefined;
+
+    if (sourceFolder === folder) return;
+
+    await handleMoveToFolder(itemId, folder);
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -82,8 +139,14 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                   setCurrentFolder(null);
                   onClose();
                 }}
+                onDragOver={(event) => handleDragOver(event, null)}
+                onDrop={(event) => void handleDrop(event, null)}
+                onDragLeave={() => dropTarget === null && setDropTarget(undefined)}
+                role="tab"
+                data-drop-target="true"
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all',
+                  'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all border border-transparent',
+                  dropTarget === null && 'ring-2 ring-primary/50 bg-primary/10 text-text',
                   currentFolder === null
                     ? 'bg-text/10 text-text font-bold'
                     : 'text-text/60 hover:bg-white/5'
@@ -94,7 +157,7 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                     {allItemIcon}
                   </span>
                 )}
-                {allItemLabel}
+                <span className="flex-1 text-left truncate">{allItemLabel}</span>
                 <span className="ml-auto text-[10px] opacity-40">{items.length}</span>
               </button>
               {folders.map((folder) => {
@@ -103,8 +166,14 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                 return (
                   <div
                     key={folder}
+                    onDragOver={(event) => handleDragOver(event, folder)}
+                    onDrop={(event) => void handleDrop(event, folder)}
+                    onDragLeave={() => dropTarget === folder && setDropTarget(undefined)}
+                    role="tab"
+                    data-drop-target="true"
                     className={cn(
                       'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all border border-transparent',
+                      dropTarget === folder && 'ring-2 ring-primary/50 bg-primary/10 text-text',
                       currentFolder === folder
                         ? 'bg-text/10 text-text font-bold'
                         : 'text-text/60 hover:bg-white/5'
@@ -131,9 +200,7 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                         }}
                         title={folder}
                       >
-                        {folder.split(' ').length > 8
-                          ? `${folder.split(' ').slice(0, 8).join(' ')}...`
-                          : folder}
+                        {folder}
                       </button>
                     )}
                     <span className="text-[10px] opacity-40">

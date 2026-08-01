@@ -1,6 +1,7 @@
-import { decryptToFile, detectMimeTypeFromBytes } from './encryption';
+import { decryptToFile, detectMimeTypeFromBytes, base64ToUint8Array } from './encryption';
 import { VaultItem } from './storage';
 import { resolveApiBaseUrl } from './apiBaseUrl';
+import { getDecryptStreamResponseUrl } from './streamDecryption';
 
 const API_BASE_URL = resolveApiBaseUrl();
 
@@ -289,6 +290,32 @@ export const getVaultItemPreviewUrl = async (
   }
 
   let effectiveMimeType = mimeType || inferMimeTypeFromItem(item);
+
+  // Decrypt audio/video items chunk-by-chunk using TransformStream to prevent high RAM usage
+  const isAudioOrVideo =
+    item.type === 'audio' ||
+    item.type === 'video' ||
+    Boolean(effectiveMimeType && (effectiveMimeType.startsWith('audio/') || effectiveMimeType.startsWith('video/')));
+
+  if (
+    isAudioOrVideo &&
+    (item.content instanceof Uint8Array || (typeof item.content === 'string' && isLikelyEncryptedString(item.content)))
+  ) {
+    try {
+      const rawBytes =
+        item.content instanceof Uint8Array
+          ? item.content
+          : base64ToUint8Array(item.content);
+      const blobInput = new Blob([rawBytes]);
+      return await getDecryptStreamResponseUrl(
+        blobInput,
+        masterKey,
+        effectiveMimeType || 'application/octet-stream'
+      );
+    } catch {
+      // Fallback to standard decryptToFile if streaming decryption fails
+    }
+  }
 
   if (
     item.content instanceof Uint8Array &&

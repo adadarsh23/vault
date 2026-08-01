@@ -42,6 +42,11 @@ import {
   deleteFolderController,
   initializeFoldersController,
 } from '../controllers/folderController.ts';
+import {
+  createTusUploadController,
+  getTusOffsetController,
+  uploadTusChunkController,
+} from '../controllers/tusController.ts';
 import { requireAuth, resolveIdentity } from '../middleware/authMiddleware.ts';
 import { validateRequest } from '../middleware/expressValidate.ts';
 import {
@@ -247,6 +252,17 @@ vaultRouter.post(
   validateRequest([...multipartRouteParamsValidation, ...multipartCompleteBodyValidation]),
   asyncHandler(completeMultipartUpload)
 );
+
+// TUS Protocol Endpoints
+vaultRouter.post('/files/tus', requireAuth, asyncHandler(createTusUploadController));
+vaultRouter.head('/files/tus/:uploadId', requireAuth, asyncHandler(getTusOffsetController));
+vaultRouter.patch(
+  '/files/tus/:uploadId',
+  requireAuth,
+  express.raw({ type: ['application/offset+octet-stream', 'application/octet-stream'], limit: '500mb' }),
+  asyncHandler(uploadTusChunkController)
+);
+
 vaultRouter.post(
   '/files/:category',
   requireAuth,

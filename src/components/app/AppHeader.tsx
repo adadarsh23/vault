@@ -2,7 +2,7 @@ import React from 'react';
 import { Lock, ChevronRight, ChevronLeft, Search, Bell, PanelLeft } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { NotificationDropdown } from './NotificationDropdown';
-import { CloudHealthIndicator } from '../vault/CloudHealthIndicator';
+// import { CloudHealthIndicator } from '../vault/CloudHealthIndicator';
 
 interface AppHeaderProps {
   showNotifications: boolean;
@@ -21,6 +21,7 @@ interface AppHeaderProps {
   headerProfileName: string;
   username: string | null;
   profileMonogram: string;
+  connectionStatus?: 'connected' | 'error' | 'loading';
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -40,7 +41,45 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   headerProfileName,
   username,
   profileMonogram,
+  connectionStatus: connectionStatusProp,
 }) => {
+  const [connectionStatus, setConnectionStatus] = React.useState<'connected' | 'error' | 'loading'>(() => {
+    if (connectionStatusProp) return connectionStatusProp;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return 'error';
+    }
+    return 'connected';
+  });
+
+  React.useEffect(() => {
+    if (connectionStatusProp) {
+      setConnectionStatus(connectionStatusProp);
+      return;
+    }
+
+    const handleSyncStatus = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        status: 'connected' | 'error' | 'loading';
+      }>;
+      if (customEvent.detail?.status) {
+        setConnectionStatus(customEvent.detail.status);
+      }
+    };
+
+    const handleOnline = () => setConnectionStatus('connected');
+    const handleOffline = () => setConnectionStatus('error');
+
+    window.addEventListener('vault-cloud-health-status', handleSyncStatus);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('vault-cloud-health-status', handleSyncStatus);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [connectionStatusProp]);
+
   return (
     <header
       role="banner"
@@ -148,7 +187,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
 
         {/* Mobile Cloud Health Indicator */}
-        <CloudHealthIndicator compact={true} className="flex lg:hidden shrink-0" />
+        {/*<CloudHealthIndicator compact={true} className="flex lg:hidden shrink-0" /> */}
 
         {/* Search Command Palette Trigger */}
         <button
@@ -188,34 +227,55 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           />
         </div>
 
-        {/* Header Profile Photo / Monogram Button */}
-        <button
-          type="button"
-          className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-text/15 bg-text/5 text-[11px] font-semibold uppercase tracking-wide text-text transition-all duration-200 hover:bg-text/10 hover:border-text/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95 overflow-hidden"
-          onClick={handleHeaderProfileClick}
-          aria-label={
-            headerProfilePhoto && !isHeaderProfilePhotoBroken
-              ? 'Open profile image preview'
-              : 'Open profile editor'
-          }
-          title={
-            headerProfilePhoto && !isHeaderProfilePhotoBroken
-              ? `${headerProfileName || username || 'Profile'} - Preview image`
-              : `${headerProfileName || username || 'Profile'} - Edit profile`
-          }
-        >
-          {headerProfilePhoto && !isHeaderProfilePhotoBroken ? (
-            <img
-              src={headerProfilePhoto}
-              alt={`${headerProfileName || username || 'User'} profile`}
-              className="h-full w-full rounded-full object-cover"
-              referrerPolicy="no-referrer"
-              onError={() => setIsHeaderProfilePhotoBroken(true)}
-            />
-          ) : (
-            profileMonogram
-          )}
-        </button>
+        {/* Header Profile Photo / Monogram Button with Connection Status Indicator */}
+        <div className="relative shrink-0 flex items-center justify-center">
+          <button
+            type="button"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-text/15 bg-text/5 text-[11px] font-semibold uppercase tracking-wide text-text transition-all duration-200 hover:bg-text/10 hover:border-text/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95 overflow-hidden"
+            onClick={handleHeaderProfileClick}
+            aria-label={
+              headerProfilePhoto && !isHeaderProfilePhotoBroken
+                ? 'Open profile image preview'
+                : 'Open profile editor'
+            }
+            title={
+              headerProfilePhoto && !isHeaderProfilePhotoBroken
+                ? `${headerProfileName || username || 'Profile'} - Preview image`
+                : `${headerProfileName || username || 'Profile'} - Edit profile`
+            }
+          >
+            {headerProfilePhoto && !isHeaderProfilePhotoBroken ? (
+              <img
+                src={headerProfilePhoto}
+                alt={`${headerProfileName || username || 'User'} profile`}
+                className="h-full w-full rounded-full object-cover"
+                referrerPolicy="no-referrer"
+                onError={() => setIsHeaderProfilePhotoBroken(true)}
+              />
+            ) : (
+              profileMonogram
+            )}
+          </button>
+          <span
+            className={cn(
+              'absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-sidebar-bg transition-all duration-300 pointer-events-none z-10',
+              connectionStatus === 'connected' &&
+                'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]',
+              connectionStatus === 'error' &&
+                'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]',
+              connectionStatus === 'loading' &&
+                'bg-amber-500 animate-pulse'
+            )}
+            title={
+              connectionStatus === 'connected'
+                ? 'Cloud Connected'
+                : connectionStatus === 'error'
+                  ? 'Connection Lost'
+                  : 'Connecting...'
+            }
+            aria-label={`Connection status: ${connectionStatus}`}
+          />
+        </div>
       </div>
     </header>
   );

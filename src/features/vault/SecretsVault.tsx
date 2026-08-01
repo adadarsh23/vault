@@ -303,7 +303,7 @@ const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
                 <div className="inline-flex max-w-full items-center rounded-full border border-rose-400/15 bg-rose-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-rose-300/80">
                   <Folder className="h-3 w-3 mr-1.5 text-rose-400/80" />
                   <span className="truncate" title={item.folder}>
-                    {item.folder.length > 10 ? `${item.folder.slice(0, 10)}...` : item.folder}
+                    {item.folder}
                   </span>
                 </div>
               )}

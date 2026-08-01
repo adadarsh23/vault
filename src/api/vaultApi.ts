@@ -285,4 +285,57 @@ export const vaultApi = {
     });
     return data;
   },
+
+  createTusUpload: async (
+    fileSize: number,
+    metadata: Record<string, string>
+  ): Promise<{ uploadId: string; location: string }> => {
+    const encodedMetadata = Object.entries(metadata)
+      .map(([k, v]) => `${k} ${btoa(v)}`)
+      .join(',');
+
+    const response = await apiClient.post('/vault/files/tus', {}, {
+      headers: {
+        'Tus-Resumable': '1.0.0',
+        'Upload-Length': fileSize.toString(),
+        'Upload-Metadata': encodedMetadata,
+      },
+    });
+
+    const location = response.headers['location'] || response.headers['Location'] || '';
+    const uploadId = location.split('/').pop() || `${Date.now()}`;
+    return { uploadId, location };
+  },
+
+  getTusOffset: async (uploadId: string): Promise<number> => {
+    const response = await apiClient.head(`/vault/files/tus/${encodeURIComponent(uploadId)}`, {
+      headers: {
+        'Tus-Resumable': '1.0.0',
+      },
+    });
+
+    const offsetHeader = response.headers['upload-offset'] || response.headers['Upload-Offset'];
+    return parseInt(offsetHeader || '0', 10);
+  },
+
+  uploadTusChunk: async (
+    uploadId: string,
+    offset: number,
+    chunk: Uint8Array
+  ): Promise<number> => {
+    const response = await apiClient.patch(
+      `/vault/files/tus/${encodeURIComponent(uploadId)}`,
+      chunk,
+      {
+        headers: {
+          'Tus-Resumable': '1.0.0',
+          'Upload-Offset': offset.toString(),
+          'Content-Type': 'application/offset+octet-stream',
+        },
+      }
+    );
+
+    const newOffsetHeader = response.headers['upload-offset'] || response.headers['Upload-Offset'];
+    return parseInt(newOffsetHeader || `${offset + chunk.length}`, 10);
+  },
 };

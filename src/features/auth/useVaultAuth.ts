@@ -341,28 +341,45 @@ export const useVaultAuth = (options?: {
               unlockErr?.message || ''
             );
           if (isKeyCheckError && rawVaultKey) {
-            const fallbackSalt = `${normalizedUsername}-vault-pqc-salt`;
             const primarySalt = activeSaltRef.current;
-            const alternativeSalt =
-              primarySalt !== fallbackSalt
-                ? fallbackSalt
-                : await fetchVaultSalt(normalizedUsername).catch(() => null);
+            const fetchedSalt = await fetchVaultSalt(normalizedUsername).catch(() => null);
+            const candidateSalts = Array.from(
+              new Set(
+                [
+                  `${normalizedUsername}-vault-pqc-salt`,
+                  fetchedSalt,
+                  'vault-v1-stable-salt-32bytes',
+                ].filter((s): s is string => Boolean(s) && s !== primarySalt)
+              )
+            );
 
-            if (alternativeSalt && alternativeSalt !== primarySalt) {
-              console.warn('Primary salt unlock failed. Retrying unlock with alternative salt...');
-              const altMasterKey = await deriveKey(rawVaultKey, alternativeSalt);
-              await unlock(altMasterKey, normalizedUsername);
-              const keyBuf = base64ToUint8Array(altMasterKey);
-              const cryptoKey = await crypto.subtle.importKey(
-                'raw',
-                keyBuf as any,
-                { name: 'AES-GCM' },
-                false,
-                ['encrypt', 'decrypt']
-              );
-              keyBuf.fill(0);
-              await uploadKeyCheckToCloud(cryptoKey, { force: true }).catch(() => {});
-            } else {
+            let unlockedWithAlt = false;
+            for (const altSalt of candidateSalts) {
+              try {
+                console.warn(
+                  `Primary salt unlock failed. Retrying unlock with candidate salt (${altSalt})...`
+                );
+                const altMasterKey = await deriveKey(rawVaultKey, altSalt);
+                await unlock(altMasterKey, normalizedUsername);
+                activeSaltRef.current = altSalt;
+                const keyBuf = base64ToUint8Array(altMasterKey);
+                const cryptoKey = await crypto.subtle.importKey(
+                  'raw',
+                  keyBuf as any,
+                  { name: 'AES-GCM' },
+                  false,
+                  ['encrypt', 'decrypt']
+                );
+                keyBuf.fill(0);
+                await uploadKeyCheckToCloud(cryptoKey, { force: true }).catch(() => {});
+                unlockedWithAlt = true;
+                break;
+              } catch {
+                // Try next salt candidate
+              }
+            }
+
+            if (!unlockedWithAlt) {
               throw unlockErr;
             }
           } else {
@@ -678,30 +695,45 @@ export const useVaultAuth = (options?: {
               unlockErr?.message || ''
             );
           if (isKeyCheckError && rawVaultKey) {
-            const fallbackSalt = `${normalizedUsername}-vault-pqc-salt`;
             const primarySalt = activeSaltRef.current;
-            const alternativeSalt =
-              primarySalt !== fallbackSalt
-                ? fallbackSalt
-                : await fetchVaultSalt(normalizedUsername).catch(() => null);
+            const fetchedSalt = await fetchVaultSalt(normalizedUsername).catch(() => null);
+            const candidateSalts = Array.from(
+              new Set(
+                [
+                  `${normalizedUsername}-vault-pqc-salt`,
+                  fetchedSalt,
+                  'vault-v1-stable-salt-32bytes',
+                ].filter((s): s is string => Boolean(s) && s !== primarySalt)
+              )
+            );
 
-            if (alternativeSalt && alternativeSalt !== primarySalt) {
-              console.warn(
-                'Primary salt unlock failed during OTP. Retrying unlock with alternative salt...'
-              );
-              const altMasterKey = await deriveKey(rawVaultKey, alternativeSalt);
-              await unlock(altMasterKey, normalizedUsername);
-              const keyBuf = base64ToUint8Array(altMasterKey);
-              const cryptoKey = await crypto.subtle.importKey(
-                'raw',
-                keyBuf as any,
-                { name: 'AES-GCM' },
-                false,
-                ['encrypt', 'decrypt']
-              );
-              keyBuf.fill(0);
-              await uploadKeyCheckToCloud(cryptoKey, { force: true }).catch(() => {});
-            } else {
+            let unlockedWithAlt = false;
+            for (const altSalt of candidateSalts) {
+              try {
+                console.warn(
+                  `Primary salt unlock failed during OTP. Retrying unlock with candidate salt (${altSalt})...`
+                );
+                const altMasterKey = await deriveKey(rawVaultKey, altSalt);
+                await unlock(altMasterKey, normalizedUsername);
+                activeSaltRef.current = altSalt;
+                const keyBuf = base64ToUint8Array(altMasterKey);
+                const cryptoKey = await crypto.subtle.importKey(
+                  'raw',
+                  keyBuf as any,
+                  { name: 'AES-GCM' },
+                  false,
+                  ['encrypt', 'decrypt']
+                );
+                keyBuf.fill(0);
+                await uploadKeyCheckToCloud(cryptoKey, { force: true }).catch(() => {});
+                unlockedWithAlt = true;
+                break;
+              } catch {
+                // Try next salt candidate
+              }
+            }
+
+            if (!unlockedWithAlt) {
               throw unlockErr;
             }
           } else {

@@ -20,6 +20,12 @@ import { VaultLayout } from '../../components/layout/VaultLayout';
 import { VaultItem } from '../../lib/storage';
 import { LiveCaptureModal } from './components/LiveCaptureModal';
 import { vaultApi } from '../../api/vaultApi';
+import {
+  compressFileInWorker,
+  generateBlurhashInWorker,
+  generateThumbnailInWorker,
+} from '../../lib/mediaWorker';
+import { uploadFileTus } from '../../lib/sync/tusUpload';
 
 // New extracted components and utilities
 import {
@@ -597,11 +603,31 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
             }
           }
 
+          // Offload image compression and blurhash computation to background Web Worker to prevent UI freezing
+          let uploadFileObj = file;
+          let blurhash: string | null = null;
+          if (type === 'photo' && !isAlreadyEncrypted) {
+            toast.loading(`Processing image in Web Worker ${index + 1}/${total}...`, { id: toastId });
+            uploadFileObj = await compressFileInWorker(file, 0.85);
+            blurhash = await generateBlurhashInWorker(uploadFileObj);
+          }
+
+          // Use TUS protocol for resilient, chunked encrypted uploads over unstable networks
+          toast.loading(`Uploading via TUS protocol ${index + 1}/${total}...`, { id: toastId });
+          const tusResult = await uploadFileTus({
+            file: uploadFileObj,
+            masterKey,
+            onProgress: (uploadedBytes, totalBytes) => {
+              const pct = Math.round((uploadedBytes / totalBytes) * 100);
+              toast.loading(`Uploading via TUS ${index + 1}/${total}: ${pct}%...`, { id: toastId });
+            },
+          });
+
           const encryptedData = isAlreadyEncrypted
             ? new Uint8Array(await file.arrayBuffer())
-            : await encryptFileInWorker(file, masterKey);
+            : await encryptFileInWorker(uploadFileObj, masterKey);
 
-          const dimensions = type === 'photo' ? await getMediaDimensions(file, 'photo') : undefined;
+          const dimensions = type === 'photo' ? await getMediaDimensions(uploadFileObj, 'photo') : undefined;
 
           await addItem(
             {
@@ -610,18 +636,20 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
               content: encryptedData,
               folder: fileTargetFolder || undefined,
               metadata: {
-                mimeType: normalizeMediaMimeType(file, type),
-                size: file.size,
+                mimeType: normalizeMediaMimeType(uploadFileObj, type),
+                size: uploadFileObj.size,
                 extension: getFileExtension(file.name),
                 width: dimensions?.width,
                 height: dimensions?.height,
                 aspectRatio: dimensions?.aspectRatio,
+                blurhash: blurhash || undefined,
+                tusUploadId: tusResult.uploadId,
                 isE2EE: isAlreadyEncrypted,
                 isLiveCapture,
               },
             },
             (progress) => {
-              toast.loading(`Uploading ${index + 1}/${total}: ${progress}%...`, {
+              toast.loading(`Finalizing ${index + 1}/${total}: ${progress}%...`, {
                 id: toastId,
               });
             },

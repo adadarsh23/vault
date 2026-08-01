@@ -247,6 +247,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
             onDrop={(event) => void handleFolderDrop(event, null)}
             onDragLeave={() => handleFolderDragLeave(null)}
             role="tab"
+            data-drop-target="true"
             aria-selected={currentFolder === null}
             aria-label={allItemLabel || `All ${itemTypeLabel}s`}
             className={cn(
@@ -264,7 +265,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                 (currentFolder === null ? 'bg-text/10 text-text' : 'text-text/60 hover:bg-text/5')
             )}
           >
-            <SidebarIcon className="h-4 w-4" />
+            <SidebarIcon className="h-4 w-4 shrink-0" />
             <span className="flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis font-bold">
               {allItemLabel || `All ${itemTypeLabel}s`}
             </span>
@@ -324,6 +325,8 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                       onDragOver={(event) => handleFolderDragOver(event, folder)}
                       onDrop={(event) => void handleFolderDrop(event, folder)}
                       onDragLeave={() => handleFolderDragLeave(folder)}
+                      role="tab"
+                      data-drop-target="true"
                       className={cn(
                         'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all border border-transparent',
                         dropTarget === folder && 'ring-2 ring-primary/50 bg-primary/10 text-text',
@@ -346,7 +349,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                         className="flex-1 truncate text-left group-hover:pr-10 transition-all"
                         title={folder}
                       >
-                        {folder.length > 10 ? `${folder.slice(0, 10)}...` : folder}
+                        {folder}
                       </span>
                       {draggedItemId && draggedItemFolder === folder ? (
                         <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary animate-pulse">
@@ -447,9 +450,18 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
 
       {/* Main Content Area */}
       <div className="min-w-0 flex-1 space-y-6">
+        {/* Enhanced File Drop Overlay */}
         {isFileDropActive && onFileDrop ? (
-          <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center rounded-3xl border-2 border-dashed border-primary/50 bg-bg/70 backdrop-blur-sm">
-            <div className="rounded-2xl border border-primary/30 bg-primary/10 px-6 py-4 text-center shadow-xl">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center rounded-3xl border-2 border-dashed border-primary/60 bg-bg/80 backdrop-blur-md"
+          >
+            <div className="rounded-2xl border border-primary/30 bg-primary/10 px-8 py-6 text-center shadow-2xl ring-1 ring-primary/20">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
+                <Plus className="h-6 w-6 text-primary" />
+              </div>
               <p className="text-sm font-semibold text-text">Drop files to upload</p>
               <p className="mt-1 text-xs text-text/60">
                 {currentFolder
@@ -457,45 +469,44 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                   : 'Files will be added to the current vault.'}
               </p>
             </div>
-          </div>
+          </motion.div>
         ) : null}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3">
+
+        {/* Header Section */}
+        <div className="flex flex-col gap-3 sm:gap-4">
+          {/* Title Row */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <h1
-                  className="text-3xl font-bold text-text truncate capitalize"
+                  className="text-xl sm:text-2xl lg:text-3xl font-bold text-text truncate capitalize leading-tight"
                   title={currentFolder || title}
                 >
-                  {(currentFolder || title).length > 5
-                    ? `${(currentFolder || title).slice(0, 5)}...`
-                    : currentFolder || title}
+                  {currentFolder || title}
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full bg-text/5 border border-text/10 text-text/50 text-xs font-bold shadow-inner">
-                  {getFolderCount(currentFolder)} items
+                <span className="inline-flex shrink-0 items-center px-2 py-0.5 rounded-full bg-text/5 border border-text/10 text-text/50 text-[11px] font-bold shadow-inner">
+                  {getFolderCount(currentFolder)}
+                  <span className="ml-1 opacity-70">items</span>
                 </span>
               </div>
-              <p className="text-text/50 truncate transition-colors">{description}</p>
+              <p className="mt-0.5 text-xs sm:text-sm text-text/40 truncate">{description}</p>
             </div>
-            <div className="flex items-center gap-3">
-              {/* {isUploading && (
-                <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary animate-pulse">
-                  <Cloud className="h-3 w-3 animate-spin" />
-                </div>
-              )} */}
-              {/* Desktop View: Record then Upload */}
+
+            {/* Action Buttons */}
+            <div className="flex shrink-0 items-center gap-2">
+              {/* Desktop: Record + Upload with labels */}
               {onLiveRecord && (
                 <Button
                   onClick={onLiveRecord}
                   variant="outline"
                   size="sm"
-                  className="hidden sm:flex border-primary/20 hover:border-primary/50"
+                  className="hidden sm:flex items-center gap-2 border-primary/20 hover:border-primary/50 hover:bg-primary/5 transition-all"
                   aria-label="Live record"
                 >
                   <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className="mr-2 h-2 w-2 rounded-full bg-red-500"
+                    animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                    className="h-2 w-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]"
                   />
                   Record
                 </Button>
@@ -505,26 +516,27 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                   onClick={() => onUpload(currentFolder)}
                   disabled={isUploading}
                   size="sm"
-                  className="hidden sm:flex transition-all"
+                  className="hidden sm:flex items-center gap-1.5 transition-all shadow-sm"
                 >
                   {isUploading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus className="h-3.5 w-3.5" />
                   )}
                   {uploadLabel || `Upload ${itemTypeLabel}`}
                 </Button>
               )}
 
-              {/* Mobile View: Upload then Record (Swapped) */}
+              {/* Mobile: Icon-only buttons */}
               {onLiveRecord && (
                 <Button
                   onClick={onLiveRecord}
                   variant="outline"
                   size="icon"
-                  className="flex sm:hidden border-primary/20"
+                  className="flex sm:hidden h-9 w-9 border-primary/20 hover:border-primary/40 hover:bg-primary/5"
+                  aria-label="Live record"
                 >
-                  <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                  <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.5)]" />
                 </Button>
               )}
               {onUpload && (
@@ -532,7 +544,8 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                   onClick={() => onUpload(currentFolder)}
                   disabled={isUploading}
                   size="icon"
-                  className="flex sm:hidden transition-all"
+                  className="flex sm:hidden h-9 w-9 transition-all shadow-sm"
+                  aria-label={uploadLabel || `Upload ${itemTypeLabel}`}
                 >
                   {isUploading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -544,12 +557,16 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/30" />
+          {/* Search + Mobile Folder Toggle Row */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/30 pointer-events-none" />
               <Input
                 placeholder={`Search ${itemTypeLabel}s...`}
-                className={cn('pl-10', searchInput && 'pr-9')}
+                className={cn(
+                  'pl-9 h-9 sm:h-10 rounded-xl border-text/10 bg-text/[0.03] focus:bg-text/[0.06] transition-colors text-sm placeholder:text-text/30',
+                  searchInput && 'pr-9'
+                )}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
               />
@@ -557,19 +574,25 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                 <button
                   type="button"
                   onClick={() => setSearchInput('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-text/40 hover:text-text rounded-full hover:bg-text/10 transition-colors"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-text/40 hover:text-text rounded-full hover:bg-text/10 transition-colors"
                   aria-label="Clear search"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               ) : null}
             </div>
-            {/* Mobile Category Toggle */}
+
+            {/* Mobile Folder Menu Trigger */}
             <Button
               aria-label="Toggle mobile folders menu"
               variant="outline"
               size="icon"
-              className="lg:hidden flex border-text/10"
+              data-drop-target="true"
+              onDragOver={(event) => {
+                event.preventDefault();
+                setIsMobileFolderOpen(true);
+              }}
+              className="lg:hidden h-9 w-9 sm:h-10 sm:w-10 shrink-0 border-text/10 hover:bg-text/5 hover:border-text/20 transition-all"
               onClick={() => setIsMobileFolderOpen(true)}
             >
               <Menu className="h-4 w-4" />
@@ -580,56 +603,74 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
         <AnimatePresence>
           {isMobileFolderOpen && (
             <motion.div key="mobile-folder-menu" className="fixed inset-0 z-50 lg:hidden">
+              {/* Backdrop */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
                 onClick={() => setIsMobileFolderOpen(false)}
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
               />
+
+              {/* Drawer Panel */}
               <motion.div
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="absolute right-0 top-0 bottom-0 w-72 bg-sidebar-bg border-l border-sidebar-border p-6 overflow-y-auto"
+                transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+                className="absolute right-0 top-0 bottom-0 flex flex-col w-[min(18rem,90vw)] bg-sidebar-bg/95 backdrop-blur-xl border-l border-sidebar-border shadow-2xl overflow-hidden"
               >
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-lg font-bold capitalize">{`${itemTypeLabel} Categories`}</h2>
+                {/* Drawer Header */}
+                <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-sidebar-border/60">
+                  <div>
+                    <h2 className="text-base font-bold capitalize tracking-tight">
+                      {`${itemTypeLabel} Categories`}
+                    </h2>
+                    <p className="text-[11px] text-text/40 mt-0.5">{folders.length} categories</p>
+                  </div>
                   <Button
                     aria-label="Close mobile folders menu"
                     variant="ghost"
                     size="icon"
+                    className="h-8 w-8 rounded-lg"
                     onClick={() => setIsMobileFolderOpen(false)}
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
 
-                <div className="space-y-2">
+                {/* Scrollable List */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
+                  {/* All Items button */}
                   <button
                     onClick={() => {
                       onFolderSelect(null);
                       setIsMobileFolderOpen(false);
                     }}
+                    onDragOver={(event) => handleFolderDragOver(event, null)}
+                    onDrop={(event) => void handleFolderDrop(event, null)}
+                    onDragLeave={() => handleFolderDragLeave(null)}
                     role="tab"
+                    data-drop-target="true"
                     aria-selected={currentFolder === null}
                     aria-label={allItemLabel || `All ${itemTypeLabel}s`}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all border border-transparent',
-                      // Highlight if this is the source folder of the dragged item
+                      'flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm transition-all border border-transparent',
+                      dropTarget === null && 'ring-2 ring-primary/50 bg-primary/10 text-text',
                       draggedItemId &&
                         draggedItemFolder === null &&
-                        'border border-dashed border-primary/40 bg-primary/10 text-primary',
-                      // Highlight other folders as valid drop zones
+                        'border-dashed border-primary/40 bg-primary/10 text-primary',
                       draggedItemId &&
                         draggedItemFolder !== null &&
-                        'border border-dashed border-primary/20 bg-primary/5 text-text/70',
+                        'border-dashed border-primary/20 bg-primary/5 text-text/70',
                       !draggedItemId &&
-                        (currentFolder === null ? 'bg-text/10 text-text font-bold' : 'text-text/60')
+                        (currentFolder === null
+                          ? 'bg-primary/10 text-text font-semibold border-primary/20'
+                          : 'text-text/60 hover:bg-text/5 hover:text-text')
                     )}
                   >
-                    <SidebarIcon className="h-5 w-5 shrink-0" />
+                    <SidebarIcon className="h-4 w-4 shrink-0" />
                     <span
                       className="flex-1 text-left truncate"
                       title={allItemLabel || `All ${itemTypeLabel}s`}
@@ -637,43 +678,54 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                       {allItemLabel || `All ${itemTypeLabel}s`}
                     </span>
                     {draggedItemId && draggedItemFolder === null ? (
-                      <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary animate-pulse">
+                      <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary/20 text-primary animate-pulse">
                         Source
                       </span>
                     ) : (
-                      <span className="ml-auto text-[10px] font-bold opacity-40">
+                      <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-text/5 text-text/40">
                         {getFolderCount(null)}
                       </span>
                     )}
                   </button>
+
+                  {/* Separator */}
+                  {folders.length > 0 && (
+                    <div className="h-px bg-text/5 mx-1 my-2" />
+                  )}
+
+                  {/* Folder list */}
                   {folders.map((folder) => {
                     const isEditing = folderControls.editing === folder;
                     const isSavedFolder = isSavedFolderName(folder);
                     return (
                       <div
                         key={folder}
+                        onDragOver={(event) => handleFolderDragOver(event, folder)}
+                        onDrop={(event) => void handleFolderDrop(event, folder)}
+                        onDragLeave={() => handleFolderDragLeave(folder)}
+                        role="tab"
+                        data-drop-target="true"
                         className={cn(
-                          'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all border border-transparent',
-                          // Highlight if this is the source folder of the dragged item
+                          'flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm transition-all border border-transparent',
+                          dropTarget === folder && 'ring-2 ring-primary/50 bg-primary/10 text-text',
                           draggedItemId &&
                             draggedItemFolder === folder &&
-                            'border border-dashed border-primary/40 bg-primary/10 text-primary',
-                          // Highlight other folders as valid drop zones
+                            'border-dashed border-primary/40 bg-primary/10 text-primary',
                           draggedItemId &&
                             draggedItemFolder !== folder &&
-                            'border border-dashed border-primary/20 bg-primary/5 text-text/70',
+                            'border-dashed border-primary/20 bg-primary/5 text-text/70',
                           !draggedItemId &&
                             (currentFolder === folder
-                              ? 'bg-text/10 text-text font-bold'
-                              : 'text-text/60')
+                              ? 'bg-primary/10 text-text font-semibold border-primary/20'
+                              : 'text-text/60 hover:bg-text/5 hover:text-text')
                         )}
                       >
-                        <Folder className="h-5 w-5 shrink-0" />
+                        <Folder className="h-4 w-4 shrink-0" />
                         {isEditing ? (
                           <Input
                             value={folderControls.editingName}
                             onChange={(e) => folderControls.setEditingName(e.target.value)}
-                            className="h-9 flex-1 text-sm"
+                            className="h-8 flex-1 text-sm"
                             autoFocus
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleRenameFolder(folder);
@@ -689,17 +741,19 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                               setIsMobileFolderOpen(false);
                             }}
                           >
-                            {folder.length > 10 ? `${folder.slice(0, 10)}...` : folder}
+                            {folder}
                           </button>
                         )}
                         {draggedItemId && draggedItemFolder === folder ? (
-                          <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary animate-pulse">
+                          <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary/20 text-primary animate-pulse">
                             Source
                           </span>
                         ) : (
-                          <span className="text-[10px] font-bold opacity-40">
-                            {getFolderCount(folder)}
-                          </span>
+                          !isEditing && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-text/5 text-text/40">
+                              {getFolderCount(folder)}
+                            </span>
+                          )
                         )}
                         {isEditing ? (
                           <div className="flex items-center gap-1">
@@ -707,7 +761,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                               aria-label="Confirm rename"
                               size="icon"
                               variant="ghost"
-                              className="h-8 w-8 text-green-400"
+                              className="h-7 w-7 text-green-400 hover:text-green-300 hover:bg-green-400/10"
                               onClick={() => handleRenameFolder(folder)}
                               disabled={isRenameInvalid(folder)}
                             >
@@ -717,19 +771,19 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                               aria-label="Cancel rename"
                               size="icon"
                               variant="ghost"
-                              className="h-8 w-8 text-red-400"
+                              className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-400/10"
                               onClick={() => folderControls.setEditing(null)}
                             >
                               <X className="h-3 w-3" />
                             </Button>
                           </div>
                         ) : !isSavedFolder ? (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-0.5">
                             <Button
                               aria-label="Edit folder"
                               size="icon"
                               variant="ghost"
-                              className="h-8 w-8"
+                              className="h-7 w-7 hover:bg-text/10"
                               onClick={() => {
                                 folderControls.setEditing(folder);
                                 folderControls.setEditingName(folder);
@@ -741,7 +795,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                               aria-label="Delete folder"
                               size="icon"
                               variant="ghost"
-                              className="h-8 w-8 hover:text-red-400"
+                              className="h-7 w-7 hover:text-red-400 hover:bg-red-400/10"
                               onClick={() => folderControls.onDelete(folder)}
                             >
                               <Trash2 className="h-3 w-3" />
@@ -751,21 +805,24 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                       </div>
                     );
                   })}
+                </div>
 
+                {/* Drawer Footer: Add Category */}
+                <div className="px-4 pb-5 pt-2 border-t border-sidebar-border/60">
                   <AnimatePresence mode="wait">
                     {folderControls.isAdding ? (
                       <motion.div
                         key="adding-folder"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mt-4 space-y-3 px-1"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className="space-y-2 pt-3"
                       >
                         <Input
-                          placeholder="New category name..."
+                          placeholder="Category name..."
                           value={folderControls.newName}
                           onChange={(e) => folderControls.setNewName(e.target.value)}
-                          className="h-10 text-sm"
+                          className="h-9 text-sm"
                           autoFocus
                           onKeyDown={(e) => e.key === 'Enter' && handleCreateFolder()}
                         />
@@ -773,8 +830,9 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                           <Button
                             aria-label="Confirm create folder"
                             size="sm"
-                            className="h-9 flex-1"
+                            className="h-9 flex-1 text-sm"
                             onClick={handleCreateFolder}
+                            disabled={isCreateInvalid}
                           >
                             Create
                           </Button>
@@ -782,7 +840,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                             aria-label="Cancel create folder"
                             size="sm"
                             variant="ghost"
-                            className="h-9 flex-1"
+                            className="h-9 flex-1 text-sm"
                             onClick={() => folderControls.setIsAdding(false)}
                           >
                             Cancel
@@ -798,13 +856,11 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                       >
                         <Button
                           variant="ghost"
-                          className="w-full justify-start gap-3 mt-4 text-text/40"
-                          onClick={() => {
-                            folderControls.setIsAdding(true);
-                          }}
+                          className="w-full justify-start gap-2.5 mt-2 text-text/40 hover:text-text hover:bg-text/5 h-9 text-sm"
+                          onClick={() => folderControls.setIsAdding(true)}
                         >
-                          <Plus className="h-5 w-5" />
-                          Create New Category
+                          <Plus className="h-4 w-4" />
+                          New Category
                         </Button>
                       </motion.div>
                     )}

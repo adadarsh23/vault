@@ -804,9 +804,7 @@ export const DocumentsVault: React.FC = () => {
                             <span className="flex max-w-full items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[8px] font-medium text-blue-400/60 uppercase">
                               <Folder className="h-2 w-2 shrink-0" />
                               <span className="truncate" title={item.folder}>
-                                {item.folder.length > 10
-                                  ? `${item.folder.slice(0, 10)}...`
-                                  : item.folder}
+                                {item.folder}
                               </span>
                             </span>
                           )}

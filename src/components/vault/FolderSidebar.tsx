@@ -132,6 +132,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
         <div
           role="button"
           tabIndex={0}
+          data-drop-target="true"
           onClick={() => setCurrentFolder(null)}
           onDragOver={(event) => handleDragOver(event, null)}
           onDrop={(event) => void handleDrop(event, null)}
@@ -205,6 +206,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                 <div
                   role="button"
                   tabIndex={0}
+                  data-drop-target="true"
                   onClick={() => setCurrentFolder(folder)}
                   onDragOver={(event) => handleDragOver(event, folder)}
                   onDrop={(event) => void handleDrop(event, folder)}
@@ -232,9 +234,9 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                         : 'text-text/60 hover:bg-text/5')
                   )}
                 >
-                  <Folder className="h-4 w-4" />
+                  <Folder className="h-4 w-4 shrink-0" />
                   <span className="flex-1 truncate text-left" title={folder}>
-                    {folder.length > 10 ? `${folder.slice(0, 10)}...` : folder}
+                    {folder}
                   </span>
                   <div className="flex items-center gap-1">
                     {draggedItemId && draggedItemFolder === folder ? (

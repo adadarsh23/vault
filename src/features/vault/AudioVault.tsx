@@ -21,7 +21,8 @@ import { toast } from 'sonner';
 import { Button } from '../../components/ui/Button';
 import { AudioPlayer } from '../../components/ui/audio-player';
 import { useVaultStore } from '../../store/vaultStore';
-import { encryptFile } from '../../lib/cryptoPrimitives';
+import { encryptFile, encryptFileInWorker } from '../../lib/cryptoPrimitives';
+import { uploadFileTus } from '../../lib/sync/tusUpload';
 import {
   getVaultItemFileUrl,
   getVaultItemPreviewUrl,
@@ -357,9 +358,18 @@ export const AudioVault: React.FC = () => {
 
           const fileTargetFolder = folderFromPath || targetFolder;
 
+          const tusResult = await uploadFileTus({
+            file,
+            masterKey,
+            onProgress: (uploadedBytes, totalBytes) => {
+              const pct = Math.round((uploadedBytes / totalBytes) * 100);
+              toast.loading(`Uploading audio via TUS ${index + 1}/${total}: ${pct}%...`, { id: toastId });
+            },
+          });
+
           const encryptedData = isAlreadyEncrypted
             ? new Uint8Array(await file.arrayBuffer())
-            : await encryptFile(file, masterKey);
+            : await encryptFileInWorker(file, masterKey);
 
           await addItem(
             {
@@ -400,6 +410,7 @@ export const AudioVault: React.FC = () => {
                 })(),
                 size: file.size,
                 extension: file.name.split('.').pop()?.toUpperCase() || 'AUDIO',
+                tusUploadId: tusResult.uploadId,
                 isE2EE: isAlreadyEncrypted,
                 isLiveCapture,
               },
@@ -589,9 +600,7 @@ export const AudioVault: React.FC = () => {
                           <span className="flex max-w-full items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-cyan-300/80">
                             <Folder className="h-3 w-3 shrink-0" />
                             <span className="truncate" title={item.folder}>
-                              {item.folder.length > 10
-                                ? `${item.folder.slice(0, 10)}...`
-                                : item.folder}
+                              {item.folder}
                             </span>
                           </span>
                         )}

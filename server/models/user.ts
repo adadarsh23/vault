@@ -318,7 +318,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: 'none',
-      maxlength: 4096,
+      // ~5.5 M chars supports base64-encoded images up to 3 MB (same limit enforced by the validator)
+      maxlength: 5_500_000,
     },
     profileDetails: {
       type: profileDetailsSchema,

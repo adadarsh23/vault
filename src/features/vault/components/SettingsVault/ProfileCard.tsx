@@ -502,7 +502,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 ) : null}
                 {profileSaveError ? (
                   <p className="text-xs text-red-500">
-                    Failed to save profile image link. {profileSaveError}
+                    Failed to save profile. {profileSaveError}
                   </p>
                 ) : null}
               </div>

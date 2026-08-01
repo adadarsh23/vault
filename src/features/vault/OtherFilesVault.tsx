@@ -545,9 +545,7 @@ export const OtherFilesVault: React.FC = () => {
                           <span className="flex items-center gap-1">
                             <Folder className="h-2 w-2" />
                             <span className="truncate" title={item.folder}>
-                              {item.folder.length > 10
-                                ? `${item.folder.slice(0, 10)}...`
-                                : item.folder}
+                              {item.folder}
                             </span>
                           </span>
                         )}

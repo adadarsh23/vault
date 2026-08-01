@@ -1,12 +1,12 @@
 import { argon2id } from 'hash-wasm';
 
-const AES_GCM_IV_LENGTH = 12;
+export const AES_GCM_IV_LENGTH = 12;
 const ARGON2_MEMORY = 65536;
 const ARGON2_ITERATIONS = 3;
 const ARGON2_PARALLELISM = 4;
 const ARGON2_HASH_LENGTH = 32;
 const KEY_BYTE_LENGTH = 32;
-const AES_GCM_AAD = new TextEncoder().encode('vault:e2ee:aes-gcm:v2');
+export const AES_GCM_AAD = new TextEncoder().encode('vault:e2ee:aes-gcm:v2');
 
 const toArrayBuffer = (value: Uint8Array): ArrayBuffer => new Uint8Array(value).buffer;
 
@@ -102,7 +102,7 @@ const computeKeyHash = async (secretKey: string): Promise<string> => {
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 };
 
-const getOrCreateCryptoKey = async (secretKey: string | CryptoKey): Promise<CryptoKey | null> => {
+export const getOrCreateCryptoKey = async (secretKey: string | CryptoKey): Promise<CryptoKey | null> => {
   if (secretKey instanceof CryptoKey) {
     return secretKey;
   }

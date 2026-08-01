@@ -246,7 +246,8 @@ const isDropTarget = (el: Element): boolean => {
     el.hasAttribute('ondrop') ||
     el.hasAttribute('onDragOver') ||
     el.hasAttribute('onDrop') ||
-    el.hasAttribute('data-drop-target')
+    el.hasAttribute('data-drop-target') ||
+    el.getAttribute('data-drop-target') === 'true'
   ) {
     return true;
   }
@@ -263,7 +264,8 @@ const isDropTarget = (el: Element): boolean => {
   if (
     el.classList.contains('drop-target') ||
     el.classList.contains('folder-item') ||
-    el.classList.contains('vault-folder')
+    el.classList.contains('vault-folder') ||
+    el.tagName === 'BUTTON'
   ) {
     return true;
   }

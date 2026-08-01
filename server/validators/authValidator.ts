@@ -79,13 +79,30 @@ const normalizeProfileName = z
   .max(120, 'Profile name must be 120 characters or fewer')
   .transform((value) => (value.length === 0 ? 'none' : value));
 
+// ~5.5M chars covers a 3 MB file encoded as base64 plus JSON overhead
+const MAX_PROFILE_PHOTO_LENGTH = 5_500_000;
+
 const normalizeProfilePhoto = z
   .string()
   .trim()
-  .max(2048, 'Profile photo URL is too long')
+  .max(MAX_PROFILE_PHOTO_LENGTH, 'Profile photo is too large (max ~3 MB).')
   .transform((value, ctx) => {
     if (value.length === 0 || value.toLowerCase() === 'none') {
       return 'none';
+    }
+
+    // Allow base64 data URIs for locally-uploaded images
+    if (value.startsWith('data:image/')) {
+      // Only permit safe image MIME types
+      const mimeMatch = value.match(/^data:(image\/[a-zA-Z0-9.+\-]+);base64,/);
+      if (!mimeMatch) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Profile photo data URI must be a base64-encoded image.',
+        });
+        return z.NEVER;
+      }
+      return value;
     }
 
     let parsed: URL;
@@ -94,7 +111,7 @@ const normalizeProfilePhoto = z
     } catch {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Profile photo must be a valid URL or "none".',
+        message: 'Profile photo must be a valid HTTPS URL, a base64 data URI, or "none".',
       });
       return z.NEVER;
     }
@@ -102,7 +119,7 @@ const normalizeProfilePhoto = z
     if (parsed.protocol !== 'https:') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Profile photo URL must use HTTPS.',
+        message: 'Profile photo URL must use HTTPS (or upload a file directly).',
       });
       return z.NEVER;
     }

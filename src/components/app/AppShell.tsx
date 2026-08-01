@@ -207,6 +207,11 @@ const normalizeProfilePhotoUrl = (value?: string | null): string | null => {
     return null;
   }
 
+  // Accept base64-uploaded images directly
+  if (normalized.startsWith('data:image/')) {
+    return normalized;
+  }
+
   try {
     const parsed = new URL(normalized);
     if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {

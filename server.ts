@@ -74,6 +74,7 @@ const buildHelmetConfig = (): Parameters<typeof helmet>[0] => {
   const mediaAndImageSources = [...selfAndConfiguredOrigins, 'blob:', 'data:', 'https:'];
   const connectSources = [
     ...selfAndConfiguredOrigins,
+    'blob:',
     'wss:',
     ...(isProduction ? [] : ['ws:']),
     // Maps / geocoding
@@ -442,7 +443,12 @@ async function startServer() {
             'X-Vault-Title',
             'X-Vault-Metadata',
             'X-Request-Id',
+            'Tus-Resumable',
+            'Upload-Length',
+            'Upload-Metadata',
+            'Upload-Offset',
           ],
+          exposedHeaders: ['Location', 'Tus-Resumable', 'Upload-Offset', 'Upload-Length'],
         })
       );
       if (resolveCompressionEnabled()) {
