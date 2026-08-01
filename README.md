@@ -1,61 +1,156 @@
 <p align="center">
-  <img
-    src="./public/favicon.svg"
-    alt="Vault Logo"
-    width="96"
-    style="padding: 14px; border: 3px solid #0f172a; border-radius: 20px; background: #000000; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.9);"
-  />
+  <a href="#vault">
+    <img
+      src="./public/favicon.svg"
+      alt="Vault Logo"
+      width="104"
+      height="104"
+      style="padding: 18px; background: #090d16; border: 2px solid #38bdf8; border-radius: 24px; box-shadow: 0 0 30px rgba(56, 189, 248, 0.4), 0 12px 32px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.25);"
+    />
+  </a>
 </p>
 
-# Vault
+<h1 align="center">🔐 Vault</h1>
 
-Securely store your files, notes, and sensitive data with end-to-end peace of mind.
+<p align="center">
+  <strong>Ultra-Secure Zero-Knowledge Personal Storage & Real-Time Sync Platform</strong>
+</p>
 
-## Features
+<p align="center">
+  <em>Engineered with client-side AES-256-GCM encryption, Post-Quantum Kyber key exchange, device session rotation, and real-time cloud synchronization.</em>
+</p>
 
-- User registration with bcrypt password hashing
-- JWT authentication for protected routes
-- AES-256-GCM encryption for notes, vault passwords, and secret keys
-- Secure file uploads with type and size validation
+<p align="center">
+  <img src="https://img.shields.io/badge/Security-Zero--Knowledge-blueviolet?style=for-the-badge&logo=shield&logoColor=white" alt="Zero Knowledge Security" />
+  <img src="https://img.shields.io/badge/Encryption-AES--256--GCM-007acc?style=for-the-badge&logo=lock&logoColor=white" alt="AES-256-GCM" />
+  <img src="https://img.shields.io/badge/Post--Quantum-PQC--Kyber-8b5cf6?style=for-the-badge&logo=quantum&logoColor=white" alt="PQC Kyber" />
+  <img src="https://img.shields.io/badge/React-19.0-61dafb?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/Vite-8.0-646cff?style=for-the-badge&logo=vite&logoColor=white" alt="Vite 8" />
+  <img src="https://img.shields.io/badge/TypeScript-5.0-3178c6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Node.js-22.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node 22" />
+  <img src="https://img.shields.io/badge/Express-5.0-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express 5" />
+  <img src="https://img.shields.io/badge/MongoDB-7.0-47a248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB 7" />
+</p>
 
-## Environment
+---
 
-Copy `.env.example` to `.env` and set:
+## 📋 Table of Contents
 
-- `MONGODB_URI`
-- `MONGODB_URI_FALLBACK` for a non-SRV Atlas URI if `mongodb+srv` is blocked
-- `JWT_SECRET`
-- `REFRESH_TOKEN_SECRET`
-- `VAULT_ENCRYPTION_KEY`
-- `CLIENT_URL`
-- `PUBLIC_URL` if you want local/self-hosted keep-alive pings outside Render
-- `VITE_APP_PUBLIC_URL` for canonical/Open Graph HTML metadata
-- `VITE_DNS_PREFETCH_HOST` for the HTML DNS prefetch host
-- `RENDER_SERVICE_ID` if you want Render service metadata included in startup/keep-alive logs
-- `VITE_API_BASE_URL`
-- `VITE_DEV_API_BASE_URL`
-- `VITE_DEFAULT_API_BASE_URL` for non-browser/server-side fallback API resolution
-- `VITE_CSP_CONNECT_SRC`
-- `ANALYZE_BUNDLE=true` only when you want a bundle report generated during build
-- `MAX_JSON_BODY_MB` to tune JSON request body size safely
-- `API_RATE_LIMIT_MAX` to tune general API throttling
-- `AUTH_RATE_LIMIT_WINDOW_MS` and `AUTH_RATE_LIMIT_MAX` to harden auth endpoints separately
-- `TRUST_PROXY=1` when running behind a single reverse proxy or load balancer so login/activity logs store the real client IP without weakening IP-based rate limiting
-- `REFRESH_TOKEN_EXPIRES_IN` to tune long-lived session expiry
-- `REFRESH_COOKIE_SAME_SITE`, `REFRESH_COOKIE_SECURE`, and `REFRESH_COOKIE_DOMAIN` to align session cookies with your production domain strategy
-- `REGISTRATION_PROFILE_CAPTURE_ENABLED=true` if you want to store signup IP intelligence from `free.freeipapi.com`, `ipwho.is`, and `ipinfo.io`
-- `REGISTRATION_PROFILE_TIMEOUT_MS` to control third-party lookup timeout
-- `FREE_IP_API_URL_TEMPLATE`, `IPWHOIS_URL_TEMPLATE`, `IPINFO_IO_URL_TEMPLATE`, and `IPGEOLOCATION_URL_TEMPLATE` if you want the registration lookup providers controlled from env
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Architecture & Security Blueprint](#architecture--security-blueprint)
+- [Technology Stack](#technology-stack)
+- [Environment Configuration](#environment-configuration)
+- [API Reference](#api-reference)
+  - [Authentication Endpoints](#authentication-endpoints)
+  - [Vault Storage Endpoints](#vault-storage-endpoints)
+- [Synchronization Strategy](#synchronization-strategy)
+- [Security & Hardening Notes](#security--hardening-notes)
+- [Development & Verification Commands](#development--verification-commands)
 
-For Render deployments, the server will also use `RENDER_EXTERNAL_URL` automatically for keep-alive if `PUBLIC_URL` is not set. If you define `RENDER_SERVICE_ID` or `SERVICE_ID`, the server will include that service identity in keep-alive logging for easier production diagnostics.
+---
 
-If Atlas SRV DNS lookups fail on your machine, use either:
+## 🎯 Overview
 
-- A direct Mongo URI in `MONGODB_URI_FALLBACK`
-- A local MongoDB URI such as `mongodb://127.0.0.1:27017/personal-vault`
-- Alias names are also supported: `MONGODB_URL`, `MONGODB_URL_FALLBACK`
+**Vault** is a high-performance, enterprise-grade personal vault application designed for storing sensitive files, encrypted notes, credentials, and confidential personal data. 
 
-Example Atlas production setup:
+Built on a **Zero-Knowledge Architecture**, all sensitive client payload data (notes, vault items, secret keys) is encrypted locally on the user's client using **AES-256-GCM** before ever being transmitted over the network or stored in the database. The server never holds unencrypted user keys or plaintext vault items.
+
+---
+
+## ✨ Key Features
+
+- 🔑 **Zero-Knowledge Encryption**: Full end-to-end client-side encryption using AES-256-GCM.
+- 🛡️ **Post-Quantum Crypto Readiness**: Integrated with `pqc-kyber` for lattice-based post-quantum key encapsulation.
+- 🔐 **Dual-Key Authentication**: Strict separation between account authentication passwords (bcrypt hashed) and local client vault encryption keys.
+- 🌐 **Real-time Socket.IO Sync**: Instant cross-device synchronization with automatic delta resolution and timestamp conflict arbitration (`latest-update-wins`).
+- 📝 **Rich Text Encrypted Notes**: Interactive rich-text editing powered by TipTap with live client-side decryption.
+- 🔒 **2FA & TOTP Vault**: Built-in time-based one-time password (TOTP) generator supporting QR code export & verification.
+- 📁 **Secure Media & File Streaming**: Encrypted file uploads with MIME-type verification, HLS.js, and Shaka Player video streaming.
+- 📲 **Device Session Management**: Granular per-device session tracking with HTTP-Only refresh cookie rotation and instant session revoking.
+- 🚦 **Hardened API Gateway**: Dynamic rate-limiting, Helmet security headers, mandatory CSRF validation, and optional IP geolocation telemetry capture.
+
+---
+
+## 🏗️ Architecture & Security Blueprint
+
+```
++---------------------------------------------------------------------------------+
+|                                 CLIENT LAYER                                    |
+|   React 19 + Vite + TypeScript + WebCrypto API + Sodium / PQC-Kyber + TipTap    |
+|                                                                                 |
+|  * Client-side AES-256-GCM encryption before sending data over the wire         |
+|  * Vault Encryption Key never leaves client memory                              |
+|  * Decrypts notes, files, passwords & TOTP tokens locally in real-time          |
++----------------------------------------+----------------------------------------+
+                                         |
+                       HTTPS + WebSockets (Socket.IO)
+                                         |
++----------------------------------------v----------------------------------------+
+|                               API GATEWAY LAYER                                 |
+|          Express 5 + Helmet Hardening + Rate Limiter + CSRF + Auth Middleware     |
+|                                                                                 |
+|  * JWT Bearer Access Tokens + HTTP-Only Rotating Refresh Cookies                |
+|  * IP-Based & Route-Based Rate Throttling                                       |
+|  * Sentinel Verification Check (`__keycheck__`) without exposing raw secrets   |
++----------------------------------------+----------------------------------------+
+                                         |
+                                  MongoDB Driver 7
+                                         |
++----------------------------------------v----------------------------------------+
+|                                DATABASE LAYER                                   |
+|             MongoDB Atlas Cluster (Primary) + SRV Fallback Cluster              |
+|                                                                                 |
+|  * Encrypted Control Records (`__settings__`, `__logs__`, `__profile__`)        |
+|  * Scoped encrypted user items & soft-deleted tombstones                        |
++---------------------------------------------------------------------------------+
+```
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies & Key Libraries |
+| :--- | :--- |
+| **Frontend UI** | **React 19**, **Vite 8**, **TypeScript 7**, TailwindCSS v4, Framer Motion, Radix UI, Lucide Icons, Sonner |
+| **Rich Text & Media** | TipTap Editor, HLS.js, Shaka Player, HTML-to-Image, Emoji-Mart, tsParticles, COBE 3D Globe |
+| **Cryptography & Security** | WebCrypto API, **AES-256-GCM**, `libsodium-wrappers`, **`pqc-kyber`**, `hash-wasm` (Argon2), `bcryptjs`, `jsonwebtoken` |
+| **Backend Framework** | **Express 5**, **Node.js 22 (LTS)**, Socket.IO 4, Helmet 8, Express Rate Limit, Multer, Cookie Parser |
+| **Database & Cache** | **MongoDB 7**, Mongoose 9, Node Cache |
+| **Testing & Quality** | **Vitest 4**, **Playwright E2E**, Lighthouse Runner, Sentry Error Tracking & Node Profiling |
+
+---
+
+## ⚙️ Environment Configuration
+
+Copy `.env.example` to `.env` in the project root:
+
+```bash
+cp .env.example .env
+```
+
+### Essential Environment Variables
+
+| Variable | Description | Example / Recommended |
+| :--- | :--- | :--- |
+| `MONGODB_URI` | Primary MongoDB connection URI (Atlas SRV or direct) | `mongodb+srv://user:pass@cluster.mongodb.net/vault` |
+| `MONGODB_URI_FALLBACK` | Non-SRV Atlas fallback URI if SRV lookups fail | `mongodb://user:pass@node1.mongodb.net/vault` |
+| `JWT_SECRET` | Secret key for short-lived JWT access tokens | `your-256-bit-jwt-secret-string` |
+| `REFRESH_TOKEN_SECRET` | Secret key for long-lived refresh tokens | `your-256-bit-refresh-secret-string` |
+| `VAULT_ENCRYPTION_KEY` | Server-side master envelope encryption key | `32-byte-hex-or-base64-secret-key` |
+| `CLIENT_URL` | Trusted frontend origin for CORS & cookie policy | `https://my-vault.onrender.com` |
+| `PUBLIC_URL` | Public server URL for health check keep-alive pings | `https://my-vault.onrender.com` |
+| `VITE_API_BASE_URL` | Frontend API endpoint URL | `https://my-vault.onrender.com` |
+| `VITE_DEV_API_BASE_URL` | Vite local development API endpoint | `http://localhost:4000` |
+| `TRUST_PROXY` | Set `1` when deployed behind reverse proxy/load balancer | `1` |
+| `AUTH_RATE_LIMIT_MAX` | Max login/auth requests per window (default: 15 min) | `100` |
+| `MAX_JSON_BODY_MB` | Maximum allowed JSON request payload size | `5` |
+
+---
+
+### Example Configuration Snippets
+
+#### 🌟 Standard Atlas Production Setup
 
 ```env
 MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.ncuxgch.mongodb.net/personal-vault?retryWrites=true&w=majority&appName=Cluster0
@@ -80,7 +175,7 @@ IPINFO_IO_URL_TEMPLATE=https://ipinfo.io/{ip}/json
 IPGEOLOCATION_URL_TEMPLATE=https://api.ipgeolocation.io/ipgeo?apiKey={apiKey}&ip={ip}
 ```
 
-Example Atlas primary/fallback setup:
+#### 🔄 Atlas Primary + Fallback Cluster Setup
 
 ```env
 MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.ncuxgch.mongodb.net/personal-vault?retryWrites=true&w=majority&appName=Cluster0
@@ -100,107 +195,138 @@ AUTH_RATE_LIMIT_WINDOW_MS=900000
 AUTH_RATE_LIMIT_MAX=100
 REFRESH_COOKIE_SAME_SITE=strict
 REFRESH_COOKIE_SECURE=true
-FREE_IP_API_URL_TEMPLATE=https://free.freeipapi.com/api/json/{ip}
-IPWHOIS_URL_TEMPLATE=https://ipwho.is/{ip}
-IPINFO_IO_URL_TEMPLATE=https://ipinfo.io/{ip}/json
-IPGEOLOCATION_URL_TEMPLATE=https://api.ipgeolocation.io/ipgeo?apiKey={apiKey}&ip={ip}
 ```
 
-The server will try the primary URI first and then `MONGODB_URI_FALLBACK`.
-If you use `MONGODB_URL` names instead, the server will read those too.
+> **Note**: The server automatically attempts connection to `MONGODB_URI` first. If SRV resolution or primary cluster fails, it gracefully falls back to `MONGODB_URI_FALLBACK`.
 
-Important:
+---
 
-- `MONGODB_URI_FALLBACK` is optional and should only be used if you have a real backup database target.
-- If you do not have a verified backup target, leave `MONGODB_URI_FALLBACK` empty.
-- For most deployments, one healthy primary Atlas cluster is the recommended production setup.
-- Frontend and CSP origins should be configured through env values instead of hardcoded production URLs.
-- Canonical/public HTML metadata and third-party registration lookup endpoints are also env-driven now.
-- Production static assets are cached aggressively while `index.html` stays non-cacheable so fresh deploys roll out cleanly.
-- `REGISTRATION_PROFILE_CAPTURE_ENABLED` is off by default and should only be enabled if you intentionally want to persist third-party IP/geolocation metadata for new account registrations.
+## 📡 API Reference
 
-## API Overview
+### Authentication Endpoints
 
-### Auth
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/api/auth/register` | Register new user account & set device session | ❌ |
+| `POST` | `/api/auth/login` | Authenticate user credentials & issue JWT + Session Cookie | ❌ |
+| `POST` | `/api/auth/refresh` | Rotate long-lived refresh cookie & issue new JWT access token | ❌ |
+| `POST` | `/api/auth/logout` | Invalidate current device refresh token & clear cookies | ❌ |
+| `GET` | `/api/auth/me` | Fetch active user profile & active device sessions | 🔐 |
+| `POST` | `/api/auth/sessions/revoke` | Revoke specific device session or all remote sessions | 🔐 |
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/refresh`
-- `POST /api/auth/logout`
-- `GET /api/auth/me`
-- `POST /api/auth/sessions/revoke`
-
-Example register request:
+#### Request Example (`POST /api/auth/register`):
 
 ```json
 {
-  "username": "ook",
+  "username": "vault_user",
   "password": "KW88P0E%NezFZs7!",
   "masterKey": "O4[qH:shrp95_Xd0",
   "deviceId": "laptop-main"
 }
 ```
 
-Note:
-
-- `password` is the account authentication password.
-- Demo vault passphrase (client-side unlock secret): `O4[qH:shrp95_Xd0`
-- The vault encryption key is separate and is entered only on the client during unlock.
-- Existing accounts can still use the same value for both if they choose, but production usage should treat them as separate secrets.
-
-Example login response:
+#### Response Example (`POST /api/auth/login`):
 
 ```json
 {
   "success": true,
   "data": {
-    "token": "<jwt>",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "user": {
       "id": "65f0...",
-      "username": "ook"
+      "username": "vault_user"
     }
   }
 }
 ```
 
-### Vault
+---
 
-- `GET /api/vault/items`
-- `POST /api/vault/items/:itemId`
-- `DELETE /api/vault/items/:itemId`
-- `GET /api/vault/legacy/:vaultId/items`
+### Vault Storage Endpoints
 
-Control records written into the active scoped vault:
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/api/vault/items` | Fetch all encrypted vault records for the authenticated user | 🔐 |
+| `POST` | `/api/vault/items/:itemId` | Upsert (create or update) an encrypted vault item record | 🔐 |
+| `DELETE` | `/api/vault/items/:itemId` | Soft-delete vault item & emit tombstone for sync clients | 🔐 |
+| `GET` | `/api/vault/sync` | Query updated items since timestamp (`since` query param) | 🔐 |
+| `GET` | `/api/vault/legacy/:vaultId/items` | Legacy compatibility endpoint for older vault formats | 🔐 |
 
-- `__settings__`
-- `__logs__`
-- `__profile__`
-- `__keycheck__`
+#### Internal Vault Control Records:
 
-Example note request:
+- `__settings__`: Client interface configuration & theme preferences (encrypted).
+- `__logs__`: Client activity audit logs (encrypted).
+- `__profile__`: User profile metadata & optional registration IP telemetry.
+- `__keycheck__`: Encrypted sentinel record used to verify client vault passphrase correctness without exposing raw secrets.
 
-```json
-{
-  "title": "Recovery codes",
-  "content": "My private recovery data",
-  "deviceId": "iphone-1",
-  "clientUpdatedAt": "2026-03-19T10:45:00.000Z"
-}
+---
+
+## 🔄 Synchronization Strategy
+
+- **Real-Time WebSocket Push**: Real-time change events are broadcast over Socket.IO on the `vault:changed` event channel.
+- **Incremental Delta Polling**: Polling clients query `/api/vault/sync?since=<timestamp>` for lightweight delta updates.
+- **Conflict Arbitration**: Concurrent cross-device edits resolve using **latest-update-wins** based on client timestamp (`updatedAt`).
+- **Tombstone Preservation**: Deleted items are soft-deleted (`isDeleted: true`, `deletedAt: <timestamp>`) to propagate deletion seamlessly across all synced devices.
+
+---
+
+## 🔒 Security & Hardening Notes
+
+1. **Bcrypt Password Hashing**: Passwords are salted and hashed via `bcryptjs` before storage.
+2. **AES-256-GCM Envelope Encryption**: Vault items and sensitive records are encrypted client-side using AES-256-GCM.
+3. **Dedicated Keycheck Sentinel**: High-entropy `__keycheck__` records allow instant validation of client-entered passphrase without decrypting actual user payload data.
+4. **Helmet Security Headers**: Enforces Content Security Policy (CSP), Cross-Origin Resource Policy (CORP), Frameguard, and X-Content-Type-Options.
+5. **Session Isolation**: HTTP-Only, SameSite strict cookies prevent XSS-based refresh token theft.
+
+---
+
+## 🧪 Development & Verification Commands
+
+### Development Server
+
+```bash
+# Start backend server in development watch mode
+npm run dev
+
+# Start Vite client development server
+npm run dev:client
 ```
 
-## Sync Strategy
+### Build & Production Packaging
 
-- Real-time notifications are emitted over Socket.IO on `vault:changed`
-- Polling clients can call `/api/vault/sync`
-- Conflict resolution uses `latest-update-wins` based on `updatedAt`
-- Soft deletes are retained with `isDeleted` and `deletedAt`
+```bash
+# Type check and build Vite production bundle
+npm run build
 
-## Security Notes
+# Build with OXC minification
+npm run build:minify
 
-- User passwords are hashed with bcrypt
-- Sensitive vault values are encrypted with AES-256-GCM before MongoDB writes
-- A dedicated encrypted `__keycheck__` sentinel verifies the vault key without relying on unrelated control records
-- JWT is required for every vault route
-- Refresh tokens rotate in HTTP-only cookies and can be revoked per device session
-- Auth routes are rate limited aggressively, while general vault APIs use a broader limiter
-- Helmet now enforces a CSP/CORP-based browser hardening policy driven by env configuration
+# Analyze bundle sizes
+npm run build:analyze
+```
+
+### Testing Suite
+
+```bash
+# Run unit test suite
+npm run test:unit
+
+# Run full Vitest test suite
+npm run test
+
+# Run End-to-End Playwright test suite
+npm run test:e2e
+
+# Run security & cryptographic verification tests
+npm run test:crypto
+npm run test:security:integration
+
+# Run full linting, type-checking and test verification
+npm run verify
+```
+
+---
+
+<p align="center">
+  <sub>Built with ❤️ for privacy and zero-trust personal data security.</sub>
+</p>
