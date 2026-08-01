@@ -52,8 +52,8 @@ export const getVaultSnapshot = async (userId: string) => {
   const DynamicVaultModel = getVaultItemModel(username);
   const DynamicLogModel = getActivityLogModel(username);
 
-  const items = await DynamicVaultModel.find({ userId, isDeleted: false }).lean().exec();
-  const logs = await DynamicLogModel.find({ userId }).sort({ createdAt: -1 }).limit(100).lean().exec();
+  const items = await DynamicVaultModel.find({ userId, isDeleted: false }).allowDiskUse().lean().exec();
+  const logs = await DynamicLogModel.find({ userId }).sort({ createdAt: -1 }).allowDiskUse().limit(100).lean().exec();
 
   // Group items into categories for the legacy 'vault' object structure
   const vault: any = {
@@ -100,7 +100,7 @@ export const getVaultSyncChanges = async (userId: string, since?: string) => {
   const items = await DynamicVaultModel.find({
     userId,
     updatedAt: { $gt: sinceDate }
-  }).lean().exec()
+  }).allowDiskUse().lean().exec()
 
   const vaultChanges: any = {
     photos: [], videos: [], audios: [], documents: [], otherFiles: [],

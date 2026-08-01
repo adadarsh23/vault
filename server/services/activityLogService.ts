@@ -206,6 +206,7 @@ export const getUserActivityLogs = async (
     const DynamicLogModel = getActivityLogModel(username);
     const logs = await DynamicLogModel.find(query)
       .sort({ createdAt: -1 })
+      .allowDiskUse()
       .skip(skip)
       .limit(limit)
       .exec()
@@ -284,6 +285,7 @@ export const getRecentActivityLogs = async (
       createdAt: { $gte: cutoffDate },
     })
       .sort({ createdAt: -1 })
+      .allowDiskUse()
       .limit(500)
       .exec()
 
@@ -324,6 +326,7 @@ export const getActivityLogsByAction = async (
       isDeleted: false,
     })
       .sort({ createdAt: -1 })
+      .allowDiskUse()
       .limit(limit)
       .exec()
 

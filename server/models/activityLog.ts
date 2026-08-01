@@ -121,7 +121,9 @@ export const getActivityLogModel = (username: string): Model<ActivityLogType> =>
   if (mongoose.models[collectionName]) {
     return mongoose.models[collectionName] as Model<ActivityLogType>;
   }
-  return mongoose.model<ActivityLogType>(collectionName, encryptedActivityLogSchema, collectionName);
+  const model = mongoose.model<ActivityLogType>(collectionName, encryptedActivityLogSchema, collectionName);
+  model.createIndexes().catch(() => {});
+  return model;
 };
 
 // Removed default ActivityLog model to prevent automatic collection creation.

@@ -159,6 +159,7 @@ class SecurityDashboardService {
         timestamp: { $gte: oneDayAgo },
       })
         .sort({ timestamp: -1 })
+        .allowDiskUse()
         .limit(50)
         .lean() as any[]
 

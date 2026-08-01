@@ -66,6 +66,8 @@ vaultItemSchema.index({ userId: 1, itemId: 1 }, { unique: true });
 vaultItemSchema.index({ userId: 1, category: 1, isDeleted: 1 });
 vaultItemSchema.index({ userId: 1, isDeleted: 1, updatedAt: -1 });
 vaultItemSchema.index({ userId: 1, updatedAt: -1 });
+vaultItemSchema.index({ isDeleted: 1, updatedAt: -1 });
+vaultItemSchema.index({ updatedAt: -1 });
 
 export type VaultItemType = mongoose.InferSchemaType<typeof vaultItemSchema>;
 export type VaultItemDocument = mongoose.HydratedDocument<VaultItemType>;
@@ -86,7 +88,9 @@ export const getVaultItemModel = (username: string): mongoose.Model<VaultItemTyp
     return mongoose.models[collectionName] as mongoose.Model<VaultItemType>;
   }
   
-  return mongoose.model<VaultItemType>(collectionName, vaultItemSchema, collectionName);
+  const model = mongoose.model<VaultItemType>(collectionName, vaultItemSchema, collectionName);
+  model.createIndexes().catch(() => {});
+  return model;
 };
 
 // Removed default VaultItem model to prevent automatic collection creation.

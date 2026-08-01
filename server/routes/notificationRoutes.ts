@@ -16,6 +16,7 @@ router.get('/', requireAuth, async (req, res) => {
   const userId = (req as AuthenticatedRequest).user.userId
   const notifications = await Notification.find({ userId })
     .sort({ createdAt: -1 })
+    .allowDiskUse()
     .limit(50)
     .lean()
     .exec()

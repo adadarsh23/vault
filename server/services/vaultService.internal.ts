@@ -1238,7 +1238,7 @@ export const getUserStoredBytes = async (userId: string, username: string) => {
   const aggregate = await DynamicVaultModel.aggregate([
     { $match: { userId, isDeleted: false } },
     { $group: { _id: null, total: { $sum: { $ifNull: ['$metadata.size', 0] } } } },
-  ])
+  ]).allowDiskUse(true)
   return Number(aggregate?.[0]?.total || 0)
 }
 
