@@ -498,7 +498,7 @@
     "name": "video-players"
   },
   "index.html": {
-    "file": "assets/index-BBBuJ_Xk.js",
+    "file": "assets/index-UtPjT5ss.js",
     "name": "index",
     "src": "index.html",
     "isEntry": true,
@@ -672,7 +672,7 @@
     "src": "node_modules/pqc-kyber/pqc_kyber_bg.wasm"
   },
   "src/components/app/LockedVaultHost.tsx": {
-    "file": "assets/LockedVaultHost-B_y_ypz6.js",
+    "file": "assets/LockedVaultHost-ChOmu8r5.js",
     "name": "LockedVaultHost",
     "src": "src/components/app/LockedVaultHost.tsx",
     "isDynamicEntry": true,
@@ -698,7 +698,7 @@
     ]
   },
   "src/components/app/UnlockedVaultHost.tsx": {
-    "file": "assets/UnlockedVaultHost-BLL2BFQS.js",
+    "file": "assets/UnlockedVaultHost-BlRrrYxj.js",
     "name": "UnlockedVaultHost",
     "src": "src/components/app/UnlockedVaultHost.tsx",
     "isDynamicEntry": true,
@@ -782,7 +782,7 @@
     ]
   },
   "src/components/vault/CommandPalette.tsx": {
-    "file": "assets/CommandPalette-BZtKRaIt.js",
+    "file": "assets/CommandPalette-CQOrWSS5.js",
     "name": "CommandPalette",
     "src": "src/components/vault/CommandPalette.tsx",
     "isDynamicEntry": true,
@@ -798,7 +798,7 @@
     ]
   },
   "src/components/vault/MaintenanceModal.tsx": {
-    "file": "assets/MaintenanceModal-BjeytUdX.js",
+    "file": "assets/MaintenanceModal-BFt-IMgS.js",
     "name": "MaintenanceModal",
     "src": "src/components/vault/MaintenanceModal.tsx",
     "isDynamicEntry": true,
@@ -855,7 +855,7 @@
     ]
   },
   "src/features/LegalPage.tsx": {
-    "file": "assets/LegalPage-CCgj5BbJ.js",
+    "file": "assets/LegalPage-C-2Yow5O.js",
     "name": "LegalPage",
     "src": "src/features/LegalPage.tsx",
     "isDynamicEntry": true,
@@ -885,7 +885,7 @@
     ]
   },
   "src/features/auth/AuthScreen.tsx": {
-    "file": "assets/AuthScreen-DmLSy8Ht.js",
+    "file": "assets/AuthScreen-JrYVoqm3.js",
     "name": "AuthScreen",
     "src": "src/features/auth/AuthScreen.tsx",
     "isDynamicEntry": true,
@@ -907,7 +907,7 @@
     ]
   },
   "src/features/vault/AudioVault.tsx": {
-    "file": "assets/AudioVault-BhhTjrwE.js",
+    "file": "assets/AudioVault-BDplc0gy.js",
     "name": "AudioVault",
     "src": "src/features/vault/AudioVault.tsx",
     "isDynamicEntry": true,
@@ -1008,7 +1008,7 @@
     ]
   },
   "src/features/vault/Dashboard.tsx": {
-    "file": "assets/Dashboard-DhmPRRZR.js",
+    "file": "assets/Dashboard-D9lfCgHk.js",
     "name": "Dashboard",
     "src": "src/features/vault/Dashboard.tsx",
     "isDynamicEntry": true,
@@ -1028,7 +1028,7 @@
     ]
   },
   "src/features/vault/DeviceSessionsPage.tsx": {
-    "file": "assets/DeviceSessionsPage-BMiqOv6W.js",
+    "file": "assets/DeviceSessionsPage-C4n7SUCz.js",
     "name": "DeviceSessionsPage",
     "src": "src/features/vault/DeviceSessionsPage.tsx",
     "isDynamicEntry": true,
@@ -1159,7 +1159,7 @@
     ]
   },
   "src/features/vault/NotesVault.tsx": {
-    "file": "assets/NotesVault-CZxEopQ-.js",
+    "file": "assets/NotesVault-Dt6Uws18.js",
     "name": "NotesVault",
     "src": "src/features/vault/NotesVault.tsx",
     "isDynamicEntry": true,
@@ -1194,7 +1194,7 @@
     ]
   },
   "src/features/vault/OtherFilesVault.tsx": {
-    "file": "assets/OtherFilesVault-BLbvcpUN.js",
+    "file": "assets/OtherFilesVault-BmQSxT5P.js",
     "name": "OtherFilesVault",
     "src": "src/features/vault/OtherFilesVault.tsx",
     "isDynamicEntry": true,
@@ -1287,7 +1287,7 @@
     ]
   },
   "src/features/vault/SettingsVault.tsx": {
-    "file": "assets/SettingsVault-CUJfYQEV.js",
+    "file": "assets/SettingsVault-URMTuscP.js",
     "name": "SettingsVault",
     "src": "src/features/vault/SettingsVault.tsx",
     "isDynamicEntry": true,

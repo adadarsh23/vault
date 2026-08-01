@@ -16,8 +16,7 @@ export type RuntimeSnapshot = {
   p95LatencyMs: number;
 };
 
-export const formatMemoryUsage = (bytes: number) =>
-  `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+export const formatMemoryUsage = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 
 export const formatDurationMs = (ms: number) => `${Math.round(ms)} ms`;
 
@@ -68,13 +67,9 @@ export const createRuntimeMetrics = () => {
     const elapsedMinutes = Math.max((Date.now() - startedAt) / 60000, 1 / 60);
     const sorted = [...latenciesMs].sort((a, b) => a - b);
     const avgLatencyMs =
-      latenciesMs.length > 0
-        ? latenciesMs.reduce((sum, n) => sum + n, 0) / latenciesMs.length
-        : 0;
+      latenciesMs.length > 0 ? latenciesMs.reduce((sum, n) => sum + n, 0) / latenciesMs.length : 0;
     const p95Index =
-      sorted.length > 0
-        ? Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))
-        : -1;
+      sorted.length > 0 ? Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95)) : -1;
 
     return {
       totalRequests,

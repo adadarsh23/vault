@@ -1,35 +1,34 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import ReCAPTCHA from 'react-google-recaptcha'
-import { AlertTriangle, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react'
-import { cn } from '../../lib/utils'
-import { useThemeStore } from '../../store/themeStore'
-import type { RecaptchaStatus } from '../../hooks/useRecaptchaChallenge'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import ReCAPTCHA from 'react-google-recaptcha';
+import { AlertTriangle, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { useThemeStore } from '../../store/themeStore';
+import type { RecaptchaStatus } from '../../hooks/useRecaptchaChallenge';
 
 interface RecaptchaFieldProps {
-  id: string
-  token: string | null
-  status: RecaptchaStatus
-  message?: string | null
-  resetNonce?: number
-  disabled?: boolean
-  className?: string
-  onChange: (token: string | null) => void
-  onExpired: () => void
-  onError: () => void
+  id: string;
+  token: string | null;
+  status: RecaptchaStatus;
+  message?: string | null;
+  resetNonce?: number;
+  disabled?: boolean;
+  className?: string;
+  onChange: (token: string | null) => void;
+  onExpired: () => void;
+  onError: () => void;
 }
 
 const RECAPTCHA_MISSING_SITE_KEY_MESSAGE =
-  'Security challenge is unavailable. Configure VITE_RECAPTCHA_SITE_KEY with a reCAPTCHA v2 Checkbox site key.'
-const RECAPTCHA_LOADING_MESSAGE = 'Loading security challenge...'
-const RECAPTCHA_PENDING_MESSAGE =
-  'Complete CAPTCHA before submitting this form.'
+  'Security challenge is unavailable. Configure VITE_RECAPTCHA_SITE_KEY with a reCAPTCHA v2 Checkbox site key.';
+const RECAPTCHA_LOADING_MESSAGE = 'Loading security challenge...';
+const RECAPTCHA_PENDING_MESSAGE = 'Complete CAPTCHA before submitting this form.';
 const RECAPTCHA_LOAD_ERROR_MESSAGE =
-  'Security challenge failed to load. Use a reCAPTCHA v2 Checkbox key and allow Google reCAPTCHA domains in CSP.'
-const RECAPTCHA_WIDTH = 304
-const RECAPTCHA_HEIGHT = 78
-const RECAPTCHA_MIN_SCALE = 0.6
-const RECAPTCHA_SCRIPT_TIMEOUT_MS = 12_000
-type RecaptchaWidgetState = 'loading' | 'ready' | 'error'
+  'Security challenge failed to load. Use a reCAPTCHA v2 Checkbox key and allow Google reCAPTCHA domains in CSP.';
+const RECAPTCHA_WIDTH = 304;
+const RECAPTCHA_HEIGHT = 78;
+const RECAPTCHA_MIN_SCALE = 0.6;
+const RECAPTCHA_SCRIPT_TIMEOUT_MS = 12_000;
+type RecaptchaWidgetState = 'loading' | 'ready' | 'error';
 
 export const RecaptchaField = ({
   id,
@@ -43,151 +42,145 @@ export const RecaptchaField = ({
   onExpired,
   onError,
 }: RecaptchaFieldProps) => {
-  const selectedTheme = useThemeStore((state) => state.theme)
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
-  const [widgetScale, setWidgetScale] = useState(1)
-  const [widgetState, setWidgetState] =
-    useState<RecaptchaWidgetState>('loading')
-  const recaptchaRef = useRef<ReCAPTCHA | null>(null)
-  const wrapperRef = useRef<HTMLDivElement | null>(null)
-  const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim() || ''
+  const selectedTheme = useThemeStore((state) => state.theme);
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const [widgetScale, setWidgetScale] = useState(1);
+  const [widgetState, setWidgetState] = useState<RecaptchaWidgetState>('loading');
+  const recaptchaRef = useRef<ReCAPTCHA | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim() || '';
 
   const blurRecaptchaFocus = useCallback(() => {
-    const activeElement = document.activeElement
-    if (
-      activeElement instanceof HTMLElement &&
-      wrapperRef.current?.contains(activeElement)
-    ) {
-      activeElement.blur()
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement && wrapperRef.current?.contains(activeElement)) {
+      activeElement.blur();
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    blurRecaptchaFocus()
-    recaptchaRef.current?.reset()
-  }, [blurRecaptchaFocus, resetNonce])
+    blurRecaptchaFocus();
+    recaptchaRef.current?.reset();
+  }, [blurRecaptchaFocus, resetNonce]);
 
   useEffect(() => {
     return () => {
-      blurRecaptchaFocus()
-    }
-  }, [blurRecaptchaFocus])
+      blurRecaptchaFocus();
+    };
+  }, [blurRecaptchaFocus]);
 
   useEffect(() => {
     if (!siteKey) {
-      return
+      return;
     }
 
-    setWidgetState('loading')
+    setWidgetState('loading');
     const timeoutId = window.setTimeout(() => {
-      setWidgetState((current) => (current === 'ready' ? current : 'error'))
-    }, RECAPTCHA_SCRIPT_TIMEOUT_MS)
+      setWidgetState((current) => (current === 'ready' ? current : 'error'));
+    }, RECAPTCHA_SCRIPT_TIMEOUT_MS);
 
     return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [siteKey, resolvedTheme])
+      window.clearTimeout(timeoutId);
+    };
+  }, [siteKey, resolvedTheme]);
 
   useEffect(() => {
-    const wrapper = wrapperRef.current
+    const wrapper = wrapperRef.current;
     if (!wrapper || typeof ResizeObserver === 'undefined') {
-      return
+      return;
     }
 
     const updateScale = () => {
-      const availableWidth = wrapper.clientWidth - 2
+      const availableWidth = wrapper.clientWidth - 2;
       if (availableWidth <= 0) {
-        return
+        return;
       }
 
       const nextScale = Math.min(
         1,
-        Math.max(RECAPTCHA_MIN_SCALE, availableWidth / RECAPTCHA_WIDTH),
-      )
+        Math.max(RECAPTCHA_MIN_SCALE, availableWidth / RECAPTCHA_WIDTH)
+      );
 
-      setWidgetScale((current) =>
-        Math.abs(current - nextScale) < 0.01 ? current : nextScale,
-      )
-    }
+      setWidgetScale((current) => (Math.abs(current - nextScale) < 0.01 ? current : nextScale));
+    };
 
-    updateScale()
-    const observer = new ResizeObserver(updateScale)
-    observer.observe(wrapper)
+    updateScale();
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(wrapper);
 
     return () => {
-      observer.disconnect()
-    }
-  }, [])
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     if (selectedTheme === 'dark') {
-      setResolvedTheme('dark')
-      return
+      setResolvedTheme('dark');
+      return;
     }
 
     if (selectedTheme === 'light') {
-      setResolvedTheme('light')
-      return
+      setResolvedTheme('light');
+      return;
     }
 
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const apply = () => setResolvedTheme(media.matches ? 'dark' : 'light')
-    apply()
-    media.addEventListener('change', apply)
-    return () => media.removeEventListener('change', apply)
-  }, [selectedTheme])
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => setResolvedTheme(media.matches ? 'dark' : 'light');
+    apply();
+    media.addEventListener('change', apply);
+    return () => media.removeEventListener('change', apply);
+  }, [selectedTheme]);
 
-  const isCompleted = Boolean(token)
-  const hasErrorState = status === 'error' || widgetState === 'error'
-  const isLoadingState = widgetState === 'loading' && !isCompleted
+  const isCompleted = Boolean(token);
+  const hasErrorState = status === 'error' || widgetState === 'error';
+  const isLoadingState = widgetState === 'loading' && !isCompleted;
 
   const statusText = useMemo(() => {
     if (message) {
-      return message
+      return message;
     }
 
     if (isCompleted || status === 'verified') {
-      return 'CAPTCHA completed.'
+      return 'CAPTCHA completed.';
     }
 
     if (status === 'expired') {
-      return 'CAPTCHA expired. Please complete it again.'
+      return 'CAPTCHA expired. Please complete it again.';
     }
 
     if (hasErrorState) {
-      return RECAPTCHA_LOAD_ERROR_MESSAGE
+      return RECAPTCHA_LOAD_ERROR_MESSAGE;
     }
 
     if (isLoadingState) {
-      return RECAPTCHA_LOADING_MESSAGE
+      return RECAPTCHA_LOADING_MESSAGE;
     }
 
-    return RECAPTCHA_PENDING_MESSAGE
-  }, [hasErrorState, isCompleted, isLoadingState, message, status])
+    return RECAPTCHA_PENDING_MESSAGE;
+  }, [hasErrorState, isCompleted, isLoadingState, message, status]);
 
   const handleChange = useCallback(
     (nextToken: string | null) => {
-      setWidgetState('ready')
-      onChange(nextToken)
+      setWidgetState('ready');
+      onChange(nextToken);
     },
-    [onChange],
-  )
+    [onChange]
+  );
 
   const handleScriptLoad = useCallback(() => {
-    setWidgetState('ready')
-  }, [])
+    setWidgetState('ready');
+  }, []);
 
   const handleWidgetError = useCallback(() => {
-    setWidgetState('error')
-    onError()
-  }, [onError])
+    setWidgetState('error');
+    onError();
+  }, [onError]);
 
   if (!siteKey) {
     return (
       <div
         className={cn(
           'rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200',
-          className,
+          className
         )}
         role="alert"
       >
@@ -196,7 +189,7 @@ export const RecaptchaField = ({
           <span>{RECAPTCHA_MISSING_SITE_KEY_MESSAGE}</span>
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -255,7 +248,7 @@ export const RecaptchaField = ({
               ? 'text-emerald-400'
               : hasErrorState || status === 'expired'
                 ? 'text-red-400'
-                : 'text-text/65',
+                : 'text-text/65'
           )}
           role="status"
           aria-live="polite"
@@ -284,5 +277,5 @@ export const RecaptchaField = ({
         </p>
       )}
     </div>
-  )
-}
+  );
+};

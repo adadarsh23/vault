@@ -1,18 +1,18 @@
-import express from "express";
-import mongoose from "mongoose";
-import { ensureMongoReady } from "../mongo.ts";
+import express from 'express';
+import mongoose from 'mongoose';
+import { ensureMongoReady } from '../mongo.ts';
 
-const DEFAULT_DB_NAME = process.env.MONGODB_DB_NAME?.trim() || "vault";
+const DEFAULT_DB_NAME = process.env.MONGODB_DB_NAME?.trim() || 'vault';
 
 const writeHealthHeaders = (res: express.Response) => {
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-  res.setHeader("Pragma", "no-cache");
-  res.setHeader("Expires", "0");
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
 };
 
 const isMongoOptionalMode = (): boolean => {
   const raw = process.env.SKIP_MONGO_CONNECT?.trim().toLowerCase();
-  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
 };
 
 export const getHealthStatus = async (_req: express.Request, res: express.Response) => {
@@ -21,7 +21,7 @@ export const getHealthStatus = async (_req: express.Request, res: express.Respon
 
   return res.status(ready ? 200 : 503).json({
     success: ready,
-    status: ready ? "connected" : "disconnected",
+    status: ready ? 'connected' : 'disconnected',
     database: {
       name: mongoose.connection.name || DEFAULT_DB_NAME,
       readyState: mongoose.connection.readyState,
@@ -44,7 +44,7 @@ export const getReadinessStatus = async (_req: express.Request, res: express.Res
 
   return res.status(ready ? 200 : 503).json({
     success: ready,
-    status: ready ? "ready" : "not_ready",
+    status: ready ? 'ready' : 'not_ready',
     checks: {
       mongo: mongoReady,
       jwtSecret: hasJwtSecret,

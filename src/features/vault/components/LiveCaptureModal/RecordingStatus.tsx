@@ -1,11 +1,11 @@
-import React from 'react'
-import { motion } from 'framer-motion'
+import React from 'react';
+import { motion } from 'framer-motion';
 
 interface RecordingStatusProps {
-  recordingTime: number
-  recordingSize: number
-  formatTime: (s: number) => string
-  formatSize: (b: number) => string
+  recordingTime: number;
+  recordingSize: number;
+  formatTime: (s: number) => string;
+  formatSize: (b: number) => string;
 }
 
 export const RecordingStatus: React.FC<RecordingStatusProps> = ({
@@ -37,5 +37,5 @@ export const RecordingStatus: React.FC<RecordingStatusProps> = ({
         </span>
       </div>
     </motion.div>
-  )
-}
+  );
+};

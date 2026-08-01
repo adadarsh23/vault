@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import {
   useCallback,
@@ -7,20 +7,20 @@ import {
   useMemo,
   useRef,
   type PointerEvent as ReactPointerEvent,
-} from 'react'
-import createGlobe, { type COBEOptions } from 'cobe'
-import { cn } from '../../lib/utils'
+} from 'react';
+import createGlobe, { type COBEOptions } from 'cobe';
+import { cn } from '../../lib/utils';
 
 interface PulseMarker {
-  id: string
-  location: [number, number]
-  delay: number
+  id: string;
+  location: [number, number];
+  delay: number;
 }
 
 export interface GlobeProps {
-  markers?: PulseMarker[]
-  className?: string
-  speed?: number
+  markers?: PulseMarker[];
+  className?: string;
+  speed?: number;
 }
 
 const defaultMarkers: PulseMarker[] = [
@@ -28,54 +28,48 @@ const defaultMarkers: PulseMarker[] = [
   { id: 'pulse-2', location: [40.71, -74.01], delay: 0.5 },
   { id: 'pulse-3', location: [35.68, 139.65], delay: 1 },
   { id: 'pulse-4', location: [-33.87, 151.21], delay: 1.5 },
-]
+];
 
-const BASE_THETA = 0.2
-const THETA_LIMIT = 0.65
-const MARKER_SIZE = 0.025
+const BASE_THETA = 0.2;
+const THETA_LIMIT = 0.65;
+const MARKER_SIZE = 0.025;
 const DRAG_SENSITIVITY = {
   phi: 300,
   theta: 1000,
-} as const
+} as const;
 
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, value))
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-const sanitizeCssIdentifier = (value: string) =>
-  value.replace(/[^a-zA-Z0-9_-]/g, '-')
+const sanitizeCssIdentifier = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, '-');
 
 const getCanvasSize = (canvas: HTMLCanvasElement) => {
-  const rect = canvas.getBoundingClientRect()
-  return Math.floor(Math.min(rect.width, rect.height))
-}
+  const rect = canvas.getBoundingClientRect();
+  return Math.floor(Math.min(rect.width, rect.height));
+};
 
 interface RenderMarker extends PulseMarker {
-  anchorId: string
+  anchorId: string;
 }
 
-export default function Globe({
-  markers = defaultMarkers,
-  className,
-  speed = 0.003,
-}: GlobeProps) {
-  const componentId = useId()
+export default function Globe({ markers = defaultMarkers, className, speed = 0.003 }: GlobeProps) {
+  const componentId = useId();
   const markerNamespace = useMemo(
     () => `globe-${sanitizeCssIdentifier(componentId) || 'instance'}`,
-    [componentId],
-  )
+    [componentId]
+  );
   const renderMarkers = useMemo<RenderMarker[]>(
     () =>
       markers.map((marker, index) => {
-        const rawId = marker.id || `marker-${index + 1}`
-        const safeId = sanitizeCssIdentifier(rawId) || `marker-${index + 1}`
+        const rawId = marker.id || `marker-${index + 1}`;
+        const safeId = sanitizeCssIdentifier(rawId) || `marker-${index + 1}`;
 
         return {
           ...marker,
           anchorId: `${markerNamespace}-${safeId}`,
-        }
+        };
       }),
-    [markerNamespace, markers],
-  )
+    [markerNamespace, markers]
+  );
   const cobeMarkers = useMemo(
     () =>
       renderMarkers.map((marker) => ({
@@ -83,172 +77,154 @@ export default function Globe({
         size: MARKER_SIZE,
         id: marker.anchorId,
       })),
-    [renderMarkers],
-  )
+    [renderMarkers]
+  );
 
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const pointerIdRef = useRef<number | null>(null)
-  const pointerInteracting = useRef<{ x: number; y: number } | null>(null)
-  const dragOffset = useRef({ phi: 0, theta: 0 })
-  const phiOffsetRef = useRef(0)
-  const thetaOffsetRef = useRef(0)
-  const canvasSizeRef = useRef(0)
-  const prefersReducedMotionRef = useRef(false)
-  const isPausedRef = useRef(false)
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pointerIdRef = useRef<number | null>(null);
+  const pointerInteracting = useRef<{ x: number; y: number } | null>(null);
+  const dragOffset = useRef({ phi: 0, theta: 0 });
+  const phiOffsetRef = useRef(0);
+  const thetaOffsetRef = useRef(0);
+  const canvasSizeRef = useRef(0);
+  const prefersReducedMotionRef = useRef(false);
+  const isPausedRef = useRef(false);
 
-  const handlePointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLCanvasElement>) => {
-      pointerIdRef.current = event.pointerId
-      pointerInteracting.current = { x: event.clientX, y: event.clientY }
-      dragOffset.current = { phi: 0, theta: 0 }
-      event.currentTarget.setPointerCapture(event.pointerId)
+  const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
+    pointerIdRef.current = event.pointerId;
+    pointerInteracting.current = { x: event.clientX, y: event.clientY };
+    dragOffset.current = { phi: 0, theta: 0 };
+    event.currentTarget.setPointerCapture(event.pointerId);
 
-      if (canvasRef.current) {
-        canvasRef.current.style.cursor = 'grabbing'
-      }
-
-      isPausedRef.current = true
-    },
-    [],
-  )
-
-  const handlePointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLCanvasElement>) => {
-      if (
-        pointerInteracting.current === null ||
-        pointerIdRef.current !== event.pointerId
-      ) {
-        return
-      }
-
-      dragOffset.current = {
-        phi:
-          (event.clientX - pointerInteracting.current.x) / DRAG_SENSITIVITY.phi,
-        theta:
-          (event.clientY - pointerInteracting.current.y) /
-          DRAG_SENSITIVITY.theta,
-      }
-    },
-    [],
-  )
-
-  const handlePointerUp = useCallback(
-    (event: ReactPointerEvent<HTMLCanvasElement>) => {
-      const activePointerId = pointerIdRef.current
-      if (activePointerId === null || activePointerId !== event.pointerId) {
-        return
-      }
-
-      if (event.currentTarget.hasPointerCapture(activePointerId)) {
-        event.currentTarget.releasePointerCapture(activePointerId)
-      }
-
-      pointerIdRef.current = null
-
-      if (pointerInteracting.current !== null) {
-        phiOffsetRef.current += dragOffset.current.phi
-        thetaOffsetRef.current = clamp(
-          thetaOffsetRef.current + dragOffset.current.theta,
-          -THETA_LIMIT,
-          THETA_LIMIT,
-        )
-        dragOffset.current = { phi: 0, theta: 0 }
-      }
-
-      pointerInteracting.current = null
-
-      if (canvasRef.current) {
-        canvasRef.current.style.cursor = 'grab'
-      }
-
-      isPausedRef.current = false
-    },
-    [],
-  )
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const updateReducedMotionPreference = () => {
-      prefersReducedMotionRef.current = mediaQuery.matches
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = 'grabbing';
     }
 
-    updateReducedMotionPreference()
-    mediaQuery.addEventListener('change', updateReducedMotionPreference)
+    isPausedRef.current = true;
+  }, []);
+
+  const handlePointerMove = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (pointerInteracting.current === null || pointerIdRef.current !== event.pointerId) {
+      return;
+    }
+
+    dragOffset.current = {
+      phi: (event.clientX - pointerInteracting.current.x) / DRAG_SENSITIVITY.phi,
+      theta: (event.clientY - pointerInteracting.current.y) / DRAG_SENSITIVITY.theta,
+    };
+  }, []);
+
+  const handlePointerUp = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
+    const activePointerId = pointerIdRef.current;
+    if (activePointerId === null || activePointerId !== event.pointerId) {
+      return;
+    }
+
+    if (event.currentTarget.hasPointerCapture(activePointerId)) {
+      event.currentTarget.releasePointerCapture(activePointerId);
+    }
+
+    pointerIdRef.current = null;
+
+    if (pointerInteracting.current !== null) {
+      phiOffsetRef.current += dragOffset.current.phi;
+      thetaOffsetRef.current = clamp(
+        thetaOffsetRef.current + dragOffset.current.theta,
+        -THETA_LIMIT,
+        THETA_LIMIT
+      );
+      dragOffset.current = { phi: 0, theta: 0 };
+    }
+
+    pointerInteracting.current = null;
+
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = 'grab';
+    }
+
+    isPausedRef.current = false;
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updateReducedMotionPreference = () => {
+      prefersReducedMotionRef.current = mediaQuery.matches;
+    };
+
+    updateReducedMotionPreference();
+    mediaQuery.addEventListener('change', updateReducedMotionPreference);
 
     return () => {
-      mediaQuery.removeEventListener('change', updateReducedMotionPreference)
+      mediaQuery.removeEventListener('change', updateReducedMotionPreference);
+    };
+  }, []);
+
+  const handlePointerCancel = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
+    const activePointerId = pointerIdRef.current;
+    if (activePointerId === null || activePointerId !== event.pointerId) {
+      return;
     }
-  }, [])
 
-  const handlePointerCancel = useCallback(
-    (event: ReactPointerEvent<HTMLCanvasElement>) => {
-      const activePointerId = pointerIdRef.current
-      if (activePointerId === null || activePointerId !== event.pointerId) {
-        return
-      }
+    if (event.currentTarget.hasPointerCapture(activePointerId)) {
+      event.currentTarget.releasePointerCapture(activePointerId);
+    }
 
-      if (event.currentTarget.hasPointerCapture(activePointerId)) {
-        event.currentTarget.releasePointerCapture(activePointerId)
-      }
+    pointerIdRef.current = null;
 
-      pointerIdRef.current = null
+    if (pointerInteracting.current !== null) {
+      phiOffsetRef.current += dragOffset.current.phi;
+      thetaOffsetRef.current = clamp(
+        thetaOffsetRef.current + dragOffset.current.theta,
+        -THETA_LIMIT,
+        THETA_LIMIT
+      );
+      dragOffset.current = { phi: 0, theta: 0 };
+    }
 
-      if (pointerInteracting.current !== null) {
-        phiOffsetRef.current += dragOffset.current.phi
-        thetaOffsetRef.current = clamp(
-          thetaOffsetRef.current + dragOffset.current.theta,
-          -THETA_LIMIT,
-          THETA_LIMIT,
-        )
-        dragOffset.current = { phi: 0, theta: 0 }
-      }
+    pointerInteracting.current = null;
 
-      pointerInteracting.current = null
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = 'grab';
+    }
 
-      if (canvasRef.current) {
-        canvasRef.current.style.cursor = 'grab'
-      }
-
-      isPausedRef.current = false
-    },
-    [],
-  )
+    isPausedRef.current = false;
+  }, []);
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    let globe: ReturnType<typeof createGlobe> | null = null
-    let animationId = 0
-    let fadeInTimeoutId = 0
-    let resizeObserver: ResizeObserver | null = null
-    let phi = 0
-    let isDisposed = false
+    let globe: ReturnType<typeof createGlobe> | null = null;
+    let animationId = 0;
+    let fadeInTimeoutId = 0;
+    let resizeObserver: ResizeObserver | null = null;
+    let phi = 0;
+    let isDisposed = false;
 
     const updateCanvasSize = () => {
-      if (isDisposed || !canvas.isConnected) return
+      if (isDisposed || !canvas.isConnected) return;
 
-      const nextSize = getCanvasSize(canvas)
-      if (nextSize <= 0) return
+      const nextSize = getCanvasSize(canvas);
+      if (nextSize <= 0) return;
 
-      canvasSizeRef.current = nextSize
+      canvasSizeRef.current = nextSize;
 
       if (!globe) {
-        initialize()
+        initialize();
       }
-    }
+    };
 
     const animate = () => {
-      if (isDisposed) return
+      if (isDisposed) return;
 
-      const currentGlobe = globe
-      if (!currentGlobe) return
+      const currentGlobe = globe;
+      if (!currentGlobe) return;
 
       if (!isPausedRef.current && !prefersReducedMotionRef.current) {
-        phi += speed
+        phi += speed;
       }
 
-      const size = canvasSizeRef.current
+      const size = canvasSizeRef.current;
       if (size > 0) {
         currentGlobe.update({
           width: size,
@@ -257,19 +233,19 @@ export default function Globe({
           theta: clamp(
             BASE_THETA + thetaOffsetRef.current + dragOffset.current.theta,
             -THETA_LIMIT,
-            THETA_LIMIT,
+            THETA_LIMIT
           ),
-        })
+        });
       }
 
-      animationId = window.requestAnimationFrame(animate)
-    }
+      animationId = window.requestAnimationFrame(animate);
+    };
 
     const initialize = () => {
-      if (isDisposed || !canvas.isConnected || globe) return
+      if (isDisposed || !canvas.isConnected || globe) return;
 
-      const size = canvasSizeRef.current
-      if (size === 0) return
+      const size = canvasSizeRef.current;
+      if (size === 0) return;
 
       const globeConfig: COBEOptions = {
         devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
@@ -291,52 +267,47 @@ export default function Globe({
         arcWidth: 0.5,
         arcHeight: 0.25,
         opacity: 0.7,
-      }
+      };
 
-      const createdGlobe = createGlobe(canvas, globeConfig)
+      const createdGlobe = createGlobe(canvas, globeConfig);
       if (isDisposed) {
-        createdGlobe.destroy()
-        return
+        createdGlobe.destroy();
+        return;
       }
-      globe = createdGlobe
+      globe = createdGlobe;
 
-      animationId = window.requestAnimationFrame(animate)
+      animationId = window.requestAnimationFrame(animate);
       fadeInTimeoutId = window.setTimeout(() => {
         if (!isDisposed && canvas.isConnected) {
-          canvas.style.opacity = '1'
+          canvas.style.opacity = '1';
         }
-      }, 0)
-    }
+      }, 0);
+    };
 
-    updateCanvasSize()
-    resizeObserver = new ResizeObserver(() => updateCanvasSize())
-    resizeObserver.observe(canvas)
+    updateCanvasSize();
+    resizeObserver = new ResizeObserver(() => updateCanvasSize());
+    resizeObserver.observe(canvas);
 
     return () => {
-      isDisposed = true
+      isDisposed = true;
 
       if (animationId) {
-        window.cancelAnimationFrame(animationId)
+        window.cancelAnimationFrame(animationId);
       }
       if (fadeInTimeoutId) {
-        window.clearTimeout(fadeInTimeoutId)
+        window.clearTimeout(fadeInTimeoutId);
       }
-      resizeObserver?.disconnect()
+      resizeObserver?.disconnect();
       if (globe) {
-        const activeGlobe = globe
-        globe = null
-        activeGlobe.destroy()
+        const activeGlobe = globe;
+        globe = null;
+        activeGlobe.destroy();
       }
-    }
-  }, [cobeMarkers, speed])
+    };
+  }, [cobeMarkers, speed]);
 
   return (
-    <div
-      className={cn(
-        'relative aspect-square select-none overflow-visible',
-        className,
-      )}
-    >
+    <div className={cn('relative aspect-square select-none overflow-visible', className)}>
       <style>{`
         @keyframes pulse-expand {
           0% { transform: scaleX(0.3) scaleY(0.3); opacity: 0.8; }
@@ -419,5 +390,5 @@ export default function Globe({
         </div>
       ))}
     </div>
-  )
+  );
 }

@@ -8,40 +8,40 @@ import {
   useEffect,
   memo,
   forwardRef,
-} from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
-import { X, ChevronUp, ChevronDown } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
-import DOMPurify from 'dompurify'
-import { marked } from 'marked'
+} from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { X, ChevronUp, ChevronDown } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import DOMPurify from 'dompurify';
+import { marked } from 'marked';
 
-import { Button } from '../../ui/Button'
-import { cn } from '../../../lib/utils'
-import { ScrollButton } from '../ScrollButton'
+import { Button } from '../../ui/Button';
+import { cn } from '../../../lib/utils';
+import { ScrollButton } from '../ScrollButton';
 
 interface NoteEditorPreviewProps {
-  content: string
-  lineWrap: boolean
-  showPreview: boolean
-  showHtmlPreview: boolean
-  onToggleTask: (taskIndex: number, checked: boolean) => void
-  onToggleTaskByLine: (lineNumber: number, checked: boolean) => boolean
-  setShowPreview: (show: boolean) => void
-  setShowHtmlPreview: (show: boolean) => void
+  content: string;
+  lineWrap: boolean;
+  showPreview: boolean;
+  showHtmlPreview: boolean;
+  onToggleTask: (taskIndex: number, checked: boolean) => void;
+  onToggleTaskByLine: (lineNumber: number, checked: boolean) => boolean;
+  setShowPreview: (show: boolean) => void;
+  setShowHtmlPreview: (show: boolean) => void;
 }
 
 export interface NoteEditorPreviewRef {
-  scrollToTop: () => void
-  scrollToBottom: () => void
-  scrollToRatio: (ratio: number) => void
+  scrollToTop: () => void;
+  scrollToBottom: () => void;
+  scrollToRatio: (ratio: number) => void;
 }
 
 interface ScrollMetrics {
-  scrollTop: number
-  scrollHeight: number
-  clientHeight: number
+  scrollTop: number;
+  scrollHeight: number;
+  clientHeight: number;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -49,51 +49,51 @@ interface ScrollMetrics {
 /* -------------------------------------------------------------------------- */
 
 function throttle<T extends (...args: any[]) => void>(fn: T, delay: number) {
-  let lastCall = 0
+  let lastCall = 0;
 
   return (...args: Parameters<T>) => {
-    const now = Date.now()
+    const now = Date.now();
 
     if (now - lastCall >= delay) {
-      lastCall = now
-      fn(...args)
+      lastCall = now;
+      fn(...args);
     }
-  }
+  };
 }
 
 const getSafeMarkdownHref = (href?: string) => {
-  if (!href) return '#'
-  const trimmedHref = href.trim()
-  if (!trimmedHref) return '#'
+  if (!href) return '#';
+  const trimmedHref = href.trim();
+  if (!trimmedHref) return '#';
   if (
     trimmedHref.startsWith('#') ||
     trimmedHref.startsWith('/') ||
     trimmedHref.startsWith('./') ||
     trimmedHref.startsWith('../')
   ) {
-    return trimmedHref
+    return trimmedHref;
   }
 
-  const lowerHref = trimmedHref.toLowerCase()
+  const lowerHref = trimmedHref.toLowerCase();
   if (
     lowerHref.startsWith('javascript:') ||
     lowerHref.startsWith('data:') ||
     lowerHref.startsWith('vbscript:')
   ) {
-    return '#'
+    return '#';
   }
 
   try {
-    const parsed = new URL(trimmedHref, window.location.origin)
+    const parsed = new URL(trimmedHref, window.location.origin);
     if (['http:', 'https:', 'mailto:', 'tel:'].includes(parsed.protocol)) {
-      return trimmedHref
+      return trimmedHref;
     }
   } catch {
-    return '#'
+    return '#';
   }
 
-  return '#'
-}
+  return '#';
+};
 
 const buildHtmlDocument = (body: string) => `
 <!doctype html>
@@ -188,16 +188,13 @@ const buildHtmlDocument = (body: string) => `
 
   <body>${body}</body>
 </html>
-`
+`;
 
 /* -------------------------------------------------------------------------- */
 /*                                COMPONENT                                   */
 /* -------------------------------------------------------------------------- */
 
-const NoteEditorPreviewBase = forwardRef<
-  NoteEditorPreviewRef,
-  NoteEditorPreviewProps
->(
+const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreviewProps>(
   (
     {
       content,
@@ -209,16 +206,16 @@ const NoteEditorPreviewBase = forwardRef<
       setShowPreview,
       setShowHtmlPreview,
     },
-    ref,
+    ref
   ) => {
-    const internalRef = useRef<HTMLDivElement>(null)
+    const internalRef = useRef<HTMLDivElement>(null);
 
-    const deferredContent = useDeferredValue(content)
-    const prefersReducedMotion = useReducedMotion()
+    const deferredContent = useDeferredValue(content);
+    const prefersReducedMotion = useReducedMotion();
 
-    const [showTop, setShowTop] = useState(false)
-    const [showBottom, setShowBottom] = useState(false)
-    const taskRenderIndexRef = useRef(0)
+    const [showTop, setShowTop] = useState(false);
+    const [showBottom, setShowBottom] = useState(false);
+    const taskRenderIndexRef = useRef(0);
 
     /* ---------------------------------------------------------------------- */
     /*                              SANITIZE SCHEMA                           */
@@ -240,8 +237,8 @@ const NoteEditorPreviewBase = forwardRef<
           li: [...((defaultSchema.attributes?.li as string[]) || []), 'class'],
         },
       }),
-      [],
-    )
+      []
+    );
 
     /* ---------------------------------------------------------------------- */
     /*                               SCROLL API                               */
@@ -251,28 +248,28 @@ const NoteEditorPreviewBase = forwardRef<
       internalRef.current?.scrollTo({
         top: 0,
         behavior: 'smooth',
-      })
-    }, [])
+      });
+    }, []);
 
     const scrollToBottom = useCallback(() => {
-      const el = internalRef.current
+      const el = internalRef.current;
 
-      if (!el) return
+      if (!el) return;
 
       el.scrollTo({
         top: el.scrollHeight,
         behavior: 'smooth',
-      })
-    }, [])
+      });
+    }, []);
 
     const scrollToRatio = useCallback((ratio: number) => {
-      const el = internalRef.current
-      if (!el) return
+      const el = internalRef.current;
+      if (!el) return;
 
-      const clampedRatio = Math.max(0, Math.min(1, ratio))
-      const targetScroll = clampedRatio * (el.scrollHeight - el.clientHeight)
-      el.scrollTop = targetScroll
-    }, [])
+      const clampedRatio = Math.max(0, Math.min(1, ratio));
+      const targetScroll = clampedRatio * (el.scrollHeight - el.clientHeight);
+      el.scrollTop = targetScroll;
+    }, []);
 
     useImperativeHandle(
       ref,
@@ -281,8 +278,8 @@ const NoteEditorPreviewBase = forwardRef<
         scrollToBottom,
         scrollToRatio,
       }),
-      [scrollToTop, scrollToBottom, scrollToRatio],
-    )
+      [scrollToTop, scrollToBottom, scrollToRatio]
+    );
 
     /* ---------------------------------------------------------------------- */
     /*                            KEYBOARD ACCESSIBILITY                      */
@@ -291,17 +288,17 @@ const NoteEditorPreviewBase = forwardRef<
     useEffect(() => {
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
-          setShowPreview(false)
-          setShowHtmlPreview(false)
+          setShowPreview(false);
+          setShowHtmlPreview(false);
         }
-      }
+      };
 
-      window.addEventListener('keydown', handleKeyDown)
+      window.addEventListener('keydown', handleKeyDown);
 
       return () => {
-        window.removeEventListener('keydown', handleKeyDown)
-      }
-    }, [setShowPreview, setShowHtmlPreview])
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [setShowPreview, setShowHtmlPreview]);
 
     /* ---------------------------------------------------------------------- */
     /*                            MARKDOWN CONTENT                            */
@@ -309,8 +306,8 @@ const NoteEditorPreviewBase = forwardRef<
 
     const highlightedMarkdownContent = useMemo(
       () => deferredContent.replace(/==(.+?)==/g, '<mark>$1</mark>'),
-      [deferredContent],
-    )
+      [deferredContent]
+    );
 
     /* ---------------------------------------------------------------------- */
     /*                             HTML PREVIEW                               */
@@ -322,26 +319,23 @@ const NoteEditorPreviewBase = forwardRef<
           gfm: true,
           breaks: true,
           async: false,
-        })
+        });
 
         const safeBodyHtml = DOMPurify.sanitize(markdownAsHtml, {
           USE_PROFILES: {
             html: true,
           },
-        })
+        });
 
-        return buildHtmlDocument(safeBodyHtml)
+        return buildHtmlDocument(safeBodyHtml);
       } catch (error) {
         if (import.meta.env.DEV) {
-          console.error(
-            '[NoteEditorPreview] Failed to generate preview:',
-            error,
-          )
+          console.error('[NoteEditorPreview] Failed to generate preview:', error);
         }
 
-        return buildHtmlDocument('<p>Preview failed to render.</p>')
+        return buildHtmlDocument('<p>Preview failed to render.</p>');
       }
-    }, [highlightedMarkdownContent])
+    }, [highlightedMarkdownContent]);
 
     /* ---------------------------------------------------------------------- */
     /*                               SCROLL STATE                             */
@@ -349,22 +343,22 @@ const NoteEditorPreviewBase = forwardRef<
 
     const handleScroll = useCallback(
       throttle(({ scrollTop, scrollHeight, clientHeight }: ScrollMetrics) => {
-        setShowTop(scrollTop > 150)
+        setShowTop(scrollTop > 150);
 
-        setShowBottom(scrollHeight - scrollTop - clientHeight > 150)
+        setShowBottom(scrollHeight - scrollTop - clientHeight > 150);
       }, 120),
-      [],
-    )
+      []
+    );
 
     /* ---------------------------------------------------------------------- */
     /*                                 GUARD                                  */
     /* ---------------------------------------------------------------------- */
 
     if (!showPreview && !showHtmlPreview) {
-      return null
+      return null;
     }
 
-    taskRenderIndexRef.current = 0
+    taskRenderIndexRef.current = 0;
 
     /* ---------------------------------------------------------------------- */
     /*                                RENDER                                  */
@@ -383,7 +377,7 @@ const NoteEditorPreviewBase = forwardRef<
           'flex flex-col',
           'bg-bg/95 md:bg-black/10',
           'backdrop-blur-sm',
-          'overflow-hidden',
+          'overflow-hidden'
         )}
       >
         {/* HEADER */}
@@ -393,16 +387,10 @@ const NoteEditorPreviewBase = forwardRef<
             'flex items-center justify-between',
             'px-5 py-3',
             'border-b border-white/5',
-            'bg-white/[0.02]',
+            'bg-white/[0.02]'
           )}
         >
-          <span
-            className={cn(
-              'text-xs font-semibold',
-              'text-text/50',
-              'uppercase tracking-wide',
-            )}
-          >
+          <span className={cn('text-xs font-semibold', 'text-text/50', 'uppercase tracking-wide')}>
             {showHtmlPreview ? 'HTML Preview' : 'Markdown Preview'}
           </span>
 
@@ -414,8 +402,8 @@ const NoteEditorPreviewBase = forwardRef<
               variant="ghost"
               size="icon"
               onClick={() => {
-                setShowPreview(false)
-                setShowHtmlPreview(false)
+                setShowPreview(false);
+                setShowHtmlPreview(false);
               }}
               className="md:hidden h-7 w-7 text-text/50 hover:text-white"
             >
@@ -445,18 +433,18 @@ const NoteEditorPreviewBase = forwardRef<
         <div
           ref={internalRef}
           onScroll={(e) => {
-            const target = e.currentTarget
+            const target = e.currentTarget;
 
             handleScroll({
               scrollTop: target.scrollTop,
               scrollHeight: target.scrollHeight,
               clientHeight: target.clientHeight,
-            })
+            });
           }}
           className={cn(
             'relative flex-1 overflow-y-auto',
             'scroll-smooth custom-scrollbar',
-            !showHtmlPreview && 'p-8 md:p-10',
+            !showHtmlPreview && 'p-8 md:p-10'
           )}
         >
           {showHtmlPreview ? (
@@ -483,7 +471,7 @@ const NoteEditorPreviewBase = forwardRef<
                 'prose-li:text-text/70',
                 'prose-strong:text-white',
                 'prose-code:text-white/90',
-                'pb-40',
+                'pb-40'
               )}
             >
               <ReactMarkdown
@@ -491,28 +479,19 @@ const NoteEditorPreviewBase = forwardRef<
                 rehypePlugins={[[rehypeSanitize, markdownSanitizeSchema]]}
                 components={{
                   ol: ({ children }) => (
-                    <ol className="list-decimal list-outside pl-6 my-3 space-y-1">
-                      {children}
-                    </ol>
+                    <ol className="list-decimal list-outside pl-6 my-3 space-y-1">{children}</ol>
                   ),
 
                   ul: ({ children }) => (
-                    <ul className="list-disc list-outside pl-6 my-3 space-y-1">
-                      {children}
-                    </ul>
+                    <ul className="list-disc list-outside pl-6 my-3 space-y-1">{children}</ul>
                   ),
 
                   li: ({ children }) => (
-                    <li className="whitespace-pre-wrap break-words">
-                      {children}
-                    </li>
+                    <li className="whitespace-pre-wrap break-words">{children}</li>
                   ),
 
                   a: ({ href, children }) => (
-                    <a
-                      href={getSafeMarkdownHref(href)}
-                      className="text-blue-400 hover:underline"
-                    >
+                    <a href={getSafeMarkdownHref(href)} className="text-blue-400 hover:underline">
                       {children}
                     </a>
                   ),
@@ -523,29 +502,19 @@ const NoteEditorPreviewBase = forwardRef<
                     </blockquote>
                   ),
 
-                  del: ({ children }) => (
-                    <del className="text-text/60">{children}</del>
-                  ),
+                  del: ({ children }) => <del className="text-text/60">{children}</del>,
 
                   mark: ({ children }) => (
-                    <mark className="rounded px-1 bg-amber-300/80 text-black">
-                      {children}
-                    </mark>
+                    <mark className="rounded px-1 bg-amber-300/80 text-black">{children}</mark>
                   ),
 
                   input: ({ type, checked, disabled, node }) => {
                     if (type !== 'checkbox') {
-                      return (
-                        <input
-                          type={type}
-                          checked={checked}
-                          disabled={disabled}
-                        />
-                      )
+                      return <input type={type} checked={checked} disabled={disabled} />;
                     }
 
-                    const currentTaskIndex = taskRenderIndexRef.current
-                    taskRenderIndexRef.current += 1
+                    const currentTaskIndex = taskRenderIndexRef.current;
+                    taskRenderIndexRef.current += 1;
 
                     return (
                       <input
@@ -554,43 +523,34 @@ const NoteEditorPreviewBase = forwardRef<
                         disabled={showHtmlPreview}
                         className="mr-2 h-4 w-4 cursor-pointer align-middle accent-emerald-500 transition-transform duration-150 hover:scale-110"
                         onClick={(e) => {
-                          e.stopPropagation()
+                          e.stopPropagation();
                         }}
                         onChange={(e) => {
-                          const lineNumber =
-                            (node as { position?: { start?: { line?: number } } })
-                              ?.position?.start?.line
+                          const lineNumber = (node as { position?: { start?: { line?: number } } })
+                            ?.position?.start?.line;
                           if (typeof lineNumber === 'number' && lineNumber > 0) {
                             const toggledByLine = onToggleTaskByLine(
                               lineNumber,
-                              e.currentTarget.checked,
-                            )
-                            if (toggledByLine) return
+                              e.currentTarget.checked
+                            );
+                            if (toggledByLine) return;
                           }
-                          onToggleTask(
-                            currentTaskIndex,
-                            e.currentTarget.checked,
-                          )
+                          onToggleTask(currentTaskIndex, e.currentTarget.checked);
                         }}
                       />
-                    )
+                    );
                   },
 
                   // Apply completed-task visual treatment directly in preview.
                   p: ({ children }) => {
-                    const childArray = Array.isArray(children)
-                      ? children
-                      : [children]
+                    const childArray = Array.isArray(children) ? children : [children];
                     const hasCheckedTask = childArray.some((child) => {
-                      if (!child || typeof child !== 'object') return false
+                      if (!child || typeof child !== 'object') return false;
                       const node = child as {
-                        props?: { type?: string; checked?: boolean }
-                      }
-                      return (
-                        node.props?.type === 'checkbox' &&
-                        Boolean(node.props.checked)
-                      )
-                    })
+                        props?: { type?: string; checked?: boolean };
+                      };
+                      return node.props?.type === 'checkbox' && Boolean(node.props.checked);
+                    });
 
                     return (
                       <p
@@ -598,12 +558,12 @@ const NoteEditorPreviewBase = forwardRef<
                           lineWrap
                             ? 'whitespace-pre-wrap break-words'
                             : 'whitespace-pre overflow-x-auto',
-                          hasCheckedTask && 'text-text/45 line-through',
+                          hasCheckedTask && 'text-text/45 line-through'
                         )}
                       >
                         {children}
                       </p>
-                    )
+                    );
                   },
                 }}
               >
@@ -613,9 +573,9 @@ const NoteEditorPreviewBase = forwardRef<
           )}
         </div>
       </motion.div>
-    )
-  },
-)
+    );
+  }
+);
 
-NoteEditorPreviewBase.displayName = 'NoteEditorPreview'
-export const NoteEditorPreview = memo(NoteEditorPreviewBase)
+NoteEditorPreviewBase.displayName = 'NoteEditorPreview';
+export const NoteEditorPreview = memo(NoteEditorPreviewBase);

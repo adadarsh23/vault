@@ -1,6 +1,6 @@
-import React, { memo } from 'react'
-import { Fingerprint, KeyRound, Shield } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/Card'
+import React, { memo } from 'react';
+import { Fingerprint, KeyRound, Shield } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/Card';
 
 export const AdvancedAuthCard: React.FC = memo(() => (
   <Card className="border-card-border bg-card-bg">
@@ -14,8 +14,8 @@ export const AdvancedAuthCard: React.FC = memo(() => (
       <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4">
         <p className="text-sm font-bold text-text">Coming Next</p>
         <p className="mt-2 text-sm text-text/60">
-          Multi-factor authentication and passkey-based login are planned for a
-          future hardening pass.
+          Multi-factor authentication and passkey-based login are planned for a future hardening
+          pass.
         </p>
       </div>
 
@@ -46,6 +46,6 @@ export const AdvancedAuthCard: React.FC = memo(() => (
       </div>
     </CardContent>
   </Card>
-))
+));
 
-AdvancedAuthCard.displayName = 'AdvancedAuthCard'
+AdvancedAuthCard.displayName = 'AdvancedAuthCard';

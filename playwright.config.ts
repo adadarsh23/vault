@@ -1,17 +1,17 @@
-import { existsSync } from 'node:fs'
-import { chromium, defineConfig, devices, firefox, webkit } from '@playwright/test'
+import { existsSync } from 'node:fs';
+import { chromium, defineConfig, devices, firefox, webkit } from '@playwright/test';
 
-process.env.NO_PROXY = process.env.NO_PROXY ?? '127.0.0.1,localhost'
-process.env.no_proxy = process.env.no_proxy ?? '127.0.0.1,localhost'
-process.env.E2E_USERNAME = process.env.E2E_USERNAME || 'demo-user'
-process.env.E2E_ACCOUNT_PASSWORD = process.env.E2E_ACCOUNT_PASSWORD || 'DemoPassword123!'
-process.env.E2E_MASTER_KEY = process.env.E2E_MASTER_KEY || 'DemoMasterKey123!'
+process.env.NO_PROXY = process.env.NO_PROXY ?? '127.0.0.1,localhost';
+process.env.no_proxy = process.env.no_proxy ?? '127.0.0.1,localhost';
+process.env.E2E_USERNAME = process.env.E2E_USERNAME || 'demo-user';
+process.env.E2E_ACCOUNT_PASSWORD = process.env.E2E_ACCOUNT_PASSWORD || 'DemoPassword123!';
+process.env.E2E_MASTER_KEY = process.env.E2E_MASTER_KEY || 'DemoMasterKey123!';
 
-const e2ePort = process.env.PLAYWRIGHT_PORT ?? '4100'
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${e2ePort}`
-const reuseServer = !process.env.CI
-const skipWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER === '1'
-const isCI = !!process.env.CI
+const e2ePort = process.env.PLAYWRIGHT_PORT ?? '4100';
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${e2ePort}`;
+const reuseServer = !process.env.CI;
+const skipWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER === '1';
+const isCI = !!process.env.CI;
 
 const browserProjects = [
   {
@@ -29,15 +29,16 @@ const browserProjects = [
     browser: webkit,
     use: { ...devices['Desktop Safari'] },
   },
-]
+];
 
 const installedBrowserProjects = browserProjects
   .filter(({ browser }) => isCI || existsSync(browser.executablePath()))
-  .map(({ name, use }) => ({ name, use }))
+  .map(({ name, use }) => ({ name, use }));
 
-const activeProjects = installedBrowserProjects.length > 0
-  ? installedBrowserProjects
-  : browserProjects.map(({ name, use }) => ({ name, use }))
+const activeProjects =
+  installedBrowserProjects.length > 0
+    ? installedBrowserProjects
+    : browserProjects.map(({ name, use }) => ({ name, use }));
 
 export default defineConfig({
   testDir: './tests/e2e/specs',
@@ -72,13 +73,11 @@ export default defineConfig({
             NODE_ENV: 'test',
             REQUIRE_ES256_IN_PRODUCTION: 'false',
             JWT_SECRET: 'playwright-e2e-jwt-secret-32chars-minimum!!',
-            REFRESH_TOKEN_SECRET:
-              'playwright-e2e-refresh-secret-32chars-min!',
+            REFRESH_TOKEN_SECRET: 'playwright-e2e-refresh-secret-32chars-min!',
             VAULT_ENCRYPTION_KEY:
               '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
             AUTH_PEPPER: 'playwright-e2e-auth-pepper',
-            ENVELOPE_KEK:
-              'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
+            ENVELOPE_KEK: 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
             CLIENT_URL: baseURL,
             PUBLIC_URL: baseURL,
             VITE_APP_PUBLIC_URL: baseURL,
@@ -92,4 +91,4 @@ export default defineConfig({
         },
       }),
   globalSetup: './tests/e2e/global-setup.ts',
-})
+});

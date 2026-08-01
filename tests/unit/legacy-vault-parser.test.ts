@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { parseLegacyPayloadFromRequest } from '../../server/controllers/legacyVaultController.ts'
+import { describe, expect, it } from 'vitest';
+import { parseLegacyPayloadFromRequest } from '../../server/controllers/legacyVaultController.ts';
 
 describe('parseLegacyPayloadFromRequest', () => {
   it('uses encrypted headers as the source of truth for modern payloads', async () => {
@@ -19,18 +19,18 @@ describe('parseLegacyPayloadFromRequest', () => {
         username: 'alice',
         id: 'todo-1',
       },
-    } as any
+    } as any;
 
-    const parsed = await parseLegacyPayloadFromRequest(req, {} as any)
+    const parsed = await parseLegacyPayloadFromRequest(req, {} as any);
 
-    expect(parsed).not.toBeNull()
-    expect(parsed?.category).toBe('todo')
-    expect(parsed?.title).toBe('V2_ENC:encrypted-title-bundle')
-    expect(parsed?.folder).toBeNull()
+    expect(parsed).not.toBeNull();
+    expect(parsed?.category).toBe('todo');
+    expect(parsed?.title).toBe('V2_ENC:encrypted-title-bundle');
+    expect(parsed?.folder).toBeNull();
     expect(parsed?.metadata).toEqual({
       payload: 'V2_ENC:encrypted-metadata-bundle',
-    })
-  })
+    });
+  });
 
   it('preserves plaintext legacy payload fields when encrypted headers are absent', async () => {
     const req = {
@@ -46,18 +46,18 @@ describe('parseLegacyPayloadFromRequest', () => {
         username: 'alice',
         id: 'todo-2',
       },
-    } as any
+    } as any;
 
-    const parsed = await parseLegacyPayloadFromRequest(req, {} as any)
+    const parsed = await parseLegacyPayloadFromRequest(req, {} as any);
 
-    expect(parsed).not.toBeNull()
-    expect(parsed?.category).toBe('todo')
-    expect(parsed?.title).toBe('Legacy Todo Title')
-    expect(parsed?.folder).toBe('Work')
+    expect(parsed).not.toBeNull();
+    expect(parsed?.category).toBe('todo');
+    expect(parsed?.title).toBe('Legacy Todo Title');
+    expect(parsed?.folder).toBe('Work');
     expect(parsed?.metadata).toMatchObject({
       custom: 'value',
       username: 'alice',
       id: 'todo-2',
-    })
-  })
-})
+    });
+  });
+});

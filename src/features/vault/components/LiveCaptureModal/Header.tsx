@@ -1,16 +1,16 @@
-import React from 'react'
-import { motion } from 'framer-motion'
-import { Camera, Video, Mic, X, Loader2 } from 'lucide-react'
-import { Button } from '../../../../components/ui/Button'
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Camera, Video, Mic, X, Loader2 } from 'lucide-react';
+import { Button } from '../../../../components/ui/Button';
 // Removed unused cn import
-import { CaptureType } from './types'
+import { CaptureType } from './types';
 
 interface HeaderProps {
-  type: CaptureType
-  isRecording: boolean
-  capturedBlob: Blob | null
-  isClosing: boolean
-  onClose: () => void
+  type: CaptureType;
+  isRecording: boolean;
+  capturedBlob: Blob | null;
+  isClosing: boolean;
+  onClose: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,8 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   isClosing,
   onClose,
 }) => {
-  const headingLabel =
-    type === 'photo' ? 'Photo' : type === 'video' ? 'Video' : 'Audio'
+  const headingLabel = type === 'photo' ? 'Photo' : type === 'video' ? 'Video' : 'Audio';
 
   return (
     <div className="z-10 flex items-center justify-between p-1.5 px-4 md:p-4 bg-white/[0.03] border-b border-white/10 backdrop-blur-3xl shadow-lg">
@@ -43,7 +42,9 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </h3>
           <p className="hidden md:block text-xs font-semibold text-white/30 tracking-wide uppercase mt-0.5">
-            {capturedBlob ? 'Quality Assurance Review' : `Military-Grade Secure ${headingLabel} session`}
+            {capturedBlob
+              ? 'Quality Assurance Review'
+              : `Military-Grade Secure ${headingLabel} session`}
           </p>
         </div>
       </div>
@@ -61,5 +62,5 @@ export const Header: React.FC<HeaderProps> = ({
         )}
       </Button>
     </div>
-  )
-}
+  );
+};

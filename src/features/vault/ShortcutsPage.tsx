@@ -1,16 +1,16 @@
-import React, { useState } from 'react'
-import { ArrowLeft, Keyboard } from 'lucide-react'
-import { Button } from '../../components/ui/Button'
-import { ShortcutsCard } from './components/SettingsVault/ShortcutsCard'
+import React, { useState } from 'react';
+import { ArrowLeft, Keyboard } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { ShortcutsCard } from './components/SettingsVault/ShortcutsCard';
 
 interface ShortcutsPageProps {
-  onBack: () => void
+  onBack: () => void;
 }
 
 export const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ onBack }) => {
-  const [showShortcuts, setShowShortcuts] = useState(false)
+  const [showShortcuts, setShowShortcuts] = useState(false);
   // Backward-compatible alias to avoid runtime crashes from stale references.
-  const showShortcutskeys = showShortcuts
+  const showShortcutskeys = showShortcuts;
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-bg px-4 py-5 text-text sm:px-6 sm:py-6 lg:px-8 lg:py-8">
@@ -36,10 +36,7 @@ export const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ onBack }) => {
               Back
             </Button>
             {!showShortcutskeys && (
-              <Button
-                onClick={() => setShowShortcuts(true)}
-                className="h-11 w-full rounded-2xl"
-              >
+              <Button onClick={() => setShowShortcuts(true)} className="h-11 w-full rounded-2xl">
                 <Keyboard className="mr-2 h-4 w-4" />
                 Tap
               </Button>
@@ -47,12 +44,10 @@ export const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ onBack }) => {
           </div>
         </div>
         {/* 👇 Lazy mount only when needed */}
-        {showShortcutskeys && (
-          <ShortcutsCard />
-        )}
+        {showShortcutskeys && <ShortcutsCard />}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ShortcutsPage
+export default ShortcutsPage;

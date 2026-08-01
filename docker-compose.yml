@@ -5,7 +5,7 @@ services:
     image: mongo:latest
     container_name: vault-mongodb
     ports:
-      - "27017:27017"
+      - '27017:27017'
     volumes:
       - mongodb_data:/data/db
     restart: always
@@ -14,7 +14,7 @@ services:
     build: .
     container_name: vault-app
     ports:
-      - "4000:4000"
+      - '4000:4000'
     environment:
       - NODE_ENV=development
       - PORT=4000

@@ -48,10 +48,7 @@ export const titleBox = (title: string, subtitle?: string) => {
   return [top, t, ...(s ? [s] : []), bottom];
 };
 
-export const badge = (
-  label: 'UP' | 'WARN' | 'DOWN' | 'INFO',
-  message: string,
-) => {
+export const badge = (label: 'UP' | 'WARN' | 'DOWN' | 'INFO', message: string) => {
   const color =
     label === 'UP'
       ? ansi.green

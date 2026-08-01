@@ -1,6 +1,6 @@
-import { getActivityLogModel, ActivityLogDocument } from '../models/activityLog.ts'
-import { logger } from '../utils/logger.ts'
-import { encryptText, decryptText } from '../utils/crypto.ts'
+import { getActivityLogModel, ActivityLogDocument } from '../models/activityLog.ts';
+import { logger } from '../utils/logger.ts';
+import { encryptText, decryptText } from '../utils/crypto.ts';
 
 /**
  * Activity Log Service
@@ -11,18 +11,18 @@ import { encryptText, decryptText } from '../utils/crypto.ts'
 export type ActivityAction = string;
 
 export interface ActivityLogEntry {
-  userId: string
-  username: string
-  action: ActivityAction
-  category: string
-  itemId?: string | null
-  deviceId?: string
-  ipAddress?: string
-  userAgent?: string
-  status?: 'SUCCESS' | 'FAILURE' | 'PARTIAL'
-  errorCode?: string
-  errorMessage?: string
-  details?: Record<string, unknown>
+  userId: string;
+  username: string;
+  action: ActivityAction;
+  category: string;
+  itemId?: string | null;
+  deviceId?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  status?: 'SUCCESS' | 'FAILURE' | 'PARTIAL';
+  errorCode?: string;
+  errorMessage?: string;
+  details?: Record<string, unknown>;
 }
 
 /**
@@ -33,22 +33,19 @@ export interface ActivityLogEntry {
  * @returns Saved activity log document
  */
 export const saveActivityLog = async (
-  entry: ActivityLogEntry,
+  entry: ActivityLogEntry
 ): Promise<ActivityLogDocument | null> => {
   try {
-    const { userId, username, action, category, details = {} } = entry
+    const { userId, username, action, category, details = {} } = entry;
 
-    logger.debug(
-      `[ActivityLogService] Saving activity log for user: ${userId}`,
-      {
-        context: 'saveActivityLog',
-        action,
-        category,
-      },
-    )
+    logger.debug(`[ActivityLogService] Saving activity log for user: ${userId}`, {
+      context: 'saveActivityLog',
+      action,
+      category,
+    });
 
     if (!userId || !action || !category) {
-      throw new Error('Missing required fields: userId, action, or category')
+      throw new Error('Missing required fields: userId, action, or category');
     }
 
     // Encrypt the detailed information
@@ -57,10 +54,10 @@ export const saveActivityLog = async (
       ipAddress: entry.ipAddress || 'unknown',
       userAgent: entry.userAgent || 'unknown',
       details,
-    })
+    });
 
     if (!encryptedDetails) {
-      throw new Error('Failed to encrypt activity log details')
+      throw new Error('Failed to encrypt activity log details');
     }
 
     // Save individual log entry
@@ -80,21 +77,18 @@ export const saveActivityLog = async (
         errorMessage: entry.errorMessage || null,
       },
       createdAt: new Date(),
-    })
+    });
 
-    const savedLog = await logDoc.save()
+    const savedLog = await logDoc.save();
 
-    logger.debug(
-      `[ActivityLogService] Activity log saved successfully for user: ${userId}`,
-      {
-        context: 'saveActivityLog',
-        logId: savedLog._id.toString(),
-        action,
-        timestamp: savedLog.createdAt.toISOString(),
-      },
-    )
+    logger.debug(`[ActivityLogService] Activity log saved successfully for user: ${userId}`, {
+      context: 'saveActivityLog',
+      logId: savedLog._id.toString(),
+      action,
+      timestamp: savedLog.createdAt.toISOString(),
+    });
 
-    return savedLog
+    return savedLog;
   } catch (error) {
     logger.error(
       `[ActivityLogService] Error saving activity log for user: ${entry.userId}`,
@@ -103,31 +97,27 @@ export const saveActivityLog = async (
         context: 'saveActivityLog',
         userId: entry.userId,
         action: entry.action,
-      },
-    )
-    throw error
+      }
+    );
+    throw error;
   }
-}
+};
 
 /**
  * Encrypt activity log details with AES-256-GCM
  */
 const encryptActivityDetails = (data: Record<string, unknown>) => {
   try {
-    const jsonString = JSON.stringify(data)
-    const encrypted = encryptText(jsonString)
-    return encrypted
+    const jsonString = JSON.stringify(data);
+    const encrypted = encryptText(jsonString);
+    return encrypted;
   } catch (error) {
-    logger.error(
-      '[ActivityLogService] Error encrypting activity details',
-      error,
-      {
-        context: 'encryptActivityDetails',
-      },
-    )
-    return null
+    logger.error('[ActivityLogService] Error encrypting activity details', error, {
+      context: 'encryptActivityDetails',
+    });
+    return null;
   }
-}
+};
 
 /**
  * Decrypt activity log details
@@ -135,26 +125,22 @@ const encryptActivityDetails = (data: Record<string, unknown>) => {
 const decryptActivityDetails = (encryptedData: any): Record<string, unknown> | null => {
   try {
     if (!encryptedData || !encryptedData.cipherText) {
-      return null
+      return null;
     }
-    const decrypted = decryptText(encryptedData)
+    const decrypted = decryptText(encryptedData);
 
     if (!decrypted) {
-      return null
+      return null;
     }
 
-    return JSON.parse(decrypted) as Record<string, unknown>
+    return JSON.parse(decrypted) as Record<string, unknown>;
   } catch (error) {
-    logger.error(
-      '[ActivityLogService] Error decrypting activity details',
-      error,
-      {
-        context: 'decryptActivityDetails',
-      },
-    )
-    return null
+    logger.error('[ActivityLogService] Error decrypting activity details', error, {
+      context: 'decryptActivityDetails',
+    });
+    return null;
   }
-}
+};
 
 /**
  * Get activity logs for a user with pagination
@@ -170,37 +156,34 @@ export const getUserActivityLogs = async (
   username: string,
   limit = 100,
   skip = 0,
-  action?: ActivityAction,
+  action?: ActivityAction
 ): Promise<
   Array<{
-    _id: string
-    action: ActivityAction
-    category: string
-    timestamp: Date
-    device: string
-    ipAddress: string
-    status: string
-    details?: Record<string, unknown>
+    _id: string;
+    action: ActivityAction;
+    category: string;
+    timestamp: Date;
+    device: string;
+    ipAddress: string;
+    status: string;
+    details?: Record<string, unknown>;
   }>
 > => {
   try {
-    logger.debug(
-      `[ActivityLogService] Fetching activity logs for user: ${userId}`,
-      {
-        context: 'getUserActivityLogs',
-        limit,
-        skip,
-        action,
-      },
-    )
+    logger.debug(`[ActivityLogService] Fetching activity logs for user: ${userId}`, {
+      context: 'getUserActivityLogs',
+      limit,
+      skip,
+      action,
+    });
 
     const query: any = {
       userId: userId.toString(),
       isDeleted: false,
-    }
+    };
 
     if (action) {
-      query.action = action
+      query.action = action;
     }
 
     const DynamicLogModel = getActivityLogModel(username);
@@ -209,7 +192,7 @@ export const getUserActivityLogs = async (
       .allowDiskUse()
       .skip(skip)
       .limit(limit)
-      .exec()
+      .exec();
 
     return logs.map((log) => ({
       _id: log._id.toString(),
@@ -220,19 +203,15 @@ export const getUserActivityLogs = async (
       ipAddress: log.metadata?.ipAddress || 'unknown',
       status: log.metadata?.status || 'SUCCESS',
       details: decryptActivityDetails(log.encryptedData) || undefined,
-    }))
+    }));
   } catch (error) {
-    logger.error(
-      `[ActivityLogService] Error fetching activity logs for user: ${userId}`,
-      error,
-      {
-        context: 'getUserActivityLogs',
-        userId,
-      },
-    )
-    return []
+    logger.error(`[ActivityLogService] Error fetching activity logs for user: ${userId}`, error, {
+      context: 'getUserActivityLogs',
+      userId,
+    });
+    return [];
   }
-}
+};
 
 /**
  * Get activity logs count for a user
@@ -246,21 +225,17 @@ export const getActivityLogCount = async (userId: string, username: string): Pro
     const count = await DynamicLogModel.countDocuments({
       userId,
       isDeleted: false,
-    })
+    });
 
-    return count
+    return count;
   } catch (error) {
-    logger.error(
-      `[ActivityLogService] Error counting activity logs for user: ${userId}`,
-      error,
-      {
-        context: 'getActivityLogCount',
-        userId,
-      },
-    )
-    return 0
+    logger.error(`[ActivityLogService] Error counting activity logs for user: ${userId}`, error, {
+      context: 'getActivityLogCount',
+      userId,
+    });
+    return 0;
   }
-}
+};
 
 /**
  * Get recent activity for a user (last N days)
@@ -272,11 +247,11 @@ export const getActivityLogCount = async (userId: string, username: string): Pro
 export const getRecentActivityLogs = async (
   userId: string,
   username: string,
-  daysBack = 7,
+  daysBack = 7
 ): Promise<ActivityLogDocument[]> => {
   try {
-    const cutoffDate = new Date()
-    cutoffDate.setDate(cutoffDate.getDate() - daysBack)
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysBack);
 
     const DynamicLogModel = getActivityLogModel(username);
     const logs = await DynamicLogModel.find({
@@ -287,9 +262,9 @@ export const getRecentActivityLogs = async (
       .sort({ createdAt: -1 })
       .allowDiskUse()
       .limit(500)
-      .exec()
+      .exec();
 
-    return logs
+    return logs;
   } catch (error) {
     logger.error(
       `[ActivityLogService] Error fetching recent activity logs for user: ${userId}`,
@@ -298,11 +273,11 @@ export const getRecentActivityLogs = async (
         context: 'getRecentActivityLogs',
         userId,
         daysBack,
-      },
-    )
-    return []
+      }
+    );
+    return [];
   }
-}
+};
 
 /**
  * Get activity logs by action type
@@ -316,7 +291,7 @@ export const getActivityLogsByAction = async (
   userId: string,
   username: string,
   action: ActivityAction,
-  limit = 100,
+  limit = 100
 ): Promise<ActivityLogDocument[]> => {
   try {
     const DynamicLogModel = getActivityLogModel(username);
@@ -328,9 +303,9 @@ export const getActivityLogsByAction = async (
       .sort({ createdAt: -1 })
       .allowDiskUse()
       .limit(limit)
-      .exec()
+      .exec();
 
-    return logs
+    return logs;
   } catch (error) {
     logger.error(
       `[ActivityLogService] Error fetching activity logs by action for user: ${userId}`,
@@ -339,11 +314,11 @@ export const getActivityLogsByAction = async (
         context: 'getActivityLogsByAction',
         userId,
         action,
-      },
-    )
-    return []
+      }
+    );
+    return [];
   }
-}
+};
 
 /**
  * Soft delete activity log
@@ -357,21 +332,17 @@ export const deleteActivityLog = async (logId: string, username: string): Promis
     const result = await DynamicLogModel.findByIdAndUpdate(logId, {
       isDeleted: true,
       deletedAt: new Date(),
-    })
+    });
 
-    return !!result
+    return !!result;
   } catch (error) {
-    logger.error(
-      `[ActivityLogService] Error deleting activity log: ${logId}`,
-      error,
-      {
-        context: 'deleteActivityLog',
-        logId,
-      },
-    )
-    return false
+    logger.error(`[ActivityLogService] Error deleting activity log: ${logId}`, error, {
+      context: 'deleteActivityLog',
+      logId,
+    });
+    return false;
   }
-}
+};
 
 /**
  * Delete all activity logs for a user
@@ -380,15 +351,12 @@ export const deleteActivityLog = async (logId: string, username: string): Promis
  * @param userId - User ID
  * @returns Number of deleted logs
  */
-export const deleteUserActivityLogs = async (
-  userId: string,
-  username: string,
-): Promise<number> => {
+export const deleteUserActivityLogs = async (userId: string, username: string): Promise<number> => {
   try {
     const DynamicLogModel = getActivityLogModel(username);
     const result = await DynamicLogModel.deleteMany({
       userId,
-    })
+    });
 
     logger.info(
       `[ActivityLogService] Deleted ${result.deletedCount} activity logs for user: ${userId}`,
@@ -396,22 +364,18 @@ export const deleteUserActivityLogs = async (
         context: 'deleteUserActivityLogs',
         userId,
         deletedCount: result.deletedCount,
-      },
-    )
+      }
+    );
 
-    return result.deletedCount || 0
+    return result.deletedCount || 0;
   } catch (error) {
-    logger.error(
-      `[ActivityLogService] Error deleting activity logs for user: ${userId}`,
-      error,
-      {
-        context: 'deleteUserActivityLogs',
-        userId,
-      },
-    )
-    return 0
+    logger.error(`[ActivityLogService] Error deleting activity logs for user: ${userId}`, error, {
+      context: 'deleteUserActivityLogs',
+      userId,
+    });
+    return 0;
   }
-}
+};
 
 /**
  * Get suspicious activity (failed attempts, multiple devices, unusual IPs)
@@ -421,7 +385,7 @@ export const deleteUserActivityLogs = async (
  */
 export const getSuspiciousActivity = async (
   userId: string,
-  username: string,
+  username: string
 ): Promise<ActivityLogDocument[]> => {
   try {
     const DynamicLogModel = getActivityLogModel(username);
@@ -431,27 +395,27 @@ export const getSuspiciousActivity = async (
       createdAt: {
         $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
       },
-    }).exec()
+    }).exec();
 
     // Filter for suspicious patterns
-    const suspicious = recentLogs.filter(
-      (log) => {
-        const meta = log.metadata as any;
-        return meta?.status === 'FAILURE' ||
+    const suspicious = recentLogs.filter((log) => {
+      const meta = log.metadata as any;
+      return (
+        meta?.status === 'FAILURE' ||
         (log.action === 'LOGIN' && meta?.status === 'FAILURE') ||
-        meta?.errorCode === 'INVALID_CREDENTIALS';
-      }
-    )
+        meta?.errorCode === 'INVALID_CREDENTIALS'
+      );
+    });
 
     // Get unique IPs
-    const ips = new Set(recentLogs.map((log) => (log.metadata as any)?.ipAddress))
+    const ips = new Set(recentLogs.map((log) => (log.metadata as any)?.ipAddress));
 
     // If more than 3 different IPs, mark all as suspicious
     if (ips.size > 3) {
-      return recentLogs.filter((log) => (log.metadata as any)?.status === 'SUCCESS')
+      return recentLogs.filter((log) => (log.metadata as any)?.status === 'SUCCESS');
     }
 
-    return suspicious
+    return suspicious;
   } catch (error) {
     logger.error(
       `[ActivityLogService] Error getting suspicious activity for user: ${userId}`,
@@ -459,11 +423,11 @@ export const getSuspiciousActivity = async (
       {
         context: 'getSuspiciousActivity',
         userId,
-      },
-    )
-    return []
+      }
+    );
+    return [];
   }
-}
+};
 
 export default {
   saveActivityLog,
@@ -474,4 +438,4 @@ export default {
   deleteActivityLog,
   deleteUserActivityLogs,
   getSuspiciousActivity,
-}
+};

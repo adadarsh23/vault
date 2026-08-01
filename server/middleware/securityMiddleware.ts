@@ -9,24 +9,24 @@
  * - Automated response
  */
 
-import { Request, Response, NextFunction } from 'express'
-import { randomUUID } from 'crypto'
-import { logger } from '../utils/logger.ts'
-import { aiAnomalyDetectionService } from './aiAnomalyDetectionService.ts'
-import { requestFingerprintService } from './requestFingerprintService.ts'
-import { threatResponseService } from './threatResponseService.ts'
+import { Request, Response, NextFunction } from 'express';
+import { randomUUID } from 'crypto';
+import { logger } from '../utils/logger.ts';
+import { aiAnomalyDetectionService } from './aiAnomalyDetectionService.ts';
+import { requestFingerprintService } from './requestFingerprintService.ts';
+import { threatResponseService } from './threatResponseService.ts';
 
 interface SecurityContext {
-  requestId: string
-  fingerprint: string
-  userId?: string
-  riskScore: number
-  anomalies: string[]
-  recommendedAction: 'allow' | 'challenge' | 'block'
+  requestId: string;
+  fingerprint: string;
+  userId?: string;
+  riskScore: number;
+  anomalies: string[];
+  recommendedAction: 'allow' | 'challenge' | 'block';
 }
 
 interface RequestWithSecurity extends Request {
-  security?: SecurityContext
+  security?: SecurityContext;
 }
 
 /**
@@ -35,44 +35,41 @@ interface RequestWithSecurity extends Request {
 export const securityMiddleware = async (
   req: RequestWithSecurity,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ) => {
   try {
-    const requestId = `req_${randomUUID()}`
-    const ip = (req.ip || req.connection.remoteAddress || 'unknown').replace(
-      /^::ffff:/,
-      '',
-    )
+    const requestId = `req_${randomUUID()}`;
+    const ip = (req.ip || req.connection.remoteAddress || 'unknown').replace(/^::ffff:/, '');
 
     // Extract client data from headers + body
-    const clientData = extractClientData(req)
+    const clientData = extractClientData(req);
 
     // Step 1: Generate/validate device fingerprint
-    let fingerprintId = req.get('x-fingerprint-id')
+    let fingerprintId = req.get('x-fingerprint-id');
     let fingerprint = fingerprintId
       ? requestFingerprintService.validateFingerprint(
           req,
           req.user?.userId,
           clientData,
-          fingerprintId,
+          fingerprintId
         )
       : {
           isValid: false,
           trustScore: 50,
           anomalies: ['NEW_DEVICE'],
           recommendation: 'allow' as const,
-        }
+        };
 
     // Step 2: Perform anomaly detection if authenticated
-    let anomalies: string[] = []
-    let riskScore = 0
+    let anomalies: string[] = [];
+    let riskScore = 0;
 
     if (req.user?.userId) {
       // Check if IP is blacklisted
-      const isBlacklisted = await checkIpBlacklist(ip)
+      const isBlacklisted = await checkIpBlacklist(ip);
       if (isBlacklisted) {
-        anomalies.push('IP_BLACKLISTED')
-        riskScore += 100
+        anomalies.push('IP_BLACKLISTED');
+        riskScore += 100;
       }
 
       // Analyze login behavior
@@ -81,23 +78,23 @@ export const securityMiddleware = async (
         ip,
         null, // Location would come from GeoIP lookup
         fingerprintId || 'unknown',
-        req.get('user-agent') || '',
-      )
+        req.get('user-agent') || ''
+      );
 
-      riskScore += loginAnomaly.loginRisk
-      anomalies.push(...loginAnomaly.factors)
+      riskScore += loginAnomaly.loginRisk;
+      anomalies.push(...loginAnomaly.factors);
 
       // Analyze API usage
       if (req.method !== 'GET' || req.path.includes('/api')) {
         const apiAnalysis = await aiAnomalyDetectionService.analyzeApiUsage(
           req.user.userId,
           `${req.method} ${req.path}`,
-          0, // Will be updated on response
-        )
+          0 // Will be updated on response
+        );
 
         if (apiAnalysis.isAnomalous) {
-          riskScore += apiAnalysis.riskScore
-          anomalies.push('API_ANOMALY')
+          riskScore += apiAnalysis.riskScore;
+          anomalies.push('API_ANOMALY');
         }
       }
     }
@@ -109,9 +106,8 @@ export const securityMiddleware = async (
       userId: req.user?.userId,
       riskScore,
       anomalies,
-      recommendedAction:
-        riskScore > 70 ? 'block' : riskScore > 40 ? 'challenge' : 'allow',
-    }
+      recommendedAction: riskScore > 70 ? 'block' : riskScore > 40 ? 'challenge' : 'allow',
+    };
 
     // Log security event
     logger.debug(`[SECURITY] Request processed`, {
@@ -123,7 +119,7 @@ export const securityMiddleware = async (
       riskScore,
       anomalies,
       action: req.security.recommendedAction,
-    })
+    });
 
     // Handle high-risk requests
     if (req.security.recommendedAction === 'block') {
@@ -135,33 +131,32 @@ export const securityMiddleware = async (
           riskScore,
           type: 'suspicious_login',
           details: { anomalies },
-        })
+        });
       }
 
       return res.status(403).json({
         error: 'Access Denied',
-        message:
-          'Your account has triggered security measures. Please contact support.',
+        message: 'Your account has triggered security measures. Please contact support.',
         requestId,
-      })
+      });
     }
 
     if (req.security.recommendedAction === 'challenge') {
       // Require MFA/additional verification
-      res.set('X-Security-Challenge', 'true')
+      res.set('X-Security-Challenge', 'true');
     }
 
     // Include security headers in response
-    res.set('X-Request-ID', requestId)
-    res.set('X-Risk-Score', riskScore.toString())
+    res.set('X-Request-ID', requestId);
+    res.set('X-Risk-Score', riskScore.toString());
 
-    next()
+    next();
   } catch (error) {
-    logger.error('[SECURITY] Error in security middleware', error)
+    logger.error('[SECURITY] Error in security middleware', error);
     // Fail open but log the error
-    next()
+    next();
   }
-}
+};
 
 /**
  * Verify file upload security
@@ -169,14 +164,14 @@ export const securityMiddleware = async (
 export const fileUploadSecurityMiddleware = async (
   req: RequestWithSecurity,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ) => {
   try {
     if (!req.files) {
-      return next()
+      return next();
     }
 
-    const files = Array.isArray(req.files) ? req.files : [req.files]
+    const files = Array.isArray(req.files) ? req.files : [req.files];
     const dangerousExtensions = [
       '.exe',
       '.dll',
@@ -191,40 +186,36 @@ export const fileUploadSecurityMiddleware = async (
       '.js',
       '.jar',
       '.app',
-    ]
+    ];
 
     for (const file of files) {
       // Check file extension
-      const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
+      const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
       if (dangerousExtensions.includes(ext)) {
-        const ip = (
-          req.ip ||
-          req.connection.remoteAddress ||
-          'unknown'
-        ).replace(/^::ffff:/, '')
+        const ip = (req.ip || req.connection.remoteAddress || 'unknown').replace(/^::ffff:/, '');
 
         if (req.user?.userId) {
           await threatResponseService.handleMaliciousUpload(
             req.user.userId,
             ip,
             file.name,
-            'Dangerous file extension',
-          )
+            'Dangerous file extension'
+          );
         }
 
         return res.status(400).json({
           error: 'File Upload Rejected',
           message: `File type ${ext} is not allowed`,
-        })
+        });
       }
 
       // Check file size
-      const maxSize = 500 * 1024 * 1024 // 500 MB
+      const maxSize = 500 * 1024 * 1024; // 500 MB
       if (file.size > maxSize) {
         return res.status(400).json({
           error: 'File Too Large',
           message: 'Maximum file size is 500 MB',
-        })
+        });
       }
 
       // TODO: In production, scan with ClamAV/YARA
@@ -232,12 +223,12 @@ export const fileUploadSecurityMiddleware = async (
       // if (isMalicious) { ... }
     }
 
-    next()
+    next();
   } catch (error) {
-    logger.error('[SECURITY] Error in file upload security', error)
-    next()
+    logger.error('[SECURITY] Error in file upload security', error);
+    next();
   }
-}
+};
 
 /**
  * Track request performance and detect slow/expensive endpoints
@@ -245,15 +236,15 @@ export const fileUploadSecurityMiddleware = async (
 export const performanceSecurityMiddleware = (
   req: RequestWithSecurity,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ) => {
-  const startTime = Date.now()
+  const startTime = Date.now();
 
   // Capture original send function
-  const originalSend = res.send
+  const originalSend = res.send;
 
   res.send = function (data: any) {
-    const duration = Date.now() - startTime
+    const duration = Date.now() - startTime;
 
     // Detect slow requests (potential DoS or inefficient queries)
     if (duration > 5000) {
@@ -262,17 +253,17 @@ export const performanceSecurityMiddleware = (
         method: req.method,
         duration,
         userId: req.user?.userId,
-      })
+      });
 
       // Could trigger additional monitoring
     }
 
     // Continue with normal send
-    return originalSend.call(this, data)
-  }
+    return originalSend.call(this, data);
+  };
 
-  next()
-}
+  next();
+};
 
 /**
  * Extract client data from request
@@ -285,7 +276,7 @@ function extractClientData(req: Request): Record<string, string> {
     webglRenderer: req.get('x-webgl-renderer') || '',
     canvasFingerprint: req.get('x-canvas-fingerprint') || '',
     audioContext: req.get('x-audio-context') || '',
-  }
+  };
 }
 
 /**
@@ -295,27 +286,18 @@ async function checkIpBlacklist(ip: string): Promise<boolean> {
   // In production, check Redis cache
   // const blacklisted = await redisClient.exists(`blacklist:${ip}`)
   // return blacklisted === 1
-  return false
+  return false;
 }
 
 /**
  * Log security event to immutable audit trail
  */
-export const auditLogMiddleware = (
-  req: RequestWithSecurity,
-  res: Response,
-  next: NextFunction,
-) => {
-  const originalSend = res.send
+export const auditLogMiddleware = (req: RequestWithSecurity, res: Response, next: NextFunction) => {
+  const originalSend = res.send;
 
   res.send = function (data: any) {
     // Log sensitive operations
-    const sensitivePaths = [
-      '/auth/login',
-      '/auth/register',
-      '/api/vault/delete',
-      '/api/users/me',
-    ]
+    const sensitivePaths = ['/auth/login', '/auth/register', '/api/vault/delete', '/api/users/me'];
 
     if (sensitivePaths.some((p) => req.path.includes(p))) {
       logger.info(`[AUDIT] Sensitive operation`, {
@@ -326,11 +308,11 @@ export const auditLogMiddleware = (
         ip: req.ip,
         statusCode: res.statusCode,
         timestamp: new Date().toISOString(),
-      })
+      });
     }
 
-    return originalSend.call(this, data)
-  }
+    return originalSend.call(this, data);
+  };
 
-  next()
-}
+  next();
+};

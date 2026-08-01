@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react';
 import {
   type CookieOptions,
   deleteCookie,
@@ -6,55 +6,52 @@ import {
   hasCookie,
   setCookie,
   updateCookie,
-} from '../lib/cookie-utils'
-import { logger } from '../lib/logger'
+} from '../lib/cookie-utils';
+import { logger } from '../lib/logger';
 
 export interface UseCookieApi {
-  value: string | null
-  exists: boolean
-  set: (value: string, options?: CookieOptions) => boolean
-  update: (value: string, options?: CookieOptions) => boolean
-  remove: (options?: CookieOptions) => boolean
-  refresh: () => void
+  value: string | null;
+  exists: boolean;
+  set: (value: string, options?: CookieOptions) => boolean;
+  update: (value: string, options?: CookieOptions) => boolean;
+  remove: (options?: CookieOptions) => boolean;
+  refresh: () => void;
 }
 
-export const useCookie = (
-  name: string,
-  baseOptions?: CookieOptions,
-): UseCookieApi => {
+export const useCookie = (name: string, baseOptions?: CookieOptions): UseCookieApi => {
   const [value, setValue] = useState<string | null>(() => {
     try {
-      return getCookie(name)
+      return getCookie(name);
     } catch (error) {
-      logger.warn('Failed to read cookie in hook initializer', { name, error })
-      return null
+      logger.warn('Failed to read cookie in hook initializer', { name, error });
+      return null;
     }
-  })
+  });
 
   const refresh = useCallback(() => {
     try {
-      setValue(getCookie(name))
+      setValue(getCookie(name));
     } catch (error) {
-      logger.warn('Failed to refresh cookie value', { name, error })
-      setValue(null)
+      logger.warn('Failed to refresh cookie value', { name, error });
+      setValue(null);
     }
-  }, [name])
+  }, [name]);
 
   const set = useCallback(
     (nextValue: string, options?: CookieOptions) => {
       try {
-        const success = setCookie(name, nextValue, { ...baseOptions, ...options })
+        const success = setCookie(name, nextValue, { ...baseOptions, ...options });
         if (success) {
-          setValue(nextValue)
+          setValue(nextValue);
         }
-        return success
+        return success;
       } catch (error) {
-        logger.warn('Failed to set cookie via hook', { name, error })
-        return false
+        logger.warn('Failed to set cookie via hook', { name, error });
+        return false;
       }
     },
-    [baseOptions, name],
-  )
+    [baseOptions, name]
+  );
 
   const update = useCallback(
     (nextValue: string, options?: CookieOptions) => {
@@ -62,47 +59,47 @@ export const useCookie = (
         const success = updateCookie(name, nextValue, {
           ...baseOptions,
           ...options,
-        })
+        });
         if (success) {
-          setValue(nextValue)
+          setValue(nextValue);
         }
-        return success
+        return success;
       } catch (error) {
-        logger.warn('Failed to update cookie via hook', { name, error })
-        return false
+        logger.warn('Failed to update cookie via hook', { name, error });
+        return false;
       }
     },
-    [baseOptions, name],
-  )
+    [baseOptions, name]
+  );
 
   const remove = useCallback(
     (options?: CookieOptions) => {
       try {
-        const success = deleteCookie(name, { ...baseOptions, ...options })
+        const success = deleteCookie(name, { ...baseOptions, ...options });
         if (success) {
-          setValue(null)
+          setValue(null);
         }
-        return success
+        return success;
       } catch (error) {
-        logger.warn('Failed to remove cookie via hook', { name, error })
-        return false
+        logger.warn('Failed to remove cookie via hook', { name, error });
+        return false;
       }
     },
-    [baseOptions, name],
-  )
+    [baseOptions, name]
+  );
 
   const exists = useMemo(() => {
     if (value !== null) {
-      return true
+      return true;
     }
 
     try {
-      return hasCookie(name)
+      return hasCookie(name);
     } catch (error) {
-      logger.warn('Failed to evaluate cookie existence', { name, error })
-      return false
+      logger.warn('Failed to evaluate cookie existence', { name, error });
+      return false;
     }
-  }, [name, value])
+  }, [name, value]);
 
   return useMemo(
     () => ({
@@ -113,6 +110,6 @@ export const useCookie = (
       remove,
       refresh,
     }),
-    [exists, refresh, remove, set, update, value],
-  )
-}
+    [exists, refresh, remove, set, update, value]
+  );
+};

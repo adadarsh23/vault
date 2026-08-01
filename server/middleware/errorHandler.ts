@@ -1,63 +1,63 @@
-import express from "express";
-import multer from "multer";
-import mongoose from "mongoose";
-import { ZodError } from "zod";
-import { AppError } from "../utils/appError.ts";
-import { logger } from "../utils/logger.ts";
-import { getClientIp } from "../utils/requestIp.ts";
-import { addBreadcrumb, captureException } from "../lib/sentry.js";
+import express from 'express';
+import multer from 'multer';
+import mongoose from 'mongoose';
+import { ZodError } from 'zod';
+import { AppError } from '../utils/appError.ts';
+import { logger } from '../utils/logger.ts';
+import { getClientIp } from '../utils/requestIp.ts';
+import { addBreadcrumb, captureException } from '../lib/sentry.js';
 
 export const errorHandler = (
   err: any,
   req: express.Request,
   res: express.Response,
-  _next: express.NextFunction,
+  _next: express.NextFunction
 ) => {
   const requestId = (req as express.Request & { requestId?: string }).requestId;
 
   // Ensure cross-origin resources can see the error response (Avoid COEP/CORP blocks)
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  
+
   // Default values
   let statusCode = err.statusCode || 500;
-  let code = err.code || "INTERNAL_SERVER_ERROR";
-  let message = err.message || "An unexpected error occurred.";
+  let code = err.code || 'INTERNAL_SERVER_ERROR';
+  let message = err.message || 'An unexpected error occurred.';
   let details: any = undefined;
 
   // Handle specific error types
-  if (err instanceof SyntaxError && "body" in err) {
+  if (err instanceof SyntaxError && 'body' in err) {
     statusCode = 400;
-    code = "INVALID_JSON";
-    message = "Request body contains invalid JSON.";
+    code = 'INVALID_JSON';
+    message = 'Request body contains invalid JSON.';
   } else if (err instanceof ZodError) {
     statusCode = 400;
-    code = "VALIDATION_ERROR";
-    message = "Input validation failed.";
+    code = 'VALIDATION_ERROR';
+    message = 'Input validation failed.';
     details = err.issues.map((e: any) => ({
       path: e.path.join('.'),
-      message: e.message
+      message: e.message,
     }));
   } else if (err instanceof mongoose.Error.ValidationError) {
     statusCode = 400;
-    code = "VALIDATION_ERROR";
+    code = 'VALIDATION_ERROR';
     const firstIssue = Object.values(err.errors)[0];
-    message = firstIssue?.message || "Validation failed.";
+    message = firstIssue?.message || 'Validation failed.';
   } else if (err.code === 11000) {
     statusCode = 409;
-    code = "DUPLICATE_RESOURCE";
-    message = "The requested resource already exists.";
-  } else if (err?.code === "EBADCSRFTOKEN") {
+    code = 'DUPLICATE_RESOURCE';
+    message = 'The requested resource already exists.';
+  } else if (err?.code === 'EBADCSRFTOKEN') {
     statusCode = 403;
-    code = "CSRF_TOKEN_INVALID";
-    message = "Invalid or missing CSRF token.";
-  } else if (err.name === "UnauthorizedError" || err.code === "UNAUTHORIZED") {
+    code = 'CSRF_TOKEN_INVALID';
+    message = 'Invalid or missing CSRF token.';
+  } else if (err.name === 'UnauthorizedError' || err.code === 'UNAUTHORIZED') {
     statusCode = 401;
-    code = "UNAUTHORIZED";
-    message = err.message || "Authentication failed.";
-  } else if (err.message === "Origin is not allowed by CORS.") {
+    code = 'UNAUTHORIZED';
+    message = err.message || 'Authentication failed.';
+  } else if (err.message === 'Origin is not allowed by CORS.') {
     statusCode = 403;
-    code = "CORS_FORBIDDEN";
-    message = "Request origin is not allowed.";
+    code = 'CORS_FORBIDDEN';
+    message = 'Request origin is not allowed.';
   } else if (err instanceof multer.MulterError) {
     statusCode = 400;
     code = err.code;
@@ -73,9 +73,9 @@ export const errorHandler = (
 
   // Log error (only critical/unexpected or detailed for debugging)
   addBreadcrumb({
-    category: "error",
+    category: 'error',
     message: message,
-    level: statusCode >= 500 ? "error" : "warning",
+    level: statusCode >= 500 ? 'error' : 'warning',
     data: {
       statusCode,
       code,
@@ -92,7 +92,7 @@ export const errorHandler = (
       route: req.route?.path || req.originalUrl,
       method: req.method,
     },
-    level: statusCode >= 500 ? "error" : "warning",
+    level: statusCode >= 500 ? 'error' : 'warning',
     extra: {
       requestId,
       details,
@@ -102,14 +102,14 @@ export const errorHandler = (
 
   // Log error (only critical/unexpected or detailed for debugging)
   if (statusCode === 500 || !err.isOperational) {
-    logger.error("Unhandled or non-operational server error.", {
+    logger.error('Unhandled or non-operational server error.', {
       requestId,
       method: req.method,
       path: req.originalUrl,
       error: {
         name: err.name,
         message: err.message,
-        stack: process.env.NODE_ENV === "production" ? undefined : err.stack,
+        stack: process.env.NODE_ENV === 'production' ? undefined : err.stack,
       },
       ipAddress: getClientIp(req),
     });
@@ -118,7 +118,7 @@ export const errorHandler = (
       requestId,
       statusCode,
       code,
-      path: req.originalUrl
+      path: req.originalUrl,
     });
   }
 
@@ -129,8 +129,8 @@ export const errorHandler = (
     error: {
       code,
       requestId,
-      ...(process.env.NODE_ENV !== "production" ? { stack: err.stack } : {}),
-      ...(details ? { details } : {})
+      ...(process.env.NODE_ENV !== 'production' ? { stack: err.stack } : {}),
+      ...(details ? { details } : {}),
     },
   });
 };

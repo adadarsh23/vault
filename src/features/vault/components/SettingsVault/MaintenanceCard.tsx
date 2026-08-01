@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import {
   RefreshCw,
   Smartphone,
@@ -11,31 +11,29 @@ import {
   ShieldAlert,
   Cloud,
   X,
-} from 'lucide-react'
-import { SectionCard, ActionButton } from './SharedComponents'
-import { toast } from 'sonner'
+} from 'lucide-react';
+import { SectionCard, ActionButton } from './SharedComponents';
+import { toast } from 'sonner';
 
 interface MaintenanceCardProps {
-  isLoading: boolean
-  syncStatus: string
-  isSessionActionLoading: boolean
-  isSyncingLogs: boolean
-  hasPendingSyncRetry: boolean
-  isMigrating: boolean
-  syncWithCloud: () => Promise<void>
-  loadSessionState: () => Promise<void>
-  syncLogs: () => Promise<void>
-  retryFailedSync: () => Promise<void>
-  migrateLocalToCloud: () => Promise<void>
-  onOpenMaintenance: (
-    type: 'export' | 'import' | 'changeKey' | 'changePassword',
-  ) => void
-  lock: () => void
-  handleLockAllSessions: () => Promise<void>
-  getErrorMessage: (error: unknown, fallback: string) => string
-  setIsMigrating: (value: boolean) => void
-  cancelSync: () => void
-  cancelActivityLogSync: () => void
+  isLoading: boolean;
+  syncStatus: string;
+  isSessionActionLoading: boolean;
+  isSyncingLogs: boolean;
+  hasPendingSyncRetry: boolean;
+  isMigrating: boolean;
+  syncWithCloud: () => Promise<void>;
+  loadSessionState: () => Promise<void>;
+  syncLogs: () => Promise<void>;
+  retryFailedSync: () => Promise<void>;
+  migrateLocalToCloud: () => Promise<void>;
+  onOpenMaintenance: (type: 'export' | 'import' | 'changeKey' | 'changePassword') => void;
+  lock: () => void;
+  handleLockAllSessions: () => Promise<void>;
+  getErrorMessage: (error: unknown, fallback: string) => string;
+  setIsMigrating: (value: boolean) => void;
+  cancelSync: () => void;
+  cancelActivityLogSync: () => void;
 }
 
 export const MaintenanceCard: React.FC<MaintenanceCardProps> = ({
@@ -73,7 +71,7 @@ export const MaintenanceCard: React.FC<MaintenanceCardProps> = ({
             icon={RefreshCw}
             label="Sync cloud"
             onClick={() => {
-              void syncWithCloud()
+              void syncWithCloud();
             }}
             loading={isLoading && syncStatus === 'syncing'}
             variant="outline"
@@ -82,7 +80,7 @@ export const MaintenanceCard: React.FC<MaintenanceCardProps> = ({
             icon={RefreshCw}
             label="Refresh account state"
             onClick={() => {
-              void loadSessionState()
+              void loadSessionState();
             }}
             loading={isSessionActionLoading}
             variant="outline"
@@ -91,7 +89,7 @@ export const MaintenanceCard: React.FC<MaintenanceCardProps> = ({
             icon={Smartphone}
             label="Refresh sessions"
             onClick={() => {
-              void loadSessionState()
+              void loadSessionState();
             }}
             loading={isSessionActionLoading}
             variant="outline"
@@ -100,7 +98,7 @@ export const MaintenanceCard: React.FC<MaintenanceCardProps> = ({
             icon={Activity}
             label="Sync activity log"
             onClick={() => {
-              void syncLogs()
+              void syncLogs();
             }}
             loading={isSyncingLogs}
             disabled={isLoading || isSyncingLogs}
@@ -110,7 +108,7 @@ export const MaintenanceCard: React.FC<MaintenanceCardProps> = ({
             icon={RefreshCw}
             label="Retry failed sync"
             onClick={() => {
-              void retryFailedSync()
+              void retryFailedSync();
             }}
             loading={isLoading && hasPendingSyncRetry}
             disabled={!hasPendingSyncRetry && syncStatus !== 'error'}
@@ -120,14 +118,14 @@ export const MaintenanceCard: React.FC<MaintenanceCardProps> = ({
             icon={Cloud}
             label="Migrate local to cloud"
             onClick={async () => {
-              setIsMigrating(true)
+              setIsMigrating(true);
               try {
-                await migrateLocalToCloud()
-                toast.success('Migration to cloud completed successfully')
+                await migrateLocalToCloud();
+                toast.success('Migration to cloud completed successfully');
               } catch (error) {
-                toast.error(getErrorMessage(error, 'Migration failed'))
+                toast.error(getErrorMessage(error, 'Migration failed'));
               } finally {
-                setIsMigrating(false)
+                setIsMigrating(false);
               }
             }}
             loading={isMigrating}
@@ -189,17 +187,12 @@ export const MaintenanceCard: React.FC<MaintenanceCardProps> = ({
             onClick={() => onOpenMaintenance('changeKey')}
             variant="outline"
           />
-          <ActionButton
-            icon={LogOut}
-            label="Lock vault"
-            onClick={lock}
-            variant="danger"
-          />
+          <ActionButton icon={LogOut} label="Lock vault" onClick={lock} variant="danger" />
           <ActionButton
             icon={Lock}
             label="Lock sessions"
             onClick={() => {
-              void handleLockAllSessions()
+              void handleLockAllSessions();
             }}
             loading={isSessionActionLoading}
             variant="danger"
@@ -208,7 +201,7 @@ export const MaintenanceCard: React.FC<MaintenanceCardProps> = ({
             icon={ShieldAlert}
             label="Logout all sessions"
             onClick={() => {
-              void handleLockAllSessions()
+              void handleLockAllSessions();
             }}
             loading={isSessionActionLoading}
             variant="danger"
@@ -217,4 +210,4 @@ export const MaintenanceCard: React.FC<MaintenanceCardProps> = ({
       </div>
     </div>
   </SectionCard>
-)
+);

@@ -22,14 +22,19 @@ If you experience or witness unacceptable behavior, contact the maintainers priv
 ## Local Setup
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
+
 2. Start development server:
+
 ```bash
 npm run dev
 ```
+
 3. (Optional) Start client only:
+
 ```bash
 npm run dev:client
 ```
@@ -80,4 +85,3 @@ npm run test:auth
 
 Do not open public issues for sensitive vulnerabilities.  
 Report security issues privately to project maintainers.
-

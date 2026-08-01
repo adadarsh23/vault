@@ -1,6 +1,6 @@
-import { Home } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import Globe from "@/components/ui/globe";
+import { Home } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import Globe from '@/components/ui/globe';
 
 export interface NotFoundPageProps {
   title?: string;
@@ -9,8 +9,8 @@ export interface NotFoundPageProps {
 }
 
 export function NotFoundPage({
-  title = "404 - Page Not Found",
-  description = "The page you are looking for does not exist or was moved.",
+  title = '404 - Page Not Found',
+  description = 'The page you are looking for does not exist or was moved.',
   onGoHome,
 }: NotFoundPageProps) {
   const handleGoHome = () => {
@@ -19,7 +19,7 @@ export function NotFoundPage({
       return;
     }
 
-    window.location.href = "/";
+    window.location.href = '/';
   };
 
   return (

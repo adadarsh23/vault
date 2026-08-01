@@ -18,10 +18,11 @@ export const DurationSelector: React.FC<DurationSelectorProps> = ({
       <button
         key={value}
         onClick={() => onChange(value)}
-        className={`flex-1 rounded-lg py-1.5 text-[10px] font-bold transition-all ${current === value
-          ? 'bg-text text-bg shadow-lg'
-          : 'text-text/40 hover:bg-text/5 hover:text-text/60'
-          }`}
+        className={`flex-1 rounded-lg py-1.5 text-[10px] font-bold transition-all ${
+          current === value
+            ? 'bg-text text-bg shadow-lg'
+            : 'text-text/40 hover:bg-text/5 hover:text-text/60'
+        }`}
       >
         {formatLabel(value)}
       </button>

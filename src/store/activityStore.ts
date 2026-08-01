@@ -32,8 +32,7 @@ export interface ActivityEntry {
   isSynced?: boolean;
 }
 
-export type ActivityLogInput =
-  Omit<ActivityEntry, 'id' | 'timestamp'> & { timestamp?: number };
+export type ActivityLogInput = Omit<ActivityEntry, 'id' | 'timestamp'> & { timestamp?: number };
 
 interface ActivityState {
   entries: ActivityEntry[];
@@ -82,11 +81,7 @@ const generateEntryId = (): string => {
   return `activity-${safeNow()}-${Math.random().toString(16).slice(2, 10)}`;
 };
 
-const sanitizeString = (
-  value: unknown,
-  fallback: string,
-  maxLength: number,
-): string => {
+const sanitizeString = (value: unknown, fallback: string, maxLength: number): string => {
   if (typeof value !== 'string') {
     return fallback;
   }
@@ -123,8 +118,7 @@ const normalizeStatus = (value: unknown): ActivityStatus => {
   return 'failure';
 };
 
-const normalizeIsSynced = (value: unknown): boolean =>
-  value === true;
+const normalizeIsSynced = (value: unknown): boolean => value === true;
 
 const normalizeSessionName = (value: unknown): string | undefined => {
   const normalized = sanitizeString(value, '', MAX_SESSION_NAME_LENGTH);
@@ -141,7 +135,7 @@ const normalizeActivityEntry = (
     description: string;
     timestamp: number;
     isSynced: boolean;
-  },
+  }
 ): ActivityEntry => {
   const timestamp = normalizeTimestamp(value.timestamp, fallback.timestamp);
 
@@ -153,24 +147,18 @@ const normalizeActivityEntry = (
     userOrSessionId: sanitizeString(
       value.userOrSessionId,
       fallback.userOrSessionId,
-      MAX_IDENTIFIER_LENGTH,
+      MAX_IDENTIFIER_LENGTH
     ),
     sessionName: normalizeSessionName(value.sessionName),
     status: normalizeStatus(value.status ?? fallback.status),
-    description: sanitizeString(
-      value.description,
-      fallback.description,
-      MAX_DESCRIPTION_LENGTH,
-    ),
-    isSynced: normalizeIsSynced(
-      value.isSynced !== undefined ? value.isSynced : fallback.isSynced,
-    ),
+    description: sanitizeString(value.description, fallback.description, MAX_DESCRIPTION_LENGTH),
+    isSynced: normalizeIsSynced(value.isSynced !== undefined ? value.isSynced : fallback.isSynced),
   };
 };
 
 const pickPreferredEntry = (
   existing: ActivityEntry | undefined,
-  candidate: ActivityEntry,
+  candidate: ActivityEntry
 ): ActivityEntry => {
   if (!existing) {
     return candidate;
@@ -199,14 +187,10 @@ const normalizeAndLimitEntries = (entries: ActivityEntry[]): ActivityEntry[] => 
       timestamp: safeNow(),
       isSynced: false,
     });
-    deduped.set(
-      normalized.id,
-      pickPreferredEntry(deduped.get(normalized.id), normalized),
-    );
+    deduped.set(normalized.id, pickPreferredEntry(deduped.get(normalized.id), normalized));
   }
 
-  return Array.from(deduped.values())
-    .sort((a, b) => b.timestamp - a.timestamp);
+  return Array.from(deduped.values()).sort((a, b) => b.timestamp - a.timestamp);
 };
 
 export const useActivityStore = create<ActivityState>((set) => ({
@@ -225,9 +209,9 @@ export const useActivityStore = create<ActivityState>((set) => ({
       });
 
       const nextEntries = normalizeAndLimitEntries([nextEntry, ...state.entries]);
-      return { 
+      return {
         entries: nextEntries,
-        count: nextEntries.length
+        count: nextEntries.length,
       };
     });
   },
@@ -242,9 +226,9 @@ export const useActivityStore = create<ActivityState>((set) => ({
     set((state) => {
       const unique = normalizeAndLimitEntries([...newEntries, ...state.entries]);
 
-      return { 
+      return {
         entries: unique,
-        count: unique.length
+        count: unique.length,
       };
     });
   },

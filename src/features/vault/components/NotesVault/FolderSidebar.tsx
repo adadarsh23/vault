@@ -1,39 +1,36 @@
-import React, { useMemo, useState, useCallback } from 'react'
-import { cn } from '../../../../lib/utils'
-import { Button } from '../../../../components/ui/Button'
-import { Input } from '../../../../components/ui/Input'
-import { Plus, Trash2, FileText, Check, Folder, Edit2, X } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { getDraggedVaultItem, clearDraggedVaultItem } from '../../../../lib/vaultDragDrop'
-import { isSavedFolderName } from '../../../../lib/folderGuards'
+import React, { useMemo, useState, useCallback } from 'react';
+import { cn } from '../../../../lib/utils';
+import { Button } from '../../../../components/ui/Button';
+import { Input } from '../../../../components/ui/Input';
+import { Plus, Trash2, FileText, Check, Folder, Edit2, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { getDraggedVaultItem, clearDraggedVaultItem } from '../../../../lib/vaultDragDrop';
+import { isSavedFolderName } from '../../../../lib/folderGuards';
 
 /* -------------------- Types -------------------- */
 
 interface Note {
-  id: string
-  folder: string | null
+  id: string;
+  folder: string | null;
 }
 
 export interface FolderSidebarProps {
-  notes: Note[]
-  folders: string[]
-  currentFolder: string | null
-  setCurrentFolder: (folder: string | null) => void
-  isAddingFolder: boolean
-  setIsAddingFolder: (isAdding: boolean) => void
-  newFolderName: string
-  setNewFolderName: (name: string) => void
-  editingFolder: string | null
-  setEditingFolder: (folder: string | null) => void
-  editingFolderName: string
-  setEditingFolderName: (name: string) => void
-  handleCreateFolder: () => void
-  handleRenameFolder: (oldName: string) => void
-  handleDeleteFolder: (folderName: string) => void
-  handleMoveToFolder?: (
-    itemId: string,
-    folderName: string | null,
-  ) => Promise<void> | void
+  notes: Note[];
+  folders: string[];
+  currentFolder: string | null;
+  setCurrentFolder: (folder: string | null) => void;
+  isAddingFolder: boolean;
+  setIsAddingFolder: (isAdding: boolean) => void;
+  newFolderName: string;
+  setNewFolderName: (name: string) => void;
+  editingFolder: string | null;
+  setEditingFolder: (folder: string | null) => void;
+  editingFolderName: string;
+  setEditingFolderName: (name: string) => void;
+  handleCreateFolder: () => void;
+  handleRenameFolder: (oldName: string) => void;
+  handleDeleteFolder: (folderName: string) => void;
+  handleMoveToFolder?: (itemId: string, folderName: string | null) => Promise<void> | void;
 }
 
 /* -------------------- Component -------------------- */
@@ -56,92 +53,92 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
   handleDeleteFolder,
   handleMoveToFolder,
 }) => {
-  const [dropTarget, setDropTarget] = useState<string | null | undefined>()
-  const [draggedItemId, setDraggedItemId] = useState<string | null>(null)
+  const [dropTarget, setDropTarget] = useState<string | null | undefined>();
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
 
   React.useEffect(() => {
     const handleGlobalDragStart = (e: DragEvent) => {
-      const itemId = getDraggedVaultItem({ dataTransfer: e.dataTransfer })
+      const itemId = getDraggedVaultItem({ dataTransfer: e.dataTransfer });
       if (itemId) {
-        setDraggedItemId(itemId)
+        setDraggedItemId(itemId);
       }
-    }
+    };
 
     const handleGlobalDragEnd = () => {
-      setDraggedItemId(null)
-      clearDraggedVaultItem()
-    }
+      setDraggedItemId(null);
+      clearDraggedVaultItem();
+    };
 
-    window.addEventListener('dragstart', handleGlobalDragStart)
-    window.addEventListener('dragend', handleGlobalDragEnd)
+    window.addEventListener('dragstart', handleGlobalDragStart);
+    window.addEventListener('dragend', handleGlobalDragEnd);
 
     return () => {
-      window.removeEventListener('dragstart', handleGlobalDragStart)
-      window.removeEventListener('dragend', handleGlobalDragEnd)
-    }
-  }, [])
+      window.removeEventListener('dragstart', handleGlobalDragStart);
+      window.removeEventListener('dragend', handleGlobalDragEnd);
+    };
+  }, []);
 
   const draggedItem = useMemo(() => {
-    if (!draggedItemId) return null
-    return notes.find((note) => note.id === draggedItemId)
-  }, [draggedItemId, notes])
+    if (!draggedItemId) return null;
+    return notes.find((note) => note.id === draggedItemId);
+  }, [draggedItemId, notes]);
 
-  const draggedItemFolder = draggedItem ? (draggedItem.folder ?? null) : undefined
+  const draggedItemFolder = draggedItem ? (draggedItem.folder ?? null) : undefined;
 
   /* ---------- Memoized counts (performance) ---------- */
   const folderCounts = useMemo(() => {
-    const map: Record<string, number> = {}
+    const map: Record<string, number> = {};
     for (const note of notes) {
       if (note.folder) {
-        map[note.folder] = (map[note.folder] || 0) + 1
+        map[note.folder] = (map[note.folder] || 0) + 1;
       }
     }
-    return map
-  }, [notes])
+    return map;
+  }, [notes]);
 
   /* ---------- Drag handlers ---------- */
   const handleDragOver = useCallback(
     (event: React.DragEvent<HTMLElement>, folder: string | null) => {
-      if (!handleMoveToFolder || !getDraggedVaultItem(event)) return
+      if (!handleMoveToFolder || !getDraggedVaultItem(event)) return;
 
-      const itemId = getDraggedVaultItem(event)
-      const dragged = notes.find((note) => note.id === itemId)
-      const sourceFolder = dragged ? (dragged.folder ?? null) : undefined
+      const itemId = getDraggedVaultItem(event);
+      const dragged = notes.find((note) => note.id === itemId);
+      const sourceFolder = dragged ? (dragged.folder ?? null) : undefined;
 
       // Do not allow drop on the folder where the item already is
-      if (sourceFolder === folder) return
+      if (sourceFolder === folder) return;
 
-      event.preventDefault()
-      event.dataTransfer.dropEffect = 'move'
-      setDropTarget(folder)
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      setDropTarget(folder);
     },
-    [handleMoveToFolder, notes],
-  )
+    [handleMoveToFolder, notes]
+  );
 
   const handleDrop = useCallback(
     async (event: React.DragEvent<HTMLElement>, folder: string | null) => {
-      if (!handleMoveToFolder) return
-      event.preventDefault()
+      if (!handleMoveToFolder) return;
+      event.preventDefault();
 
-      const itemId = getDraggedVaultItem(event)
-      setDropTarget(undefined)
+      const itemId = getDraggedVaultItem(event);
+      setDropTarget(undefined);
 
-      if (!itemId) return
+      if (!itemId) return;
 
-      const dragged = notes.find((note) => note.id === itemId)
-      const sourceFolder = dragged ? (dragged.folder ?? null) : undefined
+      const dragged = notes.find((note) => note.id === itemId);
+      const sourceFolder = dragged ? (dragged.folder ?? null) : undefined;
 
       // Do not allow drop on the folder where the item already is
-      if (sourceFolder === folder) return
+      if (sourceFolder === folder) return;
 
       try {
-        await handleMoveToFolder(itemId, folder)
+        await handleMoveToFolder(itemId, folder);
       } catch (error) {
-        console.error('Move failed:', error)
+        console.error('Move failed:', error);
       }
     },
-    [handleMoveToFolder, notes],
-  )
+    [handleMoveToFolder, notes]
+  );
 
   /* -------------------- UI -------------------- */
 
@@ -179,14 +176,15 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
             'flex items-center gap-3 rounded-xl px-3 py-2 text-sm cursor-pointer transition border border-transparent',
             dropTarget === null && 'ring-2 ring-primary/50 bg-primary/10',
             // Highlight if this is the source folder of the dragged item
-            draggedItemId && draggedItemFolder === null &&
+            draggedItemId &&
+              draggedItemFolder === null &&
               'border border-dashed border-primary/40 bg-primary/10 text-primary',
             // Highlight other folders as valid drop zones
-            draggedItemId && draggedItemFolder !== null &&
+            draggedItemId &&
+              draggedItemFolder !== null &&
               'border border-dashed border-primary/20 bg-primary/5 text-text/70',
-            !draggedItemId && (currentFolder === null
-              ? 'bg-text/10 text-text'
-              : 'text-text/60 hover:bg-text/5'),
+            !draggedItemId &&
+              (currentFolder === null ? 'bg-text/10 text-text' : 'text-text/60 hover:bg-text/5')
           )}
         >
           <FileText className="h-4 w-4" />
@@ -204,9 +202,9 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
 
         {/* Folders */}
         {folders.map((folder) => {
-          const isActive = currentFolder === folder
-          const isDrop = dropTarget === folder
-          const isSavedFolder = isSavedFolderName(folder)
+          const isActive = currentFolder === folder;
+          const isDrop = dropTarget === folder;
+          const isSavedFolder = isSavedFolderName(folder);
 
           return (
             <div key={folder} className="group relative">
@@ -217,9 +215,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                     onChange={(e) => setEditingFolderName(e.target.value)}
                     className="h-8 text-xs"
                     autoFocus
-                    onKeyDown={(e) =>
-                      e.key === 'Enter' && handleRenameFolder(folder)
-                    }
+                    onKeyDown={(e) => e.key === 'Enter' && handleRenameFolder(folder)}
                   />
                   <Button
                     size="icon"
@@ -250,14 +246,15 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                     'flex items-center gap-3 rounded-xl px-3 py-2 text-sm cursor-pointer transition border border-transparent relative',
                     isDrop && 'ring-2 ring-primary/50 bg-primary/10',
                     // Highlight if this is the source folder of the dragged item
-                    draggedItemId && draggedItemFolder === folder &&
+                    draggedItemId &&
+                      draggedItemFolder === folder &&
                       'border border-dashed border-primary/40 bg-primary/10 text-primary',
                     // Highlight other folders as valid drop zones
-                    draggedItemId && draggedItemFolder !== folder &&
+                    draggedItemId &&
+                      draggedItemFolder !== folder &&
                       'border border-dashed border-primary/20 bg-primary/5 text-text/70',
-                    !draggedItemId && (isActive
-                      ? 'bg-text/10 text-text'
-                      : 'text-text/60 hover:bg-text/5'),
+                    !draggedItemId &&
+                      (isActive ? 'bg-text/10 text-text' : 'text-text/60 hover:bg-text/5')
                   )}
                 >
                   <Folder className="h-4 w-4" />
@@ -270,9 +267,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                       Source
                     </span>
                   ) : (
-                    <span className="text-[10px] opacity-40">
-                      {folderCounts[folder] || 0}
-                    </span>
+                    <span className="text-[10px] opacity-40">{folderCounts[folder] || 0}</span>
                   )}
 
                   {/* Actions */}
@@ -283,9 +278,9 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                         size="icon"
                         className="h-6 w-6"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          setEditingFolder(folder)
-                          setEditingFolderName(folder)
+                          e.stopPropagation();
+                          setEditingFolder(folder);
+                          setEditingFolderName(folder);
                         }}
                       >
                         <Edit2 className="h-3 w-3" />
@@ -295,8 +290,8 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                         size="icon"
                         className="h-6 w-6 hover:text-red-400"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          handleDeleteFolder(folder)
+                          e.stopPropagation();
+                          handleDeleteFolder(folder);
                         }}
                       >
                         <Trash2 className="h-3 w-3" />
@@ -306,7 +301,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                 </div>
               )}
             </div>
-          )
+          );
         })}
 
         {/* Add Folder */}
@@ -328,11 +323,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
               />
 
               <div className="flex gap-1">
-                <Button
-                  size="sm"
-                  className="h-7 flex-1 text-[10px]"
-                  onClick={handleCreateFolder}
-                >
+                <Button size="sm" className="h-7 flex-1 text-[10px]" onClick={handleCreateFolder}>
                   Create
                 </Button>
                 <Button
@@ -349,5 +340,5 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
         </AnimatePresence>
       </div>
     </aside>
-  )
-}
+  );
+};

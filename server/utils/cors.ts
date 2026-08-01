@@ -1,4 +1,4 @@
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 
 const isPrivateNetworkHost = (hostname: string): boolean => {
   if (LOCAL_HOSTS.has(hostname)) {
@@ -13,17 +13,13 @@ const isPrivateNetworkHost = (hostname: string): boolean => {
 };
 
 export const getAllowedCorsOrigins = (): string[] => {
-  const sources = [
-    process.env.CLIENT_URL,
-    process.env.PUBLIC_URL,
-    process.env.VITE_APP_PUBLIC_URL,
-  ];
+  const sources = [process.env.CLIENT_URL, process.env.PUBLIC_URL, process.env.VITE_APP_PUBLIC_URL];
 
   return sources
     .filter(Boolean)
-    .join(",")
-    .split(",")
-    .map((value) => value.trim().replace(/\/+$/, ""))
+    .join(',')
+    .split(',')
+    .map((value) => value.trim().replace(/\/+$/, ''))
     .filter(Boolean);
 };
 
@@ -32,11 +28,11 @@ export const isAllowedCorsOrigin = (origin: string | undefined): boolean => {
     return true;
   }
 
-  const normalizedOrigin = origin.trim().replace(/\/+$/, "");
+  const normalizedOrigin = origin.trim().replace(/\/+$/, '');
   const configuredOrigins = getAllowedCorsOrigins();
   const allowLocalCorsInProd =
-    process.env.ALLOW_LOCAL_CORS_ORIGINS === "1" ||
-    process.env.ALLOW_LOCAL_CORS_ORIGINS?.toLowerCase() === "true";
+    process.env.ALLOW_LOCAL_CORS_ORIGINS === '1' ||
+    process.env.ALLOW_LOCAL_CORS_ORIGINS?.toLowerCase() === 'true';
 
   if (configuredOrigins.includes(normalizedOrigin)) {
     return true;
@@ -45,7 +41,7 @@ export const isAllowedCorsOrigin = (origin: string | undefined): boolean => {
   try {
     const { hostname } = new URL(normalizedOrigin);
     if (isPrivateNetworkHost(hostname)) {
-      if (process.env.NODE_ENV === "production" && !allowLocalCorsInProd) {
+      if (process.env.NODE_ENV === 'production' && !allowLocalCorsInProd) {
         return false;
       }
       return true;
@@ -54,7 +50,7 @@ export const isAllowedCorsOrigin = (origin: string | undefined): boolean => {
     // Treat invalid URLs as non-allowed
   }
 
-  if (process.env.NODE_ENV === "production" && !allowLocalCorsInProd) {
+  if (process.env.NODE_ENV === 'production' && !allowLocalCorsInProd) {
     return false;
   }
 

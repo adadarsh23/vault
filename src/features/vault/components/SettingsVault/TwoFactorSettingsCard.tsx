@@ -1,97 +1,112 @@
-import React, { useState } from 'react'
-import { Shield, Smartphone, QrCode, Clipboard, Check, RefreshCw, X, AlertTriangle, Download, Trash2, Key } from 'lucide-react'
-import { SectionCard, StatCard, ActionButton } from './SharedComponents'
-import { SETTINGS_PANEL, SETTINGS_PANEL_SOFT } from './Utils'
-import { motion, AnimatePresence } from 'framer-motion'
-import { setup2FA, verify2FASetup, disable2FA } from '../../../../lib/auth-api'
-import { toast } from 'sonner'
-import { handleError } from '../../../../lib/error-handler'
+import React, { useState } from 'react';
+import {
+  Shield,
+  Smartphone,
+  QrCode,
+  Clipboard,
+  Check,
+  RefreshCw,
+  X,
+  AlertTriangle,
+  Download,
+  Trash2,
+  Key,
+} from 'lucide-react';
+import { SectionCard, StatCard, ActionButton } from './SharedComponents';
+import { SETTINGS_PANEL, SETTINGS_PANEL_SOFT } from './Utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { setup2FA, verify2FASetup, disable2FA } from '../../../../lib/auth-api';
+import { toast } from 'sonner';
+import { handleError } from '../../../../lib/error-handler';
 
 interface TwoFactorSettingsCardProps {
-  twoFactorEnabled: boolean
-  onUpdate: () => void
+  twoFactorEnabled: boolean;
+  onUpdate: () => void;
 }
 
-export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({ twoFactorEnabled, onUpdate }) => {
-  const [isSettingUp, setIsSettingUp] = useState(false)
-  const [isDisabling, setIsDisabling] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [qrCode, setQrCode] = useState<string | null>(null)
-  const [secret, setSecret] = useState<string | null>(null)
-  const [otpToken, setOtpToken] = useState('')
-  const [backupCodes, setBackupCodes] = useState<string[] | null>(null)
-  const [copied, setCopied] = useState(false)
+export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({
+  twoFactorEnabled,
+  onUpdate,
+}) => {
+  const [isSettingUp, setIsSettingUp] = useState(false);
+  const [isDisabling, setIsDisabling] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [secret, setSecret] = useState<string | null>(null);
+  const [otpToken, setOtpToken] = useState('');
+  const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const handleStartSetup = async () => {
     try {
-      setLoading(true)
-      const data = await setup2FA()
-      setQrCode(data.qrCodeUrl)
-      setSecret(data.secret)
-      setIsSettingUp(true)
+      setLoading(true);
+      const data = await setup2FA();
+      setQrCode(data.qrCodeUrl);
+      setSecret(data.secret);
+      setIsSettingUp(true);
     } catch (error) {
-      handleError(error, '2FA Setup')
+      handleError(error, '2FA Setup');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleVerifySetup = async () => {
-    if (!otpToken) return
+    if (!otpToken) return;
     try {
-      setLoading(true)
-      const data = await verify2FASetup(otpToken)
-      setBackupCodes(data.backupCodes)
-      toast.success('2FA enabled successfully!')
-      onUpdate()
+      setLoading(true);
+      const data = await verify2FASetup(otpToken);
+      setBackupCodes(data.backupCodes);
+      toast.success('2FA enabled successfully!');
+      onUpdate();
     } catch (error) {
-      handleError(error, '2FA Verification')
+      handleError(error, '2FA Verification');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleDisable = async () => {
     if (!otpToken) {
-      toast.error('Please enter OTP to disable 2FA')
-      return
+      toast.error('Please enter OTP to disable 2FA');
+      return;
     }
     try {
-      setLoading(true)
-      await disable2FA(otpToken)
-      toast.success('2FA disabled')
-      setIsDisabling(false)
-      setOtpToken('')
-      onUpdate()
+      setLoading(true);
+      await disable2FA(otpToken);
+      toast.success('2FA disabled');
+      setIsDisabling(false);
+      setOtpToken('');
+      onUpdate();
     } catch (error) {
-      handleError(error, '2FA Disable')
+      handleError(error, '2FA Disable');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const downloadBackupCodes = () => {
-    if (!backupCodes) return
-    const content = `VAULT BACKUP CODES\nGenerated: ${new Date().toLocaleString()}\n\n${backupCodes.join('\n')}\n\nKeep these codes in a secure place. Each code can be used only once.`
-    const blob = new Blob([content], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'vault-backup-codes.txt'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    toast.success('Backup codes downloaded')
-  }
+    if (!backupCodes) return;
+    const content = `VAULT BACKUP CODES\nGenerated: ${new Date().toLocaleString()}\n\n${backupCodes.join('\n')}\n\nKeep these codes in a secure place. Each code can be used only once.`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'vault-backup-codes.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Backup codes downloaded');
+  };
 
   const copySecret = () => {
     if (secret) {
-      navigator.clipboard.writeText(secret)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      navigator.clipboard.writeText(secret);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
-  }
+  };
 
   return (
     <SectionCard
@@ -113,12 +128,7 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({ tw
             hint="Google/Microsoft"
             icon={Smartphone}
           />
-          <StatCard
-            label="Recovery"
-            value="Backup Codes"
-            hint="One-time use"
-            icon={Key}
-          />
+          <StatCard label="Recovery" value="Backup Codes" hint="One-time use" icon={Key} />
         </div>
 
         <div className={`${SETTINGS_PANEL} space-y-6 overflow-hidden`}>
@@ -138,7 +148,8 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({ tw
                   <div>
                     <h4 className="text-sm font-bold text-text">Authenticator App</h4>
                     <p className="mt-1 text-xs leading-5 text-text/45 max-w-sm">
-                      Protect your vault with 2FA. Every time you sign in, you'll be asked for a code from your authenticator app.
+                      Protect your vault with 2FA. Every time you sign in, you'll be asked for a
+                      code from your authenticator app.
                     </p>
                   </div>
                 </div>
@@ -197,7 +208,9 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({ tw
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-text/30">Scan QR Code</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-text/30">
+                        Scan QR Code
+                      </p>
                       <button
                         onClick={handleStartSetup}
                         disabled={loading}
@@ -211,20 +224,30 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({ tw
 
                   <div className="flex-1 space-y-6">
                     <div className="space-y-3">
-                      <p className="text-xs font-semibold text-text/80">Step 1: Save manual secret (Optional)</p>
+                      <p className="text-xs font-semibold text-text/80">
+                        Step 1: Save manual secret (Optional)
+                      </p>
                       <div className={`flex items-center gap-3 ${SETTINGS_PANEL_SOFT} px-4 py-3`}>
-                        <code className="text-xs font-mono text-blue-300/80 flex-1 truncate">{secret}</code>
+                        <code className="text-xs font-mono text-blue-300/80 flex-1 truncate">
+                          {secret}
+                        </code>
                         <button
                           onClick={copySecret}
                           className="p-1 text-text/40 hover:text-blue-400 transition-colors"
                         >
-                          {copied ? <Check className="h-4 w-4 text-green-400" /> : <Clipboard className="h-4 w-4" />}
+                          {copied ? (
+                            <Check className="h-4 w-4 text-green-400" />
+                          ) : (
+                            <Clipboard className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                     </div>
 
                     <div className="space-y-3">
-                      <p className="text-xs font-semibold text-text/80">Step 2: Enter validation code</p>
+                      <p className="text-xs font-semibold text-text/80">
+                        Step 2: Enter validation code
+                      </p>
                       <div className="flex flex-col sm:flex-row gap-3">
                         <input
                           type="text"
@@ -232,7 +255,9 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({ tw
                           placeholder="000 000"
                           className={`${SETTINGS_PANEL_SOFT} flex-1 px-4 py-3 font-mono text-lg tracking-[0.4em] text-center outline-none focus:ring-1 focus:ring-blue-500/50`}
                           value={otpToken}
-                          onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          onChange={(e) =>
+                            setOtpToken(e.target.value.replace(/\D/g, '').slice(0, 6))
+                          }
                         />
                         <ActionButton
                           icon={Check}
@@ -261,9 +286,12 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({ tw
                       <Check className="h-5 w-5" />
                     </div>
                     <div className="space-y-1">
-                      <h4 className="text-sm font-bold text-green-400">2FA successfully activated</h4>
+                      <h4 className="text-sm font-bold text-green-400">
+                        2FA successfully activated
+                      </h4>
                       <p className="text-xs leading-5 text-text/45">
-                        Save these backup codes immediately. They are the only way to access your vault if you lose your authenticator device.
+                        Save these backup codes immediately. They are the only way to access your
+                        vault if you lose your authenticator device.
                       </p>
                     </div>
                   </div>
@@ -271,7 +299,10 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({ tw
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                   {backupCodes.map((code, i) => (
-                    <div key={i} className={`${SETTINGS_PANEL_SOFT} py-2.5 text-center font-mono text-[13px] text-green-300/70 border border-green-500/10`}>
+                    <div
+                      key={i}
+                      className={`${SETTINGS_PANEL_SOFT} py-2.5 text-center font-mono text-[13px] text-green-300/70 border border-green-500/10`}
+                    >
                       {code}
                     </div>
                   ))}
@@ -292,9 +323,9 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({ tw
                       icon={Check}
                       label="Dismiss"
                       onClick={() => {
-                        setBackupCodes(null)
-                        setIsSettingUp(false)
-                        setOtpToken('')
+                        setBackupCodes(null);
+                        setIsSettingUp(false);
+                        setOtpToken('');
                       }}
                       variant="ghost"
                     />
@@ -323,7 +354,8 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({ tw
                 </div>
 
                 <p className="text-xs leading-5 text-text/45">
-                  Confirm deactivation by entering a valid code from your authenticator app or one of your backup codes.
+                  Confirm deactivation by entering a valid code from your authenticator app or one
+                  of your backup codes.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -332,7 +364,9 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({ tw
                     placeholder="Enter Code"
                     className={`${SETTINGS_PANEL_SOFT} flex-1 px-4 py-3 font-mono text-center outline-none focus:ring-1 focus:ring-red-500/50`}
                     value={otpToken}
-                    onChange={(e) => setOtpToken(e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8))}
+                    onChange={(e) =>
+                      setOtpToken(e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8))
+                    }
                   />
                   <ActionButton
                     icon={Trash2}
@@ -349,5 +383,5 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({ tw
         </div>
       </div>
     </SectionCard>
-  )
-}
+  );
+};

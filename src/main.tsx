@@ -13,12 +13,13 @@ import { installGlobalFetchCsrfProtection } from './lib/csrf.ts';
 import { initTouchDragDrop } from './lib/vaultDragDrop.ts';
 
 let trackRouteNavigationWhenReady:
-  | ((location: { pathname: string; search?: string; hash?: string }) => void)
-  | null = null;
+  ((location: { pathname: string; search?: string; hash?: string }) => void) | null = null;
 
 const runWhenIdle = (cb: () => void) => {
   if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-    (window as Window & { requestIdleCallback: (fn: () => void) => number }).requestIdleCallback(cb);
+    (window as Window & { requestIdleCallback: (fn: () => void) => number }).requestIdleCallback(
+      cb
+    );
     return;
   }
   setTimeout(cb, 1);
@@ -91,21 +92,13 @@ window.addEventListener('error', (event) => {
 });
 
 window.addEventListener('unhandledrejection', (event) => {
-  const reason = event.reason as
-    | { name?: string; message?: string }
-    | string
-    | undefined;
-  const reasonMessage =
-    typeof reason === 'string'
-      ? reason
-      : reason?.message ?? '';
+  const reason = event.reason as { name?: string; message?: string } | string | undefined;
+  const reasonMessage = typeof reason === 'string' ? reason : (reason?.message ?? '');
 
-  const reasonName =
-    typeof reason === 'string' ? '' : (reason?.name ?? '');
+  const reasonName = typeof reason === 'string' ? '' : (reason?.name ?? '');
 
   const isAbortedViewTransition =
-    reasonName === 'InvalidStateError' &&
-    reasonMessage.includes('Transition was aborted');
+    reasonName === 'InvalidStateError' && reasonMessage.includes('Transition was aborted');
 
   if (isAbortedViewTransition) {
     event.preventDefault();
@@ -123,7 +116,9 @@ window.addEventListener('unhandledrejection', (event) => {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AppErrorBoundary
-      fallback={<ErrorFallback label="The app crashed before it could finish loading. Please refresh and try again." />}
+      fallback={
+        <ErrorFallback label="The app crashed before it could finish loading. Please refresh and try again." />
+      }
       onError={(error, errorInfo) => {
         captureLogRocketError(error, {
           componentStack: errorInfo?.componentStack,

@@ -1,44 +1,44 @@
 import { z } from 'zod';
 
-const USERNAME_PATTERN = /^[a-z0-9._-]+$/i
+const USERNAME_PATTERN = /^[a-z0-9._-]+$/i;
 const STRONG_PASSWORD_PATTERN =
-  /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+=\[\];:,.<>?{}|\-])\S{16,64}$/
+  /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+=\[\];:,.<>?{}|\-])\S{16,64}$/;
 
 const usernameSchema = z
   .string()
   .trim()
   .toLowerCase()
-  .min(3, "Username must be at least 3 characters")
-  .max(64, "Username must be at most 64 characters")
+  .min(3, 'Username must be at least 3 characters')
+  .max(64, 'Username must be at most 64 characters')
   .regex(
     USERNAME_PATTERN,
-    "Username can only include letters, numbers, dots, underscores, and hyphens",
-  )
+    'Username can only include letters, numbers, dots, underscores, and hyphens'
+  );
 
 const passwordSchema = z
   .string()
-  .min(16, "Password must be at least 16 characters")
-  .max(64, "Password must be at most 64 characters")
+  .min(16, 'Password must be at least 16 characters')
+  .max(64, 'Password must be at most 64 characters')
   .regex(
     STRONG_PASSWORD_PATTERN,
-    "Password must include uppercase, lowercase, number, and special character, and cannot contain spaces",
-  )
+    'Password must include uppercase, lowercase, number, and special character, and cannot contain spaces'
+  );
 
 const masterKeySchema = z
   .string()
-  .min(16, "Master Key must be at least 16 characters")
-  .max(64, "Master Key must be at most 64 characters")
+  .min(16, 'Master Key must be at least 16 characters')
+  .max(64, 'Master Key must be at most 64 characters')
   .regex(
     STRONG_PASSWORD_PATTERN,
-    "Master Key must include uppercase, lowercase, number, and special character, and cannot contain spaces",
-  )
+    'Master Key must include uppercase, lowercase, number, and special character, and cannot contain spaces'
+  );
 
-const deviceIdSchema = z.string().trim().min(1).max(128)
+const deviceIdSchema = z.string().trim().min(1).max(128);
 const captchaTokenSchema = z
   .string()
   .trim()
-  .min(20, "CAPTCHA token is invalid")
-  .max(4096, "CAPTCHA token is invalid")
+  .min(20, 'CAPTCHA token is invalid')
+  .max(4096, 'CAPTCHA token is invalid');
 
 export const loginSchema = z.object({
   username: usernameSchema,
@@ -59,11 +59,10 @@ export const registerSchema = z.object({
 export const changePasswordSchema = z.object({
   currentPassword: z
     .string()
-    .min(1, "Current password is required")
-    .max(128, "Current password is too long"),
+    .min(1, 'Current password is required')
+    .max(128, 'Current password is too long'),
   newPassword: passwordSchema,
   captchaToken: captchaTokenSchema,
-
 });
 
 export const masterKeyCaptchaSchema = z.object({
@@ -121,5 +120,5 @@ export const updateProfileSchema = z
     {
       message: 'At least one profile field is required.',
       path: ['profileName'],
-    },
+    }
   );

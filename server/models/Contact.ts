@@ -1,5 +1,5 @@
-import mongoose, { Schema, Document, Model } from 'mongoose'
-import crypto from 'crypto'
+import mongoose, { Schema, Document, Model } from 'mongoose';
+import crypto from 'crypto';
 
 // ─────────────────────────────────────────────
 // Enums (centralized for reuse & type safety)
@@ -31,21 +31,21 @@ export enum ContactSubject {
 // Interface
 // ─────────────────────────────────────────────
 export interface IContact extends Document {
-  name: string
-  email: string
-  username: string
-  subject: ContactSubject
-  message: string
-  ipAddress?: string
-  userAgent?: string
-  geolocation?: Record<string, any>
-  status: ContactStatus
-  priority: ContactPriority
-  referenceId: string
-  isDeleted: boolean
-  deletedAt?: Date | null
-  createdAt: Date
-  updatedAt: Date
+  name: string;
+  email: string;
+  username: string;
+  subject: ContactSubject;
+  message: string;
+  ipAddress?: string;
+  userAgent?: string;
+  geolocation?: Record<string, any>;
+  status: ContactStatus;
+  priority: ContactPriority;
+  referenceId: string;
+  isDeleted: boolean;
+  deletedAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /**
@@ -141,14 +141,14 @@ const ContactSchema = new Schema<IContact>(
     timestamps: true, // auto createdAt & updatedAt
     versionKey: false,
   }
-)
+);
 
 // ─────────────────────────────────────────────
 // Indexes (important for scaling)
 // ─────────────────────────────────────────────
-ContactSchema.index({ createdAt: -1 })
-ContactSchema.index({ email: 1, status: 1 })
-ContactSchema.index({ subject: 1, priority: 1 })
+ContactSchema.index({ createdAt: -1 });
+ContactSchema.index({ email: 1, status: 1 });
+ContactSchema.index({ subject: 1, priority: 1 });
 
 // ─────────────────────────────────────────────
 // Pre-save Hook
@@ -156,39 +156,35 @@ ContactSchema.index({ subject: 1, priority: 1 })
 ContactSchema.pre<IContact>('save', function () {
   // Generate reference ID safely
   if (!this.referenceId) {
-    this.referenceId =
-      'VLT-' + crypto.randomBytes(4).toString('hex').toUpperCase()
+    this.referenceId = 'VLT-' + crypto.randomBytes(4).toString('hex').toUpperCase();
   }
 
   // Auto priority logic
   switch (this.subject) {
     case ContactSubject.SECURITY:
-      this.priority = ContactPriority.HIGH
-      break
+      this.priority = ContactPriority.HIGH;
+      break;
     case ContactSubject.TECH:
     case ContactSubject.VAULT:
-      this.priority = ContactPriority.MEDIUM
-      break
+      this.priority = ContactPriority.MEDIUM;
+      break;
     default:
-      this.priority = ContactPriority.LOW
+      this.priority = ContactPriority.LOW;
   }
-})
+});
 
 // ─────────────────────────────────────────────
 // Static Methods (clean API layer)
 // ─────────────────────────────────────────────
 interface ContactModel extends Model<IContact> {
-  findActive(): Promise<IContact[]>
+  findActive(): Promise<IContact[]>;
 }
 
 ContactSchema.statics.findActive = function () {
-  return this.find({ isDeleted: false }).sort({ createdAt: -1 }).allowDiskUse()
-}
+  return this.find({ isDeleted: false }).sort({ createdAt: -1 }).allowDiskUse();
+};
 
 // ─────────────────────────────────────────────
 // Model Export
 // ─────────────────────────────────────────────
-export const Contact = mongoose.model<IContact, ContactModel>(
-  'Contact',
-  ContactSchema
-)
+export const Contact = mongoose.model<IContact, ContactModel>('Contact', ContactSchema);

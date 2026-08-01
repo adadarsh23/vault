@@ -1,173 +1,237 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <!-- Basic -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.googletagmanager.com https://cdn.logr-in.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' blob: data: https:; media-src 'self' blob: data: https:; connect-src 'self' * blob: data:; worker-src 'self' blob:; child-src 'self' blob:; frame-src 'self' blob: https://view.officeapps.live.com https://*.google.com https://*.google.co.in https://recaptcha.google.com https://www.recaptcha.net;"
+    />
+    <title>Vault - Secure Storage</title>
+    <meta name="color-scheme" content="dark light" />
 
-<head>
-  <!-- Basic -->
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.googletagmanager.com https://cdn.logr-in.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' blob: data: https:; media-src 'self' blob: data: https:; connect-src 'self' * blob: data:; worker-src 'self' blob:; child-src 'self' blob:; frame-src 'self' blob: https://view.officeapps.live.com https://*.google.com https://*.google.co.in https://recaptcha.google.com https://www.recaptcha.net;" />
-  <title>Vault - Secure Storage</title>
-  <meta name="color-scheme" content="dark light" />
+    <meta
+      name="description"
+      content="Securely store your files, notes, and sensitive data with end-to-end peace of mind."
+    />
+    <meta
+      name="keywords"
+      content="vault, secure storage, end-to-end encryption, private notes, encrypted files"
+    />
+    <meta name="author" content="Vault Team" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="application-name" content="Vault" />
+    <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
 
-  <meta name="description"
-    content="Securely store your files, notes, and sensitive data with end-to-end peace of mind." />
-  <meta name="keywords" content="vault, secure storage, end-to-end encryption, private notes, encrypted files" />
-  <meta name="author" content="Vault Team" />
-  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
-  <meta name="application-name" content="Vault" />
-  <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
+    <!-- Search Engine -->
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <link rel="canonical" href="https://my-vault-cic6.onrender.com/" />
 
-  <!-- Search Engine -->
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-  <link rel="canonical" href="https://my-vault-cic6.onrender.com/" />
+    <!-- Compatibility -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="mobile-web-app-capable" content="yes" />
 
-  <!-- Compatibility -->
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="referrer" content="strict-origin-when-cross-origin" />
-  <meta name="mobile-web-app-capable" content="yes" />
+    <!-- Performance & DNS -->
+    <link rel="dns-prefetch" href="//my-vault-cic6.onrender.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://my-vault-cic6.onrender.com/" crossorigin />
 
-  <!-- Performance & DNS -->
-  <link rel="dns-prefetch" href="//my-vault-cic6.onrender.com">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-  <link rel="dns-prefetch" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://my-vault-cic6.onrender.com/" crossorigin />
+    <!-- Icons & PWA -->
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/favicon.svg"
+      media="(prefers-color-scheme: light)"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/favicon-dark.svg"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/favicon.svg" color="#000000" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="apple-mobile-web-app-title" content="Vault" />
 
-  <!-- Icons & PWA -->
-  <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" media="(prefers-color-scheme: light)" />
-  <link rel="icon" type="image/svg+xml" href="/favicon-dark.svg" media="(prefers-color-scheme: dark)" />
-  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
-  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png" />
-  <link rel="mask-icon" href="/favicon.svg" color="#000000" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <meta name="apple-mobile-web-app-title" content="Vault" />
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileColor" content="#000000" />
+    <meta name="msapplication-TileImage" content="/web-app-manifest-192x192.png" />
+    <meta name="msapplication-config" content="none" />
 
-  <!-- Microsoft Tiles -->
-  <meta name="msapplication-TileColor" content="#000000" />
-  <meta name="msapplication-TileImage" content="/web-app-manifest-192x192.png" />
-  <meta name="msapplication-config" content="none" />
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://my-vault-cic6.onrender.com/" />
+    <meta property="og:title" content="Vault - Secure Storage" />
+    <meta
+      property="og:description"
+      content="Securely store your files, notes, and sensitive data with end-to-end peace of mind."
+    />
+    <meta property="og:image" content="https://my-vault-cic6.onrender.com//web-app-manifest-512x512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="Vault - Secure Storage" />
+    <meta property="og:site_name" content="Vault" />
+    <meta property="og:locale" content="en_US" />
 
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://my-vault-cic6.onrender.com/" />
-  <meta property="og:title" content="Vault - Secure Storage" />
-  <meta property="og:description"
-    content="Securely store your files, notes, and sensitive data with end-to-end peace of mind." />
-  <meta property="og:image" content="https://my-vault-cic6.onrender.com//web-app-manifest-512x512.png" />
-  <meta property="og:image:width" content="512" />
-  <meta property="og:image:height" content="512" />
-  <meta property="og:image:alt" content="Vault - Secure Storage" />
-  <meta property="og:site_name" content="Vault" />
-  <meta property="og:locale" content="en_US" />
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://my-vault-cic6.onrender.com/" />
+    <meta name="twitter:title" content="Vault - Secure Storage" />
+    <meta
+      name="twitter:description"
+      content="Secure personal vault for storing files, notes, and sensitive data safely."
+    />
+    <meta name="twitter:image" content="https://my-vault-cic6.onrender.com//web-app-manifest-512x512.png" />
+    <meta name="twitter:image:alt" content="Vault - Secure Storage" />
 
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:url" content="https://my-vault-cic6.onrender.com/" />
-  <meta name="twitter:title" content="Vault - Secure Storage" />
-  <meta name="twitter:description"
-    content="Secure personal vault for storing files, notes, and sensitive data safely." />
-  <meta name="twitter:image" content="https://my-vault-cic6.onrender.com//web-app-manifest-512x512.png" />
-  <meta name="twitter:image:alt" content="Vault - Secure Storage" />
-
-  <!-- iOS/PWA Specifics -->
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-touch-fullscreen" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <!-- <meta name="HandheldFriendly" content="True" />
+    <!-- iOS/PWA Specifics -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-touch-fullscreen" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- <meta name="HandheldFriendly" content="True" />
   <meta name="MobileOptimized" content="320" /> -->
 
-  <!-- Splash Screens (iOS) -->
-  <link rel="apple-touch-startup-image" href="/web-app-manifest-512x512.png" />
-  <link rel="fluid-icon" href="/favicon.svg" title="Vault" />
+    <!-- Splash Screens (iOS) -->
+    <link rel="apple-touch-startup-image" href="/web-app-manifest-512x512.png" />
+    <link rel="fluid-icon" href="/favicon.svg" title="Vault" />
+    <script type="module" crossorigin src="/assets/index-UtPjT5ss.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/vendor-CWlGCPL-.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-DwVJnfNP.css">
+  </head>
 
-  <script type="module" crossorigin src="/assets/index-BBBuJ_Xk.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/vendor-CWlGCPL-.css">
-  <link rel="stylesheet" crossorigin href="/assets/index-DwVJnfNP.css">
-</head>
+  <body>
+    <!-- No JS fallback -->
+    <noscript>
+      <strong>This app requires JavaScript to run properly.</strong>
+    </noscript>
 
-<body>
-
-  <!-- No JS fallback -->
-  <noscript>
-    <strong>This app requires JavaScript to run properly.</strong>
-  </noscript>
-
-  <main>
-    <!-- React Root -->
-    <div id="root">
-      <div role="status" aria-live="polite" aria-busy="true"
-        style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:16px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#0b0b0b;color:rgba(255,255,255,.75);text-align:center;overflow:hidden;">
-        <svg aria-hidden="true" viewBox="0 0 24 24"
-          style="width:40px;height:40px;opacity:.55;animation:vault-root-spin .9s linear infinite;">
-          <path d="M21 12a9 9 0 1 1-6.219-8.56" fill="none" stroke="currentColor" stroke-width="1.5"
-            stroke-linecap="round" />
-        </svg>
-        <p
-          style="margin:0;font-size:14px;font-weight:500;opacity:.8;animation:vault-root-pulse 1.2s ease-in-out infinite;">
-          Loading Vault...
-        </p>
+    <main>
+      <!-- React Root -->
+      <div id="root">
+        <div
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+          style="
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 16px;
+            font-family:
+              system-ui,
+              -apple-system,
+              'Segoe UI',
+              Roboto,
+              sans-serif;
+            background: #0b0b0b;
+            color: rgba(255, 255, 255, 0.75);
+            text-align: center;
+            overflow: hidden;
+          "
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            style="
+              width: 40px;
+              height: 40px;
+              opacity: 0.55;
+              animation: vault-root-spin 0.9s linear infinite;
+            "
+          >
+            <path
+              d="M21 12a9 9 0 1 1-6.219-8.56"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+          <p
+            style="
+              margin: 0;
+              font-size: 14px;
+              font-weight: 500;
+              opacity: 0.8;
+              animation: vault-root-pulse 1.2s ease-in-out infinite;
+            "
+          >
+            Loading Vault...
+          </p>
+        </div>
       </div>
-    </div>
-  </main>
-  <div id="theme-transition-overlay"></div>
+    </main>
+    <div id="theme-transition-overlay"></div>
 
-  <style>
-    #theme-transition-overlay {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 9999;
-      opacity: 0;
-      background: radial-gradient(circle at var(--x, 50%) var(--y, 50%),
+    <style>
+      #theme-transition-overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0;
+        background: radial-gradient(
+          circle at var(--x, 50%) var(--y, 50%),
           rgba(255, 255, 255, 0.18) 0%,
           rgba(255, 255, 255, 0.08) 22%,
-          transparent 60%);
-      transform: scale(0.92);
-      transition: opacity 260ms ease, transform 260ms ease;
-      will-change: opacity, transform;
-    }
-
-    #theme-transition-overlay.is-active {
-      opacity: 1;
-      transform: scale(1);
-    }
-
-    @keyframes vault-root-spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    @keyframes vault-root-pulse {
-
-      0%,
-      100% {
-        opacity: .45;
+          transparent 60%
+        );
+        transform: scale(0.92);
+        transition:
+          opacity 260ms ease,
+          transform 260ms ease;
+        will-change: opacity, transform;
       }
 
-      50% {
-        opacity: .9;
+      #theme-transition-overlay.is-active {
+        opacity: 1;
+        transform: scale(1);
       }
-    }
 
-    @media (prefers-reduced-motion: reduce) {
-      #theme-transition-overlay {
-        transition: none;
+      @keyframes vault-root-spin {
+        to {
+          transform: rotate(360deg);
+        }
       }
-    }
-  </style>
 
-  <script src="/vite-preload-shim.js"></script>
+      @keyframes vault-root-pulse {
+        0%,
+        100% {
+          opacity: 0.45;
+        }
 
-  <!-- Main App -->
+        50% {
+          opacity: 0.9;
+        }
+      }
 
-</body>
+      @media (prefers-reduced-motion: reduce) {
+        #theme-transition-overlay {
+          transition: none;
+        }
+      }
+    </style>
 
+    <script src="/vite-preload-shim.js"></script>
+
+    <!-- Main App -->
+  </body>
 </html>

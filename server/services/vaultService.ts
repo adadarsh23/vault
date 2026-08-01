@@ -5,6 +5,6 @@
  * file preserves the historical import path used by controllers and tests.
  */
 
-export * from './vaultAuthService.ts'
-export * from './vaultDataService.ts'
-export { logAndEmit } from './vaultService.internal.ts'
+export * from './vaultAuthService.ts';
+export * from './vaultDataService.ts';
+export { logAndEmit } from './vaultService.internal.ts';

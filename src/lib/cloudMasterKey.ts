@@ -3,9 +3,9 @@ import {
   decryptData,
   uint8ArrayToBase64,
   base64ToUint8Array,
-} from './cryptoPrimitives'
-import { argon2id } from 'hash-wasm'
-import { handleError } from './error-handler'
+} from './cryptoPrimitives';
+import { argon2id } from 'hash-wasm';
+import { handleError } from './error-handler';
 
 /**
  * Client-side Master Key Cloud Storage
@@ -14,36 +14,36 @@ import { handleError } from './error-handler'
 
 export interface CloudMasterKeyPayload {
   encryptedMasterKey: {
-    cipherText: string
-    iv: string
-    authTag: string
-    salt: string
-    algorithm: string
-    keyVersion: string
-  }
-  masterKeyHash: string
-  deviceId: string
-  recoveryPhrasesEncrypted?: string
+    cipherText: string;
+    iv: string;
+    authTag: string;
+    salt: string;
+    algorithm: string;
+    keyVersion: string;
+  };
+  masterKeyHash: string;
+  deviceId: string;
+  recoveryPhrasesEncrypted?: string;
   metadata?: {
-    derivationAlgorithm: string
+    derivationAlgorithm: string;
     derivationParams: {
-      memory: number
-      iterations: number
-      parallelism: number
-    }
-  }
+      memory: number;
+      iterations: number;
+      parallelism: number;
+    };
+  };
 }
 
 export interface RetrievedCloudMasterKey {
   encryptedMasterKey: {
-    cipherText: string
-    iv: string
-    authTag: string
-    salt: string
-    algorithm: string
-    keyVersion: string
-  }
-  masterKeyHash: string
+    cipherText: string;
+    iv: string;
+    authTag: string;
+    salt: string;
+    algorithm: string;
+    keyVersion: string;
+  };
+  masterKeyHash: string;
 }
 
 /**
@@ -56,17 +56,15 @@ export interface RetrievedCloudMasterKey {
  */
 export const generateCloudProtectionKey = async (
   password: string,
-  salt: string,
+  salt: string
 ): Promise<string> => {
   try {
     if (!password || !salt) {
-      throw new Error(
-        'Password and salt are required to generate cloud protection key',
-      )
+      throw new Error('Password and salt are required to generate cloud protection key');
     }
 
-    const saltBuffer = new TextEncoder().encode(salt)
-    const hashBuffer = await argon2id({
+    const saltBuffer = new TextEncoder().encode(salt);
+    const hashBuffer = (await argon2id({
       password,
       salt: saltBuffer,
       parallelism: 4,
@@ -74,14 +72,14 @@ export const generateCloudProtectionKey = async (
       memorySize: 65536,
       hashLength: 32,
       outputType: 'binary',
-    }) as Uint8Array
+    })) as Uint8Array;
 
-    return uint8ArrayToBase64(new Uint8Array(hashBuffer))
+    return uint8ArrayToBase64(new Uint8Array(hashBuffer));
   } catch (error) {
-    handleError(error, 'generateCloudProtectionKey')
-    throw error
+    handleError(error, 'generateCloudProtectionKey');
+    throw error;
   }
-}
+};
 
 /**
  * Encrypt master key for cloud storage
@@ -95,21 +93,21 @@ export const generateCloudProtectionKey = async (
 export const encryptMasterKeyForCloud = async (
   masterKey: string,
   cloudProtectionKey: string,
-  salt: string,
+  salt: string
 ): Promise<CloudMasterKeyPayload['encryptedMasterKey']> => {
   try {
     if (!masterKey || !cloudProtectionKey || !salt) {
-      throw new Error('Master key, cloud protection key, and salt are required')
+      throw new Error('Master key, cloud protection key, and salt are required');
     }
 
     // Encrypt the master key with AES-256-GCM
-    const encryptedBundle = await encryptData(masterKey, cloudProtectionKey)
+    const encryptedBundle = await encryptData(masterKey, cloudProtectionKey);
 
     // Parse the encrypted bundle to extract components
-    const bundleBytes = base64ToUint8Array(encryptedBundle)
-    const iv = bundleBytes.slice(0, 12)
-    const ciphertext = bundleBytes.slice(12, bundleBytes.length - 16)
-    const authTag = bundleBytes.slice(bundleBytes.length - 16)
+    const bundleBytes = base64ToUint8Array(encryptedBundle);
+    const iv = bundleBytes.slice(0, 12);
+    const ciphertext = bundleBytes.slice(12, bundleBytes.length - 16);
+    const authTag = bundleBytes.slice(bundleBytes.length - 16);
 
     return {
       cipherText: uint8ArrayToBase64(ciphertext),
@@ -118,12 +116,12 @@ export const encryptMasterKeyForCloud = async (
       salt: salt,
       algorithm: 'aes-256-gcm',
       keyVersion: 'v1',
-    }
+    };
   } catch (error) {
-    handleError(error, 'encryptMasterKeyForCloud')
-    throw error
+    handleError(error, 'encryptMasterKeyForCloud');
+    throw error;
   }
-}
+};
 
 /**
  * Decrypt master key from cloud storage
@@ -134,38 +132,36 @@ export const encryptMasterKeyForCloud = async (
  */
 export const decryptMasterKeyFromCloud = async (
   encryptedPayload: {
-    cipherText: string
-    iv: string
-    authTag: string
+    cipherText: string;
+    iv: string;
+    authTag: string;
   },
-  cloudProtectionKey: string,
+  cloudProtectionKey: string
 ): Promise<string | null> => {
   try {
     if (!encryptedPayload || !cloudProtectionKey) {
-      throw new Error('Encrypted payload and cloud protection key are required')
+      throw new Error('Encrypted payload and cloud protection key are required');
     }
 
     // Reconstruct the encrypted bundle from components
-    const iv = base64ToUint8Array(encryptedPayload.iv)
-    const ciphertext = base64ToUint8Array(encryptedPayload.cipherText)
-    const authTag = base64ToUint8Array(encryptedPayload.authTag)
+    const iv = base64ToUint8Array(encryptedPayload.iv);
+    const ciphertext = base64ToUint8Array(encryptedPayload.cipherText);
+    const authTag = base64ToUint8Array(encryptedPayload.authTag);
 
-    const bundle = new Uint8Array(
-      iv.length + ciphertext.length + authTag.length,
-    )
-    bundle.set(iv)
-    bundle.set(ciphertext, iv.length)
-    bundle.set(authTag, iv.length + ciphertext.length)
+    const bundle = new Uint8Array(iv.length + ciphertext.length + authTag.length);
+    bundle.set(iv);
+    bundle.set(ciphertext, iv.length);
+    bundle.set(authTag, iv.length + ciphertext.length);
 
-    const encryptedBundle = uint8ArrayToBase64(bundle)
+    const encryptedBundle = uint8ArrayToBase64(bundle);
 
     // Decrypt
-    return await decryptData(encryptedBundle, cloudProtectionKey)
+    return await decryptData(encryptedBundle, cloudProtectionKey);
   } catch (error) {
-    handleError(error, 'decryptMasterKeyFromCloud')
-    return null
+    handleError(error, 'decryptMasterKeyFromCloud');
+    return null;
   }
-}
+};
 
 /**
  * Create SHA-256 hash of master key for verification
@@ -176,18 +172,18 @@ export const decryptMasterKeyFromCloud = async (
 export const hashMasterKey = async (masterKey: string): Promise<string> => {
   try {
     if (!masterKey) {
-      throw new Error('Master key is required to create hash')
+      throw new Error('Master key is required to create hash');
     }
 
-    const encoder = new TextEncoder()
-    const data = encoder.encode(masterKey)
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-    return uint8ArrayToBase64(new Uint8Array(hashBuffer))
+    const encoder = new TextEncoder();
+    const data = encoder.encode(masterKey);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    return uint8ArrayToBase64(new Uint8Array(hashBuffer));
   } catch (error) {
-    handleError(error, 'hashMasterKey')
-    throw error
+    handleError(error, 'hashMasterKey');
+    throw error;
   }
-}
+};
 
 /**
  * Prepare master key payload for cloud upload
@@ -202,32 +198,28 @@ export const prepareMasterKeyForCloud = async (
   masterKey: string,
   password: string,
   deviceId: string,
-  salt?: string,
+  salt?: string
 ): Promise<CloudMasterKeyPayload> => {
   try {
     if (!masterKey || !password || !deviceId) {
-      throw new Error('Master key, password, and deviceId are required')
+      throw new Error('Master key, password, and deviceId are required');
     }
 
     // Generate salt if not provided
-    const usedSalt =
-      salt || uint8ArrayToBase64(crypto.getRandomValues(new Uint8Array(16)))
+    const usedSalt = salt || uint8ArrayToBase64(crypto.getRandomValues(new Uint8Array(16)));
 
     // Generate cloud protection key
-    const cloudProtectionKey = await generateCloudProtectionKey(
-      password,
-      usedSalt,
-    )
+    const cloudProtectionKey = await generateCloudProtectionKey(password, usedSalt);
 
     // Encrypt master key
     const encryptedMasterKey = await encryptMasterKeyForCloud(
       masterKey,
       cloudProtectionKey,
-      usedSalt,
-    )
+      usedSalt
+    );
 
     // Create hash for verification
-    const masterKeyHash = await hashMasterKey(masterKey)
+    const masterKeyHash = await hashMasterKey(masterKey);
 
     return {
       encryptedMasterKey,
@@ -241,12 +233,12 @@ export const prepareMasterKeyForCloud = async (
           parallelism: 4,
         },
       },
-    }
+    };
   } catch (error) {
-    handleError(error, 'prepareMasterKeyForCloud')
-    throw error
+    handleError(error, 'prepareMasterKeyForCloud');
+    throw error;
   }
-}
+};
 
 /**
  * Recovery: Decrypt master key from cloud
@@ -258,35 +250,32 @@ export const prepareMasterKeyForCloud = async (
  */
 export const recoverMasterKeyFromCloud = async (
   encryptedPayload: CloudMasterKeyPayload['encryptedMasterKey'],
-  password: string,
+  password: string
 ): Promise<string | null> => {
   try {
     if (!encryptedPayload || !password) {
-      throw new Error('Encrypted payload and password are required')
+      throw new Error('Encrypted payload and password are required');
     }
 
     // Regenerate cloud protection key using the stored salt
-    const cloudProtectionKey = await generateCloudProtectionKey(
-      password,
-      encryptedPayload.salt,
-    )
+    const cloudProtectionKey = await generateCloudProtectionKey(password, encryptedPayload.salt);
 
     // Decrypt the master key
     const decryptedMasterKey = await decryptMasterKeyFromCloud(
       encryptedPayload,
-      cloudProtectionKey,
-    )
+      cloudProtectionKey
+    );
 
     if (!decryptedMasterKey) {
-      throw new Error('Failed to decrypt master key from cloud')
+      throw new Error('Failed to decrypt master key from cloud');
     }
 
-    return decryptedMasterKey
+    return decryptedMasterKey;
   } catch (error) {
-    handleError(error, 'recoverMasterKeyFromCloud')
-    return null
+    handleError(error, 'recoverMasterKeyFromCloud');
+    return null;
   }
-}
+};
 
 /**
  * Verify that decrypted master key matches stored hash
@@ -297,20 +286,20 @@ export const recoverMasterKeyFromCloud = async (
  */
 export const verifyDecryptedMasterKey = async (
   decryptedMasterKey: string,
-  storedHash: string,
+  storedHash: string
 ): Promise<boolean> => {
   try {
     if (!decryptedMasterKey || !storedHash) {
-      return false
+      return false;
     }
 
-    const computedHash = await hashMasterKey(decryptedMasterKey)
-    return computedHash === storedHash
+    const computedHash = await hashMasterKey(decryptedMasterKey);
+    return computedHash === storedHash;
   } catch (error) {
-    handleError(error, 'verifyDecryptedMasterKey')
-    return false
+    handleError(error, 'verifyDecryptedMasterKey');
+    return false;
   }
-}
+};
 
 export default {
   generateCloudProtectionKey,
@@ -320,4 +309,4 @@ export default {
   prepareMasterKeyForCloud,
   recoverMasterKeyFromCloud,
   verifyDecryptedMasterKey,
-}
+};

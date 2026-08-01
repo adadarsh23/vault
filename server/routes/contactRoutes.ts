@@ -27,7 +27,7 @@ router.post(
   contactLimiter,
   validate(contactSchema),
   requireRecaptcha({ action: 'contact_submit' }),
-  submitContactForm,
+  submitContactForm
 );
 
 export { router as contactRouter };

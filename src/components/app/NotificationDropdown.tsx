@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell,
   Laptop,
@@ -12,36 +12,36 @@ import {
   Info,
   X,
   Sparkles,
-} from 'lucide-react'
-import { useNotificationStore } from '../../store/notificationStore'
-import { cn } from '../../lib/utils'
+} from 'lucide-react';
+import { useNotificationStore } from '../../store/notificationStore';
+import { cn } from '../../lib/utils';
 
 interface NotificationDropdownProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 function formatRelativeTime(dateString: string): string {
   try {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffSec = Math.floor(diffMs / 1000)
-    const diffMin = Math.floor(diffSec / 60)
-    const diffHours = Math.floor(diffMin / 60)
-    const diffDays = Math.floor(diffHours / 24)
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHours = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHours / 24);
 
-    if (diffSec < 45) return 'Just now'
-    if (diffMin < 60) return `${diffMin}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays === 1) return 'Yesterday'
-    if (diffDays < 7) return `${diffDays}d ago`
+    if (diffSec < 45) return 'Just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
     return date.toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric',
-    })
+    });
   } catch {
-    return 'Recently'
+    return 'Recently';
   }
 }
 
@@ -52,85 +52,72 @@ function getNotificationIcon(type: string) {
         <div className="h-7 w-7 rounded-xl bg-blue-500/10 border border-blue-500/25 flex items-center justify-center shrink-0">
           <Laptop className="h-3.5 w-3.5 text-blue-400" />
         </div>
-      )
+      );
     case 'sync_conflict':
       return (
         <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center shrink-0">
           <RefreshCw className="h-3.5 w-3.5 text-amber-400" />
         </div>
-      )
+      );
     case 'security_alert':
       return (
         <div className="h-7 w-7 rounded-lg bg-red-500/10 border border-red-500/25 flex items-center justify-center shrink-0">
           <ShieldAlert className="h-3.5 w-3.5 text-red-400" />
         </div>
-      )
+      );
     case 'vault_backup':
       return (
         <div className="h-7 w-7 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center shrink-0">
           <Database className="h-3.5 w-3.5 text-emerald-400" />
         </div>
-      )
+      );
     default:
       return (
         <div className="h-7 w-7 rounded-lg bg-purple-500/10 border border-purple-500/25 flex items-center justify-center shrink-0">
           <Info className="h-3.5 w-3.5 text-purple-400" />
         </div>
-      )
+      );
   }
 }
 
-export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
-  isOpen,
-  onClose,
-}) => {
-  const {
-    notifications,
-    unreadCount,
-    markAsRead,
-    deleteNotification,
-    clearNotifications,
-  } = useNotificationStore()
+export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose }) => {
+  const { notifications, unreadCount, markAsRead, deleteNotification, clearNotifications } =
+    useNotificationStore();
 
-  const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all')
-  const dropdownRef = React.useRef<HTMLDivElement>(null)
+  const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
 
   // Close on click outside or Escape key press
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return;
 
     const handlePointerDown = (event: PointerEvent | MouseEvent | TouchEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        onClose()
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        onClose();
       }
-    }
+    };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        onClose();
       }
-    }
+    };
 
     // Delay attaching event listener so opening click doesn't immediately close
     const timer = setTimeout(() => {
-      document.addEventListener('pointerdown', handlePointerDown)
-    }, 10)
+      document.addEventListener('pointerdown', handlePointerDown);
+    }, 10);
 
-    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      clearTimeout(timer)
-      document.removeEventListener('pointerdown', handlePointerDown)
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isOpen, onClose])
+      clearTimeout(timer);
+      document.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   const filteredNotifications =
-    activeTab === 'unread'
-      ? notifications.filter((n) => !n.isRead)
-      : notifications
+    activeTab === 'unread' ? notifications.filter((n) => !n.isRead) : notifications;
 
   return (
     <AnimatePresence>
@@ -178,8 +165,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                     <button
                       type="button"
                       onClick={(e) => {
-                        e.stopPropagation()
-                        void markAsRead()
+                        e.stopPropagation();
+                        void markAsRead();
                       }}
                       className="text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors px-1.5 py-0.5 rounded hover:bg-emerald-500/10"
                       title="Mark all as read"
@@ -191,8 +178,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                     <button
                       type="button"
                       onClick={(e) => {
-                        e.stopPropagation()
-                        void clearNotifications()
+                        e.stopPropagation();
+                        void clearNotifications();
                       }}
                       className="text-[10px] text-red-400 hover:text-red-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors px-1.5 py-0.5 rounded hover:bg-red-500/10"
                       title="Clear all notifications"
@@ -203,8 +190,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                   <button
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation()
-                      onClose()
+                      e.stopPropagation();
+                      onClose();
                     }}
                     className="p-1 rounded-lg text-text/50 hover:text-text hover:bg-text/10 transition-colors ml-0.5 cursor-pointer"
                     title="Close notifications"
@@ -220,14 +207,14 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                 <button
                   type="button"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    setActiveTab('all')
+                    e.stopPropagation();
+                    setActiveTab('all');
                   }}
                   className={cn(
                     'px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer',
                     activeTab === 'all'
                       ? 'bg-text/15 text-text font-semibold shadow-sm'
-                      : 'text-text/50 hover:text-text hover:bg-text/5',
+                      : 'text-text/50 hover:text-text hover:bg-text/5'
                   )}
                 >
                   All ({notifications.length})
@@ -235,14 +222,14 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                 <button
                   type="button"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    setActiveTab('unread')
+                    e.stopPropagation();
+                    setActiveTab('unread');
                   }}
                   className={cn(
                     'px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5',
                     activeTab === 'unread'
                       ? 'bg-text/15 text-text font-semibold shadow-sm'
-                      : 'text-text/50 hover:text-text hover:bg-text/5',
+                      : 'text-text/50 hover:text-text hover:bg-text/5'
                   )}
                 >
                   Unread ({unreadCount})
@@ -257,9 +244,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                   {activeTab === 'unread' ? (
                     <>
                       <Sparkles className="h-9 w-9 mb-2 opacity-30 text-emerald-400 animate-pulse" />
-                      <p className="text-xs font-medium text-text/60">
-                        You're all caught up!
-                      </p>
+                      <p className="text-xs font-medium text-text/60">You're all caught up!</p>
                       <p className="text-[11px] text-text/35 mt-0.5">
                         No unread notifications right now.
                       </p>
@@ -267,9 +252,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                   ) : (
                     <>
                       <Bell className="h-9 w-9 mb-2 opacity-30 text-text/40" />
-                      <p className="text-xs font-medium text-text/60">
-                        No notifications yet
-                      </p>
+                      <p className="text-xs font-medium text-text/60">No notifications yet</p>
                       <p className="text-[11px] text-text/35 mt-0.5">
                         Security alerts & updates will show up here.
                       </p>
@@ -282,12 +265,12 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                     key={notification._id}
                     className={cn(
                       'group relative p-3.5 flex gap-3 transition-all cursor-pointer hover:bg-text/[0.04] active:bg-text/[0.07]',
-                      !notification.isRead ? 'bg-emerald-500/[0.04]' : '',
+                      !notification.isRead ? 'bg-emerald-500/[0.04]' : ''
                     )}
                     onClick={(e) => {
-                      e.stopPropagation()
+                      e.stopPropagation();
                       if (!notification.isRead) {
-                        void markAsRead(notification._id)
+                        void markAsRead(notification._id);
                       }
                     }}
                   >
@@ -298,7 +281,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                         <p
                           className={cn(
                             'text-xs font-semibold truncate',
-                            !notification.isRead ? 'text-text' : 'text-text/75',
+                            !notification.isRead ? 'text-text' : 'text-text/75'
                           )}
                         >
                           {notification.title}
@@ -324,8 +307,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                         <button
                           type="button"
                           onClick={(e) => {
-                            e.stopPropagation()
-                            void markAsRead(notification._id)
+                            e.stopPropagation();
+                            void markAsRead(notification._id);
                           }}
                           className="p-1 rounded-md text-emerald-400 hover:bg-emerald-500/20 active:bg-emerald-500/30 transition-colors"
                           title="Mark as read"
@@ -337,8 +320,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                       <button
                         type="button"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          void deleteNotification(notification._id)
+                          e.stopPropagation();
+                          void deleteNotification(notification._id);
                         }}
                         className="p-1 rounded-md text-text/40 hover:text-red-400 hover:bg-red-500/20 active:bg-red-500/30 transition-colors"
                         title="Delete notification"
@@ -355,5 +338,5 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         </>
       )}
     </AnimatePresence>
-  )
-}
+  );
+};

@@ -29,9 +29,7 @@ export interface ClearLogsResponse {
 const DEFAULT_LOG_LIMIT = 50;
 const MAX_LOG_LIMIT = 200;
 
-const normalizeGetLogsOptions = (
-  options?: GetLogsOptions,
-): { cursor?: string; limit: number } => {
+const normalizeGetLogsOptions = (options?: GetLogsOptions): { cursor?: string; limit: number } => {
   const cursor =
     typeof options?.cursor === 'string' && options.cursor.trim().length > 0
       ? options.cursor.trim()

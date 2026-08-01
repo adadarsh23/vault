@@ -147,7 +147,10 @@ export const functionCheck = <T>(fn: () => T, context: string): T | null => {
   }
 };
 
-export const asyncFunctionCheck = async <T>(fn: () => Promise<T>, context: string): Promise<T | null> => {
+export const asyncFunctionCheck = async <T>(
+  fn: () => Promise<T>,
+  context: string
+): Promise<T | null> => {
   try {
     return await fn();
   } catch (error) {

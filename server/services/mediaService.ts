@@ -18,11 +18,15 @@ export const mediaService = {
       (process.env.NODE_ENV === 'production'
         ? (() => {
             throw new Error(
-              'VAULT_ENCRYPTION_KEY must be configured for production media key derivation.',
+              'VAULT_ENCRYPTION_KEY must be configured for production media key derivation.'
             );
           })()
         : 'dev-only-streaming-secret-change-me');
-    return crypto.createHmac('sha256', keySource).update(`${userId}:${itemId}:hls:clearkey`).digest().slice(0, 16);
+    return crypto
+      .createHmac('sha256', keySource)
+      .update(`${userId}:${itemId}:hls:clearkey`)
+      .digest()
+      .slice(0, 16);
   },
 
   /**
@@ -39,7 +43,7 @@ export const mediaService = {
   async generateMasterPlaylist(itemId: string, queryString: string): Promise<string> {
     const baseUrl = process.env.PUBLIC_URL || '';
     const query = queryString ? `?${queryString}` : '';
-    
+
     return [
       '#EXTM3U',
       '#EXT-X-VERSION:3',
@@ -54,16 +58,22 @@ export const mediaService = {
       '#EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720',
       `${baseUrl}/api/vault/media/${itemId}/hls/720p/playlist.m3u8${query}`,
       '#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080',
-      `${baseUrl}/api/vault/media/${itemId}/hls/1080p/playlist.m3u8${query}`
+      `${baseUrl}/api/vault/media/${itemId}/hls/1080p/playlist.m3u8${query}`,
     ].join('\n');
   },
 
   /**
    * Generates a standard HLS M3U8 playlist with encryption tags (DRM)
    */
-  async generatePlaylist(itemId: string, sessionToken: string, variant: string, segmentCount: number, duration: number): Promise<string> {
+  async generatePlaylist(
+    itemId: string,
+    sessionToken: string,
+    variant: string,
+    segmentCount: number,
+    duration: number
+  ): Promise<string> {
     const keyUrl = this.getStreamingKeyUrl(itemId, sessionToken);
-    
+
     // ClearKey DRM format: #EXT-X-KEY:METHOD=AES-128,URI="key_url",IV=0x...
     let playlist = [
       '#EXTM3U',
@@ -71,7 +81,7 @@ export const mediaService = {
       '#EXT-X-TARGETDURATION:10',
       '#EXT-X-MEDIA-SEQUENCE:0',
       '#EXT-X-PLAYLIST-TYPE:VOD',
-      `#EXT-X-KEY:METHOD=AES-128,URI="${keyUrl}",IV=0x${crypto.randomBytes(16).toString('hex')}`
+      `#EXT-X-KEY:METHOD=AES-128,URI="${keyUrl}",IV=0x${crypto.randomBytes(16).toString('hex')}`,
     ];
 
     for (let i = 0; i < segmentCount; i++) {
@@ -81,5 +91,5 @@ export const mediaService = {
 
     playlist.push('#EXT-X-ENDLIST');
     return playlist.join('\n');
-  }
+  },
 };

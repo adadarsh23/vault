@@ -1,16 +1,13 @@
-import { Router } from "express";
-import * as twoFactorController from "../controllers/twoFactorController.ts";
-import { requireAuth } from "../middleware/authMiddleware.ts";
-import { asyncHandler } from "../utils/asyncHandler.ts";
-import rateLimit from "express-rate-limit";
-import { getClientIp } from "../utils/requestIp.ts";
-import { requireTrustedBrowserOrigin } from "../middleware/csrfOriginMiddleware.ts";
-import { validate } from "../middleware/validate.ts";
-import {
-  login2FASchema,
-  twoFactorTokenSchema,
-} from "../validators/twoFactorValidator.ts";
-import { requireRecaptcha } from "../middleware/recaptchaMiddleware.ts";
+import { Router } from 'express';
+import * as twoFactorController from '../controllers/twoFactorController.ts';
+import { requireAuth } from '../middleware/authMiddleware.ts';
+import { asyncHandler } from '../utils/asyncHandler.ts';
+import rateLimit from 'express-rate-limit';
+import { getClientIp } from '../utils/requestIp.ts';
+import { requireTrustedBrowserOrigin } from '../middleware/csrfOriginMiddleware.ts';
+import { validate } from '../middleware/validate.ts';
+import { login2FASchema, twoFactorTokenSchema } from '../validators/twoFactorValidator.ts';
+import { requireRecaptcha } from '../middleware/recaptchaMiddleware.ts';
 
 const router = Router();
 
@@ -22,32 +19,32 @@ const twoFactorLimiter = rateLimit({
   keyGenerator: (req) => `${getClientIp(req)}:${req.path}`,
   message: {
     success: false,
-    message: "Too many 2FA attempts. Please try again later.",
-    error: { code: "TOO_MANY_2FA_ATTEMPTS" }
+    message: 'Too many 2FA attempts. Please try again later.',
+    error: { code: 'TOO_MANY_2FA_ATTEMPTS' },
   },
 });
 
-router.post("/setup", requireAuth, twoFactorLimiter, asyncHandler(twoFactorController.setup2FA));
+router.post('/setup', requireAuth, twoFactorLimiter, asyncHandler(twoFactorController.setup2FA));
 router.post(
-  "/verify",
+  '/verify',
   requireAuth,
   twoFactorLimiter,
   validate(twoFactorTokenSchema),
-  asyncHandler(twoFactorController.verifyAndEnable2FA),
+  asyncHandler(twoFactorController.verifyAndEnable2FA)
 );
 router.post(
-  "/login",
+  '/login',
   requireTrustedBrowserOrigin,
   twoFactorLimiter,
   validate(login2FASchema),
-  asyncHandler(twoFactorController.login2FA),
+  asyncHandler(twoFactorController.login2FA)
 );
 router.post(
-  "/disable",
+  '/disable',
   requireAuth,
   twoFactorLimiter,
   validate(twoFactorTokenSchema),
-  asyncHandler(twoFactorController.disable2FA),
+  asyncHandler(twoFactorController.disable2FA)
 );
 
 export const twoFactorRouter = router;

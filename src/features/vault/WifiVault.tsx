@@ -1,13 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react'
-import { Button } from '../../components/ui/Button'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../components/ui/Card'
-import { Input } from '../../components/ui/Input'
-import { SearchInput } from '../../components/ui/SearchInput'
+import React, { useState, useEffect, useMemo } from 'react';
+import { Button } from '../../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { SearchInput } from '../../components/ui/SearchInput';
 import {
   Plus,
   Trash2,
@@ -27,27 +22,27 @@ import {
   Pin,
   QrCode,
   Download,
-} from 'lucide-react'
-import { QRCodeSVG } from 'qrcode.react'
-import { toast } from 'sonner'
-import { useVaultStore } from '../../store/vaultStore'
-import { VaultItem } from '../../lib/storage'
-import { encryptData, decryptData } from '../../lib/cryptoPrimitives'
-import { useClipboard } from '../../hooks/useClipboard'
-import { motion, AnimatePresence } from 'framer-motion'
-import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent'
-import { logActivity } from '../../lib/activity'
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop'
+} from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { toast } from 'sonner';
+import { useVaultStore } from '../../store/vaultStore';
+import { VaultItem } from '../../lib/storage';
+import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
+import { useClipboard } from '../../hooks/useClipboard';
+import { motion, AnimatePresence } from 'framer-motion';
+import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';
+import { logActivity } from '../../lib/activity';
+import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
 
-import { FolderSidebar } from '../../components/vault/FolderSidebar'
-import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu'
-import { useVaultFolders } from '../../hooks/useVaultFolders'
+import { FolderSidebar } from '../../components/vault/FolderSidebar';
+import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
+import { useVaultFolders } from '../../hooks/useVaultFolders';
 
 interface WifiPayload {
-  ssid: string
-  security: 'WPA2/WPA3' | 'WPA2' | 'WPA3' | 'WEP' | 'Open'
-  passwordKey: string
-  notes: string
+  ssid: string;
+  security: 'WPA2/WPA3' | 'WPA2' | 'WPA3' | 'WEP' | 'Open';
+  passwordKey: string;
+  notes: string;
 }
 
 const emptyPayload = (): WifiPayload => ({
@@ -55,179 +50,187 @@ const emptyPayload = (): WifiPayload => ({
   security: 'WPA2/WPA3',
   passwordKey: '',
   notes: '',
-})
+});
 
 const getWifiQrString = (payload: WifiPayload): string => {
-  const securityType = payload.security === 'Open' ? 'nopass' : (payload.security === 'WEP' ? 'WEP' : 'WPA')
+  const securityType =
+    payload.security === 'Open' ? 'nopass' : payload.security === 'WEP' ? 'WEP' : 'WPA';
   // Format: WIFI:S:SSID;T:WPA;P:PASSWORD;;
   // Escape special chars in SSID and Password
   const escapeString = (str: string) => {
-    return str.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/:/g, '\\:').replace(/,/g, '\\,')
-  }
-  const escapedSsid = escapeString(payload.ssid)
-  const escapedPassword = escapeString(payload.passwordKey)
-  return `WIFI:S:${escapedSsid};T:${securityType};P:${escapedPassword};;`
-}
+    return str
+      .replace(/\\/g, '\\\\')
+      .replace(/;/g, '\\;')
+      .replace(/:/g, '\\:')
+      .replace(/,/g, '\\,');
+  };
+  const escapedSsid = escapeString(payload.ssid);
+  const escapedPassword = escapeString(payload.passwordKey);
+  return `WIFI:S:${escapedSsid};T:${securityType};P:${escapedPassword};;`;
+};
 
 const DecryptedWifiItem: React.FC<{
-  item: VaultItem
-  masterKey: string | CryptoKey
-  onUpdate: (id: string, name: string, payload: WifiPayload) => Promise<void>
-  onDelete: (id: string, title: string) => void
-  onTogglePin: (id: string) => void
-  isPinning: boolean
+  item: VaultItem;
+  masterKey: string | CryptoKey;
+  onUpdate: (id: string, name: string, payload: WifiPayload) => Promise<void>;
+  onDelete: (id: string, title: string) => void;
+  onTogglePin: (id: string) => void;
+  isPinning: boolean;
 }> = React.memo(({ item, masterKey, onUpdate, onDelete, onTogglePin, isPinning }) => {
-  const [data, setData] = useState<WifiPayload | null>(null)
-  const [error, setError] = useState(false)
-  const [isVisible, setIsVisible] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
-  const [editName, setEditName] = useState(item.title)
-  const [editPayload, setEditPayload] = useState<WifiPayload>(emptyPayload())
-  const [showQr, setShowQr] = useState(false)
-  const { copy, copiedId } = useClipboard()
+  const [data, setData] = useState<WifiPayload | null>(null);
+  const [error, setError] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(item.title);
+  const [editPayload, setEditPayload] = useState<WifiPayload>(emptyPayload());
+  const [showQr, setShowQr] = useState(false);
+  const { copy, copiedId } = useClipboard();
 
-  const updateItem = useVaultStore((state) => state.updateItem)
-  const [isAddingTag, setIsAddingTag] = useState(false)
-  const [newTagInput, setNewTagInput] = useState('')
+  const updateItem = useVaultStore((state) => state.updateItem);
+  const [isAddingTag, setIsAddingTag] = useState(false);
+  const [newTagInput, setNewTagInput] = useState('');
 
   const tags = useMemo<string[]>(() => {
-    return Array.isArray(item.metadata?.tags) ? item.metadata.tags : []
-  }, [item])
+    return Array.isArray(item.metadata?.tags) ? item.metadata.tags : [];
+  }, [item]);
 
   const handleAddTag = async () => {
-    const cleaned = newTagInput.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '')
+    const cleaned = newTagInput
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]/g, '');
     if (!cleaned) {
-      setIsAddingTag(false)
-      setNewTagInput('')
-      return
+      setIsAddingTag(false);
+      setNewTagInput('');
+      return;
     }
     if (tags.includes(cleaned)) {
-      toast.error('Tag already exists')
-      setIsAddingTag(false)
-      setNewTagInput('')
-      return
+      toast.error('Tag already exists');
+      setIsAddingTag(false);
+      setNewTagInput('');
+      return;
     }
-    const updated = [...tags, cleaned]
+    const updated = [...tags, cleaned];
     try {
-      await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } })
-      toast.success(`Tag #${cleaned} added`)
+      await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } });
+      toast.success(`Tag #${cleaned} added`);
     } catch {
-      toast.error('Failed to add tag')
+      toast.error('Failed to add tag');
     } finally {
-      setIsAddingTag(false)
-      setNewTagInput('')
+      setIsAddingTag(false);
+      setNewTagInput('');
     }
-  }
+  };
 
   const handleRemoveTag = async (tagToRemove: string) => {
-    const updated = tags.filter((t) => t !== tagToRemove)
+    const updated = tags.filter((t) => t !== tagToRemove);
     try {
-      await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } })
-      toast.success(`Tag #${tagToRemove} removed`)
+      await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } });
+      toast.success(`Tag #${tagToRemove} removed`);
     } catch {
-      toast.error('Failed to remove tag')
+      toast.error('Failed to remove tag');
     }
-  }
+  };
 
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
     const decrypt = async () => {
       try {
-        const encryptedContent = getStringContent(item.content)
+        const encryptedContent = getStringContent(item.content);
         if (!encryptedContent) {
-          if (isMounted) setError(true)
-          return
+          if (isMounted) setError(true);
+          return;
         }
 
-        const decrypted = await decryptData(encryptedContent, masterKey)
+        const decrypted = await decryptData(encryptedContent, masterKey);
         if (!decrypted || !isMounted) {
-          if (isMounted) setError(true)
-          return
+          if (isMounted) setError(true);
+          return;
         }
 
-        const parsed = parseJsonSafely<WifiPayload>(decrypted)
+        const parsed = parseJsonSafely<WifiPayload>(decrypted);
         if (!parsed) {
-          if (isMounted) setError(true)
-          return
+          if (isMounted) setError(true);
+          return;
         }
 
-        setData(parsed)
-        setEditPayload(parsed)
+        setData(parsed);
+        setEditPayload(parsed);
       } catch (err) {
-        console.error('Wi-Fi Decryption Error:', err)
-        if (isMounted) setError(true)
+        console.error('Wi-Fi Decryption Error:', err);
+        if (isMounted) setError(true);
       }
-    }
+    };
 
-    decrypt()
+    decrypt();
     return () => {
-      isMounted = false
-    }
-  }, [item.content, masterKey])
+      isMounted = false;
+    };
+  }, [item.content, masterKey]);
 
   const handleCopy = (text: string, id: string, label: string) => {
-    copy(text, id)
-    toast.success(`${label} copied to clipboard`)
+    copy(text, id);
+    toast.success(`${label} copied to clipboard`);
     logActivity({
       actionType: 'copy_value',
       itemName: item.title,
       description: `${label} copied`,
       status: 'success',
-    })
-  }
+    });
+  };
 
   const handleSave = async () => {
     try {
-      await onUpdate(item.id, editName, editPayload)
-      setIsEditing(false)
+      await onUpdate(item.id, editName, editPayload);
+      setIsEditing(false);
       logActivity({
         actionType: 'item_update',
         itemName: editName,
         description: 'Wi-Fi credentials updated',
         status: 'success',
-      })
+      });
     } catch (err) {
       logActivity({
         actionType: 'item_update',
         itemName: editName,
         description: 'Wi-Fi credentials update failed',
         status: 'failure',
-      })
+      });
     }
-  }
+  };
 
   const downloadQrCode = () => {
-    if (!data) return
-    const svgElement = document.getElementById(`wifi-qr-${item.id}`)
-    if (!svgElement) return
+    if (!data) return;
+    const svgElement = document.getElementById(`wifi-qr-${item.id}`);
+    if (!svgElement) return;
 
-    const svgString = new XMLSerializer().serializeToString(svgElement)
-    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
-    const URL = window.URL || window.webkitURL || window
-    const blobURL = URL.createObjectURL(svgBlob)
+    const svgString = new XMLSerializer().serializeToString(svgElement);
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const URL = window.URL || window.webkitURL || window;
+    const blobURL = URL.createObjectURL(svgBlob);
 
-    const image = new Image()
+    const image = new Image();
     image.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = 300
-      canvas.height = 300
-      const context = canvas.getContext('2d')
+      const canvas = document.createElement('canvas');
+      canvas.width = 300;
+      canvas.height = 300;
+      const context = canvas.getContext('2d');
       if (context) {
-        context.fillStyle = '#ffffff'
-        context.fillRect(0, 0, 300, 300)
-        context.drawImage(image, 10, 10, 280, 280)
-        const pngURL = canvas.toDataURL('image/png')
-        const downloadLink = document.createElement('a')
-        downloadLink.href = pngURL
-        downloadLink.download = `${data.ssid}_wifi_qr.png`
-        document.body.appendChild(downloadLink)
-        downloadLink.click()
-        document.body.removeChild(downloadLink)
-        toast.success(`Downloaded QR Code for ${data.ssid}`)
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, 300, 300);
+        context.drawImage(image, 10, 10, 280, 280);
+        const pngURL = canvas.toDataURL('image/png');
+        const downloadLink = document.createElement('a');
+        downloadLink.href = pngURL;
+        downloadLink.download = `${data.ssid}_wifi_qr.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        toast.success(`Downloaded QR Code for ${data.ssid}`);
       }
-    }
-    image.src = blobURL
-  }
+    };
+    image.src = blobURL;
+  };
 
   if (error) {
     return (
@@ -243,7 +246,7 @@ const DecryptedWifiItem: React.FC<{
           Delete
         </Button>
       </Card>
-    )
+    );
   }
 
   if (!data) {
@@ -252,10 +255,10 @@ const DecryptedWifiItem: React.FC<{
         <div className="h-10 w-full bg-white/5 rounded-xl" />
         <div className="h-20 w-full bg-white/5 rounded-xl" />
       </Card>
-    )
+    );
   }
 
-  const qrValue = getWifiQrString(data)
+  const qrValue = getWifiQrString(data);
 
   return (
     <motion.div whileHover={{ y: -5 }} className="h-full">
@@ -313,8 +316,8 @@ const DecryptedWifiItem: React.FC<{
                   size="icon"
                   className="h-8 w-8 rounded-full hover:bg-white/10 text-text/20 hover:text-text/60 transition-colors"
                   onClick={() => {
-                    setEditPayload(data)
-                    setIsEditing(true)
+                    setEditPayload(data);
+                    setIsEditing(true);
                   }}
                 >
                   <Edit2 className="h-3.5 w-3.5" />
@@ -326,7 +329,11 @@ const DecryptedWifiItem: React.FC<{
                   className={`h-8 w-8 rounded-full ${item.isPinned ? 'text-amber-400 hover:bg-amber-400/20' : 'text-text/20 hover:text-text/60 hover:bg-white/10'} transition-colors`}
                   onClick={() => onTogglePin(item.id)}
                 >
-                  {isPinning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pin className={`h-3.5 w-3.5 ${item.isPinned ? 'fill-current' : ''}`} />}
+                  {isPinning ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Pin className={`h-3.5 w-3.5 ${item.isPinned ? 'fill-current' : ''}`} />
+                  )}
                 </Button>
                 <Button
                   variant="ghost"
@@ -352,7 +359,9 @@ const DecryptedWifiItem: React.FC<{
           {isEditing ? (
             <div className="space-y-3">
               <div>
-                <label className="text-[9px] font-bold text-text/30 uppercase tracking-wider block mb-1">SSID (Network Name)</label>
+                <label className="text-[9px] font-bold text-text/30 uppercase tracking-wider block mb-1">
+                  SSID (Network Name)
+                </label>
                 <Input
                   placeholder="Network SSID"
                   value={editPayload.ssid}
@@ -360,31 +369,51 @@ const DecryptedWifiItem: React.FC<{
                 />
               </div>
               <div>
-                <label className="text-[9px] font-bold text-text/30 uppercase tracking-wider block mb-1">Security Type</label>
+                <label className="text-[9px] font-bold text-text/30 uppercase tracking-wider block mb-1">
+                  Security Type
+                </label>
                 <select
                   value={editPayload.security}
-                  onChange={(e: any) => setEditPayload({ ...editPayload, security: e.target.value })}
+                  onChange={(e: any) =>
+                    setEditPayload({ ...editPayload, security: e.target.value })
+                  }
                   className="w-full bg-white/5 border border-white/5 text-text rounded-xl p-2.5 text-sm focus:outline-none focus:border-white/20"
                 >
-                  <option value="WPA2/WPA3" className="bg-bg text-text">WPA2/WPA3</option>
-                  <option value="WPA3" className="bg-bg text-text">WPA3</option>
-                  <option value="WPA2" className="bg-bg text-text">WPA2</option>
-                  <option value="WEP" className="bg-bg text-text">WEP</option>
-                  <option value="Open" className="bg-bg text-text">Open</option>
+                  <option value="WPA2/WPA3" className="bg-bg text-text">
+                    WPA2/WPA3
+                  </option>
+                  <option value="WPA3" className="bg-bg text-text">
+                    WPA3
+                  </option>
+                  <option value="WPA2" className="bg-bg text-text">
+                    WPA2
+                  </option>
+                  <option value="WEP" className="bg-bg text-text">
+                    WEP
+                  </option>
+                  <option value="Open" className="bg-bg text-text">
+                    Open
+                  </option>
                 </select>
               </div>
               {editPayload.security !== 'Open' && (
                 <div>
-                  <label className="text-[9px] font-bold text-text/30 uppercase tracking-wider block mb-1">Password</label>
+                  <label className="text-[9px] font-bold text-text/30 uppercase tracking-wider block mb-1">
+                    Password
+                  </label>
                   <Input
                     placeholder="Wi-Fi Password"
                     value={editPayload.passwordKey}
-                    onChange={(e) => setEditPayload({ ...editPayload, passwordKey: e.target.value })}
+                    onChange={(e) =>
+                      setEditPayload({ ...editPayload, passwordKey: e.target.value })
+                    }
                   />
                 </div>
               )}
               <div>
-                <label className="text-[9px] font-bold text-text/30 uppercase tracking-wider block mb-1">Location / Notes</label>
+                <label className="text-[9px] font-bold text-text/30 uppercase tracking-wider block mb-1">
+                  Location / Notes
+                </label>
                 <Input
                   placeholder="Notes (e.g. Living Room Router)"
                   value={editPayload.notes}
@@ -405,7 +434,11 @@ const DecryptedWifiItem: React.FC<{
                       className="h-6 w-6 rounded hover:bg-white/10"
                       onClick={() => handleCopy(data.ssid, item.id + '-ssid', 'SSID')}
                     >
-                      {copiedId === item.id + '-ssid' ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3 text-text/40" />}
+                      {copiedId === item.id + '-ssid' ? (
+                        <Check className="h-3 w-3 text-green-400" />
+                      ) : (
+                        <Copy className="h-3 w-3 text-text/40" />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -423,7 +456,11 @@ const DecryptedWifiItem: React.FC<{
                         className="h-6 w-6 rounded hover:bg-white/10"
                         onClick={() => setIsVisible(!isVisible)}
                       >
-                        {isVisible ? <EyeOff className="h-3.5 w-3.5 text-text/40" /> : <Eye className="h-3.5 w-3.5 text-text/40" />}
+                        {isVisible ? (
+                          <EyeOff className="h-3.5 w-3.5 text-text/40" />
+                        ) : (
+                          <Eye className="h-3.5 w-3.5 text-text/40" />
+                        )}
                       </Button>
                       <Button
                         variant="ghost"
@@ -431,7 +468,11 @@ const DecryptedWifiItem: React.FC<{
                         className="h-6 w-6 rounded hover:bg-white/10"
                         onClick={() => handleCopy(data.passwordKey, item.id + '-pw', 'Password')}
                       >
-                        {copiedId === item.id + '-pw' ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3 text-text/40" />}
+                        {copiedId === item.id + '-pw' ? (
+                          <Check className="h-3 w-3 text-green-400" />
+                        ) : (
+                          <Copy className="h-3 w-3 text-text/40" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -439,7 +480,9 @@ const DecryptedWifiItem: React.FC<{
 
                 {data.notes && (
                   <div className="text-xs text-text/50 bg-white/[0.02] border border-white/5 p-2 rounded-xl">
-                    <span className="font-semibold block text-[10px] text-text/30 uppercase tracking-wider mb-0.5">Notes</span>
+                    <span className="font-semibold block text-[10px] text-text/30 uppercase tracking-wider mb-0.5">
+                      Notes
+                    </span>
                     {data.notes}
                   </div>
                 )}
@@ -473,7 +516,9 @@ const DecryptedWifiItem: React.FC<{
                         includeMargin={true}
                       />
                       <div className="text-center space-y-1">
-                        <span className="text-[10px] font-bold text-zinc-600 block">Scan to Join Network</span>
+                        <span className="text-[10px] font-bold text-zinc-600 block">
+                          Scan to Join Network
+                        </span>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -495,9 +540,17 @@ const DecryptedWifiItem: React.FC<{
           <div className="pt-3 border-t border-white/5">
             <div className="flex flex-wrap gap-1.5 items-center">
               {tags.map((tag) => (
-                <span key={tag} className="inline-flex items-center rounded-full bg-white/5 border border-white/5 px-2 py-0.5 text-[10px] text-text/50">
+                <span
+                  key={tag}
+                  className="inline-flex items-center rounded-full bg-white/5 border border-white/5 px-2 py-0.5 text-[10px] text-text/50"
+                >
                   #{tag}
-                  <button onClick={() => handleRemoveTag(tag)} className="ml-1 text-text/30 hover:text-red-400 focus:outline-none">×</button>
+                  <button
+                    onClick={() => handleRemoveTag(tag)}
+                    className="ml-1 text-text/30 hover:text-red-400 focus:outline-none"
+                  >
+                    ×
+                  </button>
                 </span>
               ))}
               {isAddingTag ? (
@@ -511,7 +564,12 @@ const DecryptedWifiItem: React.FC<{
                   autoFocus
                 />
               ) : (
-                <Button variant="ghost" size="sm" onClick={() => setIsAddingTag(true)} className="h-5 px-2 rounded-full text-[9px] border border-dashed border-white/10 text-text/40 hover:text-text hover:bg-white/5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsAddingTag(true)}
+                  className="h-5 px-2 rounded-full text-[9px] border border-dashed border-white/10 text-text/40 hover:text-text hover:bg-white/5"
+                >
                   + Tag
                 </Button>
               )}
@@ -520,58 +578,74 @@ const DecryptedWifiItem: React.FC<{
         </CardContent>
       </Card>
     </motion.div>
-  )
-})
+  );
+});
 
 export const WifiVault: React.FC = () => {
-  const { items, masterKey, addItem, updateItem, removeItem, togglePin, pinningItemIds } = useVaultStore()
-  const { folders, currentFolder, setCurrentFolder, isAddingFolder, setIsAddingFolder, newFolderName, setNewFolderName, editingFolder, setEditingFolder, editingFolderName, setEditingFolderName, handleCreateFolder, handleRenameFolder, handleDeleteFolder, handleMoveToFolder } = useVaultFolders('wifi')
+  const { items, masterKey, addItem, updateItem, removeItem, togglePin, pinningItemIds } =
+    useVaultStore();
+  const {
+    folders,
+    currentFolder,
+    setCurrentFolder,
+    isAddingFolder,
+    setIsAddingFolder,
+    newFolderName,
+    setNewFolderName,
+    editingFolder,
+    setEditingFolder,
+    editingFolderName,
+    setEditingFolderName,
+    handleCreateFolder,
+    handleRenameFolder,
+    handleDeleteFolder,
+    handleMoveToFolder,
+  } = useVaultFolders('wifi');
 
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isAdding, setIsAdding] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isMobileFolderOpen, setIsMobileFolderOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isMobileFolderOpen, setIsMobileFolderOpen] = useState(false);
 
   // Form State
-  const [newName, setNewName] = useState('')
-  const [formPayload, setFormPayload] = useState<WifiPayload>(emptyPayload())
+  const [newName, setNewName] = useState('');
+  const [formPayload, setFormPayload] = useState<WifiPayload>(emptyPayload());
 
   const wifis = useMemo(() => {
-    return items.filter((item) => item.type === 'wifi')
-  }, [items])
+    return items.filter((item) => item.type === 'wifi');
+  }, [items]);
 
   const suggestions = useMemo(() => {
-    return wifis.map((item) => item.title).filter(Boolean)
-  }, [wifis])
+    return wifis.map((item) => item.title).filter(Boolean);
+  }, [wifis]);
 
   const filteredWifis = useMemo(() => {
-    let result = wifis
+    let result = wifis;
     if (currentFolder) {
-      result = result.filter((item) => item.folder === currentFolder)
+      result = result.filter((item) => item.folder === currentFolder);
     }
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
+      const q = searchQuery.toLowerCase();
       result = result.filter(
         (item) =>
-          item.title.toLowerCase().includes(q) ||
-          item.metadata?.ssid?.toLowerCase().includes(q),
-      )
+          item.title.toLowerCase().includes(q) || item.metadata?.ssid?.toLowerCase().includes(q)
+      );
     }
     return result.sort((a, b) => {
-      const aPinned = a.isPinned ? 1 : 0
-      const bPinned = b.isPinned ? 1 : 0
-      if (aPinned !== bPinned) return bPinned - aPinned
-      return b.createdAt - a.createdAt
-    })
-  }, [wifis, currentFolder, searchQuery])
+      const aPinned = a.isPinned ? 1 : 0;
+      const bPinned = b.isPinned ? 1 : 0;
+      if (aPinned !== bPinned) return bPinned - aPinned;
+      return b.createdAt - a.createdAt;
+    });
+  }, [wifis, currentFolder, searchQuery]);
 
   const handleCreateWifi = async () => {
-    const trimmedTitle = newName.trim() || formPayload.ssid.trim() || 'New Wi-Fi'
-    if (!masterKey) return
+    const trimmedTitle = newName.trim() || formPayload.ssid.trim() || 'New Wi-Fi';
+    if (!masterKey) return;
 
-    setIsSaving(true)
+    setIsSaving(true);
     try {
-      const encryptedContent = await encryptData(JSON.stringify(formPayload), masterKey)
+      const encryptedContent = await encryptData(JSON.stringify(formPayload), masterKey);
       await addItem({
         type: 'wifi',
         title: trimmedTitle,
@@ -581,23 +655,23 @@ export const WifiVault: React.FC = () => {
           ssid: formPayload.ssid,
           security: formPayload.security,
         },
-      })
+      });
 
-      setIsAdding(false)
-      setNewName('')
-      setFormPayload(emptyPayload())
-      toast.success(`Wi-Fi network "${trimmedTitle}" saved securely`)
+      setIsAdding(false);
+      setNewName('');
+      setFormPayload(emptyPayload());
+      toast.success(`Wi-Fi network "${trimmedTitle}" saved securely`);
     } catch {
-      toast.error('Failed to save Wi-Fi network')
+      toast.error('Failed to save Wi-Fi network');
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const handleUpdateWifi = async (id: string, name: string, payload: WifiPayload) => {
-    if (!masterKey) return
+    if (!masterKey) return;
     try {
-      const encryptedContent = await encryptData(JSON.stringify(payload), masterKey)
+      const encryptedContent = await encryptData(JSON.stringify(payload), masterKey);
       await updateItem(id, {
         title: name.trim() || payload.ssid || 'Updated Wi-Fi',
         content: encryptedContent,
@@ -605,12 +679,12 @@ export const WifiVault: React.FC = () => {
           ssid: payload.ssid,
           security: payload.security,
         },
-      })
-      toast.success('Wi-Fi network credentials updated')
+      });
+      toast.success('Wi-Fi network credentials updated');
     } catch {
-      toast.error('Failed to update Wi-Fi credentials')
+      toast.error('Failed to update Wi-Fi credentials');
     }
-  }
+  };
 
   return (
     <div className="relative flex h-full min-h-0 gap-6">
@@ -671,14 +745,23 @@ export const WifiVault: React.FC = () => {
               </span>
             </div>
             <p className="text-text/50 truncate">
-              Store home network details, security protocols, and auto-generate QR codes for visitors.
+              Store home network details, security protocols, and auto-generate QR codes for
+              visitors.
             </p>
           </div>
           <div className="flex gap-2 shrink-0">
-            <Button onClick={() => setIsAdding(true)} size="sm" className="hidden sm:flex transition-all">
+            <Button
+              onClick={() => setIsAdding(true)}
+              size="sm"
+              className="hidden sm:flex transition-all"
+            >
               <Plus className="mr-2 h-4 w-4" /> Add Wi-Fi
             </Button>
-            <Button onClick={() => setIsAdding(true)} size="icon" className="flex sm:hidden transition-all">
+            <Button
+              onClick={() => setIsAdding(true)}
+              size="icon"
+              className="flex sm:hidden transition-all"
+            >
               <Plus className="h-5 w-5" />
             </Button>
           </div>
@@ -708,7 +791,12 @@ export const WifiVault: React.FC = () => {
 
         <AnimatePresence>
           {isAdding && (
-            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-8"
+            >
               <Card className="border-white/10 bg-gradient-to-br from-white/10 to-transparent backdrop-blur-md">
                 <CardHeader>
                   <CardTitle className="text-lg text-text">New Wi-Fi Network</CardTitle>
@@ -717,7 +805,9 @@ export const WifiVault: React.FC = () => {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-4">
                       <div>
-                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">Network Nickname</label>
+                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
+                          Network Nickname
+                        </label>
                         <Input
                           placeholder="e.g. Guest Wi-Fi / Home Router"
                           value={newName}
@@ -725,7 +815,9 @@ export const WifiVault: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">Network SSID (Name)</label>
+                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
+                          Network SSID (Name)
+                        </label>
                         <Input
                           placeholder="SSID"
                           value={formPayload.ssid}
@@ -736,48 +828,76 @@ export const WifiVault: React.FC = () => {
 
                     <div className="space-y-4">
                       <div>
-                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">Security Protocol</label>
+                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
+                          Security Protocol
+                        </label>
                         <select
                           value={formPayload.security}
-                          onChange={(e: any) => setFormPayload({ ...formPayload, security: e.target.value })}
+                          onChange={(e: any) =>
+                            setFormPayload({ ...formPayload, security: e.target.value })
+                          }
                           className="w-full bg-white/5 border border-white/5 text-text rounded-xl p-2.5 text-sm focus:outline-none focus:border-white/20"
                         >
-                          <option value="WPA2/WPA3" className="bg-bg text-text">WPA2/WPA3</option>
-                          <option value="WPA3" className="bg-bg text-text">WPA3</option>
-                          <option value="WPA2" className="bg-bg text-text">WPA2</option>
-                          <option value="WEP" className="bg-bg text-text">WEP</option>
-                          <option value="Open" className="bg-bg text-text">Open</option>
+                          <option value="WPA2/WPA3" className="bg-bg text-text">
+                            WPA2/WPA3
+                          </option>
+                          <option value="WPA3" className="bg-bg text-text">
+                            WPA3
+                          </option>
+                          <option value="WPA2" className="bg-bg text-text">
+                            WPA2
+                          </option>
+                          <option value="WEP" className="bg-bg text-text">
+                            WEP
+                          </option>
+                          <option value="Open" className="bg-bg text-text">
+                            Open
+                          </option>
                         </select>
                       </div>
                       {formPayload.security !== 'Open' && (
                         <div>
-                          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">Password</label>
+                          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
+                            Password
+                          </label>
                           <Input
                             placeholder="Password"
                             value={formPayload.passwordKey}
-                            onChange={(e) => setFormPayload({ ...formPayload, passwordKey: e.target.value })}
+                            onChange={(e) =>
+                              setFormPayload({ ...formPayload, passwordKey: e.target.value })
+                            }
                           />
                         </div>
                       )}
                       <div>
-                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">Location / Notes</label>
+                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
+                          Location / Notes
+                        </label>
                         <Input
                           placeholder="e.g. Living Room Router"
                           value={formPayload.notes}
-                          onChange={(e) => setFormPayload({ ...formPayload, notes: e.target.value })}
+                          onChange={(e) =>
+                            setFormPayload({ ...formPayload, notes: e.target.value })
+                          }
                         />
                       </div>
                     </div>
                   </div>
 
                   <div className="flex justify-end gap-2 pt-2 border-t border-white/5">
-                    <Button variant="ghost" onClick={() => setIsAdding(false)}>Cancel</Button>
+                    <Button variant="ghost" onClick={() => setIsAdding(false)}>
+                      Cancel
+                    </Button>
                     <Button
                       className="bg-amber-500 hover:bg-amber-600 text-white min-w-[130px]"
                       onClick={handleCreateWifi}
                       disabled={isSaving}
                     >
-                      {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save Network'}
+                      {isSaving ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        'Save Network'
+                      )}
                     </Button>
                   </div>
                 </CardContent>
@@ -787,7 +907,10 @@ export const WifiVault: React.FC = () => {
         </AnimatePresence>
 
         {filteredWifis.length === 0 && !isAdding && (
-          <div className="flex flex-col items-center justify-center py-20 opacity-40 cursor-pointer hover:opacity-70 transition-opacity" onClick={() => setIsAdding(true)}>
+          <div
+            className="flex flex-col items-center justify-center py-20 opacity-40 cursor-pointer hover:opacity-70 transition-opacity"
+            onClick={() => setIsAdding(true)}
+          >
             <Wifi className="mb-4 h-16 w-16" />
             <p className="text-lg">No Wi-Fi credentials found.</p>
           </div>
@@ -807,8 +930,8 @@ export const WifiVault: React.FC = () => {
                 onUpdate={handleUpdateWifi}
                 onDelete={(id, title) => {
                   if (confirm(`Are you sure you want to delete "${title}"?`)) {
-                    removeItem(id)
-                    toast.success(`Deleted Wi-Fi "${title}"`)
+                    removeItem(id);
+                    toast.success(`Deleted Wi-Fi "${title}"`);
                   }
                 }}
                 onTogglePin={(id) => void togglePin(id)}
@@ -819,5 +942,5 @@ export const WifiVault: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

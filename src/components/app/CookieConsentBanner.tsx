@@ -1,74 +1,70 @@
-import { useCallback, useMemo, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Button } from '../ui/Button'
-import {
-  deleteCookie,
-  getCookie,
-  setCookie,
-} from '../../lib/cookie-utils'
+import { useCallback, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Button } from '../ui/Button';
+import { deleteCookie, getCookie, setCookie } from '../../lib/cookie-utils';
 
-const COOKIE_CONSENT_KEY = 'vault_cookie_consent'
-const COOKIE_SUPPORT_TEST_KEY = 'vault_cookie_support_test'
+const COOKIE_CONSENT_KEY = 'vault_cookie_consent';
+const COOKIE_SUPPORT_TEST_KEY = 'vault_cookie_support_test';
 
-type CookieConsentState = 'accepted' | 'rejected' | null
+type CookieConsentState = 'accepted' | 'rejected' | null;
 
 const readCookieConsentState = (): CookieConsentState => {
-  const value = getCookie(COOKIE_CONSENT_KEY)
+  const value = getCookie(COOKIE_CONSENT_KEY);
   if (value === 'accepted' || value === 'rejected') {
-    return value
+    return value;
   }
-  return null
-}
+  return null;
+};
 
 const checkCookieSupport = (): boolean => {
-  const ok = setCookie(COOKIE_SUPPORT_TEST_KEY, '1', { maxAge: 30 })
+  const ok = setCookie(COOKIE_SUPPORT_TEST_KEY, '1', { maxAge: 30 });
   if (!ok) {
-    return false
+    return false;
   }
 
-  const value = getCookie(COOKIE_SUPPORT_TEST_KEY)
-  deleteCookie(COOKIE_SUPPORT_TEST_KEY)
-  return value === '1'
-}
+  const value = getCookie(COOKIE_SUPPORT_TEST_KEY);
+  deleteCookie(COOKIE_SUPPORT_TEST_KEY);
+  return value === '1';
+};
 
 export const CookieConsentBanner = () => {
   const [consentState, setConsentState] = useState<CookieConsentState>(() =>
-    readCookieConsentState(),
-  )
-  const [cookieSupported] = useState<boolean>(() => checkCookieSupport())
+    readCookieConsentState()
+  );
+  const [cookieSupported] = useState<boolean>(() => checkCookieSupport());
 
-  const showBanner = consentState === null
+  const showBanner = consentState === null;
 
   const handleAccept = useCallback(() => {
     setCookie(COOKIE_CONSENT_KEY, 'accepted', {
       maxAge: 60 * 60 * 24 * 365,
       sameSite: 'Lax',
       path: '/',
-    })
-    setConsentState('accepted')
-  }, [])
+    });
+    setConsentState('accepted');
+  }, []);
 
   const handleReject = useCallback(() => {
     setCookie(COOKIE_CONSENT_KEY, 'rejected', {
       maxAge: 60 * 60 * 24 * 365,
       sameSite: 'Strict',
       path: '/',
-    })
-    setConsentState('rejected')
-  }, [])
+    });
+    setConsentState('rejected');
+  }, []);
 
   const statusLabel = useMemo(() => {
     if (!cookieSupported) {
-      return 'Cookies unavailable in this browser/session.'
+      return 'Cookies unavailable in this browser/session.';
     }
     if (consentState === 'accepted') {
-      return 'Cookie status: accepted.'
+      return 'Cookie status: accepted.';
     }
     if (consentState === 'rejected') {
-      return 'Cookie status: rejected.'
+      return 'Cookie status: rejected.';
     }
-    return 'Cookie status: not selected.'
-  }, [consentState, cookieSupported])
+    return 'Cookie status: not selected.';
+  }, [consentState, cookieSupported]);
 
   if (!showBanner) {
     return (
@@ -86,7 +82,7 @@ export const CookieConsentBanner = () => {
           </span>
         </div>
       </motion.div>
-    )
+    );
   }
 
   return (
@@ -131,5 +127,5 @@ export const CookieConsentBanner = () => {
         </div>
       </motion.section>
     </AnimatePresence>
-  )
-}
+  );
+};

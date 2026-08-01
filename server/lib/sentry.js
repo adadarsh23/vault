@@ -42,7 +42,11 @@ export const initSentry = () => {
     enabled: isEnabled,
     environment: process.env.SENTRY_ENVIRONMENT || env,
     release: process.env.SENTRY_RELEASE || process.env.npm_package_version,
-    integrations: [Sentry.httpIntegration(), Sentry.expressIntegration(), nodeProfilingIntegration()],
+    integrations: [
+      Sentry.httpIntegration(),
+      Sentry.expressIntegration(),
+      nodeProfilingIntegration(),
+    ],
     tracesSampleRate: toNumber(process.env.SENTRY_TRACES_SAMPLE_RATE, 0.1),
     profilesSampleRate: toNumber(process.env.SENTRY_PROFILES_SAMPLE_RATE, 0),
     beforeSend(event) {
@@ -85,7 +89,7 @@ export const sentryTracingHandler = () => {
           span.end();
         });
         next();
-      },
+      }
     );
   };
 };

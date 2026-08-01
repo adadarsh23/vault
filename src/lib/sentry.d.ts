@@ -7,7 +7,7 @@ export function captureException(error: unknown, context?: Record<string, unknow
 export function captureMessage(
   message: string,
   level?: SentryLevel,
-  context?: Record<string, unknown>,
+  context?: Record<string, unknown>
 ): string | null;
 export function setUser(user: Record<string, unknown> | null): void;
 export function clearUser(): void;

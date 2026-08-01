@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react';
 // test lock
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
   Search,
@@ -18,43 +18,38 @@ import {
   Pin,
   ChevronDown,
   ShieldCheck,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { Button } from '../../components/ui/Button'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../components/ui/Card'
-import { Input } from '../../components/ui/Input'
-import { useVaultStore } from '../../store/vaultStore'
-import type { VaultItem } from '../../lib/storage'
-import { encryptData, decryptData } from '../../lib/cryptoPrimitives'
-import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent'
-import { logActivity } from '../../lib/activity'
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop'
-import { FolderSidebar } from '../../components/vault/FolderSidebar'
-import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu'
-import { useVaultFolders } from '../../hooks/useVaultFolders'
-import { sortPinnedFirst } from '../../lib/pinning'
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '../../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { useVaultStore } from '../../store/vaultStore';
+import type { VaultItem } from '../../lib/storage';
+import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
+import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';
+import { logActivity } from '../../lib/activity';
+import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { FolderSidebar } from '../../components/vault/FolderSidebar';
+import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
+import { useVaultFolders } from '../../hooks/useVaultFolders';
+import { sortPinnedFirst } from '../../lib/pinning';
 
-type TodoPriority = 'none' | 'low' | 'medium' | 'high' | 'critical'
+type TodoPriority = 'none' | 'low' | 'medium' | 'high' | 'critical';
 
 type TodoPayload = {
-  task: string
-  completed: boolean
-  dueDate: string
-  priority: TodoPriority
-}
+  task: string;
+  completed: boolean;
+  dueDate: string;
+  priority: TodoPriority;
+};
 
 const EMPTY_TODO: TodoPayload = {
   task: '',
   completed: false,
   dueDate: '',
   priority: 'medium',
-}
-const ENCRYPTED_TODO_TITLE = 'Encrypted Todo'
+};
+const ENCRYPTED_TODO_TITLE = 'Encrypted Todo';
 
 export const DEFAULT_TODO_CATEGORIES = [
   // 💼 Work & Career
@@ -167,10 +162,10 @@ export const DEFAULT_TODO_CATEGORIES = [
   'Urgent',
   'Ideas',
   'Miscellaneous',
-]
+];
 
 const normalizeCategoryKey = (value: string | null | undefined): string =>
-  (value || '').trim().toLowerCase()
+  (value || '').trim().toLowerCase();
 
 const formatCategoryLabel = (value: string): string =>
   value
@@ -178,12 +173,10 @@ const formatCategoryLabel = (value: string): string =>
     .replace(/\s+/g, ' ')
     .split(' ')
     .map((part) =>
-      part.length > 0
-        ? `${part.charAt(0).toUpperCase()}${part.slice(1).toLowerCase()}`
-        : '',
+      part.length > 0 ? `${part.charAt(0).toUpperCase()}${part.slice(1).toLowerCase()}` : ''
     )
     .filter(Boolean)
-    .join(' ')
+    .join(' ');
 
 const normalizePriority = (value: unknown): TodoPriority => {
   if (
@@ -193,40 +186,36 @@ const normalizePriority = (value: unknown): TodoPriority => {
     value === 'low' ||
     value === 'critical'
   ) {
-    return value
+    return value;
   }
-  return 'medium'
-}
+  return 'medium';
+};
 
 const sanitizeTodoPayload = (payload: TodoPayload): TodoPayload | null => {
-  const task = payload.task.trim()
-  if (!task) return null
+  const task = payload.task.trim();
+  if (!task) return null;
 
   return {
     task,
     completed: Boolean(payload.completed),
     dueDate: payload.dueDate.trim(),
     priority: normalizePriority(payload.priority),
-  }
-}
+  };
+};
 
-const normalizeTodoPayload = (
-  value: unknown,
-  fallbackTask: string,
-): TodoPayload | null => {
-  if (!value || typeof value !== 'object') return null
-  const record = value as Partial<TodoPayload>
-  const task =
-    typeof record.task === 'string' ? record.task.trim() : fallbackTask.trim()
-  if (!task) return null
+const normalizeTodoPayload = (value: unknown, fallbackTask: string): TodoPayload | null => {
+  if (!value || typeof value !== 'object') return null;
+  const record = value as Partial<TodoPayload>;
+  const task = typeof record.task === 'string' ? record.task.trim() : fallbackTask.trim();
+  if (!task) return null;
 
   return sanitizeTodoPayload({
     task,
     completed: Boolean(record.completed),
     dueDate: typeof record.dueDate === 'string' ? record.dueDate : '',
     priority: normalizePriority(record.priority),
-  })
-}
+  });
+};
 
 const priorityTone: Record<TodoPriority, string> = {
   none: 'text-slate-300 bg-slate-300/10 border-slate-300/20',
@@ -234,62 +223,58 @@ const priorityTone: Record<TodoPriority, string> = {
   medium: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
   high: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
   critical: 'text-rose-400 bg-rose-400/10 border-rose-400/20',
-}
+};
 
-const padDateSegment = (value: number): string => String(value).padStart(2, '0')
+const padDateSegment = (value: number): string => String(value).padStart(2, '0');
 
 const parseDateInputValue = (value: string): Date | null => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
-  const [yearPart, monthPart, dayPart] = value.split('-')
-  const year = Number(yearPart)
-  const month = Number(monthPart)
-  const day = Number(dayPart)
-  if (
-    !Number.isFinite(year) ||
-    !Number.isFinite(month) ||
-    !Number.isFinite(day)
-  ) {
-    return null
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [yearPart, monthPart, dayPart] = value.split('-');
+  const year = Number(yearPart);
+  const month = Number(monthPart);
+  const day = Number(dayPart);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null;
   }
-  const parsed = new Date(year, month - 1, day)
+  const parsed = new Date(year, month - 1, day);
   if (
     parsed.getFullYear() !== year ||
     parsed.getMonth() + 1 !== month ||
     parsed.getDate() !== day
   ) {
-    return null
+    return null;
   }
-  return parsed
-}
+  return parsed;
+};
 
 const toDateTimeInputValue = (value: string): string => {
-  const normalized = value.trim()
-  if (!normalized) return ''
+  const normalized = value.trim();
+  if (!normalized) return '';
 
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(normalized)) return normalized
-  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return `${normalized}T12:00`
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(normalized)) return normalized;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return `${normalized}T12:00`;
 
-  const parsed = new Date(normalized)
-  if (Number.isNaN(parsed.getTime())) return ''
-  return `${parsed.getFullYear()}-${padDateSegment(parsed.getMonth() + 1)}-${padDateSegment(parsed.getDate())}T${padDateSegment(parsed.getHours())}:${padDateSegment(parsed.getMinutes())}`
-}
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return `${parsed.getFullYear()}-${padDateSegment(parsed.getMonth() + 1)}-${padDateSegment(parsed.getDate())}T${padDateSegment(parsed.getHours())}:${padDateSegment(parsed.getMinutes())}`;
+};
 
 const formatDueDateLabel = (value: string): string => {
-  const normalized = value.trim()
-  if (!normalized) return 'No due date selected'
+  const normalized = value.trim();
+  if (!normalized) return 'No due date selected';
 
-  const hasExplicitTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(normalized)
-  let parsed: Date | null = null
+  const hasExplicitTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(normalized);
+  let parsed: Date | null = null;
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
-    const dateOnly = parseDateInputValue(normalized)
-    if (!dateOnly) return 'No due date selected'
-    dateOnly.setHours(12, 0, 0, 0)
-    parsed = dateOnly
+    const dateOnly = parseDateInputValue(normalized);
+    if (!dateOnly) return 'No due date selected';
+    dateOnly.setHours(12, 0, 0, 0);
+    parsed = dateOnly;
   } else {
-    const candidate = new Date(normalized)
-    if (Number.isNaN(candidate.getTime())) return 'No due date selected'
-    parsed = candidate
+    const candidate = new Date(normalized);
+    if (Number.isNaN(candidate.getTime())) return 'No due date selected';
+    parsed = candidate;
   }
 
   const base = parsed.toLocaleDateString(undefined, {
@@ -297,8 +282,8 @@ const formatDueDateLabel = (value: string): string => {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  })
-  if (!hasExplicitTime) return base
+  });
+  if (!hasExplicitTime) return base;
   return (
     parsed.toLocaleDateString(undefined, {
       month: 'short',
@@ -310,18 +295,15 @@ const formatDueDateLabel = (value: string): string => {
           minute: '2-digit',
         })}`
       : '')
-  )
-}
+  );
+};
 
 type TodoDueDateFieldProps = {
-  value: string
-  onChange: (value: string) => void
-}
+  value: string;
+  onChange: (value: string) => void;
+};
 
-const TodoDueDateField: React.FC<TodoDueDateFieldProps> = ({
-  value,
-  onChange,
-}) => {
+const TodoDueDateField: React.FC<TodoDueDateFieldProps> = ({ value, onChange }) => {
   return (
     <div
       className="
@@ -405,35 +387,30 @@ const TodoDueDateField: React.FC<TodoDueDateFieldProps> = ({
         </button>
       )}
     </div>
-  )
-}
+  );
+};
 
 export const TodoVault: React.FC = () => {
-  const items = useVaultStore((state) => state.items)
-  const addItem = useVaultStore((state) => state.addItem)
-  const updateItem = useVaultStore((state) => state.updateItem)
-  const removeItem = useVaultStore((state) => state.removeItem)
-  const masterKey = useVaultStore((state) => state.masterKey)
-  const togglePin = useVaultStore((state) => state.togglePin)
-  const pinningItemIds = useVaultStore((state) => state.pinningItemIds)
+  const items = useVaultStore((state) => state.items);
+  const addItem = useVaultStore((state) => state.addItem);
+  const updateItem = useVaultStore((state) => state.updateItem);
+  const removeItem = useVaultStore((state) => state.removeItem);
+  const masterKey = useVaultStore((state) => state.masterKey);
+  const togglePin = useVaultStore((state) => state.togglePin);
+  const pinningItemIds = useVaultStore((state) => state.pinningItemIds);
 
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isAdding, setIsAdding] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [newTodo, setNewTodo] = useState<TodoPayload>(EMPTY_TODO)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editingTodo, setEditingTodo] = useState<TodoPayload>(EMPTY_TODO)
-  const [isMobileFolderOpen, setIsMobileFolderOpen] = useState(false)
-  const [savingTodoIds, setSavingTodoIds] = useState<string[]>([])
-  const [todoPayloads, setTodoPayloads] = useState<Record<string, TodoPayload>>(
-    {},
-  )
-  const [failedTodoIds, setFailedTodoIds] = useState<Record<string, true>>({})
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [newTodo, setNewTodo] = useState<TodoPayload>(EMPTY_TODO);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTodo, setEditingTodo] = useState<TodoPayload>(EMPTY_TODO);
+  const [isMobileFolderOpen, setIsMobileFolderOpen] = useState(false);
+  const [savingTodoIds, setSavingTodoIds] = useState<string[]>([]);
+  const [todoPayloads, setTodoPayloads] = useState<Record<string, TodoPayload>>({});
+  const [failedTodoIds, setFailedTodoIds] = useState<Record<string, true>>({});
 
-  const todos = useMemo(
-    () => items.filter((item) => item.type === 'todo'),
-    [items],
-  )
+  const todos = useMemo(() => items.filter((item) => item.type === 'todo'), [items]);
 
   const {
     folders,
@@ -451,142 +428,136 @@ export const TodoVault: React.FC = () => {
     handleRenameFolder,
     handleDeleteFolder,
     handleMoveToFolder,
-  } = useVaultFolders('todo')
+  } = useVaultFolders('todo');
 
   useEffect(() => {
     if (!masterKey) {
-      setTodoPayloads({})
-      setFailedTodoIds({})
-      return
+      setTodoPayloads({});
+      setFailedTodoIds({});
+      return;
     }
 
-    let isMounted = true
+    let isMounted = true;
 
     const decryptTodos = async () => {
-      const nextPayloads: Record<string, TodoPayload> = {}
-      const nextFailures: Record<string, true> = {}
+      const nextPayloads: Record<string, TodoPayload> = {};
+      const nextFailures: Record<string, true> = {};
 
       await Promise.all(
         todos.map(async (item) => {
           try {
-            const encryptedContent = getStringContent(item.content)
+            const encryptedContent = getStringContent(item.content);
             if (!encryptedContent) {
-              nextFailures[item.id] = true
-              return
+              nextFailures[item.id] = true;
+              return;
             }
 
-            const decrypted = await decryptData(encryptedContent, masterKey)
+            const decrypted = await decryptData(encryptedContent, masterKey);
             if (!decrypted) {
-              nextFailures[item.id] = true
-              return
+              nextFailures[item.id] = true;
+              return;
             }
 
-            const parsed = parseJsonSafely<unknown>(decrypted)
-            const payload = normalizeTodoPayload(parsed, item.title)
+            const parsed = parseJsonSafely<unknown>(decrypted);
+            const payload = normalizeTodoPayload(parsed, item.title);
             if (!payload) {
-              nextFailures[item.id] = true
-              return
+              nextFailures[item.id] = true;
+              return;
             }
 
-            nextPayloads[item.id] = payload
+            nextPayloads[item.id] = payload;
           } catch {
-            nextFailures[item.id] = true
+            nextFailures[item.id] = true;
           }
-        }),
-      )
+        })
+      );
 
-      if (!isMounted) return
-      setTodoPayloads(nextPayloads)
-      setFailedTodoIds(nextFailures)
-    }
+      if (!isMounted) return;
+      setTodoPayloads(nextPayloads);
+      setFailedTodoIds(nextFailures);
+    };
 
-    void decryptTodos()
+    void decryptTodos();
 
     return () => {
-      isMounted = false
-    }
-  }, [todos, masterKey])
+      isMounted = false;
+    };
+  }, [todos, masterKey]);
 
-  const normalizedSearchQuery = useMemo(
-    () => searchQuery.trim().toLowerCase(),
-    [searchQuery],
-  )
+  const normalizedSearchQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery]);
 
   const categoryFilters = useMemo(() => {
-    const folderByKey = new Map<string, string>()
+    const folderByKey = new Map<string, string>();
     for (const folder of folders) {
-      const key = normalizeCategoryKey(folder)
+      const key = normalizeCategoryKey(folder);
       if (key && !folderByKey.has(key)) {
-        folderByKey.set(key, folder)
+        folderByKey.set(key, folder);
       }
     }
 
-    const seenKeys = new Set<string>()
+    const seenKeys = new Set<string>();
     const filters: Array<{
-      key: string
-      label: string
-      folderValue: string | null
-    }> = [{ key: 'all', label: 'All', folderValue: null }]
+      key: string;
+      label: string;
+      folderValue: string | null;
+    }> = [{ key: 'all', label: 'All', folderValue: null }];
 
     for (const rawName of [...DEFAULT_TODO_CATEGORIES, ...folders]) {
-      const key = normalizeCategoryKey(rawName)
-      if (!key || seenKeys.has(key)) continue
-      seenKeys.add(key)
+      const key = normalizeCategoryKey(rawName);
+      if (!key || seenKeys.has(key)) continue;
+      seenKeys.add(key);
 
-      const existingFolder = folderByKey.get(key)
-      const folderValue = existingFolder || formatCategoryLabel(rawName)
+      const existingFolder = folderByKey.get(key);
+      const folderValue = existingFolder || formatCategoryLabel(rawName);
       filters.push({
         key,
         label: formatCategoryLabel(folderValue),
         folderValue,
-      })
+      });
     }
 
-    return filters
-  }, [folders])
+    return filters;
+  }, [folders]);
 
   const activeCategoryKey = useMemo(
     () => (currentFolder ? normalizeCategoryKey(currentFolder) : 'all'),
-    [currentFolder],
-  )
+    [currentFolder]
+  );
 
   const filteredTodos = useMemo(
     () =>
       sortPinnedFirst(
         todos.filter((item) => {
-          const payload = todoPayloads[item.id]
-          const task = payload?.task || item.title
-          const dueDate = payload?.dueDate || ''
-          const priority = payload?.priority || ''
+          const payload = todoPayloads[item.id];
+          const task = payload?.task || item.title;
+          const dueDate = payload?.dueDate || '';
+          const priority = payload?.priority || '';
           const matchesSearch =
             normalizedSearchQuery.length === 0 ||
             task.toLowerCase().includes(normalizedSearchQuery) ||
             item.id.toLowerCase().includes(normalizedSearchQuery) ||
             dueDate.toLowerCase().includes(normalizedSearchQuery) ||
             priority.toLowerCase().includes(normalizedSearchQuery) ||
-            (item.folder || '').toLowerCase().includes(normalizedSearchQuery)
+            (item.folder || '').toLowerCase().includes(normalizedSearchQuery);
           const matchesFolder =
             normalizedSearchQuery.length > 0 ||
             currentFolder === null ||
-            normalizeCategoryKey(item.folder) ===
-              normalizeCategoryKey(currentFolder)
-          return matchesSearch && matchesFolder
-        }),
+            normalizeCategoryKey(item.folder) === normalizeCategoryKey(currentFolder);
+          return matchesSearch && matchesFolder;
+        })
       ),
-    [todos, todoPayloads, normalizedSearchQuery, currentFolder],
-  )
+    [todos, todoPayloads, normalizedSearchQuery, currentFolder]
+  );
 
   const getFolderCount = (folder: string | null) =>
     todos.filter((todo) =>
-      folder === null
-        ? true
-        : normalizeCategoryKey(todo.folder) === normalizeCategoryKey(folder),
-    ).length
+      folder === null ? true : normalizeCategoryKey(todo.folder) === normalizeCategoryKey(folder)
+    ).length;
 
   const resetCreateForm = () => {
-    setNewTodo(EMPTY_TODO)
-    setIsAdding(false)
-  }
+    setNewTodo(EMPTY_TODO);
+    setIsAdding(false);
+  };
 
   const setTodoSaving = (itemId: string, saving: boolean) => {
     setSavingTodoIds((prev) =>
@@ -594,169 +565,161 @@ export const TodoVault: React.FC = () => {
         ? prev.includes(itemId)
           ? prev
           : [...prev, itemId]
-        : prev.filter((id) => id !== itemId),
-    )
-  }
+        : prev.filter((id) => id !== itemId)
+    );
+  };
 
   const persistTodoPayload = async (
     item: VaultItem,
     payload: TodoPayload,
-    options?: { closeEditor?: boolean },
+    options?: { closeEditor?: boolean }
   ): Promise<boolean> => {
     if (!masterKey) {
-      toast.error('Unlock the vault before saving todos')
-      return false
+      toast.error('Unlock the vault before saving todos');
+      return false;
     }
 
-    const nextPayload = sanitizeTodoPayload(payload)
+    const nextPayload = sanitizeTodoPayload(payload);
     if (!nextPayload) {
-      toast.error('Task is required')
-      return false
+      toast.error('Task is required');
+      return false;
     }
 
-    if (savingTodoIds.includes(item.id)) return false
+    if (savingTodoIds.includes(item.id)) return false;
 
-    setTodoSaving(item.id, true)
+    setTodoSaving(item.id, true);
     try {
-      const encryptedData = await encryptData(
-        JSON.stringify(nextPayload),
-        masterKey,
-      )
+      const encryptedData = await encryptData(JSON.stringify(nextPayload), masterKey);
 
       await updateItem(item.id, {
         title: ENCRYPTED_TODO_TITLE,
         content: encryptedData,
-      })
+      });
 
       setTodoPayloads((prev) => ({
         ...prev,
         [item.id]: nextPayload,
-      }))
+      }));
 
       if (options?.closeEditor) {
-        setEditingId(null)
-        setEditingTodo(EMPTY_TODO)
+        setEditingId(null);
+        setEditingTodo(EMPTY_TODO);
       }
 
-      return true
+      return true;
     } catch {
-      toast.error('Failed to update todo')
-      return false
+      toast.error('Failed to update todo');
+      return false;
     } finally {
-      setTodoSaving(item.id, false)
+      setTodoSaving(item.id, false);
     }
-  }
+  };
 
   const handleAddTodo = async () => {
-    const task = newTodo.task.trim()
+    const task = newTodo.task.trim();
     if (!masterKey) {
-      toast.error('Unlock the vault before saving todos')
-      return
+      toast.error('Unlock the vault before saving todos');
+      return;
     }
     if (!task) {
-      toast.error('Task is required')
-      return
+      toast.error('Task is required');
+      return;
     }
 
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       const payload = sanitizeTodoPayload({
         ...newTodo,
         task,
-      })
+      });
       if (!payload) {
-        toast.error('Task is required')
-        return
+        toast.error('Task is required');
+        return;
       }
 
-      const encryptedData = await encryptData(
-        JSON.stringify(payload),
-        masterKey,
-      )
+      const encryptedData = await encryptData(JSON.stringify(payload), masterKey);
 
       await addItem({
         type: 'todo',
         title: ENCRYPTED_TODO_TITLE,
         content: encryptedData,
         folder: currentFolder || undefined,
-      })
+      });
 
-      toast.success('Todo saved securely')
+      toast.success('Todo saved securely');
       logActivity({
         actionType: 'item_create',
         itemName: ENCRYPTED_TODO_TITLE,
         description: 'Todo created',
         status: 'success',
-      })
-      resetCreateForm()
+      });
+      resetCreateForm();
     } catch {
-      toast.error('Failed to save todo')
+      toast.error('Failed to save todo');
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const startEdit = (item: VaultItem) => {
-    const payload = todoPayloads[item.id]
+    const payload = todoPayloads[item.id];
     if (!payload) {
-      toast.error('Unable to decrypt this todo for editing')
-      return
+      toast.error('Unable to decrypt this todo for editing');
+      return;
     }
 
-    setEditingId(item.id)
-    setEditingTodo(payload)
-  }
+    setEditingId(item.id);
+    setEditingTodo(payload);
+  };
 
   const cancelEdit = () => {
-    setEditingId(null)
-    setEditingTodo(EMPTY_TODO)
-  }
+    setEditingId(null);
+    setEditingTodo(EMPTY_TODO);
+  };
 
   const handleDeleteTodo = async (item: VaultItem) => {
-    const payload = todoPayloads[item.id]
-    const taskLabel = payload?.task || 'this todo'
-    if (!confirm(`Delete todo "${taskLabel}"?`)) return
+    const payload = todoPayloads[item.id];
+    const taskLabel = payload?.task || 'this todo';
+    if (!confirm(`Delete todo "${taskLabel}"?`)) return;
 
     try {
-      await removeItem(item.id)
-      toast.success('Todo deleted')
+      await removeItem(item.id);
+      toast.success('Todo deleted');
       logActivity({
         actionType: 'item_delete',
         itemName: ENCRYPTED_TODO_TITLE,
         description: 'Todo deleted',
         status: 'success',
-      })
+      });
     } catch {
-      toast.error('Failed to delete todo')
+      toast.error('Failed to delete todo');
     }
-  }
+  };
 
   const handleToggleCompleted = async (item: VaultItem) => {
-    const payload = todoPayloads[item.id]
+    const payload = todoPayloads[item.id];
     if (!payload) {
-      toast.error('Unable to decrypt this todo')
-      return
+      toast.error('Unable to decrypt this todo');
+      return;
     }
 
     const saved = await persistTodoPayload(item, {
       ...payload,
       completed: !payload.completed,
-    })
+    });
     if (saved) {
-      toast.success(
-        payload.completed ? 'Marked as pending' : 'Marked as complete',
-      )
+      toast.success(payload.completed ? 'Marked as pending' : 'Marked as complete');
     }
-  }
+  };
 
   const handleSaveEdit = async (item: VaultItem) => {
     const saved = await persistTodoPayload(item, editingTodo, {
       closeEditor: true,
-    })
+    });
     if (saved) {
-      toast.success('Todo updated')
+      toast.success('Todo updated');
     }
-  }
+  };
 
   return (
     <div className="relative flex h-full min-h-0 gap-6">
@@ -812,14 +775,10 @@ export const TodoVault: React.FC = () => {
               <h1
                 className="truncate text-3xl font-bold text-text transition-colors"
                 title={
-                  normalizedSearchQuery.length > 0
-                    ? 'Search Results'
-                    : currentFolder || 'Todos'
+                  normalizedSearchQuery.length > 0 ? 'Search Results' : currentFolder || 'Todos'
                 }
               >
-                {normalizedSearchQuery.length > 0
-                  ? 'Search Results'
-                  : currentFolder || 'Todos'}
+                {normalizedSearchQuery.length > 0 ? 'Search Results' : currentFolder || 'Todos'}
               </h1>
               <span className="whitespace-nowrap rounded-full border border-text/10 bg-text/5 px-2.5 py-0.5 text-xs font-bold text-text/50 shadow-inner">
                 {normalizedSearchQuery.length > 0
@@ -884,7 +843,7 @@ export const TodoVault: React.FC = () => {
 
         <div className="flex w-full min-w-0 max-w-full flex-nowrap items-center gap-2 sm:gap-3 md:gap-3 overflow-x-auto overflow-y-hidden px-3 sm:px-4 md:px-6 py-7 sm:py-7 md:py-7 snap-x snap-mandatory scroll-smooth overscroll-x-contain touch-pan-x whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden [&>*]:shrink-0">
           {categoryFilters.map((filter) => {
-            const isActive = filter.key === activeCategoryKey
+            const isActive = filter.key === activeCategoryKey;
             return (
               <button
                 key={filter.key}
@@ -899,16 +858,14 @@ export const TodoVault: React.FC = () => {
               >
                 <span
                   className={`rounded-full px-1 py-0.5 text-[9px] font-bold leading-none ${
-                    isActive
-                      ? 'bg-emerald-900/40 text-emerald-100'
-                      : 'bg-black/25 text-text/75'
+                    isActive ? 'bg-emerald-900/40 text-emerald-100' : 'bg-black/25 text-text/75'
                   }`}
                 >
                   {getFolderCount(filter.folderValue)}
                 </span>
                 <span>{filter.label}</span>
               </button>
-            )
+            );
           })}
         </div>
         <AnimatePresence>
@@ -920,20 +877,18 @@ export const TodoVault: React.FC = () => {
             >
               <Card className="border-white/10 bg-gradient-to-br from-white/10 to-transparent backdrop-blur-md">
                 <CardHeader>
-                  <CardTitle className="text-lg text-text transition-colors">
-                    New Todo
-                  </CardTitle>
+                  <CardTitle className="text-lg text-text transition-colors">New Todo</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <Input
                     placeholder="What needs to be done?"
                     value={newTodo.task}
                     onChange={(event) => {
-                      const value = event.target.value
+                      const value = event.target.value;
                       setNewTodo((prev) => ({
                         ...prev,
                         task: value,
-                      }))
+                      }));
                     }}
                     maxLength={120}
                     className="h-12 sm:h-11 w-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent text-sm sm:text-[15px] font-medium text-text placeholder:text-text/40 backdrop-blur-xl shadow-lg shadow-black/20 transition-all duration-300 hover:border-orange-400/30 hover:bg-white/10 focus:border-orange-400/50 focus:ring-4"
@@ -964,11 +919,11 @@ export const TodoVault: React.FC = () => {
                         <select
                           value={newTodo.priority}
                           onChange={(event) => {
-                            const value = event.target.value
+                            const value = event.target.value;
                             setNewTodo((prev) => ({
                               ...prev,
                               priority: normalizePriority(value),
-                            }))
+                            }));
                           }}
                           className="
       peer
@@ -1005,18 +960,10 @@ export const TodoVault: React.FC = () => {
       [color-scheme:dark]
     "
                         >
-                          <option
-                            value="none"
-                            className="text-black"
-                            style={{ color: '#000000' }}
-                          >
+                          <option value="none" className="text-black" style={{ color: '#000000' }}>
                             ⚪ None
                           </option>
-                          <option
-                            value="low"
-                            className="text-black"
-                            style={{ color: '#000000' }}
-                          >
+                          <option value="low" className="text-black" style={{ color: '#000000' }}>
                             🟢 Low
                           </option>
                           <option
@@ -1026,11 +973,7 @@ export const TodoVault: React.FC = () => {
                           >
                             🟡 Medium
                           </option>
-                          <option
-                            value="high"
-                            className="text-black"
-                            style={{ color: '#000000' }}
-                          >
+                          <option value="high" className="text-black" style={{ color: '#000000' }}>
                             🟠 High
                           </option>
                           <option
@@ -1104,21 +1047,19 @@ export const TodoVault: React.FC = () => {
 
         <div className="grid grid-cols-1 gap-5 pb-8 lg:grid-cols-2">
           {filteredTodos.map((item) => {
-            const payload = todoPayloads[item.id]
-            const isFailed = Boolean(failedTodoIds[item.id])
-            const isEditing = editingId === item.id
-            const todo = isEditing ? editingTodo : payload
-            const isPinning = pinningItemIds.includes(item.id)
-            const isTodoSaving = savingTodoIds.includes(item.id)
+            const payload = todoPayloads[item.id];
+            const isFailed = Boolean(failedTodoIds[item.id]);
+            const isEditing = editingId === item.id;
+            const todo = isEditing ? editingTodo : payload;
+            const isPinning = pinningItemIds.includes(item.id);
+            const isTodoSaving = savingTodoIds.includes(item.id);
 
             return (
               <div
                 key={item.id}
                 draggable
                 onDragStart={(event) => setDraggedVaultItem(event, item.id)}
-                onTouchStart={(event) =>
-                  setDraggedVaultItem(event as any, item.id)
-                }
+                onTouchStart={(event) => setDraggedVaultItem(event as any, item.id)}
                 title="Drag to a folder to move this todo"
               >
                 <Card className="group relative h-full overflow-hidden border-white/5 bg-gradient-to-br from-white/[0.08] to-transparent backdrop-blur-md transition-all hover:border-white/20">
@@ -1129,9 +1070,7 @@ export const TodoVault: React.FC = () => {
                         <button
                           type="button"
                           aria-label={
-                            todo?.completed
-                              ? 'Mark todo as pending'
-                              : 'Mark todo as complete'
+                            todo?.completed ? 'Mark todo as pending' : 'Mark todo as complete'
                           }
                           onClick={() => void handleToggleCompleted(item)}
                           disabled={!payload || isTodoSaving}
@@ -1150,11 +1089,11 @@ export const TodoVault: React.FC = () => {
                             <Input
                               value={editingTodo.task}
                               onChange={(event) => {
-                                const value = event.target.value
+                                const value = event.target.value;
                                 setEditingTodo((prev) => ({
                                   ...prev,
                                   task: value,
-                                }))
+                                }));
                               }}
                               autoFocus
                             />
@@ -1209,9 +1148,7 @@ export const TodoVault: React.FC = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              aria-label={
-                                item.isPinned ? 'Unpin todo' : 'Pin todo'
-                              }
+                              aria-label={item.isPinned ? 'Unpin todo' : 'Pin todo'}
                               disabled={isPinning}
                               className={`h-8 w-8 rounded-full ${item.isPinned ? 'text-teal-400 hover:bg-teal-400/20' : 'text-text/25 hover:bg-white/10 hover:text-text/70'} transition-colors`}
                               onClick={() => void togglePin(item.id)}
@@ -1262,11 +1199,11 @@ export const TodoVault: React.FC = () => {
                               <select
                                 value={editingTodo.priority}
                                 onChange={(event) => {
-                                  const value = event.target.value
+                                  const value = event.target.value;
                                   setEditingTodo((prev) => ({
                                     ...prev,
                                     priority: normalizePriority(value),
-                                  }))
+                                  }));
                                 }}
                                 className="h-10 w-full rounded-xl border border-white/5 bg-white/5 px-3 text-sm text-text focus:border-white/20 focus:outline-none [&>option]:bg-white [&>option]:text-slate-900"
                               >
@@ -1380,18 +1317,16 @@ export const TodoVault: React.FC = () => {
                         className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/5 border border-emerald-500/10 text-emerald-400/60 font-bold cursor-help"
                       >
                         <ShieldCheck className="h-2.5 w-2.5" />
-                        <span className="text-[8px] uppercase tracking-wider">
-                          Secure 256
-                        </span>
+                        <span className="text-[8px] uppercase tracking-wider">Secure 256</span>
                       </motion.div>
                     </div>
                   </CardContent>
                 </Card>
               </div>
-            )
+            );
           })}
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

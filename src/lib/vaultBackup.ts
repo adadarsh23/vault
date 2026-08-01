@@ -7,21 +7,21 @@ export const exportEncryptedBackup = async (
   masterKey: string
 ): Promise<Uint8Array> => {
   const data = new TextEncoder().encode(json);
-  
+
   const keyBuf = base64ToUint8Array(masterKey);
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  
+
   const cryptoKey = await crypto.subtle.importKey(
-    "raw",
+    'raw',
     keyBuf as any,
-    { name: "AES-GCM" },
+    { name: 'AES-GCM' },
     false,
-    ["encrypt"]
+    ['encrypt']
   );
 
   const ciphertext = await crypto.subtle.encrypt(
     {
-      name: "AES-GCM",
+      name: 'AES-GCM',
       iv: iv,
       additionalData: VAULT_BACKUP_MAGIC,
     },
@@ -42,7 +42,7 @@ export const importEncryptedBackup = async (
   masterKey: string
 ): Promise<string> => {
   const magicLength = VAULT_BACKUP_MAGIC.length;
-  
+
   if (bundle.length < magicLength + 12) {
     throw new Error('Invalid backup file format.');
   }
@@ -58,18 +58,18 @@ export const importEncryptedBackup = async (
   const ciphertext = bundle.slice(magicLength + 12);
 
   const keyBuf = base64ToUint8Array(masterKey);
-  
+
   const cryptoKey = await crypto.subtle.importKey(
-    "raw",
+    'raw',
     keyBuf as any,
-    { name: "AES-GCM" },
+    { name: 'AES-GCM' },
     false,
-    ["decrypt"]
+    ['decrypt']
   );
 
   const decrypted = await crypto.subtle.decrypt(
     {
-      name: "AES-GCM",
+      name: 'AES-GCM',
       iv: iv,
       additionalData: VAULT_BACKUP_MAGIC,
     },
@@ -79,5 +79,3 @@ export const importEncryptedBackup = async (
 
   return new TextDecoder().decode(decrypted);
 };
-
-

@@ -1,128 +1,121 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import { execSync, spawn } from 'node:child_process'
-import http from 'node:http'
-import os from 'node:os'
-import net from 'node:net'
+import fs from 'node:fs';
+import path from 'node:path';
+import { execSync, spawn } from 'node:child_process';
+import http from 'node:http';
+import os from 'node:os';
+import net from 'node:net';
 
-const root = process.cwd()
-const DEFAULT_URL = 'http://127.0.0.1:4173/'
-const DEFAULT_OUTPUT_PATH = './lighthouse/report'
-const DEFAULT_SPLIT_REPORT_DIR = './lighthouse/report-split'
-const DEFAULT_CATEGORIES = 'performance,accessibility,best-practices,seo'
+const root = process.cwd();
+const DEFAULT_URL = 'http://127.0.0.1:4173/';
+const DEFAULT_OUTPUT_PATH = './lighthouse/report';
+const DEFAULT_SPLIT_REPORT_DIR = './lighthouse/report-split';
+const DEFAULT_CATEGORIES = 'performance,accessibility,best-practices,seo';
 const DEFAULT_CHROME_FLAGS =
-  '--headless=new --no-sandbox --disable-dev-shm-usage --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding'
+  '--headless=new --no-sandbox --disable-dev-shm-usage --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding';
 const FALLBACK_CHROME_FLAGS =
-  '--headless --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding'
+  '--headless --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding';
 
 const ensureWindowsSystem32OnPath = () => {
   if (process.platform !== 'win32') {
-    return process.env.PATH || ''
+    return process.env.PATH || '';
   }
 
-  const systemRoot = process.env.SystemRoot || 'C:\\Windows'
-  const system32 = path.join(systemRoot, 'System32')
-  const pathValue = process.env.PATH || ''
-  const separator = path.delimiter
+  const systemRoot = process.env.SystemRoot || 'C:\\Windows';
+  const system32 = path.join(systemRoot, 'System32');
+  const pathValue = process.env.PATH || '';
+  const separator = path.delimiter;
   const entries = pathValue
     .split(separator)
     .map((entry) => entry.trim())
-    .filter(Boolean)
+    .filter(Boolean);
 
-  const hasSystem32 = entries.some(
-    (entry) => entry.toLowerCase() === system32.toLowerCase(),
-  )
+  const hasSystem32 = entries.some((entry) => entry.toLowerCase() === system32.toLowerCase());
 
   if (hasSystem32) {
-    return pathValue
+    return pathValue;
   }
 
-  const updatedPath = entries.length > 0
-    ? `${pathValue}${separator}${system32}`
-    : system32
-  process.env.PATH = updatedPath
-  return updatedPath
-}
+  const updatedPath = entries.length > 0 ? `${pathValue}${separator}${system32}` : system32;
+  process.env.PATH = updatedPath;
+  return updatedPath;
+};
 
-const runtimePath = ensureWindowsSystem32OnPath()
+const runtimePath = ensureWindowsSystem32OnPath();
 
 const removeTempDirectorySafely = (directoryPath, retries = 4) => {
   if (!directoryPath) {
-    return
+    return;
   }
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
-      fs.rmSync(directoryPath, { recursive: true, force: true })
-      return
+      fs.rmSync(directoryPath, { recursive: true, force: true });
+      return;
     } catch (error) {
       const isEperm =
-        error &&
-        typeof error === 'object' &&
-        'code' in error &&
-        error.code === 'EPERM'
-      const isLastAttempt = attempt === retries
+        error && typeof error === 'object' && 'code' in error && error.code === 'EPERM';
+      const isLastAttempt = attempt === retries;
       if (!isEperm || isLastAttempt) {
-        return
+        return;
       }
       // Try a few times because antivirus/file locks can briefly hold these dirs.
     }
   }
-}
+};
 
 const cleanupStaleLighthouseTempDirectories = () => {
-  const tempRoot = os.tmpdir()
-  let entries = []
+  const tempRoot = os.tmpdir();
+  let entries = [];
 
   try {
-    entries = fs.readdirSync(tempRoot, { withFileTypes: true })
+    entries = fs.readdirSync(tempRoot, { withFileTypes: true });
   } catch {
-    return
+    return;
   }
 
   for (const entry of entries) {
     if (!entry.isDirectory() || !entry.name.startsWith('lighthouse.')) {
-      continue
+      continue;
     }
 
-    const fullPath = path.join(tempRoot, entry.name)
-    removeTempDirectorySafely(fullPath)
+    const fullPath = path.join(tempRoot, entry.name);
+    removeTempDirectorySafely(fullPath);
   }
-}
+};
 
 const getAvailablePort = (host = '127.0.0.1') =>
   new Promise((resolve, reject) => {
-    const server = net.createServer()
-    server.unref()
-    server.on('error', reject)
+    const server = net.createServer();
+    server.unref();
+    server.on('error', reject);
     server.listen(0, host, () => {
-      const address = server.address()
+      const address = server.address();
       if (!address || typeof address === 'string') {
-        server.close(() => reject(new Error('Failed to resolve free debug port')))
-        return
+        server.close(() => reject(new Error('Failed to resolve free debug port')));
+        return;
       }
 
-      const { port } = address
+      const { port } = address;
       server.close((closeError) => {
         if (closeError) {
-          reject(closeError)
-          return
+          reject(closeError);
+          return;
         }
-        resolve(port)
-      })
-    })
-  })
+        resolve(port);
+      });
+    });
+  });
 
 const splitChromeFlags = (flags) =>
   String(flags || '')
     .split(/\s+/)
     .map((part) => part.trim())
-    .filter(Boolean)
+    .filter(Boolean);
 
 const resolveChromeExecutablePath = () => {
-  const programFiles = process.env.ProgramFiles || 'C:\\Program Files'
-  const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)'
-  const localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local')
+  const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
+  const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
+  const localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
 
   const candidates = [
     process.env.LIGHTHOUSE_CHROMIUM_PATH,
@@ -133,34 +126,34 @@ const resolveChromeExecutablePath = () => {
     path.join(programFiles, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
     path.join(programFilesX86, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
     path.join(localAppData, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
-  ].filter(Boolean)
+  ].filter(Boolean);
 
   for (const candidate of candidates) {
     if (candidate && fs.existsSync(candidate)) {
-      return candidate
+      return candidate;
     }
   }
 
   throw new Error(
-    'Could not locate a Chromium executable. Set CHROME_PATH or LIGHTHOUSE_CHROMIUM_PATH.',
-  )
-}
+    'Could not locate a Chromium executable. Set CHROME_PATH or LIGHTHOUSE_CHROMIUM_PATH.'
+  );
+};
 
 const launchManagedChrome = async (chromeFlags) => {
-  const debugPort = await getAvailablePort('127.0.0.1')
-  const executablePath = resolveChromeExecutablePath()
-  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lighthouse-managed-'))
+  const debugPort = await getAvailablePort('127.0.0.1');
+  const executablePath = resolveChromeExecutablePath();
+  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lighthouse-managed-'));
 
   const args = splitChromeFlags(chromeFlags)
     .filter((flag) => !flag.startsWith('--remote-debugging-port='))
-    .filter((flag) => !flag.startsWith('--user-data-dir='))
+    .filter((flag) => !flag.startsWith('--user-data-dir='));
   if (!args.some((flag) => flag.startsWith('--headless'))) {
-    args.push('--headless=new')
+    args.push('--headless=new');
   }
 
-  args.push(`--user-data-dir=${userDataDir}`)
-  args.push(`--remote-debugging-port=${debugPort}`)
-  args.push('about:blank')
+  args.push(`--user-data-dir=${userDataDir}`);
+  args.push(`--remote-debugging-port=${debugPort}`);
+  args.push('about:blank');
 
   const chromeProcess = spawn(executablePath, args, {
     stdio: 'ignore',
@@ -169,21 +162,21 @@ const launchManagedChrome = async (chromeFlags) => {
       ...process.env,
       PATH: runtimePath,
     },
-  })
+  });
 
-  let exited = false
+  let exited = false;
   chromeProcess.on('exit', () => {
-    exited = true
-  })
+    exited = true;
+  });
 
-  await waitForServer(`http://127.0.0.1:${debugPort}/json/version`, 15000)
+  await waitForServer(`http://127.0.0.1:${debugPort}/json/version`, 15000);
 
   const stop = async () => {
-    const pid = chromeProcess.pid
+    const pid = chromeProcess.pid;
 
     if (!exited) {
       try {
-        chromeProcess.kill('SIGTERM')
+        chromeProcess.kill('SIGTERM');
       } catch {
         // ignore cleanup errors
       }
@@ -198,20 +191,20 @@ const launchManagedChrome = async (chromeFlags) => {
             ...process.env,
             PATH: runtimePath,
           },
-        })
+        });
       } catch {
         // ignore cleanup errors
       }
     }
 
-    removeTempDirectorySafely(userDataDir)
-  }
+    removeTempDirectorySafely(userDataDir);
+  };
 
-  return { debugPort, stop }
-}
+  return { debugPort, stop };
+};
 
 const parseArgs = () => {
-  const args = process.argv.slice(2)
+  const args = process.argv.slice(2);
   const options = {
     url: DEFAULT_URL,
     outputPath: DEFAULT_OUTPUT_PATH,
@@ -224,86 +217,86 @@ const parseArgs = () => {
     previewHost: '127.0.0.1',
     previewPort: 4173,
     timeoutMs: 30000,
-  }
+  };
 
   for (let i = 0; i < args.length; i += 1) {
-    const arg = args[i]
+    const arg = args[i];
     if (arg === '--no-preview') {
-      options.startPreview = false
-      continue
+      options.startPreview = false;
+      continue;
     }
     if (arg === '--no-split-report') {
-      options.splitReports = false
-      continue
+      options.splitReports = false;
+      continue;
     }
     if (arg === '--split-existing-report') {
-      options.splitExistingReport = true
-      options.startPreview = false
-      continue
+      options.splitExistingReport = true;
+      options.startPreview = false;
+      continue;
     }
     if (arg === '--url' && args[i + 1]) {
-      options.url = args[i + 1]
-      i += 1
-      continue
+      options.url = args[i + 1];
+      i += 1;
+      continue;
     }
     if (arg === '--output-path' && args[i + 1]) {
-      options.outputPath = args[i + 1]
-      i += 1
-      continue
+      options.outputPath = args[i + 1];
+      i += 1;
+      continue;
     }
     if (arg === '--split-report-dir' && args[i + 1]) {
-      options.splitReportDir = args[i + 1]
-      i += 1
-      continue
+      options.splitReportDir = args[i + 1];
+      i += 1;
+      continue;
     }
     if (arg === '--categories' && args[i + 1]) {
-      options.categories = args[i + 1]
-      i += 1
-      continue
+      options.categories = args[i + 1];
+      i += 1;
+      continue;
     }
     if (arg === '--chrome-flags' && args[i + 1]) {
-      options.chromeFlags = args[i + 1]
-      i += 1
-      continue
+      options.chromeFlags = args[i + 1];
+      i += 1;
+      continue;
     }
     if (arg === '--preview-host' && args[i + 1]) {
-      options.previewHost = args[i + 1]
-      i += 1
-      continue
+      options.previewHost = args[i + 1];
+      i += 1;
+      continue;
     }
     if (arg === '--preview-port' && args[i + 1]) {
-      const parsed = Number.parseInt(args[i + 1], 10)
+      const parsed = Number.parseInt(args[i + 1], 10);
       if (Number.isFinite(parsed) && parsed > 0) {
-        options.previewPort = parsed
+        options.previewPort = parsed;
       }
-      i += 1
-      continue
+      i += 1;
+      continue;
     }
     if (arg === '--timeout-ms' && args[i + 1]) {
-      const parsed = Number.parseInt(args[i + 1], 10)
+      const parsed = Number.parseInt(args[i + 1], 10);
       if (Number.isFinite(parsed) && parsed > 0) {
-        options.timeoutMs = parsed
+        options.timeoutMs = parsed;
       }
-      i += 1
+      i += 1;
     }
   }
 
-  return options
-}
+  return options;
+};
 
-const options = parseArgs()
-const reportBase = path.resolve(root, options.outputPath)
-const reportDir = path.dirname(reportBase)
-const htmlReportPath = `${reportBase}.report.html`
-const jsonReportPath = `${reportBase}.report.json`
-const splitReportDir = path.resolve(root, options.splitReportDir)
-const splitReportIndexPath = path.join(splitReportDir, 'index.html')
+const options = parseArgs();
+const reportBase = path.resolve(root, options.outputPath);
+const reportDir = path.dirname(reportBase);
+const htmlReportPath = `${reportBase}.report.html`;
+const jsonReportPath = `${reportBase}.report.json`;
+const splitReportDir = path.resolve(root, options.splitReportDir);
+const splitReportIndexPath = path.join(splitReportDir, 'index.html');
 
-fs.mkdirSync(reportDir, { recursive: true })
+fs.mkdirSync(reportDir, { recursive: true });
 if (!options.splitExistingReport) {
   for (const file of [htmlReportPath, jsonReportPath]) {
     try {
-      fs.rmSync(file, { force: true })
+      fs.rmSync(file, { force: true });
     } catch {
       // ignore cleanup errors
     }
@@ -311,13 +304,13 @@ if (!options.splitExistingReport) {
 }
 
 const isSafeWorkspaceChild = (targetPath) => {
-  const relative = path.relative(root, targetPath)
-  return relative && !relative.startsWith('..') && !path.isAbsolute(relative)
-}
+  const relative = path.relative(root, targetPath);
+  return relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+};
 
 if (options.splitReports && !options.splitExistingReport && isSafeWorkspaceChild(splitReportDir)) {
   try {
-    fs.rmSync(splitReportDir, { recursive: true, force: true })
+    fs.rmSync(splitReportDir, { recursive: true, force: true });
   } catch {
     // ignore cleanup errors
   }
@@ -325,42 +318,42 @@ if (options.splitReports && !options.splitExistingReport && isSafeWorkspaceChild
 
 const waitForServer = (url, timeoutMs = 30000) =>
   new Promise((resolve, reject) => {
-    const start = Date.now()
+    const start = Date.now();
 
     const tryRequest = () => {
       const req = http.get(url, (res) => {
-        res.resume()
+        res.resume();
         if (res.statusCode && res.statusCode < 500) {
-          resolve(true)
-          return
+          resolve(true);
+          return;
         }
-        retry()
-      })
+        retry();
+      });
 
-      req.on('error', retry)
+      req.on('error', retry);
       req.setTimeout(2500, () => {
-        req.destroy()
-        retry()
-      })
-    }
+        req.destroy();
+        retry();
+      });
+    };
 
     const retry = () => {
       if (Date.now() - start > timeoutMs) {
-        reject(new Error(`Preview server did not start within ${timeoutMs}ms`))
-        return
+        reject(new Error(`Preview server did not start within ${timeoutMs}ms`));
+        return;
       }
-      setTimeout(tryRequest, 500)
-    }
+      setTimeout(tryRequest, 500);
+    };
 
-    tryRequest()
-  })
+    tryRequest();
+  });
 
 const shellQuote = (value) => {
   if (process.platform === 'win32') {
-    return `"${String(value).replace(/"/g, '\\"')}"`
+    return `"${String(value).replace(/"/g, '\\"')}"`;
   }
-  return `'${String(value).replace(/'/g, `'\\''`)}'`
-}
+  return `'${String(value).replace(/'/g, `'\\''`)}'`;
+};
 
 const escapeHtml = (value) =>
   String(value ?? '')
@@ -368,52 +361,51 @@ const escapeHtml = (value) =>
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
+    .replace(/'/g, '&#39;');
 
-const stripMarkdownLinks = (value) =>
-  String(value ?? '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+const stripMarkdownLinks = (value) => String(value ?? '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 
 const slugify = (value) =>
   String(value ?? 'report')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'report'
+    .replace(/^-+|-+$/g, '') || 'report';
 
 const scorePercent = (score) => {
   if (typeof score !== 'number') {
-    return null
+    return null;
   }
-  return Math.round(score * 100)
-}
+  return Math.round(score * 100);
+};
 
 const scoreClass = (score) => {
   if (typeof score !== 'number') {
-    return 'na'
+    return 'na';
   }
   if (score >= 0.9) {
-    return 'pass'
+    return 'pass';
   }
   if (score >= 0.5) {
-    return 'warn'
+    return 'warn';
   }
-  return 'fail'
-}
+  return 'fail';
+};
 
 const scoreLabel = (audit) => {
-  const mode = audit?.scoreDisplayMode
+  const mode = audit?.scoreDisplayMode;
   if (mode === 'notApplicable') {
-    return 'N/A'
+    return 'N/A';
   }
   if (mode === 'manual') {
-    return 'Manual'
+    return 'Manual';
   }
   if (mode === 'informative') {
-    return 'Info'
+    return 'Info';
   }
 
-  const percent = scorePercent(audit?.score)
-  return percent === null ? '-' : String(percent)
-}
+  const percent = scorePercent(audit?.score);
+  return percent === null ? '-' : String(percent);
+};
 
 const getAuditRows = (report, category) =>
   (category.auditRefs || [])
@@ -421,7 +413,7 @@ const getAuditRows = (report, category) =>
       auditRef,
       audit: report.audits?.[auditRef.id],
     }))
-    .filter(({ audit }) => audit)
+    .filter(({ audit }) => audit);
 
 const renderPage = ({ title, body }) => `<!doctype html>
 <html lang="en">
@@ -541,24 +533,26 @@ const renderPage = ({ title, body }) => `<!doctype html>
   <main>${body}</main>
 </body>
 </html>
-`
+`;
 
 const renderAuditTable = (rows) => {
   if (rows.length === 0) {
-    return '<p class="muted">No audits in this section.</p>'
+    return '<p class="muted">No audits in this section.</p>';
   }
 
-  const body = rows.map(({ audit }) => {
-    const description = stripMarkdownLinks(audit.description || '')
-    return `<tr>
+  const body = rows
+    .map(({ audit }) => {
+      const description = stripMarkdownLinks(audit.description || '');
+      return `<tr>
       <td><span class="score ${scoreClass(audit.score)}">${escapeHtml(scoreLabel(audit))}</span></td>
       <td>
         <div class="audit-title">${escapeHtml(audit.title || audit.id)}</div>
         ${description ? `<div class="audit-description">${escapeHtml(description)}</div>` : ''}
       </td>
       <td>${escapeHtml(audit.displayValue || '')}</td>
-    </tr>`
-  }).join('\n')
+    </tr>`;
+    })
+    .join('\n');
 
   return `<table>
     <thead>
@@ -569,33 +563,35 @@ const renderAuditTable = (rows) => {
       </tr>
     </thead>
     <tbody>${body}</tbody>
-  </table>`
-}
+  </table>`;
+};
 
 const writeSplitReports = () => {
   if (!options.splitReports) {
-    return null
+    return null;
   }
 
   if (!isSafeWorkspaceChild(splitReportDir)) {
-    console.warn(`Skipping split report because the directory is outside the workspace: ${splitReportDir}`)
-    return null
+    console.warn(
+      `Skipping split report because the directory is outside the workspace: ${splitReportDir}`
+    );
+    return null;
   }
 
-  const report = JSON.parse(fs.readFileSync(jsonReportPath, 'utf8'))
-  const categories = Object.entries(report.categories ?? {})
+  const report = JSON.parse(fs.readFileSync(jsonReportPath, 'utf8'));
+  const categories = Object.entries(report.categories ?? {});
 
-  fs.mkdirSync(splitReportDir, { recursive: true })
+  fs.mkdirSync(splitReportDir, { recursive: true });
 
-  const categoryLinks = []
+  const categoryLinks = [];
   for (const [categoryId, category] of categories) {
-    const fileName = `${slugify(categoryId)}.html`
-    const jsonFileName = `${slugify(categoryId)}.json`
-    const rows = getAuditRows(report, category)
+    const fileName = `${slugify(categoryId)}.html`;
+    const jsonFileName = `${slugify(categoryId)}.json`;
+    const rows = getAuditRows(report, category);
     const attentionRows = rows
       .filter(({ audit }) => typeof audit.score === 'number' && audit.score < 0.9)
-      .sort((left, right) => (left.audit.score ?? 1) - (right.audit.score ?? 1))
-    const categoryScore = scorePercent(category.score)
+      .sort((left, right) => (left.audit.score ?? 1) - (right.audit.score ?? 1));
+    const categoryScore = scorePercent(category.score);
 
     const categoryJson = {
       requestedUrl: report.requestedUrl,
@@ -603,13 +599,13 @@ const writeSplitReports = () => {
       fetchTime: report.fetchTime,
       category,
       audits: Object.fromEntries(rows.map(({ auditRef, audit }) => [auditRef.id, audit])),
-    }
+    };
 
     fs.writeFileSync(
       path.join(splitReportDir, jsonFileName),
       `${JSON.stringify(categoryJson, null, 2)}\n`,
-      'utf8',
-    )
+      'utf8'
+    );
 
     fs.writeFileSync(
       path.join(splitReportDir, fileName),
@@ -633,8 +629,8 @@ const writeSplitReports = () => {
         <h2>All Audits</h2>
         ${renderAuditTable(rows)}`,
       }),
-      'utf8',
-    )
+      'utf8'
+    );
 
     categoryLinks.push({
       id: categoryId,
@@ -642,12 +638,12 @@ const writeSplitReports = () => {
       score: category.score,
       fileName,
       jsonFileName,
-    })
+    });
   }
 
   const generatedAt = report.fetchTime
     ? new Date(report.fetchTime).toLocaleString()
-    : new Date().toLocaleString()
+    : new Date().toLocaleString();
 
   fs.writeFileSync(
     splitReportIndexPath,
@@ -661,14 +657,16 @@ const writeSplitReports = () => {
         </div>
       </header>
       <section class="grid">
-        ${categoryLinks.map((category) => {
-          const categoryScore = scorePercent(category.score)
-          return `<a class="card" href="./${escapeHtml(category.fileName)}">
+        ${categoryLinks
+          .map((category) => {
+            const categoryScore = scorePercent(category.score);
+            return `<a class="card" href="./${escapeHtml(category.fileName)}">
             <span class="score ${scoreClass(category.score)}">${categoryScore ?? '-'}</span>
             <h2>${escapeHtml(category.title)}</h2>
             <p class="muted">${escapeHtml(category.id)}</p>
-          </a>`
-        }).join('\n')}
+          </a>`;
+          })
+          .join('\n')}
       </section>
       <h2>Artifacts</h2>
       <div class="links">
@@ -677,46 +675,46 @@ const writeSplitReports = () => {
         ${categoryLinks.map((category) => `<a href="./${escapeHtml(category.jsonFileName)}">${escapeHtml(category.title)} JSON</a>`).join('\n')}
       </div>`,
     }),
-    'utf8',
-  )
+    'utf8'
+  );
 
-  return splitReportIndexPath
-}
+  return splitReportIndexPath;
+};
 
 const printScoreSummary = () => {
   try {
-    const raw = fs.readFileSync(jsonReportPath, 'utf8')
-    const report = JSON.parse(raw)
-    const categories = report?.categories ?? {}
-    const score = (key) => Math.round((categories[key]?.score ?? 0) * 100)
-    console.log('')
-    console.log('Lighthouse scores:')
-    console.log(`Performance: ${score('performance')}`)
-    console.log(`Accessibility: ${score('accessibility')}`)
-    console.log(`Best Practices: ${score('best-practices')}`)
-    console.log(`SEO: ${score('seo')}`)
-    console.log(`HTML report: ${htmlReportPath}`)
-    console.log(`JSON report: ${jsonReportPath}`)
+    const raw = fs.readFileSync(jsonReportPath, 'utf8');
+    const report = JSON.parse(raw);
+    const categories = report?.categories ?? {};
+    const score = (key) => Math.round((categories[key]?.score ?? 0) * 100);
+    console.log('');
+    console.log('Lighthouse scores:');
+    console.log(`Performance: ${score('performance')}`);
+    console.log(`Accessibility: ${score('accessibility')}`);
+    console.log(`Best Practices: ${score('best-practices')}`);
+    console.log(`SEO: ${score('seo')}`);
+    console.log(`HTML report: ${htmlReportPath}`);
+    console.log(`JSON report: ${jsonReportPath}`);
     if (options.splitReports && fs.existsSync(splitReportIndexPath)) {
-      console.log(`Split report: ${splitReportIndexPath}`)
+      console.log(`Split report: ${splitReportIndexPath}`);
     }
   } catch {
     // ignore parse errors
   }
-}
+};
 
 const run = async () => {
   if (options.splitExistingReport) {
     if (!fs.existsSync(jsonReportPath)) {
-      throw new Error(`Cannot split report because JSON report does not exist: ${jsonReportPath}`)
+      throw new Error(`Cannot split report because JSON report does not exist: ${jsonReportPath}`);
     }
-    writeSplitReports()
-    printScoreSummary()
-    return
+    writeSplitReports();
+    printScoreSummary();
+    return;
   }
 
-  let preview = null
-  let managedChrome = null
+  let preview = null;
+  let managedChrome = null;
 
   if (options.startPreview) {
     preview = spawn(
@@ -738,21 +736,21 @@ const run = async () => {
           ...process.env,
           PATH: runtimePath,
         },
-      },
-    )
+      }
+    );
   }
 
-  let previewClosed = false
+  let previewClosed = false;
   preview?.on('close', () => {
-    previewClosed = true
-  })
+    previewClosed = true;
+  });
 
   try {
-    cleanupStaleLighthouseTempDirectories()
-    await waitForServer(options.url, options.timeoutMs)
+    cleanupStaleLighthouseTempDirectories();
+    await waitForServer(options.url, options.timeoutMs);
 
     if (process.platform === 'win32') {
-      managedChrome = await launchManagedChrome(options.chromeFlags)
+      managedChrome = await launchManagedChrome(options.chromeFlags);
     }
 
     const runLighthouseOnce = async (chromeFlags) => {
@@ -767,7 +765,7 @@ const run = async () => {
           ? `--port=${managedChrome.debugPort}`
           : `--chrome-flags=${shellQuote(chromeFlags)}`,
         '--no-enable-error-reporting',
-      ].join(' ')
+      ].join(' ');
 
       try {
         execSync(command, {
@@ -778,49 +776,49 @@ const run = async () => {
             ...process.env,
             PATH: runtimePath,
           },
-        })
-        return 0
+        });
+        return 0;
       } catch {
-        return 1
+        return 1;
       }
-    }
+    };
 
-    let exitCode = await runLighthouseOnce(options.chromeFlags)
+    let exitCode = await runLighthouseOnce(options.chromeFlags);
 
-    const hasHtml = fs.existsSync(htmlReportPath)
-    const hasJson = fs.existsSync(jsonReportPath)
+    const hasHtml = fs.existsSync(htmlReportPath);
+    const hasJson = fs.existsSync(jsonReportPath);
     if (exitCode !== 0 && !(hasHtml && hasJson)) {
-      exitCode = await runLighthouseOnce(FALLBACK_CHROME_FLAGS)
+      exitCode = await runLighthouseOnce(FALLBACK_CHROME_FLAGS);
     }
 
-    const hasHtmlAfterRetry = fs.existsSync(htmlReportPath)
-    const hasJsonAfterRetry = fs.existsSync(jsonReportPath)
+    const hasHtmlAfterRetry = fs.existsSync(htmlReportPath);
+    const hasJsonAfterRetry = fs.existsSync(jsonReportPath);
     if (hasHtmlAfterRetry && hasJsonAfterRetry) {
-      writeSplitReports()
-      printScoreSummary()
+      writeSplitReports();
+      printScoreSummary();
     }
     if (exitCode !== 0 && !(hasHtmlAfterRetry && hasJsonAfterRetry)) {
-      process.exitCode = exitCode
+      process.exitCode = exitCode;
     }
   } finally {
     if (managedChrome) {
       try {
-        await managedChrome.stop()
+        await managedChrome.stop();
       } catch {
         // ignore cleanup errors
       }
     }
     if (preview && !previewClosed) {
       try {
-        preview.kill('SIGTERM')
+        preview.kill('SIGTERM');
       } catch {
         // ignore cleanup errors
       }
     }
   }
-}
+};
 
 await run().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error))
-  process.exitCode = 1
-})
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exitCode = 1;
+});

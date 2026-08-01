@@ -1,151 +1,133 @@
-import {
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useSpring,
-  useTransform,
-} from 'framer-motion'
-import Particles, { ParticlesProvider } from '@tsparticles/react'
-import { loadSlim } from '@tsparticles/slim'
-import type { Engine, ISourceOptions } from '@tsparticles/engine'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
+import Particles, { ParticlesProvider } from '@tsparticles/react';
+import { loadSlim } from '@tsparticles/slim';
+import type { Engine, ISourceOptions } from '@tsparticles/engine';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 const loadBackgroundParticles = async (engine: Engine) => {
-  await loadSlim(engine)
-}
+  await loadSlim(engine);
+};
 
 const getViewportCenter = () => {
   if (typeof window === 'undefined') {
     return {
       x: 0,
       y: 0,
-    }
+    };
   }
 
   return {
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
-  }
-}
+  };
+};
 
 function BackgroundComponent() {
-  const shouldReduceMotion = useReducedMotion()
+  const shouldReduceMotion = useReducedMotion();
 
-  const [particlesReady, setParticlesReady] = useState(false)
-  const [enableFX, setEnableFX] = useState(true)
-  const [viewportCenter, setViewportCenter] = useState(getViewportCenter)
+  const [particlesReady, setParticlesReady] = useState(false);
+  const [enableFX, setEnableFX] = useState(true);
+  const [viewportCenter, setViewportCenter] = useState(getViewportCenter);
 
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
 
     const enableParticles = () => {
-      if (cancelled) return
+      if (cancelled) return;
 
       const isAutomatedTest =
         typeof navigator !== 'undefined' &&
         (navigator.webdriver ||
-          /Playwright|HeadlessChrome|PhantomJS|jsdom/i.test(
-            navigator.userAgent,
-          ))
+          /Playwright|HeadlessChrome|PhantomJS|jsdom/i.test(navigator.userAgent));
 
       if (!isAutomatedTest) {
-        setParticlesReady(true)
+        setParticlesReady(true);
       }
-    }
+    };
 
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined') return;
 
     const idleWindow = window as Window & {
-      requestIdleCallback?: (
-        callback: IdleRequestCallback,
-        options?: IdleRequestOptions,
-      ) => number
-      cancelIdleCallback?: (id: number) => void
-    }
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
 
     if (idleWindow.requestIdleCallback) {
       const id = idleWindow.requestIdleCallback(() => {
-        enableParticles()
-      })
+        enableParticles();
+      });
 
       return () => {
-        cancelled = true
+        cancelled = true;
 
         if (idleWindow.cancelIdleCallback) {
-          idleWindow.cancelIdleCallback(id)
+          idleWindow.cancelIdleCallback(id);
         }
-      }
+      };
     }
 
     const timer = window.setTimeout(() => {
-      enableParticles()
-    }, 1200)
+      enableParticles();
+    }, 1200);
 
     return () => {
-      cancelled = true
-      clearTimeout(timer)
-    }
-  }, [])
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined') return;
 
-    const lowPower =
-      window.innerWidth < 640 || navigator.hardwareConcurrency <= 2
+    const lowPower = window.innerWidth < 640 || navigator.hardwareConcurrency <= 2;
 
-    setEnableFX(!shouldReduceMotion && !lowPower)
-  }, [shouldReduceMotion])
+    setEnableFX(!shouldReduceMotion && !lowPower);
+  }, [shouldReduceMotion]);
 
-  const mouseX = useMotionValue(viewportCenter.x)
-  const mouseY = useMotionValue(viewportCenter.y)
+  const mouseX = useMotionValue(viewportCenter.x);
+  const mouseY = useMotionValue(viewportCenter.y);
 
   const smoothX = useSpring(mouseX, {
     stiffness: 80,
     damping: 20,
-  })
+  });
 
   const smoothY = useSpring(mouseY, {
     stiffness: 80,
     damping: 20,
-  })
+  });
 
-  const parallaxX = useTransform(
-    smoothX,
-    (x) => (x - viewportCenter.x) * 0.02,
-  )
+  const parallaxX = useTransform(smoothX, (x) => (x - viewportCenter.x) * 0.02);
 
-  const parallaxY = useTransform(
-    smoothY,
-    (y) => (y - viewportCenter.y) * 0.02,
-  )
+  const parallaxY = useTransform(smoothY, (y) => (y - viewportCenter.y) * 0.02);
 
   useEffect(() => {
     if (!enableFX || shouldReduceMotion || typeof window === 'undefined') {
-      return
+      return;
     }
 
     const syncViewport = () => {
-      const center = getViewportCenter()
+      const center = getViewportCenter();
 
-      setViewportCenter(center)
-      mouseX.set(center.x)
-      mouseY.set(center.y)
-    }
+      setViewportCenter(center);
+      mouseX.set(center.x);
+      mouseY.set(center.y);
+    };
 
     const handleMouseMove = (event: MouseEvent) => {
-      mouseX.set(event.clientX)
-      mouseY.set(event.clientY)
-    }
+      mouseX.set(event.clientX);
+      mouseY.set(event.clientY);
+    };
 
-    syncViewport()
-    window.addEventListener('resize', syncViewport)
-    window.addEventListener('mousemove', handleMouseMove)
+    syncViewport();
+    window.addEventListener('resize', syncViewport);
+    window.addEventListener('mousemove', handleMouseMove);
 
     return () => {
-      window.removeEventListener('resize', syncViewport)
-      window.removeEventListener('mousemove', handleMouseMove)
-    }
-  }, [enableFX, mouseX, mouseY, shouldReduceMotion])
+      window.removeEventListener('resize', syncViewport);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [enableFX, mouseX, mouseY, shouldReduceMotion]);
 
   const particleOptions = useMemo<ISourceOptions>(
     () => ({
@@ -194,8 +176,8 @@ function BackgroundComponent() {
         },
       },
     }),
-    [enableFX],
-  )
+    [enableFX]
+  );
 
   return (
     <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
@@ -270,7 +252,7 @@ function BackgroundComponent() {
         </motion.div>
       )}
     </div>
-  )
+  );
 }
 
-export const Background = memo(BackgroundComponent)
+export const Background = memo(BackgroundComponent);

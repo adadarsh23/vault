@@ -1,24 +1,24 @@
-import compression from 'compression'
-import type { Request, Response } from 'express'
-import { constants as zlibConstants } from 'zlib'
+import compression from 'compression';
+import type { Request, Response } from 'express';
+import { constants as zlibConstants } from 'zlib';
 
 const shouldCompress = (req: Request, res: Response): boolean => {
   if (req.headers['x-no-compression']) {
-    return false
+    return false;
   }
 
-  const contentEncoding = res.getHeader('Content-Encoding')
+  const contentEncoding = res.getHeader('Content-Encoding');
 
   if (typeof contentEncoding === 'string' && contentEncoding !== 'identity') {
-    return false
+    return false;
   }
 
   if (Array.isArray(contentEncoding) && contentEncoding.length > 0) {
-    return false
+    return false;
   }
 
-  return compression.filter(req, res)
-}
+  return compression.filter(req, res);
+};
 
 export const deepCompressionOptions: Parameters<typeof compression>[0] = {
   level: 6,
@@ -30,4 +30,4 @@ export const deepCompressionOptions: Parameters<typeof compression>[0] = {
     },
   },
   filter: shouldCompress,
-}
+};

@@ -1,13 +1,6 @@
 import { VaultItem } from '../lib/storage';
-import {
-  decryptToFile,
-} from '../lib/encryption';
-import {
-  decryptData,
-  encryptData,
-  encryptFile,
-  deriveKey,
-} from '../lib/cryptoPrimitives';
+import { decryptToFile } from '../lib/encryption';
+import { decryptData, encryptData, encryptFile, deriveKey } from '../lib/cryptoPrimitives';
 import { getStringContent } from '../lib/vaultItemContent';
 import { uploadItemToCloud, uploadSettingsToCloud } from '../lib/sync';
 import { fetchVaultSalt } from '../lib/auth-api';
@@ -87,10 +80,8 @@ const normalizeRsaKeys = (value: unknown): ExportedRsaKeys | undefined => {
     return undefined;
   }
 
-  const publicKey =
-    typeof value.publicKey === 'string' ? value.publicKey.trim() : '';
-  const privateKey =
-    typeof value.privateKey === 'string' ? value.privateKey.trim() : '';
+  const publicKey = typeof value.publicKey === 'string' ? value.publicKey.trim() : '';
+  const privateKey = typeof value.privateKey === 'string' ? value.privateKey.trim() : '';
 
   if (!publicKey || !privateKey) {
     return undefined;
@@ -106,7 +97,7 @@ const yieldToMainThread = async (): Promise<void> => {
 const notifyProgress = (
   onProgress: ((done: number, total: number) => void) | undefined,
   done: number,
-  total: number,
+  total: number
 ): void => {
   if (!onProgress) {
     return;
@@ -123,18 +114,15 @@ const rotateBinaryContent = async (
   item: VaultItem,
   oldKey: string,
   resolvedNewKey: string,
-  itemLabel: string,
+  itemLabel: string
 ): Promise<Uint8Array> => {
-  const mimeType =
-    typeof item.metadata?.mimeType === 'string'
-      ? item.metadata.mimeType
-      : undefined;
+  const mimeType = typeof item.metadata?.mimeType === 'string' ? item.metadata.mimeType : undefined;
   const decryptedUrl = await decryptToFile(item.content, oldKey, mimeType);
 
   if (!decryptedUrl) {
     throw new VaultServiceError(
       `Failed to decrypt binary item "${itemLabel}".`,
-      'BINARY_DECRYPT_FAILED',
+      'BINARY_DECRYPT_FAILED'
     );
   }
 
@@ -143,7 +131,7 @@ const rotateBinaryContent = async (
     if (!response.ok) {
       throw new VaultServiceError(
         `Failed to read decrypted binary item "${itemLabel}".`,
-        'BINARY_FETCH_FAILED',
+        'BINARY_FETCH_FAILED'
       );
     }
 
@@ -163,21 +151,18 @@ const rotateStringContent = async (
   item: VaultItem,
   oldKey: string,
   resolvedNewKey: string,
-  itemLabel: string,
+  itemLabel: string
 ): Promise<string> => {
   const encryptedContent = getStringContent(item.content);
   if (!encryptedContent) {
-    throw new VaultServiceError(
-      `Invalid content format for "${itemLabel}".`,
-      'INVALID_CONTENT',
-    );
+    throw new VaultServiceError(`Invalid content format for "${itemLabel}".`, 'INVALID_CONTENT');
   }
 
   const decrypted = await decryptData(encryptedContent, oldKey);
   if (decrypted === null) {
     throw new VaultServiceError(
       `Integrity check failed for "${itemLabel}".`,
-      'INTEGRITY_CHECK_FAILED',
+      'INTEGRITY_CHECK_FAILED'
     );
   }
 
@@ -195,9 +180,7 @@ const dedupeItemsByNewestUpdate = (items: VaultItem[]): VaultItem[] => {
     }
 
     const currentUpdatedAt = isFiniteNumber(item.updatedAt) ? item.updatedAt : 0;
-    const existingUpdatedAt = isFiniteNumber(existing.updatedAt)
-      ? existing.updatedAt
-      : 0;
+    const existingUpdatedAt = isFiniteNumber(existing.updatedAt) ? existing.updatedAt : 0;
     if (currentUpdatedAt >= existingUpdatedAt) {
       deduped.set(item.id, item);
     }
@@ -231,7 +214,7 @@ export const VaultService = {
 
     const rotationItems = dedupeItemsByNewestUpdate(items);
     const identitySalt = await fetchVaultSalt(normalizedUsername).catch(
-      () => `${normalizedUsername}${IDENTITY_SALT_SUFFIX}`,
+      () => `${normalizedUsername}${IDENTITY_SALT_SUFFIX}`
     );
     const resolvedNewKey = await deriveKey(normalizedNewKey, identitySalt);
 
@@ -258,14 +241,14 @@ export const VaultService = {
             item,
             normalizedOldKey,
             resolvedNewKey,
-            itemLabel,
+            itemLabel
           );
         } else {
           updatedContent = await rotateStringContent(
             item,
             normalizedOldKey,
             resolvedNewKey,
-            itemLabel,
+            itemLabel
           );
         }
 
@@ -290,7 +273,7 @@ export const VaultService = {
         const detailedError = new VaultServiceError(
           `Key rotation failed at "${itemLabel}": ${message}`,
           'ROTATION_ITEM_FAILED',
-          err,
+          err
         );
         console.error(`Rotation failed at item ${i + 1} (${itemLabel}):`, err);
         throw detailedError;
@@ -308,7 +291,7 @@ export const VaultService = {
     preferences: VaultSettingsPreferences,
     allowRestrictedTypes: boolean,
     rsaKeys?: ExportedRsaKeys,
-    options: SyncSettingsOptions = {},
+    options: SyncSettingsOptions = {}
   ): Promise<void> {
     if (!key) {
       throw new VaultServiceError('Master key is required.', 'INVALID_ARGUMENT');
@@ -326,5 +309,5 @@ export const VaultService = {
     }
 
     await uploadSettingsToCloud(payload, key, options);
-  }
+  },
 };

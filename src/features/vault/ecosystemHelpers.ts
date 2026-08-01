@@ -1,4 +1,4 @@
-import type { ElementType } from 'react'
+import type { ElementType } from 'react';
 import {
   Database,
   Fingerprint,
@@ -8,69 +8,69 @@ import {
   RefreshCw,
   ShieldCheck,
   Smartphone,
-} from 'lucide-react'
+} from 'lucide-react';
 
 /* ---------------------------
  * Types
  * --------------------------*/
 
 export interface VaultCategoryStats {
-  password: number
-  note: number
-  photo: number
-  video: number
-  audio: number
-  secret: number
-  document: number
-  location: number
-  other: number
+  password: number;
+  note: number;
+  photo: number;
+  video: number;
+  audio: number;
+  secret: number;
+  document: number;
+  location: number;
+  other: number;
 }
 
 export interface Tone {
-  icon: string
-  glow: string
-  ring: string
-  softBg: string
+  icon: string;
+  glow: string;
+  ring: string;
+  softBg: string;
 }
 
 export interface DiagramNode {
-  id: string
-  title: string
-  subtitle: string
-  description: string
-  details: string[]
-  icon: ElementType
-  tone: Tone
-  x: number
-  y: number
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  details: string[];
+  icon: ElementType;
+  tone: Tone;
+  x: number;
+  y: number;
 }
 
 export interface DiagramEdge {
-  id: string
-  from: string
-  to: string
+  id: string;
+  from: string;
+  to: string;
 }
 
 export interface NodePosition {
-  x: number
-  y: number
+  x: number;
+  y: number;
 }
 
 export interface NodeDimensions {
-  width: number
-  height: number
+  width: number;
+  height: number;
 }
 
 export interface GraphSize {
-  width: number
-  height: number
+  width: number;
+  height: number;
 }
 
 export interface AnchorPoint {
-  x: number
-  y: number
-  normalX: number
-  normalY: number
+  x: number;
+  y: number;
+  normalX: number;
+  normalY: number;
 }
 
 const CATEGORY_LABELS: Record<keyof VaultCategoryStats, string> = {
@@ -83,14 +83,14 @@ const CATEGORY_LABELS: Record<keyof VaultCategoryStats, string> = {
   document: 'Documents',
   location: 'Locations',
   other: 'Other',
-}
+};
 
 /* ---------------------------
  * Constants
  * --------------------------*/
 
-export const GRAPH_WIDTH = 920
-export const GRAPH_HEIGHT = 520
+export const GRAPH_WIDTH = 920;
+export const GRAPH_HEIGHT = 520;
 
 export const tones: Record<string, Tone> = {
   cyan: {
@@ -135,28 +135,28 @@ export const tones: Record<string, Tone> = {
     ring: 'ring-rose-500/20 dark:ring-rose-300/20',
     softBg: 'bg-rose-500/10',
   },
-} as const
+} as const;
 
 /* ---------------------------
  * Helpers
  * --------------------------*/
 
 export const clamp = (value: number, min: number, max: number) =>
-  Math.min(Math.max(value, min), max)
+  Math.min(Math.max(value, min), max);
 
 export const getCanvasPadding = (containerWidth: number) => {
-  if (containerWidth < 420) return 10
-  if (containerWidth < 520) return 12
-  if (containerWidth < 768) return 16
-  return 24
-}
+  if (containerWidth < 420) return 10;
+  if (containerWidth < 520) return 12;
+  if (containerWidth < 768) return 16;
+  return 24;
+};
 
 export const getNodeDimensions = (containerWidth: number): NodeDimensions => {
-  if (containerWidth < 420) return { width: 88, height: 88 }
-  if (containerWidth < 520) return { width: 104, height: 92 }
-  if (containerWidth < 768) return { width: 128, height: 98 }
-  return { width: 160, height: 112 }
-}
+  if (containerWidth < 420) return { width: 88, height: 88 };
+  if (containerWidth < 520) return { width: 104, height: 92 };
+  if (containerWidth < 768) return { width: 128, height: 98 };
+  return { width: 160, height: 112 };
+};
 
 /* ---------------------------
  * Layout math (safe)
@@ -166,54 +166,51 @@ export const getNodePixelPosition = (
   node: NodePosition,
   graphSize: GraphSize,
   dims: NodeDimensions,
-  padding = 0,
+  padding = 0
 ) => {
-  const safeWidth = Math.max(graphSize.width - dims.width - padding * 2, 1)
-  const safeHeight = Math.max(graphSize.height - dims.height - padding * 2, 1)
+  const safeWidth = Math.max(graphSize.width - dims.width - padding * 2, 1);
+  const safeHeight = Math.max(graphSize.height - dims.height - padding * 2, 1);
 
   return {
     left: padding + (node.x / 100) * safeWidth,
     top: padding + (node.y / 100) * safeHeight,
-  }
-}
+  };
+};
 
 export const getNodeEdgeAnchors = (
   from: NodePosition,
   to: NodePosition,
   graphSize: GraphSize,
   dims: NodeDimensions,
-  padding: number,
+  padding: number
 ) => {
-  const fromPos = getNodePixelPosition(from, graphSize, dims, padding)
-  const toPos = getNodePixelPosition(to, graphSize, dims, padding)
+  const fromPos = getNodePixelPosition(from, graphSize, dims, padding);
+  const toPos = getNodePixelPosition(to, graphSize, dims, padding);
 
   const fromCenter = {
     x: fromPos.left + dims.width / 2,
     y: fromPos.top + dims.height / 2,
-  }
+  };
 
   const toCenter = {
     x: toPos.left + dims.width / 2,
     y: toPos.top + dims.height / 2,
-  }
+  };
 
-  const halfW = Math.max(dims.width / 2, 1)
-  const halfH = Math.max(dims.height / 2, 1)
+  const halfW = Math.max(dims.width / 2, 1);
+  const halfH = Math.max(dims.height / 2, 1);
 
-  const getEdgePoint = (
-    c: typeof fromCenter,
-    t: typeof toCenter,
-  ): AnchorPoint => {
-    const dx = t.x - c.x
-    const dy = t.y - c.y
+  const getEdgePoint = (c: typeof fromCenter, t: typeof toCenter): AnchorPoint => {
+    const dx = t.x - c.x;
+    const dy = t.y - c.y;
 
     if (dx === 0 && dy === 0) {
-      return { x: c.x, y: c.y, normalX: 1, normalY: 0 }
+      return { x: c.x, y: c.y, normalX: 1, normalY: 0 };
     }
 
-    const wx = Math.abs(dx) / halfW
-    const hy = Math.abs(dy) / halfH
-    const scale = 1 / Math.max(wx, hy, 1e-6)
+    const wx = Math.abs(dx) / halfW;
+    const hy = Math.abs(dy) / halfH;
+    const scale = 1 / Math.max(wx, hy, 1e-6);
 
     if (wx >= hy) {
       return {
@@ -221,7 +218,7 @@ export const getNodeEdgeAnchors = (
         y: c.y + dy * scale,
         normalX: Math.sign(dx) || 1,
         normalY: 0,
-      }
+      };
     }
 
     return {
@@ -229,17 +226,14 @@ export const getNodeEdgeAnchors = (
       y: c.y + Math.sign(dy) * halfH,
       normalX: 0,
       normalY: Math.sign(dy) || 1,
-    }
-  }
+    };
+  };
 
-  const centerDistance = Math.hypot(
-    toCenter.x - fromCenter.x,
-    toCenter.y - fromCenter.y,
-  )
-  const edgeGap = Math.min(10, Math.max(4, centerDistance * 0.06))
+  const centerDistance = Math.hypot(toCenter.x - fromCenter.x, toCenter.y - fromCenter.y);
+  const edgeGap = Math.min(10, Math.max(4, centerDistance * 0.06));
 
-  const startRaw = getEdgePoint(fromCenter, toCenter)
-  const endRaw = getEdgePoint(toCenter, fromCenter)
+  const startRaw = getEdgePoint(fromCenter, toCenter);
+  const endRaw = getEdgePoint(toCenter, fromCenter);
 
   return {
     start: {
@@ -252,8 +246,8 @@ export const getNodeEdgeAnchors = (
       x: endRaw.x + endRaw.normalX * edgeGap,
       y: endRaw.y + endRaw.normalY * edgeGap,
     },
-  }
-}
+  };
+};
 
 /* ---------------------------
  * Nodes
@@ -261,30 +255,22 @@ export const getNodeEdgeAnchors = (
 
 export const createNodes = (
   itemCount: number,
-  categoryStats: VaultCategoryStats,
+  categoryStats: VaultCategoryStats
 ): DiagramNode[] => {
-  const totalByStats = Object.values(categoryStats).reduce(
-    (sum, value) => sum + value,
-    0,
-  )
-  const activeTypes = (
-    Object.keys(categoryStats) as Array<keyof VaultCategoryStats>
-  ).filter((key) => categoryStats[key] > 0)
-  const dominantType = activeTypes
-    .sort((a, b) => categoryStats[b] - categoryStats[a])[0]
+  const totalByStats = Object.values(categoryStats).reduce((sum, value) => sum + value, 0);
+  const activeTypes = (Object.keys(categoryStats) as Array<keyof VaultCategoryStats>).filter(
+    (key) => categoryStats[key] > 0
+  );
+  const dominantType = activeTypes.sort((a, b) => categoryStats[b] - categoryStats[a])[0];
 
-  const topCategories = (
-    Object.keys(categoryStats) as Array<keyof VaultCategoryStats>
-  )
+  const topCategories = (Object.keys(categoryStats) as Array<keyof VaultCategoryStats>)
     .filter((key) => categoryStats[key] > 0)
     .sort((a, b) => categoryStats[b] - categoryStats[a])
-    .slice(0, 3)
+    .slice(0, 3);
 
   const topCategoryDetails = topCategories.length
-    ? topCategories.map(
-        (key) => `${CATEGORY_LABELS[key]}: ${categoryStats[key]} records`,
-      )
-    : ['No category data available yet.']
+    ? topCategories.map((key) => `${CATEGORY_LABELS[key]}: ${categoryStats[key]} records`)
+    : ['No category data available yet.'];
 
   return [
     {
@@ -415,8 +401,8 @@ export const createNodes = (
       x: 89,
       y: 66,
     },
-  ] as const
-}
+  ] as const;
+};
 
 /* ---------------------------
  * Edges
@@ -431,4 +417,4 @@ export const EDGES: readonly DiagramEdge[] = [
   { id: 'sync-api', from: 'sync', to: 'api' },
   { id: 'api-mongo', from: 'api', to: 'mongo' },
   { id: 'crypto-sync', from: 'crypto', to: 'sync' },
-] as const
+] as const;

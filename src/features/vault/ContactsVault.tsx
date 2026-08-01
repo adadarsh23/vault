@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { useEffect, useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
   Trash2,
@@ -18,87 +18,82 @@ import {
   Copy,
   Loader2,
   Pin,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { Button } from '../../components/ui/Button'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../components/ui/Card'
-import { Input } from '../../components/ui/Input'
-import { SearchInput } from '../../components/ui/SearchInput'
-import { useVaultStore } from '../../store/vaultStore'
-import { VaultItem } from '../../lib/storage'
-import { encryptData, decryptData } from '../../lib/cryptoPrimitives'
-import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent'
-import { useClipboard } from '../../hooks/useClipboard'
-import { logActivity } from '../../lib/activity'
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop'
-import { FolderSidebar } from '../../components/vault/FolderSidebar'
-import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu'
-import { useVaultFolders } from '../../hooks/useVaultFolders'
-import { sortPinnedFirst } from '../../lib/pinning'
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '../../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { SearchInput } from '../../components/ui/SearchInput';
+import { useVaultStore } from '../../store/vaultStore';
+import { VaultItem } from '../../lib/storage';
+import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
+import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';
+import { useClipboard } from '../../hooks/useClipboard';
+import { logActivity } from '../../lib/activity';
+import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { FolderSidebar } from '../../components/vault/FolderSidebar';
+import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
+import { useVaultFolders } from '../../hooks/useVaultFolders';
+import { sortPinnedFirst } from '../../lib/pinning';
 
 interface ContactPayload {
-  email: string
-  phone: string
-  company: string
-  notes: string
+  email: string;
+  phone: string;
+  company: string;
+  notes: string;
 }
 
 interface ContactCardProps {
-  item: VaultItem
-  masterKey: string | CryptoKey
+  item: VaultItem;
+  masterKey: string | CryptoKey;
   onUpdate: (
     id: string,
     updates: {
-      name: string
-      email: string
-      phone: string
-      company: string
-      notes: string
-    },
-  ) => Promise<void>
-  onDelete: (id: string, title: string) => void
-  onTogglePin: (id: string) => void
-  isPinning: boolean
+      name: string;
+      email: string;
+      phone: string;
+      company: string;
+      notes: string;
+    }
+  ) => Promise<void>;
+  onDelete: (id: string, title: string) => void;
+  onTogglePin: (id: string) => void;
+  isPinning: boolean;
 }
 
 const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
   ({ item, masterKey, onUpdate, onDelete, onTogglePin, isPinning }) => {
-    const [data, setData] = useState<ContactPayload | null>(null)
-    const [error, setError] = useState(false)
-    const [isEditing, setIsEditing] = useState(false)
-    const [editName, setEditName] = useState(item.title)
-    const [editEmail, setEditEmail] = useState('')
-    const [editPhone, setEditPhone] = useState('')
-    const [editCompany, setEditCompany] = useState('')
-    const [editNotes, setEditNotes] = useState('')
-    const { copy, copiedId } = useClipboard()
+    const [data, setData] = useState<ContactPayload | null>(null);
+    const [error, setError] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState(item.title);
+    const [editEmail, setEditEmail] = useState('');
+    const [editPhone, setEditPhone] = useState('');
+    const [editCompany, setEditCompany] = useState('');
+    const [editNotes, setEditNotes] = useState('');
+    const { copy, copiedId } = useClipboard();
 
     useEffect(() => {
-      let isMounted = true
+      let isMounted = true;
 
       const decrypt = async () => {
         try {
-          const encryptedContent = getStringContent(item.content)
+          const encryptedContent = getStringContent(item.content);
           if (!encryptedContent) {
-            if (isMounted) setError(true)
-            return
+            if (isMounted) setError(true);
+            return;
           }
 
-          const decrypted = await decryptData(encryptedContent, masterKey)
+          const decrypted = await decryptData(encryptedContent, masterKey);
           if (!decrypted || !isMounted) {
-            if (isMounted) setError(true)
-            return
+            if (isMounted) setError(true);
+            return;
           }
 
-          const parsed = parseJsonSafely<ContactPayload>(decrypted)
+          const parsed = parseJsonSafely<ContactPayload>(decrypted);
           if (!parsed) {
-            if (isMounted) setError(true)
-            return
+            if (isMounted) setError(true);
+            return;
           }
 
           const nextData = {
@@ -106,49 +101,49 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
             phone: parsed.phone ?? '',
             company: parsed.company ?? '',
             notes: parsed.notes ?? '',
-          }
+          };
 
-          setData(nextData)
-          setEditEmail(nextData.email)
-          setEditPhone(nextData.phone)
-          setEditCompany(nextData.company)
-          setEditNotes(nextData.notes)
+          setData(nextData);
+          setEditEmail(nextData.email);
+          setEditPhone(nextData.phone);
+          setEditCompany(nextData.company);
+          setEditNotes(nextData.notes);
         } catch (err) {
-          console.error('Contact Decryption Error:', err)
-          if (isMounted) setError(true)
+          console.error('Contact Decryption Error:', err);
+          if (isMounted) setError(true);
         }
-      }
+      };
 
-      decrypt()
+      decrypt();
       return () => {
-        isMounted = false
-      }
-    }, [item.content, masterKey])
+        isMounted = false;
+      };
+    }, [item.content, masterKey]);
 
     const handleCopy = (value: string, id: string, label: string) => {
       if (!value.trim()) {
-        toast.error(`No ${label.toLowerCase()} available`)
-        return
+        toast.error(`No ${label.toLowerCase()} available`);
+        return;
       }
 
-      copy(value, id)
-      toast.success(`${label} copied to clipboard`)
+      copy(value, id);
+      toast.success(`${label} copied to clipboard`);
       logActivity({
         actionType: 'copy_value',
         itemName: item.title,
         description: `${label} copied`,
         status: 'success',
-      })
-    }
+      });
+    };
 
     const handleSave = async () => {
       if (!editName.trim()) {
-        toast.error('Contact name is required')
-        return
+        toast.error('Contact name is required');
+        return;
       }
       if (!editPhone.trim()) {
-        toast.error('Phone number is required')
-        return
+        toast.error('Phone number is required');
+        return;
       }
       await onUpdate(item.id, {
         name: editName,
@@ -156,9 +151,9 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
         phone: editPhone,
         company: editCompany,
         notes: editNotes,
-      })
-      setIsEditing(false)
-    }
+      });
+      setIsEditing(false);
+    };
 
     if (error) {
       return (
@@ -174,7 +169,7 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
             Delete
           </Button>
         </Card>
-      )
+      );
     }
 
     if (!data) {
@@ -183,7 +178,7 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
           <div className="h-10 w-full rounded-xl bg-white/5" />
           <div className="h-24 w-full rounded-xl bg-white/5" />
         </Card>
-      )
+      );
     }
 
     return (
@@ -203,8 +198,8 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
                   className="h-8 bg-white/5 px-2 py-0 text-sm border-white/10"
                   autoFocus
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') void handleSave()
-                    if (e.key === 'Escape') setIsEditing(false)
+                    if (e.key === 'Enter') void handleSave();
+                    if (e.key === 'Escape') setIsEditing(false);
                   }}
                 />
               ) : (
@@ -256,7 +251,11 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
                     className={`h-8 w-8 rounded-full ${item.isPinned ? 'text-teal-400 hover:bg-teal-400/20' : 'text-text/20 hover:text-text/60 hover:bg-white/10'} transition-colors`}
                     onClick={() => onTogglePin(item.id)}
                   >
-                    {isPinning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pin className={`h-3.5 w-3.5 ${item.isPinned ? 'fill-current' : ''}`} />}
+                    {isPinning ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pin className={`h-3.5 w-3.5 ${item.isPinned ? 'fill-current' : ''}`} />
+                    )}
                   </Button>
                   <Button
                     variant="ghost"
@@ -276,9 +275,7 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
               <div className="inline-flex max-w-full items-center rounded-full border border-sky-400/15 bg-sky-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-sky-300/80">
                 <Folder className="mr-1.5 h-3 w-3 text-sky-400/80" />
                 <span className="truncate" title={item.folder}>
-                  {item.folder.length > 10
-                    ? `${item.folder.slice(0, 10)}...`
-                    : item.folder}
+                  {item.folder.length > 10 ? `${item.folder.slice(0, 10)}...` : item.folder}
                 </span>
               </div>
             )}
@@ -323,9 +320,7 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
                     variant="ghost"
                     size="icon"
                     className="ml-2 h-8 w-8 rounded-lg hover:bg-white/10"
-                    onClick={() =>
-                      handleCopy(data.email, `${item.id}-email`, 'Email')
-                    }
+                    onClick={() => handleCopy(data.email, `${item.id}-email`, 'Email')}
                   >
                     {copiedId === `${item.id}-email` ? (
                       <Check className="h-3.5 w-3.5 text-green-400" />
@@ -349,9 +344,7 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
                     variant="ghost"
                     size="icon"
                     className="ml-2 h-8 w-8 rounded-lg hover:bg-white/10"
-                    onClick={() =>
-                      handleCopy(data.phone, `${item.id}-phone`, 'Phone')
-                    }
+                    onClick={() => handleCopy(data.phone, `${item.id}-phone`, 'Phone')}
                   >
                     {copiedId === `${item.id}-phone` ? (
                       <Check className="h-3.5 w-3.5 text-green-400" />
@@ -398,44 +391,41 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
           </CardContent>
         </Card>
       </motion.div>
-    )
-  },
-)
+    );
+  }
+);
 
 export const ContactsVault: React.FC = () => {
-  const items = useVaultStore((state) => state.items)
-  const addItem = useVaultStore((state) => state.addItem)
-  const removeItem = useVaultStore((state) => state.removeItem)
-  const updateItem = useVaultStore((state) => state.updateItem)
-  const masterKey = useVaultStore((state) => state.masterKey)
-  const togglePin = useVaultStore((state) => state.togglePin)
-  const pinningItemIds = useVaultStore((state) => state.pinningItemIds)
+  const items = useVaultStore((state) => state.items);
+  const addItem = useVaultStore((state) => state.addItem);
+  const removeItem = useVaultStore((state) => state.removeItem);
+  const updateItem = useVaultStore((state) => state.updateItem);
+  const masterKey = useVaultStore((state) => state.masterKey);
+  const togglePin = useVaultStore((state) => state.togglePin);
+  const pinningItemIds = useVaultStore((state) => state.pinningItemIds);
 
-  const [isAdding, setIsAdding] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [newName, setNewName] = useState('')
-  const [newEmail, setNewEmail] = useState('')
-  const [newPhone, setNewPhone] = useState('')
-  const [newCompany, setNewCompany] = useState('')
-  const [newNotes, setNewNotes] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
-  const [isMobileFolderOpen, setIsMobileFolderOpen] = useState(false)
+  const [isAdding, setIsAdding] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newCompany, setNewCompany] = useState('');
+  const [newNotes, setNewNotes] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isMobileFolderOpen, setIsMobileFolderOpen] = useState(false);
 
-  const contacts = useMemo(
-    () => items.filter((item) => item.type === 'contact'),
-    [items],
-  )
+  const contacts = useMemo(() => items.filter((item) => item.type === 'contact'), [items]);
 
   const suggestions = useMemo(() => {
-    const s = new Set<string>()
+    const s = new Set<string>();
     contacts.forEach((item) => {
-      if (item.title) s.add(item.title)
-      if (item.metadata?.email) s.add(item.metadata.email)
-      if (item.metadata?.company) s.add(item.metadata.company)
-      if (item.metadata?.phone) s.add(item.metadata.phone)
-    })
-    return Array.from(s)
-  }, [contacts])
+      if (item.title) s.add(item.title);
+      if (item.metadata?.email) s.add(item.metadata.email);
+      if (item.metadata?.company) s.add(item.metadata.company);
+      if (item.metadata?.phone) s.add(item.metadata.phone);
+    });
+    return Array.from(s);
+  }, [contacts]);
   const {
     folders,
     currentFolder,
@@ -452,52 +442,48 @@ export const ContactsVault: React.FC = () => {
     handleRenameFolder,
     handleDeleteFolder,
     handleMoveToFolder,
-  } = useVaultFolders('contact')
-  const normalizedSearchQuery = useMemo(
-    () => searchQuery.trim().toLowerCase(),
-    [searchQuery],
-  )
+  } = useVaultFolders('contact');
+  const normalizedSearchQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery]);
 
   const filteredContacts = useMemo(
     () =>
-      sortPinnedFirst(contacts.filter((contact) => {
-        const matchesSearch =
-          normalizedSearchQuery.length === 0 ||
-          contact.title.toLowerCase().includes(normalizedSearchQuery)
-        const matchesFolder =
-          currentFolder === null || contact.folder === currentFolder
-        return matchesSearch && matchesFolder
-      })),
-    [contacts, normalizedSearchQuery, currentFolder],
-  )
+      sortPinnedFirst(
+        contacts.filter((contact) => {
+          const matchesSearch =
+            normalizedSearchQuery.length === 0 ||
+            contact.title.toLowerCase().includes(normalizedSearchQuery);
+          const matchesFolder = currentFolder === null || contact.folder === currentFolder;
+          return matchesSearch && matchesFolder;
+        })
+      ),
+    [contacts, normalizedSearchQuery, currentFolder]
+  );
 
   const getFolderCount = (folder: string | null) =>
-    contacts.filter((contact) =>
-      folder === null ? true : contact.folder === folder,
-    ).length
+    contacts.filter((contact) => (folder === null ? true : contact.folder === folder)).length;
 
   const resetForm = () => {
-    setNewName('')
-    setNewEmail('')
-    setNewPhone('')
-    setNewCompany('')
-    setNewNotes('')
-  }
+    setNewName('');
+    setNewEmail('');
+    setNewPhone('');
+    setNewCompany('');
+    setNewNotes('');
+  };
 
   const handleAdd = async () => {
-    const trimmedName = newName.trim()
-    const trimmedPhone = newPhone.trim()
+    const trimmedName = newName.trim();
+    const trimmedPhone = newPhone.trim();
 
     if (!masterKey || !trimmedName) {
-      toast.error('Contact name is required')
-      return
+      toast.error('Contact name is required');
+      return;
     }
     if (!trimmedPhone) {
-      toast.error('Phone number is required')
-      return
+      toast.error('Phone number is required');
+      return;
     }
 
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       const encryptedData = await encryptData(
         JSON.stringify({
@@ -506,54 +492,54 @@ export const ContactsVault: React.FC = () => {
           company: newCompany.trim(),
           notes: newNotes.trim(),
         }),
-        masterKey,
-      )
+        masterKey
+      );
 
       await addItem({
         type: 'contact',
         title: trimmedName,
         content: encryptedData,
         folder: currentFolder || undefined,
-      })
+      });
 
-      setIsAdding(false)
-      resetForm()
-      toast.success(`Contact "${trimmedName}" saved`)
+      setIsAdding(false);
+      resetForm();
+      toast.success(`Contact "${trimmedName}" saved`);
       logActivity({
         actionType: 'item_create',
         itemName: trimmedName,
         description: 'Contact created',
         status: 'success',
-      })
+      });
     } catch {
-      toast.error('Failed to save contact')
+      toast.error('Failed to save contact');
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const handleUpdateItem = async (
     id: string,
     updates: {
-      name: string
-      email: string
-      phone: string
-      company: string
-      notes: string
-    },
+      name: string;
+      email: string;
+      phone: string;
+      company: string;
+      notes: string;
+    }
   ) => {
-    if (!masterKey) return
+    if (!masterKey) return;
 
-    const trimmedName = updates.name.trim()
+    const trimmedName = updates.name.trim();
     if (!trimmedName) {
-      toast.error('Contact name is required')
-      return
+      toast.error('Contact name is required');
+      return;
     }
 
-    const trimmedPhone = updates.phone.trim()
+    const trimmedPhone = updates.phone.trim();
     if (!trimmedPhone) {
-      toast.error('Phone number is required')
-      return
+      toast.error('Phone number is required');
+      return;
     }
 
     try {
@@ -564,25 +550,25 @@ export const ContactsVault: React.FC = () => {
           company: updates.company.trim(),
           notes: updates.notes.trim(),
         }),
-        masterKey,
-      )
+        masterKey
+      );
 
       await updateItem(id, {
         title: trimmedName,
         content: encryptedData,
-      })
+      });
 
-      toast.success(`Contact "${trimmedName}" updated`)
+      toast.success(`Contact "${trimmedName}" updated`);
       logActivity({
         actionType: 'item_update',
         itemName: trimmedName,
         description: 'Contact updated',
         status: 'success',
-      })
+      });
     } catch {
-      toast.error('Failed to update contact')
+      toast.error('Failed to update contact');
     }
-  }
+  };
 
   return (
     <div className="relative flex h-full min-h-0 gap-6">
@@ -705,9 +691,7 @@ export const ContactsVault: React.FC = () => {
             >
               <Card className="border-white/10 bg-gradient-to-br from-white/10 to-transparent backdrop-blur-md">
                 <CardHeader>
-                  <CardTitle className="text-lg text-text transition-colors">
-                    New Contact
-                  </CardTitle>
+                  <CardTitle className="text-lg text-text transition-colors">New Contact</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -742,8 +726,8 @@ export const ContactsVault: React.FC = () => {
                     <Button
                       variant="ghost"
                       onClick={() => {
-                        setIsAdding(false)
-                        resetForm()
+                        setIsAdding(false);
+                        resetForm();
                       }}
                     >
                       Cancel
@@ -785,9 +769,7 @@ export const ContactsVault: React.FC = () => {
               key={item.id}
               draggable
               onDragStart={(event) => setDraggedVaultItem(event, item.id)}
-              onTouchStart={(event) =>
-                setDraggedVaultItem(event as any, item.id)
-              }
+              onTouchStart={(event) => setDraggedVaultItem(event as any, item.id)}
               // onTouchMove={(e) => {
               //   /* Allow custom touch drag logic */
               // }}
@@ -798,19 +780,15 @@ export const ContactsVault: React.FC = () => {
                 masterKey={masterKey!}
                 onUpdate={handleUpdateItem}
                 onDelete={(id, title) => {
-                  if (
-                    confirm(
-                      `Are you sure you want to delete contact "${title}"?`,
-                    )
-                  ) {
-                    void removeItem(id)
-                    toast.success(`Contact "${title}" deleted`)
+                  if (confirm(`Are you sure you want to delete contact "${title}"?`)) {
+                    void removeItem(id);
+                    toast.success(`Contact "${title}" deleted`);
                     logActivity({
                       actionType: 'item_delete',
                       itemName: title,
                       description: 'Contact deleted',
                       status: 'success',
-                    })
+                    });
                   }
                 }}
                 onTogglePin={(id) => void togglePin(id)}
@@ -821,5 +799,5 @@ export const ContactsVault: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

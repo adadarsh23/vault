@@ -62,7 +62,7 @@ export const AutoLockCountdownOverlay: React.FC<AutoLockCountdownOverlayProps> =
                 Stay Active
               </Button>
             </div>
-            
+
             {/* Progress Bar */}
             <div className="relative mt-8 h-1 w-full overflow-hidden rounded-full bg-white/10">
               <motion.div

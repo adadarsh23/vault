@@ -1,4 +1,4 @@
-import React, { memo } from 'react'
+import React, { memo } from 'react';
 import {
   Box,
   CalendarClock,
@@ -9,24 +9,24 @@ import {
   Shield,
   TimerReset,
   User,
-} from 'lucide-react'
+} from 'lucide-react';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../../../../components/ui/Card'
+} from '../../../../components/ui/Card';
 
 interface VaultDetailsPanelProps {
-  username: string | null
-  userId?: string | null
-  createdAt?: string | null
-  updatedAt?: string | null
-  lastLoginAt?: string | null
-  lastSyncAt?: string | null
-  activeSessionCount?: number
-  itemCount: number
+  username: string | null;
+  userId?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  lastLoginAt?: string | null;
+  lastSyncAt?: string | null;
+  activeSessionCount?: number;
+  itemCount: number;
 }
 
 const architectureItems = [
@@ -62,16 +62,16 @@ const architectureItems = [
     tone: 'text-cyan-400',
     bg: 'bg-cyan-500/10',
   },
-] as const
+] as const;
 
 const formatProfileDate = (value?: string | null) => {
   if (!value) {
-    return 'Not available'
+    return 'Not available';
   }
 
-  const parsed = new Date(value)
-  return Number.isNaN(parsed.getTime()) ? 'Not available' : parsed.toLocaleString()
-}
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? 'Not available' : parsed.toLocaleString();
+};
 
 export const VaultDetailsPanel: React.FC<VaultDetailsPanelProps> = memo(
   ({
@@ -91,13 +91,10 @@ export const VaultDetailsPanel: React.FC<VaultDetailsPanelProps> = memo(
             <Info className="h-5 w-5" />
           </div>
           <div>
-            <CardTitle className="text-lg">
-              Vault Details, Profile & Architecture
-            </CardTitle>
+            <CardTitle className="text-lg">Vault Details, Profile & Architecture</CardTitle>
             <CardDescription className="mt-2 max-w-2xl leading-6">
-              A quick summary of the active account, profile timeline, session
-              state, protected inventory, and the secure building blocks behind
-              this vault.
+              A quick summary of the active account, profile timeline, session state, protected
+              inventory, and the secure building blocks behind this vault.
             </CardDescription>
           </div>
         </div>
@@ -198,9 +195,7 @@ export const VaultDetailsPanel: React.FC<VaultDetailsPanelProps> = memo(
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
                   Protected Items
                 </p>
-                <p className="mt-2 text-base font-bold text-text">
-                  {itemCount}
-                </p>
+                <p className="mt-2 text-base font-bold text-text">{itemCount}</p>
                 <p className="mt-2 text-xs leading-5 text-text/45">
                   Encrypted records currently loaded into the vault workspace.
                 </p>
@@ -215,7 +210,7 @@ export const VaultDetailsPanel: React.FC<VaultDetailsPanelProps> = memo(
           </p>
           <div className="mt-3 grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
             {architectureItems.map((item) => {
-              const Icon = item.icon
+              const Icon = item.icon;
               return (
                 <div
                   key={item.title}
@@ -226,26 +221,19 @@ export const VaultDetailsPanel: React.FC<VaultDetailsPanelProps> = memo(
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-text">
-                        {item.title}
-                      </p>
-                      <p className="mt-1 break-words text-base font-bold text-text">
-                        {item.value}
-                      </p>
-                      <p className="mt-2 text-xs leading-5 text-text/45">
-                        {item.description}
-                      </p>
+                      <p className="text-sm font-semibold text-text">{item.title}</p>
+                      <p className="mt-1 break-words text-base font-bold text-text">{item.value}</p>
+                      <p className="mt-2 text-xs leading-5 text-text/45">{item.description}</p>
                     </div>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         </div>
       </CardContent>
     </Card>
-  ),
-)
+  )
+);
 
-VaultDetailsPanel.displayName = 'VaultDetailsPanel'
-
+VaultDetailsPanel.displayName = 'VaultDetailsPanel';

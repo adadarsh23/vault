@@ -1,5 +1,5 @@
-import React from 'react'
-import { motion } from 'framer-motion'
+import React from 'react';
+import { motion } from 'framer-motion';
 import {
   CloudUpload,
   Check,
@@ -15,44 +15,35 @@ import {
   Shield,
   Gauge,
   MoveDiagonal2,
-} from 'lucide-react'
-import { Button } from '../../../../components/ui/Button'
-import { cn } from '../../../../lib/utils'
-import { CaptureType } from './types'
+} from 'lucide-react';
+import { Button } from '../../../../components/ui/Button';
+import { cn } from '../../../../lib/utils';
+import { CaptureType } from './types';
 
 interface ActionsProps {
-  type: CaptureType
-  capturedBlob: Blob | null
-  isSaving: boolean
-  isSuccess: boolean
-  isEncrypting: boolean
-  isRecording: boolean
-  isInfoEnabled: boolean
-  onRetake: () => void
-  onSave: () => void
-  onTakePhoto: () => void
-  onStartRecording: () => void
-  onStopRecording: () => void
-  onToggleInfo: () => void
-  onToggleCamera: () => void
-  onToggleHorizontalFlip: () => void
-  cameraFacing: 'user' | 'environment'
-  isHorizontallyFlipped: boolean
-  captureRatio:
-    | '1:1'
-    | '4:5'
-    | '3:4'
-    | '4:3'
-    | '2:3'
-    | '3:2'
-    | '9:16'
-    | '16:9'
-    | '21:9'
-  captureQuality: 'high' | 'balanced' | 'low'
-  captureSize: 'full' | 'medium' | 'compact'
-  onCycleCaptureRatio: () => void
-  onCycleCaptureQuality: () => void
-  onCycleCaptureSize: () => void
+  type: CaptureType;
+  capturedBlob: Blob | null;
+  isSaving: boolean;
+  isSuccess: boolean;
+  isEncrypting: boolean;
+  isRecording: boolean;
+  isInfoEnabled: boolean;
+  onRetake: () => void;
+  onSave: () => void;
+  onTakePhoto: () => void;
+  onStartRecording: () => void;
+  onStopRecording: () => void;
+  onToggleInfo: () => void;
+  onToggleCamera: () => void;
+  onToggleHorizontalFlip: () => void;
+  cameraFacing: 'user' | 'environment';
+  isHorizontallyFlipped: boolean;
+  captureRatio: '1:1' | '4:5' | '3:4' | '4:3' | '2:3' | '3:2' | '9:16' | '16:9' | '21:9';
+  captureQuality: 'high' | 'balanced' | 'low';
+  captureSize: 'full' | 'medium' | 'compact';
+  onCycleCaptureRatio: () => void;
+  onCycleCaptureQuality: () => void;
+  onCycleCaptureSize: () => void;
 }
 
 export const Actions: React.FC<ActionsProps> = ({
@@ -81,38 +72,30 @@ export const Actions: React.FC<ActionsProps> = ({
   onCycleCaptureSize,
 }) => {
   const qualityLabel =
-    captureQuality === 'high'
-      ? 'High'
-      : captureQuality === 'balanced'
-        ? 'Balanced'
-        : 'Low'
+    captureQuality === 'high' ? 'High' : captureQuality === 'balanced' ? 'Balanced' : 'Low';
 
   const sizeLabel =
-    captureSize === 'full'
-      ? 'Full'
-      : captureSize === 'medium'
-        ? 'Medium'
-        : 'Compact'
-  const isVideoMode = type === 'video'
-  const isVideoRecording = isVideoMode && isRecording
-  const disableCaptureTuning = isVideoRecording
-  const isFrontCamera = cameraFacing === 'user'
+    captureSize === 'full' ? 'Full' : captureSize === 'medium' ? 'Medium' : 'Compact';
+  const isVideoMode = type === 'video';
+  const isVideoRecording = isVideoMode && isRecording;
+  const disableCaptureTuning = isVideoRecording;
+  const isFrontCamera = cameraFacing === 'user';
   const RatioIcon =
     captureRatio === '1:1'
       ? SquareDashed
       : captureRatio === '4:5'
         ? RectangleVertical
-      : captureRatio === '3:4'
-        ? RectangleVertical
-      : captureRatio === '4:3'
-          ? Crop
-          : captureRatio === '2:3'
-            ? RectangleVertical
-            : captureRatio === '3:2'
-              ? Crop
-              : captureRatio === '21:9'
+        : captureRatio === '3:4'
+          ? RectangleVertical
+          : captureRatio === '4:3'
+            ? Crop
+            : captureRatio === '2:3'
+              ? RectangleVertical
+              : captureRatio === '3:2'
                 ? Crop
-          : Crop
+                : captureRatio === '21:9'
+                  ? Crop
+                  : Crop;
 
   return (
     <div className="z-10 flex items-center justify-center p-2 md:p-4 bg-black/30 border-t border-white/20 backdrop-blur-3xl relative">
@@ -137,10 +120,8 @@ export const Actions: React.FC<ActionsProps> = ({
             disabled={isSaving || isSuccess}
             className={cn(
               'group relative h-11 md:h-14 flex-[1.5] overflow-hidden rounded-xl md:rounded-2xl px-6 md:px-10 text-black transition-all active:scale-95 shadow-2xl',
-              isSuccess
-                ? 'bg-emerald-500 shadow-emerald-500/20'
-                : 'bg-primary shadow-primary/20',
-              (isSaving || isSuccess) && 'cursor-not-allowed opacity-80',
+              isSuccess ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-primary shadow-primary/20',
+              (isSaving || isSuccess) && 'cursor-not-allowed opacity-80'
             )}
           >
             <div className="relative z-10 flex items-center justify-center gap-2 md:gap-3">
@@ -199,8 +180,7 @@ export const Actions: React.FC<ActionsProps> = ({
                   onClick={onToggleInfo}
                   className={cn(
                     'h-9 w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/60 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200',
-                    isInfoEnabled &&
-                      'text-primary border-primary/20 bg-primary/10',
+                    isInfoEnabled && 'text-primary border-primary/20 bg-primary/10'
                   )}
                   disabled={isVideoRecording}
                   title="Capture info"
@@ -217,7 +197,7 @@ export const Actions: React.FC<ActionsProps> = ({
                   disabled={disableCaptureTuning}
                   className={cn(
                     'h-9 w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/80 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200',
-                    'text-primary border-primary/20 bg-primary/10',
+                    'text-primary border-primary/20 bg-primary/10'
                   )}
                   title={`Aspect ratio: ${captureRatio}`}
                   aria-label={`Aspect ratio: ${captureRatio}`}
@@ -243,14 +223,13 @@ export const Actions: React.FC<ActionsProps> = ({
                       ? 'text-sky-300 border-sky-400/30 bg-sky-500/10'
                       : captureSize === 'medium'
                         ? 'text-violet-300 border-violet-400/30 bg-violet-500/10'
-                        : 'text-white/70',
+                        : 'text-white/70'
                   )}
                   title={`Size: ${sizeLabel}`}
                   aria-label={`Capture size: ${sizeLabel}`}
                 >
                   <MoveDiagonal2 className="h-4 w-4 md:h-4 md:w-4" />
                 </Button>
-
               </div>
 
               <div className="flex items-center justify-center">
@@ -271,7 +250,7 @@ export const Actions: React.FC<ActionsProps> = ({
                       'group relative flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full border-[5px] transition-all hover:scale-110 active:scale-90 shadow-2xl',
                       isRecording
                         ? 'border-red-500 shadow-red-500/20'
-                        : 'border-white shadow-white/5',
+                        : 'border-white shadow-white/5'
                     )}
                   >
                     {isRecording ? (
@@ -280,7 +259,7 @@ export const Actions: React.FC<ActionsProps> = ({
                       <div
                         className={cn(
                           'h-10 w-10 md:h-12 md:w-12 rounded-full transition-all group-hover:scale-90',
-                          type === 'video' ? 'bg-red-500' : 'bg-primary',
+                          type === 'video' ? 'bg-red-500' : 'bg-primary'
                         )}
                       />
                     )}
@@ -304,7 +283,7 @@ export const Actions: React.FC<ActionsProps> = ({
                       ? 'text-emerald-300 border-emerald-400/30 bg-emerald-500/10'
                       : captureQuality === 'balanced'
                         ? 'text-yellow-300 border-yellow-400/30 bg-yellow-500/10'
-                        : 'text-white/70',
+                        : 'text-white/70'
                   )}
                   title={`Quality: ${qualityLabel}`}
                   aria-label={`Capture quality: ${qualityLabel}`}
@@ -320,8 +299,7 @@ export const Actions: React.FC<ActionsProps> = ({
                   disabled={isVideoRecording}
                   className={cn(
                     'h-9 w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/60 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200',
-                    isHorizontallyFlipped &&
-                      'text-primary border-primary/20 bg-primary/10',
+                    isHorizontallyFlipped && 'text-primary border-primary/20 bg-primary/10'
                   )}
                   title={
                     isHorizontallyFlipped
@@ -375,5 +353,5 @@ export const Actions: React.FC<ActionsProps> = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};

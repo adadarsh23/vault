@@ -1,11 +1,11 @@
-import crypto from 'node:crypto'
-import { User } from '../models/user.ts'
-import { ensureUserVaultCollections } from './legacyVaultService.ts'
-import { upsertTotalUserMirror } from './totalUserMirrorService.ts'
-import { verifyRefreshToken } from '../utils/auth.ts'
-import { comparePassword, decryptText, encryptText, hashPassword } from '../utils/crypto.ts'
-import { AppError } from '../utils/appError.ts'
-import { logger } from '../utils/logger.ts'
+import crypto from 'node:crypto';
+import { User } from '../models/user.ts';
+import { ensureUserVaultCollections } from './legacyVaultService.ts';
+import { upsertTotalUserMirror } from './totalUserMirrorService.ts';
+import { verifyRefreshToken } from '../utils/auth.ts';
+import { comparePassword, decryptText, encryptText, hashPassword } from '../utils/crypto.ts';
+import { AppError } from '../utils/appError.ts';
+import { logger } from '../utils/logger.ts';
 import {
   asDeviceId,
   buildSessionSummaries,
@@ -33,7 +33,7 @@ import {
   type RegistrationProfileSnapshot,
   type SessionRevokeInput,
   type UserStateDocument,
-} from './vaultService.internal.ts'
+} from './vaultService.internal.ts';
 // ============================================================================
 // EXPORTED PUBLIC API FUNCTIONS
 // ============================================================================
@@ -57,45 +57,33 @@ import {
  */
 export const registerUser = async (input: AuthInput) => {
   try {
-    const username = sanitizeUsername(input.username)
-    const password = sanitizePassword(input.password)
+    const username = sanitizeUsername(input.username);
+    const password = sanitizePassword(input.password);
 
-    const existing = await User.findOne({ username })
-      .select('_id')
-      .lean()
-      .exec()
+    const existing = await User.findOne({ username }).select('_id').lean().exec();
 
     if (existing) {
-      logger.info('Username already exists', { username })
+      logger.info('Username already exists', { username });
       // Perform dummy password comparison to prevent timing attacks
-      await comparePassword(password, CONFIG.dummyPasswordHash)
-      throw new AppError(
-        400,
-        'REGISTRATION_FAILED',
-        ERROR_MESSAGES.REGISTRATION_FAILED,
-      )
+      await comparePassword(password, CONFIG.dummyPasswordHash);
+      throw new AppError(400, 'REGISTRATION_FAILED', ERROR_MESSAGES.REGISTRATION_FAILED);
     }
 
-    const hashedPassword = await hashPassword(password)
-    const encryptedPassword = encryptText(hashedPassword)
-    const userDeviceId = asDeviceId(input.deviceId)
-    const rawMasterKey = typeof input.masterKey === 'string' ? input.masterKey : null
+    const hashedPassword = await hashPassword(password);
+    const encryptedPassword = encryptText(hashedPassword);
+    const userDeviceId = asDeviceId(input.deviceId);
+    const rawMasterKey = typeof input.masterKey === 'string' ? input.masterKey : null;
     if (!rawMasterKey) {
-      throw new AppError(
-        400,
-        'INVALID_MASTER_KEY',
-        'Master Key is required.',
-      )
+      throw new AppError(400, 'INVALID_MASTER_KEY', 'Master Key is required.');
     }
-    const encryptedMasterKey = encryptText(rawMasterKey)
-    const masterKeyHash = encryptText(await hashPassword(rawMasterKey))
+    const encryptedMasterKey = encryptText(rawMasterKey);
+    const masterKeyHash = encryptText(await hashPassword(rawMasterKey));
 
     // Retrieve or generate cryptographically secure random salt
-    let pqcSalt = typeof input.pqcSalt === 'string' && input.pqcSalt.trim() 
-      ? input.pqcSalt.trim() 
-      : null
+    let pqcSalt =
+      typeof input.pqcSalt === 'string' && input.pqcSalt.trim() ? input.pqcSalt.trim() : null;
     if (!pqcSalt) {
-      pqcSalt = crypto.randomBytes(16).toString('hex')
+      pqcSalt = crypto.randomBytes(16).toString('hex');
     }
 
     // Capture registration profile with timeout to prevent hanging
@@ -105,7 +93,7 @@ export const registerUser = async (input: AuthInput) => {
       fetchedAt: new Date(),
       data: null,
       error: 'Registration profile capture disabled',
-    }
+    };
 
     try {
       if (CONFIG.registrationProfileCaptureEnabled) {
@@ -115,30 +103,24 @@ export const registerUser = async (input: AuthInput) => {
           userAgent: input.userAgent ?? 'unknown',
           deviceId: userDeviceId,
           websiteMetadata: input.websiteMetadata,
-        })
+        });
       }
     } catch (profileError) {
       logger.warn('Registration profile fetch failed during registration', {
         username,
-        error:
-          profileError instanceof Error
-            ? profileError.message
-            : String(profileError),
-      })
+        error: profileError instanceof Error ? profileError.message : String(profileError),
+      });
       // Continue with disabled profile on failure
       registrationProfile = {
         provider: 'disabled',
         url: null,
         fetchedAt: new Date(),
         data: null,
-        error:
-          profileError instanceof Error
-            ? profileError.message
-            : 'Geolocation fetch failed',
-      }
+        error: profileError instanceof Error ? profileError.message : 'Geolocation fetch failed',
+      };
     }
 
-    const now = new Date()
+    const now = new Date();
     const user = new User({
       username,
       password: encryptedPassword,
@@ -171,20 +153,19 @@ export const registerUser = async (input: AuthInput) => {
         otherFiles: [],
       },
       sessions: [],
-    })
+    });
 
     // Safely log and emit event - shouldn't fail registration if it errors
     try {
       logAndEmit(user, 'REGISTER', 'auth', null, {
         ipAddress: input.ipAddress ?? 'unknown',
         deviceId: asDeviceId(input.deviceId),
-      })
+      });
     } catch (emitError) {
       logger.warn('Failed to log registration event', {
         username,
-        error:
-          emitError instanceof Error ? emitError.message : String(emitError),
-      })
+        error: emitError instanceof Error ? emitError.message : String(emitError),
+      });
     }
 
     try {
@@ -192,17 +173,17 @@ export const registerUser = async (input: AuthInput) => {
         deviceId: userDeviceId,
         ipAddress: input.ipAddress,
         userAgent: input.userAgent,
-      })
+      });
 
-      await executeWithStorageFailover(() => user.save())
+      await executeWithStorageFailover(() => user.save());
       await upsertTotalUserMirror({
         username,
         userId: user._id.toString(),
         createdDate: user.createdAt ?? now,
-      })
-      await ensureUserVaultCollections(username)
+      });
+      await ensureUserVaultCollections(username);
 
-      logger.info('User registered successfully', { username })
+      logger.info('User registered successfully', { username });
 
       return {
         token: session.accessToken,
@@ -211,19 +192,15 @@ export const registerUser = async (input: AuthInput) => {
         created: true,
         user: publicUser(user),
         message: 'Account created successfully.',
-      }
+      };
     } catch (error) {
-      const candidate = error as { code?: number }
+      const candidate = error as { code?: number };
       // Duplicate key error - race condition between existence check and save
       if (candidate.code === 11000) {
-        await comparePassword(password, CONFIG.dummyPasswordHash)
-        throw new AppError(
-          400,
-          'REGISTRATION_FAILED',
-          ERROR_MESSAGES.REGISTRATION_FAILED,
-        )
+        await comparePassword(password, CONFIG.dummyPasswordHash);
+        throw new AppError(400, 'REGISTRATION_FAILED', ERROR_MESSAGES.REGISTRATION_FAILED);
       }
-      throw error
+      throw error;
     }
   } catch (error) {
     // Log unexpected errors for debugging
@@ -231,15 +208,15 @@ export const registerUser = async (input: AuthInput) => {
       logger.error('Unexpected error during user registration', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
-      })
+      });
     }
-    throw error
+    throw error;
   }
-}
+};
 
 export const getExactUsernameMatch = async (input: { username: unknown }) => {
-  const username = sanitizeUsername(input.username)
-  const exactUser = await User.findOne({ username }).select('_id username createdAt').lean().exec()
+  const username = sanitizeUsername(input.username);
+  const exactUser = await User.findOne({ username }).select('_id username createdAt').lean().exec();
 
   if (!exactUser) {
     return {
@@ -248,7 +225,7 @@ export const getExactUsernameMatch = async (input: { username: unknown }) => {
       username,
       userId: null,
       createdDate: null,
-    }
+    };
   }
 
   return {
@@ -257,8 +234,8 @@ export const getExactUsernameMatch = async (input: { username: unknown }) => {
     username: exactUser.username,
     userId: String(exactUser._id),
     createdDate: exactUser.createdAt ?? null,
-  }
-}
+  };
+};
 
 /**
  * Authenticates user with username and password
@@ -270,31 +247,25 @@ export const getExactUsernameMatch = async (input: { username: unknown }) => {
  * @throws {AppError} If credentials are invalid
  */
 export const authenticateUser = async (input: AuthInput) => {
-  const username = sanitizeUsername(input.username)
-  const password = sanitizePassword(input.password)
+  const username = sanitizeUsername(input.username);
+  const password = sanitizePassword(input.password);
   return retryLoadedUserMutation({
     mutationName: 'authenticateUser',
     loadUser: async () => {
-      const userDocument = await User.findOne({ username })
-        .select('+password')
-        .exec()
+      const userDocument = await User.findOne({ username }).select('+password').exec();
 
       if (!userDocument) {
         // Perform dummy comparison to prevent timing attacks
-        await comparePassword(password, CONFIG.dummyPasswordHash)
-        throw new AppError(
-          401,
-          'INVALID_CREDENTIALS',
-          ERROR_MESSAGES.INVALID_CREDENTIALS,
-        )
+        await comparePassword(password, CONFIG.dummyPasswordHash);
+        throw new AppError(401, 'INVALID_CREDENTIALS', ERROR_MESSAGES.INVALID_CREDENTIALS);
       }
 
-      return withUserState(userDocument)
+      return withUserState(userDocument);
     },
     operation: async (user) => {
-      pruneExpiredSessions(user)
-      const storedHash = decryptText(user.password as any)
-      const isValidPassword = await comparePassword(password, storedHash)
+      pruneExpiredSessions(user);
+      const storedHash = decryptText(user.password as any);
+      const isValidPassword = await comparePassword(password, storedHash);
       const loginEntry = {
         loggedInAt: new Date(),
         ipAddress: input.ipAddress ?? 'unknown',
@@ -307,37 +278,33 @@ export const authenticateUser = async (input: AuthInput) => {
           ipAddress: input.ipAddress ?? 'unknown',
           userAgent: input.userAgent ?? 'unknown',
         },
-      }
+      };
 
       if (!isValidPassword) {
-        user.meta.lastFailedLoginAt = loginEntry.loggedInAt
-        user.meta.lastFailedLoginIp = loginEntry.ipAddress
-        pushLoginHistory(user, loginEntry)
-        throw new AppError(
-          401,
-          'INVALID_CREDENTIALS',
-          ERROR_MESSAGES.INVALID_CREDENTIALS,
-        )
+        user.meta.lastFailedLoginAt = loginEntry.loggedInAt;
+        user.meta.lastFailedLoginIp = loginEntry.ipAddress;
+        pushLoginHistory(user, loginEntry);
+        throw new AppError(401, 'INVALID_CREDENTIALS', ERROR_MESSAGES.INVALID_CREDENTIALS);
       }
 
-      user.meta.lastLoginAt = loginEntry.loggedInAt
+      user.meta.lastLoginAt = loginEntry.loggedInAt;
       const session = issueUserSession(user, {
         deviceId: loginEntry.deviceId,
         ipAddress: loginEntry.ipAddress,
         userAgent: loginEntry.userAgent,
-      })
+      });
       pushLoginHistory(user, {
         ...loginEntry,
         sessionId: session.sessionId,
-      })
+      });
 
       logAndEmit(user, 'LOGIN', 'auth', null, {
         ipAddress: loginEntry.ipAddress,
         deviceId: loginEntry.deviceId,
         userAgent: loginEntry.userAgent,
-      })
+      });
 
-      logger.info('User authentication succeeded', { username })
+      logger.info('User authentication succeeded', { username });
 
       return {
         result: {
@@ -346,10 +313,10 @@ export const authenticateUser = async (input: AuthInput) => {
           sessionId: session.sessionId,
           user: publicUser(user),
         },
-      }
+      };
     },
-  })
-}
+  });
+};
 
 /**
  * Refreshes authentication session using refresh token
@@ -361,71 +328,46 @@ export const authenticateUser = async (input: AuthInput) => {
  * @throws {AppError} If refresh token is invalid or revoked
  */
 export const refreshAuthenticatedSession = async (input: RefreshInput) => {
-  let payload
+  let payload;
   try {
-    payload = verifyRefreshToken(input.refreshToken)
+    payload = verifyRefreshToken(input.refreshToken);
   } catch (error) {
     logger.warn('Failed to refresh session - invalid token', {
       error: error instanceof Error ? error.message : 'Unknown error',
-    })
-    throw new AppError(
-      401,
-      'SESSION_REFRESH_FAILED',
-      ERROR_MESSAGES.SESSION_REFRESH_FAILED,
-    )
+    });
+    throw new AppError(401, 'SESSION_REFRESH_FAILED', ERROR_MESSAGES.SESSION_REFRESH_FAILED);
   }
 
   return retryLoadedUserMutation({
     mutationName: 'refreshAuthenticatedSession',
     loadUser: () => getUserOrThrow(payload.sub),
     operation: async (user) => {
-      pruneExpiredSessions(user)
+      pruneExpiredSessions(user);
 
-      const session = user.sessions.find(
-        (entry) => entry.sessionId === payload.sessionId,
-      )
+      const session = user.sessions.find((entry) => entry.sessionId === payload.sessionId);
       if (!session) {
-        throw new AppError(
-          401,
-          'SESSION_REFRESH_FAILED',
-          ERROR_MESSAGES.SESSION_REFRESH_FAILED,
-        )
+        throw new AppError(401, 'SESSION_REFRESH_FAILED', ERROR_MESSAGES.SESSION_REFRESH_FAILED);
       }
 
       // Check if session was revoked
       if (session.revokedAt) {
-        throw new AppError(
-          401,
-          'SESSION_REFRESH_FAILED',
-          ERROR_MESSAGES.SESSION_REFRESH_FAILED,
-        )
+        throw new AppError(401, 'SESSION_REFRESH_FAILED', ERROR_MESSAGES.SESSION_REFRESH_FAILED);
       }
 
       // Check if session expired
-      if (
-        !(session.expiresAt instanceof Date) ||
-        session.expiresAt.getTime() <= Date.now()
-      ) {
-        throw new AppError(
-          401,
-          'SESSION_REFRESH_FAILED',
-          ERROR_MESSAGES.SESSION_REFRESH_FAILED,
-        )
+      if (!(session.expiresAt instanceof Date) || session.expiresAt.getTime() <= Date.now()) {
+        throw new AppError(401, 'SESSION_REFRESH_FAILED', ERROR_MESSAGES.SESSION_REFRESH_FAILED);
       }
 
       // Verify token hasn't been tampered with
       if (session.refreshTokenHash !== hashRefreshToken(input.refreshToken)) {
         // Token mismatch indicates possible token theft - revoke session
-        session.revokedAt = new Date()
-        syncActiveDevicesFromSessions(user)
+        session.revokedAt = new Date();
+        syncActiveDevicesFromSessions(user);
         logger.warn('Potential token compromise detected, session revoked', {
           userId: user._id.toString(),
-        })
-        throw new AppError(
-          401,
-          'SESSION_REFRESH_FAILED',
-          ERROR_MESSAGES.SESSION_REFRESH_FAILED,
-        )
+        });
+        throw new AppError(401, 'SESSION_REFRESH_FAILED', ERROR_MESSAGES.SESSION_REFRESH_FAILED);
       }
 
       const rotatedSession = issueUserSession(user, {
@@ -433,13 +375,13 @@ export const refreshAuthenticatedSession = async (input: RefreshInput) => {
         ipAddress: input.ipAddress ?? session.ipAddress,
         userAgent: input.userAgent ?? session.userAgent,
         existingSessionId: session.sessionId,
-      })
+      });
 
       logAndEmit(user, 'REFRESH_SESSION', 'auth', null, {
         deviceId: session.deviceId,
         ipAddress: input.ipAddress ?? session.ipAddress,
         userAgent: input.userAgent ?? session.userAgent,
-      })
+      });
 
       return {
         result: {
@@ -448,10 +390,10 @@ export const refreshAuthenticatedSession = async (input: RefreshInput) => {
           sessionId: rotatedSession.sessionId,
           user: publicUser(user),
         },
-      }
+      };
     },
-  })
-}
+  });
+};
 
 /**
  * Revokes the current user session
@@ -460,41 +402,37 @@ export const refreshAuthenticatedSession = async (input: RefreshInput) => {
  * @param refreshToken - Current refresh token to revoke
  * @returns Success status
  */
-export const revokeCurrentSession = async (
-  refreshToken: string,
-): Promise<{ revoked: boolean }> => {
-  let payload
+export const revokeCurrentSession = async (refreshToken: string): Promise<{ revoked: boolean }> => {
+  let payload;
   try {
-    payload = verifyRefreshToken(refreshToken)
+    payload = verifyRefreshToken(refreshToken);
   } catch {
     // Invalid token, session already revoked
-    return { revoked: false }
+    return { revoked: false };
   }
 
   return retryLoadedUserMutation<{ revoked: boolean }>({
     mutationName: 'revokeCurrentSession',
     loadUser: () => getUserOrThrow(payload.sub),
     operation: async (user) => {
-      const session = user.sessions.find(
-        (entry) => entry.sessionId === payload.sessionId,
-      )
+      const session = user.sessions.find((entry) => entry.sessionId === payload.sessionId);
       if (!session || session.revokedAt) {
-        return { result: { revoked: false }, skipSave: true }
+        return { result: { revoked: false }, skipSave: true };
       }
 
-      session.revokedAt = new Date()
-      syncActiveDevicesFromSessions(user)
+      session.revokedAt = new Date();
+      syncActiveDevicesFromSessions(user);
 
       logAndEmit(user, 'LOGOUT', 'auth', null, {
         deviceId: session.deviceId,
-      })
+      });
 
       return {
         result: { revoked: true },
-      }
+      };
     },
-  })
-}
+  });
+};
 
 /**
  * Revokes one or more sessions for a user
@@ -505,34 +443,30 @@ export const revokeCurrentSession = async (
  * @throws {AppError} If no sessions match the target criteria
  */
 export const revokeAuthenticatedSessions = async (
-  input: SessionRevokeInput,
+  input: SessionRevokeInput
 ): Promise<{
-  revokedCount: number
-  sessions: Array<Record<string, unknown>>
+  revokedCount: number;
+  sessions: Array<Record<string, unknown>>;
 }> => {
   return retryLoadedUserMutation({
     mutationName: 'revokeAuthenticatedSessions',
     loadUser: () => getUserOrThrow(input.userId),
     operation: async (user) => {
-      pruneExpiredSessions(user)
+      pruneExpiredSessions(user);
 
-      if (
-        !input.revokeAllOther &&
-        !input.targetSessionId &&
-        !input.targetDeviceId
-      ) {
+      if (!input.revokeAllOther && !input.targetSessionId && !input.targetDeviceId) {
         throw new AppError(
           400,
           'SESSION_TARGET_REQUIRED',
-          'Provide sessionId, deviceId, or revokeAllOther=true.',
-        )
+          'Provide sessionId, deviceId, or revokeAllOther=true.'
+        );
       }
 
       const targetSessionId = input.targetSessionId
         ? sanitizeSessionId(input.targetSessionId)
-        : undefined
-      const now = new Date()
-      let revokedCount = 0
+        : undefined;
+      const now = new Date();
+      let revokedCount = 0;
 
       user.sessions.forEach((session) => {
         const matches = input.revokeAllOther
@@ -541,58 +475,54 @@ export const revokeAuthenticatedSessions = async (
             : session.sessionId !== input.currentSessionId
           : targetSessionId
             ? session.sessionId === targetSessionId
-            : session.deviceId === input.targetDeviceId
+            : session.deviceId === input.targetDeviceId;
 
         if (!matches || session.revokedAt) {
-          return
+          return;
         }
 
-        if (
-          session.sessionId === input.currentSessionId &&
-          !input.revokeCurrent
-        ) {
-          return
+        if (session.sessionId === input.currentSessionId && !input.revokeCurrent) {
+          return;
         }
 
-        session.revokedAt = now
-        revokedCount += 1
-      })
+        session.revokedAt = now;
+        revokedCount += 1;
+      });
 
       if (revokedCount === 0) {
         throw new AppError(
           404,
           'SESSION_NOT_FOUND',
-          'No matching active device session was found.',
-        )
+          'No matching active device session was found.'
+        );
       }
 
-      syncActiveDevicesFromSessions(user)
+      syncActiveDevicesFromSessions(user);
       logAndEmit(user, 'REVOKE_SESSION', 'auth', null, {
         deviceId: input.targetDeviceId ?? 'multiple-devices',
         ipAddress: input.ipAddress ?? 'unknown',
         targetSessionId: targetSessionId ?? null,
         revokeAllOther: input.revokeAllOther === true,
         revokedCount,
-      })
+      });
 
       logger.info('Sessions revoked', {
         userId: input.userId,
         revokedCount,
         targetDeviceId: input.targetDeviceId,
-      })
+      });
 
       return {
         result: {
           revokedCount,
-          sessions: buildSessionSummaries(
-            user,
-            input.currentSessionId,
-          ) as Array<Record<string, unknown>>,
+          sessions: buildSessionSummaries(user, input.currentSessionId) as Array<
+            Record<string, unknown>
+          >,
         },
-      }
+      };
     },
-  })
-}
+  });
+};
 
 /**
  * Changes user password after validating current password
@@ -603,53 +533,46 @@ export const revokeAuthenticatedSessions = async (
  * @throws {AppError} If current password is incorrect or new password is same
  */
 export const changeAuthenticatedPassword = async (
-  input: PasswordChangeInput,
+  input: PasswordChangeInput
 ): Promise<{ updated: boolean }> => {
-  const currentPassword = sanitizePassword(input.currentPassword)
-  const password = sanitizePassword(input.newPassword)
+  const currentPassword = sanitizePassword(input.currentPassword);
+  const password = sanitizePassword(input.newPassword);
 
   return retryLoadedUserMutation({
     mutationName: 'changeAuthenticatedPassword',
     loadUser: () => getUserOrThrow(input.userId, true),
     operation: async (user) => {
-      const storedHash = decryptText(user.password as any)
-      const isCurrentPasswordValid = await comparePassword(
-        currentPassword,
-        storedHash,
-      )
+      const storedHash = decryptText(user.password as any);
+      const isCurrentPasswordValid = await comparePassword(currentPassword, storedHash);
       if (!isCurrentPasswordValid) {
-        throw new AppError(
-          401,
-          'INVALID_CREDENTIALS',
-          ERROR_MESSAGES.INVALID_CREDENTIALS,
-        )
+        throw new AppError(401, 'INVALID_CREDENTIALS', ERROR_MESSAGES.INVALID_CREDENTIALS);
       }
 
-      const isSamePassword = await comparePassword(password, storedHash)
+      const isSamePassword = await comparePassword(password, storedHash);
       if (isSamePassword) {
         throw new AppError(
           400,
           'PASSWORD_UNCHANGED',
-          'New password must be different from the current password.',
-        )
+          'New password must be different from the current password.'
+        );
       }
 
-      const hashedPassword = await hashPassword(password)
-      user.password = encryptText(hashedPassword) as any
+      const hashedPassword = await hashPassword(password);
+      user.password = encryptText(hashedPassword) as any;
       logAndEmit(user, 'CHANGE_PASSWORD', 'auth', null, {
         ipAddress: input.ipAddress ?? 'unknown',
-      })
+      });
 
-      logger.info('User password changed', { userId: input.userId })
+      logger.info('User password changed', { userId: input.userId });
 
       return {
         result: {
           updated: true,
         },
-      }
+      };
     },
-  })
-}
+  });
+};
 
 /**
  * Fetches authenticated user's profile
@@ -659,17 +582,14 @@ export const changeAuthenticatedPassword = async (
  * @param currentSessionId - Optional session ID to mark as current
  * @returns Public user profile with session summaries
  */
-export const getAuthenticatedUserProfile = async (
-  userId: string,
-  currentSessionId?: string,
-) => {
-  const user = await getUserOrThrow(userId)
-  pruneExpiredSessions(user)
+export const getAuthenticatedUserProfile = async (userId: string, currentSessionId?: string) => {
+  const user = await getUserOrThrow(userId);
+  pruneExpiredSessions(user);
   return {
     ...publicUser(user),
     sessions: buildSessionSummaries(user, currentSessionId),
-  }
-}
+  };
+};
 
 /**
  * Updates the device name for all sessions matching a deviceId
@@ -677,26 +597,22 @@ export const getAuthenticatedUserProfile = async (
 export const renameDeviceSession = async (
   userId: string,
   deviceId: string,
-  deviceName: string,
+  deviceName: string
 ): Promise<{ success: boolean; sessions: Array<Record<string, unknown>> }> => {
   return retryLoadedUserMutation({
     mutationName: 'renameDeviceSession',
     loadUser: () => getUserOrThrow(userId),
     operation: async (user) => {
-      let updatedCount = 0
+      let updatedCount = 0;
       user.sessions.forEach((session) => {
         if (session.deviceId === deviceId) {
-          session.deviceName = deviceName
-          updatedCount += 1
+          session.deviceName = deviceName;
+          updatedCount += 1;
         }
-      })
+      });
 
       if (updatedCount === 0) {
-        throw new AppError(
-          404,
-          'SESSION_NOT_FOUND',
-          'No matching device session was found.',
-        )
+        throw new AppError(404, 'SESSION_NOT_FOUND', 'No matching device session was found.');
       }
 
       return {
@@ -704,7 +620,7 @@ export const renameDeviceSession = async (
           success: true,
           sessions: buildSessionSummaries(user) as Array<Record<string, unknown>>,
         },
-      }
+      };
     },
-  })
-}
+  });
+};

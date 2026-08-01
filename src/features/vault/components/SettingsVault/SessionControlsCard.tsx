@@ -1,23 +1,19 @@
-import React from 'react'
-import { RefreshCw, Lock, Edit3, Loader2, ShieldAlert } from 'lucide-react'
-import { Button } from '../../../../components/ui/Button'
-import { SectionCard, ActionButton } from './SharedComponents'
-import { formatDate, formatCountLabel } from './Utils'
-import { type AuthSessionSummary } from '../../../../lib/auth-api'
+import React from 'react';
+import { RefreshCw, Lock, Edit3, Loader2, ShieldAlert } from 'lucide-react';
+import { Button } from '../../../../components/ui/Button';
+import { SectionCard, ActionButton } from './SharedComponents';
+import { formatDate, formatCountLabel } from './Utils';
+import { type AuthSessionSummary } from '../../../../lib/auth-api';
 
 interface SessionControlsCardProps {
-  sessions: AuthSessionSummary[]
-  currentSessionName: string
-  trustedDeviceLabels: Record<string, string>
-  isSessionActionLoading: boolean
-  onRefreshSessions: () => Promise<void>
-  onLockAllSessions: () => Promise<void>
-  onRevokeSession: (session: AuthSessionSummary) => Promise<void>
-  onRenameRequest: (session: {
-    id: string
-    label: string
-    isCurrent?: boolean
-  }) => void
+  sessions: AuthSessionSummary[];
+  currentSessionName: string;
+  trustedDeviceLabels: Record<string, string>;
+  isSessionActionLoading: boolean;
+  onRefreshSessions: () => Promise<void>;
+  onLockAllSessions: () => Promise<void>;
+  onRevokeSession: (session: AuthSessionSummary) => Promise<void>;
+  onRenameRequest: (session: { id: string; label: string; isCurrent?: boolean }) => void;
 }
 
 export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
@@ -30,9 +26,9 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
   onRevokeSession,
   onRenameRequest,
 }) => {
-  const currentSession = sessions.find((session) => session.isCurrent) ?? null
-  const currentDeviceId = currentSession?.deviceId ?? ''
-  const canRenameCurrentSession = currentDeviceId.trim().length > 0
+  const currentSession = sessions.find((session) => session.isCurrent) ?? null;
+  const currentDeviceId = currentSession?.deviceId ?? '';
+  const canRenameCurrentSession = currentDeviceId.trim().length > 0;
 
   return (
     <SectionCard
@@ -62,9 +58,7 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
             <p className="text-sm font-bold text-text">Session Identity</p>
             <p className="mt-1 truncate text-xs text-text/45">
               This browser session:{' '}
-              <span className="font-semibold text-text/70">
-                {currentSessionName}
-              </span>
+              <span className="font-semibold text-text/70">{currentSessionName}</span>
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -73,13 +67,12 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
               size="sm"
               disabled={!canRenameCurrentSession}
               onClick={() => {
-                if (!canRenameCurrentSession) return
+                if (!canRenameCurrentSession) return;
                 onRenameRequest({
                   id: currentDeviceId,
-                  label:
-                    trustedDeviceLabels[currentDeviceId] || currentSessionName,
+                  label: trustedDeviceLabels[currentDeviceId] || currentSessionName,
                   isCurrent: true,
-                })
+                });
               }}
               className="h-8 px-3 text-[10px] font-bold uppercase tracking-wider text-text/60 hover:bg-text/5"
             >
@@ -104,7 +97,7 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
                 const savedLabel =
                   trustedDeviceLabels[session.deviceId] ||
                   session.deviceName ||
-                  (session.isCurrent ? currentSessionName : 'Unnamed device')
+                  (session.isCurrent ? currentSessionName : 'Unnamed device');
 
                 return (
                   <div
@@ -114,9 +107,7 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate text-sm font-semibold text-text">
-                            {savedLabel}
-                          </p>
+                          <p className="truncate text-sm font-semibold text-text">{savedLabel}</p>
                           {session.isCurrent ? (
                             <span className="rounded-full border border-card-border bg-text/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-text/65">
                               Current
@@ -135,7 +126,7 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
                             id: session.deviceId,
                             label: savedLabel,
                             isCurrent: session.isCurrent,
-                          })
+                          });
                         }}
                         className="rounded-lg border border-card-border bg-text/5 p-2 text-text/55 transition-colors hover:bg-text/10 hover:text-text"
                         title="Edit device label"
@@ -155,7 +146,7 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
                       <Button
                         variant="outline"
                         onClick={() => {
-                          void onRevokeSession(session)
+                          void onRevokeSession(session);
                         }}
                         disabled={isSessionActionLoading}
                         className="mt-4 w-full justify-center"
@@ -169,12 +160,12 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
                       </Button>
                     ) : null}
                   </div>
-                )
+                );
               })
             )}
           </div>
         </div>
       </div>
     </SectionCard>
-  )
-}
+  );
+};

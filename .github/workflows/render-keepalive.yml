@@ -3,7 +3,7 @@ name: Render Keepalive
 on:
   schedule:
     # Every 14 minutes
-    - cron: "*/14 * * * *"
+    - cron: '*/14 * * * *'
   workflow_dispatch:
 
 permissions:

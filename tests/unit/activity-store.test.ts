@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { useActivityStore } from '../../src/store/activityStore'
+import { beforeEach, describe, expect, it } from 'vitest';
+import { useActivityStore } from '../../src/store/activityStore';
 
 const buildEntry = (overrides: Record<string, unknown> = {}) =>
   ({
@@ -9,31 +9,29 @@ const buildEntry = (overrides: Record<string, unknown> = {}) =>
     status: 'success',
     description: 'Created item',
     ...overrides,
-  } as const)
+  }) as const;
 
 describe('activityStore', () => {
   beforeEach(() => {
-    useActivityStore.getState().clearActivity()
-  })
+    useActivityStore.getState().clearActivity();
+  });
 
   it('logs activity entries and keeps newest first', () => {
-    useActivityStore.getState().logActivity(
-      buildEntry({ timestamp: 1_700_000_000_000 }),
-    )
-    useActivityStore.getState().logActivity(
-      buildEntry({ itemName: 'Second', timestamp: 1_700_000_000_100 }),
-    )
+    useActivityStore.getState().logActivity(buildEntry({ timestamp: 1_700_000_000_000 }));
+    useActivityStore
+      .getState()
+      .logActivity(buildEntry({ itemName: 'Second', timestamp: 1_700_000_000_100 }));
 
-    const { entries, count } = useActivityStore.getState()
-    expect(count).toBe(2)
-    expect(entries).toHaveLength(2)
-    expect(entries[0]?.itemName).toBe('Second')
-    expect(entries[1]?.itemName).toBe('Document')
-    expect(entries[0]?.isSynced).toBe(false)
-  })
+    const { entries, count } = useActivityStore.getState();
+    expect(count).toBe(2);
+    expect(entries).toHaveLength(2);
+    expect(entries[0]?.itemName).toBe('Second');
+    expect(entries[1]?.itemName).toBe('Document');
+    expect(entries[0]?.isSynced).toBe(false);
+  });
 
   it('merges entries by id and prefers newer timestamps', () => {
-    const now = Date.now()
+    const now = Date.now();
     useActivityStore.getState().mergeEntries([
       {
         id: 'shared-id',
@@ -55,15 +53,15 @@ describe('activityStore', () => {
         description: 'new',
         isSynced: true,
       },
-    ])
+    ]);
 
-    const { entries, count } = useActivityStore.getState()
-    expect(count).toBe(1)
-    expect(entries).toHaveLength(1)
-    expect(entries[0]?.id).toBe('shared-id')
-    expect(entries[0]?.itemName).toBe('New')
-    expect(entries[0]?.isSynced).toBe(true)
-  })
+    const { entries, count } = useActivityStore.getState();
+    expect(count).toBe(1);
+    expect(entries).toHaveLength(1);
+    expect(entries[0]?.id).toBe('shared-id');
+    expect(entries[0]?.itemName).toBe('New');
+    expect(entries[0]?.isSynced).toBe(true);
+  });
 
   it('normalizes invalid merged entries safely', () => {
     useActivityStore.getState().mergeEntries([
@@ -76,17 +74,17 @@ describe('activityStore', () => {
         status: 'unknown' as any,
         description: '',
       } as any,
-    ])
+    ]);
 
-    const { entries, count } = useActivityStore.getState()
-    expect(count).toBe(1)
-    expect(typeof entries[0]?.id).toBe('string')
-    expect(entries[0]?.id.length).toBeGreaterThan(0)
-    expect(entries[0]?.actionType).toBe('error')
-    expect(entries[0]?.status).toBe('failure')
-    expect(entries[0]?.itemName).toBe('Unknown item')
-    expect(entries[0]?.userOrSessionId).toBe('unknown')
-  })
+    const { entries, count } = useActivityStore.getState();
+    expect(count).toBe(1);
+    expect(typeof entries[0]?.id).toBe('string');
+    expect(entries[0]?.id.length).toBeGreaterThan(0);
+    expect(entries[0]?.actionType).toBe('error');
+    expect(entries[0]?.status).toBe('failure');
+    expect(entries[0]?.itemName).toBe('Unknown item');
+    expect(entries[0]?.userOrSessionId).toBe('unknown');
+  });
 
   it('marks specific entries as synced', () => {
     useActivityStore.getState().mergeEntries([
@@ -110,17 +108,17 @@ describe('activityStore', () => {
         description: 'B',
         isSynced: false,
       },
-    ])
+    ]);
 
-    useActivityStore.getState().markAsSynced(['b'])
-    const { entries, count } = useActivityStore.getState()
+    useActivityStore.getState().markAsSynced(['b']);
+    const { entries, count } = useActivityStore.getState();
 
-    expect(count).toBe(2)
-    const entryA = entries.find((entry) => entry.id === 'a')
-    const entryB = entries.find((entry) => entry.id === 'b')
-    expect(entryA?.isSynced).toBe(false)
-    expect(entryB?.isSynced).toBe(true)
-  })
+    expect(count).toBe(2);
+    const entryA = entries.find((entry) => entry.id === 'a');
+    const entryB = entries.find((entry) => entry.id === 'b');
+    expect(entryA?.isSynced).toBe(false);
+    expect(entryB?.isSynced).toBe(true);
+  });
 
   it('keeps the full activity timeline instead of trimming to a small recent slice', () => {
     const entries = Array.from({ length: 750 }, (_, index) => ({
@@ -132,14 +130,14 @@ describe('activityStore', () => {
       status: 'success' as const,
       description: 'Created item',
       isSynced: true,
-    }))
+    }));
 
-    useActivityStore.getState().mergeEntries(entries)
+    useActivityStore.getState().mergeEntries(entries);
 
-    const { entries: storedEntries, count } = useActivityStore.getState()
-    expect(count).toBe(750)
-    expect(storedEntries).toHaveLength(750)
-    expect(storedEntries[0]?.id).toBe('entry-749')
-    expect(storedEntries[749]?.id).toBe('entry-0')
-  })
-})
+    const { entries: storedEntries, count } = useActivityStore.getState();
+    expect(count).toBe(750);
+    expect(storedEntries).toHaveLength(750);
+    expect(storedEntries[0]?.id).toBe('entry-749');
+    expect(storedEntries[749]?.id).toBe('entry-0');
+  });
+});

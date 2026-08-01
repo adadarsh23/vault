@@ -1,13 +1,13 @@
-import React from 'react'
-import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button } from '../../../../components/ui/Button'
+import React from 'react';
+import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '../../../../components/ui/Button';
 
 interface MediaPaginationProps {
-  currentPage: number
-  totalItems: number
-  itemsPerPage: number
-  onPageChange: (page: number) => void
+  currentPage: number;
+  totalItems: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
 }
 
 export const MediaPagination: React.FC<MediaPaginationProps> = ({
@@ -16,7 +16,7 @@ export const MediaPagination: React.FC<MediaPaginationProps> = ({
   itemsPerPage,
   onPageChange,
 }) => {
-  if (totalItems <= itemsPerPage) return null
+  if (totalItems <= itemsPerPage) return null;
 
   return (
     <div className="flex items-center justify-center gap-8 pb-32 mt-12">
@@ -53,5 +53,5 @@ export const MediaPagination: React.FC<MediaPaginationProps> = ({
         </Button>
       </motion.div>
     </div>
-  )
-}
+  );
+};

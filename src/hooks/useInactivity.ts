@@ -36,7 +36,7 @@ export const useInactivity = ({
 }: InactivityOptions) => {
   const [isInactive, setIsInactive] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState<number | null>(null);
-  
+
   const resetTimerRef = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export const useInactivity = ({
     const updateCountdown = () => {
       if (isDisposed || hasAutoLocked) return;
       const remainingSec = Math.ceil((lockTime - Date.now()) / 1000);
-      
+
       if (remainingSec <= 0) {
         setCountdownSeconds(0);
         runAutoLock();
@@ -117,13 +117,13 @@ export const useInactivity = ({
         const normalizedDurationMinutes = normalizeAutoLockDuration(autoLockDuration);
         const lockDelayMs = normalizedDurationMinutes * 60 * 1000;
         lockTime = Date.now() + lockDelayMs;
-        
+
         lockTimeout = setTimeout(() => {
           runAutoLock();
         }, lockDelayMs);
 
         // Start checking for countdown when we get close
-        const timeUntilCountdown = lockDelayMs - (COUNTDOWN_THRESHOLD_SEC * 1000);
+        const timeUntilCountdown = lockDelayMs - COUNTDOWN_THRESHOLD_SEC * 1000;
         if (timeUntilCountdown > 0) {
           setTimeout(() => {
             if (isDisposed || hasAutoLocked || lockTime < Date.now()) return;

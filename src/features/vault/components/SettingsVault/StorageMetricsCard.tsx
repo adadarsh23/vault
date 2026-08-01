@@ -1,27 +1,17 @@
-import React, { memo } from 'react'
-import { motion } from 'framer-motion'
-import { Activity, Wifi, Zap } from 'lucide-react'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../../../components/ui/Card'
+import React, { memo } from 'react';
+import { motion } from 'framer-motion';
+import { Activity, Wifi, Zap } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/Card';
 
 interface StorageMetricsCardProps {
-  storageUsedBytes: number
-  usagePercentage: string
-  formatBytes: (bytes: number) => string
-  storageLimit?: string
+  storageUsedBytes: number;
+  usagePercentage: string;
+  formatBytes: (bytes: number) => string;
+  storageLimit?: string;
 }
 
 export const StorageMetricsCard: React.FC<StorageMetricsCardProps> = memo(
-  ({
-    storageUsedBytes,
-    usagePercentage,
-    formatBytes,
-    storageLimit = '1.0 GB',
-  }) => (
+  ({ storageUsedBytes, usagePercentage, formatBytes, storageLimit = '1.0 GB' }) => (
     <Card className="border-card-border bg-card-bg">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
@@ -32,9 +22,7 @@ export const StorageMetricsCard: React.FC<StorageMetricsCardProps> = memo(
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-text/60 font-medium tracking-wide">
-              Data Size
-            </span>
+            <span className="text-text/60 font-medium tracking-wide">Data Size</span>
             <span className="font-bold text-text">
               {formatBytes(storageUsedBytes)}{' '}
               <span className="text-text/40 font-normal">/ {storageLimit}</span>
@@ -87,7 +75,7 @@ export const StorageMetricsCard: React.FC<StorageMetricsCardProps> = memo(
         </div>
       </CardContent>
     </Card>
-  ),
-)
+  )
+);
 
-StorageMetricsCard.displayName = 'StorageMetricsCard'
+StorageMetricsCard.displayName = 'StorageMetricsCard';

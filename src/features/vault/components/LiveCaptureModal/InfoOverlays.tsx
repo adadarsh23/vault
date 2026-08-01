@@ -1,16 +1,13 @@
-import React from 'react'
-import { motion } from 'framer-motion'
-import { ShieldCheck, Loader2, Lock, ShieldAlert } from 'lucide-react'
+import React from 'react';
+import { motion } from 'framer-motion';
+import { ShieldCheck, Loader2, Lock, ShieldAlert } from 'lucide-react';
 
 interface InfoOverlaysProps {
-  rsaKeyPair: any
-  isEncrypting: boolean
+  rsaKeyPair: any;
+  isEncrypting: boolean;
 }
 
-export const InfoOverlays: React.FC<InfoOverlaysProps> = ({
-  rsaKeyPair,
-  isEncrypting,
-}) => {
+export const InfoOverlays: React.FC<InfoOverlaysProps> = ({ rsaKeyPair, isEncrypting }) => {
   return (
     <div className="absolute left-4 md:left-8 top-4 md:top-8 z-20 flex flex-col gap-2 md:gap-3">
       <motion.div
@@ -66,5 +63,5 @@ export const InfoOverlays: React.FC<InfoOverlaysProps> = ({
         </span>
       </motion.div>
     </div>
-  )
-}
+  );
+};

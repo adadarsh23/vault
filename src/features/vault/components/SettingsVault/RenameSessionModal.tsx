@@ -1,13 +1,13 @@
-import React from 'react'
-import { Button } from '../../../../components/ui/Button'
-import { Input } from '../../../../components/ui/Input'
+import React from 'react';
+import { Button } from '../../../../components/ui/Button';
+import { Input } from '../../../../components/ui/Input';
 
 interface RenameSessionModalProps {
-  renamingSession: { id: string; label: string; isCurrent?: boolean }
-  renameDraft: string
-  setRenameDraft: (value: string) => void
-  onSave: (deviceId: string, label: string) => void
-  onCancel: () => void
+  renamingSession: { id: string; label: string; isCurrent?: boolean };
+  renameDraft: string;
+  setRenameDraft: (value: string) => void;
+  onSave: (deviceId: string, label: string) => void;
+  onCancel: () => void;
 }
 
 export const RenameSessionModal: React.FC<RenameSessionModalProps> = ({
@@ -24,12 +24,11 @@ export const RenameSessionModal: React.FC<RenameSessionModalProps> = ({
           Device Configuration
         </div>
         <h3 className="text-xl font-bold text-text">
-          Rename{' '}
-          {renamingSession.isCurrent ? 'Current Session' : 'Device'}
+          Rename {renamingSession.isCurrent ? 'Current Session' : 'Device'}
         </h3>
         <p className="mt-1 text-sm text-text/45">
-          Give this session a recognizable name to help identify it in
-          your vault activity and secure logs.
+          Give this session a recognizable name to help identify it in your vault activity and
+          secure logs.
         </p>
       </div>
 
@@ -44,9 +43,9 @@ export const RenameSessionModal: React.FC<RenameSessionModalProps> = ({
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRenameDraft(e.target.value)}
             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
               if (e.key === 'Enter') {
-                onSave(renamingSession.id, renameDraft)
+                onSave(renamingSession.id, renameDraft);
               } else if (e.key === 'Escape') {
-                onCancel()
+                onCancel();
               }
             }}
             placeholder="E.g. Work Macbook, Personal iPhone..."
@@ -73,4 +72,4 @@ export const RenameSessionModal: React.FC<RenameSessionModalProps> = ({
       </div>
     </div>
   </div>
-)
+);

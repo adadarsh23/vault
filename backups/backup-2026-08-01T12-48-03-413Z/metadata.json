@@ -1,0 +1,66 @@
+{
+  "name": "vault",
+  "displayName": "Vault",
+  "version": "1.0.0",
+  "description": "Secure encrypted vault for storing photos, videos, notes, and passwords with strong client-side encryption.",
+  "author": {
+    "name": "Adarsh",
+    "role": "Developer",
+    "website": "https://github.com/adadarsh23"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adadarsh23/vault"
+  },
+  "homepage": "",
+  "keywords": ["vault", "encryption", "password-manager", "secure-storage", "privacy"],
+  "security": {
+    "encryption": "AES-256",
+    "keyDerivation": "PBKDF2",
+    "authentication": ["password"],
+    "zeroKnowledge": true,
+    "clientSideEncryption": true
+  },
+  "features": [
+    "Encrypted file storage",
+    "Secure password manager",
+    "Private notes",
+    "Photo and video vault",
+    "Local encryption before upload",
+    "Secure authentication"
+  ],
+  "permissions": {
+    "browser": [],
+    "device": []
+  },
+  "environment": {
+    "node": ">=18",
+    "build": "production",
+    "runtime": "nodejs"
+  },
+  "performance": {
+    "maxUploadSizeMB": 100,
+    "recommendedMemoryMB": 512
+  },
+  "createdAt": "2026-03-10",
+  "appType": "secure-storage",
+  "platformSupport": ["web", "mobile"],
+  "compatibility": {
+    "browsers": ["Chrome >= 100", "Firefox >= 100", "Edge >= 100", "Safari >= 15"],
+    "devices": ["desktop", "mobile", "tablet", "wearable"],
+    "pwa": true
+  },
+  "branding": {
+    "primary": "#000000",
+    "secondary": "#ffffff",
+    "favicon": "/favicon.svg",
+    "themeAware": true
+  },
+  "maintainers": [
+    {
+      "name": "Adarsh",
+      "github": "adadarsh23"
+    }
+  ]
+}

@@ -8,7 +8,7 @@ describe('Server-Side Cryptography (AES-256-GCM)', () => {
 
   it('successfully encrypts and decrypts a buffer', () => {
     const encrypted = encryptBuffer(sampleData, masterKey);
-    
+
     expect(encrypted.iv).toHaveLength(24); // 12 bytes hex
     expect(encrypted.tag).toHaveLength(32); // 16 bytes hex
     expect(encrypted.encryptedData).not.toEqual(sampleData.toString('hex'));
@@ -26,7 +26,7 @@ describe('Server-Side Cryptography (AES-256-GCM)', () => {
 
   it('fails to decrypt if the authentication tag is tampered with', () => {
     const encrypted = encryptBuffer(sampleData, masterKey);
-    
+
     // Tamper with one character in the tag
     const tamperedTag = encrypted.tag.substring(0, 31) + (encrypted.tag[31] === '0' ? '1' : '0');
     const tamperedPayload = { ...encrypted, tag: tamperedTag };

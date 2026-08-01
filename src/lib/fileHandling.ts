@@ -1,11 +1,11 @@
 const parseMaxUploadSizeMb = () => {
-  const rawValue = import.meta.env.VITE_MAX_FILE_SIZE_MB
-  const parsed = Number.parseInt(rawValue ?? '', 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 500
-}
+  const rawValue = import.meta.env.VITE_MAX_FILE_SIZE_MB;
+  const parsed = Number.parseInt(rawValue ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 500;
+};
 
-export const MAX_UPLOAD_SIZE_MB = parseMaxUploadSizeMb()
-export const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024
+export const MAX_UPLOAD_SIZE_MB = parseMaxUploadSizeMb();
+export const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
 
 export const PHOTO_FILE_EXTENSIONS = [
   'JPG',
@@ -71,12 +71,12 @@ export const PHOTO_FILE_EXTENSIONS = [
   'TGA',
   'ICNS',
   'PSD',
-] as const
+] as const;
 
 export const PHOTO_FILE_INPUT_ACCEPT = [
   'image/*',
   ...PHOTO_FILE_EXTENSIONS.map((ext) => `.${ext.toLowerCase()}`),
-].join(',')
+].join(',');
 
 export const VIDEO_FILE_EXTENSIONS = [
   'MP4',
@@ -142,12 +142,12 @@ export const VIDEO_FILE_EXTENSIONS = [
   'ARX',
   'MJP2',
   'MJ2',
-] as const
+] as const;
 
 export const VIDEO_FILE_INPUT_ACCEPT = [
   'video/*',
   ...VIDEO_FILE_EXTENSIONS.map((ext) => `.${ext.toLowerCase()}`),
-].join(',')
+].join(',');
 
 export const AUDIO_FILE_EXTENSIONS = [
   'MP3',
@@ -216,12 +216,12 @@ export const AUDIO_FILE_EXTENSIONS = [
   'MOD',
   'MTM',
   'UMX',
-] as const
+] as const;
 
 export const AUDIO_FILE_INPUT_ACCEPT = [
   'audio/*',
   ...AUDIO_FILE_EXTENSIONS.map((ext) => `.${ext.toLowerCase()}`),
-].join(',')
+].join(',');
 
 export const DOCUMENT_FILE_EXTENSIONS = [
   'PDF',
@@ -304,11 +304,11 @@ export const DOCUMENT_FILE_EXTENSIONS = [
   'GZ',
   'BZ2',
   'XZ',
-] as const
+] as const;
 
 export const DOCUMENT_FILE_INPUT_ACCEPT = [
   ...DOCUMENT_FILE_EXTENSIONS.map((ext) => `.${ext.toLowerCase()}`),
-].join(',')
+].join(',');
 
 export const FILE_TYPE_SUPPORT = {
   photo: PHOTO_FILE_EXTENSIONS,
@@ -316,24 +316,20 @@ export const FILE_TYPE_SUPPORT = {
   audio: AUDIO_FILE_EXTENSIONS,
   document: DOCUMENT_FILE_EXTENSIONS,
   file: ['Archives', 'Source files', 'Installers', 'Miscellaneous files'],
-} as const
+} as const;
 
 export const formatBytes = (bytes: number) => {
   if (!Number.isFinite(bytes) || bytes <= 0) {
-    return '0 B'
+    return '0 B';
   }
 
-  const units = ['B', 'KB', 'MB', 'GB']
-  const index = Math.min(
-    Math.floor(Math.log(bytes) / Math.log(1024)),
-    units.length - 1,
-  )
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
 
-  return `${(bytes / 1024 ** index).toFixed(index === 0 ? 0 : 2)} ${units[index]}`
-}
+  return `${(bytes / 1024 ** index).toFixed(index === 0 ? 0 : 2)} ${units[index]}`;
+};
 
-export const exceedsUploadSizeLimit = (file: File) =>
-  file.size > MAX_UPLOAD_SIZE_BYTES
+export const exceedsUploadSizeLimit = (file: File) => file.size > MAX_UPLOAD_SIZE_BYTES;
 
 export const getUploadSizeErrorMessage = (file: File) =>
-  `"${file.name}" exceeds the ${MAX_UPLOAD_SIZE_MB} MB limit for secure uploads.`
+  `"${file.name}" exceeds the ${MAX_UPLOAD_SIZE_MB} MB limit for secure uploads.`;

@@ -7,52 +7,50 @@ import React, {
   useMemo,
   useRef,
   useState,
-} from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
-import { ScrollButton } from '../ScrollButton'
+} from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ScrollButton } from '../ScrollButton';
 
-const EDITOR_LINE_HEIGHT = 20
-const EDITOR_PADDING = 32
-const GUTTER_WIDTH = 56
-const EXTRA_BOTTOM_SPACE = '20rem'
-const MAX_LINE_RENDER = 10000
-let lastKnownEditorScrollTop = 0
+const EDITOR_LINE_HEIGHT = 20;
+const EDITOR_PADDING = 32;
+const GUTTER_WIDTH = 56;
+const EXTRA_BOTTOM_SPACE = '20rem';
+const MAX_LINE_RENDER = 10000;
+let lastKnownEditorScrollTop = 0;
 
 interface NoteEditorTextareaProps {
-  content: string
-  handleContentChange: (newContent: string) => void
-  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
-  handleScroll: (e: React.UIEvent<HTMLTextAreaElement>) => void
-  updateScrollVisibility: () => void
+  content: string;
+  handleContentChange: (newContent: string) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  handleScroll: (e: React.UIEvent<HTMLTextAreaElement>) => void;
+  updateScrollVisibility: () => void;
   updateActiveLine: (
-    e:
-      | React.SyntheticEvent<HTMLTextAreaElement>
-      | React.KeyboardEvent<HTMLTextAreaElement>,
-  ) => void
-  lineWrap: boolean
-  textAlign: 'left' | 'center' | 'right'
-  showLineNumbers: boolean
-  activeLine: number
-  showEditorScrollTop: boolean
-  showEditorScrollBottom: boolean
-  scrollToTop: () => void
-  scrollToBottom: () => void
-  gutterRef: React.RefObject<HTMLDivElement | null>
-  spellCheck?: boolean
-  placeholder?: string
-  disabled?: boolean
+    e: React.SyntheticEvent<HTMLTextAreaElement> | React.KeyboardEvent<HTMLTextAreaElement>
+  ) => void;
+  lineWrap: boolean;
+  textAlign: 'left' | 'center' | 'right';
+  showLineNumbers: boolean;
+  activeLine: number;
+  showEditorScrollTop: boolean;
+  showEditorScrollBottom: boolean;
+  scrollToTop: () => void;
+  scrollToBottom: () => void;
+  gutterRef: React.RefObject<HTMLDivElement | null>;
+  spellCheck?: boolean;
+  placeholder?: string;
+  disabled?: boolean;
 }
 
 interface GutterProps {
-  lineNumbers: number[]
-  activeLine: number
+  lineNumbers: number[];
+  activeLine: number;
 }
 
 const Gutter = memo<GutterProps>(({ lineNumbers, activeLine }) => {
   return (
     <>
       {lineNumbers.map((num) => {
-        const isActive = num === activeLine + 1
+        const isActive = num === activeLine + 1;
 
         return (
           <div
@@ -67,203 +65,198 @@ const Gutter = memo<GutterProps>(({ lineNumbers, activeLine }) => {
           >
             {num}
           </div>
-        )
+        );
       })}
     </>
-  )
-})
+  );
+});
 
-Gutter.displayName = 'Gutter'
+Gutter.displayName = 'Gutter';
 
-export const NoteEditorTextarea = forwardRef<
-  HTMLTextAreaElement,
-  NoteEditorTextareaProps
->((props, ref) => {
-  const {
-    content,
-    handleContentChange,
-    onKeyDown,
-    handleScroll,
-    updateScrollVisibility,
-    updateActiveLine,
-    lineWrap,
-    textAlign,
-    showLineNumbers,
-    activeLine,
-    showEditorScrollTop,
-    showEditorScrollBottom,
-    scrollToTop,
-    scrollToBottom,
-    gutterRef,
-    spellCheck = false,
-    placeholder = 'Start writing your notes...',
-    disabled = false,
-  } = props
+export const NoteEditorTextarea = forwardRef<HTMLTextAreaElement, NoteEditorTextareaProps>(
+  (props, ref) => {
+    const {
+      content,
+      handleContentChange,
+      onKeyDown,
+      handleScroll,
+      updateScrollVisibility,
+      updateActiveLine,
+      lineWrap,
+      textAlign,
+      showLineNumbers,
+      activeLine,
+      showEditorScrollTop,
+      showEditorScrollBottom,
+      scrollToTop,
+      scrollToBottom,
+      gutterRef,
+      spellCheck = false,
+      placeholder = 'Start writing your notes...',
+      disabled = false,
+    } = props;
 
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
-  const [scrollTop, setScrollTop] = useState(0)
-  const savedScrollTopRef = useRef(0)
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    const [scrollTop, setScrollTop] = useState(0);
+    const savedScrollTopRef = useRef(0);
 
-  useImperativeHandle(ref, () => {
-    if (!textareaRef.current) {
-      throw new Error('NoteEditorTextarea: textarea ref is not initialized')
-    }
-
-    return textareaRef.current
-  })
-
-  const totalLines = useMemo(() => {
-    return content.split('\n').length
-  }, [content])
-
-  const lineNumbers = useMemo(() => {
-    const limitedLines = Math.min(totalLines, MAX_LINE_RENDER)
-
-    return Array.from({ length: limitedLines }, (_, i) => i + 1)
-  }, [totalLines])
-
-  const handleTextareaScroll = useCallback(
-    (e: React.UIEvent<HTMLTextAreaElement>) => {
-      savedScrollTopRef.current = e.currentTarget.scrollTop
-      lastKnownEditorScrollTop = e.currentTarget.scrollTop
-      setScrollTop(e.currentTarget.scrollTop)
-
-      handleScroll(e)
-      updateScrollVisibility()
-
-      if (gutterRef.current) {
-        gutterRef.current.scrollTop = e.currentTarget.scrollTop
+    useImperativeHandle(ref, () => {
+      if (!textareaRef.current) {
+        throw new Error('NoteEditorTextarea: textarea ref is not initialized');
       }
-    },
-    [gutterRef, handleScroll, updateScrollVisibility],
-  )
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const currentScroll = textareaRef.current?.scrollTop ?? e.currentTarget.scrollTop
-      savedScrollTopRef.current = currentScroll
-      lastKnownEditorScrollTop = currentScroll
-      handleContentChange(e.target.value)
-    },
-    [handleContentChange],
-  )
+      return textareaRef.current;
+    });
 
-  const preserveScrollPosition = useCallback(
-    (scrollValue: number) => {
-      savedScrollTopRef.current = scrollValue
-      lastKnownEditorScrollTop = scrollValue
-    },
-    [],
-  )
+    const totalLines = useMemo(() => {
+      return content.split('\n').length;
+    }, [content]);
 
-  useLayoutEffect(() => {
-    const textarea = textareaRef.current
-    if (!textarea) return
+    const lineNumbers = useMemo(() => {
+      const limitedLines = Math.min(totalLines, MAX_LINE_RENDER);
 
-    if (savedScrollTopRef.current === 0 && lastKnownEditorScrollTop > 0) {
-      savedScrollTopRef.current = lastKnownEditorScrollTop
-    }
+      return Array.from({ length: limitedLines }, (_, i) => i + 1);
+    }, [totalLines]);
 
-    if (savedScrollTopRef.current > 0) {
-      textarea.scrollTop = savedScrollTopRef.current
-      if (gutterRef.current) {
-        gutterRef.current.scrollTop = savedScrollTopRef.current
+    const handleTextareaScroll = useCallback(
+      (e: React.UIEvent<HTMLTextAreaElement>) => {
+        savedScrollTopRef.current = e.currentTarget.scrollTop;
+        lastKnownEditorScrollTop = e.currentTarget.scrollTop;
+        setScrollTop(e.currentTarget.scrollTop);
+
+        handleScroll(e);
+        updateScrollVisibility();
+
+        if (gutterRef.current) {
+          gutterRef.current.scrollTop = e.currentTarget.scrollTop;
+        }
+      },
+      [gutterRef, handleScroll, updateScrollVisibility]
+    );
+
+    const handleChange = useCallback(
+      (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const currentScroll = textareaRef.current?.scrollTop ?? e.currentTarget.scrollTop;
+        savedScrollTopRef.current = currentScroll;
+        lastKnownEditorScrollTop = currentScroll;
+        handleContentChange(e.target.value);
+      },
+      [handleContentChange]
+    );
+
+    const preserveScrollPosition = useCallback((scrollValue: number) => {
+      savedScrollTopRef.current = scrollValue;
+      lastKnownEditorScrollTop = scrollValue;
+    }, []);
+
+    useLayoutEffect(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+
+      if (savedScrollTopRef.current === 0 && lastKnownEditorScrollTop > 0) {
+        savedScrollTopRef.current = lastKnownEditorScrollTop;
       }
-      setScrollTop(savedScrollTopRef.current)
-    }
-  }, [gutterRef])
 
-  useLayoutEffect(() => {
-    const textarea = textareaRef.current
-    if (!textarea) return
-
-    if (Math.abs(textarea.scrollTop - savedScrollTopRef.current) > 1) {
-      textarea.scrollTop = savedScrollTopRef.current
-      lastKnownEditorScrollTop = savedScrollTopRef.current
-      if (gutterRef.current) {
-        gutterRef.current.scrollTop = savedScrollTopRef.current
+      if (savedScrollTopRef.current > 0) {
+        textarea.scrollTop = savedScrollTopRef.current;
+        if (gutterRef.current) {
+          gutterRef.current.scrollTop = savedScrollTopRef.current;
+        }
+        setScrollTop(savedScrollTopRef.current);
       }
-    }
-  }, [content, gutterRef])
+    }, [gutterRef]);
 
-  const highlightTransform = useMemo(() => {
-    const translateY = activeLine * EDITOR_LINE_HEIGHT - scrollTop
+    useLayoutEffect(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
 
-    return `translateY(${translateY}px)`
-  }, [activeLine, scrollTop])
+      if (Math.abs(textarea.scrollTop - savedScrollTopRef.current) > 1) {
+        textarea.scrollTop = savedScrollTopRef.current;
+        lastKnownEditorScrollTop = savedScrollTopRef.current;
+        if (gutterRef.current) {
+          gutterRef.current.scrollTop = savedScrollTopRef.current;
+        }
+      }
+    }, [content, gutterRef]);
 
-  const ensureTextareaFocus = useCallback(() => {
-    if (disabled) return
-    textareaRef.current?.focus()
-  }, [disabled])
+    const highlightTransform = useMemo(() => {
+      const translateY = activeLine * EDITOR_LINE_HEIGHT - scrollTop;
 
-  return (
-    <div
-      className="relative flex flex-1 overflow-hidden"
-      data-testid="note-editor-container"
-      onMouseDown={ensureTextareaFocus}
-    >
-      {/* ACTIVE LINE HIGHLIGHT */}
+      return `translateY(${translateY}px)`;
+    }, [activeLine, scrollTop]);
+
+    const ensureTextareaFocus = useCallback(() => {
+      if (disabled) return;
+      textareaRef.current?.focus();
+    }, [disabled]);
+
+    return (
       <div
-        className="pointer-events-none absolute top-0 right-0 bottom-0 overflow-hidden"
-        style={{
-          left: showLineNumbers ? `${GUTTER_WIDTH}px` : 0,
-        }}
-        aria-hidden="true"
+        className="relative flex flex-1 overflow-hidden"
+        data-testid="note-editor-container"
+        onMouseDown={ensureTextareaFocus}
       >
+        {/* ACTIVE LINE HIGHLIGHT */}
         <div
-          className="absolute left-0 right-0 border-y border-white/10 bg-white/[0.04]"
+          className="pointer-events-none absolute top-0 right-0 bottom-0 overflow-hidden"
           style={{
-            top: `${EDITOR_PADDING}px`,
-            height: `${EDITOR_LINE_HEIGHT}px`,
-            transform: highlightTransform,
-            willChange: 'transform',
-          }}
-        />
-      </div>
-
-      {/* GUTTER */}
-      {showLineNumbers && (
-        <div
-          ref={gutterRef}
-          className="shrink-0 overflow-hidden border-r border-white/5 bg-white/[0.02] font-mono text-xs tabular-nums select-none text-right"
-          style={{
-            width: `${GUTTER_WIDTH}px`,
-            paddingTop: `${EDITOR_PADDING}px`,
-            paddingBottom: EXTRA_BOTTOM_SPACE,
-            paddingRight: '10px',
+            left: showLineNumbers ? `${GUTTER_WIDTH}px` : 0,
           }}
           aria-hidden="true"
         >
-          <Gutter lineNumbers={lineNumbers} activeLine={activeLine} />
+          <div
+            className="absolute left-0 right-0 border-y border-white/10 bg-white/[0.04]"
+            style={{
+              top: `${EDITOR_PADDING}px`,
+              height: `${EDITOR_LINE_HEIGHT}px`,
+              transform: highlightTransform,
+              willChange: 'transform',
+            }}
+          />
         </div>
-      )}
 
-      {/* TEXTAREA */}
-      <textarea
-        ref={textareaRef}
-        value={content}
-        disabled={disabled}
-        wrap={lineWrap ? 'soft' : 'off'}
-        spellCheck={spellCheck}
-        placeholder={placeholder}
-        onChange={handleChange}
-        onScroll={handleTextareaScroll}
-        onBeforeInput={(e) => preserveScrollPosition(e.currentTarget.scrollTop)}
-        onSelect={updateActiveLine}
-        onClick={updateActiveLine}
-        onKeyUp={updateActiveLine}
-        onKeyDown={(e) => {
-          preserveScrollPosition(e.currentTarget.scrollTop)
-          onKeyDown(e)
-        }}
-        autoCorrect="off"
-        autoCapitalize="off"
-        autoComplete="off"
-        aria-label="Note editor"
-        aria-multiline="true"
-        data-testid="note-editor-textarea"
-        className="
+        {/* GUTTER */}
+        {showLineNumbers && (
+          <div
+            ref={gutterRef}
+            className="shrink-0 overflow-hidden border-r border-white/5 bg-white/[0.02] font-mono text-xs tabular-nums select-none text-right"
+            style={{
+              width: `${GUTTER_WIDTH}px`,
+              paddingTop: `${EDITOR_PADDING}px`,
+              paddingBottom: EXTRA_BOTTOM_SPACE,
+              paddingRight: '10px',
+            }}
+            aria-hidden="true"
+          >
+            <Gutter lineNumbers={lineNumbers} activeLine={activeLine} />
+          </div>
+        )}
+
+        {/* TEXTAREA */}
+        <textarea
+          ref={textareaRef}
+          value={content}
+          disabled={disabled}
+          wrap={lineWrap ? 'soft' : 'off'}
+          spellCheck={spellCheck}
+          placeholder={placeholder}
+          onChange={handleChange}
+          onScroll={handleTextareaScroll}
+          onBeforeInput={(e) => preserveScrollPosition(e.currentTarget.scrollTop)}
+          onSelect={updateActiveLine}
+          onClick={updateActiveLine}
+          onKeyUp={updateActiveLine}
+          onKeyDown={(e) => {
+            preserveScrollPosition(e.currentTarget.scrollTop);
+            onKeyDown(e);
+          }}
+          autoCorrect="off"
+          autoCapitalize="off"
+          autoComplete="off"
+          aria-label="Note editor"
+          aria-multiline="true"
+          data-testid="note-editor-textarea"
+          className="
           custom-scrollbar
           relative
           z-10
@@ -278,34 +271,35 @@ export const NoteEditorTextarea = forwardRef<
           disabled:cursor-not-allowed
           disabled:opacity-50
         "
-        style={{
-          padding: `${EDITOR_PADDING}px ${EDITOR_PADDING}px ${EXTRA_BOTTOM_SPACE} ${EDITOR_PADDING}px`,
-          lineHeight: `${EDITOR_LINE_HEIGHT}px`,
-          whiteSpace: lineWrap ? 'pre-wrap' : 'pre',
-          overflowWrap: lineWrap ? 'break-word' : 'normal',
-          wordBreak: lineWrap ? 'break-word' : 'normal',
-          textAlign,
-          caretColor: 'currentColor',
-        }}
-      />
+          style={{
+            padding: `${EDITOR_PADDING}px ${EDITOR_PADDING}px ${EXTRA_BOTTOM_SPACE} ${EDITOR_PADDING}px`,
+            lineHeight: `${EDITOR_LINE_HEIGHT}px`,
+            whiteSpace: lineWrap ? 'pre-wrap' : 'pre',
+            overflowWrap: lineWrap ? 'break-word' : 'normal',
+            wordBreak: lineWrap ? 'break-word' : 'normal',
+            textAlign,
+            caretColor: 'currentColor',
+          }}
+        />
 
-      {/* SCROLL TOP BUTTON */}
-      <ScrollButton
-        visible={showEditorScrollTop}
-        onClick={scrollToTop}
-        icon={ChevronUp}
-        className="right-5 bottom-14"
-      />
+        {/* SCROLL TOP BUTTON */}
+        <ScrollButton
+          visible={showEditorScrollTop}
+          onClick={scrollToTop}
+          icon={ChevronUp}
+          className="right-5 bottom-14"
+        />
 
-      {/* SCROLL BOTTOM BUTTON */}
-      <ScrollButton
-        visible={showEditorScrollBottom}
-        onClick={scrollToBottom}
-        icon={ChevronDown}
-        className="right-5 bottom-3"
-      />
-    </div>
-  )
-})
+        {/* SCROLL BOTTOM BUTTON */}
+        <ScrollButton
+          visible={showEditorScrollBottom}
+          onClick={scrollToBottom}
+          icon={ChevronDown}
+          className="right-5 bottom-3"
+        />
+      </div>
+    );
+  }
+);
 
-NoteEditorTextarea.displayName = 'NoteEditorTextarea'
+NoteEditorTextarea.displayName = 'NoteEditorTextarea';

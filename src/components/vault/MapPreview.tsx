@@ -1,38 +1,34 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { cn } from '../../lib/utils'
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { cn } from '../../lib/utils';
 
 interface MapPreviewProps {
-  lat: number
-  lng: number
-  height?: string
+  lat: number;
+  lng: number;
+  height?: string;
 }
 
-export const MapPreview: React.FC<MapPreviewProps> = ({
-  lat,
-  lng,
-  height = '320px',
-}) => {
-  const [loaded, setLoaded] = useState(false)
+export const MapPreview: React.FC<MapPreviewProps> = ({ lat, lng, height = '320px' }) => {
+  const [loaded, setLoaded] = useState(false);
 
   const src = useMemo(() => {
-    return `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`
-  }, [lat, lng])
+    return `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
+  }, [lat, lng]);
 
-  const prevCoords = useRef({ lat, lng })
+  const prevCoords = useRef({ lat, lng });
   useEffect(() => {
     if (prevCoords.current.lat !== lat || prevCoords.current.lng !== lng) {
-      setLoaded(false)
-      prevCoords.current = { lat, lng }
+      setLoaded(false);
+      prevCoords.current = { lat, lng };
     }
-  }, [lat, lng])
+  }, [lat, lng]);
 
   const openInMaps = () => {
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
       '_blank',
-      'noopener,noreferrer',
-    )
-  }
+      'noopener,noreferrer'
+    );
+  };
 
   return (
     <div
@@ -52,7 +48,7 @@ export const MapPreview: React.FC<MapPreviewProps> = ({
         src={src}
         className={cn(
           'w-full border-0 transition-opacity duration-300',
-          loaded ? 'opacity-100' : 'opacity-0',
+          loaded ? 'opacity-100' : 'opacity-0'
         )}
         style={{ height }}
         loading="lazy"
@@ -69,5 +65,5 @@ export const MapPreview: React.FC<MapPreviewProps> = ({
         Open Maps
       </button>
     </div>
-  )
-}
+  );
+};

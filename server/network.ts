@@ -1,4 +1,4 @@
-import { Server as HttpServer } from "http";
+import { Server as HttpServer } from 'http';
 
 export const resolvePort = (rawPort: string | undefined, fallbackPort: number): number => {
   const parsedPort = Number(rawPort);
@@ -12,7 +12,7 @@ export const listenWithFallback = async (
   httpServer: HttpServer,
   host: string,
   startPort: number,
-  maxAttempts = 10,
+  maxAttempts = 10
 ): Promise<number> => {
   let currentPort = startPort;
 
@@ -20,24 +20,24 @@ export const listenWithFallback = async (
     try {
       await new Promise<void>((resolve, reject) => {
         const onError = (error: NodeJS.ErrnoException) => {
-          httpServer.off("listening", onListening);
+          httpServer.off('listening', onListening);
           reject(error);
         };
 
         const onListening = () => {
-          httpServer.off("error", onError);
+          httpServer.off('error', onError);
           resolve();
         };
 
-        httpServer.once("error", onError);
-        httpServer.once("listening", onListening);
+        httpServer.once('error', onError);
+        httpServer.once('listening', onListening);
         httpServer.listen(currentPort, host);
       });
 
       return currentPort;
     } catch (error) {
       const err = error as NodeJS.ErrnoException;
-      if (err.code !== "EADDRINUSE" || attempt === maxAttempts - 1) {
+      if (err.code !== 'EADDRINUSE' || attempt === maxAttempts - 1) {
         throw error;
       }
 
@@ -46,5 +46,5 @@ export const listenWithFallback = async (
     }
   }
 
-  throw new Error("No available port found in allowed retry range.");
+  throw new Error('No available port found in allowed retry range.');
 };

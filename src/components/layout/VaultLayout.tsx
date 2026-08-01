@@ -1,61 +1,45 @@
-import React, { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Plus,
-  Folder,
-  Edit2,
-  Trash2,
-  Check,
-  X,
-  Search,
-  Menu,
-  Loader2,
-} from 'lucide-react'
-import { Button } from '../ui/Button'
-import { Input } from '../ui/Input'
-import { cn } from '../../lib/utils'
-import { VaultItem } from '../../lib/storage'
-import { getDraggedVaultItem, clearDraggedVaultItem } from '../../lib/vaultDragDrop'
-import { isSavedFolderName } from '../../lib/folderGuards'
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Folder, Edit2, Trash2, Check, X, Search, Menu, Loader2 } from 'lucide-react';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { cn } from '../../lib/utils';
+import { VaultItem } from '../../lib/storage';
+import { getDraggedVaultItem, clearDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { isSavedFolderName } from '../../lib/folderGuards';
 
 interface VaultLayoutProps {
-  title: string
-  description: string
-  itemTypeLabel: string
-  allItemLabel?: string
-  items?: VaultItem[]
-  onUpload?: (targetFolder?: string | null) => void
-  onLiveRecord?: () => void
-  onFileDrop?: (
-    files: File[],
-    targetFolder?: string | null,
-  ) => Promise<void> | void
-  isUploading?: boolean
-  uploadLabel?: string
-  searchQuery: string
-  onSearchChange: (query: string) => void
-  folders: string[]
-  currentFolder: string | null
-  onFolderSelect: (folder: string | null) => void
+  title: string;
+  description: string;
+  itemTypeLabel: string;
+  allItemLabel?: string;
+  items?: VaultItem[];
+  onUpload?: (targetFolder?: string | null) => void;
+  onLiveRecord?: () => void;
+  onFileDrop?: (files: File[], targetFolder?: string | null) => Promise<void> | void;
+  isUploading?: boolean;
+  uploadLabel?: string;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  folders: string[];
+  currentFolder: string | null;
+  onFolderSelect: (folder: string | null) => void;
   folderControls: {
-    isAdding: boolean
-    setIsAdding: (val: boolean) => void
-    newName: string
-    setNewName: (val: string) => void
-    editing: string | null
-    setEditing: (val: string | null) => void
-    editingName: string
-    setEditingName: (val: string) => void
-    onCreate: () => void
-    onRename: (oldName: string) => void
-    onDelete: (name: string) => void
-  }
-  onMoveItemToFolder?: (
-    itemId: string,
-    folder: string | null,
-  ) => Promise<void> | void
-  children: React.ReactNode
-  sidebarIcon?: React.ElementType
+    isAdding: boolean;
+    setIsAdding: (val: boolean) => void;
+    newName: string;
+    setNewName: (val: string) => void;
+    editing: string | null;
+    setEditing: (val: string | null) => void;
+    editingName: string;
+    setEditingName: (val: string) => void;
+    onCreate: () => void;
+    onRename: (oldName: string) => void;
+    onDelete: (name: string) => void;
+  };
+  onMoveItemToFolder?: (itemId: string, folder: string | null) => Promise<void> | void;
+  children: React.ReactNode;
+  sidebarIcon?: React.ElementType;
 }
 
 export const VaultLayout: React.FC<VaultLayoutProps> = ({
@@ -79,177 +63,160 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
   children,
   sidebarIcon: SidebarIcon = Folder,
 }) => {
-  const [isMobileFolderOpen, setIsMobileFolderOpen] = useState(false)
-  const [searchInput, setSearchInput] = useState(searchQuery)
-  const [dropTarget, setDropTarget] = useState<string | null | undefined>(
-    undefined,
-  )
-  const [isFileDropActive, setIsFileDropActive] = useState(false)
-  const [draggedItemId, setDraggedItemId] = useState<string | null>(null)
+  const [isMobileFolderOpen, setIsMobileFolderOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState(searchQuery);
+  const [dropTarget, setDropTarget] = useState<string | null | undefined>(undefined);
+  const [isFileDropActive, setIsFileDropActive] = useState(false);
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
 
   useEffect(() => {
     const handleGlobalDragStart = (e: DragEvent) => {
-      const itemId = getDraggedVaultItem({ dataTransfer: e.dataTransfer })
+      const itemId = getDraggedVaultItem({ dataTransfer: e.dataTransfer });
       if (itemId) {
-        setDraggedItemId(itemId)
+        setDraggedItemId(itemId);
       }
-    }
+    };
 
     const handleGlobalDragEnd = () => {
-      setDraggedItemId(null)
-      clearDraggedVaultItem()
-    }
+      setDraggedItemId(null);
+      clearDraggedVaultItem();
+    };
 
-    window.addEventListener('dragstart', handleGlobalDragStart)
-    window.addEventListener('dragend', handleGlobalDragEnd)
+    window.addEventListener('dragstart', handleGlobalDragStart);
+    window.addEventListener('dragend', handleGlobalDragEnd);
 
     return () => {
-      window.removeEventListener('dragstart', handleGlobalDragStart)
-      window.removeEventListener('dragend', handleGlobalDragEnd)
-    }
-  }, [])
+      window.removeEventListener('dragstart', handleGlobalDragStart);
+      window.removeEventListener('dragend', handleGlobalDragEnd);
+    };
+  }, []);
 
   const draggedItem = React.useMemo(() => {
-    if (!draggedItemId) return null
-    return items.find((item) => item.id === draggedItemId)
-  }, [draggedItemId, items])
+    if (!draggedItemId) return null;
+    return items.find((item) => item.id === draggedItemId);
+  }, [draggedItemId, items]);
 
-  const draggedItemFolder = draggedItem ? (draggedItem.folder ?? null) : undefined
+  const draggedItemFolder = draggedItem ? (draggedItem.folder ?? null) : undefined;
 
   useEffect(() => {
-    setSearchInput(searchQuery)
-  }, [searchQuery])
+    setSearchInput(searchQuery);
+  }, [searchQuery]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       if (searchInput !== searchQuery) {
-        onSearchChange(searchInput)
+        onSearchChange(searchInput);
       }
-    }, 120)
+    }, 120);
 
     return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [searchInput, searchQuery, onSearchChange])
+      window.clearTimeout(timeoutId);
+    };
+  }, [searchInput, searchQuery, onSearchChange]);
 
   const folderCounts = React.useMemo(() => {
-    const map: Partial<Record<string, number>> = {}
+    const map: Partial<Record<string, number>> = {};
     for (const item of items) {
-      const key = item.folder || '__all__'
-      map[key] = (map[key] || 0) + 1
+      const key = item.folder || '__all__';
+      map[key] = (map[key] || 0) + 1;
     }
-    return map
-  }, [items])
+    return map;
+  }, [items]);
 
   const getFolderCount = (folderName: string | null) => {
-    if (folderName === null) return items.length
-    return folderCounts[folderName] || 0
-  }
+    if (folderName === null) return items.length;
+    return folderCounts[folderName] || 0;
+  };
 
   const handleCreateFolder = React.useCallback(() => {
-    const name = folderControls.newName.trim()
-    const normalized = name.toLowerCase()
-    if (!name || folders.some((f) => f.toLowerCase() === normalized)) return
-    folderControls.onCreate()
-  }, [folderControls, folders])
+    const name = folderControls.newName.trim();
+    const normalized = name.toLowerCase();
+    if (!name || folders.some((f) => f.toLowerCase() === normalized)) return;
+    folderControls.onCreate();
+  }, [folderControls, folders]);
 
   const handleRenameFolder = React.useCallback(
     (oldName: string) => {
-      const name = folderControls.editingName.trim()
-      const normalized = name.toLowerCase()
-      if (
-        !name ||
-        folders.some((f) => f !== oldName && f.toLowerCase() === normalized)
-      )
-        return
-      folderControls.onRename(oldName)
+      const name = folderControls.editingName.trim();
+      const normalized = name.toLowerCase();
+      if (!name || folders.some((f) => f !== oldName && f.toLowerCase() === normalized)) return;
+      folderControls.onRename(oldName);
     },
-    [folderControls, folders],
-  )
+    [folderControls, folders]
+  );
 
   const isCreateInvalid =
     !folderControls.newName.trim() ||
-    folders.some(
-      (f) => f.toLowerCase() === folderControls.newName.trim().toLowerCase(),
-    )
+    folders.some((f) => f.toLowerCase() === folderControls.newName.trim().toLowerCase());
 
   const isRenameInvalid = (oldName: string) => {
-    const name = folderControls.editingName.trim()
-    const normalized = name.toLowerCase()
-    return (
-      !name ||
-      folders.some((f) => f !== oldName && f.toLowerCase() === normalized)
-    )
-  }
+    const name = folderControls.editingName.trim();
+    const normalized = name.toLowerCase();
+    return !name || folders.some((f) => f !== oldName && f.toLowerCase() === normalized);
+  };
 
-  const handleFolderDragOver = (
-    event: React.DragEvent<HTMLElement>,
-    folder: string | null,
-  ) => {
-    if (!onMoveItemToFolder || !getDraggedVaultItem(event)) return
+  const handleFolderDragOver = (event: React.DragEvent<HTMLElement>, folder: string | null) => {
+    if (!onMoveItemToFolder || !getDraggedVaultItem(event)) return;
 
-    const itemId = getDraggedVaultItem(event)
-    const dragged = items.find((item) => item.id === itemId)
-    const sourceFolder = dragged ? (dragged.folder ?? null) : undefined
+    const itemId = getDraggedVaultItem(event);
+    const dragged = items.find((item) => item.id === itemId);
+    const sourceFolder = dragged ? (dragged.folder ?? null) : undefined;
 
     // Do not allow drop on the folder where the item already is
-    if (sourceFolder === folder) return
+    if (sourceFolder === folder) return;
 
-    event.preventDefault()
-    event.dataTransfer.dropEffect = 'move'
-    setDropTarget(folder)
-  }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    setDropTarget(folder);
+  };
 
-  const handleFolderDrop = async (
-    event: React.DragEvent<HTMLElement>,
-    folder: string | null,
-  ) => {
-    if (!onMoveItemToFolder) return
-    event.preventDefault()
-    const itemId = getDraggedVaultItem(event)
-    setDropTarget(undefined)
-    if (!itemId) return
+  const handleFolderDrop = async (event: React.DragEvent<HTMLElement>, folder: string | null) => {
+    if (!onMoveItemToFolder) return;
+    event.preventDefault();
+    const itemId = getDraggedVaultItem(event);
+    setDropTarget(undefined);
+    if (!itemId) return;
 
-    const dragged = items.find((item) => item.id === itemId)
-    const sourceFolder = dragged ? (dragged.folder ?? null) : undefined
+    const dragged = items.find((item) => item.id === itemId);
+    const sourceFolder = dragged ? (dragged.folder ?? null) : undefined;
 
     // Do not allow drop on the folder where the item already is
-    if (sourceFolder === folder) return
+    if (sourceFolder === folder) return;
 
-    await onMoveItemToFolder(itemId, folder)
-  }
+    await onMoveItemToFolder(itemId, folder);
+  };
 
   const handleFolderDragLeave = (folder: string | null) => {
     if (dropTarget === folder) {
-      setDropTarget(undefined)
+      setDropTarget(undefined);
     }
-  }
+  };
 
   const hasDraggedFiles = (event: React.DragEvent<HTMLElement>) =>
-    Array.from(event.dataTransfer.types).includes('Files')
+    Array.from(event.dataTransfer.types).includes('Files');
 
   const handleFileDragOver = (event: React.DragEvent<HTMLElement>) => {
-    if (!onFileDrop || !hasDraggedFiles(event)) return
-    event.preventDefault()
-    event.dataTransfer.dropEffect = 'copy'
-    setIsFileDropActive(true)
-  }
+    if (!onFileDrop || !hasDraggedFiles(event)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+    setIsFileDropActive(true);
+  };
 
   const handleFileDragLeave = (event: React.DragEvent<HTMLElement>) => {
-    if (!onFileDrop) return
+    if (!onFileDrop) return;
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-      setIsFileDropActive(false)
+      setIsFileDropActive(false);
     }
-  }
+  };
 
   const handleFileDrop = async (event: React.DragEvent<HTMLElement>) => {
-    if (!onFileDrop || !hasDraggedFiles(event)) return
-    event.preventDefault()
-    setIsFileDropActive(false)
-    const files = Array.from(event.dataTransfer.files || [])
-    if (!files.length) return
-    await onFileDrop(files, currentFolder)
-  }
+    if (!onFileDrop || !hasDraggedFiles(event)) return;
+    event.preventDefault();
+    setIsFileDropActive(false);
+    const files = Array.from(event.dataTransfer.files || []);
+    if (!files.length) return;
+    await onFileDrop(files, currentFolder);
+  };
 
   return (
     <div
@@ -284,17 +251,17 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
             aria-label={allItemLabel || `All ${itemTypeLabel}s`}
             className={cn(
               'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all border border-transparent',
-              dropTarget === null &&
-                'ring-2 ring-primary/50 bg-primary/10 text-text',
+              dropTarget === null && 'ring-2 ring-primary/50 bg-primary/10 text-text',
               // Highlight if this is the source folder of the dragged item
-              draggedItemId && draggedItemFolder === null &&
+              draggedItemId &&
+                draggedItemFolder === null &&
                 'border border-dashed border-primary/40 bg-primary/10 text-primary',
               // Highlight other folders as valid drop zones
-              draggedItemId && draggedItemFolder !== null &&
+              draggedItemId &&
+                draggedItemFolder !== null &&
                 'border border-dashed border-primary/20 bg-primary/5 text-text/70',
-              !draggedItemId && (currentFolder === null
-                ? 'bg-text/10 text-text'
-                : 'text-text/60 hover:bg-text/5'),
+              !draggedItemId &&
+                (currentFolder === null ? 'bg-text/10 text-text' : 'text-text/60 hover:bg-text/5')
             )}
           >
             <SidebarIcon className="h-4 w-4" />
@@ -315,21 +282,19 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
           <div className="h-px bg-text/5 my-2 mx-2" />
 
           {folders.map((folder) => {
-            const isSavedFolder = isSavedFolderName(folder)
+            const isSavedFolder = isSavedFolderName(folder);
             return (
               <div key={folder} className="group relative">
                 {folderControls.editing === folder ? (
                   <div className="flex items-center gap-1 p-1">
                     <Input
                       value={folderControls.editingName}
-                      onChange={(e) =>
-                        folderControls.setEditingName(e.target.value)
-                      }
+                      onChange={(e) => folderControls.setEditingName(e.target.value)}
                       className="h-8 text-xs"
                       autoFocus
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleRenameFolder(folder)
-                        if (e.key === 'Escape') folderControls.setEditing(null)
+                        if (e.key === 'Enter') handleRenameFolder(folder);
+                        if (e.key === 'Escape') folderControls.setEditing(null);
                       }}
                     />
                     <Button
@@ -356,24 +321,24 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                   <>
                     <button
                       onClick={() => onFolderSelect(folder)}
-                      onDragOver={(event) =>
-                        handleFolderDragOver(event, folder)
-                      }
+                      onDragOver={(event) => handleFolderDragOver(event, folder)}
                       onDrop={(event) => void handleFolderDrop(event, folder)}
                       onDragLeave={() => handleFolderDragLeave(folder)}
                       className={cn(
                         'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all border border-transparent',
-                        dropTarget === folder &&
-                          'ring-2 ring-primary/50 bg-primary/10 text-text',
+                        dropTarget === folder && 'ring-2 ring-primary/50 bg-primary/10 text-text',
                         // Highlight if this is the source folder of the dragged item
-                        draggedItemId && draggedItemFolder === folder &&
+                        draggedItemId &&
+                          draggedItemFolder === folder &&
                           'border border-dashed border-primary/40 bg-primary/10 text-primary',
                         // Highlight other folders as valid drop zones
-                        draggedItemId && draggedItemFolder !== folder &&
+                        draggedItemId &&
+                          draggedItemFolder !== folder &&
                           'border border-dashed border-primary/20 bg-primary/5 text-text/70',
-                        !draggedItemId && (currentFolder === folder
-                          ? 'bg-text/10 text-text'
-                          : 'text-text/60 hover:bg-text/5'),
+                        !draggedItemId &&
+                          (currentFolder === folder
+                            ? 'bg-text/10 text-text'
+                            : 'text-text/60 hover:bg-text/5')
                       )}
                     >
                       <Folder className="h-4 w-4 shrink-0" />
@@ -381,9 +346,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                         className="flex-1 truncate text-left group-hover:pr-10 transition-all"
                         title={folder}
                       >
-                        {folder.length > 10
-                          ? `${folder.slice(0, 10)}...`
-                          : folder}
+                        {folder.length > 10 ? `${folder.slice(0, 10)}...` : folder}
                       </span>
                       {draggedItemId && draggedItemFolder === folder ? (
                         <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary animate-pulse">
@@ -395,7 +358,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                             'ml-auto text-[10px] font-bold transition-opacity',
                             currentFolder === folder
                               ? 'opacity-40'
-                              : 'opacity-40 group-hover:opacity-0',
+                              : 'opacity-40 group-hover:opacity-0'
                           )}
                         >
                           {getFolderCount(folder)}
@@ -410,9 +373,9 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                           size="icon"
                           className="h-6 w-6"
                           onClick={(e) => {
-                            e.stopPropagation()
-                            folderControls.setEditing(folder)
-                            folderControls.setEditingName(folder)
+                            e.stopPropagation();
+                            folderControls.setEditing(folder);
+                            folderControls.setEditingName(folder);
                           }}
                         >
                           <Edit2 className="h-3 w-3" />
@@ -423,8 +386,8 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                           size="icon"
                           className="h-6 w-6 hover:text-red-400"
                           onClick={(e) => {
-                            e.stopPropagation()
-                            folderControls.onDelete(folder)
+                            e.stopPropagation();
+                            folderControls.onDelete(folder);
                           }}
                         >
                           <Trash2 className="h-3 w-3" />
@@ -434,7 +397,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                   </>
                 )}
               </div>
-            )
+            );
           })}
 
           <AnimatePresence>
@@ -452,8 +415,8 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                   className="h-8 text-xs"
                   autoFocus
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleCreateFolder()
-                    if (e.key === 'Escape') folderControls.setIsAdding(false)
+                    if (e.key === 'Enter') handleCreateFolder();
+                    if (e.key === 'Escape') folderControls.setIsAdding(false);
                   }}
                 />
                 <div className="flex gap-1">
@@ -487,9 +450,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
         {isFileDropActive && onFileDrop ? (
           <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center rounded-3xl border-2 border-dashed border-primary/50 bg-bg/70 backdrop-blur-sm">
             <div className="rounded-2xl border border-primary/30 bg-primary/10 px-6 py-4 text-center shadow-xl">
-              <p className="text-sm font-semibold text-text">
-                Drop files to upload
-              </p>
+              <p className="text-sm font-semibold text-text">Drop files to upload</p>
               <p className="mt-1 text-xs text-text/60">
                 {currentFolder
                   ? `Files will be added to "${currentFolder}".`
@@ -514,9 +475,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                   {getFolderCount(currentFolder)} items
                 </span>
               </div>
-              <p className="text-text/50 truncate transition-colors">
-                {description}
-              </p>
+              <p className="text-text/50 truncate transition-colors">{description}</p>
             </div>
             <div className="flex items-center gap-3">
               {/* {isUploading && (
@@ -590,7 +549,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/30" />
               <Input
                 placeholder={`Search ${itemTypeLabel}s...`}
-                className={cn("pl-10", searchInput && "pr-9")}
+                className={cn('pl-10', searchInput && 'pr-9')}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
               />
@@ -620,10 +579,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
 
         <AnimatePresence>
           {isMobileFolderOpen && (
-            <motion.div
-              key="mobile-folder-menu"
-              className="fixed inset-0 z-50 lg:hidden"
-            >
+            <motion.div key="mobile-folder-menu" className="fixed inset-0 z-50 lg:hidden">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -653,8 +609,8 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                 <div className="space-y-2">
                   <button
                     onClick={() => {
-                      onFolderSelect(null)
-                      setIsMobileFolderOpen(false)
+                      onFolderSelect(null);
+                      setIsMobileFolderOpen(false);
                     }}
                     role="tab"
                     aria-selected={currentFolder === null}
@@ -662,14 +618,15 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                     className={cn(
                       'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all border border-transparent',
                       // Highlight if this is the source folder of the dragged item
-                      draggedItemId && draggedItemFolder === null &&
+                      draggedItemId &&
+                        draggedItemFolder === null &&
                         'border border-dashed border-primary/40 bg-primary/10 text-primary',
                       // Highlight other folders as valid drop zones
-                      draggedItemId && draggedItemFolder !== null &&
+                      draggedItemId &&
+                        draggedItemFolder !== null &&
                         'border border-dashed border-primary/20 bg-primary/5 text-text/70',
-                      !draggedItemId && (currentFolder === null
-                        ? 'bg-text/10 text-text font-bold'
-                        : 'text-text/60'),
+                      !draggedItemId &&
+                        (currentFolder === null ? 'bg-text/10 text-text font-bold' : 'text-text/60')
                     )}
                   >
                     <SidebarIcon className="h-5 w-5 shrink-0" />
@@ -690,37 +647,37 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                     )}
                   </button>
                   {folders.map((folder) => {
-                    const isEditing = folderControls.editing === folder
-                    const isSavedFolder = isSavedFolderName(folder)
+                    const isEditing = folderControls.editing === folder;
+                    const isSavedFolder = isSavedFolderName(folder);
                     return (
                       <div
                         key={folder}
                         className={cn(
                           'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all border border-transparent',
                           // Highlight if this is the source folder of the dragged item
-                          draggedItemId && draggedItemFolder === folder &&
+                          draggedItemId &&
+                            draggedItemFolder === folder &&
                             'border border-dashed border-primary/40 bg-primary/10 text-primary',
                           // Highlight other folders as valid drop zones
-                          draggedItemId && draggedItemFolder !== folder &&
+                          draggedItemId &&
+                            draggedItemFolder !== folder &&
                             'border border-dashed border-primary/20 bg-primary/5 text-text/70',
-                          !draggedItemId && (currentFolder === folder
-                            ? 'bg-text/10 text-text font-bold'
-                            : 'text-text/60'),
+                          !draggedItemId &&
+                            (currentFolder === folder
+                              ? 'bg-text/10 text-text font-bold'
+                              : 'text-text/60')
                         )}
                       >
                         <Folder className="h-5 w-5 shrink-0" />
                         {isEditing ? (
                           <Input
                             value={folderControls.editingName}
-                            onChange={(e) =>
-                              folderControls.setEditingName(e.target.value)
-                            }
+                            onChange={(e) => folderControls.setEditingName(e.target.value)}
                             className="h-9 flex-1 text-sm"
                             autoFocus
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleRenameFolder(folder)
-                              if (e.key === 'Escape')
-                                folderControls.setEditing(null)
+                              if (e.key === 'Enter') handleRenameFolder(folder);
+                              if (e.key === 'Escape') folderControls.setEditing(null);
                             }}
                           />
                         ) : (
@@ -728,13 +685,11 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                             className="flex-1 text-left truncate"
                             title={folder}
                             onClick={() => {
-                              onFolderSelect(folder)
-                              setIsMobileFolderOpen(false)
+                              onFolderSelect(folder);
+                              setIsMobileFolderOpen(false);
                             }}
                           >
-                            {folder.length > 10
-                              ? `${folder.slice(0, 10)}...`
-                              : folder}
+                            {folder.length > 10 ? `${folder.slice(0, 10)}...` : folder}
                           </button>
                         )}
                         {draggedItemId && draggedItemFolder === folder ? (
@@ -776,8 +731,8 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                               variant="ghost"
                               className="h-8 w-8"
                               onClick={() => {
-                                folderControls.setEditing(folder)
-                                folderControls.setEditingName(folder)
+                                folderControls.setEditing(folder);
+                                folderControls.setEditingName(folder);
                               }}
                             >
                               <Edit2 className="h-3 w-3" />
@@ -794,7 +749,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                           </div>
                         ) : null}
                       </div>
-                    )
+                    );
                   })}
 
                   <AnimatePresence mode="wait">
@@ -809,14 +764,10 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                         <Input
                           placeholder="New category name..."
                           value={folderControls.newName}
-                          onChange={(e) =>
-                            folderControls.setNewName(e.target.value)
-                          }
+                          onChange={(e) => folderControls.setNewName(e.target.value)}
                           className="h-10 text-sm"
                           autoFocus
-                          onKeyDown={(e) =>
-                            e.key === 'Enter' && handleCreateFolder()
-                          }
+                          onKeyDown={(e) => e.key === 'Enter' && handleCreateFolder()}
                         />
                         <div className="flex gap-2">
                           <Button
@@ -849,7 +800,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                           variant="ghost"
                           className="w-full justify-start gap-3 mt-4 text-text/40"
                           onClick={() => {
-                            folderControls.setIsAdding(true)
+                            folderControls.setIsAdding(true);
                           }}
                         >
                           <Plus className="h-5 w-5" />
@@ -866,5 +817,5 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
         {children}
       </div>
     </div>
-  )
-}
+  );
+};

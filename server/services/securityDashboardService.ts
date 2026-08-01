@@ -9,93 +9,91 @@
  * - Admin incident management
  */
 
-import { Server as SocketServer } from 'socket.io'
-import { logger } from '../utils/logger.ts'
-import mongoose from 'mongoose'
+import { Server as SocketServer } from 'socket.io';
+import { logger } from '../utils/logger.ts';
+import mongoose from 'mongoose';
 
 interface DashboardMetrics {
   summary: {
-    activeUsers: number
-    suspiciousActivities: number
-    blockedIps: number
-    threatLevel: 'green' | 'yellow' | 'orange' | 'red'
-  }
+    activeUsers: number;
+    suspiciousActivities: number;
+    blockedIps: number;
+    threatLevel: 'green' | 'yellow' | 'orange' | 'red';
+  };
   recentIncidents: Array<{
-    id: string
-    timestamp: number
-    severity: 'low' | 'medium' | 'high' | 'critical'
-    type: string
-    userId?: string
-    ip: string
-  }>
+    id: string;
+    timestamp: number;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    type: string;
+    userId?: string;
+    ip: string;
+  }>;
   threatTrends: Array<{
-    timestamp: number
-    criticalCount: number
-    highCount: number
-    mediumCount: number
-  }>
+    timestamp: number;
+    criticalCount: number;
+    highCount: number;
+    mediumCount: number;
+  }>;
   topThreats: Array<{
-    type: string
-    count: number
-    severity: string
-  }>
+    type: string;
+    count: number;
+    severity: string;
+  }>;
 }
 
 class SecurityDashboardService {
-  private io: SocketServer | null = null
-  private metrics: Map<string, DashboardMetrics> = new Map()
-  private readonly METRICS_RETENTION_MS = 86400000 // 24 hours
+  private io: SocketServer | null = null;
+  private metrics: Map<string, DashboardMetrics> = new Map();
+  private readonly METRICS_RETENTION_MS = 86400000; // 24 hours
 
   /**
    * Initialize WebSocket server for real-time updates
    */
   initializeWebSocket(io: SocketServer): void {
-    this.io = io
+    this.io = io;
 
     io.on('connection', (socket) => {
-      logger.info(`[DASHBOARD] Admin connected: ${socket.id}`)
+      logger.info(`[DASHBOARD] Admin connected: ${socket.id}`);
 
       // Authenticate user (verify admin token)
-      const token = socket.handshake.auth.token
+      const token = socket.handshake.auth.token;
       if (!this.validateAdminToken(token)) {
-        socket.disconnect()
-        return
+        socket.disconnect();
+        return;
       }
 
       // Send initial metrics
-      socket.emit('metrics', this.getCurrentMetrics())
+      socket.emit('metrics', this.getCurrentMetrics());
 
       // Handle subscriptions
       socket.on('subscribe', (channel) => {
-        if (
-          ['threats', 'incidents', 'anomalies', 'performance'].includes(channel)
-        ) {
-          socket.join(`dashboard:${channel}`)
-          logger.info(`[DASHBOARD] Subscribed to ${channel}`)
+        if (['threats', 'incidents', 'anomalies', 'performance'].includes(channel)) {
+          socket.join(`dashboard:${channel}`);
+          logger.info(`[DASHBOARD] Subscribed to ${channel}`);
         }
-      })
+      });
 
       // Handle incident update
       socket.on('update_incident', (data) => {
-        this.handleIncidentUpdate(socket, data)
-      })
+        this.handleIncidentUpdate(socket, data);
+      });
 
       // Handle manual response
       socket.on('manual_response', (data) => {
-        this.handleManualResponse(socket, data)
-      })
+        this.handleManualResponse(socket, data);
+      });
 
       socket.on('disconnect', () => {
-        logger.info(`[DASHBOARD] Admin disconnected: ${socket.id}`)
-      })
-    })
+        logger.info(`[DASHBOARD] Admin disconnected: ${socket.id}`);
+      });
+    });
   }
 
   /**
    * Broadcast new incident to dashboard
    */
   broadcastIncident(incident: any): void {
-    if (!this.io) return
+    if (!this.io) return;
 
     const enrichedIncident = {
       id: incident.id,
@@ -106,41 +104,41 @@ class SecurityDashboardService {
       ip: incident.ip,
       details: incident.details,
       autoActions: incident.autoResponse?.map((r: any) => r.action) || [],
-    }
+    };
 
-    this.io.to('dashboard:incidents').emit('incident', enrichedIncident)
-    this.io.to('dashboard:threats').emit('threat_alert', enrichedIncident)
+    this.io.to('dashboard:incidents').emit('incident', enrichedIncident);
+    this.io.to('dashboard:threats').emit('threat_alert', enrichedIncident);
 
-    logger.info(`[DASHBOARD] Broadcast incident: ${incident.id}`)
+    logger.info(`[DASHBOARD] Broadcast incident: ${incident.id}`);
   }
 
   /**
    * Broadcast anomaly detection event
    */
   broadcastAnomaly(userId: string, anomalyData: any): void {
-    if (!this.io) return
+    if (!this.io) return;
 
     this.io.to('dashboard:anomalies').emit('anomaly', {
       timestamp: Date.now(),
       userId,
       ...anomalyData,
-    })
+    });
   }
 
   /**
    * Update performance metrics
    */
   broadcastPerformanceMetric(metric: {
-    endpoint: string
-    method: string
-    responseTime: number
-    statusCode: number
+    endpoint: string;
+    method: string;
+    responseTime: number;
+    statusCode: number;
   }): void {
-    if (!this.io) return
+    if (!this.io) return;
 
     // Only broadcast slow/error responses
     if (metric.responseTime > 1000 || metric.statusCode >= 400) {
-      this.io.to('dashboard:performance').emit('performance', metric)
+      this.io.to('dashboard:performance').emit('performance', metric);
     }
   }
 
@@ -148,70 +146,70 @@ class SecurityDashboardService {
    * Get comprehensive dashboard metrics
    */
   async getCurrentMetrics(): Promise<DashboardMetrics> {
-    const now = Date.now()
-    const oneDayAgo = now - this.METRICS_RETENTION_MS
+    const now = Date.now();
+    const oneDayAgo = now - this.METRICS_RETENTION_MS;
 
     try {
       // Fetch incidents from database
-      const IncidentModel = mongoose.model('SecurityIncident')
+      const IncidentModel = mongoose.model('SecurityIncident');
 
-      const recentIncidents = await IncidentModel.find({
+      const recentIncidents = (await IncidentModel.find({
         timestamp: { $gte: oneDayAgo },
       })
         .sort({ timestamp: -1 })
         .allowDiskUse()
         .limit(50)
-        .lean() as any[]
+        .lean()) as any[];
 
       const suspiciousActivities = recentIncidents.filter(
-        (i) => i.severity === 'high' || i.severity === 'critical',
-      ).length
+        (i) => i.severity === 'high' || i.severity === 'critical'
+      ).length;
 
       // Calculate threat level
-      let threatLevel: 'green' | 'yellow' | 'orange' | 'red' = 'green'
+      let threatLevel: 'green' | 'yellow' | 'orange' | 'red' = 'green';
       if (suspiciousActivities > 20) {
-        threatLevel = 'red'
+        threatLevel = 'red';
       } else if (suspiciousActivities > 10) {
-        threatLevel = 'orange'
+        threatLevel = 'orange';
       } else if (suspiciousActivities > 5) {
-        threatLevel = 'yellow'
+        threatLevel = 'yellow';
       }
 
       // Group by threat type
-      const typeMap: Record<string, { count: number; severity: string }> = {}
-      const severityTrend: Record<number, Record<string, number>> = {}
+      const typeMap: Record<string, { count: number; severity: string }> = {};
+      const severityTrend: Record<number, Record<string, number>> = {};
 
       for (const incident of recentIncidents) {
         // By type
         if (!typeMap[incident.type]) {
-          typeMap[incident.type] = { count: 0, severity: incident.severity }
+          typeMap[incident.type] = { count: 0, severity: incident.severity };
         }
-        typeMap[incident.type].count++
+        typeMap[incident.type].count++;
 
         // By severity over time (hourly)
-        const hour = Math.floor(incident.timestamp / 3600000) * 3600000
+        const hour = Math.floor(incident.timestamp / 3600000) * 3600000;
         if (!severityTrend[hour]) {
           severityTrend[hour] = {
             criticalCount: 0,
             highCount: 0,
             mediumCount: 0,
-          }
+          };
         }
 
-        const key = `${incident.severity}Count`
+        const key = `${incident.severity}Count`;
         if (key in severityTrend[hour]) {
-          severityTrend[hour][key]++
+          severityTrend[hour][key]++;
         }
       }
 
       const threatTrends = Object.entries(severityTrend)
         .map(([ts, counts]) => ({ timestamp: parseInt(ts), ...counts }))
-        .sort((a, b) => a.timestamp - b.timestamp)
+        .sort((a, b) => a.timestamp - b.timestamp);
 
       const topThreats = Object.entries(typeMap)
         .map(([type, data]) => ({ type, ...data }))
         .sort((a, b) => b.count - a.count)
-        .slice(0, 10)
+        .slice(0, 10);
 
       const metrics: DashboardMetrics = {
         summary: {
@@ -223,12 +221,12 @@ class SecurityDashboardService {
         recentIncidents: recentIncidents as any,
         threatTrends: threatTrends as any,
         topThreats,
-      }
+      };
 
-      return metrics
+      return metrics;
     } catch (error) {
-      logger.error('[DASHBOARD] Error fetching metrics', error)
-      throw error
+      logger.error('[DASHBOARD] Error fetching metrics', error);
+      throw error;
     }
   }
 
@@ -236,11 +234,11 @@ class SecurityDashboardService {
    * Get incident details for admin review
    */
   async getIncidentDetails(incidentId: string): Promise<any> {
-    const IncidentModel = mongoose.model('SecurityIncident')
+    const IncidentModel = mongoose.model('SecurityIncident');
 
-    const incident = await IncidentModel.findOne({ id: incidentId }).lean() as any
+    const incident = (await IncidentModel.findOne({ id: incidentId }).lean()) as any;
     if (!incident) {
-      throw new Error(`Incident not found: ${incidentId}`)
+      throw new Error(`Incident not found: ${incidentId}`);
     }
 
     return {
@@ -248,7 +246,7 @@ class SecurityDashboardService {
       relatedIncidents: await this.findRelatedIncidents(incident),
       userActivity: await this.getUserActivity(incident.userId),
       ipReputation: await this.getIpReputation(incident.ip),
-    }
+    };
   }
 
   /**
@@ -257,9 +255,9 @@ class SecurityDashboardService {
   async updateIncidentStatus(
     incidentId: string,
     status: 'open' | 'investigating' | 'mitigated' | 'resolved',
-    notes?: string,
+    notes?: string
   ): Promise<void> {
-    const IncidentModel = mongoose.model('SecurityIncident')
+    const IncidentModel = mongoose.model('SecurityIncident');
 
     await IncidentModel.findOneAndUpdate(
       { id: incidentId },
@@ -267,12 +265,10 @@ class SecurityDashboardService {
         status,
         adminNotes: notes,
         updatedAt: new Date(),
-      },
-    )
+      }
+    );
 
-    logger.info(
-      `[DASHBOARD] Incident status updated: ${incidentId} -> ${status}`,
-    )
+    logger.info(`[DASHBOARD] Incident status updated: ${incidentId} -> ${status}`);
   }
 
   /**
@@ -281,32 +277,30 @@ class SecurityDashboardService {
   async applyManualAction(
     action: 'block_ip' | 'whitelist_ip' | 'logout_user' | 'disable_user',
     target: string,
-    durationHours?: number,
+    durationHours?: number
   ): Promise<void> {
-    const duration = (durationHours || 24) * 3600000
+    const duration = (durationHours || 24) * 3600000;
 
     switch (action) {
       case 'block_ip':
         // Would set in Redis blacklist
-        logger.warn(
-          `[ADMIN] Manually blocked IP: ${target} for ${durationHours}h`,
-        )
-        break
+        logger.warn(`[ADMIN] Manually blocked IP: ${target} for ${durationHours}h`);
+        break;
 
       case 'whitelist_ip':
         // Would set in Redis whitelist
-        logger.info(`[ADMIN] Manually whitelisted IP: ${target}`)
-        break
+        logger.info(`[ADMIN] Manually whitelisted IP: ${target}`);
+        break;
 
       case 'logout_user':
         // Would invalidate user sessions
-        logger.warn(`[ADMIN] Manually forced logout: ${target}`)
-        break
+        logger.warn(`[ADMIN] Manually forced logout: ${target}`);
+        break;
 
       case 'disable_user':
         // Would disable user account
-        logger.error(`[ADMIN] Manually disabled user: ${target}`)
-        break
+        logger.error(`[ADMIN] Manually disabled user: ${target}`);
+        break;
     }
 
     // Broadcast to all admins
@@ -315,30 +309,27 @@ class SecurityDashboardService {
         action,
         target,
         timestamp: Date.now(),
-      })
+      });
     }
   }
 
   /**
    * Export security report
    */
-  async generateSecurityReport(
-    startDate: Date,
-    endDate: Date,
-  ): Promise<Buffer> {
-    const IncidentModel = mongoose.model('SecurityIncident')
+  async generateSecurityReport(startDate: Date, endDate: Date): Promise<Buffer> {
+    const IncidentModel = mongoose.model('SecurityIncident');
 
-    const incidents = await IncidentModel.find({
+    const incidents = (await IncidentModel.find({
       timestamp: { $gte: startDate.getTime(), $lte: endDate.getTime() },
-    }).lean() as any[]
+    }).lean()) as any[];
 
     // Generate CSV
-    let csv = 'ID,Timestamp,Severity,Type,User ID,IP,Status\n'
+    let csv = 'ID,Timestamp,Severity,Type,User ID,IP,Status\n';
     for (const incident of incidents) {
-      csv += `${incident.id},${new Date(incident.timestamp).toISOString()},${incident.severity},${incident.type},${incident.userId || 'N/A'},${incident.ip},${incident.status}\n`
+      csv += `${incident.id},${new Date(incident.timestamp).toISOString()},${incident.severity},${incident.type},${incident.userId || 'N/A'},${incident.ip},${incident.status}\n`;
     }
 
-    return Buffer.from(csv, 'utf-8')
+    return Buffer.from(csv, 'utf-8');
   }
 
   // ==================== PRIVATE HELPER METHODS ====================
@@ -346,49 +337,49 @@ class SecurityDashboardService {
   private validateAdminToken(token: string): boolean {
     // In production, verify JWT token and check admin role
     // TODO: Implement proper token validation
-    return token !== undefined
+    return token !== undefined;
   }
 
   private async handleIncidentUpdate(socket: any, data: any): Promise<void> {
     try {
-      await this.updateIncidentStatus(data.incidentId, data.status, data.notes)
-      socket.emit('update_success', { message: 'Incident updated' })
+      await this.updateIncidentStatus(data.incidentId, data.status, data.notes);
+      socket.emit('update_success', { message: 'Incident updated' });
     } catch (error) {
-      socket.emit('update_error', { message: 'Failed to update incident' })
+      socket.emit('update_error', { message: 'Failed to update incident' });
     }
   }
 
   private async handleManualResponse(socket: any, data: any): Promise<void> {
     try {
-      await this.applyManualAction(data.action, data.target, data.duration)
+      await this.applyManualAction(data.action, data.target, data.duration);
       socket.emit('action_success', {
         message: `Action completed: ${data.action}`,
-      })
+      });
     } catch (error) {
-      socket.emit('action_error', { message: 'Failed to apply action' })
+      socket.emit('action_error', { message: 'Failed to apply action' });
     }
   }
 
   private async findRelatedIncidents(incident: any): Promise<any[]> {
-    const IncidentModel = mongoose.model('SecurityIncident')
+    const IncidentModel = mongoose.model('SecurityIncident');
 
     return await IncidentModel.find({
       $or: [{ ip: incident.ip }, { userId: incident.userId }],
       id: { $ne: incident.id },
     })
       .limit(10)
-      .lean()
+      .lean();
   }
 
   private async getUserActivity(userId?: string): Promise<any> {
-    if (!userId) return null
+    if (!userId) return null;
 
     // Would fetch user's recent activities
     return {
       lastLogin: new Date(),
       loginAttempts: 2,
       apiCallsLast24h: 150,
-    }
+    };
   }
 
   private async getIpReputation(ip: string): Promise<any> {
@@ -397,8 +388,8 @@ class SecurityDashboardService {
       ip,
       reputation: 'unknown',
       abuseScore: 0,
-    }
+    };
   }
 }
 
-export const securityDashboardService = new SecurityDashboardService()
+export const securityDashboardService = new SecurityDashboardService();

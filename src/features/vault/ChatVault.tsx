@@ -1,18 +1,18 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { MessageSquareText } from 'lucide-react'
-import { toast } from 'sonner'
-import { encryptData, decryptData } from '../../lib/cryptoPrimitives'
-import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent'
-import { VaultItem } from '../../lib/storage'
-import { sortPinnedFirst } from '../../lib/pinning'
-import { useVaultStore } from '../../store/vaultStore'
-import { useShallow } from 'zustand/react/shallow'
-import { logActivity } from '../../lib/activity'
-import { logger } from '../../lib/logger'
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop'
-import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu'
-import { FolderSidebar } from '../../components/vault/FolderSidebar'
-import { useVaultFolders } from '../../hooks/useVaultFolders'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MessageSquareText } from 'lucide-react';
+import { toast } from 'sonner';
+import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
+import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';
+import { VaultItem } from '../../lib/storage';
+import { sortPinnedFirst } from '../../lib/pinning';
+import { useVaultStore } from '../../store/vaultStore';
+import { useShallow } from 'zustand/react/shallow';
+import { logActivity } from '../../lib/activity';
+import { logger } from '../../lib/logger';
+import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
+import { FolderSidebar } from '../../components/vault/FolderSidebar';
+import { useVaultFolders } from '../../hooks/useVaultFolders';
 import {
   ChatConversationPanel,
   ChatConversation,
@@ -28,90 +28,72 @@ import {
   isExpiredMessage,
   resolveMessageLifetime,
   toConversation,
-} from './components/ChatVault'
+} from './components/ChatVault';
 
-const CHAT_DECRYPT_BATCH_SIZE = 20
-const CHAT_LIST_PAGE_SIZE = 30
-const CHAT_MESSAGE_MAX_LENGTH = 8000
+const CHAT_DECRYPT_BATCH_SIZE = 20;
+const CHAT_LIST_PAGE_SIZE = 30;
+const CHAT_MESSAGE_MAX_LENGTH = 8000;
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
   if (error instanceof Error && error.message.trim()) {
-    return error.message
+    return error.message;
   }
 
-  const candidate = error as
-    | { message?: unknown; error?: { message?: unknown } }
-    | null
+  const candidate = error as { message?: unknown; error?: { message?: unknown } } | null;
 
   if (typeof candidate?.error?.message === 'string') {
-    return candidate.error.message
+    return candidate.error.message;
   }
 
   if (typeof candidate?.message === 'string') {
-    return candidate.message
+    return candidate.message;
   }
 
-  return fallback
-}
+  return fallback;
+};
 
-const createChatError = (message: string): Error => new Error(message)
+const createChatError = (message: string): Error => new Error(message);
 
 export const ChatVault: React.FC = () => {
-  const {
-    items,
-    masterKey,
-    username,
-    addItem,
-    updateItem,
-    removeItem,
-    togglePin,
-    pinningItemIds,
-  } = useVaultStore(
-    useShallow((state) => ({
-      items: state.items,
-      masterKey: state.masterKey,
-      username: state.username || 'You',
-      addItem: state.addItem,
-      updateItem: state.updateItem,
-      removeItem: state.removeItem,
-      togglePin: state.togglePin,
-      pinningItemIds: state.pinningItemIds,
-    })),
-  )
+  const { items, masterKey, username, addItem, updateItem, removeItem, togglePin, pinningItemIds } =
+    useVaultStore(
+      useShallow((state) => ({
+        items: state.items,
+        masterKey: state.masterKey,
+        username: state.username || 'You',
+        addItem: state.addItem,
+        updateItem: state.updateItem,
+        removeItem: state.removeItem,
+        togglePin: state.togglePin,
+        pinningItemIds: state.pinningItemIds,
+      }))
+    );
 
-  const [chatPayloads, setChatPayloads] = useState<Record<string, ChatConversation>>({})
-  const [failedChatIds, setFailedChatIds] = useState<Set<string>>(new Set())
-  const [searchQuery, setSearchQuery] = useState('')
-  const [newChatTitle, setNewChatTitle] = useState('')
-  const [filter, setFilter] = useState<ChatListFilter>('all')
-  const [isMobileFolderMenuOpen, setIsMobileFolderMenuOpen] = useState(false)
-  const [activeChatId, setActiveChatId] = useState<string | null>(null)
-  const [detailTab, setDetailTab] = useState<ChatDetailTab>('messages')
-  const [draftMessage, setDraftMessage] = useState('')
-  const [replyTargetId, setReplyTargetId] = useState<string | null>(null)
-  const [busyMessageId, setBusyMessageId] = useState<string | null>(null)
-  const [isCreatingChat, setIsCreatingChat] = useState(false)
-  const [isSendingMessage, setIsSendingMessage] = useState(false)
-  const [visibleChatCount, setVisibleChatCount] = useState(CHAT_LIST_PAGE_SIZE)
-  const [isLoadingChatBatch, setIsLoadingChatBatch] = useState(false)
-  const [hasMoreChatPayloads, setHasMoreChatPayloads] = useState(false)
-  const [chatLoadErrors, setChatLoadErrors] = useState<Record<string, string>>(
-    {},
-  )
-  const [loadingChatIds, setLoadingChatIds] = useState<Set<string>>(new Set())
-  const expiringCleanupInFlight = useRef<Set<string>>(new Set())
-  const messagesEndRef = useRef<HTMLDivElement | null>(null)
-  const chatBatchCursorRef = useRef(0)
-  const chatBatchInFlightRef = useRef(false)
+  const [chatPayloads, setChatPayloads] = useState<Record<string, ChatConversation>>({});
+  const [failedChatIds, setFailedChatIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [newChatTitle, setNewChatTitle] = useState('');
+  const [filter, setFilter] = useState<ChatListFilter>('all');
+  const [isMobileFolderMenuOpen, setIsMobileFolderMenuOpen] = useState(false);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [detailTab, setDetailTab] = useState<ChatDetailTab>('messages');
+  const [draftMessage, setDraftMessage] = useState('');
+  const [replyTargetId, setReplyTargetId] = useState<string | null>(null);
+  const [busyMessageId, setBusyMessageId] = useState<string | null>(null);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [visibleChatCount, setVisibleChatCount] = useState(CHAT_LIST_PAGE_SIZE);
+  const [isLoadingChatBatch, setIsLoadingChatBatch] = useState(false);
+  const [hasMoreChatPayloads, setHasMoreChatPayloads] = useState(false);
+  const [chatLoadErrors, setChatLoadErrors] = useState<Record<string, string>>({});
+  const [loadingChatIds, setLoadingChatIds] = useState<Set<string>>(new Set());
+  const expiringCleanupInFlight = useRef<Set<string>>(new Set());
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const chatBatchCursorRef = useRef(0);
+  const chatBatchInFlightRef = useRef(false);
 
-  const chats = useMemo(
-    () => items.filter((item) => item.type === 'chat'),
-    [items],
-  )
-  const chatItemById = useMemo(
-    () => new Map(chats.map((item) => [item.id, item])),
-    [chats],
-  )
+  const chats = useMemo(() => items.filter((item) => item.type === 'chat'), [items]);
+  const chatItemById = useMemo(() => new Map(chats.map((item) => [item.id, item])), [chats]);
 
   const {
     folders,
@@ -129,145 +111,135 @@ export const ChatVault: React.FC = () => {
     handleRenameFolder,
     handleDeleteFolder,
     handleMoveToFolder,
-  } = useVaultFolders('chat')
+  } = useVaultFolders('chat');
 
-  const markChatLoadFailed = useCallback(
-    (chatId: string, error: unknown, fallback: string) => {
-      const message = getErrorMessage(error, fallback)
-      setFailedChatIds((previous) => {
-        const next = new Set(previous)
-        next.add(chatId)
-        return next
-      })
-      setChatLoadErrors((previous) => ({
-        ...previous,
-        [chatId]: message,
-      }))
-      logger.warn('Chat conversation failed to load', {
-        chatId,
-        error,
-        reason: message,
-      })
-    },
-    [],
-  )
+  const markChatLoadFailed = useCallback((chatId: string, error: unknown, fallback: string) => {
+    const message = getErrorMessage(error, fallback);
+    setFailedChatIds((previous) => {
+      const next = new Set(previous);
+      next.add(chatId);
+      return next;
+    });
+    setChatLoadErrors((previous) => ({
+      ...previous,
+      [chatId]: message,
+    }));
+    logger.warn('Chat conversation failed to load', {
+      chatId,
+      error,
+      reason: message,
+    });
+  }, []);
 
   const markChatLoadSucceeded = useCallback((chatId: string) => {
     setFailedChatIds((previous) => {
-      if (!previous.has(chatId)) return previous
-      const next = new Set(previous)
-      next.delete(chatId)
-      return next
-    })
+      if (!previous.has(chatId)) return previous;
+      const next = new Set(previous);
+      next.delete(chatId);
+      return next;
+    });
     setChatLoadErrors((previous) => {
-      if (!previous[chatId]) return previous
-      const next = { ...previous }
-      delete next[chatId]
-      return next
-    })
-  }, [])
+      if (!previous[chatId]) return previous;
+      const next = { ...previous };
+      delete next[chatId];
+      return next;
+    });
+  }, []);
 
   const persistConversation = useCallback(
     async (item: VaultItem, nextConversation: ChatConversation) => {
       if (!masterKey) {
-        throw createChatError('Unlock the vault before updating chats')
+        throw createChatError('Unlock the vault before updating chats');
       }
 
-      let encryptedContent: string
+      let encryptedContent: string;
       try {
-        encryptedContent = await encryptData(
-          JSON.stringify(nextConversation),
-          masterKey,
-        )
+        encryptedContent = await encryptData(JSON.stringify(nextConversation), masterKey);
       } catch (error) {
         logger.error('Chat conversation encryption failed', {
           chatId: item.id,
           error,
-        })
-        throw createChatError('Failed to encrypt chat update')
+        });
+        throw createChatError('Failed to encrypt chat update');
       }
 
       try {
         await updateItem(item.id, {
           title: item.title,
           content: encryptedContent,
-        })
+        });
       } catch (error) {
         logger.error('Chat conversation save failed', {
           chatId: item.id,
           error,
-        })
-        throw error
+        });
+        throw error;
       }
 
       setChatPayloads((previous) => ({
         ...previous,
         [item.id]: nextConversation,
-      }))
-      markChatLoadSucceeded(item.id)
+      }));
+      markChatLoadSucceeded(item.id);
     },
-    [markChatLoadSucceeded, masterKey, updateItem],
-  )
+    [markChatLoadSucceeded, masterKey, updateItem]
+  );
 
   const loadConversationForChat = useCallback(
     async (chatItem: VaultItem): Promise<ChatConversation> => {
       if (!masterKey) {
-        throw createChatError('Unlock the vault before opening chats')
+        throw createChatError('Unlock the vault before opening chats');
       }
-      const encryptedContent = getStringContent(chatItem.content)
+      const encryptedContent = getStringContent(chatItem.content);
       if (!encryptedContent) {
-        throw createChatError('Chat has no encrypted content to read')
+        throw createChatError('Chat has no encrypted content to read');
       }
 
-      const decrypted = await decryptData(encryptedContent, masterKey)
+      const decrypted = await decryptData(encryptedContent, masterKey);
       if (!decrypted) {
-        throw createChatError('Chat content could not be decrypted')
+        throw createChatError('Chat content could not be decrypted');
       }
 
-      const parsed = parseJsonSafely<ChatConversation>(decrypted)
-      const conversation = toConversation(parsed)
+      const parsed = parseJsonSafely<ChatConversation>(decrypted);
+      const conversation = toConversation(parsed);
       if (!conversation) {
-        throw createChatError('Chat content is not a valid conversation')
+        throw createChatError('Chat content is not a valid conversation');
       }
 
-      return conversation
+      return conversation;
     },
-    [masterKey],
-  )
+    [masterKey]
+  );
 
   const loadChatById = useCallback(
     async (chatId: string) => {
-      if (chatPayloads[chatId] || loadingChatIds.has(chatId)) return
+      if (chatPayloads[chatId] || loadingChatIds.has(chatId)) return;
 
-      const chatItem = chatItemById.get(chatId)
-      if (!chatItem) return
+      const chatItem = chatItemById.get(chatId);
+      if (!chatItem) return;
 
       setLoadingChatIds((previous) => {
-        const next = new Set(previous)
-        next.add(chatId)
-        return next
-      })
+        const next = new Set(previous);
+        next.add(chatId);
+        return next;
+      });
 
       try {
-        const conversation = await loadConversationForChat(chatItem)
+        const conversation = await loadConversationForChat(chatItem);
         setChatPayloads((previous) => ({
           ...previous,
           [chatId]: conversation,
-        }))
-        markChatLoadSucceeded(chatId)
+        }));
+        markChatLoadSucceeded(chatId);
       } catch (error) {
-        markChatLoadFailed(
-          chatId,
-          error,
-          'Failed to load this chat conversation',
-        )
+        markChatLoadFailed(chatId, error, 'Failed to load this chat conversation');
       } finally {
         setLoadingChatIds((previous) => {
-          if (!previous.has(chatId)) return previous
-          const next = new Set(previous)
-          next.delete(chatId)
-          return next
-        })
+          if (!previous.has(chatId)) return previous;
+          const next = new Set(previous);
+          next.delete(chatId);
+          return next;
+        });
       }
     },
     [
@@ -277,166 +249,146 @@ export const ChatVault: React.FC = () => {
       loadingChatIds,
       markChatLoadFailed,
       markChatLoadSucceeded,
-    ],
-  )
+    ]
+  );
 
   const loadNextChatBatch = useCallback(async () => {
-    if (!masterKey || chatBatchInFlightRef.current) return
+    if (!masterKey || chatBatchInFlightRef.current) return;
 
-    const start = chatBatchCursorRef.current
+    const start = chatBatchCursorRef.current;
     if (start >= chats.length) {
-      setHasMoreChatPayloads(false)
-      return
+      setHasMoreChatPayloads(false);
+      return;
     }
 
-    const end = Math.min(start + CHAT_DECRYPT_BATCH_SIZE, chats.length)
-    const chatBatch = chats.slice(start, end)
-    const payloadEntries: Array<[string, ChatConversation]> = []
+    const end = Math.min(start + CHAT_DECRYPT_BATCH_SIZE, chats.length);
+    const chatBatch = chats.slice(start, end);
+    const payloadEntries: Array<[string, ChatConversation]> = [];
 
-    chatBatchInFlightRef.current = true
-    setIsLoadingChatBatch(true)
+    chatBatchInFlightRef.current = true;
+    setIsLoadingChatBatch(true);
 
     try {
       await Promise.all(
         chatBatch.map(async (chatItem) => {
           try {
-            const conversation = await loadConversationForChat(chatItem)
-            payloadEntries.push([chatItem.id, conversation])
-            markChatLoadSucceeded(chatItem.id)
+            const conversation = await loadConversationForChat(chatItem);
+            payloadEntries.push([chatItem.id, conversation]);
+            markChatLoadSucceeded(chatItem.id);
           } catch (error) {
-            markChatLoadFailed(
-              chatItem.id,
-              error,
-              'Failed to load this chat conversation',
-            )
+            markChatLoadFailed(chatItem.id, error, 'Failed to load this chat conversation');
           }
-        }),
-      )
+        })
+      );
 
       setChatPayloads((previous) => ({
         ...previous,
         ...Object.fromEntries(payloadEntries),
-      }))
-      chatBatchCursorRef.current = end
-      setHasMoreChatPayloads(end < chats.length)
+      }));
+      chatBatchCursorRef.current = end;
+      setHasMoreChatPayloads(end < chats.length);
     } finally {
-      chatBatchInFlightRef.current = false
-      setIsLoadingChatBatch(false)
+      chatBatchInFlightRef.current = false;
+      setIsLoadingChatBatch(false);
     }
-  }, [
-    chats,
-    loadConversationForChat,
-    markChatLoadFailed,
-    markChatLoadSucceeded,
-    masterKey,
-  ])
+  }, [chats, loadConversationForChat, markChatLoadFailed, markChatLoadSucceeded, masterKey]);
 
   useEffect(() => {
-    chatBatchCursorRef.current = 0
-    chatBatchInFlightRef.current = false
-    setVisibleChatCount(CHAT_LIST_PAGE_SIZE)
-    setChatPayloads({})
-    setFailedChatIds(new Set())
-    setChatLoadErrors({})
-    setLoadingChatIds(new Set())
+    chatBatchCursorRef.current = 0;
+    chatBatchInFlightRef.current = false;
+    setVisibleChatCount(CHAT_LIST_PAGE_SIZE);
+    setChatPayloads({});
+    setFailedChatIds(new Set());
+    setChatLoadErrors({});
+    setLoadingChatIds(new Set());
 
     if (!masterKey) {
-      setHasMoreChatPayloads(false)
-      setIsLoadingChatBatch(false)
-      return
+      setHasMoreChatPayloads(false);
+      setIsLoadingChatBatch(false);
+      return;
     }
 
-    setHasMoreChatPayloads(chats.length > 0)
-    void loadNextChatBatch()
-  }, [chats, loadNextChatBatch, masterKey])
+    setHasMoreChatPayloads(chats.length > 0);
+    void loadNextChatBatch();
+  }, [chats, loadNextChatBatch, masterKey]);
 
   const chatMetrics = useMemo(() => {
-    const now = Date.now()
+    const now = Date.now();
     return Object.fromEntries(
       chats.map((chatItem) => {
-        const conversation = chatPayloads[chatItem.id]
+        const conversation = chatPayloads[chatItem.id];
         if (!conversation) {
-          return [chatItem.id, { unread: 0, mentions: 0 }]
+          return [chatItem.id, { unread: 0, mentions: 0 }];
         }
 
         const visibleMessages = conversation.messages.filter(
-          (message) => !isExpiredMessage(message, now),
-        )
+          (message) => !isExpiredMessage(message, now)
+        );
         const unreadCount = visibleMessages.filter(
-          (message) =>
-            message.sender !== username && !message.readBy.includes(username),
-        ).length
+          (message) => message.sender !== username && !message.readBy.includes(username)
+        ).length;
         const mentionCount = visibleMessages.filter(
           (message) =>
             message.sender !== username &&
-            message.mentions.some(
-              (mention) => mention.toLowerCase() === username.toLowerCase(),
-            ) &&
-            !message.readBy.includes(username),
-        ).length
-        return [chatItem.id, { unread: unreadCount, mentions: mentionCount }]
-      }),
-    ) as Record<string, { unread: number; mentions: number }>
-  }, [chatPayloads, chats, username])
+            message.mentions.some((mention) => mention.toLowerCase() === username.toLowerCase()) &&
+            !message.readBy.includes(username)
+        ).length;
+        return [chatItem.id, { unread: unreadCount, mentions: mentionCount }];
+      })
+    ) as Record<string, { unread: number; mentions: number }>;
+  }, [chatPayloads, chats, username]);
 
   const filteredChats = useMemo(() => {
-    const normalizedSearch = searchQuery.trim().toLowerCase()
+    const normalizedSearch = searchQuery.trim().toLowerCase();
     const filtered = chats.filter((chatItem) => {
-      const chatTitle = chatItem.title?.toLowerCase() || ''
-      const matchesSearch =
-        normalizedSearch.length === 0 ||
-        chatTitle.includes(normalizedSearch)
-      const matchesFolder =
-        currentFolder === null ? true : chatItem.folder === currentFolder
-      const metrics = chatMetrics[chatItem.id] || { unread: 0, mentions: 0 }
+      const chatTitle = chatItem.title?.toLowerCase() || '';
+      const matchesSearch = normalizedSearch.length === 0 || chatTitle.includes(normalizedSearch);
+      const matchesFolder = currentFolder === null ? true : chatItem.folder === currentFolder;
+      const metrics = chatMetrics[chatItem.id] || { unread: 0, mentions: 0 };
       const matchesFilter =
-        filter === 'all'
-          ? true
-          : filter === 'unread'
-            ? metrics.unread > 0
-            : metrics.mentions > 0
-      return matchesSearch && matchesFolder && matchesFilter
-    })
-    return sortPinnedFirst(filtered)
-  }, [chatMetrics, chats, currentFolder, filter, searchQuery])
+        filter === 'all' ? true : filter === 'unread' ? metrics.unread > 0 : metrics.mentions > 0;
+      return matchesSearch && matchesFolder && matchesFilter;
+    });
+    return sortPinnedFirst(filtered);
+  }, [chatMetrics, chats, currentFolder, filter, searchQuery]);
 
   useEffect(() => {
-    setVisibleChatCount(CHAT_LIST_PAGE_SIZE)
-  }, [currentFolder, filter, searchQuery])
+    setVisibleChatCount(CHAT_LIST_PAGE_SIZE);
+  }, [currentFolder, filter, searchQuery]);
 
   const visibleChats = useMemo(
     () => filteredChats.slice(0, visibleChatCount),
-    [filteredChats, visibleChatCount],
-  )
+    [filteredChats, visibleChatCount]
+  );
 
-  const hasMoreVisibleChats = visibleChatCount < filteredChats.length
+  const hasMoreVisibleChats = visibleChatCount < filteredChats.length;
 
   const handleLoadMoreVisibleChats = useCallback(() => {
     setVisibleChatCount((previous) =>
-      Math.min(previous + CHAT_LIST_PAGE_SIZE, filteredChats.length),
-    )
-  }, [filteredChats.length])
+      Math.min(previous + CHAT_LIST_PAGE_SIZE, filteredChats.length)
+    );
+  }, [filteredChats.length]);
 
   const activeChatItem = useMemo(
     () => (activeChatId ? chatItemById.get(activeChatId) || null : null),
-    [activeChatId, chatItemById],
-  )
+    [activeChatId, chatItemById]
+  );
 
   const activeConversation = useMemo(
     () => (activeChatId ? chatPayloads[activeChatId] || null : null),
-    [activeChatId, chatPayloads],
-  )
+    [activeChatId, chatPayloads]
+  );
 
   useEffect(() => {
-    if (!masterKey || !hasMoreChatPayloads) return
-    if (visibleChats.length === 0) return
+    if (!masterKey || !hasMoreChatPayloads) return;
+    if (visibleChats.length === 0) return;
 
     const hasMissingPayload = visibleChats.some(
-      (chatItem) => !chatPayloads[chatItem.id] && !failedChatIds.has(chatItem.id),
-    )
-    if (!hasMissingPayload) return
+      (chatItem) => !chatPayloads[chatItem.id] && !failedChatIds.has(chatItem.id)
+    );
+    if (!hasMissingPayload) return;
 
-    void loadNextChatBatch()
+    void loadNextChatBatch();
   }, [
     chatPayloads,
     failedChatIds,
@@ -444,172 +396,159 @@ export const ChatVault: React.FC = () => {
     loadNextChatBatch,
     masterKey,
     visibleChats,
-  ])
+  ]);
 
   const activeVisibleMessages = useMemo(() => {
-    if (!activeConversation) return []
-    const now = Date.now()
-    return activeConversation.messages.filter(
-      (message) => !isExpiredMessage(message, now),
-    )
-  }, [activeConversation])
+    if (!activeConversation) return [];
+    const now = Date.now();
+    return activeConversation.messages.filter((message) => !isExpiredMessage(message, now));
+  }, [activeConversation]);
 
   const activeThreadedMessages = useMemo(() => {
-    const rootMessages = activeVisibleMessages.filter(
-      (message) => !message.parentMessageId,
-    )
-    const repliesByParentId = new Map<string, ChatMessage[]>()
+    const rootMessages = activeVisibleMessages.filter((message) => !message.parentMessageId);
+    const repliesByParentId = new Map<string, ChatMessage[]>();
 
     for (const message of activeVisibleMessages) {
-      if (!message.parentMessageId) continue
-      const existing = repliesByParentId.get(message.parentMessageId) || []
-      existing.push(message)
-      repliesByParentId.set(message.parentMessageId, existing)
+      if (!message.parentMessageId) continue;
+      const existing = repliesByParentId.get(message.parentMessageId) || [];
+      existing.push(message);
+      repliesByParentId.set(message.parentMessageId, existing);
     }
 
     for (const entries of repliesByParentId.values()) {
-      entries.sort((a, b) => a.createdAt - b.createdAt)
+      entries.sort((a, b) => a.createdAt - b.createdAt);
     }
 
-    return { rootMessages, repliesByParentId }
-  }, [activeVisibleMessages])
+    return { rootMessages, repliesByParentId };
+  }, [activeVisibleMessages]);
 
   const activeAttachments = useMemo(() => {
-    const deduped = new Map<string, ChatAttachment>()
+    const deduped = new Map<string, ChatAttachment>();
 
     for (const message of activeVisibleMessages) {
-      const messageAttachments = Array.isArray(message.attachments)
-        ? message.attachments
-        : []
+      const messageAttachments = Array.isArray(message.attachments) ? message.attachments : [];
 
-      const detectedFromText = extractAttachmentsFromText(message.text)
-      const combined = [...messageAttachments, ...detectedFromText]
+      const detectedFromText = extractAttachmentsFromText(message.text);
+      const combined = [...messageAttachments, ...detectedFromText];
 
       for (const attachment of combined) {
-        const key = `${attachment.type}:${attachment.url}`
+        const key = `${attachment.type}:${attachment.url}`;
         if (!deduped.has(key)) {
-          deduped.set(key, attachment)
+          deduped.set(key, attachment);
         }
       }
     }
 
-    return Array.from(deduped.values())
-  }, [activeVisibleMessages])
+    return Array.from(deduped.values());
+  }, [activeVisibleMessages]);
 
   const lastMessagesByChatId = useMemo(() => {
-    const now = Date.now()
-    const map: Record<string, ChatMessage | null> = {}
+    const now = Date.now();
+    const map: Record<string, ChatMessage | null> = {};
     for (const chatItem of chats) {
-      const conversation = chatPayloads[chatItem.id]
+      const conversation = chatPayloads[chatItem.id];
       if (!conversation) {
-        map[chatItem.id] = null
-        continue
+        map[chatItem.id] = null;
+        continue;
       }
-      const latest = conversation.messages.reduce<ChatMessage | null>(
-        (currentLatest, message) => {
-          if (isExpiredMessage(message, now)) return currentLatest
-          if (!currentLatest || message.createdAt > currentLatest.createdAt) {
-            return message
-          }
-          return currentLatest
-        },
-        null,
-      )
-      map[chatItem.id] = latest || null
+      const latest = conversation.messages.reduce<ChatMessage | null>((currentLatest, message) => {
+        if (isExpiredMessage(message, now)) return currentLatest;
+        if (!currentLatest || message.createdAt > currentLatest.createdAt) {
+          return message;
+        }
+        return currentLatest;
+      }, null);
+      map[chatItem.id] = latest || null;
     }
-    return map
-  }, [chatPayloads, chats])
+    return map;
+  }, [chatPayloads, chats]);
 
   useEffect(() => {
-    if (!activeChatId) return
-    if (chatItemById.has(activeChatId)) return
+    if (!activeChatId) return;
+    if (chatItemById.has(activeChatId)) return;
 
-    setActiveChatId(null)
-    setReplyTargetId(null)
-    setDetailTab('messages')
-  }, [activeChatId, chatItemById])
+    setActiveChatId(null);
+    setReplyTargetId(null);
+    setDetailTab('messages');
+  }, [activeChatId, chatItemById]);
 
   useEffect(() => {
-    if (!activeChatItem || !activeConversation) return
+    if (!activeChatItem || !activeConversation) return;
     const unreadMessages = activeConversation.messages.filter(
       (message) =>
         !isExpiredMessage(message, Date.now()) &&
         message.sender !== username &&
-        !message.readBy.includes(username),
-    )
+        !message.readBy.includes(username)
+    );
 
-    if (unreadMessages.length === 0) return
+    if (unreadMessages.length === 0) return;
 
     const nextConversation: ChatConversation = {
       ...activeConversation,
       messages: activeConversation.messages.map((message) =>
         message.sender !== username && !message.readBy.includes(username)
           ? { ...message, readBy: [...message.readBy, username] }
-          : message,
+          : message
       ),
       updatedAt: Date.now(),
-    }
+    };
 
     void persistConversation(activeChatItem, nextConversation).catch((error) => {
       logger.warn('Failed to mark chat messages as read', {
         chatId: activeChatItem.id,
         error,
-      })
-    })
-  }, [activeChatItem, activeConversation, persistConversation, username])
+      });
+    });
+  }, [activeChatItem, activeConversation, persistConversation, username]);
 
   useEffect(() => {
-    if (!masterKey) return
-    const now = Date.now()
+    if (!masterKey) return;
+    const now = Date.now();
     for (const chatItem of chats) {
-      const conversation = chatPayloads[chatItem.id]
+      const conversation = chatPayloads[chatItem.id];
       if (!conversation || expiringCleanupInFlight.current.has(chatItem.id)) {
-        continue
+        continue;
       }
 
-      const hasExpired = conversation.messages.some((message) =>
-        isExpiredMessage(message, now),
-      )
-      if (!hasExpired) continue
+      const hasExpired = conversation.messages.some((message) => isExpiredMessage(message, now));
+      if (!hasExpired) continue;
 
       const cleanedConversation: ChatConversation = {
         ...conversation,
-        messages: conversation.messages.filter(
-          (message) => !isExpiredMessage(message, now),
-        ),
+        messages: conversation.messages.filter((message) => !isExpiredMessage(message, now)),
         updatedAt: Date.now(),
-      }
+      };
 
-      expiringCleanupInFlight.current.add(chatItem.id)
+      expiringCleanupInFlight.current.add(chatItem.id);
       void persistConversation(chatItem, cleanedConversation)
         .catch((error) => {
           logger.warn('Failed to remove expired chat messages', {
             chatId: chatItem.id,
             error,
-          })
+          });
         })
         .finally(() => {
-          expiringCleanupInFlight.current.delete(chatItem.id)
-        })
+          expiringCleanupInFlight.current.delete(chatItem.id);
+        });
     }
-  }, [chatPayloads, chats, masterKey, persistConversation])
+  }, [chatPayloads, chats, masterKey, persistConversation]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }, [activeChatId, activeVisibleMessages.length, detailTab])
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [activeChatId, activeVisibleMessages.length, detailTab]);
 
   const handleCreateChat = useCallback(async () => {
-    const title = newChatTitle.trim()
+    const title = newChatTitle.trim();
     if (!title) {
-      toast.error('Enter a chat name')
-      return
+      toast.error('Enter a chat name');
+      return;
     }
     if (!masterKey) {
-      toast.error('Unlock the vault before creating chats')
-      return
+      toast.error('Unlock the vault before creating chats');
+      return;
     }
     if (isCreatingChat) {
-      return
+      return;
     }
 
     const seedConversation: ChatConversation = {
@@ -617,133 +556,119 @@ export const ChatVault: React.FC = () => {
       disappearingTimer: 'off',
       messages: [],
       updatedAt: Date.now(),
-    }
+    };
 
-    setIsCreatingChat(true)
+    setIsCreatingChat(true);
     try {
-      const encryptedContent = await encryptData(
-        JSON.stringify(seedConversation),
-        masterKey,
-      )
+      const encryptedContent = await encryptData(JSON.stringify(seedConversation), masterKey);
       const createdItem = await addItem({
         type: 'chat',
         title,
         content: encryptedContent,
         folder: currentFolder || undefined,
-      })
+      });
       setChatPayloads((previous) => ({
         ...previous,
         [createdItem.id]: seedConversation,
-      }))
-      setActiveChatId(createdItem.id)
-      setNewChatTitle('')
-      toast.success('Chat created')
+      }));
+      setActiveChatId(createdItem.id);
+      setNewChatTitle('');
+      toast.success('Chat created');
       logActivity({
         actionType: 'item_create',
         itemName: title,
         description: 'Chat conversation created',
         status: 'success',
-      })
+      });
     } catch (error) {
       logger.error('Failed to create chat conversation', {
         error,
         title,
-      })
-      toast.error(getErrorMessage(error, 'Failed to create chat'))
+      });
+      toast.error(getErrorMessage(error, 'Failed to create chat'));
     } finally {
-      setIsCreatingChat(false)
+      setIsCreatingChat(false);
     }
-  }, [
-    addItem,
-    currentFolder,
-    isCreatingChat,
-    masterKey,
-    newChatTitle,
-    username,
-  ])
+  }, [addItem, currentFolder, isCreatingChat, masterKey, newChatTitle, username]);
 
   const handleDeleteChat = useCallback(
     async (chatItem: VaultItem) => {
       const shouldDelete =
-        typeof window === 'undefined'
-          ? true
-          : window.confirm(`Delete chat "${chatItem.title}"?`)
-      if (!shouldDelete) return
+        typeof window === 'undefined' ? true : window.confirm(`Delete chat "${chatItem.title}"?`);
+      if (!shouldDelete) return;
 
       try {
-        await removeItem(chatItem.id)
+        await removeItem(chatItem.id);
         setChatPayloads((previous) => {
-          const next = { ...previous }
-          delete next[chatItem.id]
-          return next
-        })
+          const next = { ...previous };
+          delete next[chatItem.id];
+          return next;
+        });
         setFailedChatIds((previous) => {
-          if (!previous.has(chatItem.id)) return previous
-          const next = new Set(previous)
-          next.delete(chatItem.id)
-          return next
-        })
+          if (!previous.has(chatItem.id)) return previous;
+          const next = new Set(previous);
+          next.delete(chatItem.id);
+          return next;
+        });
         setChatLoadErrors((previous) => {
-          if (!previous[chatItem.id]) return previous
-          const next = { ...previous }
-          delete next[chatItem.id]
-          return next
-        })
-        setActiveChatId((previous) =>
-          previous === chatItem.id ? null : previous,
-        )
-        toast.success('Chat deleted')
+          if (!previous[chatItem.id]) return previous;
+          const next = { ...previous };
+          delete next[chatItem.id];
+          return next;
+        });
+        setActiveChatId((previous) => (previous === chatItem.id ? null : previous));
+        toast.success('Chat deleted');
       } catch (error) {
         logger.error('Failed to delete chat', {
           chatId: chatItem.id,
           error,
-        })
-        toast.error(getErrorMessage(error, 'Failed to delete chat'))
+        });
+        toast.error(getErrorMessage(error, 'Failed to delete chat'));
       }
     },
-    [removeItem],
-  )
+    [removeItem]
+  );
 
   const handleTogglePin = useCallback(
     async (chatItemId: string) => {
       try {
-        await togglePin(chatItemId)
+        await togglePin(chatItemId);
       } catch (error) {
         logger.warn('Failed to toggle chat pin', {
           chatId: chatItemId,
           error,
-        })
+        });
       }
     },
-    [togglePin],
-  )
+    [togglePin]
+  );
 
   const handleSendMessage = useCallback(async () => {
     if (!activeChatItem || !activeConversation) {
-      toast.error('Select a chat first')
-      return
+      toast.error('Select a chat first');
+      return;
     }
-    if (isSendingMessage) return
+    if (isSendingMessage) return;
 
-    const text = draftMessage.trim()
-    if (!text) return
+    const text = draftMessage.trim();
+    if (!text) return;
     if (text.length > CHAT_MESSAGE_MAX_LENGTH) {
-      toast.error(`Message must be ${CHAT_MESSAGE_MAX_LENGTH} characters or less`)
-      return
+      toast.error(`Message must be ${CHAT_MESSAGE_MAX_LENGTH} characters or less`);
+      return;
     }
     if (
       replyTargetId &&
       !activeConversation.messages.some((message) => message.id === replyTargetId)
     ) {
-      setReplyTargetId(null)
-      toast.error('The message you were replying to is no longer available')
-      return
+      setReplyTargetId(null);
+      toast.error('The message you were replying to is no longer available');
+      return;
     }
 
-    const mentions = extractMentions(text)
-    const attachments = extractAttachmentsFromText(text)
-    const expiryWindow = resolveMessageLifetime(activeConversation.disappearingTimer)
-    const now = Date.now()
+    const mentions = extractMentions(text);
+    const attachments = extractAttachmentsFromText(text);
+    const expiryWindow = resolveMessageLifetime(activeConversation.disappearingTimer);
+    const now = Date.now();
 
     const message: ChatMessage = {
       id: crypto.randomUUID(),
@@ -757,59 +682,59 @@ export const ChatVault: React.FC = () => {
       readBy: [username],
       parentMessageId: replyTargetId || undefined,
       expiresAt: expiryWindow ? now + expiryWindow : null,
-    }
+    };
 
     const nextConversation: ChatConversation = {
       ...activeConversation,
       messages: [...activeConversation.messages, message],
       updatedAt: now,
-    }
+    };
 
     const sentConversation: ChatConversation = {
       ...nextConversation,
       messages: nextConversation.messages.map((entry) =>
-        entry.id === message.id ? { ...entry, status: 'sent' } : entry,
+        entry.id === message.id ? { ...entry, status: 'sent' } : entry
       ),
-    }
+    };
 
-    setIsSendingMessage(true)
+    setIsSendingMessage(true);
     setChatPayloads((previous) => ({
       ...previous,
       [activeChatItem.id]: nextConversation,
-    }))
-    setDraftMessage('')
-    setReplyTargetId(null)
+    }));
+    setDraftMessage('');
+    setReplyTargetId(null);
 
     try {
-      await persistConversation(activeChatItem, sentConversation)
+      await persistConversation(activeChatItem, sentConversation);
       logActivity({
         actionType: 'item_update',
         itemName: activeChatItem.title,
         description: 'Sent chat message',
         status: 'success',
-      })
+      });
     } catch (error) {
       setChatPayloads((previous) => {
-        const currentConversation = previous[activeChatItem.id]
-        if (!currentConversation) return previous
+        const currentConversation = previous[activeChatItem.id];
+        if (!currentConversation) return previous;
 
         return {
           ...previous,
           [activeChatItem.id]: {
             ...currentConversation,
             messages: currentConversation.messages.map((entry) =>
-              entry.id === message.id ? { ...entry, status: 'failed' } : entry,
+              entry.id === message.id ? { ...entry, status: 'failed' } : entry
             ),
           },
-        }
-      })
+        };
+      });
       logger.error('Failed to send chat message', {
         chatId: activeChatItem.id,
         error,
-      })
-      toast.error(getErrorMessage(error, 'Failed to send message'))
+      });
+      toast.error(getErrorMessage(error, 'Failed to send message'));
     } finally {
-      setIsSendingMessage(false)
+      setIsSendingMessage(false);
     }
   }, [
     activeChatItem,
@@ -819,126 +744,118 @@ export const ChatVault: React.FC = () => {
     persistConversation,
     replyTargetId,
     username,
-  ])
+  ]);
 
   const handleUpdateDisappearingTimer = useCallback(
     async (timer: DisappearingTimer) => {
-      if (!activeChatItem || !activeConversation) return
-      if (activeConversation.disappearingTimer === timer) return
+      if (!activeChatItem || !activeConversation) return;
+      if (activeConversation.disappearingTimer === timer) return;
 
       try {
         await persistConversation(activeChatItem, {
           ...activeConversation,
           disappearingTimer: timer,
           updatedAt: Date.now(),
-        })
+        });
       } catch (error) {
         logger.error('Failed to update chat disappearing timer', {
           chatId: activeChatItem.id,
           timer,
           error,
-        })
-        toast.error(getErrorMessage(error, 'Failed to update timer'))
+        });
+        toast.error(getErrorMessage(error, 'Failed to update timer'));
       }
     },
-    [activeChatItem, activeConversation, persistConversation],
-  )
+    [activeChatItem, activeConversation, persistConversation]
+  );
 
   const handleToggleReaction = useCallback(
     async (messageId: string, emoji: string) => {
-      if (!activeChatItem || !activeConversation) return
-      if (busyMessageId) return
+      if (!activeChatItem || !activeConversation) return;
+      if (busyMessageId) return;
       if (!activeConversation.messages.some((message) => message.id === messageId)) {
-        toast.error('Message no longer exists')
-        return
+        toast.error('Message no longer exists');
+        return;
       }
-      setBusyMessageId(messageId)
-      const previousConversation = activeConversation
+      setBusyMessageId(messageId);
+      const previousConversation = activeConversation;
 
       const nextConversation: ChatConversation = {
         ...activeConversation,
         messages: activeConversation.messages.map((message) => {
-          if (message.id !== messageId) return message
-          const existingUsers = message.reactions[emoji] || []
-          const hasReacted = existingUsers.includes(username)
+          if (message.id !== messageId) return message;
+          const existingUsers = message.reactions[emoji] || [];
+          const hasReacted = existingUsers.includes(username);
           const nextUsers = hasReacted
             ? existingUsers.filter((entry) => entry !== username)
-            : [...existingUsers, username]
+            : [...existingUsers, username];
           const nextReactions = {
             ...message.reactions,
             [emoji]: nextUsers,
-          }
+          };
           if (nextUsers.length === 0) {
-            delete nextReactions[emoji]
+            delete nextReactions[emoji];
           }
-          return { ...message, reactions: nextReactions }
+          return { ...message, reactions: nextReactions };
         }),
         updatedAt: Date.now(),
-      }
+      };
 
       setChatPayloads((previous) => ({
         ...previous,
         [activeChatItem.id]: nextConversation,
-      }))
+      }));
 
       try {
-        await persistConversation(activeChatItem, nextConversation)
+        await persistConversation(activeChatItem, nextConversation);
       } catch (error) {
         setChatPayloads((previous) => ({
           ...previous,
           [activeChatItem.id]: previousConversation,
-        }))
+        }));
         logger.error('Failed to update chat reaction', {
           chatId: activeChatItem.id,
           messageId,
           error,
-        })
-        toast.error(getErrorMessage(error, 'Failed to update reaction'))
+        });
+        toast.error(getErrorMessage(error, 'Failed to update reaction'));
       } finally {
-        setBusyMessageId(null)
+        setBusyMessageId(null);
       }
     },
-    [
-      activeChatItem,
-      activeConversation,
-      busyMessageId,
-      persistConversation,
-      username,
-    ],
-  )
+    [activeChatItem, activeConversation, busyMessageId, persistConversation, username]
+  );
 
   const attachmentList = useMemo(() => {
-    if (detailTab === 'messages') return []
+    if (detailTab === 'messages') return [];
 
-    const deduped = new Map<string, ChatAttachment>()
+    const deduped = new Map<string, ChatAttachment>();
     for (const attachment of activeAttachments) {
-      const safeHref = getSafeExternalHref(attachment.url)
-      if (!safeHref) continue
+      const safeHref = getSafeExternalHref(attachment.url);
+      if (!safeHref) continue;
 
-      const existing = deduped.get(safeHref)
+      const existing = deduped.get(safeHref);
       if (!existing || existing.createdAt < attachment.createdAt) {
         deduped.set(safeHref, {
           ...attachment,
           url: safeHref,
-        })
+        });
       }
     }
 
-    return Array.from(deduped.values()).sort(
-      (a, b) => b.createdAt - a.createdAt,
-    )
-  }, [activeAttachments, detailTab])
+    return Array.from(deduped.values()).sort((a, b) => b.createdAt - a.createdAt);
+  }, [activeAttachments, detailTab]);
 
   const handleSelectChat = useCallback(
     (chatId: string) => {
-      setActiveChatId(chatId)
-      setDetailTab('messages')
-      setReplyTargetId(null)
+      setActiveChatId(chatId);
+      setDetailTab('messages');
+      setReplyTargetId(null);
 
-      void loadChatById(chatId)
+      void loadChatById(chatId);
     },
-    [loadChatById],
-  )
+    [loadChatById]
+  );
 
   return (
     <div className="relative flex h-full min-h-0 w-full gap-3 overflow-hidden p-3 sm:p-4 lg:gap-4 lg:p-4 xl:gap-6 xl:p-8">
@@ -1011,7 +928,7 @@ export const ChatVault: React.FC = () => {
           onTogglePin={handleTogglePin}
           onDeleteChat={handleDeleteChat}
           onChatDragStart={(event, chatId) => {
-            setDraggedVaultItem(event, chatId)
+            setDraggedVaultItem(event, chatId);
           }}
         />
 
@@ -1027,16 +944,14 @@ export const ChatVault: React.FC = () => {
           draftMessage={draftMessage}
           busyMessageId={busyMessageId}
           isSendingMessage={isSendingMessage}
-          isLoadingActiveChat={
-            activeChatId ? loadingChatIds.has(activeChatId) : false
-          }
+          isLoadingActiveChat={activeChatId ? loadingChatIds.has(activeChatId) : false}
           username={username}
           failedChatIds={failedChatIds}
           chatLoadErrors={chatLoadErrors}
           messagesEndRef={messagesEndRef}
           onBackToList={() => {
-            setActiveChatId(null)
-            setReplyTargetId(null)
+            setActiveChatId(null);
+            setReplyTargetId(null);
           }}
           onDetailTabChange={setDetailTab}
           onDisappearingTimerChange={handleUpdateDisappearingTimer}
@@ -1044,7 +959,7 @@ export const ChatVault: React.FC = () => {
           onDraftMessageChange={setDraftMessage}
           onRetryLoadChat={() => {
             if (activeChatId) {
-              void loadChatById(activeChatId)
+              void loadChatById(activeChatId);
             }
           }}
           onSendMessage={handleSendMessage}
@@ -1052,5 +967,5 @@ export const ChatVault: React.FC = () => {
         />
       </div>
     </div>
-  )
-}
+  );
+};

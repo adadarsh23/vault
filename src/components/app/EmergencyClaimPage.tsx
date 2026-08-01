@@ -1,3 +1,3 @@
 export function EmergencyClaimPage() {
-  return null
+  return null;
 }

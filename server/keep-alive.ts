@@ -1,5 +1,5 @@
-import http from "http";
-import https from "https";
+import http from 'http';
+import https from 'https';
 
 interface KeepAliveOptions {
   serviceId?: string;
@@ -20,10 +20,10 @@ export interface KeepAliveState {
 export function startKeepAlive(
   url: string | undefined,
   intervalMinutes = 13,
-  options: KeepAliveOptions = {},
+  options: KeepAliveOptions = {}
 ): KeepAliveState {
-  const serviceSuffix = options.serviceId ? ` for service ${options.serviceId}` : "";
-  const isEnabled = options.enabled ?? process.env.NODE_ENV === "production";
+  const serviceSuffix = options.serviceId ? ` for service ${options.serviceId}` : '';
+  const isEnabled = options.enabled ?? process.env.NODE_ENV === 'production';
 
   if (!isEnabled) {
     if (!options.silentWhenDisabled) {
@@ -37,10 +37,12 @@ export function startKeepAlive(
     return { enabled: false, target: null };
   }
 
-  const targetUrl = new URL(url.endsWith("/") ? `${url}health` : `${url}/health`);
-  const client = targetUrl.protocol === "http:" ? http : https;
+  const targetUrl = new URL(url.endsWith('/') ? `${url}health` : `${url}/health`);
+  const client = targetUrl.protocol === 'http:' ? http : https;
 
-  console.log(`[Keep-Alive] Initializing self-ping for ${targetUrl.toString()} every ${intervalMinutes} minutes${serviceSuffix}...`);
+  console.log(
+    `[Keep-Alive] Initializing self-ping for ${targetUrl.toString()} every ${intervalMinutes} minutes${serviceSuffix}...`
+  );
 
   const ping = () => {
     const request = client.get(targetUrl, (res) => {
@@ -52,7 +54,7 @@ export function startKeepAlive(
       res.resume();
     });
 
-    request.on("error", (err) => {
+    request.on('error', (err) => {
       console.error(`[Keep-Alive] Ping error: ${err.message}`);
     });
   };

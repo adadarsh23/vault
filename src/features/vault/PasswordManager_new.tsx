@@ -1,14 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react'
-import * as OTPAuth from 'otpauth'
+import React, { useState, useEffect, useMemo } from 'react';
+import * as OTPAuth from 'otpauth';
 // import { cn } from '../../lib/utils';
-import { Button } from '../../components/ui/Button'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../components/ui/Card'
-import { Input } from '../../components/ui/Input'
+import { Button } from '../../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
 import {
   Plus,
   Trash2,
@@ -30,37 +25,39 @@ import {
   RefreshCw,
   Edit2,
   Save,
-} from 'lucide-react'
-import { useGlobalNavigationStore } from '../../store/globalNavigationStore'
-import { toast } from 'sonner'
-import { useVaultStore } from '../../store/vaultStore'
-import { encryptData, decryptData } from '../../lib/cryptoPrimitives'
-import { useClipboard } from '../../hooks/useClipboard'
-import { motion, AnimatePresence } from 'framer-motion'
-import { logActivity } from '../../lib/activity'
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop'
-import { sortPinnedFirst } from '../../lib/pinning'
+} from 'lucide-react';
+import { useGlobalNavigationStore } from '../../store/globalNavigationStore';
+import { toast } from 'sonner';
+import { useVaultStore } from '../../store/vaultStore';
+import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
+import { useClipboard } from '../../hooks/useClipboard';
+import { motion, AnimatePresence } from 'framer-motion';
+import { logActivity } from '../../lib/activity';
+import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { sortPinnedFirst } from '../../lib/pinning';
 
-import { FolderSidebar } from '../../components/vault/FolderSidebar'
-import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu'
-import { useVaultFolders } from '../../hooks/useVaultFolders'
+import { FolderSidebar } from '../../components/vault/FolderSidebar';
+import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
+import { useVaultFolders } from '../../hooks/useVaultFolders';
 import {
   generateSecurePassword,
   PASSWORD_CONFIG,
   generatePasswordWithOptions,
   evaluatePasswordStrength,
-} from '../../lib/passwordGenerator'
+} from '../../lib/passwordGenerator';
 
 const PasswordStrengthMeter: React.FC<{ password?: string }> = ({ password = '' }) => {
-  const strength = useMemo(() => evaluatePasswordStrength(password), [password])
-  
-  if (!password) return null
+  const strength = useMemo(() => evaluatePasswordStrength(password), [password]);
+
+  if (!password) return null;
 
   return (
     <div className="space-y-1.5 mt-1.5 text-xs">
       <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider">
         <span className="text-text/40">Password Strength</span>
-        <span className={`${strength.color.replace('bg-', 'text-')} font-bold`}>{strength.label}</span>
+        <span className={`${strength.color.replace('bg-', 'text-')} font-bold`}>
+          {strength.label}
+        </span>
       </div>
       <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
         <div
@@ -76,25 +73,25 @@ const PasswordStrengthMeter: React.FC<{ password?: string }> = ({ password = '' 
         </ul>
       )}
     </div>
-  )
-}
+  );
+};
 
 const PasswordGeneratorPanel: React.FC<{
-  onSelectPassword: (pass: string) => void
-  initialLength?: number
+  onSelectPassword: (pass: string) => void;
+  initialLength?: number;
 }> = ({ onSelectPassword, initialLength = 20 }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [length, setLength] = useState(initialLength)
-  const [uppercase, setUppercase] = useState(true)
-  const [lowercase, setLowercase] = useState(true)
-  const [numbers, setNumbers] = useState(true)
-  const [symbols, setSymbols] = useState(true)
-  const [excludeConfusing, setExcludeConfusing] = useState(true)
-  
-  const [passphrase, setPassphrase] = useState(false)
-  const [numWords, setNumWords] = useState(4)
-  const [separator, setSeparator] = useState('-')
-  const [capitalize, setCapitalize] = useState(true)
+  const [isOpen, setIsOpen] = useState(false);
+  const [length, setLength] = useState(initialLength);
+  const [uppercase, setUppercase] = useState(true);
+  const [lowercase, setLowercase] = useState(true);
+  const [numbers, setNumbers] = useState(true);
+  const [symbols, setSymbols] = useState(true);
+  const [excludeConfusing, setExcludeConfusing] = useState(true);
+
+  const [passphrase, setPassphrase] = useState(false);
+  const [numWords, setNumWords] = useState(4);
+  const [separator, setSeparator] = useState('-');
+  const [capitalize, setCapitalize] = useState(true);
 
   const handleGenerate = () => {
     const generated = generatePasswordWithOptions({
@@ -108,31 +105,56 @@ const PasswordGeneratorPanel: React.FC<{
       numWords,
       separator,
       capitalize,
-    })
-    onSelectPassword(generated)
-  }
+    });
+    onSelectPassword(generated);
+  };
 
   // Generate automatically on mount or when options change
   useEffect(() => {
-    handleGenerate()
+    handleGenerate();
   }, [
-    length, uppercase, lowercase, numbers, symbols, excludeConfusing,
-    passphrase, numWords, separator, capitalize
-  ])
+    length,
+    uppercase,
+    lowercase,
+    numbers,
+    symbols,
+    excludeConfusing,
+    passphrase,
+    numWords,
+    separator,
+    capitalize,
+  ]);
 
   // Clickable suggestions
   const generateSuggestion = (type: 'random' | 'passphrase' | 'pin') => {
-    let pass = ''
+    let pass = '';
     if (type === 'random') {
-      pass = generatePasswordWithOptions({ length: 16, uppercase: true, lowercase: true, numbers: true, symbols: true })
+      pass = generatePasswordWithOptions({
+        length: 16,
+        uppercase: true,
+        lowercase: true,
+        numbers: true,
+        symbols: true,
+      });
     } else if (type === 'passphrase') {
-      pass = generatePasswordWithOptions({ passphrase: true, numWords: 4, separator: '-', capitalize: true })
+      pass = generatePasswordWithOptions({
+        passphrase: true,
+        numWords: 4,
+        separator: '-',
+        capitalize: true,
+      });
     } else if (type === 'pin') {
-      pass = generatePasswordWithOptions({ length: 6, uppercase: false, lowercase: false, numbers: true, symbols: false })
+      pass = generatePasswordWithOptions({
+        length: 6,
+        uppercase: false,
+        lowercase: false,
+        numbers: true,
+        symbols: false,
+      });
     }
-    onSelectPassword(pass)
-    toast.info(`Generated ${type} style password`)
-  }
+    onSelectPassword(pass);
+    toast.info(`Generated ${type} style password`);
+  };
 
   return (
     <div className="space-y-3 p-3.5 rounded-xl bg-black/20 border border-white/5 mt-1.5 transition-all text-xs">
@@ -329,63 +351,65 @@ const PasswordGeneratorPanel: React.FC<{
         )}
       </AnimatePresence>
     </div>
-  )
-}
+  );
+};
 
 const DecryptedPasswordCard: React.FC<{
-  item: any
-  masterKey: string | CryptoKey
-  onDelete: (id: string, title: string) => void
-  onTogglePin: (id: string) => void
-  isPinning: boolean
+  item: any;
+  masterKey: string | CryptoKey;
+  onDelete: (id: string, title: string) => void;
+  onTogglePin: (id: string) => void;
+  isPinning: boolean;
 }> = React.memo(({ item, masterKey, onDelete, onTogglePin, isPinning }) => {
   const [data, setData] = useState<{
-    username: string
-    password: string
-    totpSecret?: string
-  } | null>(null)
-  const [error, setError] = useState(false)
-  const [isVisible, setIsVisible] = useState(false)
-  const { copy, copiedId } = useClipboard()
+    username: string;
+    password: string;
+    totpSecret?: string;
+  } | null>(null);
+  const [error, setError] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const { copy, copiedId } = useClipboard();
 
-  const updateItem = useVaultStore((state) => state.updateItem)
-  const [isAddingTag, setIsAddingTag] = useState(false)
-  const [newTagInput, setNewTagInput] = useState('')
+  const updateItem = useVaultStore((state) => state.updateItem);
+  const [isAddingTag, setIsAddingTag] = useState(false);
+  const [newTagInput, setNewTagInput] = useState('');
 
   // 2FA TOTP states
-  const [totpCode, setTotpCode] = useState<string>('')
-  const [totpTimeLeft, setTotpTimeLeft] = useState<number>(30)
-  const [totpError, setTotpError] = useState<boolean>(false)
-  const [isEditing2FA, setIsEditing2FA] = useState(false)
-  const [edit2FAInput, setEdit2FAInput] = useState('')
+  const [totpCode, setTotpCode] = useState<string>('');
+  const [totpTimeLeft, setTotpTimeLeft] = useState<number>(30);
+  const [totpError, setTotpError] = useState<boolean>(false);
+  const [isEditing2FA, setIsEditing2FA] = useState(false);
+  const [edit2FAInput, setEdit2FAInput] = useState('');
 
   // Have I Been Pwned breach check states
-  const [breachStatus, setBreachStatus] = useState<'idle' | 'checking' | 'safe' | 'leaked' | 'error'>('idle')
-  const [breachCount, setBreachCount] = useState<number>(0)
+  const [breachStatus, setBreachStatus] = useState<
+    'idle' | 'checking' | 'safe' | 'leaked' | 'error'
+  >('idle');
+  const [breachCount, setBreachCount] = useState<number>(0);
 
   // Edit states for the entire card
-  const [isEditing, setIsEditing] = useState(false)
-  const [editTitle, setEditTitle] = useState('')
-  const [editUsername, setEditUsername] = useState('')
-  const [editPassword, setEditPassword] = useState('')
-  const [editTotpSecret, setEditTotpSecret] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editUsername, setEditUsername] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [editTotpSecret, setEditTotpSecret] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleStartEdit = () => {
-    if (!data) return
-    setEditTitle(item.title)
-    setEditUsername(data.username || '')
-    setEditPassword(data.password || '')
-    setEditTotpSecret(data.totpSecret || '')
-    setIsEditing(true)
-  }
+    if (!data) return;
+    setEditTitle(item.title);
+    setEditUsername(data.username || '');
+    setEditPassword(data.password || '');
+    setEditTotpSecret(data.totpSecret || '');
+    setIsEditing(true);
+  };
 
   const handleSaveCredential = async () => {
     if (!editTitle.trim()) {
-      toast.error('Title is required')
-      return
+      toast.error('Title is required');
+      return;
     }
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       const encrypted = await encryptData(
         JSON.stringify({
@@ -394,240 +418,246 @@ const DecryptedPasswordCard: React.FC<{
           totpSecret: editTotpSecret.trim() || undefined,
         }),
         masterKey
-      )
+      );
       await updateItem(item.id, {
         title: editTitle.trim(),
         content: encrypted,
-      })
+      });
       setData({
         username: editUsername,
         password: editPassword,
         totpSecret: editTotpSecret.trim() || undefined,
-      })
-      setIsEditing(false)
-      toast.success('Credential updated')
+      });
+      setIsEditing(false);
+      toast.success('Credential updated');
       logActivity({
         actionType: 'password_create',
         itemName: editTitle.trim(),
         description: 'Credential updated',
         status: 'success',
-      })
+      });
     } catch (err) {
-      toast.error('Failed to update credential')
+      toast.error('Failed to update credential');
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   // Decrypt and generate TOTP
   useEffect(() => {
     if (!data || !data.totpSecret) {
-      setTotpCode('')
-      return
+      setTotpCode('');
+      return;
     }
 
-    let intervalId: any
+    let intervalId: any;
     const updateTotp = () => {
       try {
-        const cleanSecret = data.totpSecret!.replace(/\s+/g, '').toUpperCase()
+        const cleanSecret = data.totpSecret!.replace(/\s+/g, '').toUpperCase();
         if (!/^[A-Z2-7]+=*$/.test(cleanSecret)) {
-          setTotpError(true)
-          setTotpCode('INVALID')
-          return
+          setTotpError(true);
+          setTotpCode('INVALID');
+          return;
         }
-        setTotpError(false)
+        setTotpError(false);
 
         const totp = new OTPAuth.TOTP({
           secret: OTPAuth.Secret.fromBase32(cleanSecret),
           algorithm: 'SHA1',
           digits: 6,
           period: 30,
-        })
-        setTotpCode(totp.generate())
-        setTotpTimeLeft(30 - (Math.floor(Date.now() / 1000) % 30))
+        });
+        setTotpCode(totp.generate());
+        setTotpTimeLeft(30 - (Math.floor(Date.now() / 1000) % 30));
       } catch (err) {
-        setTotpError(true)
-        setTotpCode('ERROR')
+        setTotpError(true);
+        setTotpCode('ERROR');
       }
-    }
+    };
 
-    updateTotp()
-    intervalId = setInterval(updateTotp, 1000)
-    return () => clearInterval(intervalId)
-  }, [data?.totpSecret])
+    updateTotp();
+    intervalId = setInterval(updateTotp, 1000);
+    return () => clearInterval(intervalId);
+  }, [data?.totpSecret]);
 
   // Check HIBP password leak status
   useEffect(() => {
     if (!data || !data.password) {
-      setBreachStatus('idle')
-      return
+      setBreachStatus('idle');
+      return;
     }
 
     const checkBreach = async () => {
-      setBreachStatus('checking')
+      setBreachStatus('checking');
       try {
-        const password = data.password
-        const encoder = new TextEncoder()
-        const passwordData = encoder.encode(password)
-        const hashBuffer = await crypto.subtle.digest('SHA-1', passwordData)
-        const hashArray = Array.from(new Uint8Array(hashBuffer))
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase()
+        const password = data.password;
+        const encoder = new TextEncoder();
+        const passwordData = encoder.encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-1', passwordData);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('')
+          .toUpperCase();
 
-        const prefix = hashHex.substring(0, 5)
-        const suffix = hashHex.substring(5)
+        const prefix = hashHex.substring(0, 5);
+        const suffix = hashHex.substring(5);
 
-        const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`)
+        const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
         if (!res.ok) {
-          throw new Error('API request failed')
+          throw new Error('API request failed');
         }
-        const text = await res.text()
-        const lines = text.split('\n')
-        let foundCount = 0
+        const text = await res.text();
+        const lines = text.split('\n');
+        let foundCount = 0;
         for (const line of lines) {
-          const parts = line.split(':')
+          const parts = line.split(':');
           if (parts[0].trim().toUpperCase() === suffix) {
-            foundCount = parseInt(parts[1].trim(), 10)
-            break
+            foundCount = parseInt(parts[1].trim(), 10);
+            break;
           }
         }
 
         if (foundCount > 0) {
-          setBreachStatus('leaked')
-          setBreachCount(foundCount)
+          setBreachStatus('leaked');
+          setBreachCount(foundCount);
         } else {
-          setBreachStatus('safe')
-          setBreachCount(0)
+          setBreachStatus('safe');
+          setBreachCount(0);
         }
       } catch (err) {
-        console.error('HIBP check error:', err)
-        setBreachStatus('error')
+        console.error('HIBP check error:', err);
+        setBreachStatus('error');
       }
-    }
+    };
 
-    void checkBreach()
-  }, [data?.password])
+    void checkBreach();
+  }, [data?.password]);
 
   const handleSave2FA = async () => {
-    if (!data) return
+    if (!data) return;
     const updatedData = {
       ...data,
       totpSecret: edit2FAInput.trim(),
-    }
-    
+    };
+
     try {
-      const encrypted = await encryptData(JSON.stringify(updatedData), masterKey)
-      await updateItem(item.id, { content: encrypted })
-      setData(updatedData)
-      setIsEditing2FA(false)
-      toast.success('2FA Secret configured.')
+      const encrypted = await encryptData(JSON.stringify(updatedData), masterKey);
+      await updateItem(item.id, { content: encrypted });
+      setData(updatedData);
+      setIsEditing2FA(false);
+      toast.success('2FA Secret configured.');
       logActivity({
         actionType: 'password_create',
         itemName: item.title,
         description: '2FA Secret updated',
         status: 'success',
-      })
+      });
     } catch (err) {
-      toast.error('Failed to save 2FA secret.')
+      toast.error('Failed to save 2FA secret.');
     }
-  }
+  };
 
   const handleDelete2FA = async () => {
-    if (!data) return
-    if (!confirm('Are you sure you want to remove the 2FA secret for this credential?')) return
+    if (!data) return;
+    if (!confirm('Are you sure you want to remove the 2FA secret for this credential?')) return;
 
-    const { totpSecret: _, ...updatedData } = data as any
-    
+    const { totpSecret: _, ...updatedData } = data as any;
+
     try {
-      const encrypted = await encryptData(JSON.stringify(updatedData), masterKey)
-      await updateItem(item.id, { content: encrypted })
-      setData(updatedData)
-      setIsEditing2FA(false)
-      toast.success('2FA Secret removed.')
+      const encrypted = await encryptData(JSON.stringify(updatedData), masterKey);
+      await updateItem(item.id, { content: encrypted });
+      setData(updatedData);
+      setIsEditing2FA(false);
+      toast.success('2FA Secret removed.');
       logActivity({
         actionType: 'password_delete',
         itemName: item.title,
         description: '2FA Secret deleted',
         status: 'success',
-      })
+      });
     } catch (err) {
-      toast.error('Failed to remove 2FA secret.')
+      toast.error('Failed to remove 2FA secret.');
     }
-  }
+  };
 
-  const formattedCode = totpCode.length === 6 ? `${totpCode.slice(0, 3)} ${totpCode.slice(3)}` : totpCode
-
+  const formattedCode =
+    totpCode.length === 6 ? `${totpCode.slice(0, 3)} ${totpCode.slice(3)}` : totpCode;
 
   const tags = useMemo<string[]>(() => {
-    return Array.isArray(item.metadata?.tags) ? item.metadata.tags : []
-  }, [item])
+    return Array.isArray(item.metadata?.tags) ? item.metadata.tags : [];
+  }, [item]);
 
   const handleAddTag = async () => {
-    const cleaned = newTagInput.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '')
+    const cleaned = newTagInput
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]/g, '');
     if (!cleaned) {
-      setIsAddingTag(false)
-      setNewTagInput('')
-      return
+      setIsAddingTag(false);
+      setNewTagInput('');
+      return;
     }
     if (tags.includes(cleaned)) {
-      toast.error('Tag already exists')
-      setIsAddingTag(false)
-      setNewTagInput('')
-      return
+      toast.error('Tag already exists');
+      setIsAddingTag(false);
+      setNewTagInput('');
+      return;
     }
-    const updated = [...tags, cleaned]
+    const updated = [...tags, cleaned];
     try {
-      await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } })
-      toast.success(`Tag #${cleaned} added`)
+      await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } });
+      toast.success(`Tag #${cleaned} added`);
     } catch {
-      toast.error('Failed to add tag')
+      toast.error('Failed to add tag');
     } finally {
-      setIsAddingTag(false)
-      setNewTagInput('')
+      setIsAddingTag(false);
+      setNewTagInput('');
     }
-  }
+  };
 
   const handleRemoveTag = async (tagToRemove: string) => {
-    const updated = tags.filter((t) => t !== tagToRemove)
+    const updated = tags.filter((t) => t !== tagToRemove);
     try {
-      await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } })
-      toast.success(`Tag #${tagToRemove} removed`)
+      await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } });
+      toast.success(`Tag #${tagToRemove} removed`);
     } catch {
-      toast.error('Failed to remove tag')
+      toast.error('Failed to remove tag');
     }
-  }
+  };
 
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
     const decrypt = async () => {
       try {
-        const decrypted = await decryptData(item.content, masterKey)
+        const decrypted = await decryptData(item.content, masterKey);
         if (decrypted && isMounted) {
-          const parsed = JSON.parse(decrypted)
-          setData(parsed)
+          const parsed = JSON.parse(decrypted);
+          setData(parsed);
         } else if (isMounted) {
-          setError(true)
+          setError(true);
         }
       } catch (err) {
-        console.error('Password Decryption Error:', err)
-        if (isMounted) setError(true)
+        console.error('Password Decryption Error:', err);
+        if (isMounted) setError(true);
       }
-    }
-    decrypt()
+    };
+    decrypt();
     return () => {
-      isMounted = false
-    }
-  }, [item.content, masterKey])
+      isMounted = false;
+    };
+  }, [item.content, masterKey]);
 
   const handleCopy = (text: string, id: string, label: string) => {
-    copy(text, id)
-    toast.success(`${label} copied to clipboard`)
+    copy(text, id);
+    toast.success(`${label} copied to clipboard`);
     logActivity({
       actionType: 'copy_value',
       itemName: item.title,
       description: `${label} copied`,
       status: 'success',
-    })
-  }
+    });
+  };
 
   if (error) {
     return (
@@ -643,7 +673,7 @@ const DecryptedPasswordCard: React.FC<{
           Delete
         </Button>
       </Card>
-    )
+    );
   }
 
   if (!data) {
@@ -652,7 +682,7 @@ const DecryptedPasswordCard: React.FC<{
         <div className="h-10 w-full bg-white/5 rounded-xl" />
         <div className="h-20 w-full bg-white/5 rounded-xl" />
       </Card>
-    )
+    );
   }
 
   return (
@@ -697,7 +727,11 @@ const DecryptedPasswordCard: React.FC<{
                   onClick={handleSaveCredential}
                   disabled={isSaving}
                 >
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
                 </Button>
               </>
             ) : (
@@ -717,7 +751,11 @@ const DecryptedPasswordCard: React.FC<{
                   className={`h-8 w-8 rounded-full transition-colors ${item.isPinned ? 'text-amber-400 hover:bg-amber-400/20' : 'text-text/20 hover:text-text/70 hover:bg-white/10'}`}
                   onClick={() => onTogglePin(item.id)}
                 >
-                  {isPinning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pin className={`h-4 w-4 ${item.isPinned ? 'fill-current' : ''}`} />}
+                  {isPinning ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Pin className={`h-4 w-4 ${item.isPinned ? 'fill-current' : ''}`} />
+                  )}
                 </Button>
                 <Button
                   variant="ghost"
@@ -737,9 +775,7 @@ const DecryptedPasswordCard: React.FC<{
             <div className="inline-flex max-w-full items-center rounded-full border border-amber-400/15 bg-amber-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300/80">
               <Folder className="h-3 w-3 mr-1.5 text-amber-400/80" />
               <span className="truncate" title={item.folder}>
-                {item.folder.length > 10
-                  ? `${item.folder.slice(0, 10)}...`
-                  : item.folder}
+                {item.folder.length > 10 ? `${item.folder.slice(0, 10)}...` : item.folder}
               </span>
             </div>
           )}
@@ -747,7 +783,9 @@ const DecryptedPasswordCard: React.FC<{
           {isEditing ? (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <span className="text-[9px] text-text/40 uppercase tracking-wider font-semibold">Username / Email</span>
+                <span className="text-[9px] text-text/40 uppercase tracking-wider font-semibold">
+                  Username / Email
+                </span>
                 <Input
                   value={editUsername}
                   onChange={(e) => setEditUsername(e.target.value)}
@@ -757,7 +795,9 @@ const DecryptedPasswordCard: React.FC<{
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-[9px] text-text/40 uppercase tracking-wider font-semibold">Password</span>
+                <span className="text-[9px] text-text/40 uppercase tracking-wider font-semibold">
+                  Password
+                </span>
                 <Input
                   value={editPassword}
                   onChange={(e) => setEditPassword(e.target.value)}
@@ -769,7 +809,9 @@ const DecryptedPasswordCard: React.FC<{
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-[9px] text-text/40 uppercase tracking-wider font-semibold">2FA Secret Key (optional)</span>
+                <span className="text-[9px] text-text/40 uppercase tracking-wider font-semibold">
+                  2FA Secret Key (optional)
+                </span>
                 <Input
                   value={editTotpSecret}
                   onChange={(e) => setEditTotpSecret(e.target.value)}
@@ -786,9 +828,7 @@ const DecryptedPasswordCard: React.FC<{
                 </p>
                 <div className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2.5 transition-all hover:bg-white/10 group-hover:border-white/5 border border-transparent">
                   <div className="flex flex-col">
-                    <span className="text-[9px] text-text/40 transition-colors">
-                      Username
-                    </span>
+                    <span className="text-[9px] text-text/40 transition-colors">Username</span>
                     <span className="text-sm font-medium text-text transition-colors truncate max-w-[150px]">
                       {data.username || 'No username'}
                     </span>
@@ -798,9 +838,7 @@ const DecryptedPasswordCard: React.FC<{
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 rounded-lg hover:bg-white/10"
-                      onClick={() =>
-                        handleCopy(data.username, item.id + '-u', 'Username')
-                      }
+                      onClick={() => handleCopy(data.username, item.id + '-u', 'Username')}
                     >
                       {copiedId === item.id + '-u' ? (
                         <Check className="h-3.5 w-3.5 text-green-400" />
@@ -816,9 +854,7 @@ const DecryptedPasswordCard: React.FC<{
                 <div className="flex flex-col gap-1.5 rounded-xl bg-white/5 px-3 py-2.5 transition-all hover:bg-white/10 border border-transparent group-hover:border-white/5">
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col flex-1 overflow-hidden">
-                      <span className="text-[9px] text-text/40 transition-colors">
-                        Password
-                      </span>
+                      <span className="text-[9px] text-text/40 transition-colors">Password</span>
                       <div className="font-mono text-sm text-text transition-colors truncate">
                         <AnimatePresence mode="wait">
                           <motion.span
@@ -850,9 +886,7 @@ const DecryptedPasswordCard: React.FC<{
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 rounded-lg hover:bg-white/10"
-                        onClick={() =>
-                          handleCopy(data.password, item.id + '-p', 'Password')
-                        }
+                        onClick={() => handleCopy(data.password, item.id + '-p', 'Password')}
                       >
                         {copiedId === item.id + '-p' ? (
                           <Check className="h-3.5 w-3.5 text-green-400" />
@@ -867,7 +901,8 @@ const DecryptedPasswordCard: React.FC<{
                   <div className="flex items-center gap-1.5 text-[9px] border-t border-white/5 pt-1.5 mt-0.5">
                     {breachStatus === 'checking' && (
                       <span className="text-text/40 animate-pulse flex items-center gap-1.5">
-                        <Loader2 className="h-3 w-3 animate-spin text-amber-500/80" /> Checking password breach status...
+                        <Loader2 className="h-3 w-3 animate-spin text-amber-500/80" /> Checking
+                        password breach status...
                       </span>
                     )}
                     {breachStatus === 'safe' && (
@@ -896,7 +931,7 @@ const DecryptedPasswordCard: React.FC<{
                     <span className="text-[9px] text-text/40 transition-colors uppercase tracking-wider font-semibold">
                       2FA Authenticator
                     </span>
-                    
+
                     {isEditing2FA ? (
                       <div className="flex items-center gap-2 mt-1.5">
                         <Input
@@ -906,14 +941,28 @@ const DecryptedPasswordCard: React.FC<{
                           className="text-xs h-8 bg-black/25 border-white/10 text-text"
                           autoFocus
                         />
-                        <Button size="sm" onClick={handleSave2FA} className="h-8 bg-amber-500 hover:bg-amber-600 text-white shrink-0 px-3">
+                        <Button
+                          size="sm"
+                          onClick={handleSave2FA}
+                          className="h-8 bg-amber-500 hover:bg-amber-600 text-white shrink-0 px-3"
+                        >
                           Save
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setIsEditing2FA(false)} className="h-8 text-text/40 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsEditing2FA(false)}
+                          className="h-8 text-text/40 shrink-0"
+                        >
                           Cancel
                         </Button>
                         {data.totpSecret && (
-                          <Button variant="ghost" size="icon" onClick={handleDelete2FA} className="h-8 w-8 text-red-400 hover:bg-red-400/10 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleDelete2FA}
+                            className="h-8 w-8 text-red-400 hover:bg-red-400/10 shrink-0"
+                          >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         )}
@@ -924,7 +973,9 @@ const DecryptedPasswordCard: React.FC<{
                           <span className="font-mono text-base font-bold tracking-widest text-amber-400 select-all">
                             {formattedCode}
                           </span>
-                          <span className={`text-[9px] font-semibold ${totpTimeLeft <= 5 ? 'text-red-400 animate-pulse font-bold' : 'text-text/30'}`}>
+                          <span
+                            className={`text-[9px] font-semibold ${totpTimeLeft <= 5 ? 'text-red-400 animate-pulse font-bold' : 'text-text/30'}`}
+                          >
                             {totpTimeLeft}s
                           </span>
                         </div>
@@ -946,8 +997,8 @@ const DecryptedPasswordCard: React.FC<{
                             size="icon"
                             className="h-8 w-8 rounded-lg hover:bg-white/10 text-text/25 hover:text-text/60"
                             onClick={() => {
-                              setEdit2FAInput(data.totpSecret || '')
-                              setIsEditing2FA(true)
+                              setEdit2FAInput(data.totpSecret || '');
+                              setIsEditing2FA(true);
                             }}
                           >
                             <Eye className="h-3.5 w-3.5" />
@@ -957,8 +1008,8 @@ const DecryptedPasswordCard: React.FC<{
                     ) : (
                       <button
                         onClick={() => {
-                          setEdit2FAInput('')
-                          setIsEditing2FA(true)
+                          setEdit2FAInput('');
+                          setIsEditing2FA(true);
                         }}
                         className="inline-flex items-center gap-1 text-[10px] mt-1.5 text-amber-400/80 hover:text-amber-300 font-semibold focus:outline-none text-left cursor-pointer"
                       >
@@ -966,7 +1017,9 @@ const DecryptedPasswordCard: React.FC<{
                       </button>
                     )}
                     {totpError && data.totpSecret && (
-                      <span className="text-[9px] text-red-400 font-semibold mt-1">Invalid 2FA Secret Key</span>
+                      <span className="text-[9px] text-red-400 font-semibold mt-1">
+                        Invalid 2FA Secret Key
+                      </span>
                     )}
                   </div>
                 </div>
@@ -997,8 +1050,8 @@ const DecryptedPasswordCard: React.FC<{
                       value={newTagInput}
                       onChange={(e) => setNewTagInput(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleAddTag()
-                        if (e.key === 'Escape') setIsAddingTag(false)
+                        if (e.key === 'Enter') handleAddTag();
+                        if (e.key === 'Escape') setIsAddingTag(false);
                       }}
                       onBlur={handleAddTag}
                       autoFocus
@@ -1032,39 +1085,34 @@ const DecryptedPasswordCard: React.FC<{
               className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/5 border border-emerald-500/10 text-emerald-400/60 font-bold cursor-help"
             >
               <ShieldCheck className="h-2.5 w-2.5" />
-              <span className="text-[8px] uppercase tracking-wider">
-                Secure 256
-              </span>
+              <span className="text-[8px] uppercase tracking-wider">Secure 256</span>
             </motion.div>
           </div>
         </CardContent>
       </Card>
     </motion.div>
-  )
-})
+  );
+});
 
 export const PasswordManager: React.FC = () => {
-  const items = useVaultStore((state) => state.items)
-  const addItem = useVaultStore((state) => state.addItem)
-  const removeItem = useVaultStore((state) => state.removeItem)
-  const masterKey = useVaultStore((state) => state.masterKey)
-  const togglePin = useVaultStore((state) => state.togglePin)
-  const pinningItemIds = useVaultStore((state) => state.pinningItemIds)
-  const targetItemId = useGlobalNavigationStore((state) => state.targetItemId)
-  const setTargetItemId = useGlobalNavigationStore((state) => state.setTargetItemId)
-  const [isAdding, setIsAdding] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [newSite, setNewSite] = useState('')
-  const [newUsername, setNewUsername] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [newTotpSecret, setNewTotpSecret] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
-  const [isMobileFolderOpen, setIsMobileFolderOpen] = useState(false)
+  const items = useVaultStore((state) => state.items);
+  const addItem = useVaultStore((state) => state.addItem);
+  const removeItem = useVaultStore((state) => state.removeItem);
+  const masterKey = useVaultStore((state) => state.masterKey);
+  const togglePin = useVaultStore((state) => state.togglePin);
+  const pinningItemIds = useVaultStore((state) => state.pinningItemIds);
+  const targetItemId = useGlobalNavigationStore((state) => state.targetItemId);
+  const setTargetItemId = useGlobalNavigationStore((state) => state.setTargetItemId);
+  const [isAdding, setIsAdding] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [newSite, setNewSite] = useState('');
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newTotpSecret, setNewTotpSecret] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isMobileFolderOpen, setIsMobileFolderOpen] = useState(false);
 
-  const passwords = useMemo(
-    () => items.filter((item) => item.type === 'password'),
-    [items],
-  )
+  const passwords = useMemo(() => items.filter((item) => item.type === 'password'), [items]);
   const {
     folders,
     currentFolder,
@@ -1081,49 +1129,46 @@ export const PasswordManager: React.FC = () => {
     handleRenameFolder,
     handleDeleteFolder,
     handleMoveToFolder,
-  } = useVaultFolders('password')
+  } = useVaultFolders('password');
 
   useEffect(() => {
-    if (!targetItemId) return
-    const target = passwords.find((p) => p.id === targetItemId)
+    if (!targetItemId) return;
+    const target = passwords.find((p) => p.id === targetItemId);
     if (target) {
-      setCurrentFolder(null)
-      setSearchQuery(target.title)
-      setTargetItemId(null)
+      setCurrentFolder(null);
+      setSearchQuery(target.title);
+      setTargetItemId(null);
     }
-  }, [targetItemId, passwords, setTargetItemId, setCurrentFolder])
-  const normalizedSearchQuery = useMemo(
-    () => searchQuery.trim().toLowerCase(),
-    [searchQuery],
-  )
+  }, [targetItemId, passwords, setTargetItemId, setCurrentFolder]);
+  const normalizedSearchQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery]);
 
   const filteredPasswords = useMemo(
     () =>
-      sortPinnedFirst(passwords.filter((passwordItem) => {
-        const matchesSearch =
-          normalizedSearchQuery.length === 0 ||
-          passwordItem.title.toLowerCase().includes(normalizedSearchQuery)
-        const matchesFolder =
-          currentFolder === null || passwordItem.folder === currentFolder
-        return matchesSearch && matchesFolder
-      })),
-    [passwords, normalizedSearchQuery, currentFolder],
-  )
+      sortPinnedFirst(
+        passwords.filter((passwordItem) => {
+          const matchesSearch =
+            normalizedSearchQuery.length === 0 ||
+            passwordItem.title.toLowerCase().includes(normalizedSearchQuery);
+          const matchesFolder = currentFolder === null || passwordItem.folder === currentFolder;
+          return matchesSearch && matchesFolder;
+        })
+      ),
+    [passwords, normalizedSearchQuery, currentFolder]
+  );
 
   const getFolderCount = (folder: string | null) => {
-    return passwords.filter((p) => folder === null || p.folder === folder)
-      .length
-  }
+    return passwords.filter((p) => folder === null || p.folder === folder).length;
+  };
 
   const handleAdd = async () => {
     if (!masterKey || !newSite || !newPassword) {
-      toast.error('Please fill in all required fields')
-      return
+      toast.error('Please fill in all required fields');
+      return;
     }
 
-    const targetFolder = currentFolder
+    const targetFolder = currentFolder;
 
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       const encryptedData = await encryptData(
         JSON.stringify({
@@ -1131,42 +1176,42 @@ export const PasswordManager: React.FC = () => {
           password: newPassword,
           totpSecret: newTotpSecret.trim(),
         }),
-        masterKey,
-      )
+        masterKey
+      );
 
       await addItem({
         type: 'password',
         title: newSite,
         content: encryptedData,
         folder: targetFolder || undefined,
-      })
+      });
 
-      setIsAdding(false)
-      setNewSite('')
-      setNewUsername('')
-      setNewPassword('')
-      setNewTotpSecret('')
-      toast.success(`Password for ${newSite} saved`)
+      setIsAdding(false);
+      setNewSite('');
+      setNewUsername('');
+      setNewPassword('');
+      setNewTotpSecret('');
+      toast.success(`Password for ${newSite} saved`);
       logActivity({
         actionType: 'password_create',
         itemName: newSite,
         description: 'Credential created',
         status: 'success',
-      })
+      });
     } catch (err) {
-      console.error('Save Password Error:', err)
-      toast.error('Failed to save password')
+      console.error('Save Password Error:', err);
+      toast.error('Failed to save password');
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const generatePassword = () => {
     // Generates a password with default length (32), configurable between 16-64
-    const pass = generateSecurePassword(PASSWORD_CONFIG.DEFAULT_LENGTH)
-    setNewPassword(pass)
-    toast.info(`Secure ${pass.length} character password generated`)
-  }
+    const pass = generateSecurePassword(PASSWORD_CONFIG.DEFAULT_LENGTH);
+    setNewPassword(pass);
+    toast.info(`Secure ${pass.length} character password generated`);
+  };
 
   return (
     <div className="relative flex h-full min-h-0 gap-6">
@@ -1368,9 +1413,7 @@ export const PasswordManager: React.FC = () => {
               key={item.id}
               draggable
               onDragStart={(event) => setDraggedVaultItem(event, item.id)}
-              onTouchStart={(event) =>
-                setDraggedVaultItem(event as any, item.id)
-              }
+              onTouchStart={(event) => setDraggedVaultItem(event as any, item.id)}
               onTouchMove={() => {
                 /* Allow custom touch drag logic */
               }}
@@ -1380,19 +1423,15 @@ export const PasswordManager: React.FC = () => {
                 item={item}
                 masterKey={masterKey!}
                 onDelete={(id, title) => {
-                  if (
-                    confirm(
-                      `Are you sure you want to delete the credentials for ${title}?`,
-                    )
-                  ) {
-                    removeItem(id)
-                    toast.success(`Password for ${title} deleted`)
+                  if (confirm(`Are you sure you want to delete the credentials for ${title}?`)) {
+                    removeItem(id);
+                    toast.success(`Password for ${title} deleted`);
                     logActivity({
                       actionType: 'password_delete',
                       itemName: title,
                       description: 'Credential deleted',
                       status: 'success',
-                    })
+                    });
                   }
                 }}
                 onTogglePin={(id) => void togglePin(id)}
@@ -1403,5 +1442,5 @@ export const PasswordManager: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

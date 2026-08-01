@@ -8,6 +8,7 @@ versioning where practical.
 ## [Unreleased]
 
 ### Changed
+
 - Chat Vault UI now aligns with Notes Vault visual language while preserving existing chat behavior.
   - Matched layout structure, spacing scale, card treatment, rounded surfaces, and section headers.
   - Unified pill/button styling, list item appearance, empty-state presentation, and mobile controls.
@@ -16,6 +17,7 @@ versioning where practical.
 ## [1.0.0] - 2026-03-23
 
 ### Added
+
 - Production-oriented package scripts and metadata in `package.json`
 - Stronger auth/session handling, including revoked-session enforcement
 - Registration metadata capture with multi-provider IP/profile lookups

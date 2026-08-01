@@ -2,9 +2,9 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
-export const ScrollButton: React.FC<{ 
-  onClick: () => void; 
-  visible: boolean; 
+export const ScrollButton: React.FC<{
+  onClick: () => void;
+  visible: boolean;
   icon: React.ElementType;
   className?: string;
 }> = ({ onClick, visible, icon: Icon, className }) => (
@@ -19,7 +19,7 @@ export const ScrollButton: React.FC<{
         whileTap={{ scale: 0.9 }}
         onClick={onClick}
         className={cn(
-          "absolute z-30 p-2 rounded-full bg-white/5 text-white/20 hover:text-white/40 shadow-lg transition-all border border-white/5 backdrop-blur-sm",
+          'absolute z-30 p-2 rounded-full bg-white/5 text-white/20 hover:text-white/40 shadow-lg transition-all border border-white/5 backdrop-blur-sm',
           className
         )}
       >

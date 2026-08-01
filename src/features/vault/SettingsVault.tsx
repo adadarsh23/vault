@@ -1,138 +1,112 @@
-import React, { memo } from 'react'
-import {
-  Keyboard,
-  Network,
-  ShieldCheck,
-  ClipboardList,
-  MonitorSmartphone,
-} from 'lucide-react'
-import { useVaultStore } from '../../store/vaultStore'
-import { usePWAInstall } from '../../hooks/usePWAInstall'
-import { PWAInstallModal } from '../../components/vault/PWAInstallModal'
-import { Button } from '../../components/ui/Button'
-import { logActivity } from '../../lib/activity'
+import React, { memo } from 'react';
+import { Keyboard, Network, ShieldCheck, ClipboardList, MonitorSmartphone } from 'lucide-react';
+import { useVaultStore } from '../../store/vaultStore';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { PWAInstallModal } from '../../components/vault/PWAInstallModal';
+import { Button } from '../../components/ui/Button';
+import { logActivity } from '../../lib/activity';
 import {
   getAuthenticatedProfile,
   revokeVaultDeviceSession,
   updateAuthenticatedProfile,
   type AuthenticatedProfile,
-} from '../../lib/auth-api'
+} from '../../lib/auth-api';
 import {} from // clearAuthToken,
 // clearCloudSessionHint,
 // clearRememberedVaultAccess,
-'../../lib/auth-session'
-import { toast } from 'sonner'
+'../../lib/auth-session';
+import { toast } from 'sonner';
 import {
   getErrorMessage,
   getSyncHealthLabel,
   estimateVaultItemBytes,
   calculateMediaBreakdown,
-} from './components/SettingsVault/Utils'
+} from './components/SettingsVault/Utils';
 
 // Extracted Components
-import { ProfileCard } from './components/SettingsVault/ProfileCard'
-import { MobileExperienceCard } from './components/SettingsVault/MobileExperienceCard'
-import { SyncStorageCard } from './components/SettingsVault/SyncStorageCard'
-import { LegalComplianceCard } from './components/SettingsVault/LegalComplianceCard'
-import { MaintenanceCard } from './components/SettingsVault/MaintenanceCard'
-import { EmergencyDestructionCard } from './components/SettingsVault/EmergencyDestructionCard'
-import { ShareVaultCard } from './components/SettingsVault/ShareVaultCard'
-import { TwoFactorSettingsCard } from './components/SettingsVault/TwoFactorSettingsCard'
-import { SectionCard } from './components/SettingsVault/SharedComponents'
+import { ProfileCard } from './components/SettingsVault/ProfileCard';
+import { MobileExperienceCard } from './components/SettingsVault/MobileExperienceCard';
+import { SyncStorageCard } from './components/SettingsVault/SyncStorageCard';
+import { LegalComplianceCard } from './components/SettingsVault/LegalComplianceCard';
+import { MaintenanceCard } from './components/SettingsVault/MaintenanceCard';
+import { EmergencyDestructionCard } from './components/SettingsVault/EmergencyDestructionCard';
+import { ShareVaultCard } from './components/SettingsVault/ShareVaultCard';
+import { TwoFactorSettingsCard } from './components/SettingsVault/TwoFactorSettingsCard';
+import { SectionCard } from './components/SettingsVault/SharedComponents';
 
 interface SettingsVaultProps {
-  onOpenMaintenance: (
-    type: 'export' | 'import' | 'changeKey' | 'changePassword',
-  ) => void
-  onNavigate: (tab: string) => void
-  openProfileEditorRequestToken?: number
+  onOpenMaintenance: (type: 'export' | 'import' | 'changeKey' | 'changePassword') => void;
+  onNavigate: (tab: string) => void;
+  openProfileEditorRequestToken?: number;
 }
 
 export const SettingsVault: React.FC<SettingsVaultProps> = memo(
   ({ onOpenMaintenance, onNavigate, openProfileEditorRequestToken }) => {
-    const syncWithCloud = useVaultStore((state) => state.syncWithCloud)
-    const retryFailedSync = useVaultStore((state) => state.retryFailedSync)
-    const syncLogs = useVaultStore((state) => state.syncLogs)
-    const isSyncingLogs = useVaultStore((state) => state.isSyncingLogs)
-    const destroyAllData = useVaultStore((state) => state.destroyAllData)
-    const isLoading = useVaultStore((state) => state.isLoading)
-    const items = useVaultStore((state) => state.items)
-    const username = useVaultStore((state) => state.username)
-    const lock = useVaultStore((state) => state.lock)
-    const fullLogout = useVaultStore((state) => state.fullLogout)
-    const migrateLocalToCloud = useVaultStore(
-      (state) => state.migrateLocalToCloud,
-    )
-    const syncStatus = useVaultStore((state) => state.syncStatus)
-    const cancelSync = useVaultStore((state) => state.cancelSync)
-    const cancelActivityLogSync = useVaultStore(
-      (state) => state.cancelActivityLogSync,
-    )
-    const lastSuccessfulSyncAt = useVaultStore(
-      (state) => state.lastSuccessfulSyncAt,
-    )
-    const lastSyncAttemptAt = useVaultStore((state) => state.lastSyncAttemptAt)
-    const lastSyncError = useVaultStore((state) => state.lastSyncError)
-    const syncConflictCount = useVaultStore((state) => state.syncConflictCount)
-    const hasPendingSyncRetry = useVaultStore(
-      (state) => state.hasPendingSyncRetry,
-    )
+    const syncWithCloud = useVaultStore((state) => state.syncWithCloud);
+    const retryFailedSync = useVaultStore((state) => state.retryFailedSync);
+    const syncLogs = useVaultStore((state) => state.syncLogs);
+    const isSyncingLogs = useVaultStore((state) => state.isSyncingLogs);
+    const destroyAllData = useVaultStore((state) => state.destroyAllData);
+    const isLoading = useVaultStore((state) => state.isLoading);
+    const items = useVaultStore((state) => state.items);
+    const username = useVaultStore((state) => state.username);
+    const lock = useVaultStore((state) => state.lock);
+    const fullLogout = useVaultStore((state) => state.fullLogout);
+    const migrateLocalToCloud = useVaultStore((state) => state.migrateLocalToCloud);
+    const syncStatus = useVaultStore((state) => state.syncStatus);
+    const cancelSync = useVaultStore((state) => state.cancelSync);
+    const cancelActivityLogSync = useVaultStore((state) => state.cancelActivityLogSync);
+    const lastSuccessfulSyncAt = useVaultStore((state) => state.lastSuccessfulSyncAt);
+    const lastSyncAttemptAt = useVaultStore((state) => state.lastSyncAttemptAt);
+    const lastSyncError = useVaultStore((state) => state.lastSyncError);
+    const syncConflictCount = useVaultStore((state) => state.syncConflictCount);
+    const hasPendingSyncRetry = useVaultStore((state) => state.hasPendingSyncRetry);
 
-    const {
-      install,
-      canInstall,
-      isInstalled,
-      isStandalone,
-      needsManualInstall,
-    } = usePWAInstall()
+    const { install, canInstall, isInstalled, isStandalone, needsManualInstall } = usePWAInstall();
 
-    const [storageUsedBytes, setStorageUsedBytes] = React.useState(0)
-    const [profile, setProfile] = React.useState<AuthenticatedProfile | null>(
-      null,
-    )
-    const [sessionsCount, setSessionsCount] = React.useState(0)
-    const [isSessionActionLoading, setIsSessionActionLoading] =
-      React.useState(false)
-    const [isDestroyingVault, setIsDestroyingVault] = React.useState(false)
-    const [isSavingProfile, setIsSavingProfile] = React.useState(false)
-    const [isMigrating, setIsMigrating] = React.useState(false)
-    const [destructionStage, setDestructionStage] = React.useState<
-      'idle' | 'confirm' | 'final'
-    >('idle')
-    const [isPWAInstallModalOpen, setIsPWAInstallModalOpen] =
-      React.useState(false)
+    const [storageUsedBytes, setStorageUsedBytes] = React.useState(0);
+    const [profile, setProfile] = React.useState<AuthenticatedProfile | null>(null);
+    const [sessionsCount, setSessionsCount] = React.useState(0);
+    const [isSessionActionLoading, setIsSessionActionLoading] = React.useState(false);
+    const [isDestroyingVault, setIsDestroyingVault] = React.useState(false);
+    const [isSavingProfile, setIsSavingProfile] = React.useState(false);
+    const [isMigrating, setIsMigrating] = React.useState(false);
+    const [destructionStage, setDestructionStage] = React.useState<'idle' | 'confirm' | 'final'>(
+      'idle'
+    );
+    const [isPWAInstallModalOpen, setIsPWAInstallModalOpen] = React.useState(false);
 
-    const deferredItems = React.useDeferredValue(items)
+    const deferredItems = React.useDeferredValue(items);
     const vaultAnalytics = React.useMemo(() => {
-      const mediaBreakdown = calculateMediaBreakdown(deferredItems)
+      const mediaBreakdown = calculateMediaBreakdown(deferredItems);
       return {
         itemCount: deferredItems.length,
         mediaBreakdown,
-      }
-    }, [deferredItems])
+      };
+    }, [deferredItems]);
 
     React.useEffect(() => {
-      let cancelled = false
+      let cancelled = false;
 
       const nextSize = deferredItems.reduce((total, item) => {
-        return total + estimateVaultItemBytes(item)
-      }, 0)
+        return total + estimateVaultItemBytes(item);
+      }, 0);
 
       if (!cancelled) {
-        setStorageUsedBytes(nextSize)
+        setStorageUsedBytes(nextSize);
       }
 
       return () => {
-        cancelled = true
-      }
-    }, [deferredItems])
+        cancelled = true;
+      };
+    }, [deferredItems]);
 
     const loadSessionState = React.useCallback(async () => {
-      setIsSessionActionLoading(true)
+      setIsSessionActionLoading(true);
       try {
-        const nextProfile = await getAuthenticatedProfile()
-        setProfile(nextProfile)
-        setSessionsCount(nextProfile.sessions?.length || 0)
+        const nextProfile = await getAuthenticatedProfile();
+        setProfile(nextProfile);
+        setSessionsCount(nextProfile.sessions?.length || 0);
         window.dispatchEvent(
           new CustomEvent('vault:profile-updated', {
             detail: {
@@ -140,55 +114,55 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
               profileName: nextProfile.profileName,
               profilePhoto: nextProfile.profilePhoto,
             },
-          }),
-        )
+          })
+        );
       } catch (error: unknown) {
-        setProfile(null)
-        setSessionsCount(0)
-        toast.error(getErrorMessage(error, 'Failed to load account sessions'))
+        setProfile(null);
+        setSessionsCount(0);
+        toast.error(getErrorMessage(error, 'Failed to load account sessions'));
       } finally {
-        setIsSessionActionLoading(false)
+        setIsSessionActionLoading(false);
       }
-    }, [])
+    }, []);
 
     React.useEffect(() => {
-      void loadSessionState()
-    }, [loadSessionState])
+      void loadSessionState();
+    }, [loadSessionState]);
 
     const handleLockAllSessions = React.useCallback(async () => {
       if (
         !confirm(
-          'This will revoke every device session and lock this browser immediately. Continue?',
+          'This will revoke every device session and lock this browser immediately. Continue?'
         )
       ) {
-        return
+        return;
       }
 
-      setIsSessionActionLoading(true)
+      setIsSessionActionLoading(true);
       try {
         await revokeVaultDeviceSession({
           revokeAllOther: true,
           revokeCurrent: true,
-        })
-        fullLogout()
-        setSessionsCount(0)
-        toast.success('All device sessions were locked')
+        });
+        fullLogout();
+        setSessionsCount(0);
+        toast.success('All device sessions were locked');
       } catch (error: unknown) {
-        toast.error(getErrorMessage(error, 'Failed to lock all sessions'))
+        toast.error(getErrorMessage(error, 'Failed to lock all sessions'));
       } finally {
-        setIsSessionActionLoading(false)
+        setIsSessionActionLoading(false);
       }
-    }, [fullLogout])
+    }, [fullLogout]);
 
     const handleEmergencyClear = async () => {
       if (destructionStage === 'idle') {
-        setDestructionStage('confirm')
-        return
+        setDestructionStage('confirm');
+        return;
       }
 
       if (destructionStage === 'confirm') {
-        setDestructionStage('final')
-        return
+        setDestructionStage('final');
+        return;
       }
 
       logActivity({
@@ -196,54 +170,46 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
         itemName: 'Vault Maintenance',
         description: 'ALL DATA DESTRUCTION INITIATED',
         status: 'success',
-      })
+      });
 
-      setIsDestroyingVault(true)
+      setIsDestroyingVault(true);
       try {
-        await destroyAllData()
+        await destroyAllData();
       } finally {
-        setIsDestroyingVault(false)
-        setDestructionStage('idle')
+        setIsDestroyingVault(false);
+        setDestructionStage('idle');
       }
-    }
+    };
 
-    const usagePercentage = Math.min(
-      (storageUsedBytes / (1024 * 1024 * 1024)) * 100,
-      100,
-    )
+    const usagePercentage = Math.min((storageUsedBytes / (1024 * 1024 * 1024)) * 100, 100);
 
-    const syncHealthLabel = getSyncHealthLabel(syncStatus)
+    const syncHealthLabel = getSyncHealthLabel(syncStatus);
 
     const handleProfileSave = React.useCallback(
       async (profileName: string, profilePhoto: string) => {
-        setIsSavingProfile(true)
+        setIsSavingProfile(true);
         try {
-          await updateAuthenticatedProfile({ profileName, profilePhoto })
-          await loadSessionState()
-          toast.success('Profile updated')
-          return { saved: true as const }
+          await updateAuthenticatedProfile({ profileName, profilePhoto });
+          await loadSessionState();
+          toast.success('Profile updated');
+          return { saved: true as const };
         } catch (error: unknown) {
-          const errorMessage = getErrorMessage(
-            error,
-            'Failed to update profile',
-          )
-          toast.error(errorMessage)
-          return { saved: false as const, errorMessage }
+          const errorMessage = getErrorMessage(error, 'Failed to update profile');
+          toast.error(errorMessage);
+          return { saved: false as const, errorMessage };
         } finally {
-          setIsSavingProfile(false)
+          setIsSavingProfile(false);
         }
       },
-      [loadSessionState],
-    )
+      [loadSessionState]
+    );
 
     return (
       <div className="space-y-5">
         <section className="flex items-center justify-between gap-4">
           <div className="min-w-0 space-y-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-text sm:text-4xl">
-                Settings
-              </h1>
+              <h1 className="text-3xl font-bold tracking-tight text-text sm:text-4xl">Settings</h1>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-text/45">
                 Review cloud health, sync, and security status.
               </p>
@@ -282,8 +248,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
             <div className="rounded-[1.25rem] border border-card-border bg-card-bg p-4 shadow-[0_12px_30px_-22px_rgba(0,0,0,0.24)] transition-colors dark:border-white/10 dark:bg-black">
               <p className="text-sm font-semibold text-text">Vault Ecosystem</p>
               <p className="mt-1 text-xs leading-5 text-text/45">
-                Explore how identity, encryption, sync, and protected content
-                connect.
+                Explore how identity, encryption, sync, and protected content connect.
               </p>
               <Button
                 variant="secondary"
@@ -296,9 +261,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
             </div>
 
             <div className="rounded-[1.25rem] border border-card-border bg-card-bg p-4 shadow-[0_12px_30px_-22px_rgba(0,0,0,0.24)] transition-colors dark:border-white/10 dark:bg-black">
-              <p className="text-sm font-semibold text-text">
-                Controls & Shortcuts
-              </p>
+              <p className="text-sm font-semibold text-text">Controls & Shortcuts</p>
               <p className="mt-1 text-xs leading-5 text-text/45">
                 Discover keyboard shortcuts for faster navigation.
               </p>
@@ -430,14 +393,14 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
           isOpen={isPWAInstallModalOpen}
           onClose={() => setIsPWAInstallModalOpen(false)}
           onInstall={() => {
-            void install()
-            setIsPWAInstallModalOpen(false)
+            void install();
+            setIsPWAInstallModalOpen(false);
           }}
           isInstalled={isInstalled}
         />
       </div>
-    )
-  },
-)
+    );
+  }
+);
 
-SettingsVault.displayName = 'SettingsVault'
+SettingsVault.displayName = 'SettingsVault';

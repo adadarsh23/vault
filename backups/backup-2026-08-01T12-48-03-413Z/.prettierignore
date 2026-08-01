@@ -1,0 +1,14 @@
+node_modules
+build
+dist
+backups
+.memory
+playwright-report
+test-results
+coverage
+vault-production.zip
+vault-tmp
+logs
+stats.html
+*.min.js
+package-lock.json

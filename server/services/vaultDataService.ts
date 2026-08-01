@@ -1,16 +1,13 @@
-import { randomUUID } from 'crypto'
-import { getActivityLogModel } from '../models/activityLog.ts'
-import { getVaultItemModel } from '../models/vaultItem.ts'
-import {
-  deleteScopedVaultItemByUsername,
-  saveScopedVaultItem,
-} from './legacyVaultService.ts'
-import { encryptText } from '../utils/crypto.ts'
-import { AppError } from '../utils/appError.ts'
-import { logger } from '../utils/logger.ts'
-import { processPhotoUpload } from '../utils/imagePipeline.ts'
-import { createNotification } from './notificationService.ts'
-import { enqueueUploadSecurityScan } from './uploadSecurityService.ts'
+import { randomUUID } from 'crypto';
+import { getActivityLogModel } from '../models/activityLog.ts';
+import { getVaultItemModel } from '../models/vaultItem.ts';
+import { deleteScopedVaultItemByUsername, saveScopedVaultItem } from './legacyVaultService.ts';
+import { encryptText } from '../utils/crypto.ts';
+import { AppError } from '../utils/appError.ts';
+import { logger } from '../utils/logger.ts';
+import { processPhotoUpload } from '../utils/imagePipeline.ts';
+import { createNotification } from './notificationService.ts';
+import { enqueueUploadSecurityScan } from './uploadSecurityService.ts';
 import {
   buildConflictResponse,
   CONFIG,
@@ -38,7 +35,7 @@ import {
   type FileCategory,
   type FileSaveInput,
   type SaveEncryptedVaultItemResult,
-} from './vaultService.internal.ts'
+} from './vaultService.internal.ts';
 /**
  * Fetches complete vault snapshot including all data, activity, and login history
  *
@@ -46,22 +43,40 @@ import {
  * @returns Vault state with all categories and audit logs
  */
 export const getVaultSnapshot = async (userId: string) => {
-  const user = await getUserOrThrow(userId)
+  const user = await getUserOrThrow(userId);
   const username = user.username;
 
   const DynamicVaultModel = getVaultItemModel(username);
   const DynamicLogModel = getActivityLogModel(username);
 
-  const items = await DynamicVaultModel.find({ userId, isDeleted: false }).allowDiskUse().lean().exec();
-  const logs = await DynamicLogModel.find({ userId }).sort({ createdAt: -1 }).allowDiskUse().limit(100).lean().exec();
+  const items = await DynamicVaultModel.find({ userId, isDeleted: false })
+    .allowDiskUse()
+    .lean()
+    .exec();
+  const logs = await DynamicLogModel.find({ userId })
+    .sort({ createdAt: -1 })
+    .allowDiskUse()
+    .limit(100)
+    .lean()
+    .exec();
 
   // Group items into categories for the legacy 'vault' object structure
   const vault: any = {
-    photos: [], videos: [], audios: [], documents: [], otherFiles: [],
-    notes: [], chats: [], todos: [], passwords: [], secretKeys: [], location: [], contact: []
+    photos: [],
+    videos: [],
+    audios: [],
+    documents: [],
+    otherFiles: [],
+    notes: [],
+    chats: [],
+    todos: [],
+    passwords: [],
+    secretKeys: [],
+    location: [],
+    contact: [],
   };
 
-  items.forEach(item => {
+  items.forEach((item) => {
     const category = item.category as string;
     if (vault[category]) {
       vault[category].push(item);
@@ -79,8 +94,8 @@ export const getVaultSnapshot = async (userId: string) => {
     vault,
     activityLog: logs,
     loginHistory: user.loginHistory,
-  }
-}
+  };
+};
 
 /**
  * Fetches vault changes since a given timestamp
@@ -92,40 +107,53 @@ export const getVaultSnapshot = async (userId: string) => {
  * @returns Changed items by category with sync metadata
  */
 export const getVaultSyncChanges = async (userId: string, since?: string) => {
-  const sinceDate = normalizeDate(since)
-  const user = await getUserOrThrow(userId)
-  const username = user.username
+  const sinceDate = normalizeDate(since);
+  const user = await getUserOrThrow(userId);
+  const username = user.username;
 
-  const DynamicVaultModel = getVaultItemModel(username)
+  const DynamicVaultModel = getVaultItemModel(username);
   const items = await DynamicVaultModel.find({
     userId,
-    updatedAt: { $gt: sinceDate }
-  }).allowDiskUse().lean().exec()
+    updatedAt: { $gt: sinceDate },
+  })
+    .allowDiskUse()
+    .lean()
+    .exec();
 
   const vaultChanges: any = {
-    photos: [], videos: [], audios: [], documents: [], otherFiles: [],
-    notes: [], chats: [], todos: [], passwords: [], secretKeys: [], location: [], contact: []
-  }
+    photos: [],
+    videos: [],
+    audios: [],
+    documents: [],
+    otherFiles: [],
+    notes: [],
+    chats: [],
+    todos: [],
+    passwords: [],
+    secretKeys: [],
+    location: [],
+    contact: [],
+  };
 
-  items.forEach(item => {
-    const category = item.category as string
+  items.forEach((item) => {
+    const category = item.category as string;
     if (vaultChanges[category]) {
-      vaultChanges[category].push(item)
-    } else if (category === 'photo') vaultChanges.photos.push(item)
-    else if (category === 'video') vaultChanges.videos.push(item)
-    else if (category === 'audio') vaultChanges.audios.push(item)
-    else if (category === 'document') vaultChanges.documents.push(item)
-    else if (category === 'chat') vaultChanges.chats.push(item)
-    else if (category === 'todo') vaultChanges.todos.push(item)
-    else if (category === 'file') vaultChanges.otherFiles.push(item)
-  })
+      vaultChanges[category].push(item);
+    } else if (category === 'photo') vaultChanges.photos.push(item);
+    else if (category === 'video') vaultChanges.videos.push(item);
+    else if (category === 'audio') vaultChanges.audios.push(item);
+    else if (category === 'document') vaultChanges.documents.push(item);
+    else if (category === 'chat') vaultChanges.chats.push(item);
+    else if (category === 'todo') vaultChanges.todos.push(item);
+    else if (category === 'file') vaultChanges.otherFiles.push(item);
+  });
 
   return {
     syncAt: new Date(),
     changes: vaultChanges,
     userId: user._id.toString(),
-  }
-}
+  };
+};
 
 /**
  * Uploads file to vault with metadata preservation
@@ -136,23 +164,19 @@ export const getVaultSyncChanges = async (userId: string, since?: string) => {
  * @throws {AppError} If file is empty or category invalid
  */
 export const saveFileToVault = async (input: FileSaveInput) => {
-  const category = validateVaultCategory(input.category)
+  const category = validateVaultCategory(input.category);
   if (!FILE_CATEGORIES.has(category as FileCategory)) {
-    throw new AppError(
-      400,
-      'INVALID_CATEGORY',
-      'This endpoint only supports file categories.',
-    )
+    throw new AppError(400, 'INVALID_CATEGORY', 'This endpoint only supports file categories.');
   }
 
-  const updatedAt = normalizeDate(input.clientUpdatedAt)
-  const itemId = randomUUID()
+  const updatedAt = normalizeDate(input.clientUpdatedAt);
+  const itemId = randomUUID();
   if (!input.file.size || !input.file.buffer?.length) {
-    throw new AppError(400, 'EMPTY_FILE', 'Uploaded file is empty.')
+    throw new AppError(400, 'EMPTY_FILE', 'Uploaded file is empty.');
   }
-  let fileName = normalizeFileName(input.file.originalname)
-  let fileBuffer = input.file.buffer
-  let fileMimeType = input.file.mimetype
+  let fileName = normalizeFileName(input.file.originalname);
+  let fileBuffer = input.file.buffer;
+  let fileMimeType = input.file.mimetype;
 
   if (category === 'photo') {
     const processedPhoto = await processPhotoUpload({
@@ -160,17 +184,17 @@ export const saveFileToVault = async (input: FileSaveInput) => {
       fileName,
       mimeType: fileMimeType,
       keepMetadata: input.keepMetadata,
-    })
-    fileBuffer = processedPhoto.buffer
-    fileName = normalizeFileName(processedPhoto.fileName)
-    fileMimeType = processedPhoto.mimeType
+    });
+    fileBuffer = processedPhoto.buffer;
+    fileName = normalizeFileName(processedPhoto.fileName);
+    fileMimeType = processedPhoto.mimeType;
   }
 
   return retryLoadedUserMutation({
     mutationName: 'saveFileToVault',
     loadUser: () => getUserOrThrow(input.userId),
     operation: async (user) => {
-      await enforceUserStorageQuota(input.userId, user.username, fileBuffer.length)
+      await enforceUserStorageQuota(input.userId, user.username, fileBuffer.length);
       // Save item to isolated collection
       await saveScopedVaultItem({
         userId: input.userId,
@@ -194,7 +218,7 @@ export const saveFileToVault = async (input: FileSaveInput) => {
             queuedAt: new Date().toISOString(),
           },
         },
-      })
+      });
 
       enqueueUploadSecurityScan({
         userId: input.userId,
@@ -204,25 +228,25 @@ export const saveFileToVault = async (input: FileSaveInput) => {
         fileName,
         mimeType: fileMimeType,
         payload: fileBuffer,
-      })
+      });
 
-      touchUser(user, updatedAt)
-        ; (
-          user as unknown as { markModified: (path: string) => void }
-        ).markModified(`vault.${category}`)
+      touchUser(user, updatedAt);
+      (user as unknown as { markModified: (path: string) => void }).markModified(
+        `vault.${category}`
+      );
       logAndEmit(user, 'FILE_UPLOAD', category, itemId, {
         ipAddress: input.ipAddress ?? 'unknown',
         deviceId: input.deviceId ?? 'unknown-device',
         fileName,
         size: fileBuffer.length,
-      })
+      });
 
       logger.info('File uploaded to vault', {
         userId: input.userId,
         category,
         itemId,
         size: input.file.size,
-      })
+      });
 
       return {
         result: {
@@ -233,10 +257,10 @@ export const saveFileToVault = async (input: FileSaveInput) => {
           scanStatus: 'pending',
           updatedAt,
         },
-      }
+      };
     },
-  })
-}
+  });
+};
 
 /**
  * Saves encrypted vault item (notes, passwords, or secret keys)
@@ -247,30 +271,28 @@ export const saveFileToVault = async (input: FileSaveInput) => {
  * @returns Save result or conflict response
  */
 export const saveEncryptedVaultItem = async (
-  input: EncryptedSaveInput,
+  input: EncryptedSaveInput
 ): Promise<SaveEncryptedVaultItemResult> => {
-  const category = validateVaultCategory(input.category)
+  const category = validateVaultCategory(input.category);
   if (!ENCRYPTED_CATEGORIES.has(category as EncryptedCategory)) {
     throw new AppError(
       400,
       'INVALID_CATEGORY',
-      'This endpoint only supports encrypted categories.',
-    )
+      'This endpoint only supports encrypted categories.'
+    );
   }
-  const encryptedCategory = category as EncryptedCategory
+  const encryptedCategory = category as EncryptedCategory;
 
-  const itemId = sanitizeItemId(input.itemId) || randomUUID()
+  const itemId = sanitizeItemId(input.itemId) || randomUUID();
   const updatedAt = normalizeDate(
-    typeof input.payload.clientUpdatedAt === 'string'
-      ? input.payload.clientUpdatedAt
-      : undefined,
-  )
+    typeof input.payload.clientUpdatedAt === 'string' ? input.payload.clientUpdatedAt : undefined
+  );
   return retryLoadedUserMutation<SaveEncryptedVaultItemResult>({
     mutationName: 'saveEncryptedVaultItem',
     loadUser: () => getUserOrThrow(input.userId),
     operation: async (user) => {
-      const DynamicVaultModel = getVaultItemModel(user.username)
-      const existingItem = await DynamicVaultModel.findOne({ userId: input.userId, itemId }).lean()
+      const DynamicVaultModel = getVaultItemModel(user.username);
+      const existingItem = await DynamicVaultModel.findOne({ userId: input.userId, itemId }).lean();
 
       // Conflict detection: reject if server has newer version
       if (
@@ -283,160 +305,120 @@ export const saveEncryptedVaultItem = async (
           'Sync Conflict Detected',
           `Conflict detected for item "${existingItem.title || 'Untitled'}" during sync. Server has a newer version.`,
           { itemId, category: input.category }
-        ).catch((err) => logger.warn('Failed to create sync conflict notification', { error: err }))
+        ).catch((err) =>
+          logger.warn('Failed to create sync conflict notification', { error: err })
+        );
 
         return {
           result: buildConflictResponse(
             'A newer version already exists on the server.',
-            existingItem,
+            existingItem
           ),
           skipSave: true,
-        }
+        };
       }
 
-      let nextRecord: Record<string, unknown>
-      let itemTitle = ''
-      const isUpdate = Boolean(existingItem)
+      let nextRecord: Record<string, unknown>;
+      let itemTitle = '';
+      const isUpdate = Boolean(existingItem);
 
       // Build record structure based on category
       if (encryptedCategory === 'note') {
-        const title = sanitizeRequiredText(
-          input.payload.title,
-          'title',
-          CONFIG.maxTitleLength,
-        )
+        const title = sanitizeRequiredText(input.payload.title, 'title', CONFIG.maxTitleLength);
         const content = sanitizeRequiredText(
           input.payload.content,
           'content',
-          CONFIG.maxNoteContentLength,
-        )
-        itemTitle = title
+          CONFIG.maxNoteContentLength
+        );
+        itemTitle = title;
         nextRecord = {
           title,
           content: encryptText(content),
-        }
+        };
       } else if (encryptedCategory === 'chat') {
-        const title = sanitizeRequiredText(
-          input.payload.title,
-          'title',
-          CONFIG.maxTitleLength,
-        )
+        const title = sanitizeRequiredText(input.payload.title, 'title', CONFIG.maxTitleLength);
         const content = sanitizeRequiredText(
           input.payload.content,
           'content',
-          CONFIG.maxNoteContentLength,
-        )
-        itemTitle = title
+          CONFIG.maxNoteContentLength
+        );
+        itemTitle = title;
         nextRecord = {
           title,
           content: encryptText(content),
-        }
+        };
       } else if (encryptedCategory === 'todo') {
-        const title = sanitizeRequiredText(
-          input.payload.title,
-          'title',
-          CONFIG.maxTitleLength,
-        )
+        const title = sanitizeRequiredText(input.payload.title, 'title', CONFIG.maxTitleLength);
         const content = sanitizeRequiredText(
           input.payload.content,
           'content',
-          CONFIG.maxNoteContentLength,
-        )
-        itemTitle = title
+          CONFIG.maxNoteContentLength
+        );
+        itemTitle = title;
         nextRecord = {
           title,
           content: encryptText(content),
-        }
+        };
       } else if (encryptedCategory === 'password') {
-        const label = sanitizeRequiredText(
-          input.payload.label,
-          'label',
-          CONFIG.maxTitleLength,
-        )
+        const label = sanitizeRequiredText(input.payload.label, 'label', CONFIG.maxTitleLength);
         const password = sanitizeRequiredText(
           input.payload.password,
           'password',
-          CONFIG.maxTextFieldLength,
-        )
-        itemTitle = label
+          CONFIG.maxTextFieldLength
+        );
+        itemTitle = label;
         nextRecord = {
           label,
           username: sanitizeOptionalText(
             input.payload.username,
             'username',
-            CONFIG.maxTextFieldLength,
+            CONFIG.maxTextFieldLength
           ),
-          url: sanitizeOptionalUrl(
-            input.payload.url,
-          ),
+          url: sanitizeOptionalUrl(input.payload.url),
           password: encryptText(password),
           notes: encryptOptionalText(
-            sanitizeOptionalText(
-              input.payload.notes,
-              'notes',
-              CONFIG.maxNoteContentLength,
-            ),
+            sanitizeOptionalText(input.payload.notes, 'notes', CONFIG.maxNoteContentLength)
           ),
-        }
+        };
       } else if (encryptedCategory === 'secret') {
-        const label = sanitizeRequiredText(
-          input.payload.label,
-          'label',
-          CONFIG.maxTitleLength,
-        )
-        const value = sanitizeRequiredText(
-          input.payload.value,
-          'value',
-          CONFIG.maxTextFieldLength,
-        )
-        itemTitle = label
+        const label = sanitizeRequiredText(input.payload.label, 'label', CONFIG.maxTitleLength);
+        const value = sanitizeRequiredText(input.payload.value, 'value', CONFIG.maxTextFieldLength);
+        itemTitle = label;
         nextRecord = {
           label,
           value: encryptText(value),
           description: sanitizeOptionalText(
             input.payload.description,
             'description',
-            CONFIG.maxTextFieldLength,
+            CONFIG.maxTextFieldLength
           ),
-        }
+        };
       } else if (encryptedCategory === 'location') {
-        const title = sanitizeRequiredText(
-          input.payload.title,
-          'title',
-          CONFIG.maxTitleLength,
-        )
+        const title = sanitizeRequiredText(input.payload.title, 'title', CONFIG.maxTitleLength);
         const content = sanitizeRequiredText(
           input.payload.content,
           'content',
-          CONFIG.maxNoteContentLength,
-        )
-        itemTitle = title
+          CONFIG.maxNoteContentLength
+        );
+        itemTitle = title;
         nextRecord = {
           title,
           content: encryptText(content),
-        }
+        };
       } else if (encryptedCategory === 'contact') {
-        const title = sanitizeRequiredText(
-          input.payload.title,
-          'title',
-          CONFIG.maxTitleLength,
-        )
+        const title = sanitizeRequiredText(input.payload.title, 'title', CONFIG.maxTitleLength);
         const content = sanitizeRequiredText(
           input.payload.content,
           'content',
-          CONFIG.maxNoteContentLength,
-        )
-        itemTitle = title
+          CONFIG.maxNoteContentLength
+        );
+        itemTitle = title;
         nextRecord = {
           title,
           content: encryptText(content),
-        }
+        };
       } else {
-        throw new AppError(
-          400,
-          'INVALID_CATEGORY',
-          'Unsupported encrypted category.',
-        )
+        throw new AppError(400, 'INVALID_CATEGORY', 'Unsupported encrypted category.');
       }
 
       // Save item to isolated collection
@@ -451,29 +433,23 @@ export const saveEncryptedVaultItem = async (
           deviceId: input.deviceId ?? 'unknown-device',
           ipAddress: input.ipAddress ?? 'unknown',
         },
-      })
+      });
 
-      touchUser(user, updatedAt)
-        ; (
-          user as unknown as { markModified: (path: string) => void }
-        ).markModified(`vault.${category}`)
-      logAndEmit(
-        user,
-        isUpdate ? 'UPDATE_ITEM' : 'CREATE_ITEM',
-        encryptedCategory,
-        itemId,
-        {
-          ipAddress: input.ipAddress ?? 'unknown',
-          deviceId: input.deviceId ?? 'unknown-device',
-        },
-      )
+      touchUser(user, updatedAt);
+      (user as unknown as { markModified: (path: string) => void }).markModified(
+        `vault.${category}`
+      );
+      logAndEmit(user, isUpdate ? 'UPDATE_ITEM' : 'CREATE_ITEM', encryptedCategory, itemId, {
+        ipAddress: input.ipAddress ?? 'unknown',
+        deviceId: input.deviceId ?? 'unknown-device',
+      });
 
       logger.info('Encrypted vault item saved', {
         userId: input.userId,
         category: encryptedCategory,
         itemId,
         isUpdate,
-      })
+      });
 
       return {
         result: {
@@ -483,10 +459,10 @@ export const saveEncryptedVaultItem = async (
           itemId,
           record: nextRecord,
         },
-      }
+      };
     },
-  })
-}
+  });
+};
 
 /**
  * Deletes vault item with soft-delete semantics
@@ -498,37 +474,33 @@ export const saveEncryptedVaultItem = async (
  * @throws {AppError} If item not found
  */
 export const deleteVaultItemByCategory = async (
-  input: DeleteInput,
+  input: DeleteInput
 ): Promise<DeleteVaultItemResult> => {
-  const category = validateVaultCategory(input.category)
-  const itemId = sanitizeItemId(input.itemId)
+  const category = validateVaultCategory(input.category);
+  const itemId = sanitizeItemId(input.itemId);
   if (!itemId) {
-    throw new AppError(400, 'INVALID_ITEM_ID', 'Item identifier is invalid.')
+    throw new AppError(400, 'INVALID_ITEM_ID', 'Item identifier is invalid.');
   }
-  const updatedAt = normalizeDate(input.clientUpdatedAt)
+  const updatedAt = normalizeDate(input.clientUpdatedAt);
   return retryLoadedUserMutation<DeleteVaultItemResult>({
     mutationName: 'deleteVaultItemByCategory',
     loadUser: () => getUserOrThrow(input.userId),
     operation: async (user) => {
       // Mark item as deleted in isolated collection
-      await deleteScopedVaultItemByUsername(
-        user._id.toString(),
-        user.username,
-        itemId,
-      )
+      await deleteScopedVaultItemByUsername(user._id.toString(), user.username, itemId);
 
-      touchUser(user, updatedAt)
+      touchUser(user, updatedAt);
 
       logAndEmit(user, 'DELETE_ITEM', category, itemId, {
         ipAddress: input.ipAddress ?? 'unknown',
         deviceId: input.deviceId ?? 'unknown-device',
-      })
+      });
 
       logger.info('Vault item deleted', {
         userId: input.userId,
         category,
         itemId,
-      })
+      });
 
       return {
         result: {
@@ -538,7 +510,7 @@ export const deleteVaultItemByCategory = async (
           itemId,
           deletedAt: updatedAt,
         },
-      }
+      };
     },
-  })
-}
+  });
+};

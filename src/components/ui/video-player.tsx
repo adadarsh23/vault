@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
-import { Button } from './Button'
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import { Button } from './Button';
 import {
   Play,
   Pause,
@@ -16,77 +16,73 @@ import {
   PictureInPicture2,
   FlipHorizontal2,
   ChevronDown,
-} from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '../../lib/utils'
-import { getAuthHeaders } from '../../lib/sync'
-import { resolveApiBaseUrl } from '../../lib/apiBaseUrl'
-import { logger } from '../../lib/logger'
-import { toast } from 'sonner'
-import Hls from 'hls.js'
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '../../lib/utils';
+import { getAuthHeaders } from '../../lib/sync';
+import { resolveApiBaseUrl } from '../../lib/apiBaseUrl';
+import { logger } from '../../lib/logger';
+import { toast } from 'sonner';
+import Hls from 'hls.js';
 
 /* ---------------- UTIL ---------------- */
 
 const formatTime = (seconds: number) => {
-  if (!isFinite(seconds) || isNaN(seconds)) return '00:00'
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = Math.floor(seconds % 60)
-  return `${String(minutes).padStart(2, '0')}:${String(
-    remainingSeconds,
-  ).padStart(2, '0')}`
-}
+  if (!isFinite(seconds) || isNaN(seconds)) return '00:00';
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+};
 
-const finiteOrZero = (value: number) => (Number.isFinite(value) ? value : 0)
+const finiteOrZero = (value: number) => (Number.isFinite(value) ? value : 0);
 
 const isSafeDownloadUrl = (url: string) => {
-  if (!url) return false
-  if (url.startsWith('blob:') || url.startsWith('data:')) return true
+  if (!url) return false;
+  if (url.startsWith('blob:') || url.startsWith('data:')) return true;
   try {
-    const parsed = new URL(url, window.location.href)
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+    const parsed = new URL(url, window.location.href);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
   } catch {
-    return false
+    return false;
   }
-}
+};
 
 const isAllowedMediaUrl = (url: string, allowedMediaDomains: string[]) => {
-  if (!url) return false
-  if (url.startsWith('blob:')) return true
-  if (url.startsWith('data:')) return false
+  if (!url) return false;
+  if (url.startsWith('blob:')) return true;
+  if (url.startsWith('data:')) return false;
   try {
-    const parsed = new URL(url, window.location.href)
-    if (!['http:', 'https:'].includes(parsed.protocol)) return false
-    const host = parsed.hostname.toLowerCase()
-    const normalizedAllowed = allowedMediaDomains.map((domain) =>
-      domain.toLowerCase(),
-    )
-    if (host === window.location.hostname.toLowerCase()) return true
-    return normalizedAllowed.includes(host)
+    const parsed = new URL(url, window.location.href);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    const host = parsed.hostname.toLowerCase();
+    const normalizedAllowed = allowedMediaDomains.map((domain) => domain.toLowerCase());
+    if (host === window.location.hostname.toLowerCase()) return true;
+    return normalizedAllowed.includes(host);
   } catch {
-    return false
+    return false;
   }
-}
+};
 
 const redactSensitiveString = (value: string) => {
-  const bearerLike = /(bearer\s+)[a-z0-9._~-]+/gi
-  let redacted = value.replace(bearerLike, '$1[REDACTED]')
+  const bearerLike = /(bearer\s+)[a-z0-9._~-]+/gi;
+  let redacted = value.replace(bearerLike, '$1[REDACTED]');
   try {
-    const parsed = new URL(value)
-    return `${parsed.origin}${parsed.pathname}`
+    const parsed = new URL(value);
+    return `${parsed.origin}${parsed.pathname}`;
   } catch {
     if (redacted.length > 240) {
-      redacted = `${redacted.slice(0, 240)}...`
+      redacted = `${redacted.slice(0, 240)}...`;
     }
-    return redacted
+    return redacted;
   }
-}
+};
 
 export type PlayerErrorCode =
   | 'SECURITY_POLICY_BLOCKED'
   | 'NETWORK_UNSTABLE'
   | 'MEDIA_DECODE_FAILED'
   | 'UNSUPPORTED_FORMAT'
-  | 'PLAYBACK_FAILED'
+  | 'PLAYBACK_FAILED';
 
 const PLAYER_ERROR_MESSAGES: Record<PlayerErrorCode, string> = {
   SECURITY_POLICY_BLOCKED: 'Media URL is not allowed by security policy.',
@@ -94,83 +90,74 @@ const PLAYER_ERROR_MESSAGES: Record<PlayerErrorCode, string> = {
   MEDIA_DECODE_FAILED: 'Video decoding failed. Please retry playback.',
   UNSUPPORTED_FORMAT: 'Video format not supported on this device/browser.',
   PLAYBACK_FAILED: 'Video playback failed.',
-}
+};
 
-export const getPlayerErrorMessage = (code: PlayerErrorCode) =>
-  PLAYER_ERROR_MESSAGES[code]
+export const getPlayerErrorMessage = (code: PlayerErrorCode) => PLAYER_ERROR_MESSAGES[code];
 
-export const mapMediaErrorCodeToPlayerError = (
-  mediaErrorCode?: number,
-): PlayerErrorCode => {
-  if (mediaErrorCode === 4) return 'UNSUPPORTED_FORMAT'
-  if (mediaErrorCode === 3) return 'MEDIA_DECODE_FAILED'
-  return 'PLAYBACK_FAILED'
-}
+export const mapMediaErrorCodeToPlayerError = (mediaErrorCode?: number): PlayerErrorCode => {
+  if (mediaErrorCode === 4) return 'UNSUPPORTED_FORMAT';
+  if (mediaErrorCode === 3) return 'MEDIA_DECODE_FAILED';
+  return 'PLAYBACK_FAILED';
+};
 
 type HlsRecoveryAction =
   | { action: 'restart_load'; retryInMs: number; message: string }
   | { action: 'recover_media' }
   | { action: 'downgrade_level'; level: number; message: string }
-  | { action: 'fatal_error'; code: PlayerErrorCode }
+  | { action: 'fatal_error'; code: PlayerErrorCode };
 
 export const getHlsRecoveryAction = (params: {
-  errorType: string
-  networkRetryCount: number
-  mediaRecoveryCount: number
-  currentLevel: number
+  errorType: string;
+  networkRetryCount: number;
+  mediaRecoveryCount: number;
+  currentLevel: number;
 }): HlsRecoveryAction => {
-  const { errorType, networkRetryCount, mediaRecoveryCount, currentLevel } =
-    params
+  const { errorType, networkRetryCount, mediaRecoveryCount, currentLevel } = params;
   if (errorType === Hls.ErrorTypes.NETWORK_ERROR) {
     if (networkRetryCount <= 5) {
       return {
         action: 'restart_load',
         retryInMs: Math.min(1000 * 2 ** (networkRetryCount - 1), 8000),
         message: `Reconnecting... (${networkRetryCount})`,
-      }
+      };
     }
-    return { action: 'fatal_error', code: 'NETWORK_UNSTABLE' }
+    return { action: 'fatal_error', code: 'NETWORK_UNSTABLE' };
   }
 
   if (errorType === Hls.ErrorTypes.MEDIA_ERROR) {
     if (mediaRecoveryCount <= 2) {
-      return { action: 'recover_media' }
+      return { action: 'recover_media' };
     }
     if (currentLevel > 0) {
       return {
         action: 'downgrade_level',
         level: currentLevel - 1,
         message: 'Reducing quality to recover playback...',
-      }
+      };
     }
-    return { action: 'fatal_error', code: 'MEDIA_DECODE_FAILED' }
+    return { action: 'fatal_error', code: 'MEDIA_DECODE_FAILED' };
   }
 
-  return { action: 'fatal_error', code: 'PLAYBACK_FAILED' }
-}
+  return { action: 'fatal_error', code: 'PLAYBACK_FAILED' };
+};
 
 export const sanitizeTelemetryMetadata = (input: unknown): unknown => {
-  if (typeof input === 'string') return redactSensitiveString(input)
-  if (Array.isArray(input))
-    return input.map((entry) => sanitizeTelemetryMetadata(entry))
+  if (typeof input === 'string') return redactSensitiveString(input);
+  if (Array.isArray(input)) return input.map((entry) => sanitizeTelemetryMetadata(entry));
   if (input && typeof input === 'object') {
-    const entries = Object.entries(input as Record<string, unknown>).map(
-      ([key, value]) => {
-        if (
-          typeof value === 'string' &&
-          ['url', 'src', 'uri', 'href', 'token', 'authorization'].includes(
-            key.toLowerCase(),
-          )
-        ) {
-          return [key, redactSensitiveString(value)] as const
-        }
-        return [key, sanitizeTelemetryMetadata(value)] as const
-      },
-    )
-    return Object.fromEntries(entries)
+    const entries = Object.entries(input as Record<string, unknown>).map(([key, value]) => {
+      if (
+        typeof value === 'string' &&
+        ['url', 'src', 'uri', 'href', 'token', 'authorization'].includes(key.toLowerCase())
+      ) {
+        return [key, redactSensitiveString(value)] as const;
+      }
+      return [key, sanitizeTelemetryMetadata(value)] as const;
+    });
+    return Object.fromEntries(entries);
   }
-  return input
-}
+  return input;
+};
 
 /* ---------------- UNIVERSAL SLIDER (MOBILE + DESKTOP) ---------------- */
 
@@ -183,68 +170,68 @@ const CustomSlider = ({
   label,
   thumbClassName,
 }: {
-  value: number
-  onChange: (value: number) => void
-  onDragStart?: () => void
-  onDragEnd?: () => void
-  className?: string
-  label: string
-  thumbClassName?: string
+  value: number;
+  onChange: (value: number) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+  className?: string;
+  label: string;
+  thumbClassName?: string;
 }) => {
-  const ref = useRef<HTMLDivElement>(null)
-  const isDragging = useRef(false)
+  const ref = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
 
   const getPercent = (clientX: number) => {
-    const rect = ref.current?.getBoundingClientRect()
-    if (!rect) return 0
-    const x = clientX - rect.left
-    return Math.min(Math.max((x / rect.width) * 100, 0), 100)
-  }
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return 0;
+    const x = clientX - rect.left;
+    return Math.min(Math.max((x / rect.width) * 100, 0), 100);
+  };
 
   const update = (clientX: number) => {
-    onChange(getPercent(clientX))
-  }
+    onChange(getPercent(clientX));
+  };
 
   const onPointerDown = (e: React.PointerEvent) => {
-    isDragging.current = true
-    onDragStart?.()
-    update(e.clientX)
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-  }
+    isDragging.current = true;
+    onDragStart?.();
+    update(e.clientX);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!isDragging.current) return
-    update(e.clientX)
-  }
+    if (!isDragging.current) return;
+    update(e.clientX);
+  };
 
   const onPointerUp = () => {
-    if (!isDragging.current) return
-    isDragging.current = false
-    onDragEnd?.()
-  }
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    onDragEnd?.();
+  };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    const step = e.shiftKey ? 10 : 2
+    const step = e.shiftKey ? 10 : 2;
     if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-      e.preventDefault()
-      onChange(Math.min(100, value + step))
-      return
+      e.preventDefault();
+      onChange(Math.min(100, value + step));
+      return;
     }
     if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-      e.preventDefault()
-      onChange(Math.max(0, value - step))
-      return
+      e.preventDefault();
+      onChange(Math.max(0, value - step));
+      return;
     }
     if (e.key === 'Home') {
-      e.preventDefault()
-      onChange(0)
-      return
+      e.preventDefault();
+      onChange(0);
+      return;
     }
     if (e.key === 'End') {
-      e.preventDefault()
-      onChange(100)
+      e.preventDefault();
+      onChange(100);
     }
-  }
+  };
 
   return (
     <div
@@ -258,7 +245,7 @@ const CustomSlider = ({
       tabIndex={0}
       className={cn(
         'relative w-full h-2 sm:h-1.5 rounded-full cursor-pointer touch-none outline-none focus-visible:ring-2 focus-visible:ring-white/50 bg-white/25 overflow-visible',
-        className,
+        className
       )}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -274,7 +261,7 @@ const CustomSlider = ({
       <div
         className={cn(
           'absolute z-[2] top-1/2 h-3 w-3 rounded-full bg-white shadow-lg ring-1 ring-black/25 transition-opacity opacity-100 sm:opacity-90',
-          thumbClassName,
+          thumbClassName
         )}
         style={{
           left: `${value}%`,
@@ -282,8 +269,8 @@ const CustomSlider = ({
         }}
       />
     </div>
-  )
-}
+  );
+};
 
 /* ---------------- VIDEO PLAYER ---------------- */
 
@@ -302,85 +289,82 @@ const VideoPlayer = ({
   allowSpeedChange = true,
   allowedMediaDomains = [],
 }: {
-  src: string
-  itemId?: string
-  title?: string
-  className?: string
-  autoPlay?: boolean
-  lowDataMode?: boolean
-  networkAwareAutoplay?: boolean
-  showPerformanceHud?: boolean
-  allowDownload?: boolean
-  allowPiP?: boolean
-  allowFullscreen?: boolean
-  allowSpeedChange?: boolean
-  allowedMediaDomains?: string[]
+  src: string;
+  itemId?: string;
+  title?: string;
+  className?: string;
+  autoPlay?: boolean;
+  lowDataMode?: boolean;
+  networkAwareAutoplay?: boolean;
+  showPerformanceHud?: boolean;
+  allowDownload?: boolean;
+  allowPiP?: boolean;
+  allowFullscreen?: boolean;
+  allowSpeedChange?: boolean;
+  allowedMediaDomains?: string[];
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const hlsRef = useRef<Hls | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
   // const isInitialMount = useRef(true) // Removed unused variable
 
-  const [isPlaying, setIsPlaying] = useState(autoPlay)
-  const [volume, setVolume] = useState(1)
-  const [isMuted, setIsMuted] = useState(false)
-  const [playbackSpeed, setPlaybackSpeed] = useState(1)
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const [isPiP, setIsPiP] = useState(false)
-  const [qualityOptions, setQualityOptions] = useState<
-    { index: number; label: string }[]
-  >([{ index: -1, label: 'Auto' }])
-  const [selectedQualityIndex, setSelectedQualityIndex] = useState(-1)
-  const [currentQualityLabel, setCurrentQualityLabel] = useState<string>('Auto')
+  const [isPlaying, setIsPlaying] = useState(autoPlay);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPiP, setIsPiP] = useState(false);
+  const [qualityOptions, setQualityOptions] = useState<{ index: number; label: string }[]>([
+    { index: -1, label: 'Auto' },
+  ]);
+  const [selectedQualityIndex, setSelectedQualityIndex] = useState(-1);
+  const [currentQualityLabel, setCurrentQualityLabel] = useState<string>('Auto');
 
-  const [showControls, setShowControls] = useState(true)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [isBuffering, setIsBuffering] = useState(false)
-  const [isVideoReady, setIsVideoReady] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [reconnectMessage, setReconnectMessage] = useState<string | null>(null)
-  const [useLiteSkeleton, setUseLiteSkeleton] = useState(false)
-  const [isMirrored, setIsMirrored] = useState(false)
+  const [showControls, setShowControls] = useState(true);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isBuffering, setIsBuffering] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [reconnectMessage, setReconnectMessage] = useState<string | null>(null);
+  const [useLiteSkeleton, setUseLiteSkeleton] = useState(false);
+  const [isMirrored, setIsMirrored] = useState(false);
   const [hudState, setHudState] = useState<{
-    level: number
-    bufferAhead: number
-    droppedFrames: number
-  }>({ level: -1, bufferAhead: 0, droppedFrames: 0 })
-  const lastResumeSaveAt = useRef(0)
-  const resumeKey = useMemo(
-    () => `vault:video:resume:${itemId ?? src}`,
-    [itemId, src],
-  )
+    level: number;
+    bufferAhead: number;
+    droppedFrames: number;
+  }>({ level: -1, bufferAhead: 0, droppedFrames: 0 });
+  const lastResumeSaveAt = useRef(0);
+  const resumeKey = useMemo(() => `vault:video:resume:${itemId ?? src}`, [itemId, src]);
   const isSourceAllowed = useMemo(
     () => isAllowedMediaUrl(src, allowedMediaDomains),
-    [src, allowedMediaDomains],
-  )
+    [src, allowedMediaDomains]
+  );
 
   useEffect(() => {
     const mediaQuery =
       typeof window !== 'undefined' && typeof window.matchMedia === 'function'
         ? window.matchMedia('(prefers-reduced-motion: reduce)')
-        : null
+        : null;
     const updateLiteMode = () => {
-      const reducedMotion = Boolean(mediaQuery?.matches)
+      const reducedMotion = Boolean(mediaQuery?.matches);
       const lowCoreDevice =
         typeof navigator !== 'undefined' &&
         typeof (navigator as any).hardwareConcurrency === 'number' &&
-        (navigator as any).hardwareConcurrency <= 4
-      setUseLiteSkeleton(reducedMotion || lowCoreDevice || lowDataMode)
-    }
-    updateLiteMode()
-    mediaQuery?.addEventListener?.('change', updateLiteMode)
-    return () => mediaQuery?.removeEventListener?.('change', updateLiteMode)
-  }, [lowDataMode])
+        (navigator as any).hardwareConcurrency <= 4;
+      setUseLiteSkeleton(reducedMotion || lowCoreDevice || lowDataMode);
+    };
+    updateLiteMode();
+    mediaQuery?.addEventListener?.('change', updateLiteMode);
+    return () => mediaQuery?.removeEventListener?.('change', updateLiteMode);
+  }, [lowDataMode]);
 
   const logEvent = useCallback(
     async (event: string, metadata: any = {}) => {
-      if (!itemId) return
+      if (!itemId) return;
       try {
-        const apiBase = resolveApiBaseUrl()
-        const safeMetadata = sanitizeTelemetryMetadata(metadata)
+        const apiBase = resolveApiBaseUrl();
+        const safeMetadata = sanitizeTelemetryMetadata(metadata);
         fetch(`${apiBase}/api/vault/media/events`, {
           method: 'POST',
           headers: {
@@ -389,72 +373,69 @@ const VideoPlayer = ({
           },
           body: JSON.stringify({ itemId, event, metadata: safeMetadata }),
         }).catch((error) => {
-          logger.warn('Telemetry delivery failed', { event, itemId, error })
-        })
+          logger.warn('Telemetry delivery failed', { event, itemId, error });
+        });
       } catch (error) {
         logger.warn('Failed to schedule telemetry delivery', {
           event,
           itemId,
           error: sanitizeTelemetryMetadata(error),
-        })
+        });
       }
     },
-    [itemId],
-  )
+    [itemId]
+  );
 
   useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
+    const video = videoRef.current;
+    if (!video) return;
 
-    setCurrentTime(0)
-    setDuration(0)
-    setError(null)
-    setIsPlaying(autoPlay)
-    setReconnectMessage(null)
-    setIsVideoReady(false)
-    setSelectedQualityIndex(-1)
-    setCurrentQualityLabel('Auto')
-    setQualityOptions([{ index: -1, label: 'Auto' }])
+    setCurrentTime(0);
+    setDuration(0);
+    setError(null);
+    setIsPlaying(autoPlay);
+    setReconnectMessage(null);
+    setIsVideoReady(false);
+    setSelectedQualityIndex(-1);
+    setCurrentQualityLabel('Auto');
+    setQualityOptions([{ index: -1, label: 'Auto' }]);
     if (!isSourceAllowed) {
-      setError(getPlayerErrorMessage('SECURITY_POLICY_BLOCKED'))
-      return
+      setError(getPlayerErrorMessage('SECURITY_POLICY_BLOCKED'));
+      return;
     }
-    let disposed = false
-    let networkRetryCount = 0
-    let mediaRecoveryCount = 0
-    let qualityHydrated = false
+    let disposed = false;
+    let networkRetryCount = 0;
+    let mediaRecoveryCount = 0;
+    let qualityHydrated = false;
 
     const shouldAutoplay = async () => {
-      if (!autoPlay) return false
-      if (!networkAwareAutoplay) return true
+      if (!autoPlay) return false;
+      if (!networkAwareAutoplay) return true;
 
       try {
         const navAny = navigator as Navigator & {
-          connection?: { saveData?: boolean; effectiveType?: string }
-          getBattery?: () => Promise<{ level: number; charging: boolean }>
-        }
-        const conn = navAny.connection
-        if (conn?.saveData) return false
-        if (
-          conn?.effectiveType &&
-          ['slow-2g', '2g'].includes(conn.effectiveType)
-        ) {
-          return false
+          connection?: { saveData?: boolean; effectiveType?: string };
+          getBattery?: () => Promise<{ level: number; charging: boolean }>;
+        };
+        const conn = navAny.connection;
+        if (conn?.saveData) return false;
+        if (conn?.effectiveType && ['slow-2g', '2g'].includes(conn.effectiveType)) {
+          return false;
         }
         if (typeof navAny.getBattery === 'function') {
-          const battery = await navAny.getBattery()
-          if (!battery.charging && battery.level < 0.2) return false
+          const battery = await navAny.getBattery();
+          if (!battery.charging && battery.level < 0.2) return false;
         }
       } catch {
         // keep autoplay unchanged on unsupported platforms
       }
-      return true
-    }
+      return true;
+    };
 
     // Cleanup previous playback engine for source changes
-    hlsRef.current?.destroy()
-    hlsRef.current = null
-    setIsBuffering(true)
+    hlsRef.current?.destroy();
+    hlsRef.current = null;
+    setIsBuffering(true);
     // Main loader: lightweight HLS/native playback for responsive previews
     const loadVideo = async () => {
       // Prefer HLS chunk-based loading first for fast start + background buffering
@@ -473,93 +454,89 @@ const VideoPlayer = ({
             maxBufferHole: 0.5,
             startFragPrefetch: false,
             testBandwidth: true,
-          })
-          hlsRef.current = hls
-          hls.loadSource(src)
-          hls.attachMedia(video)
+          });
+          hlsRef.current = hls;
+          hls.loadSource(src);
+          hls.attachMedia(video);
 
           hls.on(Hls.Events.MANIFEST_LOADING, () => {
-            setIsBuffering(true)
-          })
+            setIsBuffering(true);
+          });
 
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            logEvent('playback_start', { type: 'hls_legacy' })
-            setIsBuffering(false)
+            logEvent('playback_start', { type: 'hls_legacy' });
+            setIsBuffering(false);
             if (!qualityHydrated) {
               const nextOptions = [
                 { index: -1, label: 'Auto' },
                 ...hls.levels.map((level, index) => {
                   const labelFromHeight = level.height
                     ? `${level.height}p`
-                    : `${Math.round((level.bitrate || 0) / 1000)}kbps`
-                  return { index, label: labelFromHeight }
+                    : `${Math.round((level.bitrate || 0) / 1000)}kbps`;
+                  return { index, label: labelFromHeight };
                 }),
-              ]
-              setQualityOptions(nextOptions)
+              ];
+              setQualityOptions(nextOptions);
               const startLabel =
-                nextOptions.find((option) => option.index === hls.currentLevel)
-                  ?.label ?? 'Auto'
-              setCurrentQualityLabel(startLabel)
-              qualityHydrated = true
+                nextOptions.find((option) => option.index === hls.currentLevel)?.label ?? 'Auto';
+              setCurrentQualityLabel(startLabel);
+              qualityHydrated = true;
             }
             void shouldAutoplay().then((allowAutoPlay) => {
-              if (!allowAutoPlay || disposed) return
-              video.play().catch(() => setIsPlaying(false))
-            })
+              if (!allowAutoPlay || disposed) return;
+              video.play().catch(() => setIsPlaying(false));
+            });
 
             // Adaptive preview quality: start lower, step up when stable.
             if (!lowDataMode) {
               setTimeout(() => {
-                if (disposed || !hlsRef.current) return
-                hlsRef.current.nextLevel = -1
-              }, 4000)
+                if (disposed || !hlsRef.current) return;
+                hlsRef.current.nextLevel = -1;
+              }, 4000);
             }
-          })
+          });
 
           hls.on(Hls.Events.FRAG_LOADING, () => {
             // Next segment fetch in background
             if (!video.paused && video.readyState < 3) {
-              setIsBuffering(true)
+              setIsBuffering(true);
             }
-          })
+          });
 
           hls.on(Hls.Events.FRAG_BUFFERED, () => {
             if (video.readyState >= 3) {
-              setIsBuffering(false)
+              setIsBuffering(false);
             }
-            networkRetryCount = 0
-            mediaRecoveryCount = 0
-            setReconnectMessage(null)
-          })
+            networkRetryCount = 0;
+            mediaRecoveryCount = 0;
+            setReconnectMessage(null);
+          });
 
           hls.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => {
             const bufferedEnd = video.buffered.length
               ? video.buffered.end(video.buffered.length - 1)
-              : 0
+              : 0;
             const droppedFrames =
               (video as HTMLVideoElement & { webkitDroppedFrameCount?: number })
-                .webkitDroppedFrameCount || 0
+                .webkitDroppedFrameCount || 0;
             setHudState({
               level: data.level ?? -1,
               bufferAhead: Math.max(0, bufferedEnd - video.currentTime),
               droppedFrames,
-            })
+            });
             const qualityLabel =
-              qualityOptions.find((option) => option.index === data.level)
-                ?.label ??
-              (hls.levels[data.level]?.height
-                ? `${hls.levels[data.level].height}p`
-                : 'Auto')
-            setCurrentQualityLabel(qualityLabel)
-          })
+              qualityOptions.find((option) => option.index === data.level)?.label ??
+              (hls.levels[data.level]?.height ? `${hls.levels[data.level].height}p` : 'Auto');
+            setCurrentQualityLabel(qualityLabel);
+          });
 
           hls.on(Hls.Events.ERROR, (_event, data) => {
             if (data.fatal) {
               if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                networkRetryCount += 1
+                networkRetryCount += 1;
               }
               if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-                mediaRecoveryCount += 1
+                mediaRecoveryCount += 1;
               }
 
               const recoveryAction = getHlsRecoveryAction({
@@ -567,149 +544,141 @@ const VideoPlayer = ({
                 networkRetryCount,
                 mediaRecoveryCount,
                 currentLevel: hls.currentLevel,
-              })
+              });
 
               switch (recoveryAction.action) {
                 case 'restart_load':
-                  setIsBuffering(true)
-                  setReconnectMessage(recoveryAction.message)
+                  setIsBuffering(true);
+                  setReconnectMessage(recoveryAction.message);
                   setTimeout(() => {
                     if (!disposed && hlsRef.current) {
-                      hls.startLoad()
+                      hls.startLoad();
                     }
-                  }, recoveryAction.retryInMs)
-                  break
+                  }, recoveryAction.retryInMs);
+                  break;
                 case 'recover_media':
-                  hls.recoverMediaError()
-                  break
+                  hls.recoverMediaError();
+                  break;
                 case 'downgrade_level':
-                  hls.currentLevel = recoveryAction.level
-                  hls.nextLevel = recoveryAction.level
-                  setReconnectMessage(recoveryAction.message)
+                  hls.currentLevel = recoveryAction.level;
+                  hls.nextLevel = recoveryAction.level;
+                  setReconnectMessage(recoveryAction.message);
                   setTimeout(() => {
                     if (!disposed && hlsRef.current) {
-                      hls.startLoad()
+                      hls.startLoad();
                     }
-                  }, 400)
-                  break
+                  }, 400);
+                  break;
                 case 'fatal_error':
-                  setError(getPlayerErrorMessage(recoveryAction.code))
-                  hls.destroy()
-                  hlsRef.current = null
-                  break
+                  setError(getPlayerErrorMessage(recoveryAction.code));
+                  hls.destroy();
+                  hlsRef.current = null;
+                  break;
               }
             }
-          })
+          });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          setQualityOptions([{ index: -1, label: 'Auto' }])
-          setSelectedQualityIndex(-1)
-          setCurrentQualityLabel('Auto')
-          video.src = src
-          video.load()
+          setQualityOptions([{ index: -1, label: 'Auto' }]);
+          setSelectedQualityIndex(-1);
+          setCurrentQualityLabel('Auto');
+          video.src = src;
+          video.load();
         }
       } else {
-        setQualityOptions([{ index: -1, label: 'Auto' }])
-        setSelectedQualityIndex(-1)
-        setCurrentQualityLabel('Auto')
-        video.src = src
-        video.load()
+        setQualityOptions([{ index: -1, label: 'Auto' }]);
+        setSelectedQualityIndex(-1);
+        setCurrentQualityLabel('Auto');
+        video.src = src;
+        video.load();
       }
-    }
+    };
 
-    loadVideo()
+    loadVideo();
     return () => {
-      disposed = true
-      hlsRef.current?.destroy()
-      hlsRef.current = null
-    }
-  }, [
-    src,
-    autoPlay,
-    itemId,
-    logEvent,
-    lowDataMode,
-    networkAwareAutoplay,
-    isSourceAllowed,
-  ])
+      disposed = true;
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+    };
+  }, [src, autoPlay, itemId, logEvent, lowDataMode, networkAwareAutoplay, isSourceAllowed]);
 
-  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isDraggingSeek = useRef(false)
-  const lastVolume = useRef(1)
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isDraggingSeek = useRef(false);
+  const lastVolume = useRef(1);
 
   // Derive progress from currentTime/duration
   const progress = useMemo(
     () => (duration > 0 ? (currentTime / duration) * 100 : 0),
-    [currentTime, duration],
-  )
+    [currentTime, duration]
+  );
 
   /* ---------------- CORE EVENTS ---------------- */
 
   const handleError = useCallback(() => {
-    const video = videoRef.current
-    const err = video?.error
+    const video = videoRef.current;
+    const err = video?.error;
 
-    logEvent('error', { code: err?.code, message: err?.message })
+    logEvent('error', { code: err?.code, message: err?.message });
 
-    setError(getPlayerErrorMessage(mapMediaErrorCodeToPlayerError(err?.code)))
+    setError(getPlayerErrorMessage(mapMediaErrorCodeToPlayerError(err?.code)));
 
-    setIsBuffering(false)
-  }, [logEvent])
+    setIsBuffering(false);
+  }, [logEvent]);
 
   const handleLoadedMetadata = () => {
-    if (!videoRef.current) return
-    const video = videoRef.current
-    const safeDuration = finiteOrZero(video.duration)
-    setDuration(safeDuration)
-    setError(null)
-    setIsVideoReady(true)
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const safeDuration = finiteOrZero(video.duration);
+    setDuration(safeDuration);
+    setError(null);
+    setIsVideoReady(true);
     try {
-      const raw = window.localStorage.getItem(resumeKey)
-      if (!raw) return
-      const parsed = Number(raw)
-      if (!Number.isFinite(parsed)) return
+      const raw = window.localStorage.getItem(resumeKey);
+      if (!raw) return;
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed)) return;
       if (parsed > 1 && parsed < Math.max(0, safeDuration - 1)) {
-        video.currentTime = parsed
-        setCurrentTime(parsed)
+        video.currentTime = parsed;
+        setCurrentTime(parsed);
       }
     } catch (storageError) {
-      logger.warn('Failed to restore resume position', { storageError })
+      logger.warn('Failed to restore resume position', { storageError });
     }
-  }
+  };
 
   const handleTimeUpdate = () => {
-    const video = videoRef.current
-    if (!video || isDraggingSeek.current) return
+    const video = videoRef.current;
+    if (!video || isDraggingSeek.current) return;
 
-    const safeCurrentTime = finiteOrZero(video.currentTime)
-    setCurrentTime(safeCurrentTime)
-    const now = Date.now()
-    if (now - lastResumeSaveAt.current < 2000) return
-    lastResumeSaveAt.current = now
+    const safeCurrentTime = finiteOrZero(video.currentTime);
+    setCurrentTime(safeCurrentTime);
+    const now = Date.now();
+    if (now - lastResumeSaveAt.current < 2000) return;
+    lastResumeSaveAt.current = now;
     try {
-      window.localStorage.setItem(resumeKey, String(safeCurrentTime))
+      window.localStorage.setItem(resumeKey, String(safeCurrentTime));
     } catch (storageError) {
-      logger.warn('Failed to save resume position', { storageError })
+      logger.warn('Failed to save resume position', { storageError });
     }
-  }
+  };
 
-  const [showPlayingBadge, setShowPlayingBadge] = useState(false)
-  const badgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [showPlayingBadge, setShowPlayingBadge] = useState(false);
+  const badgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // const lastBufferEventRef = useRef<{ type: 'start' | 'end' | null; at: number }>({
   //   type: null,
   //   at: 0,
   // })
 
   const handlePlay = () => {
-    setIsPlaying(true)
-    setShowPlayingBadge(true)
-    if (badgeTimer.current) clearTimeout(badgeTimer.current)
-    badgeTimer.current = setTimeout(() => setShowPlayingBadge(false), 3000)
-  }
-  const handlePause = () => setIsPlaying(false)
+    setIsPlaying(true);
+    setShowPlayingBadge(true);
+    if (badgeTimer.current) clearTimeout(badgeTimer.current);
+    badgeTimer.current = setTimeout(() => setShowPlayingBadge(false), 3000);
+  };
+  const handlePause = () => setIsPlaying(false);
 
   const handleWaiting = () => {
-    setIsBuffering(true)
-    logEvent('buffer_start', { time: videoRef.current?.currentTime })
+    setIsBuffering(true);
+    logEvent('buffer_start', { time: videoRef.current?.currentTime });
     //   const now = Date.now()
     //   if (
     //     lastBufferEventRef.current.type !== 'start' ||
@@ -719,11 +688,11 @@ const VideoPlayer = ({
     //     logEvent('buffer_start', { time: videoRef.current?.currentTime })
     //   }
     // }
-  }
+  };
   const handlePlaying = () => {
-    setIsBuffering(false)
-    setIsVideoReady(true)
-    logEvent('buffer_end', { time: videoRef.current?.currentTime })
+    setIsBuffering(false);
+    setIsVideoReady(true);
+    logEvent('buffer_end', { time: videoRef.current?.currentTime });
     // const now = Date.now()
     // if (
     //   lastBufferEventRef.current.type !== 'end' ||
@@ -733,340 +702,320 @@ const VideoPlayer = ({
     //   logEvent('buffer_end', { time: videoRef.current?.currentTime })
     // }
     // Also show badge when resuming from buffering
-    setShowPlayingBadge(true)
-    if (badgeTimer.current) clearTimeout(badgeTimer.current)
-    badgeTimer.current = setTimeout(() => setShowPlayingBadge(false), 3000)
-  }
+    setShowPlayingBadge(true);
+    if (badgeTimer.current) clearTimeout(badgeTimer.current);
+    badgeTimer.current = setTimeout(() => setShowPlayingBadge(false), 3000);
+  };
 
   const handleEnded = () => {
-    setIsPlaying(false)
-    setShowControls(true)
+    setIsPlaying(false);
+    setShowControls(true);
     try {
-      window.localStorage.removeItem(resumeKey)
+      window.localStorage.removeItem(resumeKey);
     } catch (storageError) {
-      logger.warn('Failed to clear resume position', { storageError })
+      logger.warn('Failed to clear resume position', { storageError });
     }
-  }
+  };
 
   /* ---------------- CONTROLS ---------------- */
 
   const togglePlay = useCallback(() => {
-    const video = videoRef.current
-    if (!video || error) return
+    const video = videoRef.current;
+    if (!video || error) return;
 
     if (video.paused) {
       video.play().catch((err) => {
-        console.warn('Playback failed:', err)
-      })
+        console.warn('Playback failed:', err);
+      });
     } else {
-      video.pause()
+      video.pause();
     }
-  }, [error])
+  }, [error]);
 
   const handleSeek = (value: number) => {
-    const safeDuration = finiteOrZero(duration)
-    if (safeDuration <= 0) return
-    const newTime = Math.min(
-      safeDuration,
-      Math.max(0, (finiteOrZero(value) / 100) * safeDuration),
-    )
-    setCurrentTime(newTime)
+    const safeDuration = finiteOrZero(duration);
+    if (safeDuration <= 0) return;
+    const newTime = Math.min(safeDuration, Math.max(0, (finiteOrZero(value) / 100) * safeDuration));
+    setCurrentTime(newTime);
 
     // Only commit to video if not dragging or if it's the final update
     if (!isDraggingSeek.current && videoRef.current) {
-      videoRef.current.currentTime = newTime
+      videoRef.current.currentTime = newTime;
     }
-  }
+  };
 
   const onSeekStart = () => {
-    isDraggingSeek.current = true
-    resetHideTimer()
-  }
+    isDraggingSeek.current = true;
+    resetHideTimer();
+  };
 
   const onSeekEnd = () => {
-    isDraggingSeek.current = false
+    isDraggingSeek.current = false;
     if (videoRef.current) {
-      const safeDuration = finiteOrZero(duration)
+      const safeDuration = finiteOrZero(duration);
       const safeCurrentTime = Math.min(
         safeDuration || Number.MAX_SAFE_INTEGER,
-        Math.max(0, finiteOrZero(currentTime)),
-      )
+        Math.max(0, finiteOrZero(currentTime))
+      );
       if (Number.isFinite(safeCurrentTime)) {
-        videoRef.current.currentTime = safeCurrentTime
+        videoRef.current.currentTime = safeCurrentTime;
       }
     }
-  }
+  };
 
   const handleVolume = (value: number) => {
-    const video = videoRef.current
-    if (!video) return
+    const video = videoRef.current;
+    if (!video) return;
 
-    const v = value / 100
+    const v = value / 100;
     if (v > 0) {
-      lastVolume.current = v
+      lastVolume.current = v;
     }
-    video.volume = v
-    video.muted = v === 0
+    video.volume = v;
+    video.muted = v === 0;
 
-    setVolume(v)
-    setIsMuted(v === 0)
-  }
+    setVolume(v);
+    setIsMuted(v === 0);
+  };
 
   const toggleMute = () => {
-    const video = videoRef.current
-    if (!video) return
+    const video = videoRef.current;
+    if (!video) return;
 
     if (video.muted) {
-      const restoredVol = lastVolume.current || 1
-      video.volume = restoredVol
-      video.muted = false
-      setVolume(restoredVol)
-      setIsMuted(false)
+      const restoredVol = lastVolume.current || 1;
+      video.volume = restoredVol;
+      video.muted = false;
+      setVolume(restoredVol);
+      setIsMuted(false);
     } else {
-      lastVolume.current = volume
-      video.volume = 0
-      video.muted = true
-      setVolume(0)
-      setIsMuted(true)
+      lastVolume.current = volume;
+      video.volume = 0;
+      video.muted = true;
+      setVolume(0);
+      setIsMuted(true);
     }
-  }
+  };
 
   const setSpeed = (speed: number) => {
-    const video = videoRef.current
-    if (!video) return
+    const video = videoRef.current;
+    if (!video) return;
 
-    video.playbackRate = speed
-    setPlaybackSpeed(speed)
-  }
+    video.playbackRate = speed;
+    setPlaybackSpeed(speed);
+  };
 
-  const speeds = [0.5, 1, 1.25, 1.5, 2]
+  const speeds = [0.5, 1, 1.25, 1.5, 2];
 
   const cycleSpeed = () => {
-    if (!allowSpeedChange) return
-    const currentIndex = speeds.indexOf(playbackSpeed)
-    const nextIndex = (currentIndex + 1) % speeds.length
-    setSpeed(speeds[nextIndex])
-  }
+    if (!allowSpeedChange) return;
+    const currentIndex = speeds.indexOf(playbackSpeed);
+    const nextIndex = (currentIndex + 1) % speeds.length;
+    setSpeed(speeds[nextIndex]);
+  };
 
   const applyQualitySelection = (levelIndex: number) => {
-    const hls = hlsRef.current
-    if (!hls) return
+    const hls = hlsRef.current;
+    if (!hls) return;
 
     if (levelIndex < 0) {
       // Re-enable adaptive bitrate mode explicitly.
-      hls.currentLevel = -1
-      hls.nextLevel = -1
-      hls.loadLevel = -1
-      hls.autoLevelCapping = -1
-      setReconnectMessage('Auto quality enabled')
+      hls.currentLevel = -1;
+      hls.nextLevel = -1;
+      hls.loadLevel = -1;
+      hls.autoLevelCapping = -1;
+      setReconnectMessage('Auto quality enabled');
       setTimeout(() => {
-        setReconnectMessage((prev) =>
-          prev === 'Auto quality enabled' ? null : prev,
-        )
-      }, 1200)
-      setSelectedQualityIndex(-1)
-      return
+        setReconnectMessage((prev) => (prev === 'Auto quality enabled' ? null : prev));
+      }, 1200);
+      setSelectedQualityIndex(-1);
+      return;
     }
 
     // Force manual level for immediate and upcoming fragment loads.
-    hls.autoLevelCapping = levelIndex
-    hls.loadLevel = levelIndex
-    hls.currentLevel = levelIndex
-    hls.nextLevel = levelIndex
-    hls.startLoad()
-    setSelectedQualityIndex(levelIndex)
+    hls.autoLevelCapping = levelIndex;
+    hls.loadLevel = levelIndex;
+    hls.currentLevel = levelIndex;
+    hls.nextLevel = levelIndex;
+    hls.startLoad();
+    setSelectedQualityIndex(levelIndex);
     const chosenLabel =
-      qualityOptions.find((option) => option.index === levelIndex)?.label ??
-      `${levelIndex}`
-    setReconnectMessage(`Quality set to ${chosenLabel}`)
+      qualityOptions.find((option) => option.index === levelIndex)?.label ?? `${levelIndex}`;
+    setReconnectMessage(`Quality set to ${chosenLabel}`);
     setTimeout(() => {
-      setReconnectMessage((prev) =>
-        prev === `Quality set to ${chosenLabel}` ? null : prev,
-      )
-    }, 1200)
-  }
+      setReconnectMessage((prev) => (prev === `Quality set to ${chosenLabel}` ? null : prev));
+    }, 1200);
+  };
 
   const toggleFullscreen = async () => {
-    if (!allowFullscreen) return
-    const container = containerRef.current
-    if (!container) return
+    if (!allowFullscreen) return;
+    const container = containerRef.current;
+    if (!container) return;
     try {
       if (document.fullscreenElement) {
-        await document.exitFullscreen()
+        await document.exitFullscreen();
       } else {
-        await container.requestFullscreen()
+        await container.requestFullscreen();
       }
     } catch (fullscreenError) {
-      logger.warn('Fullscreen toggle failed', { fullscreenError })
+      logger.warn('Fullscreen toggle failed', { fullscreenError });
     }
-  }
+  };
 
   const togglePiP = async () => {
-    if (!allowPiP) return
-    const video = videoRef.current
-    if (!video) return
+    if (!allowPiP) return;
+    const video = videoRef.current;
+    if (!video) return;
     try {
       if (document.pictureInPictureElement) {
-        await document.exitPictureInPicture()
+        await document.exitPictureInPicture();
       } else if ('requestPictureInPicture' in video) {
         await (
           video as HTMLVideoElement & {
-            requestPictureInPicture: () => Promise<PictureInPictureWindow>
+            requestPictureInPicture: () => Promise<PictureInPictureWindow>;
           }
-        ).requestPictureInPicture()
+        ).requestPictureInPicture();
       }
     } catch (pipError) {
-      logger.warn('PiP toggle failed', { pipError })
+      logger.warn('PiP toggle failed', { pipError });
     }
-  }
+  };
 
   const handleDownload = () => {
-    if (!src) return
+    if (!src) return;
     if (!allowDownload) {
-      toast.error('Download is disabled by policy')
-      return
+      toast.error('Download is disabled by policy');
+      return;
     }
     if (!isSafeDownloadUrl(src)) {
-      toast.error('Download blocked: unsupported or unsafe URL')
-      logger.warn('Blocked unsafe download URL', { src })
-      return
+      toast.error('Download blocked: unsupported or unsafe URL');
+      logger.warn('Blocked unsafe download URL', { src });
+      return;
     }
     try {
-      const link = document.createElement('a')
-      link.href = src
-      const fallbackName = title ? `${title}.mp4` : `video-${Date.now()}.mp4`
-      const parsedName = src.split('/').pop()?.split('?')[0]
-      link.download = parsedName || fallbackName
+      const link = document.createElement('a');
+      link.href = src;
+      const fallbackName = title ? `${title}.mp4` : `video-${Date.now()}.mp4`;
+      const parsedName = src.split('/').pop()?.split('?')[0];
+      link.download = parsedName || fallbackName;
       if (!src.startsWith('blob:') && !src.startsWith('data:')) {
-        link.target = '_blank'
+        link.target = '_blank';
       }
-      link.rel = 'noopener noreferrer' // Security best practice
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      toast.success('Download started')
+      link.rel = 'noopener noreferrer'; // Security best practice
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('Download started');
     } catch (err) {
-      console.error('Download failed:', err)
+      console.error('Download failed:', err);
       // Fallback: just open in new tab
       if (isSafeDownloadUrl(src)) {
-        window.open(src, '_blank', 'noopener,noreferrer')
-        toast.error('Direct download failed, opening in new tab')
+        window.open(src, '_blank', 'noopener,noreferrer');
+        toast.error('Direct download failed, opening in new tab');
       } else {
-        toast.error('Download failed')
+        toast.error('Download failed');
       }
     }
-  }
+  };
 
   const handleRefresh = () => {
-    if (!videoRef.current) return
-    videoRef.current.currentTime = 0
-    videoRef.current.load()
-    toast.success('Video refreshed')
-  }
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = 0;
+    videoRef.current.load();
+    toast.success('Video refreshed');
+  };
 
   /* ---------------- AUTO HIDE CONTROLS ---------------- */
 
   const resetHideTimer = useCallback(() => {
-    setShowControls(true)
-    if (hideTimer.current) clearTimeout(hideTimer.current)
+    setShowControls(true);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
     if (isPlaying && !error) {
-      hideTimer.current = setTimeout(() => setShowControls(false), 2500)
+      hideTimer.current = setTimeout(() => setShowControls(false), 2500);
     }
-  }, [isPlaying, error])
+  }, [isPlaying, error]);
 
   useEffect(() => {
-    resetHideTimer()
+    resetHideTimer();
     return () => {
-      if (hideTimer.current) clearTimeout(hideTimer.current)
-    }
-  }, [isPlaying, error, resetHideTimer])
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    };
+  }, [isPlaying, error, resetHideTimer]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (hideTimer.current) clearTimeout(hideTimer.current)
-      if (badgeTimer.current) clearTimeout(badgeTimer.current)
-      hlsRef.current?.destroy()
-      hlsRef.current = null
-      const video = videoRef.current
-      if (!video) return
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+      if (badgeTimer.current) clearTimeout(badgeTimer.current);
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+      const video = videoRef.current;
+      if (!video) return;
       try {
-        video.pause()
+        video.pause();
       } catch {
         // Ignore pause failures during teardown.
       }
       try {
-        video.srcObject = null
+        video.srcObject = null;
       } catch {
         // Ignore srcObject failures during teardown.
       }
       try {
-        video.removeAttribute('src')
+        video.removeAttribute('src');
       } catch {
         // Ignore src cleanup failures.
       }
       try {
-        video.load()
+        video.load();
       } catch {
         // Ignore load reset failures.
       }
-    }
-  }, [])
+    };
+  }, []);
 
   /* ---------------- KEYBOARD SUPPORT ---------------- */
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const video = videoRef.current
-      const container = containerRef.current
-      if (!video || !container || error) return
+      const video = videoRef.current;
+      const container = containerRef.current;
+      if (!video || !container || error) return;
 
-      const targetNode = e.target as Node | null
-      if (!targetNode || !container.contains(targetNode)) return
+      const targetNode = e.target as Node | null;
+      if (!targetNode || !container.contains(targetNode)) return;
 
       // Basic Player Controls
       if (e.key === ' ') {
-        e.preventDefault()
-        togglePlay()
+        e.preventDefault();
+        togglePlay();
       }
-      if (e.key === 'ArrowRight') video.currentTime += 5
-      if (e.key === 'ArrowLeft') video.currentTime -= 5
-    }
+      if (e.key === 'ArrowRight') video.currentTime += 5;
+      if (e.key === 'ArrowLeft') video.currentTime -= 5;
+    };
 
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [togglePlay, error])
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [togglePlay, error]);
 
   useEffect(() => {
     const onFullscreenChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement))
-    }
-    const onEnterPiP = () => setIsPiP(true)
-    const onLeavePiP = () => setIsPiP(false)
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    const onEnterPiP = () => setIsPiP(true);
+    const onLeavePiP = () => setIsPiP(false);
 
-    const video = videoRef.current
-    document.addEventListener('fullscreenchange', onFullscreenChange)
-    video?.addEventListener(
-      'enterpictureinpicture',
-      onEnterPiP as EventListener,
-    )
-    video?.addEventListener(
-      'leavepictureinpicture',
-      onLeavePiP as EventListener,
-    )
+    const video = videoRef.current;
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    video?.addEventListener('enterpictureinpicture', onEnterPiP as EventListener);
+    video?.addEventListener('leavepictureinpicture', onLeavePiP as EventListener);
 
     return () => {
-      document.removeEventListener('fullscreenchange', onFullscreenChange)
-      video?.removeEventListener(
-        'enterpictureinpicture',
-        onEnterPiP as EventListener,
-      )
-      video?.removeEventListener(
-        'leavepictureinpicture',
-        onLeavePiP as EventListener,
-      )
-    }
-  }, [])
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      video?.removeEventListener('enterpictureinpicture', onEnterPiP as EventListener);
+      video?.removeEventListener('leavepictureinpicture', onLeavePiP as EventListener);
+    };
+  }, []);
 
   /* ---------------- UI ---------------- */
 
@@ -1075,30 +1024,27 @@ const VideoPlayer = ({
       ref={containerRef}
       className={cn(
         'group relative w-full h-full max-h-full min-h-[220px] bg-black overflow-hidden',
-        className,
+        className
       )}
       onMouseMove={resetHideTimer}
       onTouchStart={resetHideTimer}
       onClick={resetHideTimer}
       onContextMenu={(e) => {
-        e.preventDefault()
-        toast.error('Context menu is disabled for secure content.')
+        e.preventDefault();
+        toast.error('Context menu is disabled for secure content.');
       }}
     >
       <video
         ref={videoRef}
         src={src.includes('.m3u8') ? undefined : src}
-        className={cn(
-          'h-full w-full max-h-full object-contain',
-          isMirrored ? 'scale-x-[-1]' : '',
-        )}
+        className={cn('h-full w-full max-h-full object-contain', isMirrored ? 'scale-x-[-1]' : '')}
         preload="auto"
         playsInline
         autoPlay={autoPlay}
         muted={isMuted}
         onClick={(e) => {
-          e.stopPropagation()
-          togglePlay()
+          e.stopPropagation();
+          togglePlay();
         }}
         onLoadedMetadata={handleLoadedMetadata}
         onLoadedData={() => setIsVideoReady(true)}
@@ -1172,13 +1118,11 @@ const VideoPlayer = ({
           <div className="bg-red-500/10 p-4 rounded-full mb-4">
             <Loader2 className="text-red-400 w-8 h-8 opacity-50" />
           </div>
-          <p className="text-red-400/90 mb-5 text-sm font-medium max-w-[250px]">
-            {error}
-          </p>
+          <p className="text-red-400/90 mb-5 text-sm font-medium max-w-[250px]">{error}</p>
           <Button
             onClick={() => {
-              videoRef.current?.load()
-              setError(null)
+              videoRef.current?.load();
+              setError(null);
             }}
             className="bg-white/10 hover:bg-white/20 border-white/10 text-white"
           >
@@ -1308,7 +1252,7 @@ const VideoPlayer = ({
                     aria-label="Quality selector"
                     value={selectedQualityIndex}
                     onChange={(e) => {
-                      applyQualitySelection(Number(e.target.value))
+                      applyQualitySelection(Number(e.target.value));
                     }}
                     className="h-7 sm:h-8 w-full appearance-none rounded-lg border border-white/25 bg-black/55 pl-2 pr-6 sm:pl-2.5 sm:pr-7 text-[11px] sm:text-xs font-medium text-white outline-none transition-colors hover:bg-black/65 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:border-white/50 touch-manipulation"
                   >
@@ -1346,9 +1290,7 @@ const VideoPlayer = ({
 
                 <Button
                   onClick={togglePiP}
-                  aria-label={
-                    isPiP ? 'Exit Picture in Picture' : 'Picture in Picture'
-                  }
+                  aria-label={isPiP ? 'Exit Picture in Picture' : 'Picture in Picture'}
                   disabled={!allowPiP}
                   size="icon"
                   className="h-4 w-4 sm:h-6 sm:w-6 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0"
@@ -1358,11 +1300,9 @@ const VideoPlayer = ({
 
                 <Button
                   onClick={() => {
-                    void toggleFullscreen()
+                    void toggleFullscreen();
                   }}
-                  aria-label={
-                    isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'
-                  }
+                  aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
                   disabled={!allowFullscreen}
                   size="icon"
                   className="h-4 w-4 sm:h-6 sm:w-6 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0"
@@ -1398,8 +1338,8 @@ const VideoPlayer = ({
         )}
       </AnimatePresence>
     </motion.div>
-  )
-}
+  );
+};
 
-export { VideoPlayer }
-export default VideoPlayer
+export { VideoPlayer };
+export default VideoPlayer;

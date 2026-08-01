@@ -1,4 +1,4 @@
-import mongoose, { HydratedDocument, InferSchemaType, Model } from 'mongoose'
+import mongoose, { HydratedDocument, InferSchemaType, Model } from 'mongoose';
 
 /**
  * Activity Log Model - Stores individual encrypted activity log entries
@@ -99,19 +99,19 @@ const encryptedActivityLogSchema = new mongoose.Schema(
   },
   {
     timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' },
-  },
-)
+  }
+);
 
 /**
  * Indexes for optimal querying
  */
-encryptedActivityLogSchema.index({ userId: 1, createdAt: -1 })
-encryptedActivityLogSchema.index({ userId: 1, action: 1, createdAt: -1 })
-encryptedActivityLogSchema.index({ userId: 1, 'metadata.ipAddress': 1, createdAt: -1 })
-encryptedActivityLogSchema.index({ userId: 1, category: 1, createdAt: -1 })
+encryptedActivityLogSchema.index({ userId: 1, createdAt: -1 });
+encryptedActivityLogSchema.index({ userId: 1, action: 1, createdAt: -1 });
+encryptedActivityLogSchema.index({ userId: 1, 'metadata.ipAddress': 1, createdAt: -1 });
+encryptedActivityLogSchema.index({ userId: 1, category: 1, createdAt: -1 });
 
-export type ActivityLogType = InferSchemaType<typeof encryptedActivityLogSchema>
-export type ActivityLogDocument = HydratedDocument<ActivityLogType>
+export type ActivityLogType = InferSchemaType<typeof encryptedActivityLogSchema>;
+export type ActivityLogDocument = HydratedDocument<ActivityLogType>;
 
 export const getActivityLogModel = (username: string): Model<ActivityLogType> => {
   if (!username || !username.trim()) {
@@ -121,7 +121,11 @@ export const getActivityLogModel = (username: string): Model<ActivityLogType> =>
   if (mongoose.models[collectionName]) {
     return mongoose.models[collectionName] as Model<ActivityLogType>;
   }
-  const model = mongoose.model<ActivityLogType>(collectionName, encryptedActivityLogSchema, collectionName);
+  const model = mongoose.model<ActivityLogType>(
+    collectionName,
+    encryptedActivityLogSchema,
+    collectionName
+  );
   model.createIndexes().catch(() => {});
   return model;
 };

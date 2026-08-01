@@ -12,34 +12,33 @@ const SECURITY_CONSTANTS = {
   ARGON2_HASH_LENGTH: 32,
   KEY_BYTE_LENGTH: 32,
   RSA_MODULUS_LENGTH: 2048,
-  RSA_ALGORITHM: "RSA-OAEP",
-  RSA_HASH: "SHA-256",
+  RSA_ALGORITHM: 'RSA-OAEP',
+  RSA_HASH: 'SHA-256',
 } as const;
 const AES_GCM_AAD = new TextEncoder().encode('vault:e2ee:aes-gcm:v2');
 
-const toArrayBuffer = (value: Uint8Array): ArrayBuffer =>
-  new Uint8Array(value).buffer;
+const toArrayBuffer = (value: Uint8Array): ArrayBuffer => new Uint8Array(value).buffer;
 
 const decryptAesGcmWithFallback = async (
   cryptoKey: CryptoKey,
   iv: Uint8Array,
-  ciphertext: Uint8Array,
+  ciphertext: Uint8Array
 ): Promise<ArrayBuffer> => {
   try {
     return await crypto.subtle.decrypt(
       {
-        name: "AES-GCM",
+        name: 'AES-GCM',
         iv: toArrayBuffer(iv),
         additionalData: toArrayBuffer(AES_GCM_AAD),
       },
       cryptoKey,
-      toArrayBuffer(ciphertext),
+      toArrayBuffer(ciphertext)
     );
   } catch {
     return await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: toArrayBuffer(iv) },
+      { name: 'AES-GCM', iv: toArrayBuffer(iv) },
       cryptoKey,
-      toArrayBuffer(ciphertext),
+      toArrayBuffer(ciphertext)
     );
   }
 };
@@ -57,7 +56,7 @@ export const uint8ArrayToBase64 = (array: Uint8Array): string => {
 };
 
 /**
- * Robust Base64 decoding to Uint8Array 
+ * Robust Base64 decoding to Uint8Array
  */
 export const base64ToUint8Array = (base64: string): Uint8Array => {
   if (!base64) return new Uint8Array(0);
@@ -69,7 +68,7 @@ export const base64ToUint8Array = (base64: string): Uint8Array => {
     }
     return bytes;
   } catch (e) {
-    console.error("Base64 decoding failed", e);
+    console.error('Base64 decoding failed', e);
     return new Uint8Array(0);
   }
 };
@@ -80,26 +79,28 @@ export const base64ToUint8Array = (base64: string): Uint8Array => {
  */
 export const encryptData = async (data: string, secretKey: string | CryptoKey): Promise<string> => {
   if (data == null || !secretKey) {
-    throw new Error("Encryption Error: Missing data or secret key");
+    throw new Error('Encryption Error: Missing data or secret key');
   }
-  
+
   try {
     const enc = new TextEncoder();
     let cryptoKey: CryptoKey;
-    
+
     if (secretKey instanceof CryptoKey) {
       cryptoKey = secretKey;
     } else {
       const keyBuf = base64ToUint8Array(secretKey);
       if (keyBuf.length !== SECURITY_CONSTANTS.KEY_BYTE_LENGTH) {
-        throw new Error(`Invalid key length: expected ${SECURITY_CONSTANTS.KEY_BYTE_LENGTH} bytes, got ${keyBuf.length}`);
+        throw new Error(
+          `Invalid key length: expected ${SECURITY_CONSTANTS.KEY_BYTE_LENGTH} bytes, got ${keyBuf.length}`
+        );
       }
       cryptoKey = await crypto.subtle.importKey(
-        "raw",
+        'raw',
         toArrayBuffer(keyBuf),
-        { name: "AES-GCM" },
+        { name: 'AES-GCM' },
         false,
-        ["encrypt"]
+        ['encrypt']
       );
       keyBuf.fill(0);
     }
@@ -108,7 +109,7 @@ export const encryptData = async (data: string, secretKey: string | CryptoKey): 
 
     const ciphertext = await crypto.subtle.encrypt(
       {
-        name: "AES-GCM",
+        name: 'AES-GCM',
         iv: toArrayBuffer(iv),
         additionalData: toArrayBuffer(AES_GCM_AAD),
       },
@@ -122,7 +123,7 @@ export const encryptData = async (data: string, secretKey: string | CryptoKey): 
 
     return uint8ArrayToBase64(bundle);
   } catch (error) {
-    handleError(error, "Encryption Service");
+    handleError(error, 'Encryption Service');
     throw error;
   }
 };
@@ -131,11 +132,14 @@ export const encryptData = async (data: string, secretKey: string | CryptoKey): 
  * Decrypts data using AES-256-GCM
  * Includes integrity check (GCM tag verification)
  */
-export const decryptData = async (encryptedBundle: string, secretKey: string | CryptoKey): Promise<string | null> => {
+export const decryptData = async (
+  encryptedBundle: string,
+  secretKey: string | CryptoKey
+): Promise<string | null> => {
   if (!encryptedBundle || !secretKey) {
     return null;
   }
-  
+
   try {
     const bundle = base64ToUint8Array(encryptedBundle);
     if (bundle.length < SECURITY_CONSTANTS.AES_GCM_IV_LENGTH + 1) {
@@ -151,14 +155,14 @@ export const decryptData = async (encryptedBundle: string, secretKey: string | C
         return null;
       }
       cryptoKey = await crypto.subtle.importKey(
-        "raw",
+        'raw',
         toArrayBuffer(keyBuf),
-        { name: "AES-GCM" },
+        { name: 'AES-GCM' },
         false,
-        ["decrypt"]
+        ['decrypt']
       );
     }
-    
+
     const iv = bundle.slice(0, SECURITY_CONSTANTS.AES_GCM_IV_LENGTH);
     const ciphertext = bundle.slice(SECURITY_CONSTANTS.AES_GCM_IV_LENGTH);
 
@@ -180,12 +184,15 @@ export const deriveKey = deriveKeyFromPrimitives;
  * Hybrid Key Exchange (Layer 2 & 6)
  * Combines X25519 (ECC) and Kyber768 (Post-Quantum)
  */
-export const performHybridKeyExchange = async (peerPublicKey?: { ecc: Uint8Array, kyber: Uint8Array }) => {
-  const sodium = await import('libsodium-wrappers').then(m => m.default || m);
+export const performHybridKeyExchange = async (peerPublicKey?: {
+  ecc: Uint8Array;
+  kyber: Uint8Array;
+}) => {
+  const sodium = await import('libsodium-wrappers').then((m) => m.default || m);
   const kyber = await import('pqc-kyber');
-  
+
   await (sodium as any).ready;
-  
+
   const eccKeyPair = (sodium as any).crypto_box_keypair();
   const kyberKeys = kyber.keypair();
 
@@ -193,12 +200,12 @@ export const performHybridKeyExchange = async (peerPublicKey?: { ecc: Uint8Array
     return {
       localPublicKeys: {
         ecc: eccKeyPair.publicKey,
-        kyber: kyberKeys.pubkey
+        kyber: kyberKeys.pubkey,
       },
       _private: {
         ecc: eccKeyPair.privateKey,
-        kyber: kyberKeys.secret
-      }
+        kyber: kyberKeys.secret,
+      },
     };
   }
 
@@ -215,10 +222,10 @@ export const performHybridKeyExchange = async (peerPublicKey?: { ecc: Uint8Array
 
   const masterSecretBuffer = await crypto.subtle.digest('SHA-256', combinedSecret);
   const masterSecret = new Uint8Array(masterSecretBuffer);
-  
+
   return {
     masterSecret: uint8ArrayToBase64(masterSecret),
-    kyberCiphertext: ciphertext
+    kyberCiphertext: ciphertext,
   };
 };
 
@@ -233,19 +240,19 @@ export const setupMFA = async (label: string, issuer: string = 'PersonalVault') 
     algorithm: 'SHA1',
     digits: 6,
     period: 30,
-    secret: new OTPAuth.Secret()
+    secret: new OTPAuth.Secret(),
   });
 
   return {
     uri: totp.toString(),
-    secret: totp.secret.base32
+    secret: totp.secret.base32,
   };
 };
 
 export const verifyMFA = async (token: string, secret: string) => {
   const OTPAuth = await import('otpauth');
   const totp = new OTPAuth.TOTP({
-    secret: OTPAuth.Secret.fromBase32(secret)
+    secret: OTPAuth.Secret.fromBase32(secret),
   });
   const delta = totp.validate({ token, window: 1 });
   return delta !== null;
@@ -255,13 +262,13 @@ export const verifyMFA = async (token: string, secret: string) => {
  * Digital Signatures (Layer 5)
  */
 export const signMessage = async (message: string, privateKey: Uint8Array) => {
-  const sodium = await import('libsodium-wrappers').then(m => m.default || m);
+  const sodium = await import('libsodium-wrappers').then((m) => m.default || m);
   await (sodium as any).ready;
   return (sodium as any).crypto_sign(message, privateKey);
 };
 
 export const verifyMessage = async (signedMessage: Uint8Array, publicKey: Uint8Array) => {
-  const sodium = await import('libsodium-wrappers').then(m => m.default || m);
+  const sodium = await import('libsodium-wrappers').then((m) => m.default || m);
   await (sodium as any).ready;
   try {
     const opened = (sodium as any).crypto_sign_open(signedMessage, publicKey);
@@ -284,55 +291,60 @@ export const generateRSAKeyPair = async (): Promise<CryptoKeyPair> => {
       hash: SECURITY_CONSTANTS.RSA_HASH,
     },
     true,
-    ["encrypt", "decrypt"]
+    ['encrypt', 'decrypt']
   );
 };
 
 export const exportPublicKey = async (publicKey: CryptoKey): Promise<string> => {
-  const exported = await crypto.subtle.exportKey("spki", publicKey);
+  const exported = await crypto.subtle.exportKey('spki', publicKey);
   return uint8ArrayToBase64(new Uint8Array(exported));
 };
 
 export const importPublicKey = async (base64Key: string): Promise<CryptoKey> => {
   const binaryKey = base64ToUint8Array(base64Key);
   return await crypto.subtle.importKey(
-    "spki",
+    'spki',
     binaryKey as BufferSource,
     {
       name: SECURITY_CONSTANTS.RSA_ALGORITHM,
       hash: SECURITY_CONSTANTS.RSA_HASH,
     },
     true,
-    ["encrypt"]
+    ['encrypt']
   );
 };
 
 export const exportPrivateKey = async (privateKey: CryptoKey): Promise<string> => {
-  const exported = await crypto.subtle.exportKey("pkcs8", privateKey);
+  const exported = await crypto.subtle.exportKey('pkcs8', privateKey);
   return uint8ArrayToBase64(new Uint8Array(exported));
 };
 
 export const importPrivateKey = async (base64Key: string): Promise<CryptoKey> => {
   const binaryKey = base64ToUint8Array(base64Key);
   return await crypto.subtle.importKey(
-    "pkcs8",
+    'pkcs8',
     binaryKey as BufferSource,
     {
       name: SECURITY_CONSTANTS.RSA_ALGORITHM,
       hash: SECURITY_CONSTANTS.RSA_HASH,
     },
     true,
-    ["decrypt"]
+    ['decrypt']
   );
 };
 
-export const exportRSAKeyPair = async (keyPair: CryptoKeyPair): Promise<{ publicKey: string; privateKey: string }> => {
+export const exportRSAKeyPair = async (
+  keyPair: CryptoKeyPair
+): Promise<{ publicKey: string; privateKey: string }> => {
   const publicKey = await exportPublicKey(keyPair.publicKey);
   const privateKey = await exportPrivateKey(keyPair.privateKey);
   return { publicKey, privateKey };
 };
 
-export const importRSAKeyPair = async (keys: { publicKey: string; privateKey: string }): Promise<CryptoKeyPair> => {
+export const importRSAKeyPair = async (keys: {
+  publicKey: string;
+  privateKey: string;
+}): Promise<CryptoKeyPair> => {
   const publicKey = await importPublicKey(keys.publicKey);
   const privateKey = await importPrivateKey(keys.privateKey);
   return { publicKey, privateKey };
@@ -348,27 +360,26 @@ export const encryptFileE2EE = async (
   rsaPublicKey: CryptoKey | string
 ): Promise<Uint8Array> => {
   try {
-    const publicKey = typeof rsaPublicKey === 'string' 
-      ? await importPublicKey(rsaPublicKey) 
-      : rsaPublicKey;
+    const publicKey =
+      typeof rsaPublicKey === 'string' ? await importPublicKey(rsaPublicKey) : rsaPublicKey;
 
     // 1. Generate random session key (AES-256)
     const sessionKey = crypto.getRandomValues(new Uint8Array(32));
-    
+
     // 2. Encrypt File with Session Key (AES-GCM)
     const iv = crypto.getRandomValues(new Uint8Array(SECURITY_CONSTANTS.AES_GCM_IV_LENGTH));
     const cryptoKey = await crypto.subtle.importKey(
-      "raw",
+      'raw',
       toArrayBuffer(sessionKey),
-      { name: "AES-GCM" },
+      { name: 'AES-GCM' },
       false,
-      ["encrypt"]
+      ['encrypt']
     );
 
     const fileData = await file.arrayBuffer();
     const encryptedFile = await crypto.subtle.encrypt(
       {
-        name: "AES-GCM",
+        name: 'AES-GCM',
         iv: toArrayBuffer(iv),
         additionalData: toArrayBuffer(AES_GCM_AAD),
       },
@@ -388,17 +399,17 @@ export const encryptFileE2EE = async (
 
     // 4. Bundle: [EncKeyLen (2 bytes)] + [EncKey] + [IV] + [EncFile]
     const bundle = new Uint8Array(2 + encKeyUint8.length + iv.length + encFileUint8.length);
-    
+
     const view = new DataView(bundle.buffer);
     view.setUint16(0, encKeyUint8.length);
-    
+
     bundle.set(encKeyUint8, 2);
     bundle.set(iv, 2 + encKeyUint8.length);
     bundle.set(encFileUint8, 2 + encKeyUint8.length + iv.length);
 
     return bundle;
   } catch (error) {
-    handleError(error, "E2EE File Encryption");
+    handleError(error, 'E2EE File Encryption');
     throw error;
   }
 };
@@ -430,24 +441,16 @@ export const decryptFileE2EE = async (
     );
 
     // 2. Decrypt File with Session Key
-    const cryptoKey = await crypto.subtle.importKey(
-      "raw",
-      sessionKey,
-      { name: "AES-GCM" },
-      false,
-      ["decrypt"]
-    );
+    const cryptoKey = await crypto.subtle.importKey('raw', sessionKey, { name: 'AES-GCM' }, false, [
+      'decrypt',
+    ]);
 
-    const decrypted = await decryptAesGcmWithFallback(
-      cryptoKey,
-      iv,
-      encFile,
-    );
+    const decrypted = await decryptAesGcmWithFallback(cryptoKey, iv, encFile);
 
     const blob = new Blob([decrypted], { type: mimeType || 'application/octet-stream' });
     return URL.createObjectURL(blob);
   } catch (error) {
-    handleError(error, "E2EE File Decryption");
+    handleError(error, 'E2EE File Decryption');
     return null;
   }
 };
@@ -455,22 +458,25 @@ export const decryptFileE2EE = async (
 /**
  * Encrypts a File object efficiently and returns a binary bundle (IV + Ciphertext)
  */
-export const encryptFile = async (file: File, secretKey: string | CryptoKey): Promise<Uint8Array> => {
+export const encryptFile = async (
+  file: File,
+  secretKey: string | CryptoKey
+): Promise<Uint8Array> => {
   try {
     const arrayBuffer = await file.arrayBuffer();
     const data = new Uint8Array(arrayBuffer);
-    
+
     let cryptoKey: CryptoKey;
     if (secretKey instanceof CryptoKey) {
       cryptoKey = secretKey;
     } else {
       const keyBuf = base64ToUint8Array(secretKey);
       cryptoKey = await crypto.subtle.importKey(
-        "raw",
+        'raw',
         toArrayBuffer(keyBuf),
-        { name: "AES-GCM" },
+        { name: 'AES-GCM' },
         false,
-        ["encrypt"]
+        ['encrypt']
       );
       keyBuf.fill(0);
     }
@@ -479,7 +485,7 @@ export const encryptFile = async (file: File, secretKey: string | CryptoKey): Pr
 
     const ciphertext = await crypto.subtle.encrypt(
       {
-        name: "AES-GCM",
+        name: 'AES-GCM',
         iv: toArrayBuffer(iv),
         additionalData: toArrayBuffer(AES_GCM_AAD),
       },
@@ -493,7 +499,7 @@ export const encryptFile = async (file: File, secretKey: string | CryptoKey): Pr
 
     return bundle;
   } catch (error) {
-    handleError(error, "File Encryption Service");
+    handleError(error, 'File Encryption Service');
     throw error;
   }
 };
@@ -512,13 +518,14 @@ export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {
   }
 
   // RIFF container (WAV or AVI)
-  if (
-    bytes[0] === 0x52 &&
-    bytes[1] === 0x49 &&
-    bytes[2] === 0x46 &&
-    bytes[3] === 0x46
-  ) {
-    if (bytes.length >= 12 && bytes[8] === 0x57 && bytes[9] === 0x41 && bytes[10] === 0x56 && bytes[11] === 0x45) {
+  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+    if (
+      bytes.length >= 12 &&
+      bytes[8] === 0x57 &&
+      bytes[9] === 0x41 &&
+      bytes[10] === 0x56 &&
+      bytes[11] === 0x45
+    ) {
       return 'audio/wav';
     }
     return 'audio/wav';
@@ -535,7 +542,13 @@ export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {
   }
 
   // ISO Media / MP4 / M4A: "ftyp" at index 4
-  if (bytes.length >= 12 && bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+  if (
+    bytes.length >= 12 &&
+    bytes[4] === 0x66 &&
+    bytes[5] === 0x74 &&
+    bytes[6] === 0x79 &&
+    bytes[7] === 0x70
+  ) {
     return 'audio/mp4';
   }
 
@@ -559,15 +572,16 @@ export const decryptToFile = async (
   if (!encryptedBundle || !secretKey) return null;
 
   try {
-    const bundle = typeof encryptedBundle === 'string' ? base64ToUint8Array(encryptedBundle) : encryptedBundle;
-    
+    const bundle =
+      typeof encryptedBundle === 'string' ? base64ToUint8Array(encryptedBundle) : encryptedBundle;
+
     // Detect E2EE Bundle: [EncKeyLen (2 bytes)] + [EncKey] + ...
     // Standard bundles start with 12 bytes IV.
     // We check if the bundle looks like an E2EE bundle.
     if (bundle.length > 2 && rsaPrivateKey) {
       const view = new DataView(bundle.buffer);
       const encKeyLen = view.getUint16(0);
-      
+
       // Sanity check: RSA-2048 enc key is 256 bytes.
       if (encKeyLen > 0 && encKeyLen < bundle.length && (encKeyLen === 256 || encKeyLen === 512)) {
         return await decryptFileE2EE(bundle, rsaPrivateKey as CryptoKey, mimeType);
@@ -587,11 +601,11 @@ export const decryptToFile = async (
         return null;
       }
       cryptoKey = await crypto.subtle.importKey(
-        "raw",
+        'raw',
         toArrayBuffer(keyBuf),
-        { name: "AES-GCM" },
+        { name: 'AES-GCM' },
         false,
-        ["decrypt"],
+        ['decrypt']
       );
     }
 
@@ -611,7 +625,7 @@ export const decryptToFile = async (
     const blob = new Blob([decrypted], { type: finalMimeType || 'application/octet-stream' });
     return URL.createObjectURL(blob);
   } catch (error) {
-    handleError(error, "File Decryption Service");
+    handleError(error, 'File Decryption Service');
     return null;
   }
 };

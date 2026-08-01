@@ -1,8 +1,8 @@
-import { handleError } from '../error-handler'
-import { encryptData } from '../cryptoPrimitives'
-import { createVaultKeyCheckPayload } from '../vaultKeyCheck'
-import { logger } from '../logger'
-import { API_BASE_URL, fetchWithRetry, getAuthHeaders, MAX_RETRIES } from './core'
+import { handleError } from '../error-handler';
+import { encryptData } from '../cryptoPrimitives';
+import { createVaultKeyCheckPayload } from '../vaultKeyCheck';
+import { logger } from '../logger';
+import { API_BASE_URL, fetchWithRetry, getAuthHeaders, MAX_RETRIES } from './core';
 
 /**
  * Syncs encrypted settings to MongoDB via API.
@@ -10,13 +10,10 @@ import { API_BASE_URL, fetchWithRetry, getAuthHeaders, MAX_RETRIES } from './cor
 export const uploadSettingsToCloud = async (
   settings: any,
   masterKey: string | CryptoKey,
-  options: { force?: boolean } = {},
+  options: { force?: boolean } = {}
 ) => {
   try {
-    const encryptedSettings = await encryptData(
-      JSON.stringify(settings),
-      masterKey,
-    )
+    const encryptedSettings = await encryptData(JSON.stringify(settings), masterKey);
 
     await fetchWithRetry(
       `${API_BASE_URL}/api/vault/settings/__settings__`,
@@ -35,32 +32,31 @@ export const uploadSettingsToCloud = async (
       },
       'Settings Cloud Sync',
       MAX_RETRIES,
-      options.force ? {} : { silentStatuses: [409] },
-    )
+      options.force ? {} : { silentStatuses: [409] }
+    );
   } catch (error) {
-    const candidate = error as Error & { status?: number; code?: string }
+    const candidate = error as Error & { status?: number; code?: string };
     const isDuplicate =
       candidate.status === 409 ||
       candidate.code === 'DUPLICATE_RESOURCE' ||
-      (error instanceof Error &&
-        error.message.toLowerCase().includes('already exists'))
+      (error instanceof Error && error.message.toLowerCase().includes('already exists'));
 
     if (isDuplicate && !options.force) {
-      logger.warn('Settings already exist on cloud; skipping initial upload.')
-      return
+      logger.warn('Settings already exist on cloud; skipping initial upload.');
+      return;
     }
 
-    handleError(error, 'Settings Cloud Sync')
-    throw error
+    handleError(error, 'Settings Cloud Sync');
+    throw error;
   }
-}
+};
 
 export const uploadKeyCheckToCloud = async (
   masterKey: string | CryptoKey,
-  options: { force?: boolean } = {},
+  options: { force?: boolean } = {}
 ) => {
   try {
-    const encryptedPayload = await createVaultKeyCheckPayload(masterKey)
+    const encryptedPayload = await createVaultKeyCheckPayload(masterKey);
 
     await fetchWithRetry(
       `${API_BASE_URL}/api/vault/system/__keycheck__`,
@@ -79,34 +75,32 @@ export const uploadKeyCheckToCloud = async (
       },
       'master Key Check Sync',
       MAX_RETRIES,
-      options.force ? {} : { silentStatuses: [409] },
-    )
+      options.force ? {} : { silentStatuses: [409] }
+    );
   } catch (error) {
-    const candidate = error as Error & { status?: number; code?: string }
+    const candidate = error as Error & { status?: number; code?: string };
     const message =
-      error instanceof Error
-        ? error.message.toLowerCase()
-        : String(error).toLowerCase()
+      error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
     const isDuplicateKeyCheck =
       candidate.status === 409 ||
       candidate.code === 'DUPLICATE_RESOURCE' ||
       candidate.code === 'USERNAME_EXISTS' ||
       message.includes('already exists') ||
-      message.includes('duplicate key')
+      message.includes('duplicate key');
 
     // Older deployments may still have legacy uniqueness/index quirks for the key-check record.
     // If the record already exists, unlock can safely continue.
     if (isDuplicateKeyCheck && !options.force) {
       logger.warn('master Key check already exists; continuing unlock flow.', {
         error,
-      })
-      return
+      });
+      return;
     }
 
-    handleError(error, 'master Key Check Sync')
-    throw error
+    handleError(error, 'master Key Check Sync');
+    throw error;
   }
-}
+};
 
 /**
  * Syncs user profile (identity) to the cloud under "users" category.
@@ -114,14 +108,11 @@ export const uploadKeyCheckToCloud = async (
 export const uploadProfileToCloud = async (
   username: string,
   masterKey: string | CryptoKey,
-  options: { force?: boolean } = {},
+  options: { force?: boolean } = {}
 ) => {
   try {
-    const profile = { username, lastLogin: Date.now() }
-    const encryptedProfile = await encryptData(
-      JSON.stringify(profile),
-      masterKey,
-    )
+    const profile = { username, lastLogin: Date.now() };
+    const encryptedProfile = await encryptData(JSON.stringify(profile), masterKey);
 
     await fetchWithRetry(
       `${API_BASE_URL}/api/vault/users/__profile__`,
@@ -140,21 +131,20 @@ export const uploadProfileToCloud = async (
       },
       'Profile Cloud Sync',
       MAX_RETRIES,
-      options.force ? {} : { silentStatuses: [409] },
-    )
+      options.force ? {} : { silentStatuses: [409] }
+    );
   } catch (error) {
-    const candidate = error as Error & { status?: number; code?: string }
+    const candidate = error as Error & { status?: number; code?: string };
     const isDuplicate =
       candidate.status === 409 ||
       candidate.code === 'DUPLICATE_RESOURCE' ||
-      (error instanceof Error &&
-        error.message.toLowerCase().includes('already exists'))
+      (error instanceof Error && error.message.toLowerCase().includes('already exists'));
 
     if (isDuplicate && !options.force) {
-      logger.warn('Profile already exists on cloud; skipping initial upload.')
-      return
+      logger.warn('Profile already exists on cloud; skipping initial upload.');
+      return;
     }
 
-    logger.error('Profile Cloud Sync failed', { error })
+    logger.error('Profile Cloud Sync failed', { error });
   }
-}
+};

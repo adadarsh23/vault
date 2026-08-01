@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Undo2,
   Redo2,
@@ -52,266 +52,252 @@ import {
   AlignCenter,
   AlignRight,
   TextSearch,
-} from 'lucide-react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { toast } from 'sonner'
-import { Button } from '../../ui/Button'
-import { cn } from '../../../lib/utils'
-import { logger } from '../../../lib/logger'
+} from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { toast } from 'sonner';
+import { Button } from '../../ui/Button';
+import { cn } from '../../../lib/utils';
+import { logger } from '../../../lib/logger';
 
 const isLikelyUrl = (value: string) => {
-  const text = value.trim()
-  if (!text || /\s/.test(text)) return false
+  const text = value.trim();
+  if (!text || /\s/.test(text)) return false;
   try {
-    const parsed = new URL(text)
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+    const parsed = new URL(text);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
   } catch {
-    return false
+    return false;
   }
-}
+};
 
-type EmojiMartSkin = { native?: string }
-type EmojiMartEntry = { skins?: EmojiMartSkin[] }
-type EmojiMartDataset = { emojis?: Record<string, EmojiMartEntry> }
-type ErrorBoundaryProps = { children: React.ReactNode }
-type ErrorBoundaryState = { hasError: boolean }
+type EmojiMartSkin = { native?: string };
+type EmojiMartEntry = { skins?: EmojiMartSkin[] };
+type EmojiMartDataset = { emojis?: Record<string, EmojiMartEntry> };
+type ErrorBoundaryProps = { children: React.ReactNode };
+type ErrorBoundaryState = { hasError: boolean };
 
-class ToolbarErrorBoundary extends React.Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
-  state: ErrorBoundaryState = { hasError: false }
+class ToolbarErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false };
 
   static getDerivedStateFromError(): ErrorBoundaryState {
-    return { hasError: true }
+    return { hasError: true };
   }
 
   componentDidCatch(error: unknown) {
-    logger.error('Toolbar subtree render failed', { error })
+    logger.error('Toolbar subtree render failed', { error });
   }
 
   render() {
     if (this.state.hasError) {
-      return null
+      return null;
     }
-    return this.props.children
+    return this.props.children;
   }
 }
 
 const getCuratedEmojiOptions = (dataset: EmojiMartDataset | null) => {
-  if (!dataset) return []
-  const entries = Object.values(dataset.emojis ?? {})
-  const seen = new Set<string>()
-  const curated: string[] = []
+  if (!dataset) return [];
+  const entries = Object.values(dataset.emojis ?? {});
+  const seen = new Set<string>();
+  const curated: string[] = [];
 
   for (const entry of entries) {
-    const native = entry.skins?.[0]?.native
-    if (!native || seen.has(native)) continue
-    seen.add(native)
-    curated.push(native)
+    const native = entry.skins?.[0]?.native;
+    if (!native || seen.has(native)) continue;
+    seen.add(native);
+    curated.push(native);
   }
 
-  return curated
-}
+  return curated;
+};
 
-const EMOJI_CHUNK_SIZE = 160
-const EMOJI_CELL_SIZE = 28
-const EMOJI_CELL_GAP = 2
+const EMOJI_CHUNK_SIZE = 160;
+const EMOJI_CELL_SIZE = 28;
+const EMOJI_CELL_GAP = 2;
 
-type SaveStatus = 'saved' | 'dirty' | 'saving' | 'error'
-type MenuDirection = 'vertical' | 'grid'
-type MenuTriggerRef = React.RefObject<HTMLElement | null>
-type ThrottledFunction<T extends (...args: any[]) => void> = ((
-  ...args: Parameters<T>
-) => void) & {
-  cancel: () => void
-}
+type SaveStatus = 'saved' | 'dirty' | 'saving' | 'error';
+type MenuDirection = 'vertical' | 'grid';
+type MenuTriggerRef = React.RefObject<HTMLElement | null>;
+type ThrottledFunction<T extends (...args: any[]) => void> = ((...args: Parameters<T>) => void) & {
+  cancel: () => void;
+};
 
 const throttle = <T extends (...args: any[]) => void>(
   fn: T,
-  delay: number,
+  delay: number
 ): ThrottledFunction<T> => {
-  let lastRun = 0
-  let timeoutId: ReturnType<typeof setTimeout> | null = null
-  let lastArgs: Parameters<T> | null = null
+  let lastRun = 0;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let lastArgs: Parameters<T> | null = null;
 
   const throttled = ((...args: Parameters<T>) => {
-    const now = Date.now()
-    const remaining = delay - (now - lastRun)
-    lastArgs = args
+    const now = Date.now();
+    const remaining = delay - (now - lastRun);
+    lastArgs = args;
 
     if (remaining <= 0) {
       if (timeoutId) {
-        clearTimeout(timeoutId)
-        timeoutId = null
+        clearTimeout(timeoutId);
+        timeoutId = null;
       }
-      lastRun = now
-      fn(...args)
-      lastArgs = null
-      return
+      lastRun = now;
+      fn(...args);
+      lastArgs = null;
+      return;
     }
 
     if (!timeoutId) {
       timeoutId = setTimeout(() => {
-        timeoutId = null
-        lastRun = Date.now()
-        if (lastArgs) fn(...lastArgs)
-        lastArgs = null
-      }, remaining)
+        timeoutId = null;
+        lastRun = Date.now();
+        if (lastArgs) fn(...lastArgs);
+        lastArgs = null;
+      }, remaining);
     }
-  }) as ThrottledFunction<T>
+  }) as ThrottledFunction<T>;
 
   throttled.cancel = () => {
-    if (timeoutId) clearTimeout(timeoutId)
-    timeoutId = null
-    lastArgs = null
-  }
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = null;
+    lastArgs = null;
+  };
 
-  return throttled
-}
+  return throttled;
+};
 
 const handleMenuNavigation = (
   event: React.KeyboardEvent<HTMLElement>,
   closeMenu: () => void,
   triggerRef: MenuTriggerRef,
-  direction: MenuDirection = 'vertical',
+  direction: MenuDirection = 'vertical'
 ) => {
   const menuItems = Array.from(
-    event.currentTarget.querySelectorAll<HTMLButtonElement>(
-      '[role="menuitem"]',
-    ),
-  )
+    event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')
+  );
 
   if (event.key === 'Escape') {
-    event.preventDefault()
-    closeMenu()
-    triggerRef.current?.focus()
-    return
+    event.preventDefault();
+    closeMenu();
+    triggerRef.current?.focus();
+    return;
   }
 
-  if (!menuItems.length) return
+  if (!menuItems.length) return;
 
-  const currentIndex = menuItems.indexOf(
-    document.activeElement as HTMLButtonElement,
-  )
-  const lastIndex = menuItems.length - 1
+  const currentIndex = menuItems.indexOf(document.activeElement as HTMLButtonElement);
+  const lastIndex = menuItems.length - 1;
 
   if (event.key === 'Tab' && menuItems.length) {
-    event.preventDefault()
+    event.preventDefault();
     const nextIndex = event.shiftKey
       ? currentIndex <= 0
         ? lastIndex
         : currentIndex - 1
       : currentIndex >= lastIndex
         ? 0
-        : currentIndex + 1
-    menuItems[nextIndex]?.focus()
-    return
+        : currentIndex + 1;
+    menuItems[nextIndex]?.focus();
+    return;
   }
   const isNextKey =
-    event.key === 'ArrowDown' ||
-    (direction === 'grid' && event.key === 'ArrowRight')
+    event.key === 'ArrowDown' || (direction === 'grid' && event.key === 'ArrowRight');
   const isPreviousKey =
-    event.key === 'ArrowUp' ||
-    (direction === 'grid' && event.key === 'ArrowLeft')
+    event.key === 'ArrowUp' || (direction === 'grid' && event.key === 'ArrowLeft');
 
   if (isNextKey) {
-    event.preventDefault()
-    const nextIndex =
-      currentIndex >= 0 ? (currentIndex + 1) % menuItems.length : 0
-    menuItems[nextIndex]?.focus()
+    event.preventDefault();
+    const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % menuItems.length : 0;
+    menuItems[nextIndex]?.focus();
   }
 
   if (isPreviousKey) {
-    event.preventDefault()
+    event.preventDefault();
     const prevIndex =
-      currentIndex >= 0
-        ? (currentIndex - 1 + menuItems.length) % menuItems.length
-        : lastIndex
-    menuItems[prevIndex]?.focus()
+      currentIndex >= 0 ? (currentIndex - 1 + menuItems.length) % menuItems.length : lastIndex;
+    menuItems[prevIndex]?.focus();
   }
 
   if (event.key === 'Home') {
-    event.preventDefault()
-    menuItems[0]?.focus()
+    event.preventDefault();
+    menuItems[0]?.focus();
   }
 
   if (event.key === 'End') {
-    event.preventDefault()
-    menuItems[lastIndex]?.focus()
+    event.preventDefault();
+    menuItems[lastIndex]?.focus();
   }
-}
+};
 
 const useOutsideClick = (
   refs: React.RefObject<HTMLElement | null>[],
   handler: () => void,
-  enabled: boolean,
+  enabled: boolean
 ) => {
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled) return;
 
     const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target as Node
-      const clickedInside = refs.some((ref) => ref.current?.contains(target))
+      const target = event.target as Node;
+      const clickedInside = refs.some((ref) => ref.current?.contains(target));
 
-      if (!clickedInside) handler()
-    }
+      if (!clickedInside) handler();
+    };
 
-    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('pointerdown', handlePointerDown);
 
     return () => {
-      document.removeEventListener('pointerdown', handlePointerDown)
-    }
-  }, [enabled, handler, refs])
-}
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [enabled, handler, refs]);
+};
 
 interface NoteEditorToolbarProps {
-  handleUndo: () => void
-  handleRedo: () => void
-  historyIndex: number
-  historyLength: number
-  applyFormatting: (type: string, value?: string) => void
-  jumpBlock: (direction: 'up' | 'down') => void
-  setShowGoToLine: React.Dispatch<React.SetStateAction<boolean>>
-  lineWrap: boolean
-  setLineWrap: React.Dispatch<React.SetStateAction<boolean>>
-  showLineNumbers: boolean
-  setShowLineNumbers: React.Dispatch<React.SetStateAction<boolean>>
-  openInBrowser: () => void
-  content: string
-  activeLine: number
-  showPreview: boolean
-  setShowPreview: React.Dispatch<React.SetStateAction<boolean>>
-  showHtmlPreview: boolean
-  setShowHtmlPreview: React.Dispatch<React.SetStateAction<boolean>>
-  showMoreActions: boolean
-  setShowMoreActions: React.Dispatch<React.SetStateAction<boolean>>
-  copyToClipboard: () => void
-  printNote: () => void
-  toggleFullScreen: () => void
-  isFullScreen: boolean
-  clearContent: () => void
-  saveStatus: SaveStatus
-  onCancel: () => void
-  title: string
-  handleAutoSave: (title: string, content: string) => Promise<void>
-  setSaveStatus: (status: SaveStatus) => void
-  formatDocument: () => void
-  downloadNote: () => void
-  importNote: (event: React.ChangeEvent<HTMLInputElement>) => void
-  handleFindReplace: () => void
-  showFindReplace: boolean
-  handleCycleTextAlignment: () => void
-  textAlign: 'left' | 'center' | 'right'
-  handleShowWordCount: () => void
-  handleAiAssist: () => void
-  handleFocusMode: () => void
-  handleTableControls: () => void
-  showImageUrlInput: boolean
-  handleToggleImageUrlInput: () => void
-  showLinkUrlInput: boolean
-  handleToggleLinkUrlInput: () => void
-  isFocusMode: boolean
+  handleUndo: () => void;
+  handleRedo: () => void;
+  historyIndex: number;
+  historyLength: number;
+  applyFormatting: (type: string, value?: string) => void;
+  jumpBlock: (direction: 'up' | 'down') => void;
+  setShowGoToLine: React.Dispatch<React.SetStateAction<boolean>>;
+  lineWrap: boolean;
+  setLineWrap: React.Dispatch<React.SetStateAction<boolean>>;
+  showLineNumbers: boolean;
+  setShowLineNumbers: React.Dispatch<React.SetStateAction<boolean>>;
+  openInBrowser: () => void;
+  content: string;
+  activeLine: number;
+  showPreview: boolean;
+  setShowPreview: React.Dispatch<React.SetStateAction<boolean>>;
+  showHtmlPreview: boolean;
+  setShowHtmlPreview: React.Dispatch<React.SetStateAction<boolean>>;
+  showMoreActions: boolean;
+  setShowMoreActions: React.Dispatch<React.SetStateAction<boolean>>;
+  copyToClipboard: () => void;
+  printNote: () => void;
+  toggleFullScreen: () => void;
+  isFullScreen: boolean;
+  clearContent: () => void;
+  saveStatus: SaveStatus;
+  onCancel: () => void;
+  title: string;
+  handleAutoSave: (title: string, content: string) => Promise<void>;
+  setSaveStatus: (status: SaveStatus) => void;
+  formatDocument: () => void;
+  downloadNote: () => void;
+  importNote: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleFindReplace: () => void;
+  showFindReplace: boolean;
+  handleCycleTextAlignment: () => void;
+  textAlign: 'left' | 'center' | 'right';
+  handleShowWordCount: () => void;
+  handleAiAssist: () => void;
+  handleFocusMode: () => void;
+  handleTableControls: () => void;
+  showImageUrlInput: boolean;
+  handleToggleImageUrlInput: () => void;
+  showLinkUrlInput: boolean;
+  handleToggleLinkUrlInput: () => void;
+  isFocusMode: boolean;
 }
 
 export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
@@ -363,538 +349,415 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
     handleToggleLinkUrlInput,
     isFocusMode,
   }) => {
-    const shouldReduceMotion = useReducedMotion()
-    const [showEmojiPicker, setShowEmojiPicker] = useState(false)
-    const [isManualSaveInFlight, setIsManualSaveInFlight] = useState(false)
-    const [emojiDataset, setEmojiDataset] = useState<EmojiMartDataset | null>(
-      null,
-    )
-    const [visibleEmojiCount, setVisibleEmojiCount] = useState(EMOJI_CHUNK_SIZE)
-    const isMountedRef = useRef(true)
-    const frameRef = useRef<number | null>(null)
-    const textColorInputRef = useRef<HTMLInputElement>(null)
-    const importFileInputRef = useRef<HTMLInputElement>(null)
-    const emojiButtonRef = useRef<HTMLButtonElement>(null)
-    const emojiMenuRef = useRef<HTMLDivElement>(null)
-    const moreActionsButtonRef = useRef<HTMLButtonElement>(null)
-    const moreActionsMenuRef = useRef<HTMLDivElement>(null)
+    const shouldReduceMotion = useReducedMotion();
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [isManualSaveInFlight, setIsManualSaveInFlight] = useState(false);
+    const [emojiDataset, setEmojiDataset] = useState<EmojiMartDataset | null>(null);
+    const [visibleEmojiCount, setVisibleEmojiCount] = useState(EMOJI_CHUNK_SIZE);
+    const isMountedRef = useRef(true);
+    const frameRef = useRef<number | null>(null);
+    const textColorInputRef = useRef<HTMLInputElement>(null);
+    const importFileInputRef = useRef<HTMLInputElement>(null);
+    const emojiButtonRef = useRef<HTMLButtonElement>(null);
+    const emojiMenuRef = useRef<HTMLDivElement>(null);
+    const moreActionsButtonRef = useRef<HTMLButtonElement>(null);
+    const moreActionsMenuRef = useRef<HTMLDivElement>(null);
     const [emojiPickerPosition, setEmojiPickerPosition] = useState({
       top: 0,
       left: 0,
       width: 268,
       maxHeight: 160,
-    })
+    });
 
     const closeEmojiPicker = useCallback(() => {
-      setShowEmojiPicker(false)
-    }, [])
+      setShowEmojiPicker(false);
+    }, []);
 
     useEffect(() => {
       return () => {
-        isMountedRef.current = false
+        isMountedRef.current = false;
         if (frameRef.current !== null && typeof window !== 'undefined') {
-          window.cancelAnimationFrame(frameRef.current)
+          window.cancelAnimationFrame(frameRef.current);
         }
-      }
-    }, [])
+      };
+    }, []);
 
     useEffect(() => {
-      let cancelled = false
+      let cancelled = false;
 
       const loadEmojiDataset = async () => {
         try {
-          const module = await import('@emoji-mart/data')
+          const module = await import('@emoji-mart/data');
           if (!cancelled) {
-            setEmojiDataset(module.default as EmojiMartDataset)
+            setEmojiDataset(module.default as EmojiMartDataset);
           }
         } catch (error) {
-          logger.error('Failed to load emoji dataset', { error })
+          logger.error('Failed to load emoji dataset', { error });
         }
-      }
+      };
 
-      loadEmojiDataset()
+      loadEmojiDataset();
       return () => {
-        cancelled = true
-      }
-    }, [])
+        cancelled = true;
+      };
+    }, []);
 
-    const emojiOptions = useMemo(
-      () => getCuratedEmojiOptions(emojiDataset),
-      [emojiDataset],
-    )
-    const visibleEmojiOptions = emojiOptions.slice(0, visibleEmojiCount)
-    const [emojiScrollTop, setEmojiScrollTop] = useState(0)
+    const emojiOptions = useMemo(() => getCuratedEmojiOptions(emojiDataset), [emojiDataset]);
+    const visibleEmojiOptions = emojiOptions.slice(0, visibleEmojiCount);
+    const [emojiScrollTop, setEmojiScrollTop] = useState(0);
     const emojiColumns = Math.max(
       1,
-      Math.floor(
-        emojiPickerPosition.width / (EMOJI_CELL_SIZE + EMOJI_CELL_GAP),
-      ),
-    )
-    const emojiRowHeight = EMOJI_CELL_SIZE + EMOJI_CELL_GAP
-    const emojiTotalRows = Math.ceil(visibleEmojiOptions.length / emojiColumns)
-    const emojiVisibleRows = Math.max(
-      1,
-      Math.ceil(emojiPickerPosition.maxHeight / emojiRowHeight),
-    )
-    const emojiStartRow = Math.max(
-      0,
-      Math.floor(emojiScrollTop / emojiRowHeight) - 2,
-    )
-    const emojiEndRow = Math.min(
-      emojiTotalRows,
-      emojiStartRow + emojiVisibleRows + 4,
-    )
-    const emojiStartIndex = emojiStartRow * emojiColumns
-    const emojiEndIndex = Math.min(
-      visibleEmojiOptions.length,
-      emojiEndRow * emojiColumns,
-    )
-    const virtualizedEmojiOptions = visibleEmojiOptions.slice(
-      emojiStartIndex,
-      emojiEndIndex,
-    )
+      Math.floor(emojiPickerPosition.width / (EMOJI_CELL_SIZE + EMOJI_CELL_GAP))
+    );
+    const emojiRowHeight = EMOJI_CELL_SIZE + EMOJI_CELL_GAP;
+    const emojiTotalRows = Math.ceil(visibleEmojiOptions.length / emojiColumns);
+    const emojiVisibleRows = Math.max(1, Math.ceil(emojiPickerPosition.maxHeight / emojiRowHeight));
+    const emojiStartRow = Math.max(0, Math.floor(emojiScrollTop / emojiRowHeight) - 2);
+    const emojiEndRow = Math.min(emojiTotalRows, emojiStartRow + emojiVisibleRows + 4);
+    const emojiStartIndex = emojiStartRow * emojiColumns;
+    const emojiEndIndex = Math.min(visibleEmojiOptions.length, emojiEndRow * emojiColumns);
+    const virtualizedEmojiOptions = visibleEmojiOptions.slice(emojiStartIndex, emojiEndIndex);
     const activeLineText = useMemo(() => {
-      const split = content.split('\n')
-      return split[activeLine] || ''
-    }, [content, activeLine])
-    const hasActiveLineUrl = useMemo(
-      () => isLikelyUrl(activeLineText),
-      [activeLineText],
-    )
+      const split = content.split('\n');
+      return split[activeLine] || '';
+    }, [content, activeLine]);
+    const hasActiveLineUrl = useMemo(() => isLikelyUrl(activeLineText), [activeLineText]);
 
     const loadMoreEmojis = useCallback(() => {
-      setVisibleEmojiCount((count) =>
-        Math.min(count + EMOJI_CHUNK_SIZE, emojiOptions.length),
-      )
-    }, [emojiOptions.length])
+      setVisibleEmojiCount((count) => Math.min(count + EMOJI_CHUNK_SIZE, emojiOptions.length));
+    }, [emojiOptions.length]);
 
     const handleEmojiGridScroll = useMemo(
       () =>
         throttle((distanceFromBottom: number) => {
           if (distanceFromBottom < 120) {
-            loadMoreEmojis()
+            loadMoreEmojis();
           }
         }, 200),
-      [loadMoreEmojis],
-    )
+      [loadMoreEmojis]
+    );
 
     const onEmojiGridScroll = useCallback(
       (event: React.UIEvent<HTMLDivElement>) => {
-        const grid = event.currentTarget
-        setEmojiScrollTop(grid.scrollTop)
-        const distanceFromBottom =
-          grid.scrollHeight - grid.scrollTop - grid.clientHeight
-        handleEmojiGridScroll(distanceFromBottom)
+        const grid = event.currentTarget;
+        setEmojiScrollTop(grid.scrollTop);
+        const distanceFromBottom = grid.scrollHeight - grid.scrollTop - grid.clientHeight;
+        handleEmojiGridScroll(distanceFromBottom);
       },
-      [handleEmojiGridScroll],
-    )
+      [handleEmojiGridScroll]
+    );
 
     useEffect(() => {
-      return () => handleEmojiGridScroll.cancel()
-    }, [handleEmojiGridScroll])
+      return () => handleEmojiGridScroll.cancel();
+    }, [handleEmojiGridScroll]);
 
     const closeMoreActions = useCallback(() => {
-      setShowMoreActions(false)
-    }, [setShowMoreActions])
+      setShowMoreActions(false);
+    }, [setShowMoreActions]);
 
     const toggleEmojiPicker = useCallback(() => {
-      setShowMoreActions(false)
-      setShowEmojiPicker((isOpen) => !isOpen)
-    }, [setShowMoreActions])
+      setShowMoreActions(false);
+      setShowEmojiPicker((isOpen) => !isOpen);
+    }, [setShowMoreActions]);
 
     const toggleMoreActions = useCallback(() => {
-      setShowEmojiPicker(false)
-      setShowMoreActions((prev) => !prev)
-    }, [setShowMoreActions])
+      setShowEmojiPicker(false);
+      setShowMoreActions((prev) => !prev);
+    }, [setShowMoreActions]);
 
     const openTextColorPicker = useCallback(() => {
-      setShowEmojiPicker(false)
-      setShowMoreActions(false)
-      textColorInputRef.current?.click()
-    }, [setShowMoreActions])
+      setShowEmojiPicker(false);
+      setShowMoreActions(false);
+      textColorInputRef.current?.click();
+    }, [setShowMoreActions]);
 
     const openImportFilePicker = useCallback(() => {
-      setShowEmojiPicker(false)
-      setShowMoreActions(false)
-      importFileInputRef.current?.click()
-    }, [setShowMoreActions])
+      setShowEmojiPicker(false);
+      setShowMoreActions(false);
+      importFileInputRef.current?.click();
+    }, [setShowMoreActions]);
 
     const handleEmojiSelect = useCallback(
       (emoji: string) => {
-        applyFormatting('emoji', emoji)
-        setShowEmojiPicker(false)
-        emojiButtonRef.current?.focus()
+        applyFormatting('emoji', emoji);
+        setShowEmojiPicker(false);
+        emojiButtonRef.current?.focus();
       },
-      [applyFormatting],
-    )
+      [applyFormatting]
+    );
 
     const handleEmojiMenuKeyDown = useCallback(
       (event: React.KeyboardEvent<HTMLDivElement>) => {
-        handleMenuNavigation(event, closeEmojiPicker, emojiButtonRef, 'grid')
+        handleMenuNavigation(event, closeEmojiPicker, emojiButtonRef, 'grid');
       },
-      [closeEmojiPicker],
-    )
+      [closeEmojiPicker]
+    );
 
     const handleMoreActionsMenuKeyDown = useCallback(
       (event: React.KeyboardEvent<HTMLDivElement>) => {
-        handleMenuNavigation(event, closeMoreActions, moreActionsButtonRef)
+        handleMenuNavigation(event, closeMoreActions, moreActionsButtonRef);
       },
-      [closeMoreActions],
-    )
+      [closeMoreActions]
+    );
 
     const handleFormatDocument = useCallback(() => {
-      closeMoreActions()
-      formatDocument()
-    }, [closeMoreActions, formatDocument])
+      closeMoreActions();
+      formatDocument();
+    }, [closeMoreActions, formatDocument]);
 
     const handleCopyAllText = useCallback(() => {
-      closeMoreActions()
-      copyToClipboard()
-    }, [closeMoreActions, copyToClipboard])
+      closeMoreActions();
+      copyToClipboard();
+    }, [closeMoreActions, copyToClipboard]);
 
     const handleSearchGoTo = useCallback(() => {
-      closeMoreActions()
-      setShowGoToLine(true)
-    }, [closeMoreActions, setShowGoToLine])
+      closeMoreActions();
+      setShowGoToLine(true);
+    }, [closeMoreActions, setShowGoToLine]);
 
     const handlePrintNote = useCallback(() => {
-      closeMoreActions()
-      printNote()
-    }, [closeMoreActions, printNote])
+      closeMoreActions();
+      printNote();
+    }, [closeMoreActions, printNote]);
 
     const handleToggleFullScreen = useCallback(() => {
-      closeMoreActions()
-      toggleFullScreen()
-    }, [closeMoreActions, toggleFullScreen])
+      closeMoreActions();
+      toggleFullScreen();
+    }, [closeMoreActions, toggleFullScreen]);
 
     const handleToggleMarkdownPreview = useCallback(() => {
-      closeMoreActions()
+      closeMoreActions();
       setShowPreview((prev) => {
-        const next = !prev
-        if (next) setShowHtmlPreview(false)
-        return next
-      })
-    }, [closeMoreActions, setShowHtmlPreview, setShowPreview])
+        const next = !prev;
+        if (next) setShowHtmlPreview(false);
+        return next;
+      });
+    }, [closeMoreActions, setShowHtmlPreview, setShowPreview]);
     const handleToggleHtmlPreview = useCallback(() => {
       setShowHtmlPreview((prev) => {
-        const next = !prev
-        if (next) setShowPreview(false)
-        return next
-      })
-    }, [setShowHtmlPreview, setShowPreview])
+        const next = !prev;
+        if (next) setShowPreview(false);
+        return next;
+      });
+    }, [setShowHtmlPreview, setShowPreview]);
 
     const handleClearContent = useCallback(() => {
-      closeMoreActions()
-      clearContent()
-    }, [clearContent, closeMoreActions])
+      closeMoreActions();
+      clearContent();
+    }, [clearContent, closeMoreActions]);
 
-    const handleBold = useCallback(
-      () => applyFormatting('bold'),
-      [applyFormatting],
-    )
-    const handleItalic = useCallback(
-      () => applyFormatting('italic'),
-      [applyFormatting],
-    )
-    const handleUpper = useCallback(
-      () => applyFormatting('upper'),
-      [applyFormatting],
-    )
-    const handleLower = useCallback(
-      () => applyFormatting('lower'),
-      [applyFormatting],
-    )
-    const handleHeading1 = useCallback(
-      () => applyFormatting('h1'),
-      [applyFormatting],
-    )
-    const handleHeading2 = useCallback(
-      () => applyFormatting('h2'),
-      [applyFormatting],
-    )
-    const handleHeading3 = useCallback(
-      () => applyFormatting('h3'),
-      [applyFormatting],
-    )
-    const handleList = useCallback(
-      () => applyFormatting('list'),
-      [applyFormatting],
-    )
-    const handleOrderedList = useCallback(
-      () => applyFormatting('ordered-list'),
-      [applyFormatting],
-    )
-    const handleTodoList = useCallback(
-      () => applyFormatting('todo'),
-      [applyFormatting],
-    )
-    const handleQuote = useCallback(
-      () => applyFormatting('quote'),
-      [applyFormatting],
-    )
-    const handleCodeBlock = useCallback(
-      () => applyFormatting('code'),
-      [applyFormatting],
-    )
-    const handleInlineCode = useCallback(
-      () => applyFormatting('inline-code'),
-      [applyFormatting],
-    )
+    const handleBold = useCallback(() => applyFormatting('bold'), [applyFormatting]);
+    const handleItalic = useCallback(() => applyFormatting('italic'), [applyFormatting]);
+    const handleUpper = useCallback(() => applyFormatting('upper'), [applyFormatting]);
+    const handleLower = useCallback(() => applyFormatting('lower'), [applyFormatting]);
+    const handleHeading1 = useCallback(() => applyFormatting('h1'), [applyFormatting]);
+    const handleHeading2 = useCallback(() => applyFormatting('h2'), [applyFormatting]);
+    const handleHeading3 = useCallback(() => applyFormatting('h3'), [applyFormatting]);
+    const handleList = useCallback(() => applyFormatting('list'), [applyFormatting]);
+    const handleOrderedList = useCallback(() => applyFormatting('ordered-list'), [applyFormatting]);
+    const handleTodoList = useCallback(() => applyFormatting('todo'), [applyFormatting]);
+    const handleQuote = useCallback(() => applyFormatting('quote'), [applyFormatting]);
+    const handleCodeBlock = useCallback(() => applyFormatting('code'), [applyFormatting]);
+    const handleInlineCode = useCallback(() => applyFormatting('inline-code'), [applyFormatting]);
     const handleInsertLink = useCallback(() => {
-      handleToggleLinkUrlInput()
-    }, [handleToggleLinkUrlInput])
-    const handleStrike = useCallback(
-      () => applyFormatting('strike'),
-      [applyFormatting],
-    )
-    const handleHighlight = useCallback(
-      () => applyFormatting('highlight'),
-      [applyFormatting],
-    )
-    const handleClearFormatting = useCallback(
-      () => applyFormatting('clear'),
-      [applyFormatting],
-    )
-    const handleHorizontalRule = useCallback(
-      () => applyFormatting('hr'),
-      [applyFormatting],
-    )
-    const handleInsertDate = useCallback(
-      () => applyFormatting('date'),
-      [applyFormatting],
-    )
+      handleToggleLinkUrlInput();
+    }, [handleToggleLinkUrlInput]);
+    const handleStrike = useCallback(() => applyFormatting('strike'), [applyFormatting]);
+    const handleHighlight = useCallback(() => applyFormatting('highlight'), [applyFormatting]);
+    const handleClearFormatting = useCallback(() => applyFormatting('clear'), [applyFormatting]);
+    const handleHorizontalRule = useCallback(() => applyFormatting('hr'), [applyFormatting]);
+    const handleInsertDate = useCallback(() => applyFormatting('date'), [applyFormatting]);
     const handleToggleGoToLine = useCallback(() => {
-      setShowGoToLine((prev) => !prev)
-    }, [setShowGoToLine])
+      setShowGoToLine((prev) => !prev);
+    }, [setShowGoToLine]);
     const handleJumpUp = useCallback(() => {
-      jumpBlock('up')
-    }, [jumpBlock])
+      jumpBlock('up');
+    }, [jumpBlock]);
     const handleJumpDown = useCallback(() => {
-      jumpBlock('down')
-    }, [jumpBlock])
+      jumpBlock('down');
+    }, [jumpBlock]);
     const handleToggleLineWrap = useCallback(() => {
-      setLineWrap((prev) => !prev)
-    }, [setLineWrap])
+      setLineWrap((prev) => !prev);
+    }, [setLineWrap]);
     const handleToggleLineNumbers = useCallback(() => {
-      setShowLineNumbers((prev) => !prev)
-    }, [setShowLineNumbers])
+      setShowLineNumbers((prev) => !prev);
+    }, [setShowLineNumbers]);
     const handleTextColorChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
-        applyFormatting('color', e.target.value)
+        applyFormatting('color', e.target.value);
       },
-      [applyFormatting],
-    )
+      [applyFormatting]
+    );
     const handleEmojiTriggerKeyDown = useCallback(
       (event: React.KeyboardEvent<HTMLButtonElement>) => {
-        if (typeof window === 'undefined') return
-        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
-        event.preventDefault()
-        setShowMoreActions(false)
-        setShowEmojiPicker(true)
+        if (typeof window === 'undefined') return;
+        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+        event.preventDefault();
+        setShowMoreActions(false);
+        setShowEmojiPicker(true);
         frameRef.current = window.requestAnimationFrame(() => {
           const emojiButtons =
-            emojiMenuRef.current?.querySelectorAll<HTMLButtonElement>(
-              '[role="menuitem"]',
-            )
-          if (!emojiButtons?.length) return
+            emojiMenuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]');
+          if (!emojiButtons?.length) return;
           if (event.key === 'ArrowUp') {
-            emojiButtons[emojiButtons.length - 1]?.focus()
-            return
+            emojiButtons[emojiButtons.length - 1]?.focus();
+            return;
           }
-          emojiButtons[0]?.focus()
-        })
+          emojiButtons[0]?.focus();
+        });
       },
-      [setShowMoreActions],
-    )
+      [setShowMoreActions]
+    );
     const handleMoreActionsTriggerKeyDown = useCallback(
       (event: React.KeyboardEvent<HTMLButtonElement>) => {
-        if (typeof window === 'undefined') return
-        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
-        event.preventDefault()
-        setShowEmojiPicker(false)
-        setShowMoreActions(true)
+        if (typeof window === 'undefined') return;
+        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+        event.preventDefault();
+        setShowEmojiPicker(false);
+        setShowMoreActions(true);
         frameRef.current = window.requestAnimationFrame(() => {
           const actionButtons =
-            moreActionsMenuRef.current?.querySelectorAll<HTMLButtonElement>(
-              '[role="menuitem"]',
-            )
-          if (!actionButtons?.length) return
+            moreActionsMenuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]');
+          if (!actionButtons?.length) return;
           if (event.key === 'ArrowUp') {
-            actionButtons[actionButtons.length - 1]?.focus()
-            return
+            actionButtons[actionButtons.length - 1]?.focus();
+            return;
           }
-          actionButtons[0]?.focus()
-        })
+          actionButtons[0]?.focus();
+        });
       },
-      [setShowMoreActions],
-    )
+      [setShowMoreActions]
+    );
 
-    const emojiOutsideClickRefs = useMemo(
-      () => [emojiButtonRef, emojiMenuRef],
-      [],
-    )
+    const emojiOutsideClickRefs = useMemo(() => [emojiButtonRef, emojiMenuRef], []);
     const moreActionsOutsideClickRefs = useMemo(
       () => [moreActionsButtonRef, moreActionsMenuRef],
-      [],
-    )
+      []
+    );
 
-    useOutsideClick(emojiOutsideClickRefs, closeEmojiPicker, showEmojiPicker)
-    useOutsideClick(
-      moreActionsOutsideClickRefs,
-      closeMoreActions,
-      showMoreActions,
-    )
+    useOutsideClick(emojiOutsideClickRefs, closeEmojiPicker, showEmojiPicker);
+    useOutsideClick(moreActionsOutsideClickRefs, closeMoreActions, showMoreActions);
 
     useEffect(() => {
-      if (typeof document === 'undefined') return
-      if (!showEmojiPicker && !showMoreActions) return
+      if (typeof document === 'undefined') return;
+      if (!showEmojiPicker && !showMoreActions) return;
 
       const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key !== 'Escape') return
+        if (event.key !== 'Escape') return;
 
         if (showEmojiPicker) {
-          closeEmojiPicker()
-          emojiButtonRef.current?.focus()
+          closeEmojiPicker();
+          emojiButtonRef.current?.focus();
         }
 
         if (showMoreActions) {
-          closeMoreActions()
-          moreActionsButtonRef.current?.focus()
+          closeMoreActions();
+          moreActionsButtonRef.current?.focus();
         }
-      }
+      };
 
-      document.addEventListener('keydown', handleKeyDown)
+      document.addEventListener('keydown', handleKeyDown);
 
       return () => {
-        document.removeEventListener('keydown', handleKeyDown)
-      }
-    }, [closeEmojiPicker, closeMoreActions, showEmojiPicker, showMoreActions])
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [closeEmojiPicker, closeMoreActions, showEmojiPicker, showMoreActions]);
 
     useEffect(() => {
-      if (typeof window === 'undefined') return
-      if (!showEmojiPicker) return
+      if (typeof window === 'undefined') return;
+      if (!showEmojiPicker) return;
 
-      setVisibleEmojiCount(EMOJI_CHUNK_SIZE)
-      setEmojiScrollTop(0)
+      setVisibleEmojiCount(EMOJI_CHUNK_SIZE);
+      setEmojiScrollTop(0);
 
       frameRef.current = window.requestAnimationFrame(() => {
-        emojiMenuRef.current
-          ?.querySelector<HTMLButtonElement>('[role="menuitem"]')
-          ?.focus()
-      })
+        emojiMenuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+      });
       return () => {
-        if (frameRef.current !== null)
-          window.cancelAnimationFrame(frameRef.current)
-      }
-    }, [showEmojiPicker])
+        if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
+      };
+    }, [showEmojiPicker]);
 
     useEffect(() => {
-      if (typeof window === 'undefined') return
-      if (!showMoreActions) return
+      if (typeof window === 'undefined') return;
+      if (!showMoreActions) return;
 
       frameRef.current = window.requestAnimationFrame(() => {
-        moreActionsMenuRef.current
-          ?.querySelector<HTMLButtonElement>('[role="menuitem"]')
-          ?.focus()
-      })
+        moreActionsMenuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+      });
       return () => {
-        if (frameRef.current !== null)
-          window.cancelAnimationFrame(frameRef.current)
-      }
-    }, [showMoreActions])
+        if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
+      };
+    }, [showMoreActions]);
 
     useEffect(() => {
-      if (typeof window === 'undefined') return
-      if (!showEmojiPicker) return
+      if (typeof window === 'undefined') return;
+      if (!showEmojiPicker) return;
 
       const updateEmojiPickerPosition = () => {
-        const button = emojiButtonRef.current
-        if (!button) return
+        const button = emojiButtonRef.current;
+        if (!button) return;
 
-        const rect = button.getBoundingClientRect()
-        if (!rect.width || !rect.height) return
-        const isDesktop = window.matchMedia('(min-width: 1024px)').matches
-        const viewportPadding = 8
-        const viewport = window.visualViewport
-        const viewportLeft = viewport?.offsetLeft ?? 0
-        const viewportTop = viewport?.offsetTop ?? 0
-        const viewportWidth = viewport?.width ?? window.innerWidth
-        const viewportHeight = viewport?.height ?? window.innerHeight
-        const viewportRight = viewportLeft + viewportWidth
-        const viewportBottom = viewportTop + viewportHeight
-        const gap = 8
+        const rect = button.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+        const viewportPadding = 8;
+        const viewport = window.visualViewport;
+        const viewportLeft = viewport?.offsetLeft ?? 0;
+        const viewportTop = viewport?.offsetTop ?? 0;
+        const viewportWidth = viewport?.width ?? window.innerWidth;
+        const viewportHeight = viewport?.height ?? window.innerHeight;
+        const viewportRight = viewportLeft + viewportWidth;
+        const viewportBottom = viewportTop + viewportHeight;
+        const gap = 8;
         const pickerWidth = Math.max(
           isDesktop ? 170 : 110,
-          Math.min(isDesktop ? 220 : 170, viewportWidth - viewportPadding * 2),
-        )
-        const availableAbove = rect.top - viewportTop - viewportPadding - gap
-        const availableBelow =
-          viewportBottom - rect.bottom - viewportPadding - gap
-        const opensUp = availableAbove >= 160 || availableAbove > availableBelow
+          Math.min(isDesktop ? 220 : 170, viewportWidth - viewportPadding * 2)
+        );
+        const availableAbove = rect.top - viewportTop - viewportPadding - gap;
+        const availableBelow = viewportBottom - rect.bottom - viewportPadding - gap;
+        const opensUp = availableAbove >= 160 || availableAbove > availableBelow;
         const maxHeight = Math.max(
           isDesktop ? 100 : 64,
-          Math.min(
-            isDesktop ? 180 : 140,
-            opensUp ? availableAbove : availableBelow,
-          ),
-        )
-        const preferredLeft = isDesktop
-          ? rect.left - pickerWidth - gap
-          : rect.left
+          Math.min(isDesktop ? 180 : 140, opensUp ? availableAbove : availableBelow)
+        );
+        const preferredLeft = isDesktop ? rect.left - pickerWidth - gap : rect.left;
         const left = Math.max(
           viewportLeft + viewportPadding,
-          Math.min(
-            preferredLeft,
-            viewportRight - pickerWidth - viewportPadding,
-          ),
-        )
+          Math.min(preferredLeft, viewportRight - pickerWidth - viewportPadding)
+        );
         const top = opensUp
           ? Math.max(viewportTop + viewportPadding, rect.top - maxHeight - gap)
           : Math.max(
               viewportTop + viewportPadding,
-              Math.min(
-                rect.bottom + gap,
-                viewportBottom - maxHeight - viewportPadding,
-              ),
-            )
+              Math.min(rect.bottom + gap, viewportBottom - maxHeight - viewportPadding)
+            );
 
         setEmojiPickerPosition({
           top,
           left,
           width: pickerWidth,
           maxHeight,
-        })
-      }
+        });
+      };
 
-      updateEmojiPickerPosition()
-      window.addEventListener('resize', updateEmojiPickerPosition)
-      window.addEventListener('scroll', updateEmojiPickerPosition)
+      updateEmojiPickerPosition();
+      window.addEventListener('resize', updateEmojiPickerPosition);
+      window.addEventListener('scroll', updateEmojiPickerPosition);
       if (window.visualViewport) {
-        window.visualViewport.addEventListener(
-          'resize',
-          updateEmojiPickerPosition,
-        )
-        window.visualViewport.addEventListener(
-          'scroll',
-          updateEmojiPickerPosition,
-        )
+        window.visualViewport.addEventListener('resize', updateEmojiPickerPosition);
+        window.visualViewport.addEventListener('scroll', updateEmojiPickerPosition);
       }
 
       return () => {
-        window.removeEventListener('resize', updateEmojiPickerPosition)
-        window.removeEventListener('scroll', updateEmojiPickerPosition)
+        window.removeEventListener('resize', updateEmojiPickerPosition);
+        window.removeEventListener('scroll', updateEmojiPickerPosition);
         if (window.visualViewport) {
-          window.visualViewport.removeEventListener(
-            'resize',
-            updateEmojiPickerPosition,
-          )
-          window.visualViewport.removeEventListener(
-            'scroll',
-            updateEmojiPickerPosition,
-          )
+          window.visualViewport.removeEventListener('resize', updateEmojiPickerPosition);
+          window.visualViewport.removeEventListener('scroll', updateEmojiPickerPosition);
         }
-      }
-    }, [showEmojiPicker])
+      };
+    }, [showEmojiPicker]);
 
     return (
       <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] p-2 gap-2">
@@ -1012,16 +875,9 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
             onClick={handleFocusMode}
             title="Focus Mode"
             aria-label="Focus mode"
-            className={cn(
-              'shrink-0',
-              isFocusMode ? 'bg-white/20 text-white' : '',
-            )}
+            className={cn('shrink-0', isFocusMode ? 'bg-white/20 text-white' : '')}
           >
-            {isFocusMode ? (
-              <Minimize2 className="h-4 w-4" />
-            ) : (
-              <Maximize2 className="h-4 w-4" />
-            )}
+            {isFocusMode ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
           <Button
             variant="ghost"
@@ -1131,10 +987,7 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
             onClick={handleInsertLink}
             data-testid="insert-link-btn"
             title="Insert Link (Ctrl+K)"
-            className={cn(
-              'shrink-0',
-              showLinkUrlInput ? 'bg-white/20 text-white' : '',
-            )}
+            className={cn('shrink-0', showLinkUrlInput ? 'bg-white/20 text-white' : '')}
           >
             <LinkIcon className="h-4 w-4" />
           </Button>
@@ -1153,10 +1006,7 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
             onClick={handleToggleImageUrlInput}
             data-testid="insert-image-btn"
             title="Insert Image"
-            className={cn(
-              'shrink-0',
-              showImageUrlInput ? 'bg-white/20 text-white' : '',
-            )}
+            className={cn('shrink-0', showImageUrlInput ? 'bg-white/20 text-white' : '')}
           >
             <ImageIcon className="h-4 w-4" />
           </Button>
@@ -1202,10 +1052,7 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
               aria-expanded={showEmojiPicker}
               aria-haspopup="menu"
               aria-label="Insert emoji"
-              className={cn(
-                'shrink-0',
-                showEmojiPicker ? 'bg-white/10 text-white' : '',
-              )}
+              className={cn('shrink-0', showEmojiPicker ? 'bg-white/10 text-white' : '')}
             >
               <Smile className="h-4 w-4" />
             </Button>
@@ -1214,30 +1061,15 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
               <AnimatePresence>
                 {showEmojiPicker && (
                   <>
-                    <div
-                      className="fixed inset-0 z-40 pointer-events-none"
-                      aria-hidden="true"
-                    />
+                    <div className="fixed inset-0 z-40 pointer-events-none" aria-hidden="true" />
                     <motion.div
                       ref={emojiMenuRef}
                       initial={
-                        shouldReduceMotion
-                          ? { opacity: 0 }
-                          : { opacity: 0, scale: 0.96, y: 4 }
+                        shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 4 }
                       }
-                      animate={
-                        shouldReduceMotion
-                          ? { opacity: 1 }
-                          : { opacity: 1, scale: 1, y: 0 }
-                      }
-                      exit={
-                        shouldReduceMotion
-                          ? { opacity: 0 }
-                          : { opacity: 0, scale: 0.96, y: 4 }
-                      }
-                      transition={
-                        shouldReduceMotion ? { duration: 0 } : undefined
-                      }
+                      animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 4 }}
+                      transition={shouldReduceMotion ? { duration: 0 } : undefined}
                       style={{
                         top: emojiPickerPosition.top,
                         left: emojiPickerPosition.left,
@@ -1259,9 +1091,7 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
                           fontVariantEmoji: 'emoji',
                         }}
                       >
-                        <div
-                          style={{ height: emojiTotalRows * emojiRowHeight }}
-                        >
+                        <div style={{ height: emojiTotalRows * emojiRowHeight }}>
                           <div
                             className="grid gap-0.5"
                             style={{
@@ -1280,9 +1110,9 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
                                 aria-label={`Insert ${emoji}`}
                                 onMouseDown={(e) => e.preventDefault()}
                                 onClick={(e) => {
-                                  e.preventDefault()
-                                  e.stopPropagation()
-                                  handleEmojiSelect(emoji)
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleEmojiSelect(emoji);
                                 }}
                                 className="w-7 h-7 flex items-center justify-center text-base hover:bg-white/20 rounded transition-colors"
                               >
@@ -1370,17 +1200,10 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
             variant={showLineNumbers ? 'secondary' : 'ghost'}
             size="icon"
             onClick={handleToggleLineNumbers}
-            title={
-              lineWrap
-                ? 'Disable wrap to use line numbers'
-                : 'Toggle Line Numbers'
-            }
+            title={lineWrap ? 'Disable wrap to use line numbers' : 'Toggle Line Numbers'}
             aria-label="Toggle line numbers"
             disabled={lineWrap}
-            className={cn(
-              'shrink-0',
-              showLineNumbers ? 'bg-white/20 text-white' : '',
-            )}
+            className={cn('shrink-0', showLineNumbers ? 'bg-white/20 text-white' : '')}
           >
             <Hash className="h-4 w-4" />
           </Button>
@@ -1441,16 +1264,9 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
             onClick={handleToggleMarkdownPreview}
             title="Toggle Markdown Preview (Ctrl+P)"
             aria-label="Toggle markdown preview"
-            className={cn(
-              'shrink-0',
-              showPreview ? 'bg-white/20 text-white' : '',
-            )}
+            className={cn('shrink-0', showPreview ? 'bg-white/20 text-white' : '')}
           >
-            {showPreview ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
+            {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </Button>
           <Button
             variant={showHtmlPreview ? 'secondary' : 'ghost'}
@@ -1458,10 +1274,7 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
             onClick={handleToggleHtmlPreview}
             title="Toggle HTML View"
             aria-label="Toggle HTML view"
-            className={cn(
-              'shrink-0 h-9 w-9',
-              showHtmlPreview ? 'bg-white/20 text-white' : '',
-            )}
+            className={cn('shrink-0 h-9 w-9', showHtmlPreview ? 'bg-white/20 text-white' : '')}
           >
             <Globe className="h-4 w-4" />
           </Button>
@@ -1490,30 +1303,15 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
             <AnimatePresence>
               {showMoreActions && (
                 <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={closeMoreActions}
-                  />
+                  <div className="fixed inset-0 z-40" onClick={closeMoreActions} />
                   <motion.div
                     ref={moreActionsMenuRef}
                     initial={
-                      shouldReduceMotion
-                        ? { opacity: 0 }
-                        : { opacity: 0, scale: 0.95, y: 10 }
+                      shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 10 }
                     }
-                    animate={
-                      shouldReduceMotion
-                        ? { opacity: 1 }
-                        : { opacity: 1, scale: 1, y: 0 }
-                    }
-                    exit={
-                      shouldReduceMotion
-                        ? { opacity: 0 }
-                        : { opacity: 0, scale: 0.95, y: 10 }
-                    }
-                    transition={
-                      shouldReduceMotion ? { duration: 0 } : undefined
-                    }
+                    animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                    exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 10 }}
+                    transition={shouldReduceMotion ? { duration: 0 } : undefined}
                     role="menu"
                     aria-label="Note actions"
                     onKeyDown={handleMoreActionsMenuKeyDown}
@@ -1596,9 +1394,7 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
                       ) : (
                         <Maximize2 className="h-3.5 w-3.5" />
                       )}
-                      <span>
-                        {isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-                      </span>
+                      <span>{isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
                     </button>
                     <div className="my-1 h-[1px] bg-white/5" />
                     <button
@@ -1628,17 +1424,11 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
                 <Save className="h-3 w-3 text-text/40" />
               </motion.div>
             )}
-            {saveStatus === 'saved' && (
-              <CheckCircle2 className="h-3 w-3 text-white" />
+            {saveStatus === 'saved' && <CheckCircle2 className="h-3 w-3 text-white" />}
+            {saveStatus === 'error' && <AlertCircle className="h-3 w-3 text-red-400" />}
+            {saveStatus !== 'saving' && saveStatus !== 'saved' && saveStatus !== 'error' && (
+              <Save className="h-3 w-3 text-text/50" />
             )}
-            {saveStatus === 'error' && (
-              <AlertCircle className="h-3 w-3 text-red-400" />
-            )}
-            {saveStatus !== 'saving' &&
-              saveStatus !== 'saved' &&
-              saveStatus !== 'error' && (
-                <Save className="h-3 w-3 text-text/50" />
-              )}
           </div>
           <Button
             size="xs"
@@ -1652,22 +1442,22 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
             size="xs"
             className="bg-white/10 hover:bg-white/20 border border-white/10 text-white shadow-lg shadow-white/10 font-bold gap-1.5"
             onMouseDown={(event) => {
-              event.preventDefault()
-              event.stopPropagation()
+              event.preventDefault();
+              event.stopPropagation();
             }}
             disabled={isManualSaveInFlight}
             onClick={async () => {
-              if (isManualSaveInFlight) return
-              setIsManualSaveInFlight(true)
-              setSaveStatus('saving')
+              if (isManualSaveInFlight) return;
+              setIsManualSaveInFlight(true);
+              setSaveStatus('saving');
               try {
-                await handleAutoSave(title, content)
-                onCancel()
+                await handleAutoSave(title, content);
+                onCancel();
               } catch {
-                toast.error('Failed to save note. Please try again.')
+                toast.error('Failed to save note. Please try again.');
               } finally {
                 if (isMountedRef.current) {
-                  setIsManualSaveInFlight(false)
+                  setIsManualSaveInFlight(false);
                 }
               }
             }}
@@ -1677,8 +1467,8 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
           </Button>
         </div>
       </div>
-    )
-  },
-)
+    );
+  }
+);
 
-NoteEditorToolbar.displayName = 'NoteEditorToolbar'
+NoteEditorToolbar.displayName = 'NoteEditorToolbar';

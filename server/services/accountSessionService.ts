@@ -1,180 +1,160 @@
-import { createHash } from 'crypto'
-import { User, UserDocument } from '../models/user.ts'
-import { issueUserSession } from './authService.ts'
-import { verifyRefreshToken } from '../utils/auth.ts'
-import {
-  comparePassword,
-  decryptText,
-  encryptText,
-  hashPassword,
-} from '../utils/crypto.ts'
-import { AppError } from '../utils/appError.ts'
-import { logger } from '../utils/logger.ts'
+import { createHash } from 'crypto';
+import { User, UserDocument } from '../models/user.ts';
+import { issueUserSession } from './authService.ts';
+import { verifyRefreshToken } from '../utils/auth.ts';
+import { comparePassword, decryptText, encryptText, hashPassword } from '../utils/crypto.ts';
+import { AppError } from '../utils/appError.ts';
+import { logger } from '../utils/logger.ts';
 
-const SESSION_REFRESH_FAILED = 'Session could not be refreshed. Please sign in again.'
-const PROFILE_FIELD_ENCRYPTION_PREFIX = 'enc:v1:'
-const NONE_PROFILE_VALUE = 'none'
-const MIN_PASSWORD_LENGTH = 16
-const MAX_PASSWORD_LENGTH = 64
+const SESSION_REFRESH_FAILED = 'Session could not be refreshed. Please sign in again.';
+const PROFILE_FIELD_ENCRYPTION_PREFIX = 'enc:v1:';
+const NONE_PROFILE_VALUE = 'none';
+const MIN_PASSWORD_LENGTH = 16;
+const MAX_PASSWORD_LENGTH = 64;
 const STRONG_PASSWORD_PATTERN =
-  /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+=\[\];:,.<>?{}|\-])\S+$/
+  /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+=\[\];:,.<>?{}|\-])\S+$/;
 
 const hashRefreshToken = (token: string): string =>
-  createHash('sha256').update(token).digest('hex')
+  createHash('sha256').update(token).digest('hex');
 
 const normalizeProfileValue = (value: unknown): string => {
   if (typeof value !== 'string') {
-    return NONE_PROFILE_VALUE
+    return NONE_PROFILE_VALUE;
   }
 
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : NONE_PROFILE_VALUE
-}
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : NONE_PROFILE_VALUE;
+};
 
 const isEncryptedProfileValue = (value: string): boolean =>
-  value.startsWith(PROFILE_FIELD_ENCRYPTION_PREFIX)
+  value.startsWith(PROFILE_FIELD_ENCRYPTION_PREFIX);
 
 const encodeProfileValueForStorage = (value: string): string => {
   if (value === NONE_PROFILE_VALUE) {
-    return NONE_PROFILE_VALUE
+    return NONE_PROFILE_VALUE;
   }
 
-  const encrypted = encryptText(value)
-  const encoded = Buffer.from(JSON.stringify(encrypted), 'utf8').toString(
-    'base64url',
-  )
-  return `${PROFILE_FIELD_ENCRYPTION_PREFIX}${encoded}`
-}
+  const encrypted = encryptText(value);
+  const encoded = Buffer.from(JSON.stringify(encrypted), 'utf8').toString('base64url');
+  return `${PROFILE_FIELD_ENCRYPTION_PREFIX}${encoded}`;
+};
 
 const decodeProfileValueFromStorage = (value: unknown): string => {
-  const normalized = normalizeProfileValue(value)
+  const normalized = normalizeProfileValue(value);
 
   if (normalized.toLowerCase() === NONE_PROFILE_VALUE) {
-    return NONE_PROFILE_VALUE
+    return NONE_PROFILE_VALUE;
   }
 
   if (!isEncryptedProfileValue(normalized)) {
-    return normalized
+    return normalized;
   }
 
-  const payload = normalized.slice(PROFILE_FIELD_ENCRYPTION_PREFIX.length)
+  const payload = normalized.slice(PROFILE_FIELD_ENCRYPTION_PREFIX.length);
   if (!payload) {
-    return NONE_PROFILE_VALUE
+    return NONE_PROFILE_VALUE;
   }
 
   try {
-    const decoded = Buffer.from(payload, 'base64url').toString('utf8')
-    const parsed = JSON.parse(decoded) as Parameters<typeof decryptText>[0]
-    const decrypted = decryptText(parsed).trim()
-    return decrypted.length > 0 ? decrypted : NONE_PROFILE_VALUE
+    const decoded = Buffer.from(payload, 'base64url').toString('utf8');
+    const parsed = JSON.parse(decoded) as Parameters<typeof decryptText>[0];
+    const decrypted = decryptText(parsed).trim();
+    return decrypted.length > 0 ? decrypted : NONE_PROFILE_VALUE;
   } catch (error) {
     logger.warn('Failed to decrypt profile field; using fallback.', {
       error: error instanceof Error ? error.message : 'Unknown error',
-    })
-    return NONE_PROFILE_VALUE
+    });
+    return NONE_PROFILE_VALUE;
   }
-}
+};
 
-const normalizeStoredProfileValue = (value: unknown): string =>
-  normalizeProfileValue(value)
+const normalizeStoredProfileValue = (value: unknown): string => normalizeProfileValue(value);
 
 const normalizeNewPassword = (value: unknown): string => {
   if (typeof value !== 'string') {
-    throw AppError.badRequest(
-      'Current and new password are required.',
-      'INVALID_PASSWORD',
-    )
+    throw AppError.badRequest('Current and new password are required.', 'INVALID_PASSWORD');
   }
 
   if (value.length < MIN_PASSWORD_LENGTH || value.length > MAX_PASSWORD_LENGTH) {
     throw AppError.badRequest(
       `Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters.`,
-      'AUTH_WEAK_PASSWORD',
-    )
+      'AUTH_WEAK_PASSWORD'
+    );
   }
 
   if (!STRONG_PASSWORD_PATTERN.test(value)) {
     throw AppError.badRequest(
       'Password must include uppercase, lowercase, number, and special character, and cannot contain spaces.',
-      'AUTH_WEAK_PASSWORD',
-    )
+      'AUTH_WEAK_PASSWORD'
+    );
   }
 
-  return value
-}
+  return value;
+};
 
-const migrateLegacyPlaintextProfileFields = async (
-  user: UserDocument,
-): Promise<void> => {
-  let changed = false
+const migrateLegacyPlaintextProfileFields = async (user: UserDocument): Promise<void> => {
+  let changed = false;
 
   for (const field of ['profileName', 'profilePhoto'] as const) {
-    const currentStored = normalizeStoredProfileValue((user as any)[field])
-    if (
-      currentStored === NONE_PROFILE_VALUE ||
-      isEncryptedProfileValue(currentStored)
-    ) {
-      continue
+    const currentStored = normalizeStoredProfileValue((user as any)[field]);
+    if (currentStored === NONE_PROFILE_VALUE || isEncryptedProfileValue(currentStored)) {
+      continue;
     }
 
-    const normalizedDecrypted = decodeProfileValueFromStorage(currentStored)
-    ;(user as any)[field] = encodeProfileValueForStorage(normalizedDecrypted)
-    changed = true
+    const normalizedDecrypted = decodeProfileValueFromStorage(currentStored);
+    (user as any)[field] = encodeProfileValueForStorage(normalizedDecrypted);
+    changed = true;
   }
 
   if (!changed) {
-    return
+    return;
   }
 
   try {
-    await user.save()
+    await user.save();
   } catch (error) {
     logger.warn('Failed to migrate legacy plaintext profile fields.', {
       error: error instanceof Error ? error.message : 'Unknown error',
       userId: (user as any)?._id,
-    })
+    });
   }
-}
+};
 
 const toTimestamp = (value: unknown): number | null => {
   if (value instanceof Date) {
-    const ms = value.getTime()
-    return Number.isFinite(ms) ? ms : null
+    const ms = value.getTime();
+    return Number.isFinite(ms) ? ms : null;
   }
   if (typeof value === 'string' || typeof value === 'number') {
-    const ms = new Date(value).getTime()
-    return Number.isFinite(ms) ? ms : null
+    const ms = new Date(value).getTime();
+    return Number.isFinite(ms) ? ms : null;
   }
-  return null
-}
+  return null;
+};
 
 const normalizeSessionEntries = (
   user: UserDocument,
-  options: { requireRefreshTokenHash?: boolean } = {},
+  options: { requireRefreshTokenHash?: boolean } = {}
 ): { removedInvalidSessions: number } => {
   const sessions = Array.isArray((user as any).sessions)
     ? ((user as any).sessions as Array<Record<string, unknown>>)
-    : []
-  const requireRefreshTokenHash = options.requireRefreshTokenHash === true
+    : [];
+  const requireRefreshTokenHash = options.requireRefreshTokenHash === true;
 
-  const normalized: Array<Record<string, unknown>> = []
-  let removedInvalidSessions = 0
+  const normalized: Array<Record<string, unknown>> = [];
+  let removedInvalidSessions = 0;
 
   for (const rawSession of sessions) {
     if (!rawSession || typeof rawSession !== 'object') {
-      removedInvalidSessions += 1
-      continue
+      removedInvalidSessions += 1;
+      continue;
     }
 
-    const sessionId =
-      typeof rawSession.sessionId === 'string' ? rawSession.sessionId.trim() : ''
-    const deviceId =
-      typeof rawSession.deviceId === 'string' ? rawSession.deviceId.trim() : ''
-    const expiresAtMs = toTimestamp(rawSession.expiresAt)
+    const sessionId = typeof rawSession.sessionId === 'string' ? rawSession.sessionId.trim() : '';
+    const deviceId = typeof rawSession.deviceId === 'string' ? rawSession.deviceId.trim() : '';
+    const expiresAtMs = toTimestamp(rawSession.expiresAt);
     const refreshTokenHash =
-      typeof rawSession.refreshTokenHash === 'string'
-        ? rawSession.refreshTokenHash.trim()
-        : ''
+      typeof rawSession.refreshTokenHash === 'string' ? rawSession.refreshTokenHash.trim() : '';
 
     if (
       !sessionId ||
@@ -182,57 +162,57 @@ const normalizeSessionEntries = (
       expiresAtMs === null ||
       (requireRefreshTokenHash && !refreshTokenHash)
     ) {
-      removedInvalidSessions += 1
-      continue
+      removedInvalidSessions += 1;
+      continue;
     }
 
-    normalized.push(rawSession)
+    normalized.push(rawSession);
   }
 
-  ;(user as any).sessions = normalized as any
-  return { removedInvalidSessions }
-}
+  (user as any).sessions = normalized as any;
+  return { removedInvalidSessions };
+};
 
 const ensureUserState = (
   user: UserDocument,
-  options: { requireRefreshTokenHash?: boolean } = {},
+  options: { requireRefreshTokenHash?: boolean } = {}
 ): UserDocument => {
   if (!user.sessions) {
-    ;(user as any).sessions = []
+    (user as any).sessions = [];
   }
   if (!user.loginHistory) {
-    ;(user as any).loginHistory = []
+    (user as any).loginHistory = [];
   }
   if (!user.meta) {
-    ;(user as any).meta = {
+    (user as any).meta = {
       lastLoginAt: null,
       lastSyncAt: null,
       activeDevices: [],
       masterKey: null,
       masterKeyHash: null,
-    }
+    };
   }
-  const meta = (user as any).meta
+  const meta = (user as any).meta;
   if (!Array.isArray(meta.activeDevices)) {
-    meta.activeDevices = []
+    meta.activeDevices = [];
   }
 
-  const { removedInvalidSessions } = normalizeSessionEntries(user, options)
+  const { removedInvalidSessions } = normalizeSessionEntries(user, options);
   if (removedInvalidSessions > 0) {
     logger.warn('Pruned invalid legacy session entries from user state.', {
       userId: (user as any)?._id,
       removedInvalidSessions,
       requireRefreshTokenHash: options.requireRefreshTokenHash === true,
-    })
+    });
   }
 
-  return user
-}
+  return user;
+};
 
 const syncActiveDevices = (user: UserDocument) => {
-  const now = Date.now()
-  const hydratedUser = ensureUserState(user)
-  const meta = hydratedUser.meta as NonNullable<UserDocument['meta']>
+  const now = Date.now();
+  const hydratedUser = ensureUserState(user);
+  const meta = hydratedUser.meta as NonNullable<UserDocument['meta']>;
   meta.activeDevices = Array.from(
     new Set(
       (hydratedUser.sessions || [])
@@ -241,23 +221,21 @@ const syncActiveDevices = (user: UserDocument) => {
             !session.revokedAt &&
             (toTimestamp(session.expiresAt) ?? 0) > now &&
             typeof session.deviceId === 'string' &&
-            session.deviceId.trim(),
+            session.deviceId.trim()
         )
-        .map((session: any) => session.deviceId),
-    ),
-  )
-}
+        .map((session: any) => session.deviceId)
+    )
+  );
+};
 
 const buildSessionSummaries = (user: UserDocument, currentSessionId?: string) =>
   (user.sessions || [])
     .filter(
-      (session: any) =>
-        !session.revokedAt &&
-        (toTimestamp(session.expiresAt) ?? 0) > Date.now(),
+      (session: any) => !session.revokedAt && (toTimestamp(session.expiresAt) ?? 0) > Date.now()
     )
     .sort(
       (left: any, right: any) =>
-        (toTimestamp(right.lastUsedAt) ?? 0) - (toTimestamp(left.lastUsedAt) ?? 0),
+        (toTimestamp(right.lastUsedAt) ?? 0) - (toTimestamp(left.lastUsedAt) ?? 0)
     )
     .map((session: any) => ({
       sessionId: session.sessionId,
@@ -270,62 +248,62 @@ const buildSessionSummaries = (user: UserDocument, currentSessionId?: string) =>
       userAgent: session.userAgent,
       isCurrent: session.sessionId === currentSessionId,
       deviceName: session.deviceName || '',
-    }))
+    }));
 
 const getUserOrThrow = async (
   userId: string,
   select?: string,
-  options: { requireRefreshTokenHash?: boolean } = {},
+  options: { requireRefreshTokenHash?: boolean } = {}
 ): Promise<UserDocument> => {
-  const query = User.findById(userId)
+  const query = User.findById(userId);
   if (select) {
-    query.select(select)
+    query.select(select);
   }
 
-  const user = await query.exec()
+  const user = await query.exec();
   if (!user) {
-    throw AppError.notFound('User not found.', 'USER_NOT_FOUND')
+    throw AppError.notFound('User not found.', 'USER_NOT_FOUND');
   }
 
-  return ensureUserState(user, options)
-}
+  return ensureUserState(user, options);
+};
 
 export const refreshAuthenticatedSession = async (input: {
-  refreshToken: string
-  ipAddress?: string
-  userAgent?: string
+  refreshToken: string;
+  ipAddress?: string;
+  userAgent?: string;
 }) => {
-  let payload
+  let payload;
   try {
-    payload = verifyRefreshToken(input.refreshToken)
+    payload = verifyRefreshToken(input.refreshToken);
   } catch (error) {
     logger.warn('Failed to verify refresh token during session refresh', {
       error: error instanceof Error ? error.message : 'Unknown error',
-    })
-    throw AppError.unauthorized(SESSION_REFRESH_FAILED, 'SESSION_REFRESH_FAILED')
+    });
+    throw AppError.unauthorized(SESSION_REFRESH_FAILED, 'SESSION_REFRESH_FAILED');
   }
 
   const user = await getUserOrThrow(payload.sub, '+sessions.refreshTokenHash', {
     requireRefreshTokenHash: true,
-  })
-  const session = user.sessions?.find((entry: any) => entry.sessionId === payload.sessionId)
+  });
+  const session = user.sessions?.find((entry: any) => entry.sessionId === payload.sessionId);
 
   if (!session || session.revokedAt) {
-    throw AppError.unauthorized(SESSION_REFRESH_FAILED, 'SESSION_REFRESH_FAILED')
+    throw AppError.unauthorized(SESSION_REFRESH_FAILED, 'SESSION_REFRESH_FAILED');
   }
 
   if ((toTimestamp(session.expiresAt) ?? 0) <= Date.now()) {
-    session.revokedAt = new Date()
-    syncActiveDevices(user)
-    await user.save()
-    throw AppError.unauthorized(SESSION_REFRESH_FAILED, 'SESSION_REFRESH_FAILED')
+    session.revokedAt = new Date();
+    syncActiveDevices(user);
+    await user.save();
+    throw AppError.unauthorized(SESSION_REFRESH_FAILED, 'SESSION_REFRESH_FAILED');
   }
 
   if (session.refreshTokenHash !== hashRefreshToken(input.refreshToken)) {
-    session.revokedAt = new Date()
-    syncActiveDevices(user)
-    await user.save()
-    throw AppError.unauthorized(SESSION_REFRESH_FAILED, 'SESSION_REFRESH_FAILED')
+    session.revokedAt = new Date();
+    syncActiveDevices(user);
+    await user.save();
+    throw AppError.unauthorized(SESSION_REFRESH_FAILED, 'SESSION_REFRESH_FAILED');
   }
 
   const rotatedSession = issueUserSession(user, {
@@ -334,9 +312,9 @@ export const refreshAuthenticatedSession = async (input: {
     userAgent: input.userAgent ?? session.userAgent,
     existingSessionId: session.sessionId,
     deviceName: session.deviceName,
-  })
+  });
 
-  await user.save()
+  await user.save();
 
   return {
     token: rotatedSession.accessToken,
@@ -348,143 +326,132 @@ export const refreshAuthenticatedSession = async (input: {
       meta: user.meta,
       twoFactorEnabled: user.twoFactorEnabled === true,
     },
-  }
-}
+  };
+};
 
-export const revokeCurrentSession = async (
-  refreshToken: string,
-): Promise<{ revoked: boolean }> => {
-  let payload
+export const revokeCurrentSession = async (refreshToken: string): Promise<{ revoked: boolean }> => {
+  let payload;
   try {
-    payload = verifyRefreshToken(refreshToken)
+    payload = verifyRefreshToken(refreshToken);
   } catch {
-    return { revoked: false }
+    return { revoked: false };
   }
 
-  const user = await getUserOrThrow(payload.sub)
-  const session = user.sessions?.find((entry: any) => entry.sessionId === payload.sessionId)
+  const user = await getUserOrThrow(payload.sub);
+  const session = user.sessions?.find((entry: any) => entry.sessionId === payload.sessionId);
   if (!session || session.revokedAt) {
-    return { revoked: false }
+    return { revoked: false };
   }
 
-  session.revokedAt = new Date()
-  syncActiveDevices(user)
-  await user.save()
-  return { revoked: true }
-}
+  session.revokedAt = new Date();
+  syncActiveDevices(user);
+  await user.save();
+  return { revoked: true };
+};
 
 export const revokeAuthenticatedSessions = async (input: {
-  userId: string
-  currentSessionId?: string
-  targetSessionId?: string
-  targetDeviceId?: string
-  revokeAllOther?: boolean
-  revokeCurrent?: boolean
-  ipAddress?: string
+  userId: string;
+  currentSessionId?: string;
+  targetSessionId?: string;
+  targetDeviceId?: string;
+  revokeAllOther?: boolean;
+  revokeCurrent?: boolean;
+  ipAddress?: string;
 }) => {
   if (!input.revokeAllOther && !input.targetSessionId && !input.targetDeviceId) {
     throw AppError.badRequest(
       'Provide sessionId, deviceId, or revokeAllOther=true.',
-      'SESSION_TARGET_REQUIRED',
-    )
+      'SESSION_TARGET_REQUIRED'
+    );
   }
 
-  const user = await getUserOrThrow(input.userId)
-  const now = new Date()
-  let revokedCount = 0
+  const user = await getUserOrThrow(input.userId);
+  const now = new Date();
+  let revokedCount = 0;
 
   for (const session of user.sessions || []) {
     const matches = input.revokeAllOther
       ? input.revokeCurrent === true || session.sessionId !== input.currentSessionId
       : input.targetSessionId
         ? session.sessionId === input.targetSessionId
-        : session.deviceId === input.targetDeviceId
+        : session.deviceId === input.targetDeviceId;
 
     if (!matches || session.revokedAt) {
-      continue
+      continue;
     }
 
     if (session.sessionId === input.currentSessionId && input.revokeCurrent !== true) {
-      continue
+      continue;
     }
 
-    session.revokedAt = now
-    revokedCount += 1
+    session.revokedAt = now;
+    revokedCount += 1;
   }
 
   if (revokedCount === 0) {
-    throw AppError.notFound(
-      'No matching active device session was found.',
-      'SESSION_NOT_FOUND',
-    )
+    throw AppError.notFound('No matching active device session was found.', 'SESSION_NOT_FOUND');
   }
 
-  syncActiveDevices(user)
-  await user.save()
+  syncActiveDevices(user);
+  await user.save();
 
   return {
     revokedCount,
     sessions: buildSessionSummaries(user, input.currentSessionId),
-  }
-}
+  };
+};
 
 export const changeAuthenticatedPassword = async (input: {
-  userId: string
-  currentPassword: unknown
-  newPassword: unknown
-  ipAddress?: string
+  userId: string;
+  currentPassword: unknown;
+  newPassword: unknown;
+  ipAddress?: string;
 }) => {
   if (typeof input.currentPassword !== 'string' || typeof input.newPassword !== 'string') {
-    throw AppError.badRequest('Current and new password are required.', 'INVALID_PASSWORD')
+    throw AppError.badRequest('Current and new password are required.', 'INVALID_PASSWORD');
   }
-  const currentPassword = input.currentPassword
+  const currentPassword = input.currentPassword;
   if (!currentPassword.trim()) {
-    throw AppError.badRequest('Current password is required.', 'INVALID_PASSWORD')
+    throw AppError.badRequest('Current password is required.', 'INVALID_PASSWORD');
   }
-  const nextPassword = normalizeNewPassword(input.newPassword)
+  const nextPassword = normalizeNewPassword(input.newPassword);
 
   if (currentPassword === nextPassword) {
     throw AppError.badRequest(
       'New password must be different from current password.',
-      'PASSWORD_UNCHANGED',
-    )
+      'PASSWORD_UNCHANGED'
+    );
   }
 
-  const user = await getUserOrThrow(input.userId, '+password')
-  const currentHash = decryptText(user.password as any)
-  const isValid = await comparePassword(currentPassword, currentHash)
+  const user = await getUserOrThrow(input.userId, '+password');
+  const currentHash = decryptText(user.password as any);
+  const isValid = await comparePassword(currentPassword, currentHash);
   if (!isValid) {
-    throw AppError.unauthorized(
-      'Current password is incorrect.',
-      'INVALID_CREDENTIALS',
-    )
+    throw AppError.unauthorized('Current password is incorrect.', 'INVALID_CREDENTIALS');
   }
 
-  const nextHash = await hashPassword(nextPassword)
-  user.password = encryptText(nextHash) as any
-  const now = new Date()
+  const nextHash = await hashPassword(nextPassword);
+  user.password = encryptText(nextHash) as any;
+  const now = new Date();
   for (const session of user.sessions || []) {
     if (!session.revokedAt) {
-      session.revokedAt = now
+      session.revokedAt = now;
     }
   }
   if (user.meta) {
-    user.meta.lastCredentialChangeAt = now
+    user.meta.lastCredentialChangeAt = now;
   }
-  syncActiveDevices(user)
-  await user.save()
+  syncActiveDevices(user);
+  await user.save();
 
-  return { changed: true }
-}
+  return { changed: true };
+};
 
-export const getAuthenticatedUserProfile = async (
-  userId: string,
-  currentSessionId?: string,
-) => {
-  const user = await getUserOrThrow(userId)
-  await migrateLegacyPlaintextProfileFields(user)
-  const profileName = decodeProfileValueFromStorage((user as any).profileName)
-  const profilePhoto = decodeProfileValueFromStorage((user as any).profilePhoto)
+export const getAuthenticatedUserProfile = async (userId: string, currentSessionId?: string) => {
+  const user = await getUserOrThrow(userId);
+  await migrateLegacyPlaintextProfileFields(user);
+  const profileName = decodeProfileValueFromStorage((user as any).profileName);
+  const profilePhoto = decodeProfileValueFromStorage((user as any).profilePhoto);
 
   return {
     id: user._id,
@@ -500,68 +467,66 @@ export const getAuthenticatedUserProfile = async (
     meta: user.meta,
     twoFactorEnabled: user.twoFactorEnabled === true,
     sessions: buildSessionSummaries(user, currentSessionId),
-  }
-}
+  };
+};
 
 export const updateAuthenticatedUserProfile = async (input: {
-  userId: string
-  profileName?: string
-  profilePhoto?: string
+  userId: string;
+  profileName?: string;
+  profilePhoto?: string;
 }) => {
-  const user = await getUserOrThrow(input.userId)
-  const now = new Date()
-  let changed = false
+  const user = await getUserOrThrow(input.userId);
+  const now = new Date();
+  let changed = false;
 
   if (!(user as any).profileDetails) {
-    ;(user as any).profileDetails = {
+    (user as any).profileDetails = {
       createdAt: now,
       updatedAt: now,
-    }
+    };
   }
   if (!(user as any).profileDetails.createdAt) {
-    ;(user as any).profileDetails.createdAt = now
+    (user as any).profileDetails.createdAt = now;
   }
 
   if (typeof input.profileName === 'string') {
-    const nextName = input.profileName.trim()
-    const normalizedName = nextName || NONE_PROFILE_VALUE
-    const currentStoredName = normalizeProfileValue((user as any).profileName)
-    const currentName = decodeProfileValueFromStorage(currentStoredName)
+    const nextName = input.profileName.trim();
+    const normalizedName = nextName || NONE_PROFILE_VALUE;
+    const currentStoredName = normalizeProfileValue((user as any).profileName);
+    const currentName = decodeProfileValueFromStorage(currentStoredName);
     const currentIsLegacyPlaintext =
-      currentStoredName !== NONE_PROFILE_VALUE &&
-      !isEncryptedProfileValue(currentStoredName)
+      currentStoredName !== NONE_PROFILE_VALUE && !isEncryptedProfileValue(currentStoredName);
 
     if (currentName !== normalizedName || currentIsLegacyPlaintext) {
-      ;(user as any).profileName = encodeProfileValueForStorage(normalizedName)
-      changed = true
+      (user as any).profileName = encodeProfileValueForStorage(normalizedName);
+      changed = true;
     }
   }
 
   if (typeof input.profilePhoto === 'string') {
-    const nextPhoto = input.profilePhoto.trim()
-    const normalizedPhoto = nextPhoto || NONE_PROFILE_VALUE
-    const currentStoredPhoto = normalizeProfileValue((user as any).profilePhoto)
-    const currentPhoto = decodeProfileValueFromStorage(currentStoredPhoto)
+    const nextPhoto = input.profilePhoto.trim();
+    const normalizedPhoto = nextPhoto || NONE_PROFILE_VALUE;
+    const currentStoredPhoto = normalizeProfileValue((user as any).profilePhoto);
+    const currentPhoto = decodeProfileValueFromStorage(currentStoredPhoto);
     const currentIsLegacyPlaintext =
-      currentStoredPhoto !== NONE_PROFILE_VALUE &&
-      !isEncryptedProfileValue(currentStoredPhoto)
+      currentStoredPhoto !== NONE_PROFILE_VALUE && !isEncryptedProfileValue(currentStoredPhoto);
 
     if (currentPhoto !== normalizedPhoto || currentIsLegacyPlaintext) {
-      ;(user as any).profilePhoto = encodeProfileValueForStorage(normalizedPhoto)
-      changed = true
+      (user as any).profilePhoto = encodeProfileValueForStorage(normalizedPhoto);
+      changed = true;
     }
   }
 
   if (changed) {
-    ;(user as any).profileDetails.updatedAt = now
+    (user as any).profileDetails.updatedAt = now;
   }
 
   if (changed) {
-    await user.save()
+    await user.save();
   }
 
-  const profileName = decodeProfileValueFromStorage((user as any).profileName)
-  const profilePhoto = decodeProfileValueFromStorage((user as any).profilePhoto)
+  const profileName = decodeProfileValueFromStorage((user as any).profileName);
+  const profilePhoto = decodeProfileValueFromStorage((user as any).profilePhoto);
 
   return {
     id: user._id,
@@ -573,45 +538,35 @@ export const updateAuthenticatedUserProfile = async (input: {
       updatedAt: (user as any).profileDetails?.updatedAt ?? user.updatedAt,
     },
     updatedAt: user.updatedAt,
-  }
-}
+  };
+};
 
-export const renameDeviceSession = async (
-  userId: string,
-  deviceId: string,
-  deviceName: string,
-) => {
-  const normalizedDeviceId = deviceId.trim()
-  const normalizedDeviceName = deviceName.trim()
+export const renameDeviceSession = async (userId: string, deviceId: string, deviceName: string) => {
+  const normalizedDeviceId = deviceId.trim();
+  const normalizedDeviceName = deviceName.trim();
 
   if (!normalizedDeviceId || !normalizedDeviceName) {
-    throw AppError.badRequest(
-      'deviceId and deviceName are required.',
-      'INVALID_INPUT',
-    )
+    throw AppError.badRequest('deviceId and deviceName are required.', 'INVALID_INPUT');
   }
 
-  const user = await getUserOrThrow(userId)
-  let updated = false
+  const user = await getUserOrThrow(userId);
+  let updated = false;
 
   for (const session of user.sessions || []) {
     if (session.deviceId === normalizedDeviceId && !session.revokedAt) {
-      session.deviceName = normalizedDeviceName
-      updated = true
+      session.deviceName = normalizedDeviceName;
+      updated = true;
     }
   }
 
   if (!updated) {
-    throw AppError.notFound(
-      'No matching active device session was found.',
-      'SESSION_NOT_FOUND',
-    )
+    throw AppError.notFound('No matching active device session was found.', 'SESSION_NOT_FOUND');
   }
 
-  await user.save()
+  await user.save();
 
   return {
     success: true,
     sessions: buildSessionSummaries(user),
-  }
-}
+  };
+};

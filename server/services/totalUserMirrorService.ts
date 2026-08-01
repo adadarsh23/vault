@@ -1,9 +1,9 @@
-import { TotalUser } from '../models/totalUser.ts'
+import { TotalUser } from '../models/totalUser.ts';
 
 export const upsertTotalUserMirror = async (input: {
-  username: string
-  userId: string
-  createdDate: Date
+  username: string;
+  userId: string;
+  createdDate: Date;
 }) => {
   try {
     await TotalUser.findOneAndUpdate(
@@ -19,10 +19,10 @@ export const upsertTotalUserMirror = async (input: {
         upsert: true,
         new: true,
         setDefaultsOnInsert: true,
-      },
-    ).exec()
+      }
+    ).exec();
   } catch (error) {
-    const candidate = error as { code?: number }
+    const candidate = error as { code?: number };
     if (candidate?.code === 11000) {
       await TotalUser.updateOne(
         { username: input.username },
@@ -33,11 +33,10 @@ export const upsertTotalUserMirror = async (input: {
             userId: input.userId,
             createdDate: input.createdDate,
           },
-        },
-      ).exec()
-      return
+        }
+      ).exec();
+      return;
     }
-    throw error
+    throw error;
   }
-}
-
+};

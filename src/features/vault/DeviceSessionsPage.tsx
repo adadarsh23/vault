@@ -1,155 +1,142 @@
-import React from 'react'
-import { ArrowLeft, MonitorSmartphone } from 'lucide-react'
-import { Button } from '../../components/ui/Button'
-import { SessionControlsCard } from './components/SettingsVault/SessionControlsCard'
-import { RenameSessionModal } from './components/SettingsVault/RenameSessionModal'
+import React from 'react';
+import { ArrowLeft, MonitorSmartphone } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { SessionControlsCard } from './components/SettingsVault/SessionControlsCard';
+import { RenameSessionModal } from './components/SettingsVault/RenameSessionModal';
 import {
   getAuthenticatedProfile,
   revokeVaultDeviceSession,
   renameVaultDeviceSession,
   type AuthSessionSummary,
   type SessionRevokeResponse,
-} from '../../lib/auth-api'
-import {
-  getDeviceId,
-  getTrustedDeviceLabels,
-  setTrustedDeviceLabel,
-} from '../../lib/auth-session'
-import { getSessionName, setSessionName } from '../../lib/activity'
-import { toast } from 'sonner'
-import { getErrorMessage } from './components/SettingsVault/Utils'
+} from '../../lib/auth-api';
+import { getDeviceId, getTrustedDeviceLabels, setTrustedDeviceLabel } from '../../lib/auth-session';
+import { getSessionName, setSessionName } from '../../lib/activity';
+import { toast } from 'sonner';
+import { getErrorMessage } from './components/SettingsVault/Utils';
 
 interface DeviceSessionsPageProps {
-  onBack: () => void
+  onBack: () => void;
 }
 
-export const DeviceSessionsPage: React.FC<DeviceSessionsPageProps> = ({
-  onBack,
-}) => {
-  const [showSessions, setShowSessions] = React.useState(false)
-  const [sessions, setSessions] = React.useState<AuthSessionSummary[]>([])
-  const [trustedDeviceLabels, setTrustedDeviceLabels] = React.useState<
-    Record<string, string>
-  >({})
-  const [isSessionActionLoading, setIsSessionActionLoading] =
-    React.useState(false)
-  const [currentSessionName, setCurrentSessionName] =
-    React.useState(getSessionName())
+export const DeviceSessionsPage: React.FC<DeviceSessionsPageProps> = ({ onBack }) => {
+  const [showSessions, setShowSessions] = React.useState(false);
+  const [sessions, setSessions] = React.useState<AuthSessionSummary[]>([]);
+  const [trustedDeviceLabels, setTrustedDeviceLabels] = React.useState<Record<string, string>>({});
+  const [isSessionActionLoading, setIsSessionActionLoading] = React.useState(false);
+  const [currentSessionName, setCurrentSessionName] = React.useState(getSessionName());
   const [renamingSession, setRenamingSession] = React.useState<{
-    id: string
-    label: string
-    isCurrent?: boolean
-  } | null>(null)
-  const [renameDraft, setRenameDraft] = React.useState('')
+    id: string;
+    label: string;
+    isCurrent?: boolean;
+  } | null>(null);
+  const [renameDraft, setRenameDraft] = React.useState('');
 
   const loadSessionState = React.useCallback(async () => {
-    setIsSessionActionLoading(true)
+    setIsSessionActionLoading(true);
     try {
-      const nextProfile = await getAuthenticatedProfile()
-      setSessions(nextProfile.sessions || [])
-      setTrustedDeviceLabels(getTrustedDeviceLabels())
+      const nextProfile = await getAuthenticatedProfile();
+      setSessions(nextProfile.sessions || []);
+      setTrustedDeviceLabels(getTrustedDeviceLabels());
     } catch (error: unknown) {
-      setSessions([])
-      toast.error(getErrorMessage(error, 'Failed to load account sessions'))
+      setSessions([]);
+      toast.error(getErrorMessage(error, 'Failed to load account sessions'));
     } finally {
-      setIsSessionActionLoading(false)
+      setIsSessionActionLoading(false);
     }
-  }, [])
+  }, []);
 
   React.useEffect(() => {
-    void loadSessionState()
-  }, [loadSessionState])
+    void loadSessionState();
+  }, [loadSessionState]);
 
   const handleSaveTrustedDeviceLabel = React.useCallback(
     async (deviceId: string, label: string) => {
-      const trimmed = label.trim()
-      setTrustedDeviceLabel(deviceId, trimmed)
+      const trimmed = label.trim();
+      setTrustedDeviceLabel(deviceId, trimmed);
       setTrustedDeviceLabels((current) => {
-        const next = { ...current }
+        const next = { ...current };
         if (trimmed) {
-          next[deviceId] = trimmed
+          next[deviceId] = trimmed;
         } else {
-          delete next[deviceId]
+          delete next[deviceId];
         }
-        return next
-      })
+        return next;
+      });
 
       if (deviceId === getDeviceId()) {
-        setSessionName(trimmed || 'Browser session')
-        setCurrentSessionName(getSessionName())
+        setSessionName(trimmed || 'Browser session');
+        setCurrentSessionName(getSessionName());
       }
 
-      setRenamingSession(null)
+      setRenamingSession(null);
 
       try {
-        const result = await renameVaultDeviceSession(deviceId, trimmed)
-        setSessions(result.sessions || [])
-        toast.success('Device label saved to cloud')
+        const result = await renameVaultDeviceSession(deviceId, trimmed);
+        setSessions(result.sessions || []);
+        toast.success('Device label saved to cloud');
       } catch {
-        toast.error('Failed to sync label to cloud, but saved locally.')
+        toast.error('Failed to sync label to cloud, but saved locally.');
       }
     },
-    [],
-  )
+    []
+  );
 
   const handleLockAllSessions = React.useCallback(async () => {
     if (
-      !confirm(
-        'This will revoke every device session and lock this browser immediately. Continue?',
-      )
+      !confirm('This will revoke every device session and lock this browser immediately. Continue?')
     ) {
-      return
+      return;
     }
 
-    setIsSessionActionLoading(true)
+    setIsSessionActionLoading(true);
     try {
       await revokeVaultDeviceSession({
         revokeAllOther: true,
         revokeCurrent: true,
-      })
-      setSessions([])
-      toast.success('All device sessions were locked')
-      onBack()
+      });
+      setSessions([]);
+      toast.success('All device sessions were locked');
+      onBack();
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Failed to lock all sessions'))
+      toast.error(getErrorMessage(error, 'Failed to lock all sessions'));
     } finally {
-      setIsSessionActionLoading(false)
+      setIsSessionActionLoading(false);
     }
-  }, [onBack])
+  }, [onBack]);
 
   const handleRevokeSession = React.useCallback(
     async (session: AuthSessionSummary) => {
-      const deviceLabel =
-        trustedDeviceLabels[session.deviceId] || session.deviceId
+      const deviceLabel = trustedDeviceLabels[session.deviceId] || session.deviceId;
       if (!confirm(`Revoke the session for "${deviceLabel}"?`)) {
-        return
+        return;
       }
 
-      setIsSessionActionLoading(true)
+      setIsSessionActionLoading(true);
       try {
         const result: SessionRevokeResponse = await revokeVaultDeviceSession({
           sessionId: session.sessionId,
-        })
-        setSessions(result.sessions || [])
-        toast.success('Session revoked')
+        });
+        setSessions(result.sessions || []);
+        toast.success('Session revoked');
       } catch (error: unknown) {
         const errorCode =
           typeof error === 'object' && error !== null && 'code' in error
             ? (error as { code?: string }).code
-            : undefined
+            : undefined;
 
         if (errorCode === 'SESSION_NOT_FOUND') {
-          toast.info('That session is already inactive. Refreshing list.')
-          await loadSessionState()
+          toast.info('That session is already inactive. Refreshing list.');
+          await loadSessionState();
         } else {
-          toast.error(getErrorMessage(error, 'Failed to revoke session'))
+          toast.error(getErrorMessage(error, 'Failed to revoke session'));
         }
       } finally {
-        setIsSessionActionLoading(false)
+        setIsSessionActionLoading(false);
       }
     },
-    [loadSessionState, trustedDeviceLabels],
-  )
+    [loadSessionState, trustedDeviceLabels]
+  );
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-bg px-4 py-5 text-text sm:px-6 sm:py-6 lg:px-8 lg:py-8">
@@ -174,10 +161,7 @@ export const DeviceSessionsPage: React.FC<DeviceSessionsPageProps> = ({
               Back
             </Button>
             {!showSessions && (
-              <Button
-                onClick={() => setShowSessions(true)}
-                className="h-11 w-full rounded-2xl"
-              >
+              <Button onClick={() => setShowSessions(true)} className="h-11 w-full rounded-2xl">
                 <MonitorSmartphone className="mr-2 h-4 w-4" />
                 Open
               </Button>
@@ -195,8 +179,8 @@ export const DeviceSessionsPage: React.FC<DeviceSessionsPageProps> = ({
             onLockAllSessions={handleLockAllSessions}
             onRevokeSession={handleRevokeSession}
             onRenameRequest={(session) => {
-              setRenamingSession(session)
-              setRenameDraft(session.label)
+              setRenamingSession(session);
+              setRenameDraft(session.label);
             }}
           />
         )}
@@ -212,7 +196,7 @@ export const DeviceSessionsPage: React.FC<DeviceSessionsPageProps> = ({
         />
       )}
     </div>
-  )
-}
+  );
+};
 
-export default DeviceSessionsPage
+export default DeviceSessionsPage;

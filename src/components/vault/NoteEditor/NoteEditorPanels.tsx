@@ -1,55 +1,55 @@
-import React from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown, ChevronUp, Replace, ReplaceAll } from 'lucide-react'
-import { Button } from '../../ui/Button'
-import { Input } from '../../ui/Input'
+import React from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown, ChevronUp, Replace, ReplaceAll } from 'lucide-react';
+import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
 
 interface FindReplacePanelProps {
-  findInputRef: React.RefObject<HTMLInputElement | null>
-  findValue: string
-  setFindValue: (value: string) => void
-  replaceValue: string
-  setReplaceValue: (value: string) => void
-  matchCount: number
-  activeMatchIndex: number
-  setShowFindReplace: (show: boolean) => void
-  goToPreviousMatch: () => void
-  goToNextMatch: () => void
-  applyReplaceOne: () => void
-  applyReplaceAll: () => void
+  findInputRef: React.RefObject<HTMLInputElement | null>;
+  findValue: string;
+  setFindValue: (value: string) => void;
+  replaceValue: string;
+  setReplaceValue: (value: string) => void;
+  matchCount: number;
+  activeMatchIndex: number;
+  setShowFindReplace: (show: boolean) => void;
+  goToPreviousMatch: () => void;
+  goToNextMatch: () => void;
+  applyReplaceOne: () => void;
+  applyReplaceAll: () => void;
 }
 
 interface GoToLinePanelProps {
-  goToLineValue: string
-  setGoToLineValue: (value: string) => void
-  goToLine: () => void
-  setShowGoToLine: (show: boolean) => void
+  goToLineValue: string;
+  setGoToLineValue: (value: string) => void;
+  goToLine: () => void;
+  setShowGoToLine: (show: boolean) => void;
 }
 
 interface UrlInputPanelProps {
-  placeholder: string
-  value: string
-  ariaLabel: string
-  submitLabel: string
-  onChange: (value: string) => void
-  onSubmit: () => void
-  onClose: () => void
+  placeholder: string;
+  value: string;
+  ariaLabel: string;
+  submitLabel: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+  onClose: () => void;
 }
 
 interface NoteEditorPanelsProps {
-  showFindReplace: boolean
-  findReplace: FindReplacePanelProps
-  showGoToLine: boolean
-  goToLinePanel: GoToLinePanelProps
-  showImageUrlInput: boolean
-  imageUrlPanel: UrlInputPanelProps
-  showLinkUrlInput: boolean
-  linkUrlPanel: UrlInputPanelProps
+  showFindReplace: boolean;
+  findReplace: FindReplacePanelProps;
+  showGoToLine: boolean;
+  goToLinePanel: GoToLinePanelProps;
+  showImageUrlInput: boolean;
+  imageUrlPanel: UrlInputPanelProps;
+  showLinkUrlInput: boolean;
+  linkUrlPanel: UrlInputPanelProps;
 }
 
 const PanelShell: React.FC<{
-  className: string
-  children: React.ReactNode
+  className: string;
+  children: React.ReactNode;
 }> = ({ className, children }) => (
   <motion.div
     initial={{ opacity: 0, y: -20 }}
@@ -59,7 +59,7 @@ const PanelShell: React.FC<{
   >
     {children}
   </motion.div>
-)
+);
 
 const FindReplacePanel: React.FC<FindReplacePanelProps> = ({
   findInputRef,
@@ -86,8 +86,8 @@ const FindReplacePanel: React.FC<FindReplacePanelProps> = ({
           aria-label="Find text"
           onChange={(e) => setFindValue(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') goToNextMatch()
-            if (e.key === 'Escape') setShowFindReplace(false)
+            if (e.key === 'Enter') goToNextMatch();
+            if (e.key === 'Escape') setShowFindReplace(false);
           }}
         />
         <Input
@@ -97,8 +97,8 @@ const FindReplacePanel: React.FC<FindReplacePanelProps> = ({
           aria-label="Replace text"
           onChange={(e) => setReplaceValue(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') applyReplaceOne()
-            if (e.key === 'Escape') setShowFindReplace(false)
+            if (e.key === 'Enter') applyReplaceOne();
+            if (e.key === 'Escape') setShowFindReplace(false);
           }}
         />
       </div>
@@ -147,7 +147,7 @@ const FindReplacePanel: React.FC<FindReplacePanelProps> = ({
       </div>
     </div>
   </PanelShell>
-)
+);
 
 const GoToLinePanel: React.FC<GoToLinePanelProps> = ({
   goToLineValue,
@@ -164,15 +164,15 @@ const GoToLinePanel: React.FC<GoToLinePanelProps> = ({
       onChange={(e) => setGoToLineValue(e.target.value)}
       autoFocus
       onKeyDown={(e) => {
-        if (e.key === 'Enter') goToLine()
-        if (e.key === 'Escape') setShowGoToLine(false)
+        if (e.key === 'Enter') goToLine();
+        if (e.key === 'Escape') setShowGoToLine(false);
       }}
     />
     <Button size="sm" onClick={goToLine} className="h-8 px-3">
       Go
     </Button>
   </PanelShell>
-)
+);
 
 const UrlInputPanel: React.FC<UrlInputPanelProps> = ({
   placeholder,
@@ -193,15 +193,15 @@ const UrlInputPanel: React.FC<UrlInputPanelProps> = ({
       onChange={(e) => onChange(e.target.value)}
       autoFocus
       onKeyDown={(e) => {
-        if (e.key === 'Enter') onSubmit()
-        if (e.key === 'Escape') onClose()
+        if (e.key === 'Enter') onSubmit();
+        if (e.key === 'Escape') onClose();
       }}
     />
     <Button size="sm" onClick={onSubmit} className="h-8 px-3">
       {submitLabel}
     </Button>
   </PanelShell>
-)
+);
 
 export const NoteEditorPanels: React.FC<NoteEditorPanelsProps> = ({
   showFindReplace,
@@ -219,4 +219,4 @@ export const NoteEditorPanels: React.FC<NoteEditorPanelsProps> = ({
     {showImageUrlInput && <UrlInputPanel {...imageUrlPanel} />}
     {showLinkUrlInput && <UrlInputPanel {...linkUrlPanel} />}
   </AnimatePresence>
-)
+);

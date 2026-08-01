@@ -103,10 +103,7 @@ const cloneValue = <T>(value: T): T => {
 
 const cloneVaultItem = (item: VaultItem): VaultItem => ({
   ...item,
-  content:
-    item.content instanceof Uint8Array
-      ? new Uint8Array(item.content)
-      : item.content,
+  content: item.content instanceof Uint8Array ? new Uint8Array(item.content) : item.content,
   metadata: item.metadata ? cloneValue(item.metadata) : undefined,
 });
 
@@ -128,7 +125,7 @@ const normalizeVaultItem = (item: VaultItem): VaultItem => {
 
   if (!(item.content instanceof Uint8Array) && typeof item.content !== 'string') {
     throw new Error(
-      `Vault item "${normalizedId}" has invalid content. Expected string or Uint8Array.`,
+      `Vault item "${normalizedId}" has invalid content. Expected string or Uint8Array.`
     );
   }
 
@@ -140,19 +137,14 @@ const normalizeVaultItem = (item: VaultItem): VaultItem => {
     : undefined;
 
   const isPinned = Boolean(item.isPinned);
-  const pinnedAt = isPinned
-    ? normalizeTimestamp(item.pinnedAt, updatedAt)
-    : null;
+  const pinnedAt = isPinned ? normalizeTimestamp(item.pinnedAt, updatedAt) : null;
 
   return {
     ...item,
     id: normalizedId,
     title: normalizedTitle,
     type: item.type,
-    content:
-      item.content instanceof Uint8Array
-        ? new Uint8Array(item.content)
-        : item.content,
+    content: item.content instanceof Uint8Array ? new Uint8Array(item.content) : item.content,
     metadata,
     source: normalizeOptionalString(item.source),
     folder: normalizeOptionalString(item.folder),
@@ -160,9 +152,7 @@ const normalizeVaultItem = (item: VaultItem): VaultItem => {
     createdAt,
     updatedAt: Math.max(updatedAt, createdAt),
     deletedAt:
-      item.deletedAt === undefined
-        ? undefined
-        : normalizeTimestamp(item.deletedAt, updatedAt),
+      item.deletedAt === undefined ? undefined : normalizeTimestamp(item.deletedAt, updatedAt),
     isPinned,
     pinnedAt,
   };
@@ -173,9 +163,7 @@ export const saveItem = async (item: VaultItem): Promise<void> => {
   sessionVaultItems.set(normalizedItem.id, normalizedItem);
 };
 
-export const getItems = async (
-  type?: VaultItem['type'],
-): Promise<VaultItem[]> => {
+export const getItems = async (type?: VaultItem['type']): Promise<VaultItem[]> => {
   const items = Array.from(sessionVaultItems.values());
   const filteredItems = type ? items.filter((item) => item.type === type) : items;
   return filteredItems.map((item) => cloneVaultItem(item));

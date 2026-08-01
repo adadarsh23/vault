@@ -1,40 +1,42 @@
-import express from "express";
-import { getFolderModel } from "../models/folder.ts";
-import { AuthenticatedRequest } from "../utils/requestTypes.ts";
-import { initializeDefaultUserFolders, isProtectedFolderName } from "../services/folderService.ts";
-import { logger } from "../utils/logger.ts";
+import express from 'express';
+import { getFolderModel } from '../models/folder.ts';
+import { AuthenticatedRequest } from '../utils/requestTypes.ts';
+import { initializeDefaultUserFolders, isProtectedFolderName } from '../services/folderService.ts';
+import { logger } from '../utils/logger.ts';
 import {
   decryptFolderName,
   encryptFolderName,
   hashFolderName,
-} from "../services/folderCryptoService.ts";
+} from '../services/folderCryptoService.ts';
 
-const normalizeFolderName = (value: unknown): string => String(value ?? "").trim();
+const normalizeFolderName = (value: unknown): string => String(value ?? '').trim();
 const normalizeFolderItemTypeInput = (value: unknown): string =>
-  String(value ?? "").trim().toLowerCase();
+  String(value ?? '')
+    .trim()
+    .toLowerCase();
 
 const FOLDER_ITEM_TYPE_ALIASES: Record<string, string[]> = {
-  note: ["note", "notes"],
-  chat: ["chat", "chats"],
-  todo: ["todo", "todos"],
-  password: ["password", "passwords"],
-  secret: ["secret", "secrets", "secretkey", "secretkeys"],
-  contact: ["contact", "contacts"],
-  location: ["location", "locations"],
-  photo: ["photo", "photos"],
-  video: ["video", "videos"],
-  audio: ["audio", "audios"],
-  document: ["document", "documents"],
-  file: ["file", "files"],
-  "other-files": ["other-files", "other_files", "otherfile", "otherfiles"],
-  card: ["card", "cards"],
-  identity: ["identity", "identities"],
-  wifi: ["wifi", "wifis"],
+  note: ['note', 'notes'],
+  chat: ['chat', 'chats'],
+  todo: ['todo', 'todos'],
+  password: ['password', 'passwords'],
+  secret: ['secret', 'secrets', 'secretkey', 'secretkeys'],
+  contact: ['contact', 'contacts'],
+  location: ['location', 'locations'],
+  photo: ['photo', 'photos'],
+  video: ['video', 'videos'],
+  audio: ['audio', 'audios'],
+  document: ['document', 'documents'],
+  file: ['file', 'files'],
+  'other-files': ['other-files', 'other_files', 'otherfile', 'otherfiles'],
+  card: ['card', 'cards'],
+  identity: ['identity', 'identities'],
+  wifi: ['wifi', 'wifis'],
 };
 
 const resolveCanonicalFolderItemType = (value: unknown): string => {
   const normalized = normalizeFolderItemTypeInput(value);
-  if (!normalized) return "";
+  if (!normalized) return '';
 
   for (const [canonical, aliases] of Object.entries(FOLDER_ITEM_TYPE_ALIASES)) {
     if (aliases.includes(normalized)) {
@@ -58,13 +60,13 @@ const hydrateFolder = (folder: any) => {
     const decrypted = decryptFolderName(folder.name);
     return {
       ...folder,
-      name: decrypted || (typeof folder.name === "string" ? folder.name : ""),
+      name: decrypted || (typeof folder.name === 'string' ? folder.name : ''),
       itemType: normalizedItemType || folder.itemType,
     };
   } catch {
     return {
       ...folder,
-      name: typeof folder.name === "string" ? folder.name : "",
+      name: typeof folder.name === 'string' ? folder.name : '',
       itemType: normalizedItemType || folder.itemType,
     };
   }
@@ -77,8 +79,8 @@ const loadHydratedFolders = async (username: string, userId: string) => {
 
   for (const folder of folders.map(hydrateFolder)) {
     const folderName = normalizeFolderName(folder.name).toLowerCase();
-    const folderType = resolveCanonicalFolderItemType(folder.itemType || "");
-    const parentId = typeof folder.parentId === "string" ? folder.parentId : "root";
+    const folderType = resolveCanonicalFolderItemType(folder.itemType || '');
+    const parentId = typeof folder.parentId === 'string' ? folder.parentId : 'root';
     const key = `${folderType}|${folderName}|${parentId}`;
     if (!deduped.has(key)) {
       deduped.set(key, folder);
@@ -88,20 +90,23 @@ const loadHydratedFolders = async (username: string, userId: string) => {
   return Array.from(deduped.values());
 };
 
-export const initializeFoldersController = async (req: AuthenticatedRequest, res: express.Response) => {
+export const initializeFoldersController = async (
+  req: AuthenticatedRequest,
+  res: express.Response
+) => {
   try {
     await initializeDefaultUserFolders(req.user.userId, req.user.username);
     const hydrated = await loadHydratedFolders(req.user.username, req.user.userId);
     return res.json({ success: true, data: hydrated });
   } catch (error) {
-    logger.error("Failed to initialize folders", {
+    logger.error('Failed to initialize folders', {
       userId: req.user.userId,
       username: req.user.username,
       error,
     });
     return res.status(500).json({
       success: false,
-      error: { message: "Failed to initialize folders" },
+      error: { message: 'Failed to initialize folders' },
     });
   }
 };
@@ -112,14 +117,14 @@ export const getFoldersController = async (req: AuthenticatedRequest, res: expre
     const hydrated = await loadHydratedFolders(req.user.username, req.user.userId);
     return res.json({ success: true, data: hydrated });
   } catch (error) {
-    logger.error("Failed to fetch folders", {
+    logger.error('Failed to fetch folders', {
       userId: req.user.userId,
       username: req.user.username,
       error,
     });
     return res.status(500).json({
       success: false,
-      error: { message: "Failed to fetch folders" },
+      error: { message: 'Failed to fetch folders' },
     });
   }
 };
@@ -127,21 +132,23 @@ export const getFoldersController = async (req: AuthenticatedRequest, res: expre
 export const createFolderController = async (req: AuthenticatedRequest, res: express.Response) => {
   const { name, itemType, parentId } = req.body;
   if (!name || !itemType) {
-    return res.status(400).json({ success: false, error: { message: "Name and itemType are required" } });
+    return res
+      .status(400)
+      .json({ success: false, error: { message: 'Name and itemType are required' } });
   }
   const folderName = normalizeFolderName(name);
   const canonicalItemType = resolveCanonicalFolderItemType(itemType);
   const itemTypeCandidates = resolveFolderItemTypeCandidates(itemType);
   if (!folderName) {
-    return res.status(400).json({ success: false, error: { message: "Folder name is required" } });
+    return res.status(400).json({ success: false, error: { message: 'Folder name is required' } });
   }
   if (!canonicalItemType) {
-    return res.status(400).json({ success: false, error: { message: "itemType is invalid" } });
+    return res.status(400).json({ success: false, error: { message: 'itemType is invalid' } });
   }
   if (isProtectedFolderName(folderName)) {
     return res.status(403).json({
       success: false,
-      error: { message: "Saved folders are reserved and cannot be created manually" },
+      error: { message: 'Saved folders are reserved and cannot be created manually' },
     });
   }
 
@@ -157,23 +164,27 @@ export const createFolderController = async (req: AuthenticatedRequest, res: exp
     // 1. Resolve "vault_items" root folder
     const rootFolder = await Folder.findOne({
       userId,
-      nameHash: hashFolderName("vault_items"),
-      itemType: "system",
+      nameHash: hashFolderName('vault_items'),
+      itemType: 'system',
       parentId: null,
     });
     if (!rootFolder) {
-      return res.status(500).json({ success: false, error: { message: "Root folder missing after initialization" } });
+      return res
+        .status(500)
+        .json({ success: false, error: { message: 'Root folder missing after initialization' } });
     }
 
     // 2. Resolve username folder inside "vault_items"
     const userFolder = await Folder.findOne({
       userId,
       nameHash: hashFolderName(username),
-      itemType: "system",
+      itemType: 'system',
       parentId: rootFolder._id.toString(),
     });
     if (!userFolder) {
-      return res.status(500).json({ success: false, error: { message: "User folder missing after initialization" } });
+      return res
+        .status(500)
+        .json({ success: false, error: { message: 'User folder missing after initialization' } });
     }
 
     // 3. Create the requested folder inside the username folder if no parentId is provided
@@ -186,23 +197,27 @@ export const createFolderController = async (req: AuthenticatedRequest, res: exp
       itemType: { $in: itemTypeCandidates },
       parentId: targetParentId,
     });
-    if (
-      legacyAliasFolder &&
-      legacyAliasFolder.itemType !== canonicalItemType
-    ) {
+    if (legacyAliasFolder && legacyAliasFolder.itemType !== canonicalItemType) {
       legacyAliasFolder.itemType = canonicalItemType;
       await legacyAliasFolder.save();
     }
 
     const newFolder = await Folder.findOneAndUpdate(
       { userId, nameHash: folderNameHash, itemType: canonicalItemType, parentId: targetParentId },
-      { userId, username, name: encryptedFolderName, nameHash: folderNameHash, itemType: canonicalItemType, parentId: targetParentId },
+      {
+        userId,
+        username,
+        name: encryptedFolderName,
+        nameHash: folderNameHash,
+        itemType: canonicalItemType,
+        parentId: targetParentId,
+      },
       { upsert: true, returnDocument: 'after' }
     );
     if (!newFolder) {
       return res.status(500).json({
         success: false,
-        error: { message: "Folder creation failed" },
+        error: { message: 'Folder creation failed' },
       });
     }
     const safeFolder = {
@@ -211,31 +226,36 @@ export const createFolderController = async (req: AuthenticatedRequest, res: exp
     };
     return res.json({ success: true, data: safeFolder });
   } catch (error) {
-    logger.error("Folder creation error", {
+    logger.error('Folder creation error', {
       userId: req.user.userId,
       username: req.user.username,
       itemType: canonicalItemType,
       folderName,
       error,
     });
-    return res.status(500).json({ success: false, error: { message: "Failed to create folder" } });
+    return res.status(500).json({ success: false, error: { message: 'Failed to create folder' } });
   }
 };
 
 export const deleteFolderController = async (req: AuthenticatedRequest, res: express.Response) => {
   const { name, itemType } = req.query;
   if (!name || !itemType) {
-    return res.status(400).json({ success: false, error: { message: "Name and itemType are required" } });
+    return res
+      .status(400)
+      .json({ success: false, error: { message: 'Name and itemType are required' } });
   }
   const folderName = normalizeFolderName(name);
   const canonicalItemType = resolveCanonicalFolderItemType(itemType);
   const itemTypeCandidates = resolveFolderItemTypeCandidates(itemType);
   const normalizedLowerName = folderName.toLowerCase();
   if (isProtectedFolderName(folderName)) {
-    return res.status(403).json({ success: false, error: { message: "Saved folders are protected and cannot be deleted" } });
+    return res.status(403).json({
+      success: false,
+      error: { message: 'Saved folders are protected and cannot be deleted' },
+    });
   }
   if (!canonicalItemType) {
-    return res.status(400).json({ success: false, error: { message: "itemType is invalid" } });
+    return res.status(400).json({ success: false, error: { message: 'itemType is invalid' } });
   }
 
   try {
@@ -245,10 +265,7 @@ export const deleteFolderController = async (req: AuthenticatedRequest, res: exp
     const directDelete = await Folder.deleteMany({
       userId: req.user.userId,
       itemType: { $in: itemTypeCandidates },
-      $or: [
-        { nameHash: folderNameHash },
-        { name: folderName },
-      ],
+      $or: [{ nameHash: folderNameHash }, { name: folderName }],
     });
 
     if (directDelete.deletedCount && directDelete.deletedCount > 0) {
@@ -272,7 +289,7 @@ export const deleteFolderController = async (req: AuthenticatedRequest, res: exp
 
     return res.json({ success: true });
   } catch (error) {
-    logger.error("Folder deletion error", {
+    logger.error('Folder deletion error', {
       userId: req.user.userId,
       username: req.user.username,
       folderName,
@@ -281,7 +298,7 @@ export const deleteFolderController = async (req: AuthenticatedRequest, res: exp
     });
     return res.status(500).json({
       success: false,
-      error: { message: "Failed to delete folder" },
+      error: { message: 'Failed to delete folder' },
     });
   }
 };

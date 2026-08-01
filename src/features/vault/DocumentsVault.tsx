@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { Button } from '../../components/ui/Button'
-import { Card, CardContent } from '../../components/ui/Card'
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Button } from '../../components/ui/Button';
+import { Card, CardContent } from '../../components/ui/Card';
 import {
   Trash2,
   Eye,
@@ -14,40 +14,40 @@ import {
   Move,
   FilePlus,
   Pin,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { useVaultStore } from '../../store/vaultStore'
-import { VaultItem } from '../../lib/storage'
-import { encryptFile } from '../../lib/cryptoPrimitives'
-import { motion, AnimatePresence } from 'framer-motion'
-import { GlobalNavigator } from '../../components/vault/GlobalNavigator'
-import { useGlobalNavigationStore } from '../../store/globalNavigationStore'
-import { logActivity } from '../../lib/activity'
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { useVaultStore } from '../../store/vaultStore';
+import { VaultItem } from '../../lib/storage';
+import { encryptFile } from '../../lib/cryptoPrimitives';
+import { motion, AnimatePresence } from 'framer-motion';
+import { GlobalNavigator } from '../../components/vault/GlobalNavigator';
+import { useGlobalNavigationStore } from '../../store/globalNavigationStore';
+import { logActivity } from '../../lib/activity';
 import {
   describeVaultPreviewError,
   getVaultItemFileUrl,
   getVaultItemPreviewRevision,
   getVaultItemPreviewUrl,
   vaultItemHasServerFileReference,
-} from '../../lib/filePreview'
-import { getSignedUrl } from '../../lib/sync'
+} from '../../lib/filePreview';
+import { getSignedUrl } from '../../lib/sync';
 
-import { useVaultFolders } from '../../hooks/useVaultFolders'
-import { useVaultItems } from '../../hooks/useVaultItems'
-import { VaultLayout } from '../../components/layout/VaultLayout'
-import { cn } from '../../lib/utils'
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop'
+import { useVaultFolders } from '../../hooks/useVaultFolders';
+import { useVaultItems } from '../../hooks/useVaultItems';
+import { VaultLayout } from '../../components/layout/VaultLayout';
+import { cn } from '../../lib/utils';
+import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
 import {
   exceedsUploadSizeLimit,
   getUploadSizeErrorMessage,
   FILE_TYPE_SUPPORT,
   DOCUMENT_FILE_INPUT_ACCEPT,
-} from '../../lib/fileHandling'
+} from '../../lib/fileHandling';
 
 interface SafeDocumentPreviewProps {
-  item: VaultItem
-  masterKey: string | CryptoKey
-  onDownload: () => void
+  item: VaultItem;
+  masterKey: string | CryptoKey;
+  onDownload: () => void;
 }
 
 const TEXT_EXTENSIONS = new Set([
@@ -76,7 +76,7 @@ const TEXT_EXTENSIONS = new Set([
   'CFG',
   'PROPERTIES',
   'SQL',
-])
+]);
 const OFFICE_EXTENSIONS = new Set([
   'DOC',
   'DOCX',
@@ -108,7 +108,7 @@ const OFFICE_EXTENSIONS = new Set([
   'POTM',
   'ODP',
   'OTP',
-])
+]);
 const IMAGE_EXTENSIONS = new Set([
   'PNG',
   'JPG',
@@ -124,7 +124,7 @@ const IMAGE_EXTENSIONS = new Set([
   'HEIC',
   'HEIF',
   'AVIF',
-])
+]);
 const AUDIO_EXTENSIONS = new Set([
   'MP3',
   'M4A',
@@ -142,7 +142,7 @@ const AUDIO_EXTENSIONS = new Set([
   'AIFF',
   'MID',
   'MIDI',
-])
+]);
 const VIDEO_EXTENSIONS = new Set([
   'MP4',
   'M4V',
@@ -158,45 +158,41 @@ const VIDEO_EXTENSIONS = new Set([
   '3GP',
   'FLV',
   'OGV',
-])
+]);
 const SUPPORTED_DOCUMENT_EXTENSIONS = new Set<string>(
-  FILE_TYPE_SUPPORT.document as readonly string[],
-)
+  FILE_TYPE_SUPPORT.document as readonly string[]
+);
 
 const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
   item,
   masterKey,
   onDownload,
 }) => {
-  const [url, setUrl] = useState<string | null>(null)
-  const [textContent, setTextContent] = useState<string>('')
-  const [isLoading, setIsLoading] = useState(true)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [url, setUrl] = useState<string | null>(null);
+  const [textContent, setTextContent] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const mimeType = item.metadata?.mimeType || ''
-  const extension = item.metadata?.extension || ''
-  const isPdf = mimeType === 'application/pdf' || extension === 'PDF'
-  const normalizedMimeType = mimeType.toLowerCase()
-  const isImage =
-    normalizedMimeType.startsWith('image/') || IMAGE_EXTENSIONS.has(extension)
-  const isText =
-    normalizedMimeType.startsWith('text/') || TEXT_EXTENSIONS.has(extension)
-  const isOfficeDocument = OFFICE_EXTENSIONS.has(extension)
-  const isAudio =
-    normalizedMimeType.startsWith('audio/') || AUDIO_EXTENSIONS.has(extension)
-  const isVideo =
-    normalizedMimeType.startsWith('video/') || VIDEO_EXTENSIONS.has(extension)
+  const mimeType = item.metadata?.mimeType || '';
+  const extension = item.metadata?.extension || '';
+  const isPdf = mimeType === 'application/pdf' || extension === 'PDF';
+  const normalizedMimeType = mimeType.toLowerCase();
+  const isImage = normalizedMimeType.startsWith('image/') || IMAGE_EXTENSIONS.has(extension);
+  const isText = normalizedMimeType.startsWith('text/') || TEXT_EXTENSIONS.has(extension);
+  const isOfficeDocument = OFFICE_EXTENSIONS.has(extension);
+  const isAudio = normalizedMimeType.startsWith('audio/') || AUDIO_EXTENSIONS.has(extension);
+  const isVideo = normalizedMimeType.startsWith('video/') || VIDEO_EXTENSIONS.has(extension);
   const isLocalPreviewHost = url
     ? /^https?:\/\/(localhost|127\.0\.0\.1)/i.test(url) ||
       url.startsWith('blob:') ||
       url.startsWith('data:')
-    : false
+    : false;
   const officePreviewUrl =
     url && !isLocalPreviewHost
       ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`
-      : null
+      : null;
 
-  const rsaKeyPair = useVaultStore((state) => state.rsaKeyPair)
+  const rsaKeyPair = useVaultStore((state) => state.rsaKeyPair);
 
   const previewRevision = useMemo(
     () => getVaultItemPreviewRevision(item),
@@ -206,83 +202,83 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
       item.content instanceof Uint8Array ? item.content.byteLength : 0,
       typeof item.content === 'string' ? item.content.length : 0,
       mimeType,
-    ],
-  )
+    ]
+  );
 
   useEffect(() => {
-    let isMounted = true
-    let activeObjectUrl: string | null = null
+    let isMounted = true;
+    let activeObjectUrl: string | null = null;
 
     const loadPreview = async () => {
-      setIsLoading(true)
-      setErrorMessage(null)
-      setUrl(null)
-      setTextContent('')
+      setIsLoading(true);
+      setErrorMessage(null);
+      setUrl(null);
+      setTextContent('');
 
       try {
-        const isServerStored = vaultItemHasServerFileReference(item)
+        const isServerStored = vaultItemHasServerFileReference(item);
 
         if (isServerStored && (isPdf || isOfficeDocument || isImage)) {
-          const signedUrl = await getSignedUrl(item.id, 'view')
-          if (!isMounted) return
-          setUrl(signedUrl)
-          setIsLoading(false)
-          return
+          const signedUrl = await getSignedUrl(item.id, 'view');
+          if (!isMounted) return;
+          setUrl(signedUrl);
+          setIsLoading(false);
+          return;
         }
 
         const result = await getVaultItemPreviewUrl(
           item,
           masterKey,
           mimeType || undefined,
-          rsaKeyPair?.privateKey,
-        )
+          rsaKeyPair?.privateKey
+        );
         if (!result) {
-          throw new Error('Could not decrypt file for preview.')
+          throw new Error('Could not decrypt file for preview.');
         }
 
         if (!isMounted) {
           if (result.startsWith('blob:')) {
-            URL.revokeObjectURL(result)
+            URL.revokeObjectURL(result);
           }
-          return
+          return;
         }
 
-        activeObjectUrl = result.startsWith('blob:') ? result : null
-        setUrl(result)
+        activeObjectUrl = result.startsWith('blob:') ? result : null;
+        setUrl(result);
 
         if (isText) {
-          const response = await fetch(result)
+          const response = await fetch(result);
           if (!response.ok) {
-            throw new Error(`Could not read text preview (${response.status}).`)
+            throw new Error(`Could not read text preview (${response.status}).`);
           }
 
-          const content = await response.text()
+          const content = await response.text();
           if (isMounted) {
-            setTextContent(content)
+            setTextContent(content);
           }
         }
       } catch (err) {
         if (import.meta.env.DEV) {
-          console.warn('[SafeDocumentPreview]', err)
+          console.warn('[SafeDocumentPreview]', err);
         }
         if (isMounted) {
-          setErrorMessage(describeVaultPreviewError(err))
+          setErrorMessage(describeVaultPreviewError(err));
         }
       } finally {
         if (isMounted) {
-          setIsLoading(false)
+          setIsLoading(false);
         }
       }
-    }
+    };
 
-    void loadPreview()
+    void loadPreview();
 
     return () => {
-      isMounted = false
+      isMounted = false;
       if (activeObjectUrl) {
-        URL.revokeObjectURL(activeObjectUrl)
+        URL.revokeObjectURL(activeObjectUrl);
       }
-    }
+    };
   }, [
     previewRevision,
     masterKey,
@@ -293,7 +289,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
     isImage,
     item,
     rsaKeyPair?.privateKey,
-  ])
+  ]);
 
   if (isLoading) {
     return (
@@ -301,35 +297,24 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
         <Loader2 className="h-12 w-12 animate-spin text-text/20" />
         <p className="text-sm text-text/50">Loading secure preview...</p>
       </div>
-    )
+    );
   }
 
   if (errorMessage || !url) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 p-12">
         <AlertTriangle className="h-12 w-12 text-red-400" />
-        <p className="text-center text-sm text-text/60">
-          {errorMessage || 'Preview unavailable.'}
-        </p>
-        <Button
-          onClick={onDownload}
-          className="bg-blue-500 hover:bg-blue-600 text-white"
-        >
+        <p className="text-center text-sm text-text/60">{errorMessage || 'Preview unavailable.'}</p>
+        <Button onClick={onDownload} className="bg-blue-500 hover:bg-blue-600 text-white">
           <Download className="mr-2 h-4 w-4" />
           Download File
         </Button>
       </div>
-    )
+    );
   }
 
   if (isPdf) {
-    return (
-      <iframe
-        src={url}
-        title={item.title}
-        className="h-full w-full border-none bg-white"
-      />
-    )
+    return <iframe src={url} title={item.title} className="h-full w-full border-none bg-white" />;
   }
 
   if (isImage) {
@@ -344,7 +329,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
           onError={() => setErrorMessage('Image preview failed to render.')}
         />
       </div>
-    )
+    );
   }
 
   if (isText) {
@@ -354,20 +339,15 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
           {textContent || 'File is empty.'}
         </pre>
       </div>
-    )
+    );
   }
 
   if (isAudio) {
     return (
       <div className="flex h-full w-full items-center justify-center p-6">
-        <audio
-          src={url}
-          controls
-          preload="metadata"
-          className="w-full max-w-3xl"
-        />
+        <audio src={url} controls preload="metadata" className="w-full max-w-3xl" />
       </div>
-    )
+    );
   }
 
   if (isVideo) {
@@ -380,7 +360,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
           className="h-auto max-h-full w-full max-w-5xl rounded-lg object-contain"
         />
       </div>
-    )
+    );
   }
 
   if (isOfficeDocument && officePreviewUrl) {
@@ -390,7 +370,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
         title={item.title}
         className="h-full w-full border-none bg-white"
       />
-    )
+    );
   }
 
   if (isOfficeDocument) {
@@ -398,72 +378,58 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
       <div className="flex h-full flex-col items-center justify-center gap-4 p-12 text-center">
         <AlertTriangle className="h-12 w-12 text-amber-400" />
         <p className="max-w-xl text-sm text-text/60">
-          Live office preview needs a public file URL. This file can still be
-          downloaded and opened safely.
+          Live office preview needs a public file URL. This file can still be downloaded and opened
+          safely.
         </p>
-        <Button
-          onClick={onDownload}
-          className="bg-blue-500 hover:bg-blue-600 text-white"
-        >
+        <Button onClick={onDownload} className="bg-blue-500 hover:bg-blue-600 text-white">
           <Download className="mr-2 h-4 w-4" />
           Download File
         </Button>
       </div>
-    )
+    );
   }
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-6 p-12 text-center text-white">
       <FilePlus className="h-20 w-20 text-white/20 transition-colors" />
       <div>
-        <h3 className="text-xl font-semibold text-white transition-colors">
-          {item.title}
-        </h3>
+        <h3 className="text-xl font-semibold text-white transition-colors">{item.title}</h3>
         <p className="mt-2 text-white/40 transition-colors">
           No direct preview available for this file type.
         </p>
       </div>
-      <Button
-        onClick={onDownload}
-        className="bg-blue-500 hover:bg-blue-600 text-white"
-      >
+      <Button onClick={onDownload} className="bg-blue-500 hover:bg-blue-600 text-white">
         <Download className="mr-2 h-4 w-4" />
         Download to View
       </Button>
     </div>
-  )
-}
+  );
+};
 
 export const DocumentsVault: React.FC = () => {
-  const items = useVaultStore((state) => state.items)
-  const addItem = useVaultStore((state) => state.addItem)
-  const removeItem = useVaultStore((state) => state.removeItem)
-  const togglePin = useVaultStore((state) => state.togglePin)
-  const pinningItemIds = useVaultStore((state) => state.pinningItemIds)
-  const masterKey = useVaultStore((state) => state.masterKey)
-  const allowRestrictedTypes = useVaultStore(
-    (state) => state.allowRestrictedTypes,
-  )
-  const setAllowRestrictedTypes = useVaultStore(
-    (state) => state.setAllowRestrictedTypes,
-  )
-  const [isUploading, setIsUploading] = useState(false)
-  const [previewItem, setPreviewItem] = useState<string | null>(null)
-  const [moveMenuOpenId, setMoveMenuOpenId] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(0)
-  const ITEMS_PER_PAGE = 8
+  const items = useVaultStore((state) => state.items);
+  const addItem = useVaultStore((state) => state.addItem);
+  const removeItem = useVaultStore((state) => state.removeItem);
+  const togglePin = useVaultStore((state) => state.togglePin);
+  const pinningItemIds = useVaultStore((state) => state.pinningItemIds);
+  const masterKey = useVaultStore((state) => state.masterKey);
+  const allowRestrictedTypes = useVaultStore((state) => state.allowRestrictedTypes);
+  const setAllowRestrictedTypes = useVaultStore((state) => state.setAllowRestrictedTypes);
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewItem, setPreviewItem] = useState<string | null>(null);
+  const [moveMenuOpenId, setMoveMenuOpenId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const ITEMS_PER_PAGE = 8;
   const isSupportedDocumentFile = (file: File) => {
-    const extension = file.name.split('.').pop()?.toUpperCase() || ''
-    return SUPPORTED_DOCUMENT_EXTENSIONS.has(extension)
-  }
+    const extension = file.name.split('.').pop()?.toUpperCase() || '';
+    return SUPPORTED_DOCUMENT_EXTENSIONS.has(extension);
+  };
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const uploadTargetFolder = useRef<string | null>(null)
-  const targetItemId = useGlobalNavigationStore((state) => state.targetItemId)
-  const setTargetItemId = useGlobalNavigationStore(
-    (state) => state.setTargetItemId,
-  )
-  const modalRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadTargetFolder = useRef<string | null>(null);
+  const targetItemId = useGlobalNavigationStore((state) => state.targetItemId);
+  const setTargetItemId = useGlobalNavigationStore((state) => state.setTargetItemId);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const {
     folders,
@@ -481,150 +447,134 @@ export const DocumentsVault: React.FC = () => {
     handleRenameFolder,
     handleDeleteFolder,
     handleMoveToFolder,
-  } = useVaultFolders('document')
+  } = useVaultFolders('document');
 
-  const { searchQuery, setSearchQuery, filteredItems } = useVaultItems(
-    'document',
-    currentFolder,
-  )
+  const { searchQuery, setSearchQuery, filteredItems } = useVaultItems('document', currentFolder);
 
   useEffect(() => {
-    setCurrentPage(0)
-  }, [currentFolder, searchQuery])
+    setCurrentPage(0);
+  }, [currentFolder, searchQuery]);
 
   const previewedDocument = useMemo(
     () => filteredItems.find((item) => item.id === previewItem) ?? null,
-    [filteredItems, previewItem],
-  )
+    [filteredItems, previewItem]
+  );
 
   const currentPreviewIndex = useMemo(() => {
-    if (!previewItem) return -1
-    return filteredItems.findIndex((item) => item.id === previewItem)
-  }, [filteredItems, previewItem])
+    if (!previewItem) return -1;
+    return filteredItems.findIndex((item) => item.id === previewItem);
+  }, [filteredItems, previewItem]);
 
-  const canPrevious = currentPreviewIndex > 0
-  const canNext =
-    currentPreviewIndex >= 0 && currentPreviewIndex < filteredItems.length - 1
+  const canPrevious = currentPreviewIndex > 0;
+  const canNext = currentPreviewIndex >= 0 && currentPreviewIndex < filteredItems.length - 1;
 
   const showPreviousDocument = () => {
-    if (canPrevious) setPreviewItem(filteredItems[currentPreviewIndex - 1].id)
-  }
+    if (canPrevious) setPreviewItem(filteredItems[currentPreviewIndex - 1].id);
+  };
   const showNextDocument = () => {
-    if (canNext) setPreviewItem(filteredItems[currentPreviewIndex + 1].id)
-  }
+    if (canNext) setPreviewItem(filteredItems[currentPreviewIndex + 1].id);
+  };
 
   useEffect(() => {
-    if (!targetItemId) return
-    const target = filteredItems.find((item) => item.id === targetItemId)
-    if (!target) return
+    if (!targetItemId) return;
+    const target = filteredItems.find((item) => item.id === targetItemId);
+    if (!target) return;
 
-    setPreviewItem(target.id)
-    setTargetItemId(null)
-  }, [targetItemId, filteredItems, setTargetItemId])
+    setPreviewItem(target.id);
+    setTargetItemId(null);
+  }, [targetItemId, filteredItems, setTargetItemId]);
 
   useEffect(() => {
     if (previewItem) {
-      document.body.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = ''
+      document.body.style.overflow = '';
     }
 
     return () => {
-      document.body.style.overflow = ''
-    }
-  }, [previewItem])
+      document.body.style.overflow = '';
+    };
+  }, [previewItem]);
 
   useEffect(() => {
-    if (!previewItem) return
+    if (!previewItem) return;
 
     const focusableSelectors =
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
-    const modal = modalRef.current
-    if (!modal) return
+    const modal = modalRef.current;
+    if (!modal) return;
 
-    const focusableElements = modal.querySelectorAll(focusableSelectors)
-    const first = focusableElements[0] as HTMLElement
-    const last = focusableElements[focusableElements.length - 1] as HTMLElement
+    const focusableElements = modal.querySelectorAll(focusableSelectors);
+    const first = focusableElements[0] as HTMLElement;
+    const last = focusableElements[focusableElements.length - 1] as HTMLElement;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Tab') {
         if (e.shiftKey) {
           if (document.activeElement === first) {
-            e.preventDefault()
-            last?.focus()
+            e.preventDefault();
+            last?.focus();
           }
         } else {
           if (document.activeElement === last) {
-            e.preventDefault()
-            first?.focus()
+            e.preventDefault();
+            first?.focus();
           }
         }
       }
 
       if (e.key === 'ArrowRight') {
-        showNextDocument()
+        showNextDocument();
       }
 
       if (e.key === 'ArrowLeft') {
-        showPreviousDocument()
+        showPreviousDocument();
       }
 
       if (e.key === 'Escape') {
-        setPreviewItem(null)
+        setPreviewItem(null);
       }
-    }
+    };
 
-    document.addEventListener('keydown', handleKeyDown)
-    first?.focus()
+    document.addEventListener('keydown', handleKeyDown);
+    first?.focus();
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [previewItem])
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [previewItem]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
+    const files = Array.from(e.target.files || []);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+      fileInputRef.current.value = '';
     }
-    await handleUploadFiles(files, uploadTargetFolder.current)
-  }
+    await handleUploadFiles(files, uploadTargetFolder.current);
+  };
 
-  const handleUploadFiles = async (
-    files: File[],
-    targetFolder: string | null,
-  ) => {
-    if (!files.length || !masterKey) return
+  const handleUploadFiles = async (files: File[], targetFolder: string | null) => {
+    if (!files.length || !masterKey) return;
 
-    const harmfulTypes = [
-      '.exe',
-      '.dll',
-      '.js',
-      '.vbs',
-      '.bat',
-      '.cmd',
-      '.sh',
-      '.msi',
-    ]
+    const harmfulTypes = ['.exe', '.dll', '.js', '.vbs', '.bat', '.cmd', '.sh', '.msi'];
 
-    setIsUploading(true)
-    const total = files.length
+    setIsUploading(true);
+    const total = files.length;
 
     try {
       for (let index = 0; index < total; index += 1) {
-        const file = files[index]
+        const file = files[index];
         if (!isSupportedDocumentFile(file)) {
           toast.error(
-            `This document vault does not support this file. "${file.name}" was not uploaded.`,
-          )
-          continue
+            `This document vault does not support this file. "${file.name}" was not uploaded.`
+          );
+          continue;
         }
         if (exceedsUploadSizeLimit(file)) {
-          toast.error(getUploadSizeErrorMessage(file))
-          continue
+          toast.error(getUploadSizeErrorMessage(file));
+          continue;
         }
-        const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`
+        const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
 
         if (harmfulTypes.includes(fileExtension) && !allowRestrictedTypes) {
           toast.error('Restricted file type blocked', {
@@ -633,19 +583,17 @@ export const DocumentsVault: React.FC = () => {
             action: {
               label: 'Enable',
               onClick: () => {
-                setAllowRestrictedTypes(true)
-                toast.info('Restricted types enabled.')
+                setAllowRestrictedTypes(true);
+                toast.info('Restricted types enabled.');
               },
             },
-          })
-          continue
+          });
+          continue;
         }
 
-        const toastId = toast.loading(
-          `Encrypting document ${index + 1} of ${total}...`,
-        )
+        const toastId = toast.loading(`Encrypting document ${index + 1} of ${total}...`);
         try {
-          const encryptedData = await encryptFile(file, masterKey)
+          const encryptedData = await encryptFile(file, masterKey);
 
           await addItem(
             {
@@ -660,96 +608,88 @@ export const DocumentsVault: React.FC = () => {
               },
             },
             (progress) => {
-              toast.loading(
-                `Uploading ${index + 1}/${total}: ${progress}%...`,
-                {
-                  id: toastId,
-                },
-              )
-            },
-          )
-          toast.success(`${file.name} uploaded successfully`, { id: toastId })
+              toast.loading(`Uploading ${index + 1}/${total}: ${progress}%...`, {
+                id: toastId,
+              });
+            }
+          );
+          toast.success(`${file.name} uploaded successfully`, { id: toastId });
         } catch (error) {
-          console.error('Upload failed:', error)
+          console.error('Upload failed:', error);
           toast.error(`Failed to upload ${file.name}. Encryption error.`, {
             id: toastId,
             description: 'Please check your master key and try again.',
-          })
+          });
           logActivity({
             actionType: 'file_upload',
             itemName: file.name,
             description: 'document upload failed',
             status: 'failure',
-          })
+          });
         }
       }
     } finally {
-      setIsUploading(false)
-      uploadTargetFolder.current = null
+      setIsUploading(false);
+      uploadTargetFolder.current = null;
     }
-  }
+  };
 
   const handleDelete = (id: string, title: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete "${title}"? This cannot be undone.`,
-      )
-    )
-      return
-    removeItem(id)
-    toast.success(`${title} removed from vault`)
+    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) return;
+    removeItem(id);
+    toast.success(`${title} removed from vault`);
     logActivity({
       actionType: 'item_delete',
       itemName: title,
       description: 'document deleted from vault',
       status: 'success',
-    })
-  }
+    });
+  };
 
   const downloadFile = async (item: VaultItem) => {
-    if (!masterKey) return
+    if (!masterKey) return;
 
     try {
-      const mimeType = item.metadata?.mimeType as string | undefined
-      const fileUrl = await getVaultItemPreviewUrl(item, masterKey, mimeType)
+      const mimeType = item.metadata?.mimeType as string | undefined;
+      const fileUrl = await getVaultItemPreviewUrl(item, masterKey, mimeType);
       if (!fileUrl) {
         toast.error('Decryption failed', {
           description:
             'The file could not be decrypted. Please check your master key and try again.',
-        })
-        return
+        });
+        return;
       }
 
-      const link = document.createElement('a')
-      link.href = fileUrl
-      link.download = item.title
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = item.title;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
       if (!getVaultItemFileUrl(item)) {
-        window.setTimeout(() => URL.revokeObjectURL(fileUrl), 1000)
+        window.setTimeout(() => URL.revokeObjectURL(fileUrl), 1000);
       }
-      toast.success(`Downloading ${item.title}`)
+      toast.success(`Downloading ${item.title}`);
       logActivity({
         actionType: 'file_download',
         itemName: item.title,
         description: 'document downloaded',
         status: 'success',
-      })
+      });
     } catch {
       logActivity({
         actionType: 'file_download',
         itemName: item.title,
         description: 'document download failed',
         status: 'failure',
-      })
+      });
       toast.error('Decryption error', {
         description:
           'An unexpected error occurred during decryption. Please check your master key.',
-      })
+      });
     }
-  }
+  };
 
   return (
     <VaultLayout
@@ -763,12 +703,10 @@ export const DocumentsVault: React.FC = () => {
       itemTypeLabel="document"
       allItemLabel="All Documents"
       onUpload={(folder?: string | null) => {
-        uploadTargetFolder.current = folder ?? currentFolder
-        fileInputRef.current?.click()
+        uploadTargetFolder.current = folder ?? currentFolder;
+        fileInputRef.current?.click();
       }}
-      onFileDrop={(files, folder) =>
-        handleUploadFiles(files, folder ?? currentFolder)
-      }
+      onFileDrop={(files, folder) => handleUploadFiles(files, folder ?? currentFolder)}
       isUploading={isUploading}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
@@ -804,8 +742,8 @@ export const DocumentsVault: React.FC = () => {
         <div
           className="flex flex-col items-center justify-center py-20 opacity-40 cursor-pointer hover:opacity-70 transition-opacity"
           onClick={() => {
-            uploadTargetFolder.current = currentFolder
-            fileInputRef.current?.click()
+            uploadTargetFolder.current = currentFolder;
+            fileInputRef.current?.click();
           }}
         >
           <FilePlus className="mb-4 h-16 w-16" />
@@ -814,10 +752,7 @@ export const DocumentsVault: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-10">
           {filteredItems
-            .slice(
-              currentPage * ITEMS_PER_PAGE,
-              (currentPage + 1) * ITEMS_PER_PAGE,
-            )
+            .slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE)
             .map((item, idx) => (
               <motion.div
                 key={item.id}
@@ -827,9 +762,7 @@ export const DocumentsVault: React.FC = () => {
                 whileHover={{ y: -5 }}
                 transition={{ delay: idx * 0.03 }}
                 draggable
-                onDragStartCapture={(event) =>
-                  setDraggedVaultItem(event, item.id)
-                }
+                onDragStartCapture={(event) => setDraggedVaultItem(event, item.id)}
                 onTouchStartCapture={(event: React.TouchEvent) =>
                   setDraggedVaultItem(event as any, item.id)
                 }
@@ -841,7 +774,7 @@ export const DocumentsVault: React.FC = () => {
                 <Card
                   className={cn(
                     'group relative border-white/5 bg-gradient-to-br from-white/[0.08] to-transparent backdrop-blur-md transition-all hover:border-white/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)]',
-                    moveMenuOpenId === item.id ? 'z-50' : 'z-10',
+                    moveMenuOpenId === item.id ? 'z-50' : 'z-10'
                   )}
                 >
                   <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
@@ -887,13 +820,13 @@ export const DocumentsVault: React.FC = () => {
                         size="sm"
                         className="h-9 flex-1 bg-white/5 hover:bg-white/10 text-xs gap-2"
                         onClick={() => {
-                          setPreviewItem(item.id)
+                          setPreviewItem(item.id);
                           logActivity({
                             actionType: 'file_preview',
                             itemName: item.title,
                             description: 'document preview opened',
                             status: 'success',
-                          })
+                          });
                         }}
                       >
                         <Eye className="h-3.5 w-3.5 text-blue-400" />
@@ -907,22 +840,17 @@ export const DocumentsVault: React.FC = () => {
                             size="icon"
                             className={cn(
                               'h-9 w-9 bg-white/5 hover:bg-white/10 text-white',
-                              moveMenuOpenId === item.id && 'bg-white/20',
+                              moveMenuOpenId === item.id && 'bg-white/20'
                             )}
                             onClick={() =>
-                              setMoveMenuOpenId(
-                                moveMenuOpenId === item.id ? null : item.id,
-                              )
+                              setMoveMenuOpenId(moveMenuOpenId === item.id ? null : item.id)
                             }
                           >
                             <Move className="h-3.5 w-3.5" />
                           </Button>
                           <AnimatePresence>
                             {moveMenuOpenId === item.id && (
-                              <motion.div
-                                key="move-menu-overlay"
-                                className="contents"
-                              >
+                              <motion.div key="move-menu-overlay" className="contents">
                                 <motion.div
                                   key="move-menu-backdrop"
                                   initial={{ opacity: 0 }}
@@ -947,12 +875,18 @@ export const DocumentsVault: React.FC = () => {
                                       <FilePlus className="h-4 w-4" />
                                     </div>
                                     <div className="flex flex-col min-w-0">
-                                      <span className="truncate text-xs font-semibold text-white/95" title={item.title}>
+                                      <span
+                                        className="truncate text-xs font-semibold text-white/95"
+                                        title={item.title}
+                                      >
                                         {item.title}
                                       </span>
                                       <span className="flex items-center gap-1 text-[9px] text-white/45">
                                         <span>Folder:</span>
-                                        <span className="truncate max-w-[100px] font-medium text-blue-400" title={item.folder || 'All Documents'}>
+                                        <span
+                                          className="truncate max-w-[100px] font-medium text-blue-400"
+                                          title={item.folder || 'All Documents'}
+                                        >
                                           {item.folder || 'All Documents'}
                                         </span>
                                       </span>
@@ -963,8 +897,8 @@ export const DocumentsVault: React.FC = () => {
                                     <button
                                       className="w-full rounded-xl px-3 py-2 text-left text-xs hover:bg-white/5 flex items-center gap-2 transition-colors text-white"
                                       onClick={() => {
-                                        handleMoveToFolder(item.id, null)
-                                        setMoveMenuOpenId(null)
+                                        handleMoveToFolder(item.id, null);
+                                        setMoveMenuOpenId(null);
                                       }}
                                     >
                                       <FilePlus className="h-3 w-3 opacity-40 text-blue-400" />
@@ -976,14 +910,12 @@ export const DocumentsVault: React.FC = () => {
                                         title={f}
                                         className="w-full rounded-xl px-3 py-2 text-left text-xs hover:bg-white/5 flex items-center gap-2 transition-colors text-white"
                                         onClick={() => {
-                                          handleMoveToFolder(item.id, f)
-                                          setMoveMenuOpenId(null)
+                                          handleMoveToFolder(item.id, f);
+                                          setMoveMenuOpenId(null);
                                         }}
                                       >
                                         <Folder className="h-3 w-3 opacity-40 text-blue-400" />
-                                        {f.length > 8
-                                          ? `${f.slice(0, 8)}...`
-                                          : f}
+                                        {f.length > 8 ? `${f.slice(0, 8)}...` : f}
                                       </button>
                                     ))}
                                   </div>
@@ -1000,7 +932,7 @@ export const DocumentsVault: React.FC = () => {
                             'h-9 w-9 transition-all',
                             item.isPinned
                               ? 'bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-400/30'
-                              : 'bg-white/5 hover:bg-white/10 text-white',
+                              : 'bg-white/5 hover:bg-white/10 text-white'
                           )}
                           onClick={() => void togglePin(item.id)}
                         >
@@ -1066,9 +998,7 @@ export const DocumentsVault: React.FC = () => {
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
             <Button
               variant="outline"
-              disabled={
-                (currentPage + 1) * ITEMS_PER_PAGE >= filteredItems.length
-              }
+              disabled={(currentPage + 1) * ITEMS_PER_PAGE >= filteredItems.length}
               onClick={() => setCurrentPage((prev) => prev + 1)}
               className="h-10 w-10 rounded-full border-white/10 bg-white/5 p-0 text-text/60 backdrop-blur-xl transition-all hover:border-white/30 hover:bg-white/10 hover:text-text disabled:opacity-10 disabled:cursor-not-allowed shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)]"
             >
@@ -1127,5 +1057,5 @@ export const DocumentsVault: React.FC = () => {
         )}
       </AnimatePresence>
     </VaultLayout>
-  )
-}
+  );
+};

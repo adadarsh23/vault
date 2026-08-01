@@ -1,12 +1,12 @@
-import React from 'react'
-import { AlertTriangle, Loader2 } from 'lucide-react'
-import { Button } from '../../../../components/ui/Button'
+import React from 'react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
+import { Button } from '../../../../components/ui/Button';
 
 interface EmergencyDestructionCardProps {
-  destructionStage: 'idle' | 'confirm' | 'final'
-  isDestroyingVault: boolean
-  onEmergencyClear: () => Promise<void>
-  onAbort: () => void
+  destructionStage: 'idle' | 'confirm' | 'final';
+  isDestroyingVault: boolean;
+  onEmergencyClear: () => Promise<void>;
+  onAbort: () => void;
 }
 
 export const EmergencyDestructionCard: React.FC<EmergencyDestructionCardProps> = ({
@@ -26,8 +26,7 @@ export const EmergencyDestructionCard: React.FC<EmergencyDestructionCardProps> =
           Emergency Destruction
         </h3>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-text/65">
-          Permanently erase every protected record from local storage and
-          cloud storage.
+          Permanently erase every protected record from local storage and cloud storage.
         </p>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -35,25 +34,19 @@ export const EmergencyDestructionCard: React.FC<EmergencyDestructionCardProps> =
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-text/35">
               Local Storage
             </p>
-            <p className="mt-2 text-sm font-semibold text-text">
-              Permanently cleared
-            </p>
+            <p className="mt-2 text-sm font-semibold text-text">Permanently cleared</p>
           </div>
           <div className="rounded-2xl bg-bg/55 p-4 ring-1 ring-red-500/10 backdrop-blur-sm dark:bg-black/35">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-text/35">
               Cloud Data
             </p>
-            <p className="mt-2 text-sm font-semibold text-text">
-              Records deleted
-            </p>
+            <p className="mt-2 text-sm font-semibold text-text">Records deleted</p>
           </div>
           <div className="rounded-2xl bg-bg/55 p-4 ring-1 ring-red-500/10 backdrop-blur-sm dark:bg-black/35">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-text/35">
               Recovery
             </p>
-            <p className="mt-2 text-sm font-semibold text-text">
-              Not recoverable
-            </p>
+            <p className="mt-2 text-sm font-semibold text-text">Not recoverable</p>
           </div>
         </div>
       </div>
@@ -75,23 +68,13 @@ export const EmergencyDestructionCard: React.FC<EmergencyDestructionCardProps> =
             </ul>
           ) : destructionStage === 'confirm' ? (
             <>
-              <p className="font-bold text-red-400">
-                Phase 1: Readiness check.
-              </p>
-              <p>
-                Acknowledge that this action is irreversible and cannot be
-                undone.
-              </p>
+              <p className="font-bold text-red-400">Phase 1: Readiness check.</p>
+              <p>Acknowledge that this action is irreversible and cannot be undone.</p>
             </>
           ) : (
             <>
-              <p className="font-bold text-red-500">
-                Phase 2: Final destruction override.
-              </p>
-              <p>
-                Click the button below to permanently purge all data
-                immediately.
-              </p>
+              <p className="font-bold text-red-500">Phase 2: Final destruction override.</p>
+              <p>Click the button below to permanently purge all data immediately.</p>
             </>
           )}
         </div>
@@ -135,4 +118,4 @@ export const EmergencyDestructionCard: React.FC<EmergencyDestructionCardProps> =
       </div>
     </div>
   </section>
-)
+);

@@ -1,20 +1,20 @@
-import React from 'react'
-import { ArrowUpRight } from 'lucide-react'
-import { motion } from 'framer-motion'
+import React from 'react';
+import { ArrowUpRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface StatItem {
-  id: string
-  label: string
-  icon: React.ElementType
-  color: string
-  count: number
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  color: string;
+  count: number;
 }
 
 interface DashboardStatsProps {
-  stats: StatItem[]
-  onNavigate: (tab: string) => void
+  stats: StatItem[];
+  onNavigate: (tab: string) => void;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ const STAT_COLOR_MAP: Record<string, string> = {
   'text-lime-400': 'bg-lime-400',
   'text-rose-400': 'bg-rose-400',
   'text-orange-400': 'bg-orange-400',
-}
+};
 
 // ─── Animation Variants ───────────────────────────────────────────────────────
 
@@ -43,19 +43,16 @@ const containerVariants = {
       staggerChildren: 0.1,
     },
   },
-}
+};
 
 const itemVariants = {
   hidden: { y: 20, opacity: 0 },
   show: { y: 0, opacity: 1 },
-}
+};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export const DashboardStats: React.FC<DashboardStatsProps> = ({
-  stats,
-  onNavigate,
-}) => {
+export const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, onNavigate }) => {
   return (
     <motion.div
       variants={containerVariants}
@@ -82,9 +79,11 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
             />
 
             <div className="relative z-10 flex w-full items-start justify-between">
-              <div className={`rounded-2xl border border-card-border/50 bg-text/5 p-3.5 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 group-hover:bg-text/10`}>
+              <div
+                className={`rounded-2xl border border-card-border/50 bg-text/5 p-3.5 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 group-hover:bg-text/10`}
+              >
                 <stat.icon
-                   size={24}
+                  size={24}
                   className={`${stat.color} transition-colors drop-shadow-[0_0_8px_currentColor]`}
                 />
               </div>
@@ -108,10 +107,12 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
             </div>
 
             {/* Bottom Accent */}
-            <div className={`absolute bottom-0 left-0 h-1 w-full translate-y-2 transition-transform duration-500 group-hover:translate-y-0 ${STAT_COLOR_MAP[stat.color] || 'bg-rose-400'} opacity-40 blur-sm`} />
+            <div
+              className={`absolute bottom-0 left-0 h-1 w-full translate-y-2 transition-transform duration-500 group-hover:translate-y-0 ${STAT_COLOR_MAP[stat.color] || 'bg-rose-400'} opacity-40 blur-sm`}
+            />
           </button>
         </motion.div>
       ))}
     </motion.div>
-  )
-}
+  );
+};

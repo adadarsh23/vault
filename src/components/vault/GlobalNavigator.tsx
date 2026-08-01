@@ -73,7 +73,13 @@ export const GlobalNavigator: React.FC<GlobalNavigatorProps> = ({
 
   return (
     <div className={`flex gap-2 ${className}`.trim()}>
-      <Button variant="ghost" size="icon" onClick={onPrevious} className="h-9 w-9" disabled={!canPrevious}>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onPrevious}
+        className="h-9 w-9"
+        disabled={!canPrevious}
+      >
         <ChevronLeft className="h-4 w-4" />
       </Button>
       <Button variant="ghost" size="icon" onClick={onNext} className="h-9 w-9" disabled={!canNext}>

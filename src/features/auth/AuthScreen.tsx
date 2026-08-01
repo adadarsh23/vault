@@ -1,24 +1,24 @@
-import React, { memo, useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { memo, useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-import { SecurityLayers } from './SecurityLayers'
-import { VaultLoginForm } from './VaultLoginForm'
-import { useVaultAuth } from './useVaultAuth'
+import { SecurityLayers } from './SecurityLayers';
+import { VaultLoginForm } from './VaultLoginForm';
+import { useVaultAuth } from './useVaultAuth';
 
-type AuthStatus = 'idle' | 'authenticating' | 'syncing' | 'success' | 'error'
-type AuthMode = 'login' | 'register'
+type AuthStatus = 'idle' | 'authenticating' | 'syncing' | 'success' | 'error';
+type AuthMode = 'login' | 'register';
 
 interface AuthScreenProps {
-  onGoBack?: () => void
-  initialUsername?: string
-  cloudSessionActive?: boolean
+  onGoBack?: () => void;
+  initialUsername?: string;
+  cloudSessionActive?: boolean;
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = memo(
   ({ onGoBack, initialUsername, cloudSessionActive = false }) => {
     const [authMode, setAuthMode] = useState<AuthMode>(
       initialUsername || cloudSessionActive ? 'login' : 'login'
-    )
+    );
 
     const {
       username,
@@ -40,19 +40,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = memo(
       initialUsername,
       cloudSessionActive,
       authMode,
-    })
+    });
 
-    const resolvedStatus: AuthStatus = status ?? 'idle'
+    const resolvedStatus: AuthStatus = status ?? 'idle';
 
     const content = useMemo(() => {
       switch (resolvedStatus) {
         case 'authenticating':
-          return (
-            <SecurityLayers
-              layers={securityLayers}
-              currentLayer={currentLayer}
-            />
-          )
+          return <SecurityLayers layers={securityLayers} currentLayer={currentLayer} />;
 
         case 'syncing':
           return (
@@ -62,7 +57,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = memo(
               title="Syncing Secure Vault"
               description="Cloud sync is in progress. Please wait while we establish a secure connection."
             />
-          )
+          );
 
         case 'success':
           return (
@@ -83,7 +78,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = memo(
                 />
               </motion.div>
             </AnimatePresence>
-          )
+          );
 
         case 'error':
           return (
@@ -105,7 +100,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = memo(
               onVerifyOTP={handleVerifyOTP}
               onBackToCredentials={resetTwoFactorFlow}
             />
-          )
+          );
 
         case 'idle':
         default:
@@ -128,7 +123,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = memo(
               onVerifyOTP={handleVerifyOTP}
               onBackToCredentials={resetTwoFactorFlow}
             />
-          )
+          );
       }
     }, [
       resolvedStatus,
@@ -147,7 +142,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = memo(
       setOtpToken,
       handleVerifyOTP,
       resetTwoFactorFlow,
-    ])
+    ]);
 
     return (
       <main
@@ -168,10 +163,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = memo(
           </motion.div>
         </AnimatePresence>
       </main>
-    )
+    );
   }
-)
+);
 
-AuthScreen.displayName = 'AuthScreen'
+AuthScreen.displayName = 'AuthScreen';
 
-export default AuthScreen
+export default AuthScreen;

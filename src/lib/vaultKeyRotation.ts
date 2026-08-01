@@ -1,79 +1,69 @@
-import {
-  base64ToUint8Array,
-  uint8ArrayToBase64,
-} from './cryptoPrimitives.ts'
+import { base64ToUint8Array, uint8ArrayToBase64 } from './cryptoPrimitives.ts';
 
 interface ReencryptableVaultItem {
-  title: string
-  content: string | Uint8Array
+  title: string;
+  content: string | Uint8Array;
 }
 
-const toArrayBuffer = (value: Uint8Array): ArrayBuffer =>
-  new Uint8Array(value).buffer
-const AES_GCM_IV_LENGTH = 12
-const AES_GCM_TAG_LENGTH = 16
-const AES_KEY_LENGTH_BYTES = 32
-const ENCRYPTED_BUNDLE_MIN_BYTES = AES_GCM_IV_LENGTH + AES_GCM_TAG_LENGTH
-const AES_GCM_AAD = new TextEncoder().encode('vault:e2ee:aes-gcm:v2')
+const toArrayBuffer = (value: Uint8Array): ArrayBuffer => new Uint8Array(value).buffer;
+const AES_GCM_IV_LENGTH = 12;
+const AES_GCM_TAG_LENGTH = 16;
+const AES_KEY_LENGTH_BYTES = 32;
+const ENCRYPTED_BUNDLE_MIN_BYTES = AES_GCM_IV_LENGTH + AES_GCM_TAG_LENGTH;
+const AES_GCM_AAD = new TextEncoder().encode('vault:e2ee:aes-gcm:v2');
 
 type VaultKeyRotationErrorCode =
-  | 'CRYPTO_UNAVAILABLE'
-  | 'INVALID_KEY_MATERIAL'
-  | 'INVALID_CONTENT'
-  | 'INTEGRITY_CHECK_FAILED'
+  'CRYPTO_UNAVAILABLE' | 'INVALID_KEY_MATERIAL' | 'INVALID_CONTENT' | 'INTEGRITY_CHECK_FAILED';
 
 type VaultKeyRotationError = Error & {
-  code?: VaultKeyRotationErrorCode
-  cause?: unknown
-}
+  code?: VaultKeyRotationErrorCode;
+  cause?: unknown;
+};
 
 const createRotationError = (
   message: string,
   code: VaultKeyRotationErrorCode,
-  cause?: unknown,
+  cause?: unknown
 ): VaultKeyRotationError => {
-  const error = new Error(message) as VaultKeyRotationError
-  error.code = code
+  const error = new Error(message) as VaultKeyRotationError;
+  error.code = code;
   if (cause !== undefined) {
-    error.cause = cause
+    error.cause = cause;
   }
-  return error
-}
+  return error;
+};
 
 const getItemTitleForMessage = (title: string): string => {
-  const trimmed = title.trim()
-  return trimmed ? trimmed : 'Untitled item'
-}
+  const trimmed = title.trim();
+  return trimmed ? trimmed : 'Untitled item';
+};
 
 const decodeBase64Safely = (value: string): Uint8Array | null => {
   try {
-    return base64ToUint8Array(value)
+    return base64ToUint8Array(value);
   } catch {
-    return null
+    return null;
   }
-}
+};
 
-const importAesKey = async (
-  rawKey: string | CryptoKey,
-  usages: KeyUsage[],
-): Promise<CryptoKey> => {
+const importAesKey = async (rawKey: string | CryptoKey, usages: KeyUsage[]): Promise<CryptoKey> => {
   if (rawKey instanceof CryptoKey) {
-    return rawKey
+    return rawKey;
   }
 
   if (typeof crypto === 'undefined' || !crypto.subtle) {
     throw createRotationError(
       'Secure cryptography is unavailable in this environment.',
-      'CRYPTO_UNAVAILABLE',
-    )
+      'CRYPTO_UNAVAILABLE'
+    );
   }
 
-  const keyBytes = decodeBase64Safely(rawKey)
+  const keyBytes = decodeBase64Safely(rawKey);
   if (!keyBytes || keyBytes.byteLength !== AES_KEY_LENGTH_BYTES) {
     throw createRotationError(
       'Invalid vault key material for key rotation.',
-      'INVALID_KEY_MATERIAL',
-    )
+      'INVALID_KEY_MATERIAL'
+    );
   }
 
   const cryptoKey = await crypto.subtle.importKey(
@@ -81,19 +71,19 @@ const importAesKey = async (
     toArrayBuffer(keyBytes),
     { name: 'AES-GCM' },
     false,
-    usages,
-  )
+    usages
+  );
 
   // Zero out raw key bytes after import
-  keyBytes.fill(0)
+  keyBytes.fill(0);
 
-  return cryptoKey
-}
+  return cryptoKey;
+};
 
 const decryptAesGcmWithFallback = async (
   cryptoKey: CryptoKey,
   iv: Uint8Array,
-  ciphertext: Uint8Array,
+  ciphertext: Uint8Array
 ): Promise<ArrayBuffer> => {
   try {
     return await crypto.subtle.decrypt(
@@ -103,25 +93,25 @@ const decryptAesGcmWithFallback = async (
         additionalData: toArrayBuffer(AES_GCM_AAD),
       },
       cryptoKey,
-      toArrayBuffer(ciphertext),
-    )
+      toArrayBuffer(ciphertext)
+    );
   } catch {
     return await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: toArrayBuffer(iv) },
       cryptoKey,
-      toArrayBuffer(ciphertext),
-    )
+      toArrayBuffer(ciphertext)
+    );
   }
-}
+};
 
 const looksLikeServerRef = (value: string): boolean =>
-  /^(https?:\/\/|blob:|data:|\/?uploads\/|\/?api\/)/i.test(value)
+  /^(https?:\/\/|blob:|data:|\/?uploads\/|\/?api\/)/i.test(value);
 
 const looksLikeEncryptedBundle = (bytes: Uint8Array): boolean =>
-  bytes.length >= ENCRYPTED_BUNDLE_MIN_BYTES
+  bytes.length >= ENCRYPTED_BUNDLE_MIN_BYTES;
 
 const looksLikeReadableMediaBytes = (bytes: Uint8Array): boolean => {
-  if (bytes.length < 4) return false
+  if (bytes.length < 4) return false;
 
   // PNG
   if (
@@ -135,10 +125,10 @@ const looksLikeReadableMediaBytes = (bytes: Uint8Array): boolean => {
     bytes[6] === 0x1a &&
     bytes[7] === 0x0a
   )
-    return true
+    return true;
 
   // JPEG
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return true
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return true;
 
   // GIF
   if (
@@ -148,7 +138,7 @@ const looksLikeReadableMediaBytes = (bytes: Uint8Array): boolean => {
     bytes[2] === 0x46 &&
     bytes[3] === 0x38
   )
-    return true
+    return true;
 
   // WebP RIFF....WEBP
   if (
@@ -162,55 +152,55 @@ const looksLikeReadableMediaBytes = (bytes: Uint8Array): boolean => {
     bytes[10] === 0x42 &&
     bytes[11] === 0x50
   )
-    return true
+    return true;
 
-  return false
-}
+  return false;
+};
 
 export const reencryptVaultItemContent = async (
   item: ReencryptableVaultItem,
   oldKey: string | CryptoKey,
-  newKey: string | CryptoKey,
+  newKey: string | CryptoKey
 ): Promise<ReencryptableVaultItem['content']> => {
   if (!oldKey || !newKey) {
     throw createRotationError(
       'Old and new vault keys are required for key rotation.',
-      'INVALID_KEY_MATERIAL',
-    )
+      'INVALID_KEY_MATERIAL'
+    );
   }
   if (oldKey === newKey) {
-    return item.content
+    return item.content;
   }
 
-  const itemTitle = getItemTitleForMessage(item.title)
+  const itemTitle = getItemTitleForMessage(item.title);
 
   if (item.content instanceof Uint8Array) {
-    let decrypted: ArrayBuffer
-    const oldCryptoKey = await importAesKey(oldKey, ['decrypt'])
+    let decrypted: ArrayBuffer;
+    const oldCryptoKey = await importAesKey(oldKey, ['decrypt']);
 
     if (looksLikeEncryptedBundle(item.content)) {
-      const iv = item.content.slice(0, AES_GCM_IV_LENGTH)
-      const data = item.content.slice(AES_GCM_IV_LENGTH)
+      const iv = item.content.slice(0, AES_GCM_IV_LENGTH);
+      const data = item.content.slice(AES_GCM_IV_LENGTH);
       try {
-        decrypted = await decryptAesGcmWithFallback(oldCryptoKey, iv, data)
+        decrypted = await decryptAesGcmWithFallback(oldCryptoKey, iv, data);
       } catch (cause) {
         // Some legacy/broken records contain raw media bytes instead of encrypted payloads.
         if (!looksLikeReadableMediaBytes(item.content)) {
           throw createRotationError(
             `Integrity check failed for "${itemTitle}"`,
             'INTEGRITY_CHECK_FAILED',
-            cause,
-          )
+            cause
+          );
         }
-        decrypted = toArrayBuffer(item.content)
+        decrypted = toArrayBuffer(item.content);
       }
     } else {
       // Short payload cannot be AES-GCM ciphertext; treat as already-plain bytes.
-      decrypted = toArrayBuffer(item.content)
+      decrypted = toArrayBuffer(item.content);
     }
 
-    const newCryptoKey = await importAesKey(newKey, ['encrypt'])
-    const newIv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH))
+    const newCryptoKey = await importAesKey(newKey, ['encrypt']);
+    const newIv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
     const newEncrypted = await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
@@ -218,47 +208,47 @@ export const reencryptVaultItemContent = async (
         additionalData: toArrayBuffer(AES_GCM_AAD),
       },
       newCryptoKey,
-      decrypted,
-    )
+      decrypted
+    );
 
-    const result = new Uint8Array(newIv.length + newEncrypted.byteLength)
-    result.set(newIv)
-    result.set(new Uint8Array(newEncrypted), newIv.length)
-    return result
+    const result = new Uint8Array(newIv.length + newEncrypted.byteLength);
+    result.set(newIv);
+    result.set(new Uint8Array(newEncrypted), newIv.length);
+    return result;
   }
 
   if (typeof item.content === 'string') {
     if (looksLikeServerRef(item.content)) {
       // Server/file references are not encrypted payload bytes.
-      return item.content
+      return item.content;
     }
 
-    const encryptedBytes = decodeBase64Safely(item.content)
+    const encryptedBytes = decodeBase64Safely(item.content);
     if (!encryptedBytes) {
       // Non-base64 textual content should be preserved.
-      return item.content
+      return item.content;
     }
     if (!looksLikeEncryptedBundle(encryptedBytes)) {
       // Non-encrypted textual content should be preserved.
-      return item.content
+      return item.content;
     }
-    const iv = encryptedBytes.slice(0, AES_GCM_IV_LENGTH)
-    const data = encryptedBytes.slice(AES_GCM_IV_LENGTH)
-    const oldCryptoKey = await importAesKey(oldKey, ['decrypt'])
+    const iv = encryptedBytes.slice(0, AES_GCM_IV_LENGTH);
+    const data = encryptedBytes.slice(AES_GCM_IV_LENGTH);
+    const oldCryptoKey = await importAesKey(oldKey, ['decrypt']);
 
-    let decrypted: ArrayBuffer
+    let decrypted: ArrayBuffer;
     try {
-      decrypted = await decryptAesGcmWithFallback(oldCryptoKey, iv, data)
+      decrypted = await decryptAesGcmWithFallback(oldCryptoKey, iv, data);
     } catch (cause) {
       throw createRotationError(
         `Integrity check failed for "${itemTitle}"`,
         'INTEGRITY_CHECK_FAILED',
-        cause,
-      )
+        cause
+      );
     }
 
-    const newCryptoKey = await importAesKey(newKey, ['encrypt'])
-    const newIv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH))
+    const newCryptoKey = await importAesKey(newKey, ['encrypt']);
+    const newIv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
     const newEncrypted = await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
@@ -266,17 +256,14 @@ export const reencryptVaultItemContent = async (
         additionalData: toArrayBuffer(AES_GCM_AAD),
       },
       newCryptoKey,
-      decrypted,
-    )
+      decrypted
+    );
 
-    const result = new Uint8Array(newIv.length + newEncrypted.byteLength)
-    result.set(newIv)
-    result.set(new Uint8Array(newEncrypted), newIv.length)
-    return uint8ArrayToBase64(result)
+    const result = new Uint8Array(newIv.length + newEncrypted.byteLength);
+    result.set(newIv);
+    result.set(new Uint8Array(newEncrypted), newIv.length);
+    return uint8ArrayToBase64(result);
   }
 
-  throw createRotationError(
-    `Invalid content format for "${itemTitle}"`,
-    'INVALID_CONTENT',
-  )
-}
+  throw createRotationError(`Invalid content format for "${itemTitle}"`, 'INVALID_CONTENT');
+};

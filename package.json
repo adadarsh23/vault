@@ -82,7 +82,7 @@
     "memory:all": "npm run memory:index && npm run memory:visual && start \"\" \".\\.memory\\index.html\" && echo \"Memory indexing and visualization complete!\"",
     "security:rewrap-kek": "tsx server/scripts/rewrapEnvelopeKeys.ts --dry-run",
     "zip:prod": "node scripts/zip-prod.mjs",
-    "build:zip:analyze": "npm run build:analyze && npm run memory:all && npm run backup && npm run zip:prod && npm run stats && npm run lighthouse && echo \"Building and analyzing complete!\""
+    "build:zip:analyze": "npm run build:analyze && npm run memory:all && npm run backup && npm run zip:prod && npm run stats && npm run lighthouse && npm run format && npm run format:check && echo \"Building and analyzing complete!\""
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

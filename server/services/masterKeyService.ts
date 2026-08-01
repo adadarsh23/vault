@@ -1,7 +1,7 @@
-import { getMasterKeyModel, MasterKeyDocument } from '../models/masterKey.ts'
-import { User } from '../models/user.ts'
-import { logger } from '../utils/logger.ts'
-import { comparePassword, hashPassword, decryptText, encryptText } from '../utils/crypto.ts'
+import { getMasterKeyModel, MasterKeyDocument } from '../models/masterKey.ts';
+import { User } from '../models/user.ts';
+import { logger } from '../utils/logger.ts';
+import { comparePassword, hashPassword, decryptText, encryptText } from '../utils/crypto.ts';
 
 /**
  * Master Key Cloud Storage Service
@@ -9,43 +9,43 @@ import { comparePassword, hashPassword, decryptText, encryptText } from '../util
  */
 
 interface EncryptedMasterKeyPayload {
-  cipherText: string
-  iv: string
-  authTag: string
-  salt: string
-  algorithm?: string
-  keyVersion?: string
+  cipherText: string;
+  iv: string;
+  authTag: string;
+  salt: string;
+  algorithm?: string;
+  keyVersion?: string;
 }
 
 interface MasterKeyMetadata {
-  derivationAlgorithm?: string
+  derivationAlgorithm?: string;
   derivationParams?: {
-    memory?: number
-    iterations?: number
-    parallelism?: number
-  }
-  deviceId?: string
+    memory?: number;
+    iterations?: number;
+    parallelism?: number;
+  };
+  deviceId?: string;
 }
 
 interface SaveMasterKeyOptions {
-  masterKeyHash: string
-  deviceId: string
-  recoveryPhrasesEncrypted?: string
-  metadata?: MasterKeyMetadata
+  masterKeyHash: string;
+  deviceId: string;
+  recoveryPhrasesEncrypted?: string;
+  metadata?: MasterKeyMetadata;
   changeContext?: {
-    ipAddress?: string
-    userAgent?: string
-  }
+    ipAddress?: string;
+    userAgent?: string;
+  };
 }
 
-const MASTER_KEY_HASH_HISTORY_LIMIT = 20
+const MASTER_KEY_HASH_HISTORY_LIMIT = 20;
 
 /**
  * Format encrypted master key data for display/logging
  * Shows the encrypted payload structure without exposing sensitive details
  */
 const formatEncryptedMasterKeyForDisplay = (
-  encryptedKey: EncryptedMasterKeyPayload,
+  encryptedKey: EncryptedMasterKeyPayload
 ): Record<string, unknown> => {
   return {
     encryption: {
@@ -64,8 +64,8 @@ const formatEncryptedMasterKeyForDisplay = (
       authTagPreview: `${encryptedKey.authTag.substring(0, 12)}...`,
       saltPreview: `${encryptedKey.salt.substring(0, 12)}...`,
     },
-  }
-}
+  };
+};
 
 /**
  * Save encrypted master key to cloud
@@ -79,22 +79,17 @@ export const saveCloudMasterKey = async (
   userId: string,
   username: string,
   encryptedKey: EncryptedMasterKeyPayload,
-  options: SaveMasterKeyOptions,
+  options: SaveMasterKeyOptions
 ): Promise<MasterKeyDocument | null> => {
   try {
-    logger.info(
-      `[MasterKeyService] Saving encrypted master key for user: ${userId}`,
-      {
-        context: 'saveCloudMasterKey',
-        userId,
-        deviceId: options.deviceId,
-      },
-    )
+    logger.info(`[MasterKeyService] Saving encrypted master key for user: ${userId}`, {
+      context: 'saveCloudMasterKey',
+      userId,
+      deviceId: options.deviceId,
+    });
 
     if (!userId || !encryptedKey || !options.masterKeyHash) {
-      throw new Error(
-        'Missing required parameters: userId, encryptedKey, or masterKeyHash',
-      )
+      throw new Error('Missing required parameters: userId, encryptedKey, or masterKeyHash');
     }
 
     if (
@@ -103,19 +98,17 @@ export const saveCloudMasterKey = async (
       !encryptedKey.authTag ||
       !encryptedKey.salt
     ) {
-      throw new Error('Incomplete encrypted key payload')
+      throw new Error('Incomplete encrypted key payload');
     }
 
-    const now = new Date()
-    const MasterKey = getMasterKeyModel(username)
+    const now = new Date();
+    const MasterKey = getMasterKeyModel(username);
     const existing = await MasterKey.findOne({ userId, isDeleted: false })
       .select({ masterKeyHash: 1, metadata: 1 })
       .lean()
-      .exec()
+      .exec();
 
-    const encryptedIncomingHash = encryptText(
-      await hashPassword(options.masterKeyHash),
-    )
+    const encryptedIncomingHash = encryptText(await hashPassword(options.masterKeyHash));
 
     const baseSet: Record<string, unknown> = {
       encryptedMasterKey: {
@@ -127,35 +120,28 @@ export const saveCloudMasterKey = async (
         keyVersion: encryptedKey.keyVersion || 'v1',
       },
       masterKeyHash: encryptedIncomingHash,
-      'metadata.derivationAlgorithm':
-        options.metadata?.derivationAlgorithm || 'argon2id',
-      'metadata.derivationParams.memory':
-        options.metadata?.derivationParams?.memory || 65536,
-      'metadata.derivationParams.iterations':
-        options.metadata?.derivationParams?.iterations || 3,
-      'metadata.derivationParams.parallelism':
-        options.metadata?.derivationParams?.parallelism || 4,
+      'metadata.derivationAlgorithm': options.metadata?.derivationAlgorithm || 'argon2id',
+      'metadata.derivationParams.memory': options.metadata?.derivationParams?.memory || 65536,
+      'metadata.derivationParams.iterations': options.metadata?.derivationParams?.iterations || 3,
+      'metadata.derivationParams.parallelism': options.metadata?.derivationParams?.parallelism || 4,
       'metadata.updatedAt': now,
       'metadata.lastAccessedAt': now,
       'metadata.deviceId': options.deviceId,
       isActive: true,
       isDeleted: false,
       deletedAt: null,
-    }
+    };
 
     if (options.recoveryPhrasesEncrypted) {
-      baseSet.recoveryPhrasesEncrypted = options.recoveryPhrasesEncrypted
+      baseSet.recoveryPhrasesEncrypted = options.recoveryPhrasesEncrypted;
     }
 
     // Log the encrypted master key structure for verification
-    logger.debug(
-      `[MasterKeyService] Encrypted master key data structure for user: ${userId}`,
-      {
-        context: 'saveCloudMasterKey',
-        encryptedKeyDisplay: formatEncryptedMasterKeyForDisplay(encryptedKey),
-        derivationParams: options.metadata?.derivationParams,
-      },
-    )
+    logger.debug(`[MasterKeyService] Encrypted master key data structure for user: ${userId}`, {
+      context: 'saveCloudMasterKey',
+      encryptedKeyDisplay: formatEncryptedMasterKeyForDisplay(encryptedKey),
+      derivationParams: options.metadata?.derivationParams,
+    });
 
     const update: Record<string, unknown> = {
       $set: baseSet,
@@ -166,11 +152,11 @@ export const saveCloudMasterKey = async (
         'audit.failedDecryptionAttempts': 0,
         'audit.lastAccessedByDeviceId': options.deviceId,
       },
-    }
+    };
 
     if (existing?.masterKeyHash) {
-      const existingHash = decryptText(existing.masterKeyHash as any)
-      const sameHash = await comparePassword(options.masterKeyHash, existingHash)
+      const existingHash = decryptText(existing.masterKeyHash as any);
+      const sameHash = await comparePassword(options.masterKeyHash, existingHash);
 
       if (!sameHash) {
         update.$push = {
@@ -186,20 +172,22 @@ export const saveCloudMasterKey = async (
             ],
             $slice: -MASTER_KEY_HASH_HISTORY_LIMIT,
           },
-        }
+        };
       }
     }
 
-    const savedKey = await MasterKey.findOneAndUpdate(
-      { userId, isDeleted: false },
-      update as any,
-      { upsert: true, returnDocument: 'after', runValidators: true },
-    )
+    const savedKey = await MasterKey.findOneAndUpdate({ userId, isDeleted: false }, update as any, {
+      upsert: true,
+      returnDocument: 'after',
+      runValidators: true,
+    });
 
     if (savedKey) {
       // Keep the canonical User document in sync so model hooks can archive
       // master-key history in users.history.masterKey.
-      const userDoc = await User.findById(userId).select('+masterKey +meta.masterKey +meta.masterKeyHash')
+      const userDoc = await User.findById(userId).select(
+        '+masterKey +meta.masterKey +meta.masterKeyHash'
+      );
       if (userDoc) {
         userDoc.masterKey = {
           cipherText: encryptedKey.cipherText,
@@ -208,43 +196,36 @@ export const saveCloudMasterKey = async (
           salt: encryptedKey.salt,
           algorithm: encryptedKey.algorithm || 'aes-256-gcm',
           keyVersion: encryptedKey.keyVersion || 'v1',
-        } as any
+        } as any;
 
         if (!userDoc.meta) {
-          ;(userDoc as any).meta = {}
+          (userDoc as any).meta = {};
         }
-        ;(userDoc.meta as any).masterKey = userDoc.masterKey as any
-        ;(userDoc.meta as any).masterKeyHash = encryptedIncomingHash as any
-        ;(userDoc.meta as any).lastCredentialChangeAt = now
+        (userDoc.meta as any).masterKey = userDoc.masterKey as any;
+        (userDoc.meta as any).masterKeyHash = encryptedIncomingHash as any;
+        (userDoc.meta as any).lastCredentialChangeAt = now;
 
-        await userDoc.save()
+        await userDoc.save();
       }
 
-      logger.info(
-        `[MasterKeyService] Master key saved successfully for user: ${userId}`,
-        {
-          context: 'saveCloudMasterKey',
-          userId,
-          documentId: savedKey._id.toString(),
-          savedAt: now.toISOString(),
-          encryptionAlgorithm: encryptedKey.algorithm || 'aes-256-gcm',
-        },
-      )
-    }
-
-    return savedKey
-  } catch (error) {
-    logger.error(
-      `[MasterKeyService] Error saving master key for user: ${userId}`,
-      error,
-      {
+      logger.info(`[MasterKeyService] Master key saved successfully for user: ${userId}`, {
         context: 'saveCloudMasterKey',
         userId,
-      },
-    )
-    throw error
+        documentId: savedKey._id.toString(),
+        savedAt: now.toISOString(),
+        encryptionAlgorithm: encryptedKey.algorithm || 'aes-256-gcm',
+      });
+    }
+
+    return savedKey;
+  } catch (error) {
+    logger.error(`[MasterKeyService] Error saving master key for user: ${userId}`, error, {
+      context: 'saveCloudMasterKey',
+      userId,
+    });
+    throw error;
   }
-}
+};
 
 /**
  * Retrieve encrypted master key from cloud
@@ -256,20 +237,17 @@ export const saveCloudMasterKey = async (
 export const getCloudMasterKey = async (
   userId: string,
   username: string,
-  deviceId: string,
+  deviceId: string
 ): Promise<EncryptedMasterKeyPayload | null> => {
   try {
-    logger.info(
-      `[MasterKeyService] Retrieving encrypted master key for user: ${userId}`,
-      {
-        context: 'getCloudMasterKey',
-        userId,
-        deviceId,
-      },
-    )
+    logger.info(`[MasterKeyService] Retrieving encrypted master key for user: ${userId}`, {
+      context: 'getCloudMasterKey',
+      userId,
+      deviceId,
+    });
 
     if (!userId) {
-      throw new Error('Missing userId')
+      throw new Error('Missing userId');
     }
 
     const MasterKey = getMasterKeyModel(username);
@@ -280,18 +258,15 @@ export const getCloudMasterKey = async (
         masterKeyHash: 1,
         'metadata.derivationParams': 1,
         'audit.accessCount': 1,
-      },
-    )
+      }
+    );
 
     if (!masterKeyDoc) {
-      logger.warn(
-        `[MasterKeyService] Master key not found for user: ${userId}`,
-        {
-          context: 'getCloudMasterKey',
-          userId,
-        },
-      )
-      return null
+      logger.warn(`[MasterKeyService] Master key not found for user: ${userId}`, {
+        context: 'getCloudMasterKey',
+        userId,
+      });
+      return null;
     }
 
     // Update access tracking
@@ -299,30 +274,23 @@ export const getCloudMasterKey = async (
       'metadata.lastAccessedAt': new Date(),
       'audit.accessCount': ((masterKeyDoc.audit as any)?.accessCount || 0) + 1,
       'audit.lastAccessedByDeviceId': deviceId,
-    })
+    });
 
-    logger.info(
-      `[MasterKeyService] Master key retrieved successfully for user: ${userId}`,
-      {
-        context: 'getCloudMasterKey',
-        userId,
-        accessCount: ((masterKeyDoc.audit as any)?.accessCount || 0) + 1,
-      },
-    )
+    logger.info(`[MasterKeyService] Master key retrieved successfully for user: ${userId}`, {
+      context: 'getCloudMasterKey',
+      userId,
+      accessCount: ((masterKeyDoc.audit as any)?.accessCount || 0) + 1,
+    });
 
-    return masterKeyDoc.encryptedMasterKey
+    return masterKeyDoc.encryptedMasterKey;
   } catch (error) {
-    logger.error(
-      `[MasterKeyService] Error retrieving master key for user: ${userId}`,
-      error,
-      {
-        context: 'getCloudMasterKey',
-        userId,
-      },
-    )
-    throw error
+    logger.error(`[MasterKeyService] Error retrieving master key for user: ${userId}`, error, {
+      context: 'getCloudMasterKey',
+      userId,
+    });
+    throw error;
   }
-}
+};
 
 /**
  * Verify master key hash (without exposing actual key)
@@ -335,33 +303,30 @@ export const getCloudMasterKey = async (
 export const verifyMasterKeyHash = async (
   userId: string,
   username: string,
-  masterKeyHash: string,
+  masterKeyHash: string
 ): Promise<boolean> => {
   try {
-    logger.debug(
-      `[MasterKeyService] Verifying master key hash for user: ${userId}`,
-      {
-        context: 'verifyMasterKeyHash',
-        userId,
-      },
-    )
+    logger.debug(`[MasterKeyService] Verifying master key hash for user: ${userId}`, {
+      context: 'verifyMasterKeyHash',
+      userId,
+    });
 
     if (!userId || !masterKeyHash) {
-      return false
+      return false;
     }
 
     const MasterKey = getMasterKeyModel(username);
     const masterKeyDoc = await MasterKey.findOne(
       { userId, isActive: true, isDeleted: false },
-      { masterKeyHash: 1 },
-    )
+      { masterKeyHash: 1 }
+    );
 
     if (!masterKeyDoc) {
-      return false
+      return false;
     }
 
-    const storedHash = decryptText(masterKeyDoc.masterKeyHash as any)
-    const isValid = await comparePassword(masterKeyHash, storedHash)
+    const storedHash = decryptText(masterKeyDoc.masterKeyHash as any);
+    const isValid = await comparePassword(masterKeyHash, storedHash);
 
     if (!isValid) {
       // Track failed verification attempt
@@ -369,30 +334,23 @@ export const verifyMasterKeyHash = async (
         'audit.failedDecryptionAttempts':
           ((masterKeyDoc.audit as any)?.failedDecryptionAttempts || 0) + 1,
         'audit.lastFailedAttempt': new Date(),
-      })
+      });
 
-      logger.warn(
-        `[MasterKeyService] Master key hash verification failed for user: ${userId}`,
-        {
-          context: 'verifyMasterKeyHash',
-          userId,
-        },
-      )
-    }
-
-    return isValid
-  } catch (error) {
-    logger.error(
-      `[MasterKeyService] Error verifying master key hash for user: ${userId}`,
-      error,
-      {
+      logger.warn(`[MasterKeyService] Master key hash verification failed for user: ${userId}`, {
         context: 'verifyMasterKeyHash',
         userId,
-      },
-    )
-    return false
+      });
+    }
+
+    return isValid;
+  } catch (error) {
+    logger.error(`[MasterKeyService] Error verifying master key hash for user: ${userId}`, error, {
+      context: 'verifyMasterKeyHash',
+      userId,
+    });
+    return false;
   }
-}
+};
 
 /**
  * Delete master key from cloud (soft delete)
@@ -400,18 +358,15 @@ export const verifyMasterKeyHash = async (
  * @param userId - User ID
  * @returns Boolean indicating success
  */
-export const deleteCloudMasterKey = async (
-  userId: string,
-  username: string,
-): Promise<boolean> => {
+export const deleteCloudMasterKey = async (userId: string, username: string): Promise<boolean> => {
   try {
     logger.warn(`[MasterKeyService] Deleting master key for user: ${userId}`, {
       context: 'deleteCloudMasterKey',
       userId,
-    })
+    });
 
     if (!userId) {
-      throw new Error('Missing userId')
+      throw new Error('Missing userId');
     }
 
     const MasterKey = getMasterKeyModel(username);
@@ -421,10 +376,10 @@ export const deleteCloudMasterKey = async (
         isActive: false,
         isDeleted: true,
         deletedAt: new Date(),
-      },
-    )
+      }
+    );
 
-    const success = !!result
+    const success = !!result;
 
     logger.info(
       success
@@ -433,22 +388,18 @@ export const deleteCloudMasterKey = async (
       {
         context: 'deleteCloudMasterKey',
         userId,
-      },
-    )
+      }
+    );
 
-    return success
+    return success;
   } catch (error) {
-    logger.error(
-      `[MasterKeyService] Error deleting master key for user: ${userId}`,
-      error,
-      {
-        context: 'deleteCloudMasterKey',
-        userId,
-      },
-    )
-    throw error
+    logger.error(`[MasterKeyService] Error deleting master key for user: ${userId}`, error, {
+      context: 'deleteCloudMasterKey',
+      userId,
+    });
+    throw error;
   }
-}
+};
 
 /**
  * Get master key metadata (for debugging/auditing)
@@ -458,17 +409,17 @@ export const deleteCloudMasterKey = async (
  */
 export const getMasterKeyMetadata = async (
   userId: string,
-  username: string,
+  username: string
 ): Promise<{ metadata: any; audit: any; historyCount: number } | null> => {
   try {
     const MasterKey = getMasterKeyModel(username);
     const masterKeyDoc = await MasterKey.findOne(
       { userId, isActive: true, isDeleted: false },
-      { metadata: 1, audit: 1, masterKeyHashHistory: 1 },
-    )
+      { metadata: 1, audit: 1, masterKeyHashHistory: 1 }
+    );
 
     if (!masterKeyDoc) {
-      return null
+      return null;
     }
 
     return {
@@ -477,7 +428,7 @@ export const getMasterKeyMetadata = async (
       historyCount: Array.isArray((masterKeyDoc as any).masterKeyHashHistory)
         ? (masterKeyDoc as any).masterKeyHashHistory.length
         : 0,
-    }
+    };
   } catch (error) {
     logger.error(
       `[MasterKeyService] Error getting master key metadata for user: ${userId}`,
@@ -485,11 +436,11 @@ export const getMasterKeyMetadata = async (
       {
         context: 'getMasterKeyMetadata',
         userId,
-      },
-    )
-    return null
+      }
+    );
+    return null;
   }
-}
+};
 
 /**
  * Get full master key data for display (encrypted components and metadata)
@@ -500,24 +451,21 @@ export const getMasterKeyMetadata = async (
  */
 export const getMasterKeyFullData = async (
   userId: string,
-  username: string,
+  username: string
 ): Promise<{
-  encryptedMasterKey: Record<string, unknown>
-  masterKeyHash: string
-  metadata: any
-  audit: any
-  historyCount: number
-  createdAt: Date
-  updatedAt: Date
+  encryptedMasterKey: Record<string, unknown>;
+  masterKeyHash: string;
+  metadata: any;
+  audit: any;
+  historyCount: number;
+  createdAt: Date;
+  updatedAt: Date;
 } | null> => {
   try {
-    logger.info(
-      `[MasterKeyService] Retrieving full master key data for user: ${userId}`,
-      {
-        context: 'getMasterKeyFullData',
-        userId,
-      },
-    )
+    logger.info(`[MasterKeyService] Retrieving full master key data for user: ${userId}`, {
+      context: 'getMasterKeyFullData',
+      userId,
+    });
 
     const MasterKey = getMasterKeyModel(username);
     const masterKeyDoc = await MasterKey.findOne(
@@ -530,23 +478,20 @@ export const getMasterKeyFullData = async (
         masterKeyHashHistory: 1,
         createdAt: 1,
         updatedAt: 1,
-      },
-    )
+      }
+    );
 
     if (!masterKeyDoc) {
-      logger.warn(
-        `[MasterKeyService] Master key data not found for user: ${userId}`,
-        {
-          context: 'getMasterKeyFullData',
-          userId,
-        },
-      )
-      return null
+      logger.warn(`[MasterKeyService] Master key data not found for user: ${userId}`, {
+        context: 'getMasterKeyFullData',
+        userId,
+      });
+      return null;
     }
 
     const displayData = {
       encryptedMasterKey: formatEncryptedMasterKeyForDisplay(
-        masterKeyDoc.encryptedMasterKey as EncryptedMasterKeyPayload,
+        masterKeyDoc.encryptedMasterKey as EncryptedMasterKeyPayload
       ),
       masterKeyHashPreview: `${(masterKeyDoc.masterKeyHash as any).cipherText.substring(0, 20)}...`,
       metadata: masterKeyDoc.metadata,
@@ -556,18 +501,15 @@ export const getMasterKeyFullData = async (
         : 0,
       createdAt: masterKeyDoc.createdAt,
       updatedAt: masterKeyDoc.updatedAt,
-    }
+    };
 
-    logger.debug(
-      `[MasterKeyService] Full master key data retrieved for user: ${userId}`,
-      {
-        context: 'getMasterKeyFullData',
-        userId,
-        displayData,
-      },
-    )
+    logger.debug(`[MasterKeyService] Full master key data retrieved for user: ${userId}`, {
+      context: 'getMasterKeyFullData',
+      userId,
+      displayData,
+    });
 
-    return displayData as any
+    return displayData as any;
   } catch (error) {
     logger.error(
       `[MasterKeyService] Error getting full master key data for user: ${userId}`,
@@ -575,11 +517,11 @@ export const getMasterKeyFullData = async (
       {
         context: 'getMasterKeyFullData',
         userId,
-      },
-    )
-    return null
+      }
+    );
+    return null;
   }
-}
+};
 
 export default {
   saveCloudMasterKey,
@@ -588,4 +530,4 @@ export default {
   deleteCloudMasterKey,
   getMasterKeyMetadata,
   getMasterKeyFullData,
-}
+};

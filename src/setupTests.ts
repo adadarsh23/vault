@@ -1,13 +1,12 @@
-import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
-import { afterEach } from 'vitest'
+import '@testing-library/jest-dom/vitest';
+import { cleanup } from '@testing-library/react';
+import { afterEach } from 'vitest';
 
-const isBrowserTestEnv =
-  typeof window !== 'undefined' && typeof document !== 'undefined'
+const isBrowserTestEnv = typeof window !== 'undefined' && typeof document !== 'undefined';
 
 const installTestPolyfills = () => {
   if (!isBrowserTestEnv) {
-    return
+    return;
   }
 
   if (typeof window.matchMedia !== 'function') {
@@ -25,7 +24,7 @@ const installTestPolyfills = () => {
           removeEventListener: () => undefined,
           dispatchEvent: () => false,
         }) as MediaQueryList,
-    })
+    });
   }
 
   if (typeof window.scrollTo !== 'function') {
@@ -33,18 +32,15 @@ const installTestPolyfills = () => {
       configurable: true,
       writable: true,
       value: () => undefined,
-    })
+    });
   }
 
-  if (
-    typeof Element !== 'undefined' &&
-    typeof Element.prototype.scrollTo !== 'function'
-  ) {
+  if (typeof Element !== 'undefined' && typeof Element.prototype.scrollTo !== 'function') {
     Object.defineProperty(Element.prototype, 'scrollTo', {
       configurable: true,
       writable: true,
       value: () => undefined,
-    })
+    });
   }
 
   if (
@@ -61,7 +57,7 @@ const installTestPolyfills = () => {
       configurable: true,
       writable: true,
       value: ResizeObserverMock,
-    })
+    });
   }
 
   if (
@@ -69,14 +65,14 @@ const installTestPolyfills = () => {
     typeof globalThis.IntersectionObserver === 'undefined'
   ) {
     class IntersectionObserverMock {
-      readonly root: Element | Document | null = null
-      readonly rootMargin = ''
-      readonly thresholds: ReadonlyArray<number> = []
+      readonly root: Element | Document | null = null;
+      readonly rootMargin = '';
+      readonly thresholds: ReadonlyArray<number> = [];
       observe(): void {}
       unobserve(): void {}
       disconnect(): void {}
       takeRecords(): IntersectionObserverEntry[] {
-        return []
+        return [];
       }
     }
 
@@ -84,19 +80,19 @@ const installTestPolyfills = () => {
       configurable: true,
       writable: true,
       value: IntersectionObserverMock,
-    })
+    });
   }
 
   if (typeof URL.createObjectURL !== 'function') {
-    let objectUrlCounter = 0
+    let objectUrlCounter = 0;
     Object.defineProperty(URL, 'createObjectURL', {
       configurable: true,
       writable: true,
       value: () => {
-        objectUrlCounter += 1
-        return `blob:vitest-${objectUrlCounter}`
+        objectUrlCounter += 1;
+        return `blob:vitest-${objectUrlCounter}`;
       },
-    })
+    });
   }
 
   if (typeof URL.revokeObjectURL !== 'function') {
@@ -104,7 +100,7 @@ const installTestPolyfills = () => {
       configurable: true,
       writable: true,
       value: () => undefined,
-    })
+    });
   }
 
   if (
@@ -118,32 +114,29 @@ const installTestPolyfills = () => {
           writeText: async () => undefined,
           readText: async () => '',
         },
-      })
+      });
     } catch {
       // Ignore if clipboard is non-configurable in this environment.
     }
   }
 
-  if (
-    typeof window.crypto === 'undefined' &&
-    typeof globalThis.crypto !== 'undefined'
-  ) {
+  if (typeof window.crypto === 'undefined' && typeof globalThis.crypto !== 'undefined') {
     Object.defineProperty(window, 'crypto', {
       configurable: true,
       value: globalThis.crypto,
-    })
+    });
   }
-}
+};
 
-installTestPolyfills()
+installTestPolyfills();
 
 afterEach(() => {
-  cleanup()
+  cleanup();
 
   if (!isBrowserTestEnv) {
-    return
+    return;
   }
 
-  window.localStorage.clear()
-  window.sessionStorage.clear()
-})
+  window.localStorage.clear();
+  window.sessionStorage.clear();
+});

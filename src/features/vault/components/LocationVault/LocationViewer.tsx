@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
   Check,
@@ -11,39 +11,34 @@ import {
   Trash2,
   ChevronUp,
   Map as MapIcon,
-} from 'lucide-react'
-import { cn } from '../../../../lib/utils'
-import { Button } from '../../../../components/ui/Button'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../../../components/ui/Card'
-import { Input } from '../../../../components/ui/Input'
-import { ScrollButton } from '../../../../components/vault/ScrollButton'
-import { MapPreview } from '../../../../components/vault/MapPreview'
-import { GlobalNavigator } from '../../../../components/vault/GlobalNavigator'
-import { parseCoordinate } from '../../../../lib/utils'
+} from 'lucide-react';
+import { cn } from '../../../../lib/utils';
+import { Button } from '../../../../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/Card';
+import { Input } from '../../../../components/ui/Input';
+import { ScrollButton } from '../../../../components/vault/ScrollButton';
+import { MapPreview } from '../../../../components/vault/MapPreview';
+import { GlobalNavigator } from '../../../../components/vault/GlobalNavigator';
+import { parseCoordinate } from '../../../../lib/utils';
 
 interface LocationPayload {
-  latitude: number
-  longitude: number
-  address: string
-  notes: string
-  accuracy?: number
-  altitude?: number | null
-  capturedAt: number
+  latitude: number;
+  longitude: number;
+  address: string;
+  notes: string;
+  accuracy?: number;
+  altitude?: number | null;
+  capturedAt: number;
 }
 
 interface FormState {
-  title: string
-  latitude: string
-  longitude: string
-  address: string
-  notes: string
-  accuracy: string
-  altitude: string
+  title: string;
+  latitude: string;
+  longitude: string;
+  address: string;
+  notes: string;
+  accuracy: string;
+  altitude: string;
 }
 
 const Editor = ({
@@ -58,16 +53,16 @@ const Editor = ({
   isFetchingAddress,
   label,
 }: {
-  form: FormState
-  setForm: React.Dispatch<React.SetStateAction<FormState>>
-  onSave: () => Promise<void>
-  onCancel: () => void
-  onCapture: () => Promise<void>
-  onFetchAddress: () => Promise<void>
-  isCapturing: boolean
-  isSaving: boolean
-  isFetchingAddress: boolean
-  label: string
+  form: FormState;
+  setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  onSave: () => Promise<void>;
+  onCancel: () => void;
+  onCapture: () => Promise<void>;
+  onFetchAddress: () => Promise<void>;
+  isCapturing: boolean;
+  isSaving: boolean;
+  isFetchingAddress: boolean;
+  label: string;
 }) => (
   <Card className="flex h-full flex-col border-none bg-card-bg/30 shadow-none overflow-hidden">
     <CardHeader className="flex flex-row items-center gap-2 border-b border-card-border py-3 md:py-4 px-4 md:px-6">
@@ -86,7 +81,9 @@ const Editor = ({
       <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-5 custom-scrollbar">
         <div className="grid gap-4 md:grid-cols-1">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">Title</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">
+              Title
+            </label>
             <Input
               placeholder="Location title"
               value={form.title}
@@ -98,7 +95,9 @@ const Editor = ({
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">Address</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">
+                Address
+              </label>
               {(form.latitude || form.longitude) && (
                 <button
                   type="button"
@@ -106,22 +105,14 @@ const Editor = ({
                   disabled={isFetchingAddress || isSaving}
                   className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-400/10 px-2 py-0.5 rounded flex items-center gap-1"
                 >
-                  {isFetchingAddress ? (
-                    'Fetching...'
-                  ) : (
-                    <>
-                      Fetch
-                    </>
-                  )}
+                  {isFetchingAddress ? 'Fetching...' : <>Fetch</>}
                 </button>
               )}
             </div>
             <Input
               placeholder="Address or label"
               value={form.address}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, address: e.target.value }))
-              }
+              onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
               disabled={isSaving || isFetchingAddress}
               className="bg-white/5 border-white/5 h-11"
             />
@@ -129,30 +120,32 @@ const Editor = ({
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">Latitude</label>
-              {form.latitude && !/^-?\d+(\.\d+)?$/.test(form.latitude.trim()) && parseCoordinate(form.latitude) !== null && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const parsed = parseCoordinate(form.latitude);
-                    if (parsed !== null) setForm(p => ({ ...p, latitude: parsed.toFixed(8) }));
-                  }}
-                  className="text-[9px] font-bold uppercase tracking-widest text-lime-400 hover:text-lime-300 transition-colors bg-lime-400/10 px-2 py-0.5 rounded"
-                >
-                  Decimal
-                </button>
-              )}
+              <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">
+                Latitude
+              </label>
+              {form.latitude &&
+                !/^-?\d+(\.\d+)?$/.test(form.latitude.trim()) &&
+                parseCoordinate(form.latitude) !== null && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const parsed = parseCoordinate(form.latitude);
+                      if (parsed !== null) setForm((p) => ({ ...p, latitude: parsed.toFixed(8) }));
+                    }}
+                    className="text-[9px] font-bold uppercase tracking-widest text-lime-400 hover:text-lime-300 transition-colors bg-lime-400/10 px-2 py-0.5 rounded"
+                  >
+                    Decimal
+                  </button>
+                )}
             </div>
             <Input
               placeholder="Latitude (e.g. 40° 42′ 46″ N)"
               value={form.latitude}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, latitude: e.target.value }))
-              }
+              onChange={(e) => setForm((p) => ({ ...p, latitude: e.target.value }))}
               onBlur={() => {
                 const parsed = parseCoordinate(form.latitude);
                 if (parsed !== null && !/^-?\d+(\.\d+)?$/.test(form.latitude.trim())) {
-                  setForm(p => ({ ...p, latitude: parsed.toFixed(8) }));
+                  setForm((p) => ({ ...p, latitude: parsed.toFixed(8) }));
                 }
               }}
               disabled={isSaving}
@@ -162,30 +155,32 @@ const Editor = ({
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">Longitude</label>
-              {form.longitude && !/^-?\d+(\.\d+)?$/.test(form.longitude.trim()) && parseCoordinate(form.longitude) !== null && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const parsed = parseCoordinate(form.longitude);
-                    if (parsed !== null) setForm(p => ({ ...p, longitude: parsed.toFixed(8) }));
-                  }}
-                  className="text-[9px] font-bold uppercase tracking-widest text-lime-400 hover:text-lime-300 transition-colors bg-lime-400/10 px-2 py-0.5 rounded"
-                >
-                  Decimal
-                </button>
-              )}
+              <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">
+                Longitude
+              </label>
+              {form.longitude &&
+                !/^-?\d+(\.\d+)?$/.test(form.longitude.trim()) &&
+                parseCoordinate(form.longitude) !== null && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const parsed = parseCoordinate(form.longitude);
+                      if (parsed !== null) setForm((p) => ({ ...p, longitude: parsed.toFixed(8) }));
+                    }}
+                    className="text-[9px] font-bold uppercase tracking-widest text-lime-400 hover:text-lime-300 transition-colors bg-lime-400/10 px-2 py-0.5 rounded"
+                  >
+                    Decimal
+                  </button>
+                )}
             </div>
             <Input
               placeholder="Longitude (e.g. 74° 00′ 21″ W)"
               value={form.longitude}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, longitude: e.target.value }))
-              }
+              onChange={(e) => setForm((p) => ({ ...p, longitude: e.target.value }))}
               onBlur={() => {
                 const parsed = parseCoordinate(form.longitude);
                 if (parsed !== null && !/^-?\d+(\.\d+)?$/.test(form.longitude.trim())) {
-                  setForm(p => ({ ...p, longitude: parsed.toFixed(8) }));
+                  setForm((p) => ({ ...p, longitude: parsed.toFixed(8) }));
                 }
               }}
               disabled={isSaving}
@@ -194,26 +189,26 @@ const Editor = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">Accuracy (m)</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">
+              Accuracy (m)
+            </label>
             <Input
               placeholder="Accuracy (m)"
               value={form.accuracy}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, accuracy: e.target.value }))
-              }
+              onChange={(e) => setForm((p) => ({ ...p, accuracy: e.target.value }))}
               disabled={isSaving}
               className="bg-white/5 border-white/5 h-11"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">Altitude (m)</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">
+              Altitude (m)
+            </label>
             <Input
               placeholder="Altitude (m)"
               value={form.altitude}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, altitude: e.target.value }))
-              }
+              onChange={(e) => setForm((p) => ({ ...p, altitude: e.target.value }))}
               disabled={isSaving}
               className="bg-white/5 border-white/5 h-11"
             />
@@ -221,7 +216,9 @@ const Editor = ({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">Notes</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">
+            Notes
+          </label>
           <textarea
             placeholder="Notes"
             value={form.notes}
@@ -261,37 +258,37 @@ const Editor = ({
       </div>
     </CardContent>
   </Card>
-)
+);
 
 export interface LocationViewerProps {
-  selectedId: string | null
-  selectedItem: any
-  payload: LocationPayload | null
-  isCreating: boolean
-  isEditing: boolean
-  setIsEditing: (isEditing: boolean) => void
-  setSelectedId: (id: string | null) => void
-  form: FormState
-  setForm: React.Dispatch<React.SetStateAction<FormState>>
-  saveNewLocation: () => Promise<void>
-  saveEditedLocation: () => Promise<void>
-  resetEditor: () => void
-  captureCurrentLocation: () => Promise<void>
-  isCapturing: boolean
-  isSaving: boolean
-  hasPrevious: boolean
-  hasNext: boolean
-  goToPrevious: () => void
-  goToNext: () => void
-  copyValue: (type: 'coords' | 'id') => Promise<void>
-  copied: 'coords' | 'id' | null
-  deleteLocation: (id: string, title: string) => Promise<void>
-  confirmDeleteId: string | null
-  setConfirmDeleteId: (id: string | null) => void
-  startEdit: () => void
-  currentCoords: { lat: number; lng: number } | null
-  isFetchingAddress: boolean
-  fetchAddress: () => Promise<void>
+  selectedId: string | null;
+  selectedItem: any;
+  payload: LocationPayload | null;
+  isCreating: boolean;
+  isEditing: boolean;
+  setIsEditing: (isEditing: boolean) => void;
+  setSelectedId: (id: string | null) => void;
+  form: FormState;
+  setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  saveNewLocation: () => Promise<void>;
+  saveEditedLocation: () => Promise<void>;
+  resetEditor: () => void;
+  captureCurrentLocation: () => Promise<void>;
+  isCapturing: boolean;
+  isSaving: boolean;
+  hasPrevious: boolean;
+  hasNext: boolean;
+  goToPrevious: () => void;
+  goToNext: () => void;
+  copyValue: (type: 'coords' | 'id') => Promise<void>;
+  copied: 'coords' | 'id' | null;
+  deleteLocation: (id: string, title: string) => Promise<void>;
+  confirmDeleteId: string | null;
+  setConfirmDeleteId: (id: string | null) => void;
+  startEdit: () => void;
+  currentCoords: { lat: number; lng: number } | null;
+  isFetchingAddress: boolean;
+  fetchAddress: () => Promise<void>;
 }
 
 export const LocationViewer: React.FC<LocationViewerProps> = ({
@@ -324,14 +321,14 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
   isFetchingAddress,
   fetchAddress,
 }) => {
-  const [showViewScrollTop, setShowViewScrollTop] = useState(false)
-  const viewRef = useRef<HTMLDivElement>(null)
+  const [showViewScrollTop, setShowViewScrollTop] = useState(false);
+  const viewRef = useRef<HTMLDivElement>(null);
 
   return (
     <div
       className={cn(
         'flex-1 min-w-0 h-full',
-        !selectedId && !isCreating ? 'hidden md:block' : 'block',
+        !selectedId && !isCreating ? 'hidden md:block' : 'block'
       )}
     >
       <AnimatePresence mode="wait">
@@ -370,7 +367,7 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                 setForm={setForm}
                 onSave={saveEditedLocation}
                 onCancel={() => {
-                  setIsEditing(false)
+                  setIsEditing(false);
                   // Form reset logic should be handled by parent or here if preferred
                 }}
                 onCapture={captureCurrentLocation}
@@ -414,18 +411,15 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                       <Edit2 className="h-4 w-4" />
                     </Button>
                     <Button
-                      variant={confirmDeleteId === selectedItem.id ? "danger" : "ghost"}
-                      size={confirmDeleteId === selectedItem.id ? "md" : "icon"}
-                      onClick={() =>
-                        void deleteLocation(
-                          selectedItem.id,
-                          selectedItem.title,
-                        )
-                      }
+                      variant={confirmDeleteId === selectedItem.id ? 'danger' : 'ghost'}
+                      size={confirmDeleteId === selectedItem.id ? 'md' : 'icon'}
+                      onClick={() => void deleteLocation(selectedItem.id, selectedItem.title)}
                       onMouseLeave={() => confirmDeleteId && setConfirmDeleteId(null)}
                       className={cn(
-                        "h-9 transition-all",
-                        confirmDeleteId === selectedItem.id ? "px-3 text-xs" : "w-9 text-text/40 hover:text-red-400"
+                        'h-9 transition-all',
+                        confirmDeleteId === selectedItem.id
+                          ? 'px-3 text-xs'
+                          : 'w-9 text-text/40 hover:text-red-400'
                       )}
                     >
                       {confirmDeleteId === selectedItem.id ? (
@@ -443,9 +437,7 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                 <CardContent className="relative flex-1 min-h-0 p-0 overflow-hidden">
                   <div
                     ref={viewRef}
-                    onScroll={(e) =>
-                      setShowViewScrollTop(e.currentTarget.scrollTop > 220)
-                    }
+                    onScroll={(e) => setShowViewScrollTop(e.currentTarget.scrollTop > 220)}
                     className="h-full overflow-y-auto custom-scrollbar"
                   >
                     <div className="space-y-6 p-4 xl:p-8">
@@ -472,7 +464,9 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                                 ) : (
                                   <>
                                     <Copy className="h-3 w-3 text-text/40" />
-                                    <span className="text-[10px] text-text/40 font-bold uppercase tracking-wider">Copy</span>
+                                    <span className="text-[10px] text-text/40 font-bold uppercase tracking-wider">
+                                      Copy
+                                    </span>
                                   </>
                                 )}
                               </Button>
@@ -530,7 +524,9 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                               ) : (
                                 <div className="flex flex-col items-center justify-center py-12 text-text/10 border border-dashed border-white/5 rounded-2xl h-full">
                                   <MapIcon className="h-8 w-8 mb-3 opacity-20" />
-                                  <p className="text-xs uppercase tracking-widest font-bold opacity-30">No notes provided</p>
+                                  <p className="text-xs uppercase tracking-widest font-bold opacity-30">
+                                    No notes provided
+                                  </p>
                                 </div>
                               )}
                             </div>
@@ -554,11 +550,18 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                       <div className="flex items-center gap-4 md:gap-6 shrink-0">
                         <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0">
                           <Calendar className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
-                          <span className="text-text/60">{new Date(selectedItem.createdAt).toLocaleDateString()}</span>
+                          <span className="text-text/60">
+                            {new Date(selectedItem.createdAt).toLocaleDateString()}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium tracking-tight shrink-0">
                           <Clock className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
-                          <span className="text-text/60">{new Date(selectedItem.updatedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                          <span className="text-text/60">
+                            {new Date(selectedItem.updatedAt).toLocaleString(undefined, {
+                              dateStyle: 'medium',
+                              timeStyle: 'short',
+                            })}
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
@@ -573,7 +576,11 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                             onClick={() => void copyValue('id')}
                             className="text-emerald-400/40 hover:text-emerald-400 transition-colors"
                           >
-                            {copied === 'id' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                            {copied === 'id' ? (
+                              <Check className="h-3 w-3" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
                           </button>
                         </div>
                         <motion.div
@@ -620,12 +627,14 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                   <div className="absolute inset-0 bg-emerald-400/5 blur-3xl rounded-full" />
                 </div>
                 <p className="text-text/30 font-medium">Select a location to view or edit</p>
-                <p className="mt-2 text-[10px] text-text/20 uppercase tracking-[0.3em] font-black">Vault Location Service</p>
+                <p className="mt-2 text-[10px] text-text/20 uppercase tracking-[0.3em] font-black">
+                  Vault Location Service
+                </p>
               </div>
             </div>
           </div>
         )}
       </AnimatePresence>
     </div>
-  )
-}
+  );
+};

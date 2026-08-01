@@ -1,6 +1,6 @@
-import express from "express";
-import { isAllowedCorsOrigin } from "../utils/cors.ts";
-import { AppError } from "../utils/appError.ts";
+import express from 'express';
+import { isAllowedCorsOrigin } from '../utils/cors.ts';
+import { AppError } from '../utils/appError.ts';
 
 const parseOrigin = (value: string | undefined): string | null => {
   if (!value || !value.trim()) return null;
@@ -18,21 +18,21 @@ const parseOrigin = (value: string | undefined): string | null => {
 export const requireTrustedBrowserOrigin = (
   req: express.Request,
   _res: express.Response,
-  next: express.NextFunction,
+  next: express.NextFunction
 ) => {
   const method = req.method.toUpperCase();
-  if (!["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
     return next();
   }
 
-  const origin = parseOrigin(req.get("origin"));
-  const refererOrigin = parseOrigin(req.get("referer"));
+  const origin = parseOrigin(req.get('origin'));
+  const refererOrigin = parseOrigin(req.get('referer'));
   const candidateOrigin = origin || refererOrigin;
-  const fetchSite = req.get("sec-fetch-site")?.trim().toLowerCase();
+  const fetchSite = req.get('sec-fetch-site')?.trim().toLowerCase();
 
   // Extra browser signal: block explicit cross-site browser navigation/fetch attempts.
-  if (fetchSite === "cross-site") {
-    throw AppError.forbidden("Cross-site request is not allowed.", "CSRF_BLOCKED");
+  if (fetchSite === 'cross-site') {
+    throw AppError.forbidden('Cross-site request is not allowed.', 'CSRF_BLOCKED');
   }
 
   // Non-browser clients may omit Origin/Referer; keep compatibility for API tooling.
@@ -41,7 +41,7 @@ export const requireTrustedBrowserOrigin = (
   }
 
   if (!isAllowedCorsOrigin(candidateOrigin)) {
-    throw AppError.forbidden("Request origin is not allowed.", "ORIGIN_FORBIDDEN");
+    throw AppError.forbidden('Request origin is not allowed.', 'ORIGIN_FORBIDDEN');
   }
 
   return next();

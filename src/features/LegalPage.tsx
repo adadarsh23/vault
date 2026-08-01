@@ -1,8 +1,8 @@
-import { useEffect } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
-import { Shield, Scale, Copy } from 'lucide-react'
-import { useLocation } from 'react-router-dom'
-import { toast } from 'sonner'
+import { useEffect } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Shield, Scale, Copy } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 // import { Background } from '../components/layout/Background'
 
 const LICENSE_TEXT = `Copyright (c) 2026 Vault
@@ -11,31 +11,31 @@ All rights reserved.
 
 This software and associated source code are proprietary and confidential. No permission is granted to use, copy, modify, merge, publish, distribute, sublicense, or sell this software, in whole or in part, without prior written permission from the copyright holder.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`;
 
 interface LegalPageProps {}
 
 export function LegalPage({}: LegalPageProps) {
-  const shouldReduceMotion = useReducedMotion()
-  const { hash } = useLocation()
-  const [licenseHeading, ...licenseRest] = LICENSE_TEXT.split('\n')
-  const licenseBody = licenseRest.join('\n')
+  const shouldReduceMotion = useReducedMotion();
+  const { hash } = useLocation();
+  const [licenseHeading, ...licenseRest] = LICENSE_TEXT.split('\n');
+  const licenseBody = licenseRest.join('\n');
 
   useEffect(() => {
     if (hash) {
       // Small delay to ensure the content is rendered and animations are started
       const timeoutId = setTimeout(() => {
-        const element = document.getElementById(hash.substring(1))
+        const element = document.getElementById(hash.substring(1));
         if (element) {
           element.scrollIntoView({
             behavior: shouldReduceMotion ? 'auto' : 'smooth',
             block: 'start',
-          })
+          });
         }
-      }, 100)
-      return () => clearTimeout(timeoutId)
+      }, 100);
+      return () => clearTimeout(timeoutId);
     }
-  }, [hash, shouldReduceMotion])
+  }, [hash, shouldReduceMotion]);
 
   const sections = [
     {
@@ -45,32 +45,30 @@ export function LegalPage({}: LegalPageProps) {
       content: (
         <div className="space-y-6">
           <p>
-            Your privacy is our highest priority at Vault. Our architecture is
-            built on the principle of Zero-Knowledge - meaning we never have
-            access to your encryption keys or your raw data.
+            Your privacy is our highest priority at Vault. Our architecture is built on the
+            principle of Zero-Knowledge - meaning we never have access to your encryption keys or
+            your raw data.
           </p>
 
           <h3 className="text-xl font-bold text-text">Data Collection</h3>
           <p>
-            We collect minimal technical information required to maintain your
-            secure session. This includes encrypted authentication tokens and
-            anonymized system telemetry to ensure reliability. We do not track
-            your activity, and we never sell your data.
+            We collect minimal technical information required to maintain your secure session. This
+            includes encrypted authentication tokens and anonymized system telemetry to ensure
+            reliability. We do not track your activity, and we never sell your data.
           </p>
 
           <h3 className="text-xl font-bold text-text">Local Encryption</h3>
           <p>
-            All files, notes, and sensitive data are encrypted locally on your
-            device before being uploaded. The encryption keys never leave your
-            browser or app environment unless you explicitly export them.
+            All files, notes, and sensitive data are encrypted locally on your device before being
+            uploaded. The encryption keys never leave your browser or app environment unless you
+            explicitly export them.
           </p>
 
           <h3 className="text-xl font-bold text-text">Your Rights</h3>
           <p>
-            You have the right to export your data, delete your account
-            entirely, and audit the security of our application. As a
-            privacy-first platform, we empower you with full control over your
-            digital footprint.
+            You have the right to export your data, delete your account entirely, and audit the
+            security of our application. As a privacy-first platform, we empower you with full
+            control over your digital footprint.
           </p>
         </div>
       ),
@@ -92,13 +90,13 @@ export function LegalPage({}: LegalPageProps) {
                 onClick={async () => {
                   try {
                     if (!navigator.clipboard) {
-                      toast.error('Clipboard is not available on this browser')
-                      return
+                      toast.error('Clipboard is not available on this browser');
+                      return;
                     }
-                    await navigator.clipboard.writeText(LICENSE_TEXT)
-                    toast.success('License Agreement copied')
+                    await navigator.clipboard.writeText(LICENSE_TEXT);
+                    toast.success('License Agreement copied');
                   } catch {
-                    toast.error('Unable to copy License Agreement')
+                    toast.error('Unable to copy License Agreement');
                   }
                 }}
               >
@@ -110,7 +108,7 @@ export function LegalPage({}: LegalPageProps) {
         </div>
       ),
     },
-  ]
+  ];
 
   return (
     <div className="min-h-screen text-text selection:bg-text selection:text-bg">
@@ -138,14 +136,9 @@ export function LegalPage({}: LegalPageProps) {
         >
           <header className="mb-12 rounded-[2rem] border border-card-border bg-card-bg p-6 shadow-sm dark:border-white/10 dark:bg-black/90 md:p-8">
             <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">
-              Legal &{' '}
-              <span className="font-medium italic text-text/40">
-                Compliance
-              </span>
+              Legal & <span className="font-medium italic text-text/40">Compliance</span>
             </h1>
-            <p className="text-lg font-medium text-text/50">
-              Last updated: March 2026
-            </p>
+            <p className="text-lg font-medium text-text/50">Last updated: March 2026</p>
           </header>
 
           <div className="space-y-24">
@@ -195,5 +188,5 @@ export function LegalPage({}: LegalPageProps) {
         </motion.div>
       </main>
     </div>
-  )
+  );
 }

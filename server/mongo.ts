@@ -1,10 +1,10 @@
-import dns from "dns";
-import dotenv from "dotenv";
-import mongoose from "mongoose";
+import dns from 'dns';
+import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 
 dotenv.config();
 
-const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME?.trim() || "vault";
+const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME?.trim() || 'vault';
 
 const getEnvValue = (...keys: string[]): string | undefined => {
   for (const key of keys) {
@@ -17,14 +17,14 @@ const getEnvValue = (...keys: string[]): string | undefined => {
   return undefined;
 };
 
-const primaryUri = getEnvValue("MONGODB_URI", "MONGODB_URL");
-const fallbackUri = getEnvValue("MONGODB_URI_FALLBACK", "MONGODB_URL_FALLBACK");
-const retryDnsServers =
-  process.env.MONGODB_DNS_SERVERS?.split(",").map((value) => value.trim()).filter(Boolean) ||
-  ["1.1.1.1", "8.8.8.8"];
+const primaryUri = getEnvValue('MONGODB_URI', 'MONGODB_URL');
+const fallbackUri = getEnvValue('MONGODB_URI_FALLBACK', 'MONGODB_URL_FALLBACK');
+const retryDnsServers = process.env.MONGODB_DNS_SERVERS?.split(',')
+  .map((value) => value.trim())
+  .filter(Boolean) || ['1.1.1.1', '8.8.8.8'];
 
 if (!primaryUri) {
-  throw new Error("MONGODB_URI or MONGODB_URL is required in environment variables.");
+  throw new Error('MONGODB_URI or MONGODB_URL is required in environment variables.');
 }
 
 let connectionPromise: Promise<typeof mongoose> | null = null;
@@ -34,18 +34,20 @@ let dnsRetryApplied = false;
 const isSrvResolutionError = (error: unknown): boolean => {
   const candidate = error as { code?: string; syscall?: string; message?: string };
   return (
-    candidate?.syscall === "querySrv" ||
-    candidate?.code === "ECONNREFUSED" ||
-    String(candidate?.message || "").includes("querySrv")
+    candidate?.syscall === 'querySrv' ||
+    candidate?.code === 'ECONNREFUSED' ||
+    String(candidate?.message || '').includes('querySrv')
   );
 };
 
 const isServerSelectionError = (error: unknown): boolean => {
   const candidate = error as { name?: string; message?: string };
   return (
-    candidate?.name === "MongooseServerSelectionError" ||
-    String(candidate?.message || "").includes("MongooseServerSelectionError") ||
-    String(candidate?.message || "").includes("Could not connect to any servers in your MongoDB Atlas cluster")
+    candidate?.name === 'MongooseServerSelectionError' ||
+    String(candidate?.message || '').includes('MongooseServerSelectionError') ||
+    String(candidate?.message || '').includes(
+      'Could not connect to any servers in your MongoDB Atlas cluster'
+    )
   );
 };
 
@@ -57,7 +59,7 @@ const applyDnsRetryServers = (): boolean => {
   try {
     dns.setServers(retryDnsServers);
     dnsRetryApplied = true;
-    console.warn(`Retrying MongoDB SRV lookup with DNS servers: ${retryDnsServers.join(", ")}`);
+    console.warn(`Retrying MongoDB SRV lookup with DNS servers: ${retryDnsServers.join(', ')}`);
     return true;
   } catch {
     return false;
@@ -70,7 +72,7 @@ const connectWithUri = async (mongoUri: string): Promise<typeof mongoose> => {
   }
   const connection = await mongoose.connect(mongoUri, {
     dbName: MONGODB_DB_NAME,
-    autoIndex: process.env.NODE_ENV !== "production",
+    autoIndex: process.env.NODE_ENV !== 'production',
     serverSelectionTimeoutMS: 10_000,
     maxPoolSize: 20,
   });
@@ -79,12 +81,14 @@ const connectWithUri = async (mongoUri: string): Promise<typeof mongoose> => {
 };
 
 const canConnectToUri = async (mongoUri: string): Promise<boolean> => {
-  const probe = await mongoose.createConnection(mongoUri, {
-    dbName: MONGODB_DB_NAME,
-    autoIndex: false,
-    serverSelectionTimeoutMS: 10_000,
-    maxPoolSize: 5,
-  }).asPromise();
+  const probe = await mongoose
+    .createConnection(mongoUri, {
+      dbName: MONGODB_DB_NAME,
+      autoIndex: false,
+      serverSelectionTimeoutMS: 10_000,
+      maxPoolSize: 5,
+    })
+    .asPromise();
 
   try {
     await probe.db?.admin().ping();
@@ -100,7 +104,7 @@ const buildUriCandidates = (): string[] => {
     .map((value) => value.trim());
 
   // Add local development fallback if not in production
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== 'production') {
     candidates.push(`mongodb://127.0.0.1:27017/${MONGODB_DB_NAME}`);
   }
 
@@ -123,7 +127,7 @@ export const isStorageFullError = (error: unknown): boolean => {
     ...(candidate?.writeErrors?.map((entry) => entry?.errmsg) || []),
   ]
     .filter(Boolean)
-    .join(" | ")
+    .join(' | ')
     .toLowerCase();
   const codeCandidates = [
     candidate?.code,
@@ -134,13 +138,13 @@ export const isStorageFullError = (error: unknown): boolean => {
 
   return (
     codeCandidates.includes(8000) ||
-    message.includes("storage limit") ||
-    message.includes("quota exceeded") ||
-    message.includes("capacity exceeded") ||
-    message.includes("you are out of space") ||
-    message.includes("disk is full") ||
-    message.includes("over your space quota") ||
-    message.includes("database storage limit has been reached")
+    message.includes('storage limit') ||
+    message.includes('quota exceeded') ||
+    message.includes('capacity exceeded') ||
+    message.includes('you are out of space') ||
+    message.includes('disk is full') ||
+    message.includes('over your space quota') ||
+    message.includes('database storage limit has been reached')
   );
 };
 
@@ -157,7 +161,9 @@ export const switchToNextMongoUri = async (): Promise<boolean> => {
         continue;
       }
       await connectWithUri(candidate);
-      console.warn(`Switched MongoDB connection to candidate #${index + 1} after storage failover.`);
+      console.warn(
+        `Switched MongoDB connection to candidate #${index + 1} after storage failover.`
+      );
       return true;
     } catch (error) {
       console.error(`MongoDB failover candidate #${index + 1} failed:`, error);
@@ -183,7 +189,7 @@ export const connectToMongo = async (): Promise<typeof mongoose> => {
         try {
           const connection = await connectWithUri(candidate);
           console.log(
-            `Connected to MongoDB successfully${candidate === primaryUri ? "." : ` using candidate #${index + 1}.`}`,
+            `Connected to MongoDB successfully${candidate === primaryUri ? '.' : ` using candidate #${index + 1}.`}`
           );
           return connection;
         } catch (error) {
@@ -192,7 +198,7 @@ export const connectToMongo = async (): Promise<typeof mongoose> => {
           if (candidate === primaryUri && isSrvResolutionError(error) && applyDnsRetryServers()) {
             try {
               const connection = await connectWithUri(primaryUri);
-              console.log("Connected to MongoDB successfully after DNS retry.");
+              console.log('Connected to MongoDB successfully after DNS retry.');
               return connection;
             } catch (retryError) {
               lastError = retryError;
@@ -203,13 +209,13 @@ export const connectToMongo = async (): Promise<typeof mongoose> => {
 
       if (isSrvResolutionError(lastError)) {
         throw new Error(
-          `MongoDB SRV lookup failed (querySrv/ECONNREFUSED). This usually means your DNS is blocking Atlas lookups. Configure MONGODB_URI_FALLBACK with a direct connection string or use a local instance: mongodb://127.0.0.1:27017/${MONGODB_DB_NAME}.`,
+          `MongoDB SRV lookup failed (querySrv/ECONNREFUSED). This usually means your DNS is blocking Atlas lookups. Configure MONGODB_URI_FALLBACK with a direct connection string or use a local instance: mongodb://127.0.0.1:27017/${MONGODB_DB_NAME}.`
         );
       }
 
       if (isServerSelectionError(lastError)) {
         throw new Error(
-          `Failed to connect to MongoDB Atlas. This is most likely because your current IP address is not whitelisted in your Atlas cluster configuration. Please visit https://www.mongodb.com/docs/atlas/security-whitelist/ to allow access from your current location, or ensure a local MongoDB instance is running at mongodb://127.0.0.1:27017/${MONGODB_DB_NAME}.`,
+          `Failed to connect to MongoDB Atlas. This is most likely because your current IP address is not whitelisted in your Atlas cluster configuration. Please visit https://www.mongodb.com/docs/atlas/security-whitelist/ to allow access from your current location, or ensure a local MongoDB instance is running at mongodb://127.0.0.1:27017/${MONGODB_DB_NAME}.`
         );
       }
 
@@ -227,7 +233,7 @@ export const ensureMongoReady = async (): Promise<boolean> => {
     await connectToMongo();
     return mongoose.connection.readyState === 1;
   } catch (error) {
-    console.error("MongoDB connection error:", error);
+    console.error('MongoDB connection error:', error);
     return false;
   }
 };

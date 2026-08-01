@@ -139,16 +139,16 @@ function fixAuthMiddleware() {
 
 try {
   fixUser();
-} catch(e) {
-  console.log("Failed to fix user:", e);
+} catch (e) {
+  console.log('Failed to fix user:', e);
 }
 try {
   fixSecurityRoutes();
-} catch(e) {
-  console.log("Failed to fix securityRoutes:", e);
+} catch (e) {
+  console.log('Failed to fix securityRoutes:', e);
 }
 try {
   fixAuthMiddleware();
-} catch(e) {
-  console.log("Failed to fix authMiddleware:", e);
+} catch (e) {
+  console.log('Failed to fix authMiddleware:', e);
 }

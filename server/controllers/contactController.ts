@@ -26,7 +26,7 @@ export const submitContactForm = async (req: Request, res: Response) => {
       if (ipAddress !== 'unknown' && ipAddress !== '127.0.0.1' && ipAddress !== '::1') {
         const geoUrl = `https://free.freeipapi.com/api/json/${ipAddress}`;
         const geoResponse = await fetch(geoUrl, {
-          signal: AbortSignal.timeout(8000)
+          signal: AbortSignal.timeout(8000),
         });
         if (geoResponse.ok) {
           geolocation = await geoResponse.json();
@@ -35,7 +35,7 @@ export const submitContactForm = async (req: Request, res: Response) => {
     } catch (e) {
       logger.warn('Failed to fetch geolocation for contact submission', {
         ipAddress,
-        error: e instanceof Error ? e.message : 'Unknown'
+        error: e instanceof Error ? e.message : 'Unknown',
       });
     }
 
@@ -56,8 +56,8 @@ export const submitContactForm = async (req: Request, res: Response) => {
     } catch (saveError: any) {
       // If referenceId collision (rare but possible), try once more
       if (saveError.code === 11000 && saveError.keyPattern?.referenceId) {
-        logger.warn('Reference ID collision occurred, retrying...', { 
-          collisionId: newContact.referenceId 
+        logger.warn('Reference ID collision occurred, retrying...', {
+          collisionId: newContact.referenceId,
         });
         (newContact as any).referenceId = undefined; // Trigger re-generation in pre-save hook
         savedContact = await newContact.save();
@@ -106,7 +106,8 @@ export const submitContactForm = async (req: Request, res: Response) => {
         success: false,
         error: {
           code: 'DATABASE_ERROR',
-          message: 'An internal storage error occurred. Please try again or contact support directly.',
+          message:
+            'An internal storage error occurred. Please try again or contact support directly.',
           requestId,
         },
       });
@@ -122,9 +123,10 @@ export const submitContactForm = async (req: Request, res: Response) => {
       success: false,
       error: {
         code: 'INTERNAL_SERVER_ERROR',
-        message: process.env.NODE_ENV === 'development' 
-          ? `Server Error: ${error.message}`
-          : 'An unexpected error occurred. Please try again later.',
+        message:
+          process.env.NODE_ENV === 'development'
+            ? `Server Error: ${error.message}`
+            : 'An unexpected error occurred. Please try again later.',
         requestId,
       },
     });

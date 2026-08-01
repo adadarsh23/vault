@@ -5,8 +5,7 @@ const env = import.meta.env;
 const appEnv = env.VITE_SENTRY_ENVIRONMENT || env.MODE || 'development';
 const dsn = env.VITE_SENTRY_DSN;
 const isLocalhost =
-  isBrowser &&
-  ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+  isBrowser && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
 const isEnabledFlag = env.VITE_SENTRY_ENABLED === 'true';
 const isDisabledExplicitly = env.VITE_SENTRY_ENABLED === 'false';
 const allowLocalhost = env.VITE_SENTRY_ENABLE_LOCALHOST === 'true';
@@ -66,14 +65,8 @@ export const initSentry = (options = {}) => {
         : []),
     ],
     tracesSampleRate: toNumber(env.VITE_SENTRY_TRACES_SAMPLE_RATE, 0.1),
-    replaysSessionSampleRate: toNumber(
-      env.VITE_SENTRY_REPLAY_SESSION_SAMPLE_RATE,
-      0,
-    ),
-    replaysOnErrorSampleRate: toNumber(
-      env.VITE_SENTRY_REPLAY_ON_ERROR_SAMPLE_RATE,
-      0.1,
-    ),
+    replaysSessionSampleRate: toNumber(env.VITE_SENTRY_REPLAY_SESSION_SAMPLE_RATE, 0),
+    replaysOnErrorSampleRate: toNumber(env.VITE_SENTRY_REPLAY_ON_ERROR_SAMPLE_RATE, 0.1),
     beforeSend(event, hint) {
       if (event.exception) {
         const key = eventKeyFromException(event.exception, hint);

@@ -1,12 +1,12 @@
-import React, { useEffect, useCallback } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { X } from 'lucide-react'
-import type { DiagramNode } from './ecosystemHelpers'
-import { Variants } from 'framer-motion'
+import React, { useEffect, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { X } from 'lucide-react';
+import type { DiagramNode } from './ecosystemHelpers';
+import { Variants } from 'framer-motion';
 
 interface NodeDetailsModalProps {
-  node: DiagramNode | null
-  onClose: () => void
+  node: DiagramNode | null;
+  onClose: () => void;
 }
 
 const backdropVariants: Variants = {
@@ -25,7 +25,7 @@ const backdropVariants: Variants = {
       ease: [0.4, 0, 1, 1],
     },
   },
-} as const
+} as const;
 
 const modalVariants: Variants = {
   hidden: {
@@ -56,30 +56,27 @@ const modalVariants: Variants = {
       ease: [0.4, 0, 1, 1],
     },
   },
-} as const
+} as const;
 
-export const NodeDetailsModal: React.FC<NodeDetailsModalProps> = ({
-  node,
-  onClose,
-}) => {
+export const NodeDetailsModal: React.FC<NodeDetailsModalProps> = ({ node, onClose }) => {
   const handleEscape = useCallback(
     (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') onClose();
     },
-    [onClose],
-  )
+    [onClose]
+  );
 
   useEffect(() => {
-    if (!node) return
+    if (!node) return;
 
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', handleEscape)
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleEscape);
 
     return () => {
-      document.body.style.overflow = ''
-      window.removeEventListener('keydown', handleEscape)
-    }
-  }, [node, handleEscape])
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [node, handleEscape]);
 
   return (
     <AnimatePresence mode="wait">
@@ -131,8 +128,8 @@ export const NodeDetailsModal: React.FC<NodeDetailsModalProps> = ({
                 className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border bg-card-bg/85 ${node.tone.softBg} ${node.tone.ring}`}
               >
                 {(() => {
-                  const Icon = node.icon
-                  return <Icon className={`h-[18px] w-[18px] ${node.tone.icon}`} />
+                  const Icon = node.icon;
+                  return <Icon className={`h-[18px] w-[18px] ${node.tone.icon}`} />;
                 })()}
               </div>
 
@@ -171,5 +168,5 @@ export const NodeDetailsModal: React.FC<NodeDetailsModalProps> = ({
         </motion.div>
       )}
     </AnimatePresence>
-  )
-}
+  );
+};

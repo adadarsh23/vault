@@ -1,12 +1,12 @@
-import { Toaster as Sonner } from 'sonner'
-import { CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react'
-import { useMediaQuery } from '@/hooks/use-media-query'
+import { Toaster as Sonner } from 'sonner';
+import { CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 export const Toaster = () => {
-  const isMobile = useMediaQuery('(max-width: 640px)')
-  const position = isMobile ? 'bottom-right' : 'bottom-right'
-  const offset = isMobile ? 12 : 10
-  const gap = isMobile ? 8 : 10
+  const isMobile = useMediaQuery('(max-width: 640px)');
+  const position = isMobile ? 'bottom-right' : 'bottom-right';
+  const offset = isMobile ? 12 : 10;
+  const gap = isMobile ? 8 : 10;
 
   return (
     <Sonner
@@ -38,8 +38,7 @@ export const Toaster = () => {
 
           title: 'text-[12px] leading-tight',
 
-          description:
-            'text-white/75 text-[11px] font-normal mt-1 leading-snug',
+          description: 'text-white/75 text-[11px] font-normal mt-1 leading-snug',
 
           actionButton:
             'bg-white text-black hover:bg-white/90 transition rounded-lg font-semibold px-3 py-1.5 text-[11px]',
@@ -52,17 +51,11 @@ export const Toaster = () => {
         },
       }}
       icons={{
-        success: (
-          <CheckCircle2 className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-emerald-400" />
-        ),
+        success: <CheckCircle2 className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-emerald-400" />,
         info: <Info className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-blue-400" />,
-        warning: (
-          <AlertTriangle className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-amber-400" />
-        ),
-        error: (
-          <AlertCircle className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-red-400" />
-        ),
+        warning: <AlertTriangle className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-amber-400" />,
+        error: <AlertCircle className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-red-400" />,
       }}
     />
-  )
-}
+  );
+};

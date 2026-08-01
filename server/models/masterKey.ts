@@ -1,4 +1,4 @@
-import mongoose, { HydratedDocument, InferSchemaType, Model } from 'mongoose'
+import mongoose, { HydratedDocument, InferSchemaType, Model } from 'mongoose';
 
 /**
  * Schema for encrypted master key storage on cloud
@@ -37,8 +37,8 @@ const encryptedKeySchema = new mongoose.Schema(
       description: 'Version of the encryption key',
     },
   },
-  { _id: false },
-)
+  { _id: false }
+);
 
 const masterKeySchema = new mongoose.Schema(
   {
@@ -71,7 +71,7 @@ const masterKeySchema = new mongoose.Schema(
             changedByIp: { type: String, default: null },
             changedByUserAgent: { type: String, default: null },
           },
-          { _id: false },
+          { _id: false }
         ),
       ],
       default: [],
@@ -114,17 +114,17 @@ const masterKeySchema = new mongoose.Schema(
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date, default: null },
   },
-  { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } },
-)
+  { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } }
+);
 
 /**
  * Indexes for optimization
  */
-masterKeySchema.index({ userId: 1, isActive: 1 })
-masterKeySchema.index({ 'metadata.createdAt': -1 })
+masterKeySchema.index({ userId: 1, isActive: 1 });
+masterKeySchema.index({ 'metadata.createdAt': -1 });
 
-export type MasterKeyType = InferSchemaType<typeof masterKeySchema>
-export type MasterKeyDocument = HydratedDocument<MasterKeyType>
+export type MasterKeyType = InferSchemaType<typeof masterKeySchema>;
+export type MasterKeyDocument = HydratedDocument<MasterKeyType>;
 
 /**
  * Returns a user-specific MasterKey model using a dedicated collection.
@@ -133,14 +133,17 @@ export const getMasterKeyModel = (username: string): Model<MasterKeyType> => {
   if (!username || !username.trim()) {
     throw new Error('Username is required for isolated master keys');
   }
-  
-  const normalized = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+
+  const normalized = username
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '_');
   const collectionName = `${normalized}.${normalized}_master_keys`;
-  
+
   if (mongoose.models[collectionName]) {
     return mongoose.models[collectionName] as Model<MasterKeyType>;
   }
-  
+
   return mongoose.model<MasterKeyType>(collectionName, masterKeySchema, collectionName);
 };
 

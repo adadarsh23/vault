@@ -1,6 +1,6 @@
 type ErrorFallbackProps = {
-  label?: string
-}
+  label?: string;
+};
 
 export function ErrorFallback({
   label = 'Something went wrong while loading this section.',
@@ -28,14 +28,10 @@ export function ErrorFallback({
       shadow-lg
     "
       >
-        <p className="text-base sm:text-lg font-semibold text-text">
-          Unable to continue
-        </p>
+        <p className="text-base sm:text-lg font-semibold text-text">Unable to continue</p>
 
-        <p className="mt-2 text-xs sm:text-sm leading-relaxed text-text/60">
-          {label}
-        </p>
+        <p className="mt-2 text-xs sm:text-sm leading-relaxed text-text/60">{label}</p>
       </div>
     </div>
-  )
+  );
 }

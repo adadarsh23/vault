@@ -1,6 +1,6 @@
 // UI panels
-export { ChatListPanel } from './ChatListPanel'
-export { ChatConversationPanel } from './ChatConversationPanel'
+export { ChatListPanel } from './ChatListPanel';
+export { ChatConversationPanel } from './ChatConversationPanel';
 
 // Types & constants
 export {
@@ -9,7 +9,7 @@ export {
   EMPTY_CONVERSATION,
   getTimerDuration,
   createExpiresAt,
-} from './types'
+} from './types';
 export type {
   DisappearingTimer,
   ChatListFilter,
@@ -25,7 +25,7 @@ export type {
   ConversationPreview,
   ChatConversation,
   QuickReaction,
-} from './types'
+} from './types';
 
 // Chat helpers
 export {
@@ -39,4 +39,4 @@ export {
   getAvatarLabel,
   getSafeExternalHref,
   renderMessageText,
-} from './utils'
+} from './utils';

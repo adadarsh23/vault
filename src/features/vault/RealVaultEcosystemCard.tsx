@@ -1,18 +1,22 @@
-import React, {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
-import { RefreshCw, Plus, Minus, Download, Loader2, Cpu, Activity, Monitor, Server, Gauge } from 'lucide-react'
-import { usePerformanceMetrics } from '../../hooks/usePerformanceMetrics'
-import { toast } from 'sonner'
-import { Card, CardContent, CardHeader } from '../../components/ui/Card'
-import { NodeDetailsModal } from './NodeDetailsModal'
-import { cn } from '../../lib/utils'
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import {
+  RefreshCw,
+  Plus,
+  Minus,
+  Download,
+  Loader2,
+  Cpu,
+  Activity,
+  Monitor,
+  Server,
+  Gauge,
+} from 'lucide-react';
+import { usePerformanceMetrics } from '../../hooks/usePerformanceMetrics';
+import { toast } from 'sonner';
+import { Card, CardContent, CardHeader } from '../../components/ui/Card';
+import { NodeDetailsModal } from './NodeDetailsModal';
+import { cn } from '../../lib/utils';
 import {
   GRAPH_WIDTH,
   GRAPH_HEIGHT,
@@ -26,58 +30,58 @@ import {
   type VaultCategoryStats,
   type NodePosition,
   type GraphSize,
-} from './ecosystemHelpers'
+} from './ecosystemHelpers';
 
-export type { VaultCategoryStats }
+export type { VaultCategoryStats };
 
 interface RealVaultEcosystemCardProps {
-  itemCount: number
-  categoryStats: VaultCategoryStats
+  itemCount: number;
+  categoryStats: VaultCategoryStats;
 }
 
-export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
-  memo(({ itemCount, categoryStats }) => {
-    const shouldReduceMotion = useReducedMotion()
-    const performance = usePerformanceMetrics()
-    const graphRef = useRef<HTMLDivElement>(null)
+export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> = memo(
+  ({ itemCount, categoryStats }) => {
+    const shouldReduceMotion = useReducedMotion();
+    const performance = usePerformanceMetrics();
+    const graphRef = useRef<HTMLDivElement>(null);
 
     // ─────────────────────────────────────────────
     // Drag / modal safety flags
     // ─────────────────────────────────────────────
-    const dragSuppressRef = useRef(false)
-    const modalSuppressRef = useRef(false) // Used for debouncing modal open
-    const dragOriginRef = useRef<Record<string, NodePosition>>({}) // Used to store node positions before dragging starts
+    const dragSuppressRef = useRef(false);
+    const modalSuppressRef = useRef(false); // Used for debouncing modal open
+    const dragOriginRef = useRef<Record<string, NodePosition>>({}); // Used to store node positions before dragging starts
 
     // ─────────────────────────────────────────────
     // Zoom + Pan (State and Persistence)
     // ─────────────────────────────────────────────
     const [scale, setScale] = useState<number>(() => {
       try {
-        const savedScale = localStorage.getItem('vault_ecosystem_scale')
-        return savedScale ? parseFloat(savedScale) : 1
+        const savedScale = localStorage.getItem('vault_ecosystem_scale');
+        return savedScale ? parseFloat(savedScale) : 1;
       } catch (e) {
-        console.error('Failed to load scale from localStorage', e)
-        return 1
+        console.error('Failed to load scale from localStorage', e);
+        return 1;
       }
-    })
+    });
     const [pan, setPan] = useState<{ x: number; y: number }>(() => {
       try {
-        const savedPan = localStorage.getItem('vault_ecosystem_pan')
-        return savedPan ? JSON.parse(savedPan) : { x: 0, y: 0 }
+        const savedPan = localStorage.getItem('vault_ecosystem_pan');
+        return savedPan ? JSON.parse(savedPan) : { x: 0, y: 0 };
       } catch (e) {
-        console.error('Failed to load pan from localStorage', e)
-        return { x: 0, y: 0 }
+        console.error('Failed to load pan from localStorage', e);
+        return { x: 0, y: 0 };
       }
-    })
-    const isPanning = useRef(false)
-    const panStart = useRef({ x: 0, y: 0 })
-    const panFrameRef = useRef<number | null>(null)
-    const panPendingRef = useRef<{ x: number; y: number } | null>(null)
-    const wheelFrameRef = useRef<number | null>(null)
-    const wheelDeltaRef = useRef(0)
-    const [isResetting, setIsResetting] = useState(false) // For animation smoothing on reset
-    const isMinimapPanning = useRef(false)
-    const [isExporting, setIsExporting] = useState(false) // For export button loading state
+    });
+    const isPanning = useRef(false);
+    const panStart = useRef({ x: 0, y: 0 });
+    const panFrameRef = useRef<number | null>(null);
+    const panPendingRef = useRef<{ x: number; y: number } | null>(null);
+    const wheelFrameRef = useRef<number | null>(null);
+    const wheelDeltaRef = useRef(0);
+    const [isResetting, setIsResetting] = useState(false); // For animation smoothing on reset
+    const isMinimapPanning = useRef(false);
+    const [isExporting, setIsExporting] = useState(false); // For export button loading state
 
     // ─────────────────────────────────────────────
     // Graph size
@@ -85,130 +89,123 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
     const [graphSize, setGraphSize] = useState<GraphSize>({
       width: GRAPH_WIDTH,
       height: GRAPH_HEIGHT,
-    })
+    });
     // ─────────────────────────────────────────────
     // Nodes
     // ─────────────────────────────────────────────
     const nodeTemplates = useMemo(
       () => createNodes(itemCount, categoryStats),
-      [itemCount, categoryStats],
-    )
+      [itemCount, categoryStats]
+    );
 
     const defaultPositions = useMemo(
       () =>
-        Object.fromEntries(
-          nodeTemplates.map((n) => [n.id, { x: n.x, y: n.y }]),
-        ) as Record<string, NodePosition>,
-      [nodeTemplates],
-    )
+        Object.fromEntries(nodeTemplates.map((n) => [n.id, { x: n.x, y: n.y }])) as Record<
+          string,
+          NodePosition
+        >,
+      [nodeTemplates]
+    );
 
-    const [positions, setPositions] = useState<Record<string, NodePosition>>(
-      () => {
-        try {
-          const saved = localStorage.getItem('vault_ecosystem_positions')
-          if (saved) {
-            // Merge with defaults so new nodes still get an initial placement
-            return { ...defaultPositions, ...JSON.parse(saved) }
-          }
-        } catch (e) {
-          console.error('Failed to load node positions', e)
+    const [positions, setPositions] = useState<Record<string, NodePosition>>(() => {
+      try {
+        const saved = localStorage.getItem('vault_ecosystem_positions');
+        if (saved) {
+          // Merge with defaults so new nodes still get an initial placement
+          return { ...defaultPositions, ...JSON.parse(saved) };
         }
-        return defaultPositions
-      },
-    )
+      } catch (e) {
+        console.error('Failed to load node positions', e);
+      }
+      return defaultPositions;
+    });
 
-    const [activeNodeId, setActiveNodeId] = useState<string | null>(null)
-    const [focusedNode, setFocusedNode] = useState<string | null>(null)
+    const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
+    const [focusedNode, setFocusedNode] = useState<string | null>(null);
 
-    const [layoutResetKey, setLayoutResetKey] = useState(0)
+    const [layoutResetKey, setLayoutResetKey] = useState(0);
 
     // ─────────────────────────────────────────────
     // Resize observer
     // ─────────────────────────────────────────────
     useEffect(() => {
-      const el = graphRef.current
-      if (!el || typeof ResizeObserver === 'undefined') return
+      const el = graphRef.current;
+      if (!el || typeof ResizeObserver === 'undefined') return;
 
       const ro = new ResizeObserver(([entry]) => {
-        const { width, height } = entry.contentRect
+        const { width, height } = entry.contentRect;
         setGraphSize({
           width: width || GRAPH_WIDTH,
           height: height || GRAPH_HEIGHT,
-        })
-      })
+        });
+      });
 
-      ro.observe(el)
-      return () => ro.disconnect()
-    }, [])
+      ro.observe(el);
+      return () => ro.disconnect();
+    }, []);
 
     // ─────────────────────────────────────────────
     // Persist positions to local storage
     // ─────────────────────────────────────────────
     useEffect(() => {
       try {
-        localStorage.setItem(
-          'vault_ecosystem_positions',
-          JSON.stringify(positions),
-        )
+        localStorage.setItem('vault_ecosystem_positions', JSON.stringify(positions));
       } catch (e) {
-        console.error('Failed to save node positions', e)
+        console.error('Failed to save node positions', e);
       }
-    }, [positions])
+    }, [positions]);
 
     // ─────────────────────────────────────────────
     // Persist scale to local storage
     // ─────────────────────────────────────────────
     useEffect(() => {
       try {
-        localStorage.setItem('vault_ecosystem_scale', String(scale))
+        localStorage.setItem('vault_ecosystem_scale', String(scale));
       } catch (e) {
-        console.error('Failed to save scale to localStorage', e)
+        console.error('Failed to save scale to localStorage', e);
       }
-    }, [scale])
+    }, [scale]);
 
     // ─────────────────────────────────────────────
     // Persist pan to local storage
     // ─────────────────────────────────────────────
     useEffect(() => {
       try {
-        localStorage.setItem('vault_ecosystem_pan', JSON.stringify(pan))
+        localStorage.setItem('vault_ecosystem_pan', JSON.stringify(pan));
       } catch (e) {
-        console.error('Failed to save pan to localStorage', e)
+        console.error('Failed to save pan to localStorage', e);
       }
-    }, [pan])
+    }, [pan]);
 
     useEffect(
       () => () => {
         if (panFrameRef.current !== null) {
-          cancelAnimationFrame(panFrameRef.current)
+          cancelAnimationFrame(panFrameRef.current);
         }
         if (wheelFrameRef.current !== null) {
-          cancelAnimationFrame(wheelFrameRef.current)
+          cancelAnimationFrame(wheelFrameRef.current);
         }
       },
-      [],
-    )
+      []
+    );
 
     // ─────────────────────────────────────────────
     // Sync positions on item change
     // ─────────────────────────────────────────────
     useEffect(() => {
       setPositions((prev) => {
-        const next = { ...defaultPositions }
+        const next = { ...defaultPositions };
         for (const n of nodeTemplates) {
-          if (prev[n.id]) next[n.id] = prev[n.id]
+          if (prev[n.id]) next[n.id] = prev[n.id];
         }
-        return next
-      })
-    }, [defaultPositions, nodeTemplates])
+        return next;
+      });
+    }, [defaultPositions, nodeTemplates]);
 
     // ─────────────────────────────────────────────
     // Derived
     // ─────────────────────────────────────────────
-    const nodeDimensions = useMemo(
-      () => getNodeDimensions(graphSize.width),
-      [graphSize.width],
-    )
+    const nodeDimensions = useMemo(() => getNodeDimensions(graphSize.width), [graphSize.width]);
 
     const nodes = useMemo(
       () =>
@@ -216,302 +213,288 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
           ...n,
           ...(positions[n.id] ?? { x: n.x, y: n.y }),
         })),
-      [nodeTemplates, positions],
-    )
+      [nodeTemplates, positions]
+    );
 
     const activeNode = useMemo(
       () => nodes.find((n) => n.id === activeNodeId) ?? null,
-      [nodes, activeNodeId],
-    )
+      [nodes, activeNodeId]
+    );
 
-    const { width: gsW, height: gsH } = graphSize
-    const { width: ndW, height: ndH } = nodeDimensions
-    const canvasPadding = useMemo(() => getCanvasPadding(gsW), [gsW])
+    const { width: gsW, height: gsH } = graphSize;
+    const { width: ndW, height: ndH } = nodeDimensions;
+    const canvasPadding = useMemo(() => getCanvasPadding(gsW), [gsW]);
 
     // ─────────────────────────────────────────────
     // Position update
     // ─────────────────────────────────────────────
     const updateNodePositionFromOffset = useCallback(
       (nodeId: string, offset: { x: number; y: number }) => {
-        const node = dragOriginRef.current[nodeId] ?? positions[nodeId]
-        const container = graphRef.current
-        if (!node || !container) return
+        const node = dragOriginRef.current[nodeId] ?? positions[nodeId];
+        const container = graphRef.current;
+        if (!node || !container) return;
 
-        const availW = container.clientWidth - ndW - canvasPadding * 2
-        const availH = container.clientHeight - ndH - canvasPadding * 2
+        const availW = container.clientWidth - ndW - canvasPadding * 2;
+        const availH = container.clientHeight - ndH - canvasPadding * 2;
 
-        const left =
-          canvasPadding + (node.x / 100) * Math.max(availW, 1) + offset.x
-        const top =
-          canvasPadding + (node.y / 100) * Math.max(availH, 1) + offset.y
+        const left = canvasPadding + (node.x / 100) * Math.max(availW, 1) + offset.x;
+        const top = canvasPadding + (node.y / 100) * Math.max(availH, 1) + offset.y;
 
-        const x = clamp(
-          ((left - canvasPadding) / Math.max(availW, 1)) * 100,
-          0,
-          100,
-        )
-        const y = clamp(
-          ((top - canvasPadding) / Math.max(availH, 1)) * 100,
-          0,
-          100,
-        )
+        const x = clamp(((left - canvasPadding) / Math.max(availW, 1)) * 100, 0, 100);
+        const y = clamp(((top - canvasPadding) / Math.max(availH, 1)) * 100, 0, 100);
 
-        setPositions((prev) => ({ ...prev, [nodeId]: { x, y } }))
+        setPositions((prev) => ({ ...prev, [nodeId]: { x, y } }));
       },
-      [positions, ndW, ndH, canvasPadding],
-    )
+      [positions, ndW, ndH, canvasPadding]
+    );
 
     // ─────────────────────────────────────────────
     // Drag handlers
     // ─────────────────────────────────────────────
     const handleDragStart = useCallback(
       (id: string) => {
-        dragOriginRef.current[id] = positions[id]
+        dragOriginRef.current[id] = positions[id];
       },
-      [positions],
-    )
+      [positions]
+    );
 
     const handleDrag = useCallback(
       (id: string, info: { offset: { x: number; y: number } }) => {
-        updateNodePositionFromOffset(id, info.offset)
+        updateNodePositionFromOffset(id, info.offset);
       },
-      [updateNodePositionFromOffset],
-    )
+      [updateNodePositionFromOffset]
+    );
 
     const handleDragEnd = useCallback(
       (id: string, _e: any, info: { offset: { x: number; y: number } }) => {
-        updateNodePositionFromOffset(id, info.offset)
-        delete dragOriginRef.current[id]
+        updateNodePositionFromOffset(id, info.offset);
+        delete dragOriginRef.current[id];
 
-        dragSuppressRef.current = true
-        setTimeout(() => (dragSuppressRef.current = false), 120)
+        dragSuppressRef.current = true;
+        setTimeout(() => (dragSuppressRef.current = false), 120);
       },
-      [updateNodePositionFromOffset],
-    )
+      [updateNodePositionFromOffset]
+    );
 
     // ─────────────────────────────────────────────
     // Node click + focus
     // ─────────────────────────────────────────────
     const handleNodeClick = useCallback((id: string) => {
       if (!dragSuppressRef.current && !modalSuppressRef.current) {
-        setActiveNodeId(id)
-        setFocusedNode(id)
+        setActiveNodeId(id);
+        setFocusedNode(id);
       }
-    }, [])
+    }, []);
 
     const handleCloseModal = useCallback(() => {
-      modalSuppressRef.current = true
-      setActiveNodeId(null)
-      setTimeout(() => (modalSuppressRef.current = false), 150)
-    }, [])
+      modalSuppressRef.current = true;
+      setActiveNodeId(null);
+      setTimeout(() => (modalSuppressRef.current = false), 150);
+    }, []);
 
     // ─────────────────────────────────────────────
     // Reset layout
     // ─────────────────────────────────────────────
     const handleResetLayout = useCallback(() => {
-      dragSuppressRef.current = true
-      modalSuppressRef.current = true
+      dragSuppressRef.current = true;
+      modalSuppressRef.current = true;
 
-      setIsResetting(true)
-      setActiveNodeId(null)
-      setFocusedNode(null)
-      setPositions({ ...defaultPositions })
-      setScale(1)
-      setPan({ x: 0, y: 0 })
+      setIsResetting(true);
+      setActiveNodeId(null);
+      setFocusedNode(null);
+      setPositions({ ...defaultPositions });
+      setScale(1);
+      setPan({ x: 0, y: 0 });
 
-      setLayoutResetKey((k) => k + 1)
+      setLayoutResetKey((k) => k + 1);
 
       setTimeout(() => {
-        setIsResetting(false)
-        dragSuppressRef.current = false
-        modalSuppressRef.current = false
-      }, 400)
-    }, [defaultPositions])
+        setIsResetting(false);
+        dragSuppressRef.current = false;
+        modalSuppressRef.current = false;
+      }, 400);
+    }, [defaultPositions]);
 
     // ─────────────────────────────────────────────
     // Export Diagram
     // ─────────────────────────────────────────────
     const handleExportImage = useCallback(async () => {
-      if (!graphRef.current || isExporting) return
-      setIsExporting(true)
+      if (!graphRef.current || isExporting) return;
+      setIsExporting(true);
       try {
         // Dynamically import to keep initial bundle size small
-        const { toBlob, toPng } = await import('html-to-image')
+        const { toBlob, toPng } = await import('html-to-image');
         const exportOptions = {
           quality: 1,
           cacheBust: true,
           pixelRatio: Math.min(window.devicePixelRatio || 1, 2), // Crisp export without oversized files
           filter: (node: Node) =>
-            !(
-              node instanceof HTMLElement &&
-              node.dataset.exportIgnore === 'true'
-            ),
-        }
+            !(node instanceof HTMLElement && node.dataset.exportIgnore === 'true'),
+        };
 
-        const blob = await toBlob(graphRef.current, exportOptions)
-        let href = ''
+        const blob = await toBlob(graphRef.current, exportOptions);
+        let href = '';
         if (blob) {
-          href = URL.createObjectURL(blob)
+          href = URL.createObjectURL(blob);
         } else {
-          const dataUrl = await toPng(graphRef.current, exportOptions)
-          href = dataUrl
+          const dataUrl = await toPng(graphRef.current, exportOptions);
+          href = dataUrl;
         }
 
-        const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
-        const link = document.createElement('a')
-        link.download = `vault-ecosystem-${timestamp}.png`
-        link.href = href
-        link.rel = 'noopener'
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        const link = document.createElement('a');
+        link.download = `vault-ecosystem-${timestamp}.png`;
+        link.href = href;
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
         if (href.startsWith('blob:')) {
-          setTimeout(() => URL.revokeObjectURL(href), 0)
+          setTimeout(() => URL.revokeObjectURL(href), 0);
         }
-        toast.success('Diagram exported successfully')
+        toast.success('Diagram exported successfully');
       } catch (error) {
-        console.error('Failed to export image', error)
-        toast.error('Failed to export diagram')
+        console.error('Failed to export image', error);
+        toast.error('Failed to export diagram');
       } finally {
-        setIsExporting(false)
+        setIsExporting(false);
       }
-    }, [isExporting])
+    }, [isExporting]);
 
     // ─────────────────────────────────────────────
     // Zoom + Pan handlers
     // ─────────────────────────────────────────────
     const handleZoomStep = useCallback((delta: number) => {
-      setIsResetting(true)
-      setScale((s) => clamp(s + delta, 0.6, 2))
-      setTimeout(() => setIsResetting(false), 400)
-    }, [])
+      setIsResetting(true);
+      setScale((s) => clamp(s + delta, 0.6, 2));
+      setTimeout(() => setIsResetting(false), 400);
+    }, []);
 
     const flushWheelZoom = useCallback(() => {
-      wheelFrameRef.current = null
-      const accumulatedDelta = wheelDeltaRef.current
-      wheelDeltaRef.current = 0
-      if (!accumulatedDelta) return
+      wheelFrameRef.current = null;
+      const accumulatedDelta = wheelDeltaRef.current;
+      wheelDeltaRef.current = 0;
+      if (!accumulatedDelta) return;
 
-      const sensitivity = shouldReduceMotion ? 0.00075 : 0.0011
-      setScale((s) => clamp(s + -accumulatedDelta * sensitivity, 0.6, 2))
-    }, [shouldReduceMotion])
+      const sensitivity = shouldReduceMotion ? 0.00075 : 0.0011;
+      setScale((s) => clamp(s + -accumulatedDelta * sensitivity, 0.6, 2));
+    }, [shouldReduceMotion]);
 
-    const handleWheel = useCallback((e: React.WheelEvent) => {
-      e.preventDefault()
-      wheelDeltaRef.current += e.deltaY
-      if (wheelFrameRef.current === null) {
-        wheelFrameRef.current = requestAnimationFrame(flushWheelZoom)
-      }
-    }, [flushWheelZoom])
+    const handleWheel = useCallback(
+      (e: React.WheelEvent) => {
+        e.preventDefault();
+        wheelDeltaRef.current += e.deltaY;
+        if (wheelFrameRef.current === null) {
+          wheelFrameRef.current = requestAnimationFrame(flushWheelZoom);
+        }
+      },
+      [flushWheelZoom]
+    );
 
     const handlePointerDown = (e: React.PointerEvent) => {
-      isPanning.current = true
+      isPanning.current = true;
       panStart.current = {
         x: e.clientX - pan.x,
         y: e.clientY - pan.y,
-      }
-    }
+      };
+    };
 
     const flushPanFrame = useCallback(() => {
-      panFrameRef.current = null
-      const nextPan = panPendingRef.current
-      panPendingRef.current = null
-      if (!nextPan) return
-      setPan(nextPan)
-    }, [])
+      panFrameRef.current = null;
+      const nextPan = panPendingRef.current;
+      panPendingRef.current = null;
+      if (!nextPan) return;
+      setPan(nextPan);
+    }, []);
 
     const handlePointerMove = (e: React.PointerEvent) => {
-      if (!isPanning.current) return
+      if (!isPanning.current) return;
 
-      const rawX = e.clientX - panStart.current.x
-      const rawY = e.clientY - panStart.current.y
+      const rawX = e.clientX - panStart.current.x;
+      const rawY = e.clientY - panStart.current.y;
 
-      const limitX = gsW * scale * 0.6
-      const limitY = gsH * scale * 0.6
+      const limitX = gsW * scale * 0.6;
+      const limitY = gsH * scale * 0.6;
 
-      const clampedX = clamp(rawX, -limitX, limitX)
-      const clampedY = clamp(rawY, -limitY, limitY)
+      const clampedX = clamp(rawX, -limitX, limitX);
+      const clampedY = clamp(rawY, -limitY, limitY);
 
       // Prevent cursor slip when hitting the boundary wall
-      if (rawX !== clampedX) panStart.current.x = e.clientX - clampedX
-      if (rawY !== clampedY) panStart.current.y = e.clientY - clampedY
+      if (rawX !== clampedX) panStart.current.x = e.clientX - clampedX;
+      if (rawY !== clampedY) panStart.current.y = e.clientY - clampedY;
 
       panPendingRef.current = {
         x: clampedX,
         y: clampedY,
-      }
+      };
       if (panFrameRef.current === null) {
-        panFrameRef.current = requestAnimationFrame(flushPanFrame)
+        panFrameRef.current = requestAnimationFrame(flushPanFrame);
       }
-    }
+    };
 
     const handlePointerUp = () => {
-      isPanning.current = false
-      const pendingPan = panPendingRef.current
+      isPanning.current = false;
+      const pendingPan = panPendingRef.current;
       if (pendingPan) {
-        setPan(pendingPan)
-        panPendingRef.current = null
+        setPan(pendingPan);
+        panPendingRef.current = null;
       }
-    }
+    };
 
     // ─────────────────────────────────────────────
     // Minimap logic
     // ─────────────────────────────────────────────
-    const minimapW = 140
-    const minimapScale = minimapW / Math.max(gsW, 1)
-    const minimapH = gsH * minimapScale
+    const minimapW = 140;
+    const minimapScale = minimapW / Math.max(gsW, 1);
+    const minimapH = gsH * minimapScale;
 
-    const vpW = minimapW / scale
-    const vpH = minimapH / scale
-    const vpX = minimapW / 2 - vpW / 2 - (pan.x / scale) * minimapScale
-    const vpY = minimapH / 2 - vpH / 2 - (pan.y / scale) * minimapScale
+    const vpW = minimapW / scale;
+    const vpH = minimapH / scale;
+    const vpX = minimapW / 2 - vpW / 2 - (pan.x / scale) * minimapScale;
+    const vpY = minimapH / 2 - vpH / 2 - (pan.y / scale) * minimapScale;
 
     const updatePanFromMinimap = useCallback(
       (e: React.PointerEvent<HTMLDivElement>) => {
-        const rect = e.currentTarget.getBoundingClientRect()
-        const mouseX = clamp(e.clientX - rect.left, 0, minimapW)
-        const mouseY = clamp(e.clientY - rect.top, 0, minimapH)
+        const rect = e.currentTarget.getBoundingClientRect();
+        const mouseX = clamp(e.clientX - rect.left, 0, minimapW);
+        const mouseY = clamp(e.clientY - rect.top, 0, minimapH);
 
-        const nextPanX = (minimapW / 2 - mouseX) * (scale / minimapScale)
-        const nextPanY = (minimapH / 2 - mouseY) * (scale / minimapScale)
+        const nextPanX = (minimapW / 2 - mouseX) * (scale / minimapScale);
+        const nextPanY = (minimapH / 2 - mouseY) * (scale / minimapScale);
 
         setPan({
           x: clamp(nextPanX, -gsW * scale * 0.6, gsW * scale * 0.6),
           y: clamp(nextPanY, -gsH * scale * 0.6, gsH * scale * 0.6),
-        })
+        });
       },
-      [gsW, gsH, scale],
-    )
+      [gsW, gsH, scale]
+    );
 
-    const handleMinimapPointerDown = (
-      e: React.PointerEvent<HTMLDivElement>,
-    ) => {
-      e.stopPropagation()
-      e.currentTarget.setPointerCapture(e.pointerId)
-      isMinimapPanning.current = true
-      updatePanFromMinimap(e)
-    }
-    const handleMinimapPointerMove = (
-      e: React.PointerEvent<HTMLDivElement>,
-    ) => {
-      if (!isMinimapPanning.current) return
-      e.stopPropagation()
-      updatePanFromMinimap(e)
-    }
+    const handleMinimapPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+      e.stopPropagation();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      isMinimapPanning.current = true;
+      updatePanFromMinimap(e);
+    };
+    const handleMinimapPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!isMinimapPanning.current) return;
+      e.stopPropagation();
+      updatePanFromMinimap(e);
+    };
     const handleMinimapPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-      e.stopPropagation()
-      e.currentTarget.releasePointerCapture(e.pointerId)
-      isMinimapPanning.current = false
-    }
+      e.stopPropagation();
+      e.currentTarget.releasePointerCapture(e.pointerId);
+      isMinimapPanning.current = false;
+    };
 
     // ─────────────────────────────────────────────
     // Edge computation (optimized)
     // ─────────────────────────────────────────────
     const edges = useMemo(() => {
       return EDGES.map((edge) => {
-        const from = nodes.find((n) => n.id === edge.from)
-        const to = nodes.find((n) => n.id === edge.to)
-        if (!from || !to) return null
+        const from = nodes.find((n) => n.id === edge.from);
+        const to = nodes.find((n) => n.id === edge.to);
+        if (!from || !to) return null;
 
         return {
           ...edge,
@@ -520,25 +503,25 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
             to,
             { width: gsW, height: gsH },
             { width: ndW, height: ndH },
-            canvasPadding,
+            canvasPadding
           ),
-        }
-      })
+        };
+      });
     }, [nodes, gsW, gsH, ndW, ndH, canvasPadding]).filter(
-      (edge): edge is NonNullable<typeof edge> => edge !== null,
-    )
+      (edge): edge is NonNullable<typeof edge> => edge !== null
+    );
 
-    const graphMinHeight = gsW < 480 ? 320 : gsW < 640 ? 360 : 420
+    const graphMinHeight = gsW < 480 ? 320 : gsW < 640 ? 360 : 420;
     const graphTransformTransition = shouldReduceMotion
       ? { duration: 0 }
       : isResetting
         ? { type: 'tween' as const, ease: 'easeInOut' as const, duration: 0.38 }
-        : { type: 'spring' as const, stiffness: 165, damping: 24, mass: 0.42 }
+        : { type: 'spring' as const, stiffness: 165, damping: 24, mass: 0.42 };
     const minimapViewportTransition = shouldReduceMotion
       ? { duration: 0 }
       : isResetting
         ? { type: 'tween' as const, ease: 'easeOut' as const, duration: 0.32 }
-        : { type: 'spring' as const, stiffness: 210, damping: 30, mass: 0.38 }
+        : { type: 'spring' as const, stiffness: 210, damping: 30, mass: 0.38 };
 
     // ─────────────────────────────────────────────
     // Render
@@ -574,7 +557,9 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                     title={`System Memory: ${performance.memoryUsed ? `Usage ${performance.memoryUsed}MB` : `Available ${performance.deviceMemory}GB`}`}
                   >
                     <Server className="h-3 w-3 text-violet-400" />
-                    {performance.memoryUsed ? `${performance.memoryUsed}M` : `${performance.deviceMemory}G`}
+                    {performance.memoryUsed
+                      ? `${performance.memoryUsed}M`
+                      : `${performance.deviceMemory}G`}
                   </div>
 
                   <div
@@ -598,7 +583,7 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                           ? 'text-emerald-400'
                           : performance.fps > 30
                             ? 'text-amber-400'
-                            : 'text-rose-400',
+                            : 'text-rose-400'
                       )}
                     />
                     {performance.fps} FPS
@@ -609,10 +594,16 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                       className="inline-flex items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2 py-0.5 text-[10px] font-bold tracking-tight text-text/70"
                       title="End-to-end Network Latency"
                     >
-                      <div className={cn(
-                        'h-1.5 w-1.5 rounded-full animate-pulse',
-                        performance.ping < 50 ? 'bg-emerald-500' : performance.ping < 150 ? 'bg-amber-500' : 'bg-rose-500',
-                      )} />
+                      <div
+                        className={cn(
+                          'h-1.5 w-1.5 rounded-full animate-pulse',
+                          performance.ping < 50
+                            ? 'bg-emerald-500'
+                            : performance.ping < 150
+                              ? 'bg-amber-500'
+                              : 'bg-rose-500'
+                        )}
+                      />
                       {performance.ping}ms
                     </div>
                   )}
@@ -623,8 +614,8 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                 <button
                   type="button"
                   onPointerDown={(event) => {
-                    event.preventDefault()
-                    event.stopPropagation()
+                    event.preventDefault();
+                    event.stopPropagation();
                   }}
                   onClick={handleExportImage}
                   disabled={isExporting}
@@ -633,10 +624,7 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                   title="Export diagram as PNG"
                 >
                   {isExporting ? (
-                    <Loader2
-                      className="h-3.5 w-3.5 animate-spin"
-                      aria-hidden="true"
-                    />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                   ) : (
                     <Download className="h-3.5 w-3.5" aria-hidden="true" />
                   )}
@@ -644,8 +632,8 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                 <button
                   type="button"
                   onPointerDown={(event) => {
-                    event.preventDefault()
-                    event.stopPropagation()
+                    event.preventDefault();
+                    event.stopPropagation();
                   }}
                   onClick={handleResetLayout}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-card-border bg-text/5 text-text/65 transition-colors hover:bg-text/10 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/30"
@@ -721,24 +709,12 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                           className="text-text/10"
                         />
                       </pattern>
-                      <linearGradient
-                        id="ecosystem-edge"
-                        x1="0%"
-                        y1="0%"
-                        x2="100%"
-                        y2="0%"
-                      >
+                      <linearGradient id="ecosystem-edge" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="rgba(0,0,0,0.18)" />
                         <stop offset="50%" stopColor="rgba(255,255,255,0.95)" />
                         <stop offset="100%" stopColor="rgba(0,0,0,0.18)" />
                       </linearGradient>
-                      <filter
-                        id="ecosystem-edge-glow"
-                        x="-30%"
-                        y="-30%"
-                        width="160%"
-                        height="160%"
-                      >
+                      <filter id="ecosystem-edge-glow" x="-30%" y="-30%" width="160%" height="160%">
                         <feGaussianBlur stdDeviation="2.2" result="blur" />
                         <feMerge>
                           <feMergeNode in="blur" />
@@ -757,34 +733,31 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                     />
 
                     {edges.map((edge, i) => {
-                      const { start, end } = edge.anchors
-                      const joinOffset = 6
+                      const { start, end } = edge.anchors;
+                      const joinOffset = 6;
                       const startJoin = {
                         x: start.x - start.normalX * joinOffset,
                         y: start.y - start.normalY * joinOffset,
-                      }
+                      };
                       const endJoin = {
                         x: end.x - end.normalX * joinOffset,
                         y: end.y - end.normalY * joinOffset,
-                      }
+                      };
                       const controlDistance = Math.max(
                         32,
                         Math.min(
                           96,
-                          Math.hypot(
-                            endJoin.x - startJoin.x,
-                            endJoin.y - startJoin.y,
-                          ) * 0.35,
-                        ),
-                      )
+                          Math.hypot(endJoin.x - startJoin.x, endJoin.y - startJoin.y) * 0.35
+                        )
+                      );
                       const cp1 = {
                         x: startJoin.x + start.normalX * controlDistance,
                         y: startJoin.y + start.normalY * controlDistance,
-                      }
+                      };
                       const cp2 = {
                         x: endJoin.x + end.normalX * controlDistance,
                         y: endJoin.y + end.normalY * controlDistance,
-                      }
+                      };
 
                       return (
                         <g key={edge.id}>
@@ -810,9 +783,9 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                               shouldReduceMotion
                                 ? { opacity: 0.9 }
                                 : {
-                                  opacity: [0.75, 1, 0.75],
-                                  strokeDashoffset: [0, -22],
-                                }
+                                    opacity: [0.75, 1, 0.75],
+                                    strokeDashoffset: [0, -22],
+                                  }
                             }
                             transition={{
                               duration: 3.8,
@@ -822,22 +795,22 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                             }}
                           />
                         </g>
-                      )
+                      );
                     })}
                   </svg>
 
                   {/* Draggable nodes */}
                   {nodes.map((node, i) => {
-                    const Icon = node.icon
-                    const isFocused = focusedNode === node.id
-                    const isActive = activeNodeId === node.id
-                    const isHighlighted = isFocused || isActive
+                    const Icon = node.icon;
+                    const isFocused = focusedNode === node.id;
+                    const isActive = activeNodeId === node.id;
+                    const isHighlighted = isFocused || isActive;
                     const { left, top } = getNodePixelPosition(
                       node,
                       { width: gsW, height: gsH },
                       nodeDimensions,
-                      canvasPadding,
-                    )
+                      canvasPadding
+                    );
 
                     return (
                       <motion.button
@@ -867,10 +840,7 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                         animate={{
                           opacity: 1,
                           y: 0,
-                          scale:
-                            !shouldReduceMotion && isHighlighted
-                              ? 1.018
-                              : 1,
+                          scale: !shouldReduceMotion && isHighlighted ? 1.018 : 1,
                         }}
                         transition={{
                           delay: i * 0.045,
@@ -881,7 +851,7 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                         }}
                         className={cn(
                           'absolute cursor-grab active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/30',
-                          isHighlighted && 'z-20',
+                          isHighlighted && 'z-20'
                         )}
                         style={{ left, top, width: ndW, height: ndH }}
                       >
@@ -890,7 +860,7 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                             'group/node relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-card-border bg-card-bg/90 p-3 shadow-[0_24px_60px_-32px_rgba(15,23,42,0.34)] backdrop-blur-2xl transition-all duration-300 hover:border-text/15 hover:shadow-[0_28px_70px_-34px_rgba(15,23,42,0.4)] ring-1 transform-gpu sm:rounded-[1.55rem] sm:p-4 dark:border-white/10 dark:bg-black/50',
                             node.tone.ring,
                             isHighlighted &&
-                            'border-text/25 shadow-[0_30px_80px_-34px_rgba(15,23,42,0.52)] ring-2 ring-white/10',
+                              'border-text/25 shadow-[0_30px_80px_-34px_rgba(15,23,42,0.52)] ring-2 ring-white/10'
                           )}
                         >
                           {/* {isHighlighted && !shouldReduceMotion && (
@@ -967,7 +937,7 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                           </div>
                         </div>
                       </motion.button>
-                    )
+                    );
                   })}
                 </motion.div>
 
@@ -978,8 +948,7 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                   style={{
                     width: minimapW,
                     height: minimapH,
-                    opacity:
-                      scale > 1.05 || pan.x !== 0 || pan.y !== 0 ? 0.9 : 0.3,
+                    opacity: scale > 1.05 || pan.x !== 0 || pan.y !== 0 ? 0.9 : 0.3,
                   }}
                   onPointerDown={handleMinimapPointerDown}
                   onPointerMove={handleMinimapPointerMove}
@@ -995,8 +964,8 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                       type="button"
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => {
-                        e.stopPropagation()
-                        handleZoomStep(0.25)
+                        e.stopPropagation();
+                        handleZoomStep(0.25);
                       }}
                       className="flex h-6 w-6 items-center justify-center rounded-md border border-card-border bg-text/10 text-text/75 shadow-sm transition-colors hover:bg-text/15 hover:text-text"
                       aria-label="Zoom in"
@@ -1008,8 +977,8 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                       type="button"
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => {
-                        e.stopPropagation()
-                        handleZoomStep(-0.25)
+                        e.stopPropagation();
+                        handleZoomStep(-0.25);
                       }}
                       className="flex h-6 w-6 items-center justify-center rounded-md border border-card-border bg-text/10 text-text/75 shadow-sm transition-colors hover:bg-text/15 hover:text-text"
                       aria-label="Zoom out"
@@ -1024,17 +993,18 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                       node,
                       { width: gsW, height: gsH },
                       nodeDimensions,
-                      canvasPadding,
-                    )
-                    const isActive = node.id === focusedNode
+                      canvasPadding
+                    );
+                    const isActive = node.id === focusedNode;
 
                     return (
                       <div
                         key={`minimap-${node.id}`}
-                        className={`absolute rounded-[2px] transition-all duration-300 ${isActive
-                          ? 'z-10 scale-[1.35] bg-white opacity-100 shadow-[0_0_8px_rgba(255,255,255,0.9)] ring-1 ring-white/50'
-                          : `bg-current opacity-70 ${node.tone.icon}`
-                          }`}
+                        className={`absolute rounded-[2px] transition-all duration-300 ${
+                          isActive
+                            ? 'z-10 scale-[1.35] bg-white opacity-100 shadow-[0_0_8px_rgba(255,255,255,0.9)] ring-1 ring-white/50'
+                            : `bg-current opacity-70 ${node.tone.icon}`
+                        }`}
                         style={{
                           left: parseFloat(String(left)) * minimapScale,
                           top: parseFloat(String(top)) * minimapScale,
@@ -1042,7 +1012,7 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
                           height: Math.max(ndH * minimapScale, 3),
                         }}
                       />
-                    )
+                    );
                   })}
 
                   <motion.div
@@ -1057,15 +1027,16 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> =
             </div>
 
             <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-text/40">
-              Drag nodes to reorganize, tap any node for details, and scroll on
-              smaller screens to explore the full graph.
+              Drag nodes to reorganize, tap any node for details, and scroll on smaller screens to
+              explore the full graph.
             </p>
           </CardContent>
         </Card>
 
         <NodeDetailsModal node={activeNode} onClose={handleCloseModal} />
       </>
-    )
-  })
+    );
+  }
+);
 
-RealVaultEcosystemCard.displayName = 'RealVaultEcosystemCard'
+RealVaultEcosystemCard.displayName = 'RealVaultEcosystemCard';

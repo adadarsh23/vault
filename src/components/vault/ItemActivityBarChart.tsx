@@ -1,5 +1,5 @@
-import React from 'react'
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
+import React from 'react';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import {
   Activity,
   BarChart3,
@@ -8,53 +8,44 @@ import {
   TrendingDown,
   Sparkles,
   PieChart,
-} from 'lucide-react'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../ui/Card'
-import { Button } from '../ui/Button'
-import { cn } from '../../lib/utils'
-import type { VaultItem } from '../../lib/storage'
+} from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { cn } from '../../lib/utils';
+import type { VaultItem } from '../../lib/storage';
 
-type RangeOption = 7 | 14 | 28 | 48 | 90 | 180
-type ChartMode = 'bar' | 'line' | 'pie'
+type RangeOption = 7 | 14 | 28 | 48 | 90 | 180;
+type ChartMode = 'bar' | 'line' | 'pie';
 
-const CHART_HEIGHT = 288
-const CHART_TOP_PADDING = 38
-const CHART_BOTTOM_PADDING = 44
-const CHART_SIDE_PADDING = 12
+const CHART_HEIGHT = 288;
+const CHART_TOP_PADDING = 38;
+const CHART_BOTTOM_PADDING = 44;
+const CHART_SIDE_PADDING = 12;
 
-const RANGE_OPTIONS: RangeOption[] = [7, 14, 28, 48, 90, 180]
+const RANGE_OPTIONS: RangeOption[] = [7, 14, 28, 48, 90, 180];
 
 interface ItemActivityBarChartProps {
-  items: VaultItem[]
-  className?: string
+  items: VaultItem[];
+  className?: string;
 }
 
-export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
-  items,
-  className,
-}) => {
-  const [rangeDays, setRangeDays] = React.useState<RangeOption>(14)
-  const [chartMode, setChartMode] = React.useState<ChartMode>('bar')
-  const [hoveredKey, setHoveredKey] = React.useState<string | null>(null)
-  const [isRangeChanging, startRangeTransition] = React.useTransition()
-  const chartId = React.useId().replace(/:/g, '')
-  const lineGradientId = `item-activity-line-${chartId}`
-  const areaGradientId = `item-activity-area-${chartId}`
+export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ items, className }) => {
+  const [rangeDays, setRangeDays] = React.useState<RangeOption>(14);
+  const [chartMode, setChartMode] = React.useState<ChartMode>('bar');
+  const [hoveredKey, setHoveredKey] = React.useState<string | null>(null);
+  const [isRangeChanging, startRangeTransition] = React.useTransition();
+  const chartId = React.useId().replace(/:/g, '');
+  const lineGradientId = `item-activity-line-${chartId}`;
+  const areaGradientId = `item-activity-area-${chartId}`;
 
   const chartState = React.useMemo(() => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     const buckets = Array.from({ length: rangeDays }, (_, index) => {
-      const date = new Date(today)
-      date.setDate(today.getDate() - (rangeDays - 1 - index))
-      const key = date.toISOString().slice(0, 10)
+      const date = new Date(today);
+      date.setDate(today.getDate() - (rangeDays - 1 - index));
+      const key = date.toISOString().slice(0, 10);
 
       return {
         key,
@@ -79,27 +70,27 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
           month: 'short',
           year: 'numeric',
         }),
-      }
-    })
+      };
+    });
 
-    const bucketMap = new Map(buckets.map((bucket) => [bucket.key, bucket]))
+    const bucketMap = new Map(buckets.map((bucket) => [bucket.key, bucket]));
 
     for (const item of items) {
-      const createdAt = new Date(item.createdAt)
+      const createdAt = new Date(item.createdAt);
       if (Number.isNaN(createdAt.getTime())) {
-        continue
+        continue;
       }
-      createdAt.setHours(0, 0, 0, 0)
-      const bucket = bucketMap.get(createdAt.toISOString().slice(0, 10))
+      createdAt.setHours(0, 0, 0, 0);
+      const bucket = bucketMap.get(createdAt.toISOString().slice(0, 10));
       if (bucket) {
-        bucket.count += 1
+        bucket.count += 1;
       }
     }
 
-    const total = buckets.reduce((sum, bucket) => sum + bucket.count, 0)
-    const peak = Math.max(...buckets.map((bucket) => bucket.count), 0)
-    const average = total === 0 ? 0 : total / buckets.length
-    const activeDays = buckets.filter((bucket) => bucket.count > 0).length
+    const total = buckets.reduce((sum, bucket) => sum + bucket.count, 0);
+    const peak = Math.max(...buckets.map((bucket) => bucket.count), 0);
+    const average = total === 0 ? 0 : total / buckets.length;
+    const activeDays = buckets.filter((bucket) => bucket.count > 0).length;
 
     return {
       buckets,
@@ -107,12 +98,12 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
       total,
       average,
       activeDays,
-    }
-  }, [items, rangeDays])
+    };
+  }, [items, rangeDays]);
 
   const pieData = React.useMemo(() => {
-    const active = chartState.activeDays
-    const inactive = rangeDays - active
+    const active = chartState.activeDays;
+    const inactive = rangeDays - active;
 
     return [
       {
@@ -125,28 +116,28 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
         value: inactive,
         color: '#64748b',
       },
-    ]
-  }, [chartState.activeDays, rangeDays])
+    ];
+  }, [chartState.activeDays, rangeDays]);
 
-  const radius = 85
-  const circumference = 2 * Math.PI * radius
+  const radius = 85;
+  const circumference = 2 * Math.PI * radius;
 
-  let accumulated = 0
+  let accumulated = 0;
 
   const slices = pieData.map((slice) => {
-    const percent = slice.value / rangeDays
-    const dash = percent * circumference
+    const percent = slice.value / rangeDays;
+    const dash = percent * circumference;
 
     const result = {
       ...slice,
       dash,
       offset: accumulated,
-    }
+    };
 
-    accumulated += dash
+    accumulated += dash;
 
-    return result
-  })
+    return result;
+  });
 
   const chartMinWidth =
     rangeDays === 180
@@ -157,56 +148,45 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
           ? 960
           : rangeDays === 28
             ? 720
-            : 560
-  const hoveredIndex = chartState.buckets.findIndex(
-    (bucket) => bucket.key === hoveredKey,
-  )
-  const hoveredBucket =
-    hoveredIndex >= 0 ? chartState.buckets[hoveredIndex] : null
-  const previousBucket =
-    hoveredIndex > 0 ? chartState.buckets[hoveredIndex - 1] : null
+            : 560;
+  const hoveredIndex = chartState.buckets.findIndex((bucket) => bucket.key === hoveredKey);
+  const hoveredBucket = hoveredIndex >= 0 ? chartState.buckets[hoveredIndex] : null;
+  const previousBucket = hoveredIndex > 0 ? chartState.buckets[hoveredIndex - 1] : null;
 
   const averageDiff =
     hoveredBucket && chartState.average > 0
       ? ((hoveredBucket.count - chartState.average) / chartState.average) * 100
-      : 0
+      : 0;
 
   const activityShare =
-    hoveredBucket && chartState.total > 0
-      ? (hoveredBucket.count / chartState.total) * 100
-      : 0
+    hoveredBucket && chartState.total > 0 ? (hoveredBucket.count / chartState.total) * 100 : 0;
 
   const previousDiff =
     hoveredBucket && previousBucket && previousBucket.count > 0
-      ? ((hoveredBucket.count - previousBucket.count) / previousBucket.count) *
-        100
-      : null
+      ? ((hoveredBucket.count - previousBucket.count) / previousBucket.count) * 100
+      : null;
   const linePoints = React.useMemo(() => {
-    const plotWidth = chartMinWidth - CHART_SIDE_PADDING * 2
-    const columnWidth = plotWidth / chartState.buckets.length
-    const drawableHeight =
-      CHART_HEIGHT - CHART_TOP_PADDING - CHART_BOTTOM_PADDING
+    const plotWidth = chartMinWidth - CHART_SIDE_PADDING * 2;
+    const columnWidth = plotWidth / chartState.buckets.length;
+    const drawableHeight = CHART_HEIGHT - CHART_TOP_PADDING - CHART_BOTTOM_PADDING;
 
     return chartState.buckets.map((bucket, index) => {
-      const ratio =
-        chartState.peak <= 0 ? 0 : Math.max(bucket.count / chartState.peak, 0)
-      const x = CHART_SIDE_PADDING + columnWidth * index + columnWidth / 2
-      const y = CHART_TOP_PADDING + (1 - ratio) * drawableHeight
+      const ratio = chartState.peak <= 0 ? 0 : Math.max(bucket.count / chartState.peak, 0);
+      const x = CHART_SIDE_PADDING + columnWidth * index + columnWidth / 2;
+      const y = CHART_TOP_PADDING + (1 - ratio) * drawableHeight;
 
-      return { x, y, count: bucket.count, key: bucket.key }
-    })
-  }, [chartMinWidth, chartState.buckets, chartState.peak])
+      return { x, y, count: bucket.count, key: bucket.key };
+    });
+  }, [chartMinWidth, chartState.buckets, chartState.peak]);
 
   const linePathPoints = React.useMemo(() => {
-    if (linePoints.length === 0) return []
+    if (linePoints.length === 0) return [];
 
-    const [firstPoint] = linePoints
-    const lastPoint = linePoints[linePoints.length - 1]
-    const plotWidth = chartMinWidth - CHART_SIDE_PADDING * 2
+    const [firstPoint] = linePoints;
+    const lastPoint = linePoints[linePoints.length - 1];
+    const plotWidth = chartMinWidth - CHART_SIDE_PADDING * 2;
     const columnHalfWidth =
-      chartState.buckets.length > 0
-        ? plotWidth / chartState.buckets.length / 2
-        : 0
+      chartState.buckets.length > 0 ? plotWidth / chartState.buckets.length / 2 : 0;
 
     return [
       {
@@ -215,51 +195,44 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
       },
       ...linePoints,
       {
-        x: Math.min(
-          lastPoint.x + columnHalfWidth,
-          chartMinWidth - CHART_SIDE_PADDING,
-        ),
+        x: Math.min(lastPoint.x + columnHalfWidth, chartMinWidth - CHART_SIDE_PADDING),
         y: lastPoint.y,
       },
-    ]
-  }, [chartMinWidth, chartState.buckets.length, linePoints])
+    ];
+  }, [chartMinWidth, chartState.buckets.length, linePoints]);
   const linePath = React.useMemo(() => {
-    if (linePathPoints.length === 0) return ''
+    if (linePathPoints.length === 0) return '';
 
     return linePathPoints
       .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`)
-      .join(' ')
-  }, [linePathPoints])
+      .join(' ');
+  }, [linePathPoints]);
   const lineAreaPath = React.useMemo(() => {
-    if (linePathPoints.length === 0) return ''
+    if (linePathPoints.length === 0) return '';
 
-    const baseline = CHART_HEIGHT - CHART_BOTTOM_PADDING
-    const [firstPoint] = linePathPoints
-    const lastPoint = linePathPoints[linePathPoints.length - 1]
+    const baseline = CHART_HEIGHT - CHART_BOTTOM_PADDING;
+    const [firstPoint] = linePathPoints;
+    const lastPoint = linePathPoints[linePathPoints.length - 1];
 
-    return `${linePath} L ${lastPoint.x} ${baseline} L ${firstPoint.x} ${baseline} Z`
-  }, [linePath, linePathPoints])
+    return `${linePath} L ${lastPoint.x} ${baseline} L ${firstPoint.x} ${baseline} Z`;
+  }, [linePath, linePathPoints]);
 
-  const TOOLTIP_WIDTH = 220
+  const TOOLTIP_WIDTH = 220;
 
   const tooltipLeft = React.useMemo(() => {
-    if (hoveredIndex < 0) return 0
+    if (hoveredIndex < 0) return 0;
 
-    const point = linePoints[hoveredIndex]
-    if (!point) return 0
+    const point = linePoints[hoveredIndex];
+    if (!point) return 0;
 
-    return Math.max(
-      0,
-      Math.min(point.x - TOOLTIP_WIDTH / 2, chartMinWidth - TOOLTIP_WIDTH),
-    )
-  }, [hoveredIndex, linePoints, chartMinWidth])
-
+    return Math.max(0, Math.min(point.x - TOOLTIP_WIDTH / 2, chartMinWidth - TOOLTIP_WIDTH));
+  }, [hoveredIndex, linePoints, chartMinWidth]);
 
   return (
     <Card
       className={cn(
         'overflow-hidden border-card-border bg-card-bg rounded-[2rem] dark:border-white/10 dark:bg-black shadow-sm',
-        className,
+        className
       )}
     >
       <CardHeader className="border-b border-card-border/80 bg-gradient-to-r from-text/[0.02] via-transparent to-text/[0.02]">
@@ -270,8 +243,8 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
               Item Activity
             </CardTitle>
             <CardDescription>
-              {chartState.total} item{chartState.total === 1 ? '' : 's'} created
-              in the last {rangeDays} days.
+              {chartState.total} item{chartState.total === 1 ? '' : 's'} created in the last{' '}
+              {rangeDays} days.
             </CardDescription>
           </div>
 
@@ -284,7 +257,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                   'h-8 w-full rounded-lg px-3 text-xs transition-all duration-300',
                   chartMode === 'bar'
                     ? 'bg-text text-bg shadow-[0_8px_24px_-16px_rgba(15,23,42,0.85)] hover:bg-text/90'
-                    : 'text-text/55 hover:bg-text/5 hover:text-text',
+                    : 'text-text/55 hover:bg-text/5 hover:text-text'
                 )}
                 onClick={() => setChartMode('bar')}
               >
@@ -298,7 +271,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                   'h-8 w-full rounded-lg px-3 text-xs transition-all duration-300',
                   chartMode === 'line'
                     ? 'bg-text text-bg shadow-[0_8px_24px_-16px_rgba(15,23,42,0.85)] hover:bg-text/90'
-                    : 'text-text/55 hover:bg-text/5 hover:text-text',
+                    : 'text-text/55 hover:bg-text/5 hover:text-text'
                 )}
                 onClick={() => setChartMode('line')}
               >
@@ -312,7 +285,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                   'h-8 w-full rounded-lg px-3 text-xs transition-all duration-300',
                   chartMode === 'pie'
                     ? 'bg-text text-bg shadow-[0_8px_24px_-16px_rgba(15,23,42,0.85)] hover:bg-text/90'
-                    : 'text-text/55 hover:bg-text/5 hover:text-text',
+                    : 'text-text/55 hover:bg-text/5 hover:text-text'
                 )}
                 onClick={() => setChartMode('pie')}
               >
@@ -331,12 +304,12 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                     'h-8 w-full rounded-lg px-3 text-xs transition-all duration-300',
                     rangeDays === option
                       ? 'bg-text text-bg shadow-[0_8px_24px_-16px_rgba(15,23,42,0.85)] hover:bg-text/90'
-                      : 'text-text/55 hover:bg-text/5 hover:text-text',
+                      : 'text-text/55 hover:bg-text/5 hover:text-text'
                   )}
                   onClick={() =>
                     startRangeTransition(() => {
-                      setRangeDays(option)
-                      setHoveredKey(null)
+                      setRangeDays(option);
+                      setHoveredKey(null);
                     })
                   }
                 >
@@ -373,10 +346,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
               />
               <div className="pointer-events-none absolute inset-0 flex flex-col justify-between">
                 {[0, 1, 2, 3].map((row) => (
-                  <div
-                    key={row}
-                    className="border-t border-dashed border-card-border/60"
-                  />
+                  <div key={row} className="border-t border-dashed border-card-border/60" />
                 ))}
               </div>
 
@@ -445,9 +415,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                             <span
                               className={cn(
                                 'text-xs font-semibold',
-                                averageDiff >= 0
-                                  ? 'text-emerald-500'
-                                  : 'text-rose-500',
+                                averageDiff >= 0 ? 'text-emerald-500' : 'text-rose-500'
                               )}
                             >
                               {Math.abs(averageDiff).toFixed(0)}%
@@ -457,9 +425,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
 
                         {previousDiff !== null && (
                           <div className="flex items-center justify-between rounded-xl border border-card-border/60 bg-text/[0.03] px-3 py-2">
-                            <span className="text-xs text-text/60">
-                              Previous Day
-                            </span>
+                            <span className="text-xs text-text/60">Previous Day</span>
 
                             <div className="flex items-center gap-1.5">
                               {previousDiff >= 0 ? (
@@ -471,9 +437,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                               <span
                                 className={cn(
                                   'text-xs font-semibold',
-                                  previousDiff >= 0
-                                    ? 'text-emerald-500'
-                                    : 'text-rose-500',
+                                  previousDiff >= 0 ? 'text-emerald-500' : 'text-rose-500'
                                 )}
                               >
                                 {Math.abs(previousDiff).toFixed(0)}%
@@ -483,9 +447,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                         )}
 
                         <div className="flex items-center justify-between rounded-xl border border-card-border/60 bg-text/[0.03] px-3 py-2">
-                          <span className="text-xs text-text/60">
-                            Activity Share
-                          </span>
+                          <span className="text-xs text-text/60">Activity Share</span>
 
                           <div className="flex items-center gap-1.5">
                             <Sparkles className="h-3.5 w-3.5 text-amber-400" />
@@ -721,10 +683,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
             md:text-[9px]
           "
                           >
-                            {Math.round(
-                              (chartState.activeDays / rangeDays) * 100,
-                            )}
-                            %
+                            {Math.round((chartState.activeDays / rangeDays) * 100)}%
                           </span>
                         </motion.div>
                       </div>
@@ -754,9 +713,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                         {
                           title: 'Active Days',
                           value: chartState.activeDays,
-                          percent: Math.round(
-                            (chartState.activeDays / rangeDays) * 100,
-                          ),
+                          percent: Math.round((chartState.activeDays / rangeDays) * 100),
                           color: 'text-emerald-400',
                           bg: 'bg-emerald-500/10',
                           dot: 'bg-emerald-400',
@@ -764,11 +721,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                         {
                           title: 'Inactive',
                           value: rangeDays - chartState.activeDays,
-                          percent:
-                            100 -
-                            Math.round(
-                              (chartState.activeDays / rangeDays) * 100,
-                            ),
+                          percent: 100 - Math.round((chartState.activeDays / rangeDays) * 100),
                           color: 'text-slate-400',
                           bg: 'bg-slate-500/10',
                           dot: 'bg-slate-400',
@@ -816,9 +769,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
 
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex min-w-0 items-center gap-2">
-                              <span
-                                className={`h-2 w-2 shrink-0 rounded-full ${item.dot}`}
-                              />
+                              <span className={`h-2 w-2 shrink-0 rounded-full ${item.dot}`} />
 
                               <span
                                 className="
@@ -946,10 +897,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
           sm:text-xs
         "
                           >
-                            {Math.round(
-                              (chartState.activeDays / rangeDays) * 100,
-                            )}
-                            %
+                            {Math.round((chartState.activeDays / rangeDays) * 100)}%
                           </span>
                         </div>
 
@@ -957,9 +905,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{
-                              width: `${Math.round(
-                                (chartState.activeDays / rangeDays) * 100,
-                              )}%`,
+                              width: `${Math.round((chartState.activeDays / rangeDays) * 100)}%`,
                             }}
                             transition={{
                               duration: 1,
@@ -996,46 +942,14 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                           preserveAspectRatio="none"
                         >
                           <defs>
-                            <linearGradient
-                              id={lineGradientId}
-                              x1="0"
-                              y1="0"
-                              x2="1"
-                              y2="0"
-                            >
-                              <stop
-                                offset="0%"
-                                stopColor="currentColor"
-                                stopOpacity="0.35"
-                              />
-                              <stop
-                                offset="50%"
-                                stopColor="currentColor"
-                                stopOpacity="0.95"
-                              />
-                              <stop
-                                offset="100%"
-                                stopColor="currentColor"
-                                stopOpacity="0.45"
-                              />
+                            <linearGradient id={lineGradientId} x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="currentColor" stopOpacity="0.35" />
+                              <stop offset="50%" stopColor="currentColor" stopOpacity="0.95" />
+                              <stop offset="100%" stopColor="currentColor" stopOpacity="0.45" />
                             </linearGradient>
-                            <linearGradient
-                              id={areaGradientId}
-                              x1="0"
-                              y1="0"
-                              x2="0"
-                              y2="1"
-                            >
-                              <stop
-                                offset="0%"
-                                stopColor="currentColor"
-                                stopOpacity="0.2"
-                              />
-                              <stop
-                                offset="100%"
-                                stopColor="currentColor"
-                                stopOpacity="0.02"
-                              />
+                            <linearGradient id={areaGradientId} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="currentColor" stopOpacity="0.2" />
+                              <stop offset="100%" stopColor="currentColor" stopOpacity="0.02" />
                             </linearGradient>
                           </defs>
 
@@ -1083,7 +997,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                           />
 
                           {linePoints.map((point) => {
-                            const isHovered = hoveredKey === point.key
+                            const isHovered = hoveredKey === point.key;
 
                             return (
                               <g key={point.key}>
@@ -1093,7 +1007,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                                   r={isHovered ? 8 : 5}
                                   className={cn(
                                     'fill-bg/90 stroke-text/20',
-                                    point.count === 0 && 'opacity-0',
+                                    point.count === 0 && 'opacity-0'
                                   )}
                                   strokeWidth="2"
                                   initial={{ scale: 0.8, opacity: 0 }}
@@ -1110,10 +1024,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                                   cx={point.x}
                                   cy={point.y}
                                   r={isHovered ? 4 : 3}
-                                  className={cn(
-                                    'fill-text',
-                                    point.count === 0 && 'opacity-0',
-                                  )}
+                                  className={cn('fill-text', point.count === 0 && 'opacity-0')}
                                   initial={{ scale: 0.8, opacity: 0 }}
                                   animate={{
                                     scale: 1,
@@ -1125,7 +1036,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                                   }}
                                 />
                               </g>
-                            )
+                            );
                           })}
                         </svg>
                       </div>
@@ -1135,14 +1046,14 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                       const heightPercent =
                         bucket.count === 0
                           ? 0
-                          : Math.max((bucket.count / chartState.peak) * 100, 14)
-                      const isHovered = hoveredKey === bucket.key
+                          : Math.max((bucket.count / chartState.peak) * 100, 14);
+                      const isHovered = hoveredKey === bucket.key;
                       const shouldShowLabel =
                         rangeDays <= 14 ||
                         (rangeDays === 28 && index % 2 === 0) ||
                         (rangeDays === 48 && index % 4 === 0) ||
                         (rangeDays === 90 && index % 7 === 0) ||
-                        (rangeDays === 180 && index % 14 === 0)
+                        (rangeDays === 180 && index % 14 === 0);
 
                       return (
                         <div
@@ -1150,9 +1061,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                           className="relative flex h-full flex-col justify-end"
                           onPointerEnter={() => setHoveredKey(bucket.key)}
                           onPointerLeave={() =>
-                            setHoveredKey((current) =>
-                              current === bucket.key ? null : current,
-                            )
+                            setHoveredKey((current) => (current === bucket.key ? null : current))
                           }
                         >
                           <div className="flex h-full flex-col justify-end">
@@ -1177,8 +1086,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                                 }}
                                 className={cn(
                                   'relative mx-auto w-full origin-bottom rounded-[1rem] border border-text/10 bg-gradient-to-t from-text via-text/80 to-text/55 shadow-[0_16px_35px_-20px_rgba(15,23,42,0.28)] transition-all duration-300',
-                                  isHovered &&
-                                    'shadow-[0_24px_50px_-18px_rgba(15,23,42,0.42)]',
+                                  isHovered && 'shadow-[0_24px_50px_-18px_rgba(15,23,42,0.42)]'
                                 )}
                                 style={{
                                   maxWidth:
@@ -1216,9 +1124,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                                 <div
                                   className={cn(
                                     'mx-auto h-full w-full rounded-[1rem] transition-colors duration-200',
-                                    isHovered
-                                      ? 'bg-text/[0.06]'
-                                      : 'bg-transparent',
+                                    isHovered ? 'bg-text/[0.06]' : 'bg-transparent'
                                   )}
                                 />
                               </motion.div>
@@ -1241,7 +1147,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
                             )}
                           </div>
                         </div>
-                      )
+                      );
                     })}
                   </motion.div>
                 )}
@@ -1251,5 +1157,5 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({
         </motion.div>
       </CardContent>
     </Card>
-  )
-}
+  );
+};

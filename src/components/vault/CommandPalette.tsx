@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   FileText,
@@ -19,21 +19,21 @@ import {
   CreditCard,
   Fingerprint,
   Wifi,
-} from 'lucide-react'
-import { useVaultStore } from '../../store/vaultStore'
-import { requestGlobalItemNavigation } from '../../lib/global-navigation'
-import { cn } from '../../lib/utils'
-import { searchVaultItems, getHighlightedParts, FuzzySearchResult } from '../../lib/fuzzy'
+} from 'lucide-react';
+import { useVaultStore } from '../../store/vaultStore';
+import { requestGlobalItemNavigation } from '../../lib/global-navigation';
+import { cn } from '../../lib/utils';
+import { searchVaultItems, getHighlightedParts, FuzzySearchResult } from '../../lib/fuzzy';
 
 interface TypeConfig {
-  label: string
-  icon: React.ElementType
+  label: string;
+  icon: React.ElementType;
   styles: {
-    selected: string
-    iconBg: string
-    icon: string
-    tag: string
-  }
+    selected: string;
+    iconBg: string;
+    icon: string;
+    tag: string;
+  };
 }
 
 const TYPE_CONFIGS: Record<string, TypeConfig> = {
@@ -187,50 +187,50 @@ const TYPE_CONFIGS: Record<string, TypeConfig> = {
       tag: 'bg-blue-500/5 border-blue-500/10 text-blue-400/70',
     },
   },
-}
+};
 
 export const CommandPalette: React.FC = () => {
-  const { items, isUnlocked } = useVaultStore()
-  const [isOpen, setIsOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const { items, isUnlocked } = useVaultStore();
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Listen for Ctrl+K / Cmd+K and custom open event (for mobile touch trigger)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isUnlocked) return
+      if (!isUnlocked) return;
 
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setIsOpen((prev) => !prev)
-        setQuery('')
-        setSelectedIndex(0)
+        e.preventDefault();
+        setIsOpen((prev) => !prev);
+        setQuery('');
+        setSelectedIndex(0);
       }
-    }
+    };
 
     const handleOpenEvent = () => {
-      if (!isUnlocked) return
-      setIsOpen(true)
-      setQuery('')
-      setSelectedIndex(0)
-    }
+      if (!isUnlocked) return;
+      setIsOpen(true);
+      setQuery('');
+      setSelectedIndex(0);
+    };
 
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('open-command-palette', handleOpenEvent)
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('open-command-palette', handleOpenEvent);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('open-command-palette', handleOpenEvent)
-    }
-  }, [isUnlocked])
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('open-command-palette', handleOpenEvent);
+    };
+  }, [isUnlocked]);
 
   // Focus input when opened
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100)
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   // Perform client-side fuzzy search across all items
   const fuzzyResults = useMemo(() => {
@@ -250,81 +250,77 @@ export const CommandPalette: React.FC = () => {
 
   // Group fuzzy results by type and sort items within each type by score descending
   const groupedItems = useMemo(() => {
-    const groups: Record<string, FuzzySearchResult[]> = {}
+    const groups: Record<string, FuzzySearchResult[]> = {};
     Object.keys(TYPE_CONFIGS).forEach((type) => {
-      groups[type] = []
-    })
+      groups[type] = [];
+    });
 
     fuzzyResults.forEach((result) => {
       if (groups[result.item.type]) {
-        groups[result.item.type].push(result)
+        groups[result.item.type].push(result);
       }
-    })
+    });
 
-    return groups
-  }, [fuzzyResults])
+    return groups;
+  }, [fuzzyResults]);
 
   // Flatten the grouped items in visual order so keyboard navigation index matches visual order
   const filteredItems = useMemo(() => {
-    const flattened: FuzzySearchResult[] = []
+    const flattened: FuzzySearchResult[] = [];
     Object.keys(TYPE_CONFIGS).forEach((type) => {
-      const typeItems = groupedItems[type] || []
-      flattened.push(...typeItems)
-    })
-    return flattened
-  }, [groupedItems])
+      const typeItems = groupedItems[type] || [];
+      flattened.push(...typeItems);
+    });
+    return flattened;
+  }, [groupedItems]);
 
   // Reset selected index when filter changes
   useEffect(() => {
-    setSelectedIndex(0)
-  }, [query])
+    setSelectedIndex(0);
+  }, [query]);
 
   // Handle keyboard navigation inside the palette
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setSelectedIndex((prev) =>
-        prev < filteredItems.length - 1 ? prev + 1 : 0
-      )
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev < filteredItems.length - 1 ? prev + 1 : 0));
     } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setSelectedIndex((prev) =>
-        prev > 0 ? prev - 1 : filteredItems.length - 1
-      )
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : filteredItems.length - 1));
     } else if (e.key === 'Enter') {
-      e.preventDefault()
+      e.preventDefault();
       if (filteredItems[selectedIndex]) {
-        handleSelectItem(filteredItems[selectedIndex])
+        handleSelectItem(filteredItems[selectedIndex]);
       }
     } else if (e.key === 'Escape') {
-      e.preventDefault()
-      setIsOpen(false)
+      e.preventDefault();
+      setIsOpen(false);
     }
-  }
+  };
 
   const handleSelectItem = (item: FuzzySearchResult) => {
-    requestGlobalItemNavigation(item.item)
-    setIsOpen(false)
-  }
+    requestGlobalItemNavigation(item.item);
+    setIsOpen(false);
+  };
 
   // Handle click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false)
+        setIsOpen(false);
       }
-    }
+    };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('mousedown', handleClickOutside);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isOpen])
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
 
   // Highlight search term in title or tags using precise fuzzy character indices
   const renderFuzzyHighlightedText = (text: string, matches: number[]) => {
-    if (!matches || matches.length === 0) return <span>{text}</span>
-    const parts = getHighlightedParts(text, matches)
+    if (!matches || matches.length === 0) return <span>{text}</span>;
+    const parts = getHighlightedParts(text, matches);
     return (
       <span>
         {parts.map((part, i) =>
@@ -340,12 +336,12 @@ export const CommandPalette: React.FC = () => {
           )
         )}
       </span>
-    )
-  }
+    );
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
-  const selectedItem = filteredItems[selectedIndex]
+  const selectedItem = filteredItems[selectedIndex];
 
   return (
     <AnimatePresence>
@@ -385,19 +381,21 @@ export const CommandPalette: React.FC = () => {
             {filteredItems.length > 0 ? (
               <>
                 {Object.entries(TYPE_CONFIGS).map(([type, config]) => {
-                  const typeItems = groupedItems[type] || []
-                  if (typeItems.length === 0) return null
+                  const typeItems = groupedItems[type] || [];
+                  if (typeItems.length === 0) return null;
 
-                  const IconComponent = config.icon
+                  const IconComponent = config.icon;
 
                   return (
                     <div key={type} className="space-y-1">
-                      <p className={`text-[10px] font-bold ${config.styles.icon} uppercase tracking-[0.2em] px-3.5 py-1`}>
+                      <p
+                        className={`text-[10px] font-bold ${config.styles.icon} uppercase tracking-[0.2em] px-3.5 py-1`}
+                      >
                         {config.label} ({typeItems.length})
                       </p>
                       {typeItems.map((item) => {
-                        const isSelected = selectedItem?.item.id === item.item.id
-                        const tags = (item.item.metadata?.tags as string[]) || []
+                        const isSelected = selectedItem?.item.id === item.item.id;
+                        const tags = (item.item.metadata?.tags as string[]) || [];
 
                         return (
                           <button
@@ -411,11 +409,13 @@ export const CommandPalette: React.FC = () => {
                             )}
                           >
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className={cn(
-                                'shrink-0 flex items-center justify-center h-8 w-8 rounded-lg transition-colors',
-                                config.styles.iconBg
-                              )}>
-                                <IconComponent className={cn("h-4.5 w-4.5", config.styles.icon)} />
+                              <div
+                                className={cn(
+                                  'shrink-0 flex items-center justify-center h-8 w-8 rounded-lg transition-colors',
+                                  config.styles.iconBg
+                                )}
+                              >
+                                <IconComponent className={cn('h-4.5 w-4.5', config.styles.icon)} />
                               </div>
                               <div className="truncate">
                                 <p className="font-semibold text-sm truncate">
@@ -424,28 +424,31 @@ export const CommandPalette: React.FC = () => {
                                 {tags.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mt-1">
                                     {tags.map((tag) => {
-                                      const tagMatch = item.tagMatches.find((tm) => tm.tag === tag)
+                                      const tagMatch = item.tagMatches.find((tm) => tm.tag === tag);
                                       return (
                                         <span
                                           key={tag}
                                           className={cn(
-                                            "text-[9px] px-1.5 py-0.1 border rounded font-medium",
+                                            'text-[9px] px-1.5 py-0.1 border rounded font-medium',
                                             config.styles.tag
                                           )}
                                         >
-                                          #{tagMatch ? renderFuzzyHighlightedText(tag, tagMatch.matches) : tag}
+                                          #
+                                          {tagMatch
+                                            ? renderFuzzyHighlightedText(tag, tagMatch.matches)
+                                            : tag}
                                         </span>
-                                      )
+                                      );
                                     })}
                                   </div>
                                 )}
                               </div>
                             </div>
                           </button>
-                        )
+                        );
                       })}
                     </div>
-                  )
+                  );
                 })}
               </>
             ) : (
@@ -463,10 +466,16 @@ export const CommandPalette: React.FC = () => {
           <div className="flex items-center justify-between border-t border-card-border bg-white/[0.01] px-4 py-3 text-[10px] text-text/30 font-medium select-none">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
-                <kbd className="bg-text/5 border border-text/10 rounded px-1.5 py-0.5 text-[9px]">↑↓</kbd> navigate
+                <kbd className="bg-text/5 border border-text/10 rounded px-1.5 py-0.5 text-[9px]">
+                  ↑↓
+                </kbd>{' '}
+                navigate
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="bg-text/5 border border-text/10 rounded px-1.5 py-0.5 text-[9px]">Enter</kbd> open
+                <kbd className="bg-text/5 border border-text/10 rounded px-1.5 py-0.5 text-[9px]">
+                  Enter
+                </kbd>{' '}
+                open
               </span>
             </div>
             <div className="flex items-center gap-1.5 text-right">
@@ -477,5 +486,5 @@ export const CommandPalette: React.FC = () => {
         </motion.div>
       </div>
     </AnimatePresence>
-  )
-}
+  );
+};

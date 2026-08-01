@@ -1,36 +1,36 @@
-import React from 'react'
-import { RefreshCw, Upload, Cloud, Activity,X } from 'lucide-react'
-import { SectionCard, ActionButton } from './SharedComponents'
+import React from 'react';
+import { RefreshCw, Upload, Cloud, Activity, X } from 'lucide-react';
+import { SectionCard, ActionButton } from './SharedComponents';
 import {
   formatBytes,
   formatDate,
   formatCountLabel,
   getSyncHealthDescription,
   SETTINGS_PANEL,
-} from './Utils'
-import { toast } from 'sonner'
+} from './Utils';
+import { toast } from 'sonner';
 
 interface SyncStorageCardProps {
-  storageUsedBytes: number
-  usagePercentage: number
-  itemCount: number
-  syncStatus: 'idle' | 'syncing' | 'success' | 'error'
-  syncHealthLabel: string
-  lastSuccessfulSyncAt: number | string | null | undefined
-  lastSyncAttemptAt: number | string | null | undefined
-  hasPendingSyncRetry: boolean
-  syncConflictCount: number
-  lastSyncError: string | null
-  isLoading: boolean
-  isMigrating: boolean
-  isSyncingLogs: boolean
-  syncWithCloud: () => Promise<void>
-  retryFailedSync: () => Promise<void>
-  migrateLocalToCloud: () => Promise<void>
-  syncLogs: () => Promise<void>
-  getErrorMessage: (error: unknown, fallback: string) => string
-  cancelSync: () => void
-  cancelActivityLogSync: () => void
+  storageUsedBytes: number;
+  usagePercentage: number;
+  itemCount: number;
+  syncStatus: 'idle' | 'syncing' | 'success' | 'error';
+  syncHealthLabel: string;
+  lastSuccessfulSyncAt: number | string | null | undefined;
+  lastSyncAttemptAt: number | string | null | undefined;
+  hasPendingSyncRetry: boolean;
+  syncConflictCount: number;
+  lastSyncError: string | null;
+  isLoading: boolean;
+  isMigrating: boolean;
+  isSyncingLogs: boolean;
+  syncWithCloud: () => Promise<void>;
+  retryFailedSync: () => Promise<void>;
+  migrateLocalToCloud: () => Promise<void>;
+  syncLogs: () => Promise<void>;
+  getErrorMessage: (error: unknown, fallback: string) => string;
+  cancelSync: () => void;
+  cancelActivityLogSync: () => void;
 }
 
 export const SyncStorageCard: React.FC<SyncStorageCardProps> = ({
@@ -62,9 +62,7 @@ export const SyncStorageCard: React.FC<SyncStorageCardProps> = ({
     {/* MAIN GRID */}
     <div className="grid gap-4 xl:grid-cols-3">
       {/* LEFT - STORAGE (TAKES MORE SPACE ON LAPTOP) */}
-      <div
-        className={`xl:col-span-1 ${SETTINGS_PANEL} flex flex-col justify-between`}
-      >
+      <div className={`xl:col-span-1 ${SETTINGS_PANEL} flex flex-col justify-between`}>
         <div>
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium text-text/60">Data Size</span>
@@ -93,57 +91,37 @@ export const SyncStorageCard: React.FC<SyncStorageCardProps> = ({
       <div className="xl:col-span-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
         {/* CARD */}
         <div className={`${SETTINGS_PANEL}`}>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-text/35">
-            Cloud health
-          </p>
-          <p className="mt-2 text-sm font-semibold text-text">
-            {syncHealthLabel}
-          </p>
-          <p className="mt-1 text-xs text-text/45">
-            {getSyncHealthDescription(syncStatus)}
-          </p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-text/35">Cloud health</p>
+          <p className="mt-2 text-sm font-semibold text-text">{syncHealthLabel}</p>
+          <p className="mt-1 text-xs text-text/45">{getSyncHealthDescription(syncStatus)}</p>
         </div>
 
         <div className={`${SETTINGS_PANEL}`}>
           <p className="text-[10px] uppercase tracking-[0.2em] text-text/35">
             Last successful sync
           </p>
-          <p className="mt-2 text-sm font-semibold text-text">
-            {formatDate(lastSuccessfulSyncAt)}
-          </p>
+          <p className="mt-2 text-sm font-semibold text-text">{formatDate(lastSuccessfulSyncAt)}</p>
         </div>
 
         <div className={`${SETTINGS_PANEL}`}>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-text/35">
-            Last attempt
-          </p>
-          <p className="mt-2 text-sm font-semibold text-text">
-            {formatDate(lastSyncAttemptAt)}
-          </p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-text/35">Last attempt</p>
+          <p className="mt-2 text-sm font-semibold text-text">{formatDate(lastSyncAttemptAt)}</p>
         </div>
 
         <div className={`${SETTINGS_PANEL}`}>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-text/35">
-            Retry state
-          </p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-text/35">Retry state</p>
           <p className="mt-2 text-sm font-semibold text-text">
             {hasPendingSyncRetry ? 'Retry available' : 'No retry pending'}
           </p>
         </div>
 
         <div className={`${SETTINGS_PANEL}`}>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-text/35">
-            Conflict warnings
-          </p>
-          <p className="mt-2 text-2xl font-bold text-text">
-            {syncConflictCount}
-          </p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-text/35">Conflict warnings</p>
+          <p className="mt-2 text-2xl font-bold text-text">{syncConflictCount}</p>
         </div>
 
         <div className={`${SETTINGS_PANEL}`}>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-text/35">
-            Vault footprint
-          </p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-text/35">Vault footprint</p>
           <p className="mt-2 text-sm font-semibold text-text">
             {formatCountLabel(itemCount, 'item')}
           </p>
@@ -154,9 +132,7 @@ export const SyncStorageCard: React.FC<SyncStorageCardProps> = ({
     {/* ERROR BLOCK */}
     {lastSyncError && (
       <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/5 p-4">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-red-400">
-          Last sync error
-        </p>
+        <p className="text-[10px] uppercase tracking-[0.2em] text-red-400">Last sync error</p>
         <p className="mt-2 text-sm text-red-300 break-words">{lastSyncError}</p>
       </div>
     )}
@@ -190,10 +166,10 @@ export const SyncStorageCard: React.FC<SyncStorageCardProps> = ({
         label="Migrate"
         onClick={async () => {
           try {
-            await migrateLocalToCloud()
-            toast.success('Migration completed')
+            await migrateLocalToCloud();
+            toast.success('Migration completed');
           } catch (error) {
-            toast.error(getErrorMessage(error, 'Migration failed'))
+            toast.error(getErrorMessage(error, 'Migration failed'));
           }
         }}
         loading={isMigrating}
@@ -218,4 +194,4 @@ export const SyncStorageCard: React.FC<SyncStorageCardProps> = ({
       />
     </div>
   </SectionCard>
-)
+);

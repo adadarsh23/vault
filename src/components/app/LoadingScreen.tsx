@@ -1,12 +1,12 @@
-import { memo } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
-import { Loader2 } from 'lucide-react'
-import { cn } from '../../lib/utils'
+import { memo } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 interface LoadingScreenProps {
-  label?: string
-  className?: string
-  fullscreen?: boolean
+  label?: string;
+  className?: string;
+  fullscreen?: boolean;
 }
 
 export const LoadingScreen = memo(function LoadingScreen({
@@ -14,10 +14,9 @@ export const LoadingScreen = memo(function LoadingScreen({
   className,
   fullscreen = true,
 }: LoadingScreenProps) {
-  const shouldReduceMotion = useReducedMotion()
+  const shouldReduceMotion = useReducedMotion();
 
-  const safeLabel =
-    typeof label === 'string' && label.trim() ? label : 'Loading...'
+  const safeLabel = typeof label === 'string' && label.trim() ? label : 'Loading...';
 
   return (
     <div
@@ -27,7 +26,7 @@ export const LoadingScreen = memo(function LoadingScreen({
       className={cn(
         'flex w-full flex-col items-center justify-center gap-4 bg-bg text-center',
         fullscreen ? 'min-h-dvh' : 'h-full min-h-full',
-        className,
+        className
       )}
     >
       <motion.div
@@ -47,14 +46,9 @@ export const LoadingScreen = memo(function LoadingScreen({
         <Loader2 className="h-10 w-10 text-text/50" strokeWidth={1.5} />
       </motion.div>
 
-      <p
-        className={cn(
-          'text-text/50 text-sm font-medium',
-          !shouldReduceMotion && 'animate-pulse',
-        )}
-      >
+      <p className={cn('text-text/50 text-sm font-medium', !shouldReduceMotion && 'animate-pulse')}>
         {safeLabel}
       </p>
     </div>
-  )
-})
+  );
+});

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState } from 'react';
 import {
   AtSign,
   ChevronUp,
@@ -12,41 +12,38 @@ import {
   Search,
   Trash2,
   X,
-} from 'lucide-react'
-import { Button } from '../../../../components/ui/Button'
-import { Input } from '../../../../components/ui/Input'
-import { ScrollButton } from '../../../../components/vault/ScrollButton'
-import { VaultItem } from '../../../../lib/storage'
-import { cn } from '../../../../lib/utils'
-import { ChatListFilter, ChatMessage } from './types'
-import { formatListTime, getAvatarLabel } from './utils'
+} from 'lucide-react';
+import { Button } from '../../../../components/ui/Button';
+import { Input } from '../../../../components/ui/Input';
+import { ScrollButton } from '../../../../components/vault/ScrollButton';
+import { VaultItem } from '../../../../lib/storage';
+import { cn } from '../../../../lib/utils';
+import { ChatListFilter, ChatMessage } from './types';
+import { formatListTime, getAvatarLabel } from './utils';
 
 interface ChatListPanelProps {
-  activeChatId: string | null
-  filteredChats: VaultItem[]
-  totalFilteredChats: number
-  chatMetrics: Record<string, { unread: number; mentions: number }>
-  lastMessagesByChatId: Record<string, ChatMessage | null>
-  pinningItemIds: string[]
-  filter: ChatListFilter
-  searchQuery: string
-  newChatTitle: string
-  isCreatingChat: boolean
-  hasMoreChats: boolean
-  isLoadingMoreChats: boolean
-  onOpenFolders: () => void
-  onFilterChange: (value: ChatListFilter) => void
-  onSearchQueryChange: (value: string) => void
-  onNewChatTitleChange: (value: string) => void
-  onCreateChat: () => Promise<void>
-  onLoadMoreChats: () => void
-  onSelectChat: (chatId: string) => void
-  onTogglePin: (chatItemId: string) => Promise<void>
-  onDeleteChat: (chatItem: VaultItem) => Promise<void>
-  onChatDragStart: (
-    event: React.DragEvent<HTMLDivElement>,
-    chatId: string,
-  ) => void
+  activeChatId: string | null;
+  filteredChats: VaultItem[];
+  totalFilteredChats: number;
+  chatMetrics: Record<string, { unread: number; mentions: number }>;
+  lastMessagesByChatId: Record<string, ChatMessage | null>;
+  pinningItemIds: string[];
+  filter: ChatListFilter;
+  searchQuery: string;
+  newChatTitle: string;
+  isCreatingChat: boolean;
+  hasMoreChats: boolean;
+  isLoadingMoreChats: boolean;
+  onOpenFolders: () => void;
+  onFilterChange: (value: ChatListFilter) => void;
+  onSearchQueryChange: (value: string) => void;
+  onNewChatTitleChange: (value: string) => void;
+  onCreateChat: () => Promise<void>;
+  onLoadMoreChats: () => void;
+  onSelectChat: (chatId: string) => void;
+  onTogglePin: (chatItemId: string) => Promise<void>;
+  onDeleteChat: (chatItem: VaultItem) => Promise<void>;
+  onChatDragStart: (event: React.DragEvent<HTMLDivElement>, chatId: string) => void;
 }
 
 export const ChatListPanel: React.FC<ChatListPanelProps> = ({
@@ -73,15 +70,15 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
   onDeleteChat,
   onChatDragStart,
 }) => {
-  const headerTitle = searchQuery.trim() ? 'Search Results' : 'Chats'
-  const [showListScrollTop, setShowListScrollTop] = useState(false)
-  const listRef = useRef<HTMLDivElement>(null)
+  const headerTitle = searchQuery.trim() ? 'Search Results' : 'Chats';
+  const [showListScrollTop, setShowListScrollTop] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
 
   return (
     <aside
       className={cn(
         'w-full shrink-0 flex-col gap-4 border-r border-white/5 pr-0 transition-colors sm:gap-5 md:w-72 md:pr-4 lg:w-72 xl:w-80 xl:gap-6 xl:pr-6',
-        activeChatId ? 'hidden md:flex' : 'flex',
+        activeChatId ? 'hidden md:flex' : 'flex'
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -138,8 +135,8 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
             { id: 'mentions', label: 'Mentions', icon: AtSign },
           ] as const
         ).map((entry) => {
-          const Icon = entry.icon
-          const active = filter === entry.id
+          const Icon = entry.icon;
+          const active = filter === entry.id;
           return (
             <button
               key={entry.id}
@@ -149,13 +146,13 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
                 'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
                 active
                   ? 'border-emerald-500/20 bg-emerald-500/10 text-text'
-                  : 'border-text/10 bg-bg/60 text-text/65 hover:text-text',
+                  : 'border-text/10 bg-bg/60 text-text/65 hover:text-text'
               )}
             >
               <Icon className="h-3.5 w-3.5" />
               {entry.label}
             </button>
-          )
+          );
         })}
       </div>
 
@@ -165,8 +162,8 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
           onChange={(event) => onNewChatTitleChange(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
-              event.preventDefault()
-              void onCreateChat()
+              event.preventDefault();
+              void onCreateChat();
             }
           }}
           placeholder="Create a conversation"
@@ -184,9 +181,7 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
           ) : (
             <>
               <Plus className="h-4 w-4 sm:mr-0 md:mr-1" />
-              <span className="text-sm font-semibold sm:hidden md:inline">
-                Create
-              </span>
+              <span className="text-sm font-semibold sm:hidden md:inline">Create</span>
             </>
           )}
         </Button>
@@ -196,181 +191,166 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
         <div
           ref={listRef}
           onScroll={(event) => {
-            const element = event.currentTarget
-            setShowListScrollTop(element.scrollTop > 200)
+            const element = event.currentTarget;
+            setShowListScrollTop(element.scrollTop > 200);
 
             const nearBottom =
-              element.scrollTop + element.clientHeight >=
-              element.scrollHeight - 120
+              element.scrollTop + element.clientHeight >= element.scrollHeight - 120;
             if (nearBottom && hasMoreChats && !isLoadingMoreChats) {
-              onLoadMoreChats()
+              onLoadMoreChats();
             }
           }}
           className="h-full space-y-3 overflow-y-auto pr-2 custom-scrollbar"
         >
-        {filteredChats.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-text/15 bg-bg/40 px-4 py-8 text-center text-sm text-text/55">
-            No chats found.
-          </div>
-        )}
+          {filteredChats.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-text/15 bg-bg/40 px-4 py-8 text-center text-sm text-text/55">
+              No chats found.
+            </div>
+          )}
 
-        {filteredChats.map((chatItem) => {
-          const metrics = chatMetrics[chatItem.id] || { unread: 0, mentions: 0 }
-          const lastMessage = lastMessagesByChatId[chatItem.id]
-          const isActive = activeChatId === chatItem.id
-          const isPinning = pinningItemIds.includes(chatItem.id)
-          const displayTitle = chatItem.title?.trim() || 'Untitled Chat'
+          {filteredChats.map((chatItem) => {
+            const metrics = chatMetrics[chatItem.id] || { unread: 0, mentions: 0 };
+            const lastMessage = lastMessagesByChatId[chatItem.id];
+            const isActive = activeChatId === chatItem.id;
+            const isPinning = pinningItemIds.includes(chatItem.id);
+            const displayTitle = chatItem.title?.trim() || 'Untitled Chat';
 
-          return (
-            <div
-              key={chatItem.id}
-              role="button"
-              aria-selected={isActive}
-              tabIndex={0}
-              onClick={() => onSelectChat(chatItem.id)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  onSelectChat(chatItem.id)
-                }
-              }}
-              onDragStart={(event) => {
-                event.dataTransfer.effectAllowed = 'move'
-                onChatDragStart(event, chatItem.id)
-              }}
-              draggable
-              className={cn(
-                'flex w-full cursor-pointer items-start gap-3 rounded-2xl border p-3 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-text/20 xl:gap-4 xl:p-4',
-                isActive
-                  ? 'border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_20px_rgba(16,185,129,0.05)]'
-                  : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10',
-              )}
-            >
+            return (
               <div
+                key={chatItem.id}
+                role="button"
+                aria-selected={isActive}
+                tabIndex={0}
+                onClick={() => onSelectChat(chatItem.id)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onSelectChat(chatItem.id);
+                  }
+                }}
+                onDragStart={(event) => {
+                  event.dataTransfer.effectAllowed = 'move';
+                  onChatDragStart(event, chatItem.id);
+                }}
+                draggable
                 className={cn(
-                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-semibold transition-colors',
+                  'flex w-full cursor-pointer items-start gap-3 rounded-2xl border p-3 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-text/20 xl:gap-4 xl:p-4',
                   isActive
-                    ? 'bg-emerald-500/20 text-fuchsia-400'
-                    : 'bg-white/5 text-text/20',
+                    ? 'border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_20px_rgba(16,185,129,0.05)]'
+                    : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10'
                 )}
               >
-                {getAvatarLabel(displayTitle)}
-              </div>
+                <div
+                  className={cn(
+                    'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-semibold transition-colors',
+                    isActive ? 'bg-emerald-500/20 text-fuchsia-400' : 'bg-white/5 text-text/20'
+                  )}
+                >
+                  {getAvatarLabel(displayTitle)}
+                </div>
 
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <p
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <p
+                      className={cn(
+                        'truncate text-sm font-semibold transition-colors',
+                        isActive ? 'text-text' : 'text-text/70'
+                      )}
+                    >
+                      {displayTitle}
+                    </p>
+                    <span className="text-[10px] font-medium tracking-tight text-text/30">
+                      {formatListTime(lastMessage?.createdAt || chatItem.updatedAt)}
+                    </span>
+                  </div>
+
+                  <p className="mt-0.5 truncate text-xs text-text/55">
+                    {lastMessage?.text?.trim() || 'No messages yet'}
+                  </p>
+
+                  <div className="mt-1.5 flex items-center gap-1.5">
+                    {metrics.unread > 0 && (
+                      <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                        {metrics.unread}
+                      </span>
+                    )}
+                    {metrics.mentions > 0 && (
+                      <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-semibold text-fuchsia-400">
+                        @{metrics.mentions}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-0.5 self-center">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void onTogglePin(chatItem.id);
+                    }}
+                    aria-label={chatItem.isPinned ? 'Unpin chat' : 'Pin chat'}
                     className={cn(
-                      'truncate text-sm font-semibold transition-colors',
-                      isActive ? 'text-text' : 'text-text/70',
+                      'h-8 w-8 rounded-full transition-all',
+                      chatItem.isPinned
+                        ? 'text-fuchsia-400 bg-emerald-400/10 hover:bg-emerald-400/20'
+                        : 'text-text/30 hover:text-text/80 hover:bg-white/10'
                     )}
                   >
-                    {displayTitle}
-                  </p>
-                  <span className="text-[10px] font-medium tracking-tight text-text/30">
-                    {formatListTime(
-                      lastMessage?.createdAt || chatItem.updatedAt,
+                    {isPinning ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pin className={cn('h-4 w-4', chatItem.isPinned && 'fill-current')} />
                     )}
-                  </span>
-                </div>
-
-                <p className="mt-0.5 truncate text-xs text-text/55">
-                  {lastMessage?.text?.trim() || 'No messages yet'}
-                </p>
-
-                <div className="mt-1.5 flex items-center gap-1.5">
-                  {metrics.unread > 0 && (
-                    <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-white">
-                      {metrics.unread}
-                    </span>
-                  )}
-                  {metrics.mentions > 0 && (
-                    <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-semibold text-fuchsia-400">
-                      @{metrics.mentions}
-                    </span>
-                  )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-text/35 hover:text-red-400"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void onDeleteChat(chatItem);
+                    }}
+                    aria-label="Delete chat"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  {isActive && <ChevronRight className="h-4 w-4 text-fuchsia-400" />}
                 </div>
               </div>
-
-              <div className="flex shrink-0 items-center gap-0.5 self-center">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    void onTogglePin(chatItem.id)
-                  }}
-                  aria-label={chatItem.isPinned ? 'Unpin chat' : 'Pin chat'}
-                  className={cn(
-                    'h-8 w-8 rounded-full transition-all',
-                    chatItem.isPinned
-                      ? 'text-fuchsia-400 bg-emerald-400/10 hover:bg-emerald-400/20'
-                      : 'text-text/30 hover:text-text/80 hover:bg-white/10',
-                  )}
-                >
-                  {isPinning ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Pin
-                      className={cn(
-                        'h-4 w-4',
-                        chatItem.isPinned && 'fill-current',
-                      )}
-                    />
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-text/35 hover:text-red-400"
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    void onDeleteChat(chatItem)
-                  }}
-                  aria-label="Delete chat"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-                {isActive && (
-                  <ChevronRight className="h-4 w-4 text-fuchsia-400" />
+            );
+          })}
+          {hasMoreChats && (
+            <div className="flex justify-center py-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onLoadMoreChats}
+                disabled={isLoadingMoreChats}
+                className="h-9 rounded-xl border-white/10 bg-white/5 px-4 text-xs"
+              >
+                {isLoadingMoreChats ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    Loading chats...
+                  </>
+                ) : (
+                  'Load more chats'
                 )}
-              </div>
+              </Button>
             </div>
-          )
-        })}
-        {hasMoreChats && (
-          <div className="flex justify-center py-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onLoadMoreChats}
-              disabled={isLoadingMoreChats}
-              className="h-9 rounded-xl border-white/10 bg-white/5 px-4 text-xs"
-            >
-              {isLoadingMoreChats ? (
-                <>
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  Loading chats...
-                </>
-              ) : (
-                'Load more chats'
-              )}
-            </Button>
-          </div>
-        )}
+          )}
         </div>
         <ScrollButton
           icon={ChevronUp}
           visible={showListScrollTop}
-          onClick={() =>
-            listRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-          }
+          onClick={() => listRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
           className="bottom-4 right-4"
         />
       </div>
     </aside>
-  )
-}
-
+  );
+};

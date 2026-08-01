@@ -1,60 +1,57 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
-import { Lock, ChevronRight } from 'lucide-react'
-import { Button } from '../components/ui/Button'
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { Lock, ChevronRight } from 'lucide-react';
+import { Button } from '../components/ui/Button';
 
 const Background = lazy(() =>
   import('../components/layout/Background').then((module) => ({
     default: module.Background,
-  })),
-)
+  }))
+);
 
 const Footer = lazy(() =>
   import('../components/layout/Footer').then((module) => ({
     default: module.Footer,
-  })),
-)
+  }))
+);
 
 interface LandingPageProps {
-  onEnterVault: () => void
+  onEnterVault: () => void;
 }
 
 export function LandingPage({ onEnterVault }: LandingPageProps) {
-  const [showDecorativeEffects, setShowDecorativeEffects] = useState(false)
+  const [showDecorativeEffects, setShowDecorativeEffects] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
-      return
+      return;
     }
 
     const idleWindow = window as Window & {
-      requestIdleCallback?: (
-        callback: () => void,
-        options?: { timeout?: number },
-      ) => number
-      cancelIdleCallback?: (id: number) => void
-    }
+      requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
 
     if (typeof idleWindow.requestIdleCallback === 'function') {
       const idleId = idleWindow.requestIdleCallback(
         () => {
-          setShowDecorativeEffects(true)
+          setShowDecorativeEffects(true);
         },
-        { timeout: 1200 },
-      )
+        { timeout: 1200 }
+      );
       return () => {
         if (typeof idleWindow.cancelIdleCallback === 'function') {
-          idleWindow.cancelIdleCallback(idleId)
+          idleWindow.cancelIdleCallback(idleId);
         }
-      }
+      };
     }
 
     const timeoutId = window.setTimeout(() => {
-      setShowDecorativeEffects(true)
-    }, 700)
+      setShowDecorativeEffects(true);
+    }, 700);
     return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [])
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
 
   return (
     <div className="min-h-dvh bg-bg text-text overflow-x-hidden selection:bg-text selection:text-bg">
@@ -75,9 +72,7 @@ export function LandingPage({ onEnterVault }: LandingPageProps) {
             <div className="p-2 rounded-xl bg-text text-bg shrink-0 ">
               <Lock className="w-7 h-7 sm:w-6 sm:h-6" />
             </div>
-            <span className="text-lg sm:text-xl font-bold tracking-tight">
-              Vault
-            </span>
+            <span className="text-lg sm:text-xl font-bold tracking-tight">Vault</span>
           </div>
 
           <Button
@@ -102,9 +97,7 @@ export function LandingPage({ onEnterVault }: LandingPageProps) {
             </div>
 
             <h1 className="text-[clamp(1.8rem,9vw,9rem)] font-black tracking-tighter leading-[0.95] sm:leading-[1.05]">
-              <span className="block whitespace-nowrap">
-                Your digital life,
-              </span>
+              <span className="block whitespace-nowrap">Your digital life,</span>
               <span
                 className="block bg-gradient-to-r from-text/60 via-text to-text/40 bg-clip-text text-transparent italic bg-[length:200%_auto] transform-gpu py-1 sm:py-2"
                 style={{ backgroundSize: '200% auto' }}
@@ -114,9 +107,8 @@ export function LandingPage({ onEnterVault }: LandingPageProps) {
             </h1>
 
             <p className="mt-8 max-w-2xl text-base sm:text-lg md:text-xl text-text/50 leading-relaxed font-medium px-4 sm:px-0">
-              A secure and private vault for your photos, notes, and sensitive
-              data. Everything is encrypted locally. Your keys never leave your
-              device.
+              A secure and private vault for your photos, notes, and sensitive data. Everything is
+              encrypted locally. Your keys never leave your device.
             </p>
 
             <div className="mt-12 flex w-full flex-col sm:flex-row items-center justify-center gap-4">
@@ -140,7 +132,7 @@ export function LandingPage({ onEnterVault }: LandingPageProps) {
         </Suspense>
       ) : null}
     </div>
-  )
+  );
 }
 
-export default LandingPage
+export default LandingPage;

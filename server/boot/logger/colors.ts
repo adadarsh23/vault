@@ -14,9 +14,7 @@ export const ansi = Object.freeze({
 export const isProd = process.env.NODE_ENV === 'production';
 
 const noColor =
-  process.env.NO_COLOR === 'true' ||
-  process.env.NO_COLOR === '1' ||
-  process.env.NO_COLOR === 'yes';
+  process.env.NO_COLOR === 'true' || process.env.NO_COLOR === '1' || process.env.NO_COLOR === 'yes';
 
 export const supportsAnimatedTerminal =
   Boolean(process.stdout.isTTY) && process.env.CI !== 'true' && !noColor;

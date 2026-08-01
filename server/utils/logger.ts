@@ -1,43 +1,36 @@
-import fs from 'node:fs'
-import os from 'node:os'
-import path from 'node:path'
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-type LogMeta = Record<string, unknown>
+type LogMeta = Record<string, unknown>;
 
 interface LogPayload {
-  level: LogLevel
-  message: string
-  timestamp: string
-  pid: number
-  hostname: string
-  environment: string
-  meta?: unknown
+  level: LogLevel;
+  message: string;
+  timestamp: string;
+  pid: number;
+  hostname: string;
+  environment: string;
+  meta?: unknown;
 }
 
-const LOG_DIRECTORY = path.resolve(process.cwd(), 'logs')
-const LOG_FILE = path.join(LOG_DIRECTORY, 'server.jsonl')
+const LOG_DIRECTORY = path.resolve(process.cwd(), 'logs');
+const LOG_FILE = path.join(LOG_DIRECTORY, 'server.jsonl');
 
-const MAX_RECENT_LOGS = 100
-const MAX_DEPTH = 5
-const MAX_ARRAY_LENGTH = 50
+const MAX_RECENT_LOGS = 100;
+const MAX_DEPTH = 5;
+const MAX_ARRAY_LENGTH = 50;
 
-const recentLogs: LogPayload[] = []
+const recentLogs: LogPayload[] = [];
 
-const REDACTED_TEXT = '[REDACTED]'
-const MAX_DEPTH_TEXT = '[MaxDepthExceeded]'
-const CIRCULAR_REFERENCE_TEXT = '[CircularReference]'
-const URL_LIKE_KEYS = new Set([
-  'path',
-  'url',
-  'originalurl',
-  'referer',
-  'referrer',
-  'location',
-])
+const REDACTED_TEXT = '[REDACTED]';
+const MAX_DEPTH_TEXT = '[MaxDepthExceeded]';
+const CIRCULAR_REFERENCE_TEXT = '[CircularReference]';
+const URL_LIKE_KEYS = new Set(['path', 'url', 'originalurl', 'referer', 'referrer', 'location']);
 const SENSITIVE_QUERY_PARAM_PATTERN =
-  /([?&](?:auth_token|access_token|refresh_token|token|signature|sig|api_key|apikey)=)[^&#]*/gi
+  /([?&](?:auth_token|access_token|refresh_token|token|signature|sig|api_key|apikey)=)[^&#]*/gi;
 
 const redactKeys = new Set([
   'password',
@@ -56,44 +49,44 @@ const redactKeys = new Set([
   'ciphertext',
   'authtag',
   'iv',
-])
+]);
 
 // Ensure log directory exists once during startup
 fs.mkdirSync(LOG_DIRECTORY, {
   recursive: true,
-})
+});
 
 // Non-blocking write stream
 let logStream = fs.createWriteStream(LOG_FILE, {
   flags: 'a',
   encoding: 'utf8',
-})
+});
 
 logStream.on('error', (error) => {
-  console.error('Logger stream error:', error)
-})
+  console.error('Logger stream error:', error);
+});
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> => {
-  return Object.prototype.toString.call(value) === '[object Object]'
-}
+  return Object.prototype.toString.call(value) === '[object Object]';
+};
 
 const normalizeKey = (key: string): string => {
-  return key.toLowerCase()
-}
+  return key.toLowerCase();
+};
 
 const sanitizeUrlForLogs = (value: string): string => {
-  return value.replace(SENSITIVE_QUERY_PARAM_PATTERN, '$1[REDACTED]')
-}
+  return value.replace(SENSITIVE_QUERY_PARAM_PATTERN, '$1[REDACTED]');
+};
 
 const serializeValue = (
   value: unknown,
   depth = 0,
   seen = new WeakSet<object>(),
-  keyHint?: string,
+  keyHint?: string
 ): unknown => {
   // Prevent deep recursion
   if (depth > MAX_DEPTH) {
-    return MAX_DEPTH_TEXT
+    return MAX_DEPTH_TEXT;
   }
 
   // Handle primitive values
@@ -103,24 +96,24 @@ const serializeValue = (
     typeof value === 'number' ||
     typeof value === 'boolean'
   ) {
-    return value
+    return value;
   }
 
   if (typeof value === 'string') {
     if (keyHint && URL_LIKE_KEYS.has(normalizeKey(keyHint))) {
-      return sanitizeUrlForLogs(value)
+      return sanitizeUrlForLogs(value);
     }
-    return value
+    return value;
   }
 
   // Handle bigint
   if (typeof value === 'bigint') {
-    return value.toString()
+    return value.toString();
   }
 
   // Handle functions
   if (typeof value === 'function') {
-    return `[Function: ${value.name || 'anonymous'}]`
+    return `[Function: ${value.name || 'anonymous'}]`;
   }
 
   // Handle Error objects
@@ -129,84 +122,84 @@ const serializeValue = (
       name: value.name,
       message: value.message,
       stack: value.stack,
-    }
+    };
   }
 
   // Handle Date
   if (value instanceof Date) {
-    return value.toISOString()
+    return value.toISOString();
   }
 
   // Handle Buffer
   if (Buffer.isBuffer(value)) {
-    return `[Buffer: ${value.length} bytes]`
+    return `[Buffer: ${value.length} bytes]`;
   }
 
   // Handle arrays
   if (Array.isArray(value)) {
     return value
       .slice(0, MAX_ARRAY_LENGTH)
-      .map((entry) => serializeValue(entry, depth + 1, seen, keyHint))
+      .map((entry) => serializeValue(entry, depth + 1, seen, keyHint));
   }
 
   // Handle objects
   if (typeof value === 'object') {
     if (seen.has(value)) {
-      return CIRCULAR_REFERENCE_TEXT
+      return CIRCULAR_REFERENCE_TEXT;
     }
 
-    seen.add(value)
+    seen.add(value);
 
     if (!isPlainObject(value)) {
-      return String(value)
+      return String(value);
     }
 
-    const serializedObject: Record<string, unknown> = {}
+    const serializedObject: Record<string, unknown> = {};
 
     for (const [key, entry] of Object.entries(value)) {
-      const normalizedKey = normalizeKey(key)
+      const normalizedKey = normalizeKey(key);
 
       serializedObject[key] = redactKeys.has(normalizedKey)
         ? REDACTED_TEXT
-        : serializeValue(entry, depth + 1, seen, key)
+        : serializeValue(entry, depth + 1, seen, key);
     }
 
-    return serializedObject
+    return serializedObject;
   }
 
-  return String(value)
-}
+  return String(value);
+};
 
 const pushRecentLog = (payload: LogPayload): void => {
-  recentLogs.push(payload)
+  recentLogs.push(payload);
 
   if (recentLogs.length > MAX_RECENT_LOGS) {
-    recentLogs.shift()
+    recentLogs.shift();
   }
-}
+};
 
 const createPayload = (
   level: LogLevel,
   message: string,
   meta?: unknown,
-  extraMeta?: LogMeta,
+  extraMeta?: LogMeta
 ): LogPayload => {
-  const mergedMeta: LogMeta = {}
+  const mergedMeta: LogMeta = {};
 
   if (meta instanceof Error) {
     mergedMeta.error = {
       name: meta.name,
       message: meta.message,
       stack: meta.stack,
-    }
+    };
   } else if (isPlainObject(meta)) {
-    Object.assign(mergedMeta, meta)
+    Object.assign(mergedMeta, meta);
   } else if (meta !== undefined) {
-    mergedMeta.value = meta
+    mergedMeta.value = meta;
   }
 
   if (isPlainObject(extraMeta)) {
-    Object.assign(mergedMeta, extraMeta)
+    Object.assign(mergedMeta, extraMeta);
   }
 
   return {
@@ -221,98 +214,86 @@ const createPayload = (
           meta: serializeValue(mergedMeta),
         }
       : {}),
-  }
-}
+  };
+};
 
-const writeLog = (
-  level: LogLevel,
-  message: string,
-  meta?: unknown,
-  extraMeta?: LogMeta,
-): void => {
+const writeLog = (level: LogLevel, message: string, meta?: unknown, extraMeta?: LogMeta): void => {
   try {
-    const payload = createPayload(level, message, meta, extraMeta)
+    const payload = createPayload(level, message, meta, extraMeta);
 
-    pushRecentLog(payload)
+    pushRecentLog(payload);
 
-    const line = `${JSON.stringify(payload)}\n`
+    const line = `${JSON.stringify(payload)}\n`;
 
     // Non-blocking async write
-    logStream.write(line)
+    logStream.write(line);
 
     // Console output in development
     if (process.env.NODE_ENV !== 'production') {
       const consoleMethod =
-        level === 'error'
-          ? console.error
-          : level === 'warn'
-            ? console.warn
-            : console.log
+        level === 'error' ? console.error : level === 'warn' ? console.warn : console.log;
 
-      consoleMethod(
-        `[${payload.timestamp}] ${level.toUpperCase()} ${message}`,
-        payload.meta || '',
-      )
+      consoleMethod(`[${payload.timestamp}] ${level.toUpperCase()} ${message}`, payload.meta || '');
     }
   } catch (error) {
-    console.error('Logger failure:', error)
+    console.error('Logger failure:', error);
   }
-}
+};
 
 export const logger = {
   debug: (message: string, meta?: unknown, extraMeta?: LogMeta): void => {
-    writeLog('debug', message, meta, extraMeta)
+    writeLog('debug', message, meta, extraMeta);
   },
 
   info: (message: string, meta?: unknown, extraMeta?: LogMeta): void => {
-    writeLog('info', message, meta, extraMeta)
+    writeLog('info', message, meta, extraMeta);
   },
 
   warn: (message: string, meta?: unknown, extraMeta?: LogMeta): void => {
-    writeLog('warn', message, meta, extraMeta)
+    writeLog('warn', message, meta, extraMeta);
   },
 
   error: (message: string, meta?: unknown, extraMeta?: LogMeta): void => {
-    writeLog('error', message, meta, extraMeta)
+    writeLog('error', message, meta, extraMeta);
   },
 
   getRecentLogs(): LogPayload[] {
-    return [...recentLogs]
+    return [...recentLogs];
   },
 
   clearLogs(): void {
-    recentLogs.length = 0
+    recentLogs.length = 0;
     try {
-      logStream.end()
-      fs.writeFileSync(LOG_FILE, '', { flag: 'w' })
+      logStream.end();
+      fs.writeFileSync(LOG_FILE, '', { flag: 'w' });
       logStream = fs.createWriteStream(LOG_FILE, {
         flags: 'a',
         encoding: 'utf8',
-      })
+      });
       logStream.on('error', (error) => {
-        console.error('Logger stream error:', error)
-      })
+        console.error('Logger stream error:', error);
+      });
     } catch (error) {
-      console.error('Failed to clear log file:', error)
+      console.error('Failed to clear log file:', error);
     }
   },
 
   close(): void {
-    logStream.end()
+    logStream.end();
   },
-}
+};
 
 // Graceful shutdown handling
 process.on('beforeExit', () => {
-  logger.close()
-})
+  logger.close();
+});
 
 process.on('SIGINT', () => {
-  logger.close()
-  process.exit(0)
-})
+  logger.close();
+  process.exit(0);
+});
 
 process.on('SIGTERM', () => {
-  logger.close()
-  process.exit(0)
-})
+  logger.close();
+  process.exit(0);
+});

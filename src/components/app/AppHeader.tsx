@@ -1,32 +1,25 @@
-import React from 'react'
-import {
-  Lock,
-  ChevronRight,
-  ChevronLeft,
-  Search,
-  Bell,
-  PanelLeft,
-} from 'lucide-react'
-import { cn } from '../../lib/utils'
-import { NotificationDropdown } from './NotificationDropdown'
+import React from 'react';
+import { Lock, ChevronRight, ChevronLeft, Search, Bell, PanelLeft } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { NotificationDropdown } from './NotificationDropdown';
 
 interface AppHeaderProps {
-  showNotifications: boolean
-  setShowNotifications: (show: boolean) => void
-  sidebarPosition?: 'left' | 'right'
-  isSidebarOpen: boolean
-  toggleSidebar: () => void
-  activeTabLabel: string
-  handlePrevTab: () => void
-  handleNextTab: () => void
-  unreadCount: number
-  handleHeaderProfileClick: () => void
-  headerProfilePhoto: string | null
-  isHeaderProfilePhotoBroken: boolean
-  setIsHeaderProfilePhotoBroken: (broken: boolean) => void
-  headerProfileName: string
-  username: string | null
-  profileMonogram: string
+  showNotifications: boolean;
+  setShowNotifications: (show: boolean) => void;
+  sidebarPosition?: 'left' | 'right';
+  isSidebarOpen: boolean;
+  toggleSidebar: () => void;
+  activeTabLabel: string;
+  handlePrevTab: () => void;
+  handleNextTab: () => void;
+  unreadCount: number;
+  handleHeaderProfileClick: () => void;
+  headerProfilePhoto: string | null;
+  isHeaderProfilePhotoBroken: boolean;
+  setIsHeaderProfilePhotoBroken: (broken: boolean) => void;
+  headerProfileName: string;
+  username: string | null;
+  profileMonogram: string;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -53,25 +46,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       className={cn(
         'relative flex h-16 w-full items-center justify-between border-b border-sidebar-border bg-sidebar-bg/60 px-3 sm:px-4 lg:px-6 backdrop-blur-xl transition-all duration-200 select-none',
         showNotifications ? 'z-[100]' : 'z-40',
-        sidebarPosition === 'right' && 'flex-row-reverse',
+        sidebarPosition === 'right' && 'flex-row-reverse'
       )}
     >
       {/* Mobile Branding & Sidebar Toggle */}
       <div
         className={cn(
           'flex items-center gap-2 sm:gap-3 lg:hidden',
-          sidebarPosition === 'right' && 'flex-row-reverse',
+          sidebarPosition === 'right' && 'flex-row-reverse'
         )}
       >
         <button
           type="button"
           onClick={toggleSidebar}
           className="flex items-center gap-2.5 rounded-lg text-text transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25"
-          aria-label={
-            isSidebarOpen
-              ? 'Close sidebar navigation'
-              : 'Open sidebar navigation'
-          }
+          aria-label={isSidebarOpen ? 'Close sidebar navigation' : 'Open sidebar navigation'}
           aria-controls="primary-sidebar"
           aria-expanded={isSidebarOpen}
         >
@@ -88,7 +77,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <div
         className={cn(
           'hidden lg:flex items-center gap-3 min-w-0',
-          sidebarPosition === 'right' && 'flex-row-reverse',
+          sidebarPosition === 'right' && 'flex-row-reverse'
         )}
       >
         <button
@@ -101,7 +90,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <PanelLeft
             className={cn(
               'h-5 w-5 text-text/80 transition-transform duration-200 hover:text-text',
-              sidebarPosition === 'right' && 'rotate-180',
+              sidebarPosition === 'right' && 'rotate-180'
             )}
           />
         </button>
@@ -114,14 +103,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <div
         className={cn(
           'flex items-center gap-1.5 sm:gap-2 lg:gap-3 ml-auto min-w-0',
-          sidebarPosition === 'right' && 'flex-row-reverse mr-auto ml-0',
+          sidebarPosition === 'right' && 'flex-row-reverse mr-auto ml-0'
         )}
       >
         {/* Mobile Quick Tab Switcher Pill */}
         <div
           className={cn(
             'flex items-center gap-0.1 text-xs font-medium text-text/60 lg:hidden max-w-[150px] sm:max-w-none truncate',
-            sidebarPosition === 'right' && 'flex-row-reverse',
+            sidebarPosition === 'right' && 'flex-row-reverse'
           )}
         >
           <button
@@ -132,10 +121,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             title="Previous tab"
           >
             <ChevronLeft
-              className={cn(
-                'h-3.5 w-3.5',
-                sidebarPosition === 'right' && 'rotate-180',
-              )}
+              className={cn('h-3.5 w-3.5', sidebarPosition === 'right' && 'rotate-180')}
             />
           </button>
 
@@ -157,10 +143,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             title="Next tab"
           >
             <ChevronRight
-              className={cn(
-                'h-3.5 w-3.5',
-                sidebarPosition === 'right' && 'rotate-180',
-              )}
+              className={cn('h-3.5 w-3.5', sidebarPosition === 'right' && 'rotate-180')}
             />
           </button>
         </div>
@@ -169,16 +152,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           type="button"
           className="relative flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-text/15 bg-text/5 px-2.5 sm:px-3 text-text transition-all duration-200 hover:bg-text/10 hover:border-text/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
-          onClick={() =>
-            window.dispatchEvent(new CustomEvent('open-command-palette'))
-          }
+          onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
           aria-label="Open search command palette"
           title="Search (Ctrl+K / Cmd+K)"
         >
           <Search className="h-4 w-4 text-text/80 transition-colors" />
-          <span className="hidden sm:inline text-xs text-text/50 font-medium">
-            Search...
-          </span>
+          <span className="hidden sm:inline text-xs text-text/50 font-medium">Search...</span>
           <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-text/15 bg-text/10 px-1.5 py-0.5 text-[10px] font-mono text-text/60">
             ⌘K
           </kbd>
@@ -190,11 +169,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             type="button"
             className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-text/15 bg-text/5 text-text transition-all duration-200 hover:bg-text/10 hover:border-text/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
             onClick={() => setShowNotifications(!showNotifications)}
-            aria-label={
-              unreadCount > 0
-                ? `Notifications (${unreadCount} unread)`
-                : 'Notifications'
-            }
+            aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
             title="Notifications"
           >
             <Bell className="h-4 w-4 text-text/80 transition-colors" />
@@ -241,5 +216,5 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </button>
       </div>
     </header>
-  )
-}
+  );
+};

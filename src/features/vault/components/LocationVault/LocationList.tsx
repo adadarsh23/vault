@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react'
-import { cn } from '../../../../lib/utils'
-import { Button } from '../../../../components/ui/Button'
-import { SearchInput } from '../../../../components/ui/SearchInput'
+import React, { useRef, useState } from 'react';
+import { cn } from '../../../../lib/utils';
+import { Button } from '../../../../components/ui/Button';
+import { SearchInput } from '../../../../components/ui/SearchInput';
 import {
   Plus,
   MapPin,
@@ -12,29 +12,29 @@ import {
   Navigation,
   Pin,
   Loader2,
-} from 'lucide-react'
-import { motion } from 'framer-motion'
-import { ScrollButton } from '../../../../components/vault/ScrollButton'
-import { setDraggedVaultItem } from '../../../../lib/vaultDragDrop'
-import { X } from 'lucide-react'
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ScrollButton } from '../../../../components/vault/ScrollButton';
+import { setDraggedVaultItem } from '../../../../lib/vaultDragDrop';
+import { X } from 'lucide-react';
 
 export interface LocationListProps {
-  locations: any[]
-  filteredLocations: any[]
-  selectedId: string | null
-  setSelectedId: (id: string | null) => void
-  isCreating: boolean
-  setIsCreating: (isCreating: boolean) => void
-  setIsEditing: (isEditing: boolean) => void
-  searchQuery: string
-  setSearchQuery: (query: string) => void
-  currentFolder: string | null
-  startCreate: () => void
-  captureCurrentLocation: () => Promise<void>
-  isCapturing: boolean
-  setIsMobileFolderOpen: (isOpen: boolean) => void
-  onTogglePin: (id: string) => void
-  pinningItemIds: string[]
+  locations: any[];
+  filteredLocations: any[];
+  selectedId: string | null;
+  setSelectedId: (id: string | null) => void;
+  isCreating: boolean;
+  setIsCreating: (isCreating: boolean) => void;
+  setIsEditing: (isEditing: boolean) => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  currentFolder: string | null;
+  startCreate: () => void;
+  captureCurrentLocation: () => Promise<void>;
+  isCapturing: boolean;
+  setIsMobileFolderOpen: (isOpen: boolean) => void;
+  onTogglePin: (id: string) => void;
+  pinningItemIds: string[];
 }
 
 export const LocationList: React.FC<LocationListProps> = ({
@@ -55,28 +55,28 @@ export const LocationList: React.FC<LocationListProps> = ({
   onTogglePin,
   pinningItemIds,
 }) => {
-  const [showListScrollTop, setShowListScrollTop] = useState(false)
-  const listRef = useRef<HTMLDivElement>(null)
+  const [showListScrollTop, setShowListScrollTop] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const suggestions = React.useMemo(() => {
-    if (!locations) return []
-    return locations.map((item) => item.title).filter(Boolean)
-  }, [locations])
+    if (!locations) return [];
+    return locations.map((item) => item.title).filter(Boolean);
+  }, [locations]);
 
-  const headerTitle = currentFolder || 'Locations'
+  const headerTitle = currentFolder || 'Locations';
   const displayHeaderTitle = React.useMemo(() => {
-    const words = headerTitle.trim().split(/\s+/)
+    const words = headerTitle.trim().split(/\s+/);
     if (words.length > 10) {
-      return `${words.slice(0, 10).join(' ')}…`
+      return `${words.slice(0, 10).join(' ')}…`;
     }
-    return headerTitle
-  }, [headerTitle])
+    return headerTitle;
+  }, [headerTitle]);
 
   return (
     <div
       className={cn(
         'w-full md:w-80 shrink-0 flex-col gap-6 border-r border-white/5 pr-6 transition-colors',
-        selectedId || isCreating ? 'hidden md:flex' : 'flex',
+        selectedId || isCreating ? 'hidden md:flex' : 'flex'
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -92,11 +92,7 @@ export const LocationList: React.FC<LocationListProps> = ({
           </span>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button
-            onClick={startCreate}
-            size="sm"
-            className="hidden sm:flex transition-all"
-          >
+          <Button onClick={startCreate} size="sm" className="hidden sm:flex transition-all">
             <Plus className="mr-2 h-4 w-4" />
             Add Location
           </Button>
@@ -147,9 +143,7 @@ export const LocationList: React.FC<LocationListProps> = ({
         disabled={isCapturing}
         className="justify-start rounded-xl border-white/5 bg-white/5 hover:bg-white/10 h-11"
       >
-        <Navigation
-          className={cn('mr-3 h-4 w-4 text-lime-400', isCapturing && 'animate-pulse')}
-        />
+        <Navigation className={cn('mr-3 h-4 w-4 text-lime-400', isCapturing && 'animate-pulse')} />
         <span className="text-sm font-medium">
           {isCapturing ? 'Capturing...' : 'Capture Current Location'}
         </span>
@@ -158,9 +152,7 @@ export const LocationList: React.FC<LocationListProps> = ({
       <div className="relative flex-1 min-h-0">
         <div
           ref={listRef}
-          onScroll={(e) =>
-            setShowListScrollTop(e.currentTarget.scrollTop > 200)
-          }
+          onScroll={(e) => setShowListScrollTop(e.currentTarget.scrollTop > 200)}
           className="h-full overflow-y-auto space-y-3 pr-2 custom-scrollbar"
         >
           {filteredLocations.map((item, idx) => (
@@ -169,32 +161,30 @@ export const LocationList: React.FC<LocationListProps> = ({
               role="button"
               tabIndex={0}
               draggable
-              onDragStartCapture={(event) =>
-                setDraggedVaultItem(event, item.id)
-              }
+              onDragStartCapture={(event) => setDraggedVaultItem(event, item.id)}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               whileHover={{ x: 4 }}
               whileTap={{ scale: 0.98 }}
               transition={{ delay: idx * 0.03 }}
               onClick={() => {
-                setSelectedId(item.id)
-                setIsCreating(false)
-                setIsEditing(false)
+                setSelectedId(item.id);
+                setIsCreating(false);
+                setIsEditing(false);
               }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  setSelectedId(item.id)
-                  setIsCreating(false)
-                  setIsEditing(false)
+                  event.preventDefault();
+                  setSelectedId(item.id);
+                  setIsCreating(false);
+                  setIsEditing(false);
                 }
               }}
               className={cn(
                 'w-full rounded-2xl border p-4 text-left transition-all',
                 selectedId === item.id
                   ? 'border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_20px_rgba(16,185,129,0.05)]'
-                  : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10',
+                  : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10'
               )}
               title="Drag to a folder to move this location"
             >
@@ -204,7 +194,7 @@ export const LocationList: React.FC<LocationListProps> = ({
                     'rounded-xl p-2 transition-colors',
                     selectedId === item.id
                       ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-white/5 text-text/20',
+                      : 'bg-white/5 text-text/20'
                   )}
                 >
                   <MapPin className="h-4 w-4" />
@@ -213,7 +203,7 @@ export const LocationList: React.FC<LocationListProps> = ({
                   <p
                     className={cn(
                       'truncate text-sm font-semibold transition-colors',
-                      selectedId === item.id ? 'text-text' : 'text-text/70',
+                      selectedId === item.id ? 'text-text' : 'text-text/70'
                     )}
                   >
                     {item.title}
@@ -238,14 +228,14 @@ export const LocationList: React.FC<LocationListProps> = ({
                   size="icon"
                   disabled={pinningItemIds.includes(item.id)}
                   onClick={(event) => {
-                    event.stopPropagation()
-                    onTogglePin(item.id)
+                    event.stopPropagation();
+                    onTogglePin(item.id);
                   }}
                   className={cn(
                     'h-8 w-8 rounded-full transition-all',
                     item.isPinned
                       ? 'text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20'
-                      : 'text-text/30 hover:text-text/80 hover:bg-white/10',
+                      : 'text-text/30 hover:text-text/80 hover:bg-white/10'
                   )}
                   title={item.isPinned ? 'Unpin location' : 'Pin location'}
                 >
@@ -255,9 +245,7 @@ export const LocationList: React.FC<LocationListProps> = ({
                     <Pin className={cn('h-4 w-4', item.isPinned && 'fill-current')} />
                   )}
                 </Button>
-                {selectedId === item.id && (
-                  <ChevronRight className="h-4 w-4 text-emerald-500/40" />
-                )}
+                {selectedId === item.id && <ChevronRight className="h-4 w-4 text-emerald-500/40" />}
               </div>
             </motion.div>
           ))}
@@ -265,12 +253,10 @@ export const LocationList: React.FC<LocationListProps> = ({
         <ScrollButton
           icon={ChevronUp}
           visible={showListScrollTop}
-          onClick={() =>
-            listRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-          }
+          onClick={() => listRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
           className="bottom-4 right-4"
         />
       </div>
     </div>
-  )
-}
+  );
+};

@@ -1,12 +1,12 @@
-import { useLocation } from 'react-router-dom'
-import { useDocumentMeta } from '../../hooks/useDocumentMeta'
-import { useAuthManager, AuthManager } from './AuthManager'
+import { useLocation } from 'react-router-dom';
+import { useDocumentMeta } from '../../hooks/useDocumentMeta';
+import { useAuthManager, AuthManager } from './AuthManager';
 
 const PUBLIC_ROUTE_META: Record<
   string,
   {
-    title: string
-    description: string
+    title: string;
+    description: string;
   }
 > = {
   '/': {
@@ -16,33 +16,31 @@ const PUBLIC_ROUTE_META: Record<
   },
   '/legal': {
     title: 'Vault - Legal',
-    description:
-      'Review legal terms, privacy policies, and security commitments for Vault.',
+    description: 'Review legal terms, privacy policies, and security commitments for Vault.',
   },
   '/contact': {
     title: 'Vault - Contact',
-    description:
-      'Reach the Vault team for support, feedback, and security-related questions.',
+    description: 'Reach the Vault team for support, feedback, and security-related questions.',
   },
-}
+};
 
 const resolvePublicRouteMeta = (pathname: string) =>
-  PUBLIC_ROUTE_META[pathname] ?? PUBLIC_ROUTE_META['/']
+  PUBLIC_ROUTE_META[pathname] ?? PUBLIC_ROUTE_META['/'];
 
 export function LockedVaultHost({
   shouldReduceMotion: _shouldReduceMotion,
 }: {
-  shouldReduceMotion: boolean
+  shouldReduceMotion: boolean;
 }) {
-  const authManager = useAuthManager()
-  const location = useLocation()
-  const meta = resolvePublicRouteMeta(location.pathname)
+  const authManager = useAuthManager();
+  const location = useLocation();
+  const meta = resolvePublicRouteMeta(location.pathname);
 
   useDocumentMeta({
     title: meta.title,
     description: meta.description,
     path: location.pathname,
-  })
+  });
 
   return (
     <AuthManager
@@ -52,6 +50,5 @@ export function LockedVaultHost({
       onGoBack={() => authManager.setShowLanding(true)}
       showLanding={authManager.showLanding}
     />
-  )
+  );
 }
-

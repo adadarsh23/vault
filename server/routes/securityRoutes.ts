@@ -9,29 +9,28 @@
  * - Admin dashboard
  */
 
-import { Router, Request as ExpressRequest, Response } from 'express'
-import { requireAuth } from '../middleware/authMiddleware.ts'
-import { asyncHandler } from '../utils/asyncHandler.ts'
-import { aiAnomalyDetectionService } from '../services/aiAnomalyDetectionService.ts'
-import { requestFingerprintService } from '../services/requestFingerprintService.ts'
-import { securityDashboardService } from '../services/securityDashboardService.ts'
-import { AppError } from '../utils/appError.ts'
-import { AuthenticatedRequest } from '../utils/requestTypes.ts'
-import { User } from '../models/user.ts'
-import { getVaultSnapshot } from '../services/vaultItemService.ts'
+import { Router, Request as ExpressRequest, Response } from 'express';
+import { requireAuth } from '../middleware/authMiddleware.ts';
+import { asyncHandler } from '../utils/asyncHandler.ts';
+import { aiAnomalyDetectionService } from '../services/aiAnomalyDetectionService.ts';
+import { requestFingerprintService } from '../services/requestFingerprintService.ts';
+import { securityDashboardService } from '../services/securityDashboardService.ts';
+import { AppError } from '../utils/appError.ts';
+import { AuthenticatedRequest } from '../utils/requestTypes.ts';
+import { User } from '../models/user.ts';
+import { getVaultSnapshot } from '../services/vaultItemService.ts';
 
+type Request = AuthenticatedRequest;
 
-type Request = AuthenticatedRequest
-
-const securityRouter = Router()
+const securityRouter = Router();
 
 const getRouteParam = (value: string | string[] | undefined): string => {
   if (Array.isArray(value)) {
-    return value[0] ?? ''
+    return value[0] ?? '';
   }
 
-  return value ?? ''
-}
+  return value ?? '';
+};
 
 /**
  * POST /api/security/login-verify
@@ -41,7 +40,7 @@ securityRouter.post(
   '/login-verify',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId
+    const userId = req.user!.userId;
 
     // Verify password
     // TODO: Implement password verification
@@ -53,9 +52,9 @@ securityRouter.post(
       success: true,
       message: 'Verification code sent to registered email',
       expiresIn: 300, // 5 minutes
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * GET /api/security/devices
@@ -65,8 +64,8 @@ securityRouter.get(
   '/devices',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId
-    const devices = requestFingerprintService.getUserDevices(userId)
+    const userId = req.user!.userId;
+    const devices = requestFingerprintService.getUserDevices(userId);
 
     res.json({
       devices: devices.map((d) => ({
@@ -78,9 +77,9 @@ securityRouter.get(
         trustScore: d.trustScore,
         platform: d.metadata.platform,
       })),
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * POST /api/security/devices/:id/verify
@@ -90,21 +89,21 @@ securityRouter.post(
   '/devices/:id/verify',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params
-    const userId = req.user!.userId
+    const { id } = req.params;
+    const userId = req.user!.userId;
 
     // Verify MFA code
     // TODO: Implement MFA verification
 
-    const idStr = Array.isArray(id) ? id[0] : id
-    requestFingerprintService.markDeviceVerified(idStr, userId)
+    const idStr = Array.isArray(id) ? id[0] : id;
+    requestFingerprintService.markDeviceVerified(idStr, userId);
 
     res.json({
       success: true,
       message: 'Device verified and trusted',
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * DELETE /api/security/devices/:id
@@ -114,21 +113,21 @@ securityRouter.delete(
   '/devices/:id',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params
-    const userId = req.user!.userId
+    const { id } = req.params;
+    const userId = req.user!.userId;
 
-    const success = requestFingerprintService.forgetDevice(getRouteParam(id), userId)
+    const success = requestFingerprintService.forgetDevice(getRouteParam(id), userId);
 
     if (!success) {
-      throw AppError.badRequest('Device not found', 'DEVICE_NOT_FOUND')
+      throw AppError.badRequest('Device not found', 'DEVICE_NOT_FOUND');
     }
 
     res.json({
       success: true,
       message: 'Device removed',
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * POST /api/security/devices/forget-all
@@ -138,20 +137,17 @@ securityRouter.post(
   '/devices/forget-all',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId
-    const currentFingerprintId = req.get('x-fingerprint-id') || 'unknown'
+    const userId = req.user!.userId;
+    const currentFingerprintId = req.get('x-fingerprint-id') || 'unknown';
 
-    const count = requestFingerprintService.forgetAllOtherDevices(
-      currentFingerprintId,
-      userId,
-    )
+    const count = requestFingerprintService.forgetAllOtherDevices(currentFingerprintId, userId);
 
     res.json({
       success: true,
       message: `Logged out from ${count} other devices`,
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * GET /api/security/activity
@@ -161,10 +157,10 @@ securityRouter.get(
   '/activity',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId
-    const hours = Math.min(parseInt(req.query.hours as string) || 24, 720) // Max 30 days
+    const userId = req.user!.userId;
+    const hours = Math.min(parseInt(req.query.hours as string) || 24, 720); // Max 30 days
 
-    const behavior = aiAnomalyDetectionService.getTypicalBehavior(userId)
+    const behavior = aiAnomalyDetectionService.getTypicalBehavior(userId);
 
     res.json({
       behavior: behavior || {
@@ -173,9 +169,9 @@ securityRouter.get(
         knownLocations: [],
         typicalLoginHours: [],
       },
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * GET /api/security/settings
@@ -185,7 +181,7 @@ securityRouter.get(
   '/settings',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId
+    const userId = req.user!.userId;
 
     res.json({
       mfaEnabled: true, // Would fetch from DB
@@ -194,9 +190,9 @@ securityRouter.get(
       suspiciousActivityAlerts: true,
       twoFactorRequired: true,
       sessionTimeout: 3600, // seconds
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * POST /api/security/settings
@@ -206,17 +202,17 @@ securityRouter.post(
   '/settings',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId
-    const { loginAlerts, suspiciousActivityAlerts, sessionTimeout } = req.body
+    const userId = req.user!.userId;
+    const { loginAlerts, suspiciousActivityAlerts, sessionTimeout } = req.body;
 
     // TODO: Persist to database
 
     res.json({
       success: true,
       message: 'Settings updated',
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * POST /api/security/mfa/enable
@@ -226,15 +222,15 @@ securityRouter.post(
   '/mfa/enable',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId
-    const { method } = req.body // 'totp', 'fido2', 'email'
+    const userId = req.user!.userId;
+    const { method } = req.body; // 'totp', 'fido2', 'email'
 
     if (!['totp', 'fido2', 'email'].includes(method)) {
-      throw AppError.badRequest('Invalid MFA method', 'INVALID_MFA_METHOD')
+      throw AppError.badRequest('Invalid MFA method', 'INVALID_MFA_METHOD');
     }
 
     // Generate MFA secret/challenge
-    let secret: any
+    let secret: any;
 
     if (method === 'totp') {
       // Use speakeasy library
@@ -242,7 +238,7 @@ securityRouter.post(
       secret = {
         secret: 'JBSWY3DPEBLW64TMMQ======',
         qrCode: 'otpauth://totp/...',
-      }
+      };
     }
 
     res.json({
@@ -250,9 +246,9 @@ securityRouter.post(
       method,
       secret,
       message: 'Scan QR code with authenticator app',
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * POST /api/security/mfa/verify
@@ -262,16 +258,16 @@ securityRouter.post(
   '/mfa/verify',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const { code, method } = req.body
+    const { code, method } = req.body;
 
     // TODO: Verify TOTP code or FIDO2 challenge
 
     res.json({
       success: true,
       message: 'MFA enabled successfully',
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * POST /api/security/mfa/disable
@@ -281,16 +277,16 @@ securityRouter.post(
   '/mfa/disable',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const { password } = req.body
+    const { password } = req.body;
 
     // TODO: Verify password first
 
     res.json({
       success: true,
       message: 'MFA disabled',
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * ADMIN ONLY: GET /api/admin/security/dashboard
@@ -302,10 +298,10 @@ securityRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     // TODO: Verify admin role
 
-    const metrics = await securityDashboardService.getCurrentMetrics()
-    res.json(metrics)
-  }),
-)
+    const metrics = await securityDashboardService.getCurrentMetrics();
+    res.json(metrics);
+  })
+);
 
 /**
  * ADMIN ONLY: GET /api/admin/security/incidents
@@ -317,8 +313,8 @@ securityRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     // TODO: Verify admin role
 
-    const limit = Math.min(parseInt(req.query.limit as string) || 50, 500)
-    const severity = req.query.severity as string
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 500);
+    const severity = req.query.severity as string;
 
     // TODO: Fetch from database with filters
 
@@ -326,9 +322,9 @@ securityRouter.get(
       incidents: [],
       total: 0,
       limit,
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * ADMIN ONLY: GET /api/admin/security/incidents/:id
@@ -341,11 +337,11 @@ securityRouter.get(
     // TODO: Verify admin role
 
     const incident = await securityDashboardService.getIncidentDetails(
-      getRouteParam(req.params.id),
-    )
-    res.json(incident)
-  }),
-)
+      getRouteParam(req.params.id)
+    );
+    res.json(incident);
+  })
+);
 
 /**
  * ADMIN ONLY: PATCH /api/admin/security/incidents/:id
@@ -357,20 +353,20 @@ securityRouter.patch(
   asyncHandler(async (req: Request, res: Response) => {
     // TODO: Verify admin role
 
-    const { status, notes } = req.body
+    const { status, notes } = req.body;
 
     await securityDashboardService.updateIncidentStatus(
       getRouteParam(req.params.id),
       status as any,
-      notes,
-    )
+      notes
+    );
 
     res.json({
       success: true,
       message: 'Incident updated',
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * ADMIN ONLY: POST /api/admin/security/actions
@@ -382,16 +378,16 @@ securityRouter.post(
   asyncHandler(async (req: Request, res: Response) => {
     // TODO: Verify admin role
 
-    const { action, target, duration } = req.body
+    const { action, target, duration } = req.body;
 
-    await securityDashboardService.applyManualAction(action, target, duration)
+    await securityDashboardService.applyManualAction(action, target, duration);
 
     res.json({
       success: true,
       message: `Action applied: ${action}`,
-    })
-  }),
-)
+    });
+  })
+);
 
 /**
  * ADMIN ONLY: GET /api/admin/security/report
@@ -403,21 +399,15 @@ securityRouter.get(
   asyncHandler(async (req: Request, res: Response) => {
     // TODO: Verify admin role
 
-    const startDate = new Date(req.query.startDate as string)
-    const endDate = new Date(req.query.endDate as string)
+    const startDate = new Date(req.query.startDate as string);
+    const endDate = new Date(req.query.endDate as string);
 
-    const report = await securityDashboardService.generateSecurityReport(
-      startDate,
-      endDate,
-    )
+    const report = await securityDashboardService.generateSecurityReport(startDate, endDate);
 
-    res.contentType('text/csv')
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="security-report.csv"',
-    )
-    res.send(report)
-  }),
-)
+    res.contentType('text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="security-report.csv"');
+    res.send(report);
+  })
+);
 
-export { securityRouter }
+export { securityRouter };

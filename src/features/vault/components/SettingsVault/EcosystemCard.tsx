@@ -1,10 +1,10 @@
-import React from 'react'
-import { Button } from '../../../../components/ui/Button'
-import { SectionCard } from './SharedComponents'
-import { Network } from 'lucide-react'
+import React from 'react';
+import { Button } from '../../../../components/ui/Button';
+import { SectionCard } from './SharedComponents';
+import { Network } from 'lucide-react';
 
 interface EcosystemCardProps {
-  onNavigate: (tab: string) => void
+  onNavigate: (tab: string) => void;
 }
 
 export const EcosystemCard: React.FC<EcosystemCardProps> = ({ onNavigate }) => (
@@ -15,9 +15,7 @@ export const EcosystemCard: React.FC<EcosystemCardProps> = ({ onNavigate }) => (
     <div className="rounded-[1.5rem] border border-card-border bg-card-bg p-5 shadow-[0_20px_45px_-28px_rgba(0,0,0,0.18)] transition-colors dark:border-white/10 dark:bg-black sm:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <p className="text-sm leading-6 text-text/50">
-            Explore the Vault Architecture.
-          </p>
+          <p className="text-sm leading-6 text-text/50">Explore the Vault Architecture.</p>
         </div>
 
         <Button
@@ -31,4 +29,4 @@ export const EcosystemCard: React.FC<EcosystemCardProps> = ({ onNavigate }) => (
       </div>
     </div>
   </SectionCard>
-)
+);

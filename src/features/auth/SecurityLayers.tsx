@@ -1,5 +1,5 @@
-import React, { memo, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { memo, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Fingerprint,
   Lock,
@@ -10,66 +10,57 @@ import {
   Database,
   CheckCircle2,
   Sparkles,
-} from 'lucide-react'
+} from 'lucide-react';
 
-const icons = [
-  Fingerprint,
-  Zap,
-  Lock,
-  Activity,
-  ShieldCheck,
-  Clock,
-  Database,
-  ShieldCheck,
-]
+const icons = [Fingerprint, Zap, Lock, Activity, ShieldCheck, Clock, Database, ShieldCheck];
 
 interface Layer {
-  label?: string
-  name: string
-  desc: string
+  label?: string;
+  name: string;
+  desc: string;
 }
 
 interface Props {
-  layers?: Layer[]
-  currentLayer?: number
-  success?: boolean
-  title?: string
-  description?: string
+  layers?: Layer[];
+  currentLayer?: number;
+  success?: boolean;
+  title?: string;
+  description?: string;
 }
 
 const getSafeIcon = (index: number) => {
-  return icons[index] ?? ShieldCheck
-}
+  return icons[index] ?? ShieldCheck;
+};
 
 export const SecurityLayers: React.FC<Props> = memo(
   ({ layers = [], currentLayer = -1, success = false, title, description }) => {
     const safeLayers = useMemo(() => {
-      if (!Array.isArray(layers)) return []
-      return layers.filter((l) => l && l.name && l.desc)
-    }, [layers])
+      if (!Array.isArray(layers)) return [];
+      return layers.filter((l) => l && l.name && l.desc);
+    }, [layers]);
 
     const progressWidth = useMemo(() => {
-      if (safeLayers.length === 0) return 0
+      if (safeLayers.length === 0) return 0;
 
-      if (success) return 100
-      if (currentLayer >= safeLayers.length) return 100
+      if (success) return 100;
+      if (currentLayer >= safeLayers.length) return 100;
 
       if (title === 'Syncing Secure Vault') {
-        return 95
+        return 95;
       }
 
-      const layer = Math.max(currentLayer, 0) + 1
-      const percent = (layer / safeLayers.length) * 90
+      const layer = Math.max(currentLayer, 0) + 1;
+      const percent = (layer / safeLayers.length) * 90;
 
-      return Math.min(percent, 100)
-    }, [currentLayer, safeLayers.length, title, success])
+      return Math.min(percent, 100);
+    }, [currentLayer, safeLayers.length, title, success]);
 
     if (!safeLayers.length && !success) {
       return (
         <div className="flex min-h-[50vh] w-full flex-col items-center justify-center p-4 text-center">
           <p className="text-text/50">Security layers are not available.</p>
         </div>
-      )
+      );
     }
 
     return (
@@ -92,9 +83,7 @@ export const SecurityLayers: React.FC<Props> = memo(
           />
         </div>
 
-        <div
-          className={`relative z-10 w-full ${success ? 'max-w-2xl' : 'max-w-4xl'}`}
-        >
+        <div className={`relative z-10 w-full ${success ? 'max-w-2xl' : 'max-w-4xl'}`}>
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
@@ -117,29 +106,20 @@ export const SecurityLayers: React.FC<Props> = memo(
                     </h2>
 
                     <p className="max-w-2xl text-sm leading-6 text-text/55 md:text-base">
-                      {description ||
-                        `Running ${safeLayers.length}-layer protocol check...`}
+                      {description || `Running ${safeLayers.length}-layer protocol check...`}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid min-w-[220px] grid-cols-2 gap-3 self-start md:self-auto">
                   <div className="rounded-[1.5rem] border border-card-border bg-card-bg p-4 dark:border-white/10 dark:bg-black/40">
-                    <p className="text-[11px] uppercase tracking-[0.24em] text-text/35">
-                      Protocol
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold">
-                      {safeLayers.length}
-                    </p>
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-text/35">Protocol</p>
+                    <p className="mt-2 text-2xl font-semibold">{safeLayers.length}</p>
                     <p className="mt-1 text-xs text-text/45">Security</p>
                   </div>
                   <div className="rounded-[1.5rem] border border-card-border bg-card-bg p-4 dark:border-white/10 dark:bg-black/40">
-                    <p className="text-[11px] uppercase tracking-[0.24em] text-text/35">
-                      Progress
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold">
-                      {Math.round(progressWidth)}%
-                    </p>
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-text/35">Progress</p>
+                    <p className="mt-2 text-2xl font-semibold">{Math.round(progressWidth)}%</p>
                     <p className="mt-1 text-xs text-text/45">In verification</p>
                   </div>
                 </div>
@@ -157,29 +137,23 @@ export const SecurityLayers: React.FC<Props> = memo(
                 >
                   <div className="mb-5 flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-sm font-semibold text-text/80">
-                        Layer Execution Matrix
-                      </p>
+                      <p className="text-sm font-semibold text-text/80">Layer Execution Matrix</p>
                       <p className="text-xs text-text/40">
-                        Active layer is highlighted while completed layers are
-                        sealed.
+                        Active layer is highlighted while completed layers are sealed.
                       </p>
                     </div>
                     <div className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-card-border bg-card-bg px-3 py-1.5 text-xs font-medium text-text/45 dark:border-white/10 dark:bg-black/40">
-                      {Math.min(
-                        Math.max(currentLayer + 1, 0),
-                        safeLayers.length,
-                      )}{' '}
-                      / {safeLayers.length}
+                      {Math.min(Math.max(currentLayer + 1, 0), safeLayers.length)} /{' '}
+                      {safeLayers.length}
                     </div>
                   </div>
 
                   <div className="grid gap-3 md:grid-cols-2">
                     {safeLayers.map((layer, idx) => {
-                      const Icon = getSafeIcon(idx)
+                      const Icon = getSafeIcon(idx);
 
-                      const isCompleted = currentLayer > idx
-                      const isActive = currentLayer === idx
+                      const isCompleted = currentLayer > idx;
+                      const isActive = currentLayer === idx;
 
                       return (
                         <motion.div
@@ -253,12 +227,10 @@ export const SecurityLayers: React.FC<Props> = memo(
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs leading-5 text-text/40">
-                              {layer.desc}
-                            </p>
+                            <p className="text-xs leading-5 text-text/40">{layer.desc}</p>
                           </div>
                         </motion.div>
-                      )
+                      );
                     })}
                   </div>
 
@@ -314,8 +286,8 @@ export const SecurityLayers: React.FC<Props> = memo(
                       Secure vault channel established
                     </p>
                     <p className="mt-2 text-sm leading-6 text-text/45">
-                      Identity verification, hybrid key exchange, and encrypted
-                      sync completed successfully.
+                      Identity verification, hybrid key exchange, and encrypted sync completed
+                      successfully.
                     </p>
                   </div>
                 </motion.div>
@@ -324,8 +296,8 @@ export const SecurityLayers: React.FC<Props> = memo(
           </motion.div>
         </div>
       </div>
-    )
-  },
-)
+    );
+  }
+);
 
-SecurityLayers.displayName = 'SecurityLayers'
+SecurityLayers.displayName = 'SecurityLayers';

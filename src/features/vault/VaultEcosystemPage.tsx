@@ -1,15 +1,12 @@
-import React, { useMemo, useState } from 'react'
-import { ArrowLeft, Network } from 'lucide-react'
-import { Button } from '../../components/ui/Button'
-import { useVaultStore } from '../../store/vaultStore'
-import {
-  RealVaultEcosystemCard,
-  type VaultCategoryStats,
-} from './RealVaultEcosystemCard'
-import { } from 'lucide-react'
+import React, { useMemo, useState } from 'react';
+import { ArrowLeft, Network } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { useVaultStore } from '../../store/vaultStore';
+import { RealVaultEcosystemCard, type VaultCategoryStats } from './RealVaultEcosystemCard';
+import {} from 'lucide-react';
 
 interface VaultEcosystemPageProps {
-  onBack: () => void
+  onBack: () => void;
 }
 
 const INITIAL_STATS: VaultCategoryStats = {
@@ -22,7 +19,7 @@ const INITIAL_STATS: VaultCategoryStats = {
   document: 0,
   location: 0,
   other: 0,
-}
+};
 
 const VALID_TYPES = new Set<keyof VaultCategoryStats>([
   'password',
@@ -33,31 +30,29 @@ const VALID_TYPES = new Set<keyof VaultCategoryStats>([
   'secret',
   'document',
   'location',
-])
+]);
 
-export const VaultEcosystemPage: React.FC<VaultEcosystemPageProps> = ({
-  onBack,
-}) => {
-  const items = useVaultStore((state) => state.items)
-  const [showEcosystem, setShowEcosystem] = useState(false)
+export const VaultEcosystemPage: React.FC<VaultEcosystemPageProps> = ({ onBack }) => {
+  const items = useVaultStore((state) => state.items);
+  const [showEcosystem, setShowEcosystem] = useState(false);
 
   const categoryStats = useMemo(() => {
-    const stats: VaultCategoryStats = { ...INITIAL_STATS }
+    const stats: VaultCategoryStats = { ...INITIAL_STATS };
 
     for (let i = 0; i < items.length; i++) {
-      const type = items[i]?.type as keyof VaultCategoryStats
+      const type = items[i]?.type as keyof VaultCategoryStats;
 
       if (VALID_TYPES.has(type)) {
-        stats[type] += 1
+        stats[type] += 1;
       } else {
-        stats.other += 1
+        stats.other += 1;
       }
     }
 
-    return stats
-  }, [items])
+    return stats;
+  }, [items]);
 
-  const itemCount = items.length
+  const itemCount = items.length;
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-bg px-4 py-5 text-text sm:px-6 sm:py-6 lg:px-8 lg:py-8">
@@ -69,8 +64,7 @@ export const VaultEcosystemPage: React.FC<VaultEcosystemPageProps> = ({
             </h1>
 
             <p className="mt-3 max-w-3xl text-sm leading-6 text-text/60 sm:text-base">
-              Explore how your vault components connect together in a secure
-              architecture view.
+              Explore how your vault components connect together in a secure architecture view.
             </p>
           </div>
 
@@ -85,10 +79,7 @@ export const VaultEcosystemPage: React.FC<VaultEcosystemPageProps> = ({
             </Button>
 
             {!showEcosystem && (
-              <Button
-                onClick={() => setShowEcosystem(true)}
-                className="h-11 w-full rounded-2xl"
-              >
+              <Button onClick={() => setShowEcosystem(true)} className="h-11 w-full rounded-2xl">
                 <Network className="mr-2 h-4 w-4" />
                 Open
               </Button>
@@ -98,14 +89,11 @@ export const VaultEcosystemPage: React.FC<VaultEcosystemPageProps> = ({
 
         {/* 👇 Lazy mount only when needed */}
         {showEcosystem && (
-          <RealVaultEcosystemCard
-            itemCount={itemCount}
-            categoryStats={categoryStats}
-          />
+          <RealVaultEcosystemCard itemCount={itemCount} categoryStats={categoryStats} />
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default VaultEcosystemPage
+export default VaultEcosystemPage;

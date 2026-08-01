@@ -59,7 +59,7 @@
 
 ## 🎯 Overview
 
-**Vault** is a high-performance, enterprise-grade personal vault application designed for storing sensitive files, encrypted notes, credentials, and confidential personal data. 
+**Vault** is a high-performance, enterprise-grade personal vault application designed for storing sensitive files, encrypted notes, credentials, and confidential personal data.
 
 Built on a **Zero-Knowledge Architecture**, all sensitive client payload data (notes, vault items, secret keys) is encrypted locally on the user's client using **AES-256-GCM** before ever being transmitted over the network or stored in the database. The server never holds unencrypted user keys or plaintext vault items.
 
@@ -117,15 +117,15 @@ Built on a **Zero-Knowledge Architecture**, all sensitive client payload data (n
 
 ## 🛠️ Technology Stack
 
-| Layer | Technologies & Key Libraries |
-| :--- | :--- |
-| **Frontend UI** | **React 19**, **Vite 8**, **TypeScript 7**, TailwindCSS v4, Framer Motion, Radix UI, Lucide Icons, Sonner |
-| **Rich Text & Media** | TipTap Editor, HLS.js, Shaka Player, HTML-to-Image, Emoji-Mart, tsParticles, COBE 3D Globe |
+| Layer                       | Technologies & Key Libraries                                                                                            |
+| :-------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
+| **Frontend UI**             | **React 19**, **Vite 8**, **TypeScript 7**, TailwindCSS v4, Framer Motion, Radix UI, Lucide Icons, Sonner               |
+| **Rich Text & Media**       | TipTap Editor, HLS.js, Shaka Player, HTML-to-Image, Emoji-Mart, tsParticles, COBE 3D Globe                              |
 | **Cryptography & Security** | WebCrypto API, **AES-256-GCM**, `libsodium-wrappers`, **`pqc-kyber`**, `hash-wasm` (Argon2), `bcryptjs`, `jsonwebtoken` |
-| **Backend Framework** | **Express 5**, **Node.js 22 (LTS)**, Socket.IO 4, Helmet 8, Express Rate Limit, Multer, Cookie Parser |
-| **Database & Cache** | **MongoDB 7**, Mongoose 9, Node Cache |
-| **Asset Optimization** | **Brotli & Gzip Pre-compression**, Module Preload Polyfills, Aggressive Asset Caching |
-| **Testing & Quality** | **Vitest 4**, **Playwright E2E**, Lighthouse Runner, Sentry Error Tracking & Node Profiling |
+| **Backend Framework**       | **Express 5**, **Node.js 22 (LTS)**, Socket.IO 4, Helmet 8, Express Rate Limit, Multer, Cookie Parser                   |
+| **Database & Cache**        | **MongoDB 7**, Mongoose 9, Node Cache                                                                                   |
+| **Asset Optimization**      | **Brotli & Gzip Pre-compression**, Module Preload Polyfills, Aggressive Asset Caching                                   |
+| **Testing & Quality**       | **Vitest 4**, **Playwright E2E**, Lighthouse Runner, Sentry Error Tracking & Node Profiling                             |
 
 ---
 
@@ -133,13 +133,13 @@ Built on a **Zero-Knowledge Architecture**, all sensitive client payload data (n
 
 The platform implements an automated asset pipeline designed for fast load times and minimal network bandwidth:
 
-* **Brotli & Gzip Compression**:
+- **Brotli & Gzip Compression**:
   - Static production assets are pre-compressed into `.br` and `.gz` formats during the build step ([`vite.config.ts`](file:///c:/Code/vault/vite.config.ts)).
   - Express serves pre-compressed assets directly via compression middleware ([`server/vite.ts`](file:///c:/Code/vault/server/vite.ts)) based on the client's `Accept-Encoding` header, minimizing runtime CPU overhead.
-* **Module Preloading & Resource Hints**:
+- **Module Preloading & Resource Hints**:
   - `<link rel="modulepreload">` tags automatically preload critical bundle dependencies during initial HTML parse.
   - Safe array coercion guards prevent runtime script evaluation issues across dynamic imports.
-* **Aggressive Cache-Control Headers**:
+- **Aggressive Cache-Control Headers**:
   - Content-hashed static assets (`/assets/*.js`, `/assets/*.css`) use `Cache-Control: public, max-age=31536000, immutable`.
   - Non-hashed entry files (`index.html`, `/sw.js`, `/sw-register.js`) enforce strict revalidation with `Cache-Control: no-cache, no-store, must-revalidate`.
 
@@ -155,20 +155,20 @@ cp .env.example .env
 
 ### Essential Environment Variables
 
-| Variable | Description | Example / Recommended |
-| :--- | :--- | :--- |
-| `MONGODB_URI` | Primary MongoDB connection URI (Atlas SRV or direct) | `mongodb+srv://user:pass@cluster.mongodb.net/vault` |
-| `MONGODB_URI_FALLBACK` | Non-SRV Atlas fallback URI if SRV lookups fail | `mongodb://user:pass@node1.mongodb.net/vault` |
-| `JWT_SECRET` | Secret key for short-lived JWT access tokens | `your-256-bit-jwt-secret-string` |
-| `REFRESH_TOKEN_SECRET` | Secret key for long-lived refresh tokens | `your-256-bit-refresh-secret-string` |
-| `VAULT_ENCRYPTION_KEY` | Server-side master envelope encryption key | `32-byte-hex-or-base64-secret-key` |
-| `CLIENT_URL` | Trusted frontend origin for CORS & cookie policy | `https://my-vault.onrender.com` |
-| `PUBLIC_URL` | Public server URL for health check keep-alive pings | `https://my-vault.onrender.com` |
-| `VITE_API_BASE_URL` | Frontend API endpoint URL | `https://my-vault.onrender.com` |
-| `VITE_DEV_API_BASE_URL` | Vite local development API endpoint | `http://localhost:4000` |
-| `TRUST_PROXY` | Set `1` when deployed behind reverse proxy/load balancer | `1` |
-| `AUTH_RATE_LIMIT_MAX` | Max login/auth requests per window (default: 15 min) | `100` |
-| `MAX_JSON_BODY_MB` | Maximum allowed JSON request payload size | `5` |
+| Variable                | Description                                              | Example / Recommended                               |
+| :---------------------- | :------------------------------------------------------- | :-------------------------------------------------- |
+| `MONGODB_URI`           | Primary MongoDB connection URI (Atlas SRV or direct)     | `mongodb+srv://user:pass@cluster.mongodb.net/vault` |
+| `MONGODB_URI_FALLBACK`  | Non-SRV Atlas fallback URI if SRV lookups fail           | `mongodb://user:pass@node1.mongodb.net/vault`       |
+| `JWT_SECRET`            | Secret key for short-lived JWT access tokens             | `your-256-bit-jwt-secret-string`                    |
+| `REFRESH_TOKEN_SECRET`  | Secret key for long-lived refresh tokens                 | `your-256-bit-refresh-secret-string`                |
+| `VAULT_ENCRYPTION_KEY`  | Server-side master envelope encryption key               | `32-byte-hex-or-base64-secret-key`                  |
+| `CLIENT_URL`            | Trusted frontend origin for CORS & cookie policy         | `https://my-vault.onrender.com`                     |
+| `PUBLIC_URL`            | Public server URL for health check keep-alive pings      | `https://my-vault.onrender.com`                     |
+| `VITE_API_BASE_URL`     | Frontend API endpoint URL                                | `https://my-vault.onrender.com`                     |
+| `VITE_DEV_API_BASE_URL` | Vite local development API endpoint                      | `http://localhost:4000`                             |
+| `TRUST_PROXY`           | Set `1` when deployed behind reverse proxy/load balancer | `1`                                                 |
+| `AUTH_RATE_LIMIT_MAX`   | Max login/auth requests per window (default: 15 min)     | `100`                                               |
+| `MAX_JSON_BODY_MB`      | Maximum allowed JSON request payload size                | `5`                                                 |
 
 ---
 
@@ -229,14 +229,14 @@ REFRESH_COOKIE_SECURE=true
 
 ### Authentication Endpoints
 
-| Method | Endpoint | Description | Auth Required |
-| :--- | :--- | :--- | :---: |
-| `POST` | `/api/auth/register` | Register new user account & set device session | ❌ |
-| `POST` | `/api/auth/login` | Authenticate user credentials & issue JWT + Session Cookie | ❌ |
-| `POST` | `/api/auth/refresh` | Rotate long-lived refresh cookie & issue new JWT access token | ❌ |
-| `POST` | `/api/auth/logout` | Invalidate current device refresh token & clear cookies | ❌ |
-| `GET` | `/api/auth/me` | Fetch active user profile & active device sessions | 🔐 |
-| `POST` | `/api/auth/sessions/revoke` | Revoke specific device session or all remote sessions | 🔐 |
+| Method | Endpoint                    | Description                                                   | Auth Required |
+| :----- | :-------------------------- | :------------------------------------------------------------ | :-----------: |
+| `POST` | `/api/auth/register`        | Register new user account & set device session                |      ❌       |
+| `POST` | `/api/auth/login`           | Authenticate user credentials & issue JWT + Session Cookie    |      ❌       |
+| `POST` | `/api/auth/refresh`         | Rotate long-lived refresh cookie & issue new JWT access token |      ❌       |
+| `POST` | `/api/auth/logout`          | Invalidate current device refresh token & clear cookies       |      ❌       |
+| `GET`  | `/api/auth/me`              | Fetch active user profile & active device sessions            |      🔐       |
+| `POST` | `/api/auth/sessions/revoke` | Revoke specific device session or all remote sessions         |      🔐       |
 
 #### Request Example (`POST /api/auth/register`):
 
@@ -268,13 +268,13 @@ REFRESH_COOKIE_SECURE=true
 
 ### Vault Storage Endpoints
 
-| Method | Endpoint | Description | Auth Required |
-| :--- | :--- | :--- | :---: |
-| `GET` | `/api/vault/items` | Fetch all encrypted vault records for the authenticated user | 🔐 |
-| `POST` | `/api/vault/items/:itemId` | Upsert (create or update) an encrypted vault item record | 🔐 |
-| `DELETE` | `/api/vault/items/:itemId` | Soft-delete vault item & emit tombstone for sync clients | 🔐 |
-| `GET` | `/api/vault/sync` | Query updated items since timestamp (`since` query param) | 🔐 |
-| `GET` | `/api/vault/legacy/:vaultId/items` | Legacy compatibility endpoint for older vault formats | 🔐 |
+| Method   | Endpoint                           | Description                                                  | Auth Required |
+| :------- | :--------------------------------- | :----------------------------------------------------------- | :-----------: |
+| `GET`    | `/api/vault/items`                 | Fetch all encrypted vault records for the authenticated user |      🔐       |
+| `POST`   | `/api/vault/items/:itemId`         | Upsert (create or update) an encrypted vault item record     |      🔐       |
+| `DELETE` | `/api/vault/items/:itemId`         | Soft-delete vault item & emit tombstone for sync clients     |      🔐       |
+| `GET`    | `/api/vault/sync`                  | Query updated items since timestamp (`since` query param)    |      🔐       |
+| `GET`    | `/api/vault/legacy/:vaultId/items` | Legacy compatibility endpoint for older vault formats        |      🔐       |
 
 #### Internal Vault Control Records:
 

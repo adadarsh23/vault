@@ -1,7 +1,7 @@
-import React, { memo } from 'react'
-import { motion, useReducedMotion, Variants } from 'framer-motion'
-import { Lock } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import React, { memo } from 'react';
+import { motion, useReducedMotion, Variants } from 'framer-motion';
+import { Lock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface FooterProps {}
 
@@ -16,7 +16,7 @@ const containerVariants = (reduce: boolean): Variants => ({
       delayChildren: reduce ? 0 : 0.15,
     },
   },
-})
+});
 
 const charVariants = (reduce: boolean): Variants => ({
   hidden: { opacity: 0, y: reduce ? 0 : 60 },
@@ -28,7 +28,7 @@ const charVariants = (reduce: boolean): Variants => ({
       ease: [0.22, 1, 0.36, 1],
     },
   },
-})
+});
 
 const fadeUp = (reduce: boolean): Variants => ({
   hidden: { opacity: 0, y: reduce ? 0 : 20 },
@@ -40,12 +40,12 @@ const fadeUp = (reduce: boolean): Variants => ({
       ease: 'easeOut',
     },
   },
-})
+});
 
 /* ───────── Component ───────── */
 
 export const Footer: React.FC<FooterProps> = memo(() => {
-  const shouldReduceMotion = useReducedMotion()
+  const shouldReduceMotion = useReducedMotion();
 
   return (
     <footer className="relative z-10 mt-24 sm:mt-28 lg:mt-32 pb-10 overflow-hidden">
@@ -137,9 +137,7 @@ export const Footer: React.FC<FooterProps> = memo(() => {
             <div className="lg:col-span-5 flex flex-col items-center sm:items-start text-center sm:text-left">
               <div className="flex items-center gap-3 mb-5">
                 <motion.div
-                  whileHover={
-                    shouldReduceMotion ? {} : { scale: 1.05, rotate: 4 }
-                  }
+                  whileHover={shouldReduceMotion ? {} : { scale: 1.05, rotate: 4 }}
                   className="p-2 rounded-xl bg-white text-black shadow-lg"
                 >
                   <Lock className="w-7 h-7" />
@@ -222,7 +220,7 @@ export const Footer: React.FC<FooterProps> = memo(() => {
         </motion.div>
       </div>
     </footer>
-  )
-})
+  );
+});
 
-Footer.displayName = 'Footer'
+Footer.displayName = 'Footer';

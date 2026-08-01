@@ -1,33 +1,33 @@
-import React, { useCallback, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, AlertTriangle, Loader2 } from 'lucide-react'
-import { Button } from '../../../../components/ui/Button'
-import { GlobalNavigator } from '../../../../components/vault/GlobalNavigator'
-import { SafeMedia } from './SafeMedia'
-import { ErrorBoundary } from './ErrorBoundary'
-import { cn } from '../../../../lib/utils'
-import { VaultItem } from '../../../../lib/storage'
+import React, { useCallback, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, AlertTriangle, Loader2 } from 'lucide-react';
+import { Button } from '../../../../components/ui/Button';
+import { GlobalNavigator } from '../../../../components/vault/GlobalNavigator';
+import { SafeMedia } from './SafeMedia';
+import { ErrorBoundary } from './ErrorBoundary';
+import { cn } from '../../../../lib/utils';
+import { VaultItem } from '../../../../lib/storage';
 
 interface MediaPreviewProps {
-  previewItem: string | null
-  previewedMedia: VaultItem | null
-  isPreparingPreview: boolean
-  masterKey: string | CryptoKey | null
-  type: 'photo' | 'video'
-  isMediaAutoplayEnabled: boolean
-  isLowDataModeEnabled: boolean
-  isNetworkAwareAutoplayEnabled: boolean
-  isPerformanceHudEnabled: boolean
-  canPrevious: boolean
-  canNext: boolean
-  onClose: () => void
-  onPrevious: () => void
-  onNext: () => void
-  onDownload: (item: VaultItem) => void
-  onTouchStart: (e: React.TouchEvent) => void
-  onTouchMove: (e: React.TouchEvent) => void
-  onTouchEnd: () => void
-  modalRef: React.RefObject<HTMLDivElement>
+  previewItem: string | null;
+  previewedMedia: VaultItem | null;
+  isPreparingPreview: boolean;
+  masterKey: string | CryptoKey | null;
+  type: 'photo' | 'video';
+  isMediaAutoplayEnabled: boolean;
+  isLowDataModeEnabled: boolean;
+  isNetworkAwareAutoplayEnabled: boolean;
+  isPerformanceHudEnabled: boolean;
+  canPrevious: boolean;
+  canNext: boolean;
+  onClose: () => void;
+  onPrevious: () => void;
+  onNext: () => void;
+  onDownload: (item: VaultItem) => void;
+  onTouchStart: (e: React.TouchEvent) => void;
+  onTouchMove: (e: React.TouchEvent) => void;
+  onTouchEnd: () => void;
+  modalRef: React.RefObject<HTMLDivElement>;
 }
 
 export const MediaPreview: React.FC<MediaPreviewProps> = ({
@@ -50,61 +50,61 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   onTouchEnd,
   modalRef,
 }) => {
-  const [isClosing, setIsClosing] = useState(false)
-  const closeRequestedRef = useRef(false)
+  const [isClosing, setIsClosing] = useState(false);
+  const closeRequestedRef = useRef(false);
 
   const stopActiveMediaImmediately = useCallback(() => {
-    const root = modalRef.current
-    if (!root) return
+    const root = modalRef.current;
+    if (!root) return;
 
-    const mediaElements = root.querySelectorAll('video, audio')
+    const mediaElements = root.querySelectorAll('video, audio');
     mediaElements.forEach((node) => {
-      const media = node as HTMLMediaElement
+      const media = node as HTMLMediaElement;
       try {
-        media.pause()
+        media.pause();
       } catch {
         // Ignore media pause failures.
       }
       try {
-        media.currentTime = 0
+        media.currentTime = 0;
       } catch {
         // Ignore seek failures.
       }
       try {
-        media.srcObject = null
+        media.srcObject = null;
       } catch {
         // Ignore srcObject assignment failures.
       }
       try {
-        media.removeAttribute('src')
+        media.removeAttribute('src');
       } catch {
         // Ignore src attribute cleanup failures.
       }
       try {
-        media.load()
+        media.load();
       } catch {
         // Ignore load reset failures.
       }
-    })
-  }, [modalRef])
+    });
+  }, [modalRef]);
 
   const handleImmediateClose = useCallback(() => {
-    if (closeRequestedRef.current) return
-    closeRequestedRef.current = true
-    setIsClosing(true)
-    stopActiveMediaImmediately()
+    if (closeRequestedRef.current) return;
+    closeRequestedRef.current = true;
+    setIsClosing(true);
+    stopActiveMediaImmediately();
     if (document.pictureInPictureElement) {
-      void document.exitPictureInPicture().catch(() => {})
+      void document.exitPictureInPicture().catch(() => {});
     }
     if (document.fullscreenElement) {
-      void document.exitFullscreen().catch(() => {})
+      void document.exitFullscreen().catch(() => {});
     }
     window.requestAnimationFrame(() => {
-      onClose()
-      closeRequestedRef.current = false
-      setIsClosing(false)
-    })
-  }, [onClose, stopActiveMediaImmediately])
+      onClose();
+      closeRequestedRef.current = false;
+      setIsClosing(false);
+    });
+  }, [onClose, stopActiveMediaImmediately]);
 
   return (
     <AnimatePresence>
@@ -129,21 +129,17 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
               disabled={isClosing}
               className="rounded-full bg-white/5 hover:bg-white/10 text-white disabled:opacity-80"
               onPointerDown={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                handleImmediateClose()
+                e.preventDefault();
+                e.stopPropagation();
+                handleImmediateClose();
               }}
               onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                handleImmediateClose()
+                e.preventDefault();
+                e.stopPropagation();
+                handleImmediateClose();
               }}
             >
-              {isClosing ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <X className="h-6 w-6" />
-              )}
+              {isClosing ? <Loader2 className="h-5 w-5 animate-spin" /> : <X className="h-6 w-6" />}
             </Button>
           </div>
 
@@ -164,7 +160,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
               'relative flex items-center justify-center bg-black/90 overflow-hidden',
               type === 'photo'
                 ? 'h-[100svh] w-[100vw] rounded-none border-0 shadow-none'
-                : 'w-full h-[85vh] max-w-[95vw] rounded-2xl border border-white/10 shadow-[0_80px_160px_-30px_rgba(0,0,0,0.8)] md:max-w-[85vw] lg:max-w-6xl md:rounded-[32px]',
+                : 'w-full h-[85vh] max-w-[95vw] rounded-2xl border border-white/10 shadow-[0_80px_160px_-30px_rgba(0,0,0,0.8)] md:max-w-[85vw] lg:max-w-6xl md:rounded-[32px]'
             )}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
@@ -218,5 +214,5 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
         </motion.div>
       )}
     </AnimatePresence>
-  )
-}
+  );
+};

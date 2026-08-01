@@ -1,4 +1,4 @@
-import express from 'express'
+import express from 'express';
 import {
   saveCloudMasterKey,
   getCloudMasterKey,
@@ -6,9 +6,9 @@ import {
   deleteCloudMasterKey,
   getMasterKeyMetadata,
   getMasterKeyFullData,
-} from '../services/masterKeyService.ts'
-import { logger } from '../utils/logger.ts'
-import { getClientIp } from '../utils/requestIp.ts'
+} from '../services/masterKeyService.ts';
+import { logger } from '../utils/logger.ts';
+import { getClientIp } from '../utils/requestIp.ts';
 
 /**
  * Master Key Controller
@@ -17,83 +17,79 @@ import { getClientIp } from '../utils/requestIp.ts'
 
 interface SaveMasterKeyRequest {
   encryptedMasterKey: {
-    cipherText: string
-    iv: string
-    authTag: string
-    salt: string
-    algorithm?: string
-    keyVersion?: string
-  }
-  masterKeyHash: string
-  deviceId: string
-  recoveryPhrasesEncrypted?: string
+    cipherText: string;
+    iv: string;
+    authTag: string;
+    salt: string;
+    algorithm?: string;
+    keyVersion?: string;
+  };
+  masterKeyHash: string;
+  deviceId: string;
+  recoveryPhrasesEncrypted?: string;
   metadata?: {
-    derivationAlgorithm?: string
+    derivationAlgorithm?: string;
     derivationParams?: {
-      memory?: number
-      iterations?: number
-      parallelism?: number
-    }
-  }
+      memory?: number;
+      iterations?: number;
+      parallelism?: number;
+    };
+  };
 }
 
 interface VerifyMasterKeyRequest {
-  masterKeyHash: string
+  masterKeyHash: string;
 }
 
-const MAX_BASE64_FIELD_LENGTH = 8192
-const MAX_MASTER_KEY_HASH_LENGTH = 256
-const MAX_DEVICE_ID_LENGTH = 128
-const MAX_RECOVERY_PAYLOAD_LENGTH = 32768
-const BASE64_PATTERN = /^[A-Za-z0-9+/=]+$/
+const MAX_BASE64_FIELD_LENGTH = 8192;
+const MAX_MASTER_KEY_HASH_LENGTH = 256;
+const MAX_DEVICE_ID_LENGTH = 128;
+const MAX_RECOVERY_PAYLOAD_LENGTH = 32768;
+const BASE64_PATTERN = /^[A-Za-z0-9+/=]+$/;
 
-const isBase64WithinLimit = (
-  value: unknown,
-  maxLength: number,
-): value is string => {
+const isBase64WithinLimit = (value: unknown, maxLength: number): value is string => {
   if (typeof value !== 'string') {
-    return false
+    return false;
   }
 
-  const normalized = value.trim()
+  const normalized = value.trim();
   if (normalized.length === 0 || normalized.length > maxLength) {
-    return false
+    return false;
   }
 
-  return BASE64_PATTERN.test(normalized)
-}
+  return BASE64_PATTERN.test(normalized);
+};
 
 const isValidDeviceId = (value: unknown): value is string => {
   if (typeof value !== 'string') {
-    return false
+    return false;
   }
 
-  const normalized = value.trim()
+  const normalized = value.trim();
   if (normalized.length === 0 || normalized.length > MAX_DEVICE_ID_LENGTH) {
-    return false
+    return false;
   }
 
-  return /^[a-zA-Z0-9._:-]+$/.test(normalized)
-}
+  return /^[a-zA-Z0-9._:-]+$/.test(normalized);
+};
 
 const hasValidDerivationParams = (metadata: SaveMasterKeyRequest['metadata']) => {
   if (!metadata?.derivationParams) {
-    return true
+    return true;
   }
 
-  const { memory, iterations, parallelism } = metadata.derivationParams
+  const { memory, iterations, parallelism } = metadata.derivationParams;
   const isValidMemory =
-    memory === undefined ||
-    (Number.isInteger(memory) && memory >= 8192 && memory <= 1048576)
+    memory === undefined || (Number.isInteger(memory) && memory >= 8192 && memory <= 1048576);
   const isValidIterations =
     iterations === undefined ||
-    (Number.isInteger(iterations) && iterations >= 1 && iterations <= 12)
+    (Number.isInteger(iterations) && iterations >= 1 && iterations <= 12);
   const isValidParallelism =
     parallelism === undefined ||
-    (Number.isInteger(parallelism) && parallelism >= 1 && parallelism <= 32)
+    (Number.isInteger(parallelism) && parallelism >= 1 && parallelism <= 32);
 
-  return isValidMemory && isValidIterations && isValidParallelism
-}
+  return isValidMemory && isValidIterations && isValidParallelism;
+};
 
 /**
  * POST /api/master-key/save
@@ -101,18 +97,13 @@ const hasValidDerivationParams = (metadata: SaveMasterKeyRequest['metadata']) =>
  */
 export const handleSaveMasterKey = async (
   req: express.Request<{}, {}, SaveMasterKeyRequest>,
-  res: express.Response,
+  res: express.Response
 ) => {
   try {
-    const userId = (req as any).user?.userId
-    const username = (req as any).user?.username
-    const {
-      encryptedMasterKey,
-      masterKeyHash,
-      deviceId,
-      recoveryPhrasesEncrypted,
-      metadata,
-    } = req.body
+    const userId = (req as any).user?.userId;
+    const username = (req as any).user?.username;
+    const { encryptedMasterKey, masterKeyHash, deviceId, recoveryPhrasesEncrypted, metadata } =
+      req.body;
 
     if (!userId || !username) {
       return res.status(401).json({
@@ -121,7 +112,7 @@ export const handleSaveMasterKey = async (
           code: 'UNAUTHORIZED',
           message: 'Authentication required',
         },
-      })
+      });
     }
 
     // Validate required fields
@@ -130,10 +121,9 @@ export const handleSaveMasterKey = async (
         success: false,
         error: {
           code: 'INVALID_REQUEST',
-          message:
-            'Missing required fields: encryptedMasterKey, masterKeyHash, or deviceId',
+          message: 'Missing required fields: encryptedMasterKey, masterKeyHash, or deviceId',
         },
-      })
+      });
     }
 
     // Validate encrypted master key structure
@@ -149,7 +139,7 @@ export const handleSaveMasterKey = async (
           code: 'INVALID_REQUEST',
           message: 'Incomplete encrypted key payload',
         },
-      })
+      });
     }
 
     if (!isValidDeviceId(deviceId)) {
@@ -159,7 +149,7 @@ export const handleSaveMasterKey = async (
           code: 'INVALID_REQUEST',
           message: 'Invalid deviceId format or length',
         },
-      })
+      });
     }
 
     if (!isBase64WithinLimit(masterKeyHash, MAX_MASTER_KEY_HASH_LENGTH)) {
@@ -169,14 +159,11 @@ export const handleSaveMasterKey = async (
           code: 'INVALID_REQUEST',
           message: 'Invalid masterKeyHash format or length',
         },
-      })
+      });
     }
 
     if (
-      !isBase64WithinLimit(
-        encryptedMasterKey.cipherText,
-        MAX_BASE64_FIELD_LENGTH,
-      ) ||
+      !isBase64WithinLimit(encryptedMasterKey.cipherText, MAX_BASE64_FIELD_LENGTH) ||
       !isBase64WithinLimit(encryptedMasterKey.iv, MAX_BASE64_FIELD_LENGTH) ||
       !isBase64WithinLimit(encryptedMasterKey.authTag, MAX_BASE64_FIELD_LENGTH) ||
       !isBase64WithinLimit(encryptedMasterKey.salt, MAX_BASE64_FIELD_LENGTH)
@@ -187,7 +174,7 @@ export const handleSaveMasterKey = async (
           code: 'INVALID_REQUEST',
           message: 'Encrypted master key payload is malformed or too large',
         },
-      })
+      });
     }
 
     if (
@@ -200,7 +187,7 @@ export const handleSaveMasterKey = async (
           code: 'INVALID_REQUEST',
           message: 'Recovery payload is too large',
         },
-      })
+      });
     }
 
     if (!hasValidDerivationParams(metadata)) {
@@ -210,7 +197,7 @@ export const handleSaveMasterKey = async (
           code: 'INVALID_REQUEST',
           message: 'Invalid metadata derivation parameters',
         },
-      })
+      });
     }
 
     await saveCloudMasterKey(userId, username, encryptedMasterKey, {
@@ -222,7 +209,7 @@ export const handleSaveMasterKey = async (
         ipAddress: getClientIp(req),
         userAgent: req.get('user-agent') || undefined,
       },
-    })
+    });
 
     res.status(200).json({
       success: true,
@@ -233,33 +220,29 @@ export const handleSaveMasterKey = async (
         timestamp: new Date().toISOString(),
         message: 'Master key saved to cloud successfully',
       },
-    })
+    });
   } catch (error) {
-    logger.error('[MasterKeyController] Error in handleSaveMasterKey', error)
+    logger.error('[MasterKeyController] Error in handleSaveMasterKey', error);
 
     res.status(500).json({
       success: false,
       error: {
         code: 'SAVE_FAILED',
-        message:
-          error instanceof Error ? error.message : 'Failed to save master key',
+        message: error instanceof Error ? error.message : 'Failed to save master key',
       },
-    })
+    });
   }
-}
+};
 
 /**
  * GET /api/master-key/retrieve
  * Retrieve encrypted master key from cloud
  */
-export const handleRetrieveMasterKey = async (
-  req: express.Request,
-  res: express.Response,
-) => {
+export const handleRetrieveMasterKey = async (req: express.Request, res: express.Response) => {
   try {
-    const userId = (req as any).user?.userId
-    const username = (req as any).user?.username
-    const deviceId = req.query.deviceId as string
+    const userId = (req as any).user?.userId;
+    const username = (req as any).user?.username;
+    const deviceId = req.query.deviceId as string;
 
     if (!userId || !username) {
       return res.status(401).json({
@@ -268,7 +251,7 @@ export const handleRetrieveMasterKey = async (
           code: 'UNAUTHORIZED',
           message: 'Authentication required',
         },
-      })
+      });
     }
 
     if (!deviceId) {
@@ -278,7 +261,7 @@ export const handleRetrieveMasterKey = async (
           code: 'INVALID_REQUEST',
           message: 'Missing required query parameter: deviceId',
         },
-      })
+      });
     }
 
     if (!isValidDeviceId(deviceId)) {
@@ -288,10 +271,10 @@ export const handleRetrieveMasterKey = async (
           code: 'INVALID_REQUEST',
           message: 'Invalid deviceId format or length',
         },
-      })
+      });
     }
 
-    const encryptedKey = await getCloudMasterKey(userId, username, deviceId)
+    const encryptedKey = await getCloudMasterKey(userId, username, deviceId);
 
     if (!encryptedKey) {
       return res.status(404).json({
@@ -300,7 +283,7 @@ export const handleRetrieveMasterKey = async (
           code: 'NOT_FOUND',
           message: 'Master key not found in cloud',
         },
-      })
+      });
     }
 
     res.status(200).json({
@@ -311,25 +294,19 @@ export const handleRetrieveMasterKey = async (
         timestamp: new Date().toISOString(),
         message: 'Master key retrieved successfully',
       },
-    })
+    });
   } catch (error) {
-    logger.error(
-      '[MasterKeyController] Error in handleRetrieveMasterKey',
-      error,
-    )
+    logger.error('[MasterKeyController] Error in handleRetrieveMasterKey', error);
 
     res.status(500).json({
       success: false,
       error: {
         code: 'RETRIEVE_FAILED',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to retrieve master key',
+        message: error instanceof Error ? error.message : 'Failed to retrieve master key',
       },
-    })
+    });
   }
-}
+};
 
 /**
  * POST /api/master-key/verify
@@ -337,12 +314,12 @@ export const handleRetrieveMasterKey = async (
  */
 export const handleVerifyMasterKey = async (
   req: express.Request<{}, {}, VerifyMasterKeyRequest>,
-  res: express.Response,
+  res: express.Response
 ) => {
   try {
-    const userId = (req as any).user?.userId
-    const username = (req as any).user?.username
-    const { masterKeyHash } = req.body
+    const userId = (req as any).user?.userId;
+    const username = (req as any).user?.username;
+    const { masterKeyHash } = req.body;
 
     if (!userId || !username) {
       return res.status(401).json({
@@ -351,7 +328,7 @@ export const handleVerifyMasterKey = async (
           code: 'UNAUTHORIZED',
           message: 'Authentication required',
         },
-      })
+      });
     }
 
     if (!masterKeyHash) {
@@ -361,7 +338,7 @@ export const handleVerifyMasterKey = async (
           code: 'INVALID_REQUEST',
           message: 'Missing required field: masterKeyHash',
         },
-      })
+      });
     }
 
     if (!isBase64WithinLimit(masterKeyHash, MAX_MASTER_KEY_HASH_LENGTH)) {
@@ -371,10 +348,10 @@ export const handleVerifyMasterKey = async (
           code: 'INVALID_REQUEST',
           message: 'Invalid masterKeyHash format or length',
         },
-      })
+      });
     }
 
-    const isValid = await verifyMasterKeyHash(userId, username, masterKeyHash)
+    const isValid = await verifyMasterKeyHash(userId, username, masterKeyHash);
 
     res.status(200).json({
       success: true,
@@ -382,38 +359,30 @@ export const handleVerifyMasterKey = async (
         isValid,
         userId,
         timestamp: new Date().toISOString(),
-        message: isValid
-          ? 'Master key verified successfully'
-          : 'Master key hash mismatch',
+        message: isValid ? 'Master key verified successfully' : 'Master key hash mismatch',
       },
-    })
+    });
   } catch (error) {
-    logger.error('[MasterKeyController] Error in handleVerifyMasterKey', error)
+    logger.error('[MasterKeyController] Error in handleVerifyMasterKey', error);
 
     res.status(500).json({
       success: false,
       error: {
         code: 'VERIFY_FAILED',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to verify master key',
+        message: error instanceof Error ? error.message : 'Failed to verify master key',
       },
-    })
+    });
   }
-}
+};
 
 /**
  * DELETE /api/master-key
  * Delete master key from cloud
  */
-export const handleDeleteMasterKey = async (
-  req: express.Request,
-  res: express.Response,
-) => {
+export const handleDeleteMasterKey = async (req: express.Request, res: express.Response) => {
   try {
-    const userId = (req as any).user?.userId
-    const username = (req as any).user?.username
+    const userId = (req as any).user?.userId;
+    const username = (req as any).user?.username;
 
     if (!userId || !username) {
       return res.status(401).json({
@@ -422,10 +391,10 @@ export const handleDeleteMasterKey = async (
           code: 'UNAUTHORIZED',
           message: 'Authentication required',
         },
-      })
+      });
     }
 
-    const deleted = await deleteCloudMasterKey(userId, username)
+    const deleted = await deleteCloudMasterKey(userId, username);
 
     if (!deleted) {
       return res.status(404).json({
@@ -434,7 +403,7 @@ export const handleDeleteMasterKey = async (
           code: 'NOT_FOUND',
           message: 'Master key not found or already deleted',
         },
-      })
+      });
     }
 
     res.status(200).json({
@@ -445,34 +414,28 @@ export const handleDeleteMasterKey = async (
         timestamp: new Date().toISOString(),
         message: 'Master key deleted successfully',
       },
-    })
+    });
   } catch (error) {
-    logger.error('[MasterKeyController] Error in handleDeleteMasterKey', error)
+    logger.error('[MasterKeyController] Error in handleDeleteMasterKey', error);
 
     res.status(500).json({
       success: false,
       error: {
         code: 'DELETE_FAILED',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to delete master key',
+        message: error instanceof Error ? error.message : 'Failed to delete master key',
       },
-    })
+    });
   }
-}
+};
 
 /**
  * GET /api/master-key/metadata
  * Get master key metadata (for debugging/auditing)
  */
-export const handleGetMasterKeyMetadata = async (
-  req: express.Request,
-  res: express.Response,
-) => {
+export const handleGetMasterKeyMetadata = async (req: express.Request, res: express.Response) => {
   try {
-    const userId = (req as any).user?.userId
-    const username = (req as any).user?.username
+    const userId = (req as any).user?.userId;
+    const username = (req as any).user?.username;
 
     if (!userId || !username) {
       return res.status(401).json({
@@ -481,10 +444,10 @@ export const handleGetMasterKeyMetadata = async (
           code: 'UNAUTHORIZED',
           message: 'Authentication required',
         },
-      })
+      });
     }
 
-    const metadata = await getMasterKeyMetadata(userId, username)
+    const metadata = await getMasterKeyMetadata(userId, username);
 
     if (!metadata) {
       return res.status(404).json({
@@ -493,7 +456,7 @@ export const handleGetMasterKeyMetadata = async (
           code: 'NOT_FOUND',
           message: 'Master key metadata not found',
         },
-      })
+      });
     }
 
     res.status(200).json({
@@ -504,36 +467,29 @@ export const handleGetMasterKeyMetadata = async (
         userId,
         timestamp: new Date().toISOString(),
       },
-    })
+    });
   } catch (error) {
-    logger.error(
-      '[MasterKeyController] Error in handleGetMasterKeyMetadata',
-      error,
-    )
+    logger.error('[MasterKeyController] Error in handleGetMasterKeyMetadata', error);
 
     res.status(500).json({
       success: false,
       error: {
         code: 'GET_METADATA_FAILED',
-        message:
-          error instanceof Error ? error.message : 'Failed to get metadata',
+        message: error instanceof Error ? error.message : 'Failed to get metadata',
       },
-    })
+    });
   }
-}
+};
 
 /**
  * GET /api/master-key/full-data
  * Get complete master key data including encrypted components and metadata
  * (For verification and debugging only)
  */
-export const handleGetMasterKeyFullData = async (
-  req: express.Request,
-  res: express.Response,
-) => {
+export const handleGetMasterKeyFullData = async (req: express.Request, res: express.Response) => {
   try {
-    const userId = (req as any).user?.userId
-    const username = (req as any).user?.username
+    const userId = (req as any).user?.userId;
+    const username = (req as any).user?.username;
 
     if (!userId || !username) {
       return res.status(401).json({
@@ -542,10 +498,10 @@ export const handleGetMasterKeyFullData = async (
           code: 'UNAUTHORIZED',
           message: 'Authentication required',
         },
-      })
+      });
     }
 
-    const fullData = await getMasterKeyFullData(userId, username)
+    const fullData = await getMasterKeyFullData(userId, username);
 
     if (!fullData) {
       return res.status(404).json({
@@ -554,7 +510,7 @@ export const handleGetMasterKeyFullData = async (
           code: 'NOT_FOUND',
           message: 'Master key data not found',
         },
-      })
+      });
     }
 
     res.status(200).json({
@@ -565,23 +521,19 @@ export const handleGetMasterKeyFullData = async (
         timestamp: new Date().toISOString(),
         note: 'Encrypted data is safe - only encrypted components and hashes are shown, actual key material remains encrypted',
       },
-    })
+    });
   } catch (error) {
-    logger.error(
-      '[MasterKeyController] Error in handleGetMasterKeyFullData',
-      error,
-    )
+    logger.error('[MasterKeyController] Error in handleGetMasterKeyFullData', error);
 
     res.status(500).json({
       success: false,
       error: {
         code: 'GET_FULLDATA_FAILED',
-        message:
-          error instanceof Error ? error.message : 'Failed to get full data',
+        message: error instanceof Error ? error.message : 'Failed to get full data',
       },
-    })
+    });
   }
-}
+};
 
 export default {
   handleSaveMasterKey,
@@ -590,4 +542,4 @@ export default {
   handleDeleteMasterKey,
   handleGetMasterKeyMetadata,
   handleGetMasterKeyFullData,
-}
+};

@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   AlertTriangle,
   AudioLines,
@@ -16,110 +16,110 @@ import {
   ShieldCheck,
   HardDrive,
   Pin,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { Button } from '../../components/ui/Button'
-import { AudioPlayer } from '../../components/ui/audio-player'
-import { useVaultStore } from '../../store/vaultStore'
-import { encryptFile } from '../../lib/cryptoPrimitives'
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '../../components/ui/Button';
+import { AudioPlayer } from '../../components/ui/audio-player';
+import { useVaultStore } from '../../store/vaultStore';
+import { encryptFile } from '../../lib/cryptoPrimitives';
 import {
   getVaultItemFileUrl,
   getVaultItemPreviewUrl,
   getVaultItemPreviewRevision,
-} from '../../lib/filePreview'
-import { logActivity } from '../../lib/activity'
-import { useVaultFolders } from '../../hooks/useVaultFolders'
-import { useVaultItems } from '../../hooks/useVaultItems'
-import { VaultLayout } from '../../components/layout/VaultLayout'
-import { cn } from '../../lib/utils'
-import { useGlobalNavigationStore } from '../../store/globalNavigationStore'
-import { GlobalNavigator } from '../../components/vault/GlobalNavigator'
-import { VaultItem } from '../../lib/storage'
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop'
-import { LiveCaptureModal } from './components/LiveCaptureModal'
+} from '../../lib/filePreview';
+import { logActivity } from '../../lib/activity';
+import { useVaultFolders } from '../../hooks/useVaultFolders';
+import { useVaultItems } from '../../hooks/useVaultItems';
+import { VaultLayout } from '../../components/layout/VaultLayout';
+import { cn } from '../../lib/utils';
+import { useGlobalNavigationStore } from '../../store/globalNavigationStore';
+import { GlobalNavigator } from '../../components/vault/GlobalNavigator';
+import { VaultItem } from '../../lib/storage';
+import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { LiveCaptureModal } from './components/LiveCaptureModal';
 import {
   exceedsUploadSizeLimit,
   getUploadSizeErrorMessage,
   FILE_TYPE_SUPPORT,
   AUDIO_FILE_INPUT_ACCEPT,
-} from '../../lib/fileHandling'
+} from '../../lib/fileHandling';
 
 const SafeAudioPreview: React.FC<{
-  item: VaultItem
-  masterKey: string | CryptoKey
-  compact?: boolean
+  item: VaultItem;
+  masterKey: string | CryptoKey;
+  compact?: boolean;
 }> = ({ item, masterKey, compact }) => {
-  const [url, setUrl] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const rsaKeyPair = useVaultStore((state) => state.rsaKeyPair)
-  const isAudioWaveformEnabled = useVaultStore(
-    (state) => state.preferences.isAudioWaveformEnabled,
-  )
+  const [url, setUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const rsaKeyPair = useVaultStore((state) => state.rsaKeyPair);
+  const isAudioWaveformEnabled = useVaultStore((state) => state.preferences.isAudioWaveformEnabled);
 
-  const revisionKey = useMemo(() => getVaultItemPreviewRevision(item), [item])
+  const revisionKey = useMemo(() => getVaultItemPreviewRevision(item), [item]);
 
   useEffect(() => {
-    let isMounted = true
-    let activeBlobUrl: string | null = null
+    let isMounted = true;
+    let activeBlobUrl: string | null = null;
 
     const load = async () => {
-      setIsLoading(true)
-      setErrorMessage(null)
+      setIsLoading(true);
+      setErrorMessage(null);
       try {
-        const metadata = typeof item.metadata === 'string'
-          ? (() => { try { return JSON.parse(item.metadata) } catch { return null } })()
-          : item.metadata
-        const mime = metadata?.mimeType
+        const metadata =
+          typeof item.metadata === 'string'
+            ? (() => {
+                try {
+                  return JSON.parse(item.metadata);
+                } catch {
+                  return null;
+                }
+              })()
+            : item.metadata;
+        const mime = metadata?.mimeType;
 
-        const result = await getVaultItemPreviewUrl(
-          item,
-          masterKey,
-          mime,
-          rsaKeyPair?.privateKey,
-        )
+        const result = await getVaultItemPreviewUrl(item, masterKey, mime, rsaKeyPair?.privateKey);
         if (!result) {
-          throw new Error('Preview unavailable')
+          throw new Error('Preview unavailable');
         }
 
         if (!isMounted) {
           if (result.startsWith('blob:')) {
-            URL.revokeObjectURL(result)
+            URL.revokeObjectURL(result);
           }
-          return
+          return;
         }
 
         if (result.startsWith('blob:')) {
-          activeBlobUrl = result
+          activeBlobUrl = result;
         }
 
-        setUrl(result)
+        setUrl(result);
       } catch (err: any) {
-        console.error('SafeAudioPreview load error:', err)
+        console.error('SafeAudioPreview load error:', err);
         if (isMounted) {
-          setErrorMessage(err?.message || 'Decryption failed')
+          setErrorMessage(err?.message || 'Decryption failed');
         }
       } finally {
-        if (isMounted) setIsLoading(false)
+        if (isMounted) setIsLoading(false);
       }
-    }
+    };
 
-    void load()
+    void load();
 
     return () => {
-      isMounted = false
+      isMounted = false;
       if (activeBlobUrl) {
-        URL.revokeObjectURL(activeBlobUrl)
+        URL.revokeObjectURL(activeBlobUrl);
       }
-    }
-  }, [revisionKey, masterKey, rsaKeyPair])
+    };
+  }, [revisionKey, masterKey, rsaKeyPair]);
 
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center p-6">
         <Loader2 className="h-6 w-6 animate-spin text-text/20" />
       </div>
-    )
+    );
   }
 
   if (errorMessage || !url) {
@@ -130,7 +130,7 @@ const SafeAudioPreview: React.FC<{
           {errorMessage || 'Audio preview unavailable'}
         </span>
       </div>
-    )
+    );
   }
 
   return (
@@ -141,51 +141,44 @@ const SafeAudioPreview: React.FC<{
         compact={compact}
         className={cn(
           'max-w-none border-none bg-transparent shadow-none backdrop-blur-none',
-          compact ? 'p-2' : 'p-6',
+          compact ? 'p-2' : 'p-6'
         )}
       />
     </div>
-  )
-}
+  );
+};
 
 export const AudioVault: React.FC = () => {
-  const items = useVaultStore((state) => state.items)
-  const addItem = useVaultStore((state) => state.addItem)
-  const removeItem = useVaultStore((state) => state.removeItem)
-  const togglePin = useVaultStore((state) => state.togglePin)
-  const pinningItemIds = useVaultStore((state) => state.pinningItemIds)
-  const masterKey = useVaultStore((state) => state.masterKey)
-  const rsaKeyPair = useVaultStore((state) => state.rsaKeyPair)
+  const items = useVaultStore((state) => state.items);
+  const addItem = useVaultStore((state) => state.addItem);
+  const removeItem = useVaultStore((state) => state.removeItem);
+  const togglePin = useVaultStore((state) => state.togglePin);
+  const pinningItemIds = useVaultStore((state) => state.pinningItemIds);
+  const masterKey = useVaultStore((state) => state.masterKey);
+  const rsaKeyPair = useVaultStore((state) => state.rsaKeyPair);
   const isInlineMediaPreviewEnabled = useVaultStore(
-    (state) => state.preferences.isInlineMediaPreviewEnabled,
-  )
-  const isAudioWaveformEnabled = useVaultStore(
-    (state) => state.preferences.isAudioWaveformEnabled,
-  )
-  const [isUploading, setIsUploading] = useState(false)
-  const [isLiveRecordOpen, setIsLiveRecordOpen] = useState(false)
-  const [previewItem, setPreviewItem] = useState<string | null>(null)
-  const [moveMenuOpenId, setMoveMenuOpenId] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(0)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const uploadTargetFolder = useRef<string | null>(null)
-  const ITEMS_PER_PAGE = 8
-  const supportedExtensions = Array.from(FILE_TYPE_SUPPORT.audio)
+    (state) => state.preferences.isInlineMediaPreviewEnabled
+  );
+  const isAudioWaveformEnabled = useVaultStore((state) => state.preferences.isAudioWaveformEnabled);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isLiveRecordOpen, setIsLiveRecordOpen] = useState(false);
+  const [previewItem, setPreviewItem] = useState<string | null>(null);
+  const [moveMenuOpenId, setMoveMenuOpenId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadTargetFolder = useRef<string | null>(null);
+  const ITEMS_PER_PAGE = 8;
+  const supportedExtensions = Array.from(FILE_TYPE_SUPPORT.audio);
 
   const isSupportedAudioFile = (file: File) => {
-    const extension = file.name.split('.').pop()?.toUpperCase() || ''
-    return (
-      (file.type || '').startsWith('audio/') ||
-      supportedExtensions.includes(extension as any)
-    )
-  }
+    const extension = file.name.split('.').pop()?.toUpperCase() || '';
+    return (file.type || '').startsWith('audio/') || supportedExtensions.includes(extension as any);
+  };
   const isLiveCaptureItem = (value: unknown) =>
-    value === true || value === 'true' || value === 1 || value === '1'
-  const targetItemId = useGlobalNavigationStore((state) => state.targetItemId)
-  const setTargetItemId = useGlobalNavigationStore(
-    (state) => state.setTargetItemId,
-  )
-  const modalRef = useRef<HTMLDivElement>(null)
+    value === true || value === 'true' || value === 1 || value === '1';
+  const targetItemId = useGlobalNavigationStore((state) => state.targetItemId);
+  const setTargetItemId = useGlobalNavigationStore((state) => state.setTargetItemId);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const {
     folders,
@@ -203,159 +196,153 @@ export const AudioVault: React.FC = () => {
     handleRenameFolder,
     handleDeleteFolder,
     handleMoveToFolder,
-  } = useVaultFolders('audio')
+  } = useVaultFolders('audio');
 
-  const { searchQuery, setSearchQuery, filteredItems } = useVaultItems(
-    'audio',
-    currentFolder,
-  )
+  const { searchQuery, setSearchQuery, filteredItems } = useVaultItems('audio', currentFolder);
 
   useEffect(() => {
-    setCurrentPage(0)
-  }, [currentFolder, searchQuery])
+    setCurrentPage(0);
+  }, [currentFolder, searchQuery]);
 
   useEffect(() => {
-    if (!targetItemId) return
-    const target = filteredItems.find((item) => item.id === targetItemId)
-    if (!target) return
-    setPreviewItem(target.id)
-    setTargetItemId(null)
-  }, [targetItemId, filteredItems, setTargetItemId])
+    if (!targetItemId) return;
+    const target = filteredItems.find((item) => item.id === targetItemId);
+    if (!target) return;
+    setPreviewItem(target.id);
+    setTargetItemId(null);
+  }, [targetItemId, filteredItems, setTargetItemId]);
 
   useEffect(() => {
     if (previewItem) {
-      document.body.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = ''
+      document.body.style.overflow = '';
     }
 
     return () => {
-      document.body.style.overflow = ''
-    }
-  }, [previewItem])
+      document.body.style.overflow = '';
+    };
+  }, [previewItem]);
 
   const previewedAudio = useMemo(
     () => filteredItems.find((item) => item.id === previewItem) ?? null,
-    [filteredItems, previewItem],
-  )
+    [filteredItems, previewItem]
+  );
 
   const currentPreviewIndex = useMemo(() => {
-    if (!previewItem) return -1
-    return filteredItems.findIndex((item) => item.id === previewItem)
-  }, [filteredItems, previewItem])
+    if (!previewItem) return -1;
+    return filteredItems.findIndex((item) => item.id === previewItem);
+  }, [filteredItems, previewItem]);
 
-  const canPrevious = currentPreviewIndex > 0
-  const canNext =
-    currentPreviewIndex >= 0 && currentPreviewIndex < filteredItems.length - 1
+  const canPrevious = currentPreviewIndex > 0;
+  const canNext = currentPreviewIndex >= 0 && currentPreviewIndex < filteredItems.length - 1;
 
   const showPreviousAudio = () => {
-    if (canPrevious) setPreviewItem(filteredItems[currentPreviewIndex - 1].id)
-  }
+    if (canPrevious) setPreviewItem(filteredItems[currentPreviewIndex - 1].id);
+  };
   const showNextAudio = () => {
-    if (canNext) setPreviewItem(filteredItems[currentPreviewIndex + 1].id)
-  }
+    if (canNext) setPreviewItem(filteredItems[currentPreviewIndex + 1].id);
+  };
 
   useEffect(() => {
-    if (!previewItem) return
+    if (!previewItem) return;
 
     const focusableSelectors =
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
-    const modal = modalRef.current
-    if (!modal) return
+    const modal = modalRef.current;
+    if (!modal) return;
 
-    const focusableElements = modal.querySelectorAll(focusableSelectors)
-    const first = focusableElements[0] as HTMLElement
-    const last = focusableElements[focusableElements.length - 1] as HTMLElement
+    const focusableElements = modal.querySelectorAll(focusableSelectors);
+    const first = focusableElements[0] as HTMLElement;
+    const last = focusableElements[focusableElements.length - 1] as HTMLElement;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Tab') {
         if (e.shiftKey) {
           if (document.activeElement === first) {
-            e.preventDefault()
-            last?.focus()
+            e.preventDefault();
+            last?.focus();
           }
         } else {
           if (document.activeElement === last) {
-            e.preventDefault()
-            first?.focus()
+            e.preventDefault();
+            first?.focus();
           }
         }
       }
 
       if (e.key === 'ArrowRight') {
-        showNextAudio()
+        showNextAudio();
       }
 
       if (e.key === 'ArrowLeft') {
-        showPreviousAudio()
+        showPreviousAudio();
       }
 
       if (e.key === 'Escape') {
-        setPreviewItem(null)
+        setPreviewItem(null);
       }
-    }
+    };
 
-    document.addEventListener('keydown', handleKeyDown)
-    first?.focus()
+    document.addEventListener('keydown', handleKeyDown);
+    first?.focus();
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [previewItem])
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [previewItem]);
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || [])
-    if (files.length === 0) return
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
 
     try {
-      await handleUploadFiles(files, uploadTargetFolder.current)
+      await handleUploadFiles(files, uploadTargetFolder.current);
     } finally {
       if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+        fileInputRef.current.value = '';
       }
     }
-  }
+  };
 
   const handleUploadFiles = async (
     files: File[],
     targetFolder: string | null,
     isAlreadyEncrypted = false,
-    isLiveCapture = false,
+    isLiveCapture = false
   ) => {
-    if (!files.length || !masterKey) return
+    if (!files.length || !masterKey) return;
 
-    setIsUploading(true)
-    const total = files.length
+    setIsUploading(true);
+    const total = files.length;
 
     try {
       for (let index = 0; index < total; index += 1) {
-        const file = files[index]
+        const file = files[index];
         if (!isSupportedAudioFile(file)) {
           toast.error(
-            `This audio vault does not support this file. "${file.name}" was not uploaded.`,
-          )
-          continue
+            `This audio vault does not support this file. "${file.name}" was not uploaded.`
+          );
+          continue;
         }
         if (exceedsUploadSizeLimit(file)) {
-          toast.error(getUploadSizeErrorMessage(file))
-          continue
+          toast.error(getUploadSizeErrorMessage(file));
+          continue;
         }
-        const toastId = toast.loading(
-          `Encrypting audio ${index + 1} of ${total}...`,
-        )
+        const toastId = toast.loading(`Encrypting audio ${index + 1} of ${total}...`);
 
         try {
           // Detect if file is coming from a folder upload
           const folderFromPath = (file as any).webkitRelativePath
             ? (file as any).webkitRelativePath.split('/')[0]
-            : null
+            : null;
 
-          const fileTargetFolder = folderFromPath || targetFolder
+          const fileTargetFolder = folderFromPath || targetFolder;
 
           const encryptedData = isAlreadyEncrypted
             ? new Uint8Array(await file.arrayBuffer())
-            : await encryptFile(file, masterKey)
+            : await encryptFile(file, masterKey);
 
           await addItem(
             {
@@ -365,13 +352,12 @@ export const AudioVault: React.FC = () => {
               folder: fileTargetFolder || undefined,
               metadata: {
                 mimeType: (() => {
-                  if (file.type && file.type !== 'application/octet-stream')
-                    return file.type
-                  const ext = file.name.split('.').pop()?.toLowerCase()
-                  if (ext === 'webm') return 'audio/webm'
-                  if (ext === 'mp3') return 'audio/mpeg'
-                  if (ext === 'm4a') return 'audio/mp4'
-                  return 'audio/mpeg'
+                  if (file.type && file.type !== 'application/octet-stream') return file.type;
+                  const ext = file.name.split('.').pop()?.toLowerCase();
+                  if (ext === 'webm') return 'audio/webm';
+                  if (ext === 'mp3') return 'audio/mpeg';
+                  if (ext === 'm4a') return 'audio/mp4';
+                  return 'audio/mpeg';
                 })(),
                 size: file.size,
                 extension: file.name.split('.').pop()?.toUpperCase() || 'AUDIO',
@@ -380,65 +366,62 @@ export const AudioVault: React.FC = () => {
               },
             },
             (progress) => {
-              toast.loading(
-                `Uploading ${index + 1}/${total}: ${progress}%...`,
-                {
-                  id: toastId,
-                },
-              )
-            },
-          )
+              toast.loading(`Uploading ${index + 1}/${total}: ${progress}%...`, {
+                id: toastId,
+              });
+            }
+          );
 
-          toast.success(`${file.name} uploaded successfully`, { id: toastId })
+          toast.success(`${file.name} uploaded successfully`, { id: toastId });
         } catch (error) {
-          toast.error(`Failed to upload ${file.name}`, { id: toastId })
+          toast.error(`Failed to upload ${file.name}`, { id: toastId });
           logActivity({
             actionType: 'file_upload',
             itemName: file.name,
             description: 'audio upload failed',
             status: 'failure',
-          })
+          });
         }
       }
     } finally {
-      setIsUploading(false)
-      uploadTargetFolder.current = null
+      setIsUploading(false);
+      uploadTargetFolder.current = null;
     }
-  }
+  };
 
   const handleDelete = (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"?`)) return
-    void removeItem(id)
-    toast.success(`${title} removed from vault`)
-  }
+    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+    void removeItem(id);
+    toast.success(`${title} removed from vault`);
+  };
 
   const handleDownload = async (item: VaultItem) => {
-    if (!masterKey) return
+    if (!masterKey) return;
     try {
       const fileUrl = await getVaultItemPreviewUrl(
         item,
         masterKey,
         item.metadata?.mimeType,
-        rsaKeyPair?.privateKey ?? undefined,
-      )
-      if (!fileUrl) throw new Error('Audio preview unavailable')
+        rsaKeyPair?.privateKey ?? undefined
+      );
+      if (!fileUrl) throw new Error('Audio preview unavailable');
 
-      const link = document.createElement('a')
-      link.href = fileUrl
-      link.download = item.title
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = item.title;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
       if (!getVaultItemFileUrl(item) && fileUrl.startsWith('blob:')) {
-        window.setTimeout(() => URL.revokeObjectURL(fileUrl), 1000)
+        window.setTimeout(() => URL.revokeObjectURL(fileUrl), 1000);
       }
 
-      toast.success(`Downloading ${item.title}`)
+      toast.success(`Downloading ${item.title}`);
     } catch {
-      toast.error('Audio download failed')
+      toast.error('Audio download failed');
     }
-  }
+  };
 
   return (
     <VaultLayout
@@ -452,12 +435,10 @@ export const AudioVault: React.FC = () => {
       itemTypeLabel="audio"
       allItemLabel="All Audio"
       onUpload={(folder?: string | null) => {
-        uploadTargetFolder.current = folder ?? currentFolder
-        fileInputRef.current?.click()
+        uploadTargetFolder.current = folder ?? currentFolder;
+        fileInputRef.current?.click();
       }}
-      onFileDrop={(files, folder) =>
-        handleUploadFiles(files, folder ?? currentFolder)
-      }
+      onFileDrop={(files, folder) => handleUploadFiles(files, folder ?? currentFolder)}
       onLiveRecord={() => setIsLiveRecordOpen(true)}
       isUploading={isUploading}
       uploadLabel="Upload Audio"
@@ -496,7 +477,7 @@ export const AudioVault: React.FC = () => {
         onClose={() => setIsLiveRecordOpen(false)}
         type="audio"
         onCapture={async (file, isEncrypted) => {
-          await handleUploadFiles([file], currentFolder, isEncrypted, true)
+          await handleUploadFiles([file], currentFolder, isEncrypted, true);
         }}
       />
 
@@ -504,8 +485,8 @@ export const AudioVault: React.FC = () => {
         <div
           className="flex flex-col items-center justify-center py-20 opacity-40 cursor-pointer hover:opacity-70 transition-opacity"
           onClick={() => {
-            uploadTargetFolder.current = currentFolder
-            fileInputRef.current?.click()
+            uploadTargetFolder.current = currentFolder;
+            fileInputRef.current?.click();
           }}
         >
           <Music className="mb-4 h-16 w-16" />
@@ -514,10 +495,7 @@ export const AudioVault: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 gap-6 pt-6 xl:grid-cols-2">
           {filteredItems
-            .slice(
-              currentPage * ITEMS_PER_PAGE,
-              (currentPage + 1) * ITEMS_PER_PAGE,
-            )
+            .slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE)
             .map((item, idx) => (
               <motion.div
                 key={item.id}
@@ -527,9 +505,7 @@ export const AudioVault: React.FC = () => {
                 whileHover={{ y: -4 }}
                 transition={{ delay: idx * 0.03 }}
                 draggable
-                onDragStartCapture={(event) =>
-                  setDraggedVaultItem(event, item.id)
-                }
+                onDragStartCapture={(event) => setDraggedVaultItem(event, item.id)}
                 onTouchStartCapture={(event: React.TouchEvent) =>
                   setDraggedVaultItem(event as any, item.id)
                 }
@@ -538,15 +514,14 @@ export const AudioVault: React.FC = () => {
                 // }}
                 className={cn(
                   'group relative rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-transparent backdrop-blur-md',
-                  moveMenuOpenId === item.id ? 'z-50' : 'z-10',
+                  moveMenuOpenId === item.id ? 'z-50' : 'z-10'
                 )}
                 title="Drag to a folder to move this audio file"
               >
                 <div className="flex min-h-[180px] flex-col justify-between p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      {(!isInlineMediaPreviewEnabled ||
-                        !isAudioWaveformEnabled) && (
+                      {(!isInlineMediaPreviewEnabled || !isAudioWaveformEnabled) && (
                         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 relative">
                           <AudioLines className="h-7 w-7 text-cyan-400" />
                           {isLiveCaptureItem(item.metadata?.isLiveCapture) ? (
@@ -566,16 +541,10 @@ export const AudioVault: React.FC = () => {
                           )}
                         </div>
                       )}
-                      <h3 className="truncate text-base font-semibold text-white">
-                        {item.title}
-                      </h3>
+                      <h3 className="truncate text-base font-semibold text-white">{item.title}</h3>
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/40">
                         <span>
-                          {(
-                            ((item.metadata?.size || 0) as number) /
-                            (1024 * 1024)
-                          ).toFixed(2)}{' '}
-                          MB
+                          {(((item.metadata?.size || 0) as number) / (1024 * 1024)).toFixed(2)} MB
                         </span>
                         {item.folder && (
                           <span className="flex max-w-full items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-cyan-300/80">
@@ -595,12 +564,10 @@ export const AudioVault: React.FC = () => {
                         size="icon"
                         className={cn(
                           'h-10 w-10 bg-white/5 hover:bg-white/10 text-white',
-                          moveMenuOpenId === item.id && 'bg-white/20',
+                          moveMenuOpenId === item.id && 'bg-white/20'
                         )}
                         onClick={() =>
-                          setMoveMenuOpenId(
-                            moveMenuOpenId === item.id ? null : item.id,
-                          )
+                          setMoveMenuOpenId(moveMenuOpenId === item.id ? null : item.id)
                         }
                       >
                         <Move className="h-4 w-4" />
@@ -627,12 +594,18 @@ export const AudioVault: React.FC = () => {
                                   <AudioLines className="h-4 w-4" />
                                 </div>
                                 <div className="flex flex-col min-w-0">
-                                  <span className="truncate text-xs font-semibold text-white/95" title={item.title}>
+                                  <span
+                                    className="truncate text-xs font-semibold text-white/95"
+                                    title={item.title}
+                                  >
                                     {item.title}
                                   </span>
                                   <span className="flex items-center gap-1 text-[9px] text-white/45">
                                     <span>Folder:</span>
-                                    <span className="truncate max-w-[100px] font-medium text-cyan-400" title={item.folder || 'All Audio'}>
+                                    <span
+                                      className="truncate max-w-[100px] font-medium text-cyan-400"
+                                      title={item.folder || 'All Audio'}
+                                    >
                                       {item.folder || 'All Audio'}
                                     </span>
                                   </span>
@@ -643,8 +616,8 @@ export const AudioVault: React.FC = () => {
                                 <button
                                   className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs text-white transition-colors hover:bg-white/5"
                                   onClick={() => {
-                                    void handleMoveToFolder(item.id, null)
-                                    setMoveMenuOpenId(null)
+                                    void handleMoveToFolder(item.id, null);
+                                    setMoveMenuOpenId(null);
                                   }}
                                 >
                                   <AudioLines className="h-3 w-3 opacity-40 text-cyan-400" />
@@ -657,14 +630,12 @@ export const AudioVault: React.FC = () => {
                                     className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs text-white transition-colors hover:bg-white/5"
                                     title={folder}
                                     onClick={() => {
-                                      void handleMoveToFolder(item.id, folder)
-                                      setMoveMenuOpenId(null)
+                                      void handleMoveToFolder(item.id, folder);
+                                      setMoveMenuOpenId(null);
                                     }}
                                   >
                                     <Folder className="h-3 w-3 opacity-40 text-cyan-400" />
-                                    {folder.length > 8
-                                      ? `${folder.slice(0, 8)}...`
-                                      : folder}
+                                    {folder.length > 8 ? `${folder.slice(0, 8)}...` : folder}
                                   </button>
                                 ))}
                               </div>
@@ -677,19 +648,13 @@ export const AudioVault: React.FC = () => {
 
                   {isInlineMediaPreviewEnabled ? (
                     <div className="rounded-2xl border border-white/5 bg-black/20">
-                      <SafeAudioPreview
-                        item={item}
-                        masterKey={masterKey!}
-                        compact
-                      />
+                      <SafeAudioPreview item={item} masterKey={masterKey!} compact />
                     </div>
                   ) : (
                     <div className="flex min-h-[96px] items-center gap-4 rounded-2xl border border-white/5 bg-black/20 px-5 py-4 text-white/60">
                       <Music className="h-8 w-8 text-cyan-400/70" />
                       <div>
-                        <p className="text-sm font-medium text-white">
-                          Inline preview disabled
-                        </p>
+                        <p className="text-sm font-medium text-white">Inline preview disabled</p>
                         <p className="text-xs text-white/40">
                           Open the secure preview only when you need it.
                         </p>
@@ -703,7 +668,7 @@ export const AudioVault: React.FC = () => {
                       size="sm"
                       className="h-10 flex-1 bg-white/5 hover:bg-white/10 text-white"
                       onClick={() => {
-                        setPreviewItem(item.id)
+                        setPreviewItem(item.id);
                       }}
                     >
                       <Eye className="mr-2 h-4 w-4" />
@@ -725,7 +690,7 @@ export const AudioVault: React.FC = () => {
                         'h-10 w-10 transition-all',
                         item.isPinned
                           ? 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-400/30'
-                          : 'bg-white/5 hover:bg-white/10 text-white',
+                          : 'bg-white/5 hover:bg-white/10 text-white'
                       )}
                       onClick={() => void togglePin(item.id)}
                     >
@@ -764,9 +729,7 @@ export const AudioVault: React.FC = () => {
           </motion.div>
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-3 rounded-full border border-white/5 bg-white/5 px-6 py-2 backdrop-blur-md shadow-inner">
-              <span className="text-lg font-bold text-text tabular-nums">
-                {currentPage + 1}
-              </span>
+              <span className="text-lg font-bold text-text tabular-nums">{currentPage + 1}</span>
               <div className="h-4 w-[1px] bg-white/10" />
               <span className="text-sm font-medium text-text/40 tabular-nums">
                 {Math.ceil(filteredItems.length / ITEMS_PER_PAGE)}
@@ -779,9 +742,7 @@ export const AudioVault: React.FC = () => {
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
             <Button
               variant="outline"
-              disabled={
-                (currentPage + 1) * ITEMS_PER_PAGE >= filteredItems.length
-              }
+              disabled={(currentPage + 1) * ITEMS_PER_PAGE >= filteredItems.length}
               onClick={() => setCurrentPage((prev) => prev + 1)}
               className="h-10 w-10 rounded-full border-white/10 bg-white/5 p-0 text-text/60 backdrop-blur-xl hover:border-white/30 hover:bg-white/10 hover:text-text disabled:cursor-not-allowed disabled:opacity-10"
             >
@@ -824,5 +785,5 @@ export const AudioVault: React.FC = () => {
         )}
       </AnimatePresence>
     </VaultLayout>
-  )
-}
+  );
+};

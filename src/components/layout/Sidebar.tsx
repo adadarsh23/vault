@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react';
 import {
   LayoutDashboard,
   Image,
@@ -22,30 +22,30 @@ import {
   CreditCard,
   Fingerprint,
   Wifi,
-} from 'lucide-react'
-import { cn } from '../../lib/utils'
-import { useVaultStore } from '../../store/vaultStore'
-import { useThemeStore, Theme } from '../../store/themeStore'
-import { useMediaQuery } from '../../hooks/use-media-query'
+} from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { useVaultStore } from '../../store/vaultStore';
+import { useThemeStore, Theme } from '../../store/themeStore';
+import { useMediaQuery } from '../../hooks/use-media-query';
 // Removed activity logging for lock functionality
-import { motion } from 'framer-motion'
-import { CloudHealthIndicator } from '../vault/CloudHealthIndicator'
+import { motion } from 'framer-motion';
+import { CloudHealthIndicator } from '../vault/CloudHealthIndicator';
 
 interface SidebarProps {
-  activeTab: string
-  setActiveTab: (tab: string) => void
-  onClose?: () => void
-  onExpand?: () => void
-  className?: string
-  style?: React.CSSProperties
-  compact?: boolean
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  onClose?: () => void;
+  onExpand?: () => void;
+  className?: string;
+  style?: React.CSSProperties;
+  compact?: boolean;
 }
 
 interface MenuItem {
-  id: string
-  label: string
-  icon: React.ElementType
-  group: 'core' | 'vaults' | 'system'
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  group: 'core' | 'vaults' | 'system';
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -57,12 +57,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   style,
   compact = false,
 }) => {
-  const fullLogout = useVaultStore((state) => state.fullLogout)
-  const sidebarPosition = useVaultStore(
-    (state) => state.preferences.sidebarPosition,
-  )
-  const { theme, setTheme } = useThemeStore()
-  const isMobile = useMediaQuery('(max-width: 1023px)')
+  const fullLogout = useVaultStore((state) => state.fullLogout);
+  const sidebarPosition = useVaultStore((state) => state.preferences.sidebarPosition);
+  const { theme, setTheme } = useThemeStore();
+  const isMobile = useMediaQuery('(max-width: 1023px)');
 
   const menuItems: MenuItem[] = useMemo(
     () => [
@@ -94,8 +92,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       { id: 'files', label: 'Other Files', icon: Box, group: 'vaults' },
       { id: 'settings', label: 'Settings', icon: Settings, group: 'system' },
     ],
-    [],
-  )
+    []
+  );
   const groupedMenu = useMemo(
     () => [
       {
@@ -114,8 +112,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         items: menuItems.filter((item) => item.group === 'system'),
       },
     ],
-    [menuItems],
-  )
+    [menuItems]
+  );
 
   const themes = useMemo(
     () => [
@@ -123,51 +121,51 @@ export const Sidebar: React.FC<SidebarProps> = ({
       { id: 'dark' as Theme, icon: Moon, label: 'Dark' },
       { id: 'system' as Theme, icon: Monitor, label: 'System' },
     ],
-    [],
-  )
+    []
+  );
 
   const handleThemeChange = useCallback(
     (newTheme: Theme, e: React.MouseEvent<HTMLButtonElement>) => {
       if (typeof document !== 'undefined') {
-        const overlay = document.getElementById('theme-transition-overlay')
+        const overlay = document.getElementById('theme-transition-overlay');
         if (overlay) {
-          overlay.style.setProperty('--x', `${e.clientX}px`)
-          overlay.style.setProperty('--y', `${e.clientY}px`)
+          overlay.style.setProperty('--x', `${e.clientX}px`);
+          overlay.style.setProperty('--y', `${e.clientY}px`);
         }
       }
-      setTheme(newTheme)
+      setTheme(newTheme);
     },
-    [setTheme],
-  )
+    [setTheme]
+  );
 
   const handleTabClick = useCallback(
     (tab: string) => {
-      setActiveTab(tab)
+      setActiveTab(tab);
       if (isMobile && !compact) {
-        onClose?.()
+        onClose?.();
       }
     },
-    [compact, isMobile, onClose, setActiveTab],
-  )
+    [compact, isMobile, onClose, setActiveTab]
+  );
 
   const handleFullLogout = useCallback(() => {
-    fullLogout()
+    fullLogout();
     if (isMobile) {
-      onClose?.()
+      onClose?.();
     }
-  }, [fullLogout, isMobile, onClose])
+  }, [fullLogout, isMobile, onClose]);
 
   const handleLockToggle = useCallback(() => {
     if (compact) {
-      onExpand?.()
-      return
+      onExpand?.();
+      return;
     }
-    onClose?.()
-  }, [compact, onClose, onExpand])
+    onClose?.();
+  }, [compact, onClose, onExpand]);
 
-  const isUnlocked = useVaultStore((state) => state.isUnlocked)
-  const isVaultReady = useVaultStore((state) => state.isVaultReady)
-  const isLoading = useVaultStore((state) => state.isLoading)
+  const isUnlocked = useVaultStore((state) => state.isUnlocked);
+  const isVaultReady = useVaultStore((state) => state.isVaultReady);
+  const isLoading = useVaultStore((state) => state.isLoading);
 
   return (
     <div
@@ -180,14 +178,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         sidebarPosition === 'right'
           ? 'border-l border-sidebar-border shadow-[-4px_0_24px_rgba(0,0,0,0.05)]'
           : 'border-r border-sidebar-border shadow-[4px_0_24px_rgba(0,0,0,0.05)]',
-        className,
+        className
       )}
       style={style}
     >
       <div
         className={cn(
           'flex items-center justify-between p-5 sm:p-6',
-          compact && 'justify-center px-2 py-4',
+          compact && 'justify-center px-2 py-4'
         )}
       >
         <div className="flex items-center gap-3">
@@ -196,7 +194,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={handleLockToggle}
             className={cn(
               'flex items-center justify-center bg-text text-bg shrink-0 border border-transparent shadow-sm transition hover:opacity-90 hover:shadow-md',
-              compact ? 'h-12 w-12 rounded-lg' : 'h-10 w-10 rounded-lg',
+              compact ? 'h-12 w-12 rounded-lg' : 'h-10 w-10 rounded-lg'
             )}
             aria-label={compact ? 'Open sidebar' : 'Close sidebar'}
             aria-controls="primary-sidebar"
@@ -205,9 +203,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <Lock className={cn('shrink-0', compact ? 'h-7 w-7' : 'h-5 w-5')} />
           </button>
           <div className={cn('flex flex-col', compact && 'hidden')}>
-            <span className="text-lg font-bold tracking-tight text-text leading-tight">
-              Vault
-            </span>
+            <span className="text-lg font-bold tracking-tight text-text leading-tight">Vault</span>
             {isLoading && isUnlocked && (
               <span className="mt-1 inline-flex w-fit rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-500/80">
                 Loading
@@ -230,7 +226,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <nav
         className={cn(
           'custom-scrollbar flex-1 space-y-1.5 overflow-y-auto px-3 py-4',
-          compact && 'px-2',
+          compact && 'px-2'
         )}
       >
         {groupedMenu.map((section) => (
@@ -241,17 +237,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </p>
             )}
             {section.items.map((item) => {
-              const Icon = item.icon
-              const isActive = activeTab === item.id
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
 
               return (
                 <motion.button
                   key={item.id}
-                  whileHover={
-                    compact
-                      ? undefined
-                      : { x: sidebarPosition === 'right' ? -4 : 4 }
-                  }
+                  whileHover={compact ? undefined : { x: sidebarPosition === 'right' ? -4 : 4 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleTabClick(item.id)}
                   aria-current={isActive ? 'page' : undefined}
@@ -261,41 +253,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     compact && 'h-11 justify-center rounded-lg px-0',
                     isActive
                       ? 'bg-text text-bg shadow-sm'
-                      : 'text-text/50 hover:border-text/10 hover:bg-text/5 hover:text-text',
+                      : 'text-text/50 hover:border-text/10 hover:bg-text/5 hover:text-text'
                   )}
                 >
                   <Icon
                     className={cn(
                       'h-5 w-5 shrink-0',
-                      isActive
-                        ? 'text-bg'
-                        : 'text-text/40 group-hover:text-text',
+                      isActive ? 'text-bg' : 'text-text/40 group-hover:text-text'
                     )}
                   />
                   {!compact && <span className="truncate">{item.label}</span>}
                 </motion.button>
-              )
+              );
             })}
           </div>
         ))}
       </nav>
 
-      <div
-        className={cn(
-          'space-y-3 border-t border-sidebar-border p-4',
-          compact && 'px-2',
-        )}
-      >
+      <div className={cn('space-y-3 border-t border-sidebar-border p-4', compact && 'px-2')}>
         {/* Theme Switch */}
         <div
           className={cn(
             'flex items-center gap-1 rounded-xl bg-text/5 p-1.5',
-            compact && 'flex-col rounded-lg',
+            compact && 'flex-col rounded-lg'
           )}
         >
           {themes.map((t) => {
-            const Icon = t.icon
-            const isActive = theme === t.id
+            const Icon = t.icon;
+            const isActive = theme === t.id;
 
             return (
               <button
@@ -304,9 +289,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className={cn(
                   'flex flex-1 items-center justify-center rounded-lg py-2 transition-all focus:outline-none focus:ring-2 focus:ring-text/10',
                   compact && 'w-full',
-                  isActive
-                    ? 'bg-text text-bg'
-                    : 'text-text/40 hover:text-text hover:bg-text/5',
+                  isActive ? 'bg-text text-bg' : 'text-text/40 hover:text-text hover:bg-text/5'
                 )}
                 aria-label={`Switch to ${t.label}`}
                 aria-pressed={isActive}
@@ -314,7 +297,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <Icon className="h-4 w-4" />
               </button>
-            )
+            );
           })}
         </div>
 
@@ -328,7 +311,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={handleFullLogout}
             className={cn(
               'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-500/5 hover:text-red-600 transition-all',
-              compact && 'justify-center px-0',
+              compact && 'justify-center px-0'
             )}
             title="Sign Out"
           >
@@ -338,5 +321,5 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

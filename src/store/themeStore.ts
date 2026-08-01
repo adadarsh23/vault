@@ -18,11 +18,9 @@ const THEME_SET: Record<Theme, true> = {
   system: true,
 };
 
-const isTheme = (value: unknown): value is Theme =>
-  typeof value === 'string' && value in THEME_SET;
+const isTheme = (value: unknown): value is Theme => typeof value === 'string' && value in THEME_SET;
 
-const normalizeTheme = (value: unknown): Theme =>
-  isTheme(value) ? value : DEFAULT_THEME;
+const normalizeTheme = (value: unknown): Theme => (isTheme(value) ? value : DEFAULT_THEME);
 
 export const useThemeStore = create<ThemeState>()(
   persist(
@@ -48,8 +46,7 @@ export const useThemeStore = create<ThemeState>()(
       name: THEME_STORAGE_KEY,
       partialize: (state): PersistedThemeState => ({ theme: state.theme }),
       merge: (persistedState, currentState) => {
-        const persistedTheme = (persistedState as Partial<PersistedThemeState>)
-          ?.theme;
+        const persistedTheme = (persistedState as Partial<PersistedThemeState>)?.theme;
         return {
           ...currentState,
           theme: normalizeTheme(persistedTheme),

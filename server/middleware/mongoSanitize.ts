@@ -8,19 +8,19 @@ export const customMongoSanitize = (req: Request, _res: Response, next: NextFunc
   const sanitize = (obj: any): void => {
     // Only sanitize plain objects and arrays. Skip Buffers, Date, etc.
     if (obj && typeof obj === 'object' && !Buffer.isBuffer(obj)) {
-      Object.keys(obj).forEach(key => {
+      Object.keys(obj).forEach((key) => {
         if (key.startsWith('$') || key.includes('.')) {
-          delete obj[key]
+          delete obj[key];
         } else {
-          sanitize(obj[key])
+          sanitize(obj[key]);
         }
-      })
+      });
     }
-  }
+  };
 
   if (req.body) sanitize(req.body);
   if (req.params) sanitize(req.params);
-  
+
   // For query, we need to be careful as it might be a getter in Express 5
   // If we can't delete from it, we wrap it
   try {

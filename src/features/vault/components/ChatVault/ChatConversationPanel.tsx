@@ -1,5 +1,5 @@
-import React from 'react'
-import { toast } from 'sonner'
+import React from 'react';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Check,
@@ -14,12 +14,12 @@ import {
   Send,
   TriangleAlert,
   X,
-} from 'lucide-react'
-import { ScrollButton } from '../../../../components/vault/ScrollButton'
-import { Button } from '../../../../components/ui/Button'
-import { Input } from '../../../../components/ui/Input'
-import { VaultItem } from '../../../../lib/storage'
-import { cn } from '../../../../lib/utils'
+} from 'lucide-react';
+import { ScrollButton } from '../../../../components/vault/ScrollButton';
+import { Button } from '../../../../components/ui/Button';
+import { Input } from '../../../../components/ui/Input';
+import { VaultItem } from '../../../../lib/storage';
+import { cn } from '../../../../lib/utils';
 import {
   ChatAttachment,
   ChatConversation,
@@ -28,14 +28,14 @@ import {
   DisappearingTimer,
   QUICK_REACTIONS,
   TIMER_OPTIONS,
-} from './types'
+} from './types';
 import {
   extractAttachmentsFromText,
   formatMessageTime,
   getAvatarLabel,
   getSafeExternalHref,
   renderMessageText,
-} from './utils'
+} from './utils';
 
 const IMAGE_EXTENSIONS = new Set([
   'png',
@@ -51,38 +51,38 @@ const IMAGE_EXTENSIONS = new Set([
   'heif',
   'tif',
   'tiff',
-])
+]);
 
-const IMAGE_FORMAT_HINT_KEYS = ['format', 'fm', 'ext', 'mime', 'type']
+const IMAGE_FORMAT_HINT_KEYS = ['format', 'fm', 'ext', 'mime', 'type'];
 
 interface ChatConversationPanelProps {
-  activeChatId: string | null
-  activeChatItem: VaultItem | null
-  activeConversation: ChatConversation | null
-  activeVisibleMessages: ChatMessage[]
+  activeChatId: string | null;
+  activeChatItem: VaultItem | null;
+  activeConversation: ChatConversation | null;
+  activeVisibleMessages: ChatMessage[];
   activeThreadedMessages: {
-    rootMessages: ChatMessage[]
-    repliesByParentId: Map<string, ChatMessage[]>
-  }
-  detailTab: ChatDetailTab
-  attachmentList: ChatAttachment[]
-  replyTargetId: string | null
-  draftMessage: string
-  busyMessageId: string | null
-  isSendingMessage: boolean
-  isLoadingActiveChat: boolean
-  username: string
-  failedChatIds: Set<string>
-  chatLoadErrors: Record<string, string>
-  messagesEndRef: React.RefObject<HTMLDivElement | null>
-  onBackToList: () => void
-  onDetailTabChange: (tab: ChatDetailTab) => void
-  onDisappearingTimerChange: (timer: DisappearingTimer) => Promise<void>
-  onReplyTargetChange: (messageId: string | null) => void
-  onDraftMessageChange: (value: string) => void
-  onRetryLoadChat: () => void
-  onSendMessage: () => Promise<void>
-  onToggleReaction: (messageId: string, emoji: string) => Promise<void>
+    rootMessages: ChatMessage[];
+    repliesByParentId: Map<string, ChatMessage[]>;
+  };
+  detailTab: ChatDetailTab;
+  attachmentList: ChatAttachment[];
+  replyTargetId: string | null;
+  draftMessage: string;
+  busyMessageId: string | null;
+  isSendingMessage: boolean;
+  isLoadingActiveChat: boolean;
+  username: string;
+  failedChatIds: Set<string>;
+  chatLoadErrors: Record<string, string>;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  onBackToList: () => void;
+  onDetailTabChange: (tab: ChatDetailTab) => void;
+  onDisappearingTimerChange: (timer: DisappearingTimer) => Promise<void>;
+  onReplyTargetChange: (messageId: string | null) => void;
+  onDraftMessageChange: (value: string) => void;
+  onRetryLoadChat: () => void;
+  onSendMessage: () => Promise<void>;
+  onToggleReaction: (messageId: string, emoji: string) => Promise<void>;
 }
 
 export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
@@ -112,215 +112,188 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
   onToggleReaction,
 }) => {
   const isImageUrl = React.useCallback((value: string): boolean => {
-    const trimmed = value.trim()
-    if (!trimmed) return false
+    const trimmed = value.trim();
+    if (!trimmed) return false;
 
     if (/^data:image\//i.test(trimmed)) {
-      return true
+      return true;
     }
 
-    const safeHref = getSafeExternalHref(trimmed)
-    if (!safeHref) return false
+    const safeHref = getSafeExternalHref(trimmed);
+    if (!safeHref) return false;
 
     try {
-      const parsed = new URL(safeHref)
-      const pathname = parsed.pathname.toLowerCase()
-      const filename = pathname.split('/').pop() || ''
-      const extension = filename.includes('.')
-        ? filename.slice(filename.lastIndexOf('.') + 1)
-        : ''
+      const parsed = new URL(safeHref);
+      const pathname = parsed.pathname.toLowerCase();
+      const filename = pathname.split('/').pop() || '';
+      const extension = filename.includes('.') ? filename.slice(filename.lastIndexOf('.') + 1) : '';
 
       if (extension && IMAGE_EXTENSIONS.has(extension)) {
-        return true
+        return true;
       }
 
       for (const key of IMAGE_FORMAT_HINT_KEYS) {
-        const hint = parsed.searchParams.get(key)?.toLowerCase()
-        if (!hint) continue
+        const hint = parsed.searchParams.get(key)?.toLowerCase();
+        if (!hint) continue;
 
         if (
           hint.startsWith('image/') ||
           IMAGE_EXTENSIONS.has(hint) ||
           IMAGE_EXTENSIONS.has(hint.replace(/^image\//, ''))
         ) {
-          return true
+          return true;
         }
       }
 
-      return false
+      return false;
     } catch {
-      return false
+      return false;
     }
-  }, [])
-  const formatAttachmentDate = React.useCallback(
-    (timestamp: number): string => {
-      return new Date(timestamp).toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    },
-    [],
-  )
-  const activeChatTitle = activeChatItem?.title?.trim() || 'Untitled Chat'
-  const activeChatLoadError = activeChatItem
-    ? chatLoadErrors[activeChatItem.id]
-    : undefined
-  const contentScrollRef = React.useRef<HTMLDivElement | null>(null)
-  const [showScrollTop, setShowScrollTop] = React.useState(false)
-  const [showScrollBottom, setShowScrollBottom] = React.useState(false)
-  const [activeReactionTrayMessageId, setActiveReactionTrayMessageId] =
-    React.useState<string | null>(null)
-  const [copiedAttachmentId, setCopiedAttachmentId] = React.useState<
+  }, []);
+  const formatAttachmentDate = React.useCallback((timestamp: number): string => {
+    return new Date(timestamp).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }, []);
+  const activeChatTitle = activeChatItem?.title?.trim() || 'Untitled Chat';
+  const activeChatLoadError = activeChatItem ? chatLoadErrors[activeChatItem.id] : undefined;
+  const contentScrollRef = React.useRef<HTMLDivElement | null>(null);
+  const [showScrollTop, setShowScrollTop] = React.useState(false);
+  const [showScrollBottom, setShowScrollBottom] = React.useState(false);
+  const [activeReactionTrayMessageId, setActiveReactionTrayMessageId] = React.useState<
     string | null
-  >(null)
-  const longPressTimerRef = React.useRef<number | null>(null)
-  const copiedAttachmentTimerRef = React.useRef<number | null>(null)
-  const LONG_PRESS_REACTION_MS = 180
+  >(null);
+  const [copiedAttachmentId, setCopiedAttachmentId] = React.useState<string | null>(null);
+  const longPressTimerRef = React.useRef<number | null>(null);
+  const copiedAttachmentTimerRef = React.useRef<number | null>(null);
+  const LONG_PRESS_REACTION_MS = 180;
 
   const clearLongPressTimer = React.useCallback(() => {
     if (longPressTimerRef.current !== null) {
-      window.clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
     }
-  }, [])
+  }, []);
 
   const clearCopiedAttachmentTimer = React.useCallback(() => {
     if (copiedAttachmentTimerRef.current !== null) {
-      window.clearTimeout(copiedAttachmentTimerRef.current)
-      copiedAttachmentTimerRef.current = null
+      window.clearTimeout(copiedAttachmentTimerRef.current);
+      copiedAttachmentTimerRef.current = null;
     }
-  }, [])
+  }, []);
 
   const copyLinkToClipboard = React.useCallback(
     async (attachmentId: string, value: string) => {
       try {
         if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(value)
+          await navigator.clipboard.writeText(value);
         } else if (typeof document !== 'undefined') {
-          const textArea = document.createElement('textarea')
-          textArea.value = value
-          textArea.setAttribute('readonly', 'true')
-          textArea.style.position = 'absolute'
-          textArea.style.left = '-9999px'
-          document.body.appendChild(textArea)
-          textArea.select()
-          document.execCommand('copy')
-          document.body.removeChild(textArea)
+          const textArea = document.createElement('textarea');
+          textArea.value = value;
+          textArea.setAttribute('readonly', 'true');
+          textArea.style.position = 'absolute';
+          textArea.style.left = '-9999px';
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
         } else {
-          return
+          return;
         }
 
-        setCopiedAttachmentId(attachmentId)
-        toast.success('Link copied to clipboard')
-        clearCopiedAttachmentTimer()
+        setCopiedAttachmentId(attachmentId);
+        toast.success('Link copied to clipboard');
+        clearCopiedAttachmentTimer();
         copiedAttachmentTimerRef.current = window.setTimeout(() => {
-          setCopiedAttachmentId((current) =>
-            current === attachmentId ? null : current,
-          )
-        }, 1200)
+          setCopiedAttachmentId((current) => (current === attachmentId ? null : current));
+        }, 1200);
       } catch {
-        toast.error('Unable to copy link')
+        toast.error('Unable to copy link');
       }
     },
-    [clearCopiedAttachmentTimer],
-  )
+    [clearCopiedAttachmentTimer]
+  );
 
   const handleMessageLongPressStart = React.useCallback(
     (messageId: string) => {
-      clearLongPressTimer()
+      clearLongPressTimer();
       longPressTimerRef.current = window.setTimeout(() => {
-        setActiveReactionTrayMessageId(messageId)
-      }, LONG_PRESS_REACTION_MS)
+        setActiveReactionTrayMessageId(messageId);
+      }, LONG_PRESS_REACTION_MS);
     },
-    [clearLongPressTimer, LONG_PRESS_REACTION_MS],
-  )
+    [clearLongPressTimer, LONG_PRESS_REACTION_MS]
+  );
 
   React.useEffect(
     () => () => {
-      clearLongPressTimer()
-      clearCopiedAttachmentTimer()
+      clearLongPressTimer();
+      clearCopiedAttachmentTimer();
     },
-    [clearCopiedAttachmentTimer, clearLongPressTimer],
-  )
+    [clearCopiedAttachmentTimer, clearLongPressTimer]
+  );
 
   React.useEffect(() => {
-    setActiveReactionTrayMessageId(null)
-  }, [activeChatId, detailTab])
+    setActiveReactionTrayMessageId(null);
+  }, [activeChatId, detailTab]);
 
   const updateScrollButtons = React.useCallback(() => {
-    const element = contentScrollRef.current
-    if (!element) return
-    const threshold = 24
-    const nextShowTop = element.scrollTop > threshold
+    const element = contentScrollRef.current;
+    if (!element) return;
+    const threshold = 24;
+    const nextShowTop = element.scrollTop > threshold;
     const nextShowBottom =
-      element.scrollTop + element.clientHeight <
-      element.scrollHeight - threshold
-    setShowScrollTop(nextShowTop)
-    setShowScrollBottom(nextShowBottom)
-  }, [])
+      element.scrollTop + element.clientHeight < element.scrollHeight - threshold;
+    setShowScrollTop(nextShowTop);
+    setShowScrollBottom(nextShowBottom);
+  }, []);
 
   const scrollToBottom = React.useCallback(() => {
-    const element = contentScrollRef.current
-    if (!element) return
+    const element = contentScrollRef.current;
+    if (!element) return;
 
     element.scrollTo({
       top: element.scrollHeight,
       behavior: 'smooth',
-    })
-  }, [])
+    });
+  }, []);
 
   const getMessageDayKey = React.useCallback((timestamp: number): string => {
-    const date = new Date(timestamp)
-    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
-  }, [])
+    const date = new Date(timestamp);
+    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  }, []);
 
-  const formatMessageDayLabel = React.useCallback(
-    (timestamp: number): string => {
-      const target = new Date(timestamp)
-      target.setHours(0, 0, 0, 0)
+  const formatMessageDayLabel = React.useCallback((timestamp: number): string => {
+    const target = new Date(timestamp);
+    target.setHours(0, 0, 0, 0);
 
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-      const diffDays = Math.round(
-        (target.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
-      )
+    const diffDays = Math.round((target.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
 
-      if (diffDays === 0) return 'Today'
-      if (diffDays === 1) return 'Tomorrow'
-      if (diffDays === -1) return 'Yesterday'
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Tomorrow';
+    if (diffDays === -1) return 'Yesterday';
 
-      return target.toLocaleDateString(undefined, {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        year:
-          target.getFullYear() === today.getFullYear() ? undefined : 'numeric',
-      })
-    },
-    [],
-  )
+    return target.toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: target.getFullYear() === today.getFullYear() ? undefined : 'numeric',
+    });
+  }, []);
 
   React.useEffect(() => {
     const rafId = window.requestAnimationFrame(() => {
-      updateScrollButtons()
-    })
-    return () => window.cancelAnimationFrame(rafId)
-  }, [
-    updateScrollButtons,
-    detailTab,
-    activeVisibleMessages.length,
-    attachmentList.length,
-  ])
+      updateScrollButtons();
+    });
+    return () => window.cancelAnimationFrame(rafId);
+  }, [updateScrollButtons, detailTab, activeVisibleMessages.length, attachmentList.length]);
 
   return (
-    <section
-      className={cn(
-        'h-full min-w-0 flex-1',
-        activeChatId ? 'block' : 'hidden md:block',
-      )}
-    >
+    <section className={cn('h-full min-w-0 flex-1', activeChatId ? 'block' : 'hidden md:block')}>
       {!activeChatItem || !activeConversation ? (
         <div className="h-full overflow-y-auto rounded-2xl border border-white/5 bg-white/[0.01] transition-colors custom-scrollbar md:rounded-3xl">
           <div className="flex min-h-full items-center justify-center pt-40 pb-40">
@@ -334,15 +307,12 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                   )}
                 </div>
                 <p className="text-sm font-semibold text-text/75">
-                  {isLoadingActiveChat
-                    ? 'Loading conversation...'
-                    : 'Conversation unavailable'}
+                  {isLoadingActiveChat ? 'Loading conversation...' : 'Conversation unavailable'}
                 </p>
                 <p className="mx-auto mt-2 max-w-sm text-xs leading-relaxed text-text/45">
                   {isLoadingActiveChat
                     ? 'Decrypting the selected chat.'
-                    : activeChatLoadError ||
-                      'The selected chat could not be opened.'}
+                    : activeChatLoadError || 'The selected chat could not be opened.'}
                 </p>
                 {!isLoadingActiveChat && failedChatIds.has(activeChatItem.id) && (
                   <Button
@@ -359,9 +329,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
             ) : (
               <div className="group text-center">
                 <MessageSquareText className="mx-auto mb-4 h-16 w-16 text-text/5 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" />
-                <p className="text-sm font-medium text-text/30">
-                  Select a chat to view messages
-                </p>
+                <p className="text-sm font-medium text-text/30">Select a chat to view messages</p>
                 <p className="mt-2 text-[10px] uppercase tracking-widest text-text/20">
                   Vault Secure Chat
                 </p>
@@ -391,9 +359,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                   <p className="truncate text-base font-bold tracking-tight text-text sm:text-lg md:text-2xl">
                     {activeChatTitle}
                   </p>
-                  <p className="text-xs text-text/55">
-                    {activeVisibleMessages.length} Chats
-                  </p>
+                  <p className="text-xs text-text/55">{activeVisibleMessages.length} Chats</p>
                 </div>
               </div>
 
@@ -407,8 +373,8 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                     { id: 'links', icon: Link2 },
                   ] as const
                 ).map((tab) => {
-                  const Icon = tab.icon
-                  const active = detailTab === tab.id
+                  const Icon = tab.icon;
+                  const active = detailTab === tab.id;
                   return (
                     <button
                       key={tab.id}
@@ -418,30 +384,24 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                         'inline-flex items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
                         active
                           ? 'border-emerald-500/20 bg-emerald-500/10 text-text'
-                          : 'border-text/10 bg-bg/60 text-text/65 hover:text-text',
+                          : 'border-text/10 bg-bg/60 text-text/65 hover:text-text'
                       )}
                     >
                       <Icon className="h-3.5 w-3.5" />
                       {/* {tab.label} */}
                     </button>
-                  )
+                  );
                 })}
                 <div className="ml-1 flex items-center gap-2">
                   <select
                     className="h-9 min-w-0 max-w-[6.75rem] rounded-xl border border-white/10 bg-white/5 px-2 text-xs text-text appearance-none sm:max-w-[9rem] sm:px-3 md:max-w-none"
                     value={activeConversation.disappearingTimer}
                     onChange={(event) =>
-                      void onDisappearingTimerChange(
-                        event.target.value as DisappearingTimer,
-                      )
+                      void onDisappearingTimerChange(event.target.value as DisappearingTimer)
                     }
                   >
                     {TIMER_OPTIONS.map((option) => (
-                      <option
-                        key={option.value}
-                        value={option.value}
-                        className="bg-bg text-text"
-                      >
+                      <option key={option.value} value={option.value} className="bg-bg text-text">
                         {option.label}
                       </option>
                     ))}
@@ -463,9 +423,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                     <div className="flex min-h-[55vh] items-center justify-center">
                       <div className="w-full max-w-md rounded-2xl border border-dashed border-emerald-500/20 bg-gradient-to-b from-emerald-500/5 to-transparent px-4 py-7 text-center">
                         <MessageSquareText className="mx-auto mb-2 h-5 w-5 text-fuchsia-400" />
-                        <p className="text-sm font-medium text-text/75">
-                          No messages yet
-                        </p>
+                        <p className="text-sm font-medium text-text/75">No messages yet</p>
                         <p className="mt-1 text-xs text-text/50">
                           Start the conversation by sending the first message.
                         </p>
@@ -474,41 +432,28 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                   )}
 
                   {activeThreadedMessages.rootMessages.map((message, index) => {
-                    const replies =
-                      activeThreadedMessages.repliesByParentId.get(
-                        message.id,
-                      ) || []
+                    const replies = activeThreadedMessages.repliesByParentId.get(message.id) || [];
                     const previousMessage =
-                      index > 0
-                        ? activeThreadedMessages.rootMessages[index - 1]
-                        : null
+                      index > 0 ? activeThreadedMessages.rootMessages[index - 1] : null;
                     const showDayDivider =
                       !previousMessage ||
                       getMessageDayKey(previousMessage.createdAt) !==
-                        getMessageDayKey(message.createdAt)
-                    const isMine = message.sender === username
-                    const reactionTrayOpen =
-                      activeReactionTrayMessageId === message.id
-                    const messageAttachments = Array.isArray(
-                      message.attachments,
-                    )
+                        getMessageDayKey(message.createdAt);
+                    const isMine = message.sender === username;
+                    const reactionTrayOpen = activeReactionTrayMessageId === message.id;
+                    const messageAttachments = Array.isArray(message.attachments)
                       ? message.attachments
-                      : []
-                    const inferredAttachments = extractAttachmentsFromText(
-                      message.text,
-                    )
+                      : [];
+                    const inferredAttachments = extractAttachmentsFromText(message.text);
                     const imageLinks = Array.from(
                       new Set(
                         [...messageAttachments, ...inferredAttachments]
-                          .map((attachment) =>
-                            getSafeExternalHref(attachment.url),
-                          )
+                          .map((attachment) => getSafeExternalHref(attachment.url))
                           .filter(
-                            (href): href is string =>
-                              typeof href === 'string' && isImageUrl(href),
-                          ),
-                      ),
-                    )
+                            (href): href is string => typeof href === 'string' && isImageUrl(href)
+                          )
+                      )
+                    );
 
                     return (
                       <React.Fragment key={message.id}>
@@ -520,21 +465,14 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                           </div>
                         )}
                         <div
-                          className={cn(
-                            'group flex',
-                            isMine ? 'justify-end' : 'justify-start',
-                          )}
-                          onMouseEnter={() =>
-                            setActiveReactionTrayMessageId(message.id)
-                          }
+                          className={cn('group flex', isMine ? 'justify-end' : 'justify-start')}
+                          onMouseEnter={() => setActiveReactionTrayMessageId(message.id)}
                           onMouseLeave={() =>
                             setActiveReactionTrayMessageId((current) =>
-                              current === message.id ? null : current,
+                              current === message.id ? null : current
                             )
                           }
-                          onTouchStart={() =>
-                            handleMessageLongPressStart(message.id)
-                          }
+                          onTouchStart={() => handleMessageLongPressStart(message.id)}
                           onTouchEnd={clearLongPressTimer}
                           onTouchCancel={clearLongPressTimer}
                           onTouchMove={clearLongPressTimer}
@@ -545,7 +483,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                                 'relative min-w-0 rounded-2xl border px-3.5 py-3 shadow-[0_8px_24px_rgba(0,0,0,0.16)] transition-colors',
                                 isMine
                                   ? 'border-emerald-500/35 bg-gradient-to-br from-emerald-500/14 to-emerald-500/6 text-text'
-                                  : 'border-white/10 bg-white/[0.025] text-text',
+                                  : 'border-white/10 bg-white/[0.025] text-text'
                               )}
                             >
                               {!isMine && (
@@ -558,7 +496,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                                 message.text,
                                 isMine,
                                 'text-sm leading-relaxed',
-                                8,
+                                8
                               )}
 
                               {imageLinks.length > 0 && (
@@ -589,25 +527,19 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
 
                                 <span className="flex flex-wrap items-center gap-1">
                                   {Object.keys(message.reactions).length > 0 ? (
-                                    Object.entries(message.reactions).map(
-                                      ([emoji, users]) => (
-                                        <span
-                                          key={`${message.id}-reaction-${emoji}`}
-                                          className="inline-flex items-center gap-0 rounded-full border border-text/15 bg-bg/45 px-1 py-0"
-                                        >
-                                          <span className="text-[9px] leading-none">
-                                            {emoji}
-                                          </span>
-                                          <span className="text-[9px] font-semibold text-text/70">
-                                            {users.length}
-                                          </span>
+                                    Object.entries(message.reactions).map(([emoji, users]) => (
+                                      <span
+                                        key={`${message.id}-reaction-${emoji}`}
+                                        className="inline-flex items-center gap-0 rounded-full border border-text/15 bg-bg/45 px-1 py-0"
+                                      >
+                                        <span className="text-[9px] leading-none">{emoji}</span>
+                                        <span className="text-[9px] font-semibold text-text/70">
+                                          {users.length}
                                         </span>
-                                      ),
-                                    )
+                                      </span>
+                                    ))
                                   ) : (
-                                    <span className="italic text-text/40">
-                                      No reactions
-                                    </span>
+                                    <span className="italic text-text/40">No reactions</span>
                                   )}
                                 </span>
 
@@ -619,9 +551,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
 
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    onReplyTargetChange(message.id)
-                                  }
+                                  onClick={() => onReplyTargetChange(message.id)}
                                   className="ml-auto inline-flex h-5 items-center gap-1 rounded-full border border-transparent px-1.5 text-[9px] font-semibold text-text/65 transition-colors hover:border-text/15 hover:bg-text/10 hover:text-text sm:h-6 sm:px-2 sm:text-[10px]"
                                 >
                                   <MessageCircleReply className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
@@ -635,25 +565,23 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                                 'flex flex-wrap gap-1.5 transition-all duration-100',
                                 reactionTrayOpen
                                   ? 'max-h-40 opacity-100'
-                                  : 'max-h-0 overflow-hidden opacity-0 pointer-events-none md:group-hover:max-h-40 md:group-hover:opacity-100 md:group-hover:pointer-events-auto',
+                                  : 'max-h-0 overflow-hidden opacity-0 pointer-events-none md:group-hover:max-h-40 md:group-hover:opacity-100 md:group-hover:pointer-events-auto'
                               )}
                             >
                               {QUICK_REACTIONS.map((emoji) => {
-                                const count =
-                                  message.reactions[emoji]?.length || 0
+                                const count = message.reactions[emoji]?.length || 0;
                                 return (
                                   <button
                                     key={`${message.id}-${emoji}`}
                                     type="button"
                                     disabled={busyMessageId === message.id}
                                     onClick={() => {
-                                      void onToggleReaction(message.id, emoji)
+                                      void onToggleReaction(message.id, emoji);
                                       if (
                                         typeof window !== 'undefined' &&
-                                        window.matchMedia('(hover: none)')
-                                          .matches
+                                        window.matchMedia('(hover: none)').matches
                                       ) {
-                                        setActiveReactionTrayMessageId(null)
+                                        setActiveReactionTrayMessageId(null);
                                       }
                                     }}
                                     className={cn(
@@ -662,7 +590,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                                       'hover:-translate-y-0.5 active:translate-y-0 active:shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_2px_7px_rgba(0,0,0,0.2)]',
                                       count > 0
                                         ? 'emoji-3d-chip-active border-emerald-400/35 bg-gradient-to-b from-emerald-400/25 to-emerald-500/10 text-fuchsia-400'
-                                        : 'border-text/15 bg-gradient-to-b from-white/14 to-white/[0.03] text-text/80 hover:from-white/20 hover:to-white/[0.06]',
+                                        : 'border-text/15 bg-gradient-to-b from-white/14 to-white/[0.03] text-text/80 hover:from-white/20 hover:to-white/[0.06]'
                                     )}
                                   >
                                     <span className="emoji-3d-glyph text-[13px] [filter:drop-shadow(0_1px_0_rgba(255,255,255,0.45))_drop-shadow(0_2px_3px_rgba(0,0,0,0.35))]">
@@ -670,7 +598,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                                     </span>
                                     {count > 0 && <span>{count}</span>}
                                   </button>
-                                )
+                                );
                               })}
                             </div>
 
@@ -693,7 +621,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                                       reply.text,
                                       isMine,
                                       'text-xs leading-relaxed',
-                                      4,
+                                      4
                                     )}
                                   </div>
                                 ))}
@@ -702,7 +630,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                           </div>
                         </div>
                       </React.Fragment>
-                    )
+                    );
                   })}
 
                   <div ref={messagesEndRef} />
@@ -710,17 +638,14 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
               ) : (
                 <div className="space-y-2">
                   {attachmentList.map((attachment) => {
-                    const safeHref = getSafeExternalHref(attachment.url)
+                    const safeHref = getSafeExternalHref(attachment.url);
                     if (!safeHref) {
                       return (
                         <div
                           key={attachment.id}
                           className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-2.5"
                         >
-                          <p
-                            className="truncate text-sm text-text/60"
-                            title={attachment.label}
-                          >
+                          <p className="truncate text-sm text-text/60" title={attachment.label}>
                             {attachment.label}
                           </p>
                           <p className="mt-1 text-[10px] text-text/40">
@@ -732,7 +657,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                               onClick={() =>
                                 void copyLinkToClipboard(
                                   attachment.id,
-                                  attachment.url || attachment.label,
+                                  attachment.url || attachment.label
                                 )
                               }
                               className="inline-flex h-6 items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 text-[10px] font-semibold text-text/65 transition-colors hover:bg-white/10 hover:text-text"
@@ -743,13 +668,11 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                               ) : (
                                 <Copy className="h-3 w-3" />
                               )}
-                              {copiedAttachmentId === attachment.id
-                                ? 'Copied'
-                                : 'Copy'}
+                              {copiedAttachmentId === attachment.id ? 'Copied' : 'Copy'}
                             </button>
                           </div>
                         </div>
-                      )
+                      );
                     }
                     return (
                       <div
@@ -763,10 +686,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                           className="block rounded-md px-0.5 py-0.5"
                           aria-label={`Open link: ${attachment.label}`}
                         >
-                          <p
-                            className="truncate text-sm text-text/85"
-                            title={attachment.label}
-                          >
+                          <p className="truncate text-sm text-text/85" title={attachment.label}>
                             {attachment.label}
                           </p>
                           <p className="mt-1 text-[10px] text-text/45">
@@ -776,9 +696,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                         <div className="mt-2 flex items-center justify-end">
                           <button
                             type="button"
-                            onClick={() =>
-                              void copyLinkToClipboard(attachment.id, safeHref)
-                            }
+                            onClick={() => void copyLinkToClipboard(attachment.id, safeHref)}
                             className="inline-flex h-6 items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 text-[10px] font-semibold text-text/65 transition-colors hover:bg-white/10 hover:text-text"
                             aria-label="Copy link"
                           >
@@ -787,24 +705,19 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                             ) : (
                               <Copy className="h-3 w-3" />
                             )}
-                            {copiedAttachmentId === attachment.id
-                              ? 'Copied'
-                              : 'Copy'}
+                            {copiedAttachmentId === attachment.id ? 'Copied' : 'Copy'}
                           </button>
                         </div>
                       </div>
-                    )
+                    );
                   })}
                   {attachmentList.length === 0 && (
                     <div className="flex min-h-[55vh] items-center justify-center">
                       <div className="w-full max-w-md rounded-2xl border border-dashed border-emerald-500/20 bg-gradient-to-b from-emerald-500/5 to-transparent px-4 py-7 text-center">
                         <Link2 className="mx-auto mb-2 h-5 w-5 text-fuchsia-400" />
-                        <p className="text-sm font-medium text-text/75">
-                          No links found
-                        </p>
+                        <p className="text-sm font-medium text-text/75">No links found</p>
                         <p className="mt-1 text-xs text-text/50">
-                          Shared links will appear here once messages include
-                          URLs.
+                          Shared links will appear here once messages include URLs.
                         </p>
                       </div>
                     </div>
@@ -859,8 +772,8 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                 onChange={(event) => onDraftMessageChange(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {
-                    event.preventDefault()
-                    void onSendMessage()
+                    event.preventDefault();
+                    void onSendMessage();
                   }
                 }}
                 placeholder="Type a message..."
@@ -886,5 +799,5 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
         </div>
       )}
     </section>
-  )
-}
+  );
+};

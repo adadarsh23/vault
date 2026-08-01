@@ -7,31 +7,28 @@ import { logger } from '../lib/logger';
 const normalizeTitle = (value: unknown): string =>
   typeof value === 'string' ? value.trim().toLowerCase() : '';
 
-export const useVaultItems = (itemType: VaultItemType | VaultItemType[], currentFolder: string | null) => {
+export const useVaultItems = (
+  itemType: VaultItemType | VaultItemType[],
+  currentFolder: string | null
+) => {
   const items = useVaultStore((state) => state.items);
   const [searchQuery, setSearchQuery] = useState('');
 
   const types = useMemo(
     () => Array.from(new Set(Array.isArray(itemType) ? itemType : [itemType])),
-    [itemType],
+    [itemType]
   );
 
-  const typedItems = useMemo(
-    () => items.filter((i) => types.includes(i.type)),
-    [items, types]
-  );
+  const typedItems = useMemo(() => items.filter((i) => types.includes(i.type)), [items, types]);
 
-  const normalizedSearchQuery = useMemo(
-    () => searchQuery.trim().toLowerCase(),
-    [searchQuery],
-  );
+  const normalizedSearchQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery]);
 
   const filteredItems = useMemo(() => {
     const filtered = typedItems.filter((m) => {
       const matchesSearch =
         normalizedSearchQuery.length === 0 ||
         normalizeTitle(m.title).includes(normalizedSearchQuery);
-      
+
       // If currentFolder is null, show absolutely everything of this type (All View)
       if (currentFolder === null) return matchesSearch;
 

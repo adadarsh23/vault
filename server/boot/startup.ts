@@ -138,7 +138,8 @@ export const renderStartupSummary = (input: {
   const keepAliveHealthTarget = toHealthUrl(input.keepAliveTarget);
   const envChecks = getEnvChecks();
   const envPresentCount = envChecks.filter((line) => line.includes('[OK]')).length;
-  const heapCommittedPercent = memory.heapTotal > 0 ? (memory.heapUsed / memory.heapTotal) * 100 : 0;
+  const heapCommittedPercent =
+    memory.heapTotal > 0 ? (memory.heapUsed / memory.heapTotal) * 100 : 0;
   const heapLimit = v8.getHeapStatistics().heap_size_limit;
   const heapLimitPercent = heapLimit > 0 ? (memory.heapUsed / heapLimit) * 100 : 0;
   const warnings = getWarnings({
@@ -166,7 +167,7 @@ export const renderStartupSummary = (input: {
     '',
     ...titleBox(
       colorize('VAULT SERVER IS LIVE', `${ansi.bold}${ansi.green}`),
-      colorize('FULL RUNTIME SNAPSHOT', `${ansi.dim}${ansi.gray}`),
+      colorize('FULL RUNTIME SNAPSHOT', `${ansi.dim}${ansi.gray}`)
     ),
     badge('UP', `Mongo ${dbStatus}`),
     badge('INFO', `Mode ${isProd ? 'PRODUCTION' : 'DEVELOPMENT'}`),
@@ -176,7 +177,10 @@ export const renderStartupSummary = (input: {
     hr(),
     '',
     section('Runtime'),
-    kv('Mode', `${isProd ? 'PRODUCTION' : 'DEVELOPMENT'} (${isProd ? 'hardened' : 'developer-friendly'})`),
+    kv(
+      'Mode',
+      `${isProd ? 'PRODUCTION' : 'DEVELOPMENT'} (${isProd ? 'hardened' : 'developer-friendly'})`
+    ),
     kv('Node', process.version),
     kv('PID', String(process.pid)),
     kv('Uptime', uptime),
@@ -192,12 +196,18 @@ export const renderStartupSummary = (input: {
     kv('Platform', `${os.platform()} ${os.release()} (${os.arch()})`),
     kv('CPU', `${cpuCount} cores`),
     kv('Load Avg', loadAvg.map((n) => n.toFixed(2)).join(' / ')),
-    kv('Memory', `RSS ${formatMemoryUsage(memory.rss)}  Heap ${formatMemoryUsage(memory.heapUsed)}`),
+    kv(
+      'Memory',
+      `RSS ${formatMemoryUsage(memory.rss)}  Heap ${formatMemoryUsage(memory.heapUsed)}`
+    ),
     kv(
       'Heap',
       `${formatMemoryUsage(memory.heapUsed)} / ${formatMemoryUsage(memory.heapTotal)} committed (${heapCommittedPercent.toFixed(1)}%)`
     ),
-    kv('Heap Limit', `${formatMemoryUsage(memory.heapUsed)} / ${formatMemoryUsage(heapLimit)} (${heapLimitPercent.toFixed(1)}%)`),
+    kv(
+      'Heap Limit',
+      `${formatMemoryUsage(memory.heapUsed)} / ${formatMemoryUsage(heapLimit)} (${heapLimitPercent.toFixed(1)}%)`
+    ),
     kv('System RAM', `${freeMem} free / ${totalMem} total`),
     kv('Event Loop', formatEventLoopLag()),
     meter('Heap Pressure', heapLimitPercent),
@@ -216,7 +226,10 @@ export const renderStartupSummary = (input: {
           kv('RPM', `${input.runtimeMetrics.requestsPerMinute.toFixed(1)}/min`),
           kv('Errors', `${input.runtimeMetrics.totalErrors} total`),
           kv('EPM', `${input.runtimeMetrics.errorsPerMinute.toFixed(2)}/min`),
-          kv('Latency', `avg ${Math.round(input.runtimeMetrics.avgLatencyMs)} ms  p95 ${Math.round(input.runtimeMetrics.p95LatencyMs)} ms`),
+          kv(
+            'Latency',
+            `avg ${Math.round(input.runtimeMetrics.avgLatencyMs)} ms  p95 ${Math.round(input.runtimeMetrics.p95LatencyMs)} ms`
+          ),
           kv('Connections', `${input.runtimeMetrics.activeConnections} active`),
         ]
       : []),
@@ -226,9 +239,15 @@ export const renderStartupSummary = (input: {
     kv('Mongo', dbStatus),
     kv('Uploads', uploadRoot),
     kv('Origins', `${allowedOrigins.length} allowed`),
-    kv('Origin List', truncate(allowedOrigins.length > 0 ? allowedOrigins.join(', ') : 'none', 220)),
+    kv(
+      'Origin List',
+      truncate(allowedOrigins.length > 0 ? allowedOrigins.join(', ') : 'none', 220)
+    ),
     kv('JWT Secret', process.env.JWT_SECRET ? 'configured' : 'missing'),
-    kv('Refresh Secret', process.env.REFRESH_TOKEN_SECRET ? 'configured' : 'fallback-to-jwt-or-missing'),
+    kv(
+      'Refresh Secret',
+      process.env.REFRESH_TOKEN_SECRET ? 'configured' : 'fallback-to-jwt-or-missing'
+    ),
     sectionEnd(),
     '',
     section('Service Health'),
@@ -239,7 +258,11 @@ export const renderStartupSummary = (input: {
     ...(input.runtimeMetrics ? [meter('P95 Pressure', latencyPressurePercent)] : []),
     kv('Status', `${colorize('[UP]', ansi.green)} runtime initialized and endpoints published`),
     ...(input.phaseTimings && input.phaseTimings.length > 0
-      ? ['', section('Startup Phase Timings'), ...input.phaseTimings.map((phase) => kv(phase.name, formatDurationMs(phase.durationMs)))]
+      ? [
+          '',
+          section('Startup Phase Timings'),
+          ...input.phaseTimings.map((phase) => kv(phase.name, formatDurationMs(phase.durationMs))),
+        ]
       : []),
     ...(input.phaseTimings && input.phaseTimings.length > 0 ? [sectionEnd()] : []),
     sectionEnd(),
@@ -248,7 +271,12 @@ export const renderStartupSummary = (input: {
     kv('Signals', `${envPresentCount}/${envChecks.length} key env values present`),
     ...envChecks.map((entry) => row(entry)),
     ...(warnings.length > 0
-      ? ['', section('Warnings'), ...warnings.map((w) => row(`${colorize('! ', ansi.yellow)}${w}`)), sectionEnd()]
+      ? [
+          '',
+          section('Warnings'),
+          ...warnings.map((w) => row(`${colorize('! ', ansi.yellow)}${w}`)),
+          sectionEnd(),
+        ]
       : []),
     sectionEnd(),
     hr(),
@@ -258,10 +286,7 @@ export const renderStartupSummary = (input: {
   log.info(lines.join('\n'));
 };
 
-export const startDevHeartbeat = (input: {
-  port: number;
-  requestCounter: () => number;
-}) => {
+export const startDevHeartbeat = (input: { port: number; requestCounter: () => number }) => {
   if (isProd || !supportsAnimatedTerminal) return;
   const interval = setInterval(() => {
     const memory = process.memoryUsage();

@@ -8,7 +8,13 @@ import { mediaService } from './mediaService.ts';
 import { drmPackagingService } from './drmPackagingService.ts';
 import os from 'os';
 
-export const processHlsAdaptive = async (itemId: string, userId: string, username: string, inputPath: string, outputDir: string): Promise<void> => {
+export const processHlsAdaptive = async (
+  itemId: string,
+  userId: string,
+  username: string,
+  inputPath: string,
+  outputDir: string
+): Promise<void> => {
   await fs.mkdir(outputDir, { recursive: true });
 
   // 1. Decrypt source to temporary file if encrypted at-rest
@@ -16,7 +22,7 @@ export const processHlsAdaptive = async (itemId: string, userId: string, usernam
   const item = await DynamicVaultModel.findOne({ userId, itemId });
   let sourcePath = inputPath;
   let tempSource = '';
-  
+
   if (item && item.file && item.file.encryptionIv && item.file.encryptionTag) {
     logger.info(`Source is encrypted at rest. Decrypting for transcoding: ${itemId}`);
     const encrypted = await fs.readFile(inputPath);
@@ -49,9 +55,9 @@ export const processHlsAdaptive = async (itemId: string, userId: string, usernam
   await fs.writeFile(keyInfoPath, `${keyUrl}\n${keyFilePath}`);
 
   const ffmpegCmd = 'ffmpeg';
-  
+
   // 1. Forensic Invisible Spatial Watermarking
-  // We use multiple layers of near-invisible text (opacity 0.005 - 0.01) 
+  // We use multiple layers of near-invisible text (opacity 0.005 - 0.01)
   // distributed across the frame. These are invisible to the eye but
   // recoverable using luma/alpha thresholding on leaked footage.
   const forensicText = `VID:${itemId}:UID:${userId}`;
@@ -59,35 +65,118 @@ export const processHlsAdaptive = async (itemId: string, userId: string, usernam
     `drawtext=text='${forensicText}':x=W*0.1:y=H*0.1:fontcolor=white@0.005:fontsize=10`,
     `drawtext=text='${forensicText}':x=W*0.8:y=H*0.8:fontcolor=white@0.005:fontsize=10`,
     `drawtext=text='${forensicText}':x=W*0.5:y=H*0.5:fontcolor=white@0.007:fontsize=8`,
-    `drawtext=text='${userId}':x=(W-tw)/2:y=(H-th)/2:fontcolor=white@0.003:fontsize=20`
+    `drawtext=text='${userId}':x=(W-tw)/2:y=(H-th)/2:fontcolor=white@0.003:fontsize=20`,
   ].join(',');
 
   const args = [
-    '-i', sourcePath,
-    '-hls_key_info_file', keyInfoPath,
+    '-i',
+    sourcePath,
+    '-hls_key_info_file',
+    keyInfoPath,
     // Add Metadata Steganography: Embed User ID into the stream metadata
-    '-metadata', `comment=ForensicID:${userId}`,
-    '-metadata', `copyright=SecureVault:${itemId}`,
+    '-metadata',
+    `comment=ForensicID:${userId}`,
+    '-metadata',
+    `copyright=SecureVault:${itemId}`,
     // Global filter for spatial invisible encoding
-    '-vf', filters,
+    '-vf',
+    filters,
     // 144p
-    '-s', '256x144', '-c:v', 'libx264', '-b:v', '180k', '-g', '48', '-hls_time', '10', '-hls_playlist_type', 'vod',
-    '-hls_segment_filename', path.join(outputDir, '144p_%03d.ts'), path.join(outputDir, '144p.m3u8'),
+    '-s',
+    '256x144',
+    '-c:v',
+    'libx264',
+    '-b:v',
+    '180k',
+    '-g',
+    '48',
+    '-hls_time',
+    '10',
+    '-hls_playlist_type',
+    'vod',
+    '-hls_segment_filename',
+    path.join(outputDir, '144p_%03d.ts'),
+    path.join(outputDir, '144p.m3u8'),
     // 240p
-    '-s', '426x240', '-c:v', 'libx264', '-b:v', '400k', '-g', '48', '-hls_time', '10', '-hls_playlist_type', 'vod',
-    '-hls_segment_filename', path.join(outputDir, '240p_%03d.ts'), path.join(outputDir, '240p.m3u8'),
+    '-s',
+    '426x240',
+    '-c:v',
+    'libx264',
+    '-b:v',
+    '400k',
+    '-g',
+    '48',
+    '-hls_time',
+    '10',
+    '-hls_playlist_type',
+    'vod',
+    '-hls_segment_filename',
+    path.join(outputDir, '240p_%03d.ts'),
+    path.join(outputDir, '240p.m3u8'),
     // 360p
-    '-s', '640x360', '-c:v', 'libx264', '-b:v', '800k', '-g', '48', '-hls_time', '10', '-hls_playlist_type', 'vod',
-    '-hls_segment_filename', path.join(outputDir, '360p_%03d.ts'), path.join(outputDir, '360p.m3u8'),
+    '-s',
+    '640x360',
+    '-c:v',
+    'libx264',
+    '-b:v',
+    '800k',
+    '-g',
+    '48',
+    '-hls_time',
+    '10',
+    '-hls_playlist_type',
+    'vod',
+    '-hls_segment_filename',
+    path.join(outputDir, '360p_%03d.ts'),
+    path.join(outputDir, '360p.m3u8'),
     // 480p
-    '-s', '854x480', '-c:v', 'libx264', '-b:v', '1400k', '-g', '48', '-hls_time', '10', '-hls_playlist_type', 'vod',
-    '-hls_segment_filename', path.join(outputDir, '480p_%03d.ts'), path.join(outputDir, '480p.m3u8'),
-    // 720p 
-    '-s', '1280x720', '-c:v', 'libx264', '-b:v', '2800k', '-g', '48', '-hls_time', '10', '-hls_playlist_type', 'vod',
-    '-hls_segment_filename', path.join(outputDir, '720p_%03d.ts'), path.join(outputDir, '720p.m3u8'),
+    '-s',
+    '854x480',
+    '-c:v',
+    'libx264',
+    '-b:v',
+    '1400k',
+    '-g',
+    '48',
+    '-hls_time',
+    '10',
+    '-hls_playlist_type',
+    'vod',
+    '-hls_segment_filename',
+    path.join(outputDir, '480p_%03d.ts'),
+    path.join(outputDir, '480p.m3u8'),
+    // 720p
+    '-s',
+    '1280x720',
+    '-c:v',
+    'libx264',
+    '-b:v',
+    '2800k',
+    '-g',
+    '48',
+    '-hls_time',
+    '10',
+    '-hls_playlist_type',
+    'vod',
+    '-hls_segment_filename',
+    path.join(outputDir, '720p_%03d.ts'),
+    path.join(outputDir, '720p.m3u8'),
     // 1080p
-    '-s', '1920x1080', '-c:v', 'libx264', '-b:v', '5000k', '-g', '48', '-hls_time', '10', '-hls_playlist_type', 'vod',
-    '-hls_segment_filename', path.join(outputDir, '1080p_%03d.ts'), path.join(outputDir, '1080p.m3u8')
+    '-s',
+    '1920x1080',
+    '-c:v',
+    'libx264',
+    '-b:v',
+    '5000k',
+    '-g',
+    '48',
+    '-hls_time',
+    '10',
+    '-hls_playlist_type',
+    'vod',
+    '-hls_segment_filename',
+    path.join(outputDir, '1080p_%03d.ts'),
+    path.join(outputDir, '1080p.m3u8'),
   ];
 
   logger.info(`Starting ABR transcoding with Forensic Watermarking: ${itemId}`, { userId });

@@ -3,9 +3,9 @@
  * Use these to replace the inline logging in vaultService.ts
  */
 
-import { saveActivityLog } from './activityLogService.ts'
-import { logger } from '../utils/logger.ts'
-import { emitVaultEvent } from '../socket.ts'
+import { saveActivityLog } from './activityLogService.ts';
+import { logger } from '../utils/logger.ts';
+import { emitVaultEvent } from '../socket.ts';
 
 /**
  * Logs activity event to dedicated ActivityLog collection
@@ -24,7 +24,7 @@ export const logActivityAsync = async (
   action: string,
   category: string,
   itemId: string | null,
-  details: Record<string, unknown>,
+  details: Record<string, unknown>
 ): Promise<void> => {
   try {
     // Save to activity log collection (encrypted, one by one)
@@ -34,40 +34,28 @@ export const logActivityAsync = async (
       action: action as any,
       category,
       itemId: itemId || undefined,
-      deviceId:
-        typeof details.deviceId === 'string'
-          ? details.deviceId
-          : 'unknown-device',
-      ipAddress:
-        typeof details.ipAddress === 'string' ? details.ipAddress : 'unknown',
-      userAgent:
-        typeof details.userAgent === 'string' ? details.userAgent : 'unknown',
+      deviceId: typeof details.deviceId === 'string' ? details.deviceId : 'unknown-device',
+      ipAddress: typeof details.ipAddress === 'string' ? details.ipAddress : 'unknown',
+      userAgent: typeof details.userAgent === 'string' ? details.userAgent : 'unknown',
       status: 'SUCCESS',
       details,
-    })
+    });
 
-    logger.debug(
-      `[VaultService] Activity logged for user: ${userId}, action: ${action}`,
-      {
-        context: 'logActivityAsync',
-        userId,
-        action,
-        category,
-      },
-    )
+    logger.debug(`[VaultService] Activity logged for user: ${userId}, action: ${action}`, {
+      context: 'logActivityAsync',
+      userId,
+      action,
+      category,
+    });
   } catch (error) {
-    logger.error(
-      `[VaultService] Failed to log activity for user: ${userId}`,
-      error,
-      {
-        context: 'logActivityAsync',
-        userId,
-        action,
-      },
-    )
+    logger.error(`[VaultService] Failed to log activity for user: ${userId}`, error, {
+      context: 'logActivityAsync',
+      userId,
+      action,
+    });
     // Don't throw - logging should not break operations
   }
-}
+};
 
 /**
  * Logs activity event and emits vault change notification via WebSocket
@@ -86,9 +74,9 @@ export const logAndEmitAsync = (
   action: string,
   category: string,
   itemId: string | null,
-  details: Record<string, unknown>,
+  details: Record<string, unknown>
 ): void => {
-  const createdAt = new Date()
+  const createdAt = new Date();
 
   // Log activity (fire and forget)
   logActivityAsync(userId, username, action, category, itemId, {
@@ -98,8 +86,8 @@ export const logAndEmitAsync = (
     logger.error('Failed to log activity', error, {
       context: 'logAndEmitAsync',
       userId,
-    })
-  })
+    });
+  });
 
   // Emit real-time event to connected clients
   try {
@@ -108,14 +96,14 @@ export const logAndEmitAsync = (
       category,
       itemId,
       updatedAt: createdAt.toISOString(),
-    })
+    });
   } catch (error) {
     logger.error('[VaultService] Failed to emit vault event', error, {
       userId,
       action,
-    })
+    });
   }
-}
+};
 
 /**
  * Log failed activity (for security events)
@@ -133,7 +121,7 @@ export const logFailedActivityAsync = async (
   category: string,
   errorCode: string,
   errorMessage: string,
-  details: Record<string, unknown>,
+  details: Record<string, unknown>
 ): Promise<void> => {
   try {
     await saveActivityLog({
@@ -141,33 +129,29 @@ export const logFailedActivityAsync = async (
       username,
       action: action as any,
       category,
-      deviceId:
-        typeof details.deviceId === 'string'
-          ? details.deviceId
-          : 'unknown-device',
-      ipAddress:
-        typeof details.ipAddress === 'string' ? details.ipAddress : 'unknown',
+      deviceId: typeof details.deviceId === 'string' ? details.deviceId : 'unknown-device',
+      ipAddress: typeof details.ipAddress === 'string' ? details.ipAddress : 'unknown',
       status: 'FAILURE',
       errorCode,
       errorMessage,
       details,
-    })
+    });
 
     logger.warn(`[VaultService] Failed activity logged for user: ${userId}`, {
       context: 'logFailedActivityAsync',
       userId,
       action,
       errorCode,
-    })
+    });
   } catch (error) {
     logger.error('[VaultService] Failed to log failed activity', error, {
       userId,
-    })
+    });
   }
-}
+};
 
 export default {
   logActivityAsync,
   logAndEmitAsync,
   logFailedActivityAsync,
-}
+};

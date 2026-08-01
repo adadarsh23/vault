@@ -1,30 +1,30 @@
-import { VaultItem } from '../storage'
-import { decryptData, base64ToUint8Array } from '../cryptoPrimitives'
-import { logger } from '../logger'
+import { VaultItem } from '../storage';
+import { decryptData, base64ToUint8Array } from '../cryptoPrimitives';
+import { logger } from '../logger';
 
 const toTimestampOrFallback = (value: unknown, fallback: number): number => {
   if (typeof value === 'number' && Number.isFinite(value)) {
-    return value
+    return value;
   }
   if (typeof value !== 'string' || !value.trim()) {
-    return fallback
+    return fallback;
   }
-  const parsed = new Date(value).getTime()
-  return Number.isFinite(parsed) ? parsed : fallback
-}
+  const parsed = new Date(value).getTime();
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
 
 const safeDecodeTitle = (value: unknown, fallback: string): string => {
-  const raw = typeof value === 'string' && value.length > 0 ? value : fallback
+  const raw = typeof value === 'string' && value.length > 0 ? value : fallback;
   // Only attempt URI decoding for values that are likely percent-encoded.
   if (!raw.includes('%')) {
-    return raw
+    return raw;
   }
   try {
-    return decodeURIComponent(raw)
+    return decodeURIComponent(raw);
   } catch {
-    return raw
+    return raw;
   }
-}
+};
 
 export const toCloudCategory = (type: VaultItem['type']): string => {
   switch (type) {
@@ -43,66 +43,66 @@ export const toCloudCategory = (type: VaultItem['type']): string => {
     case 'card':
     case 'identity':
     case 'wifi':
-      return type
+      return type;
     default:
-      return 'file'
+      return 'file';
   }
-}
+};
 
 const normalizeItemType = (
   category: unknown,
-  metadata?: Record<string, unknown>,
+  metadata?: Record<string, unknown>
 ): VaultItem['type'] => {
-  const normalized = typeof category === 'string' ? category.trim() : 'file'
+  const normalized = typeof category === 'string' ? category.trim() : 'file';
   switch (normalized.toLowerCase()) {
     case 'photo':
     case 'photos':
-      return 'photo'
+      return 'photo';
     case 'video':
     case 'videos':
-      return 'video'
+      return 'video';
     case 'audio':
     case 'audios':
-      return 'audio'
+      return 'audio';
     case 'note':
     case 'notes':
-      return 'note'
+      return 'note';
     case 'chat':
     case 'chats':
-      return 'chat'
+      return 'chat';
     case 'todo':
     case 'todos':
-      return 'todo'
+      return 'todo';
     case 'password':
     case 'passwords':
-      return 'password'
+      return 'password';
     case 'secret':
     case 'secrets':
     case 'secretkey':
     case 'secretkeys':
-      return 'secret'
+      return 'secret';
     case 'contact':
     case 'contacts':
-      return 'contact'
+      return 'contact';
     case 'location':
     case 'locations':
-      return 'location'
+      return 'location';
     case 'document':
     case 'documents':
-      return 'document'
+      return 'document';
     case 'card':
     case 'cards':
-      return 'card'
+      return 'card';
     case 'identity':
     case 'identities':
-      return 'identity'
+      return 'identity';
     case 'wifi':
     case 'wifis':
-      return 'wifi'
+      return 'wifi';
     case 'file':
     case 'files':
     case 'otherfiles':
-      return 'file'
+      return 'file';
     case 'settings':
     case 'system':
     case 'logs':
@@ -110,178 +110,163 @@ const normalizeItemType = (
     case 'v2_items':
     default: {
       const mimeType =
-        typeof metadata?.mimeType === 'string'
-          ? metadata.mimeType.toLowerCase()
-          : ''
-      if (mimeType.startsWith('image/')) return 'photo'
-      if (mimeType.startsWith('video/')) return 'video'
-      if (mimeType.startsWith('audio/')) return 'audio'
-      if (
-        mimeType.startsWith('application/pdf') ||
-        mimeType.startsWith('text/')
-      )
-        return 'document'
+        typeof metadata?.mimeType === 'string' ? metadata.mimeType.toLowerCase() : '';
+      if (mimeType.startsWith('image/')) return 'photo';
+      if (mimeType.startsWith('video/')) return 'video';
+      if (mimeType.startsWith('audio/')) return 'audio';
+      if (mimeType.startsWith('application/pdf') || mimeType.startsWith('text/')) return 'document';
 
       // Advanced forensic mapping: detect locations via telemetry metadata
       if (metadata && typeof metadata === 'object') {
         const hasCoords =
-          (metadata.latitude !== undefined &&
-            metadata.longitude !== undefined) ||
-          (metadata.lat !== undefined && metadata.lng !== undefined)
-        if (hasCoords) return 'location'
+          (metadata.latitude !== undefined && metadata.longitude !== undefined) ||
+          (metadata.lat !== undefined && metadata.lng !== undefined);
+        if (hasCoords) return 'location';
       }
 
-      return 'file'
+      return 'file';
     }
   }
-}
+};
 
 const isLikelyBase64 = (value: string): boolean => {
-  let trimmed = value.trim()
-  if (!trimmed) return false
+  let trimmed = value.trim();
+  if (!trimmed) return false;
 
   if (trimmed.includes('%')) {
     try {
-      trimmed = decodeURIComponent(trimmed)
+      trimmed = decodeURIComponent(trimmed);
     } catch {
       // keep original candidate when URI decoding fails
     }
   }
 
-  const dataUrlMatch = trimmed.match(/^data:[^,]*;base64,(.*)$/i)
+  const dataUrlMatch = trimmed.match(/^data:[^,]*;base64,(.*)$/i);
   if (dataUrlMatch) {
-    trimmed = dataUrlMatch[1]
+    trimmed = dataUrlMatch[1];
   }
 
-  trimmed = trimmed.replace(/\s+/g, '')
-  if (!trimmed) return false
+  trimmed = trimmed.replace(/\s+/g, '');
+  if (!trimmed) return false;
 
   // Support standard and URL-safe Base64 alphabets.
   if (!/^[A-Za-z0-9+/_-]+={0,2}$/.test(trimmed)) {
-    return false
+    return false;
   }
 
-  const normalized = trimmed.replace(/-/g, '+').replace(/_/g, '/')
-  return normalized.length >= 8
-}
+  const normalized = trimmed.replace(/-/g, '+').replace(/_/g, '/');
+  return normalized.length >= 8;
+};
 
 const getFolderFromMetadata = (metadata: unknown): string | undefined => {
-  if (!metadata || typeof metadata !== 'object') return undefined
-  const folder = (metadata as Record<string, unknown>).folder
-  return typeof folder === 'string' && folder.trim() ? folder : undefined
-}
+  if (!metadata || typeof metadata !== 'object') return undefined;
+  const folder = (metadata as Record<string, unknown>).folder;
+  return typeof folder === 'string' && folder.trim() ? folder : undefined;
+};
 
 export const parseJsonObject = (value: string): Record<string, unknown> | null => {
   try {
-    const parsed = JSON.parse(value)
-    return parsed && typeof parsed === 'object'
-      ? (parsed as Record<string, unknown>)
-      : null
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null;
   } catch {
-    return null
+    return null;
   }
-}
+};
 
 class VaultItemDecodeError extends Error {
-  itemId: string
+  itemId: string;
 
   constructor(itemId: string, message: string) {
-    super(message)
-    this.name = 'VaultItemDecodeError'
-    this.itemId = itemId
+    super(message);
+    this.name = 'VaultItemDecodeError';
+    this.itemId = itemId;
   }
 }
 
 const decodeBase64Payload = (
   payload: string,
   itemId: string,
-  kind: 'binary' | 'payload' = 'payload',
+  kind: 'binary' | 'payload' = 'payload'
 ): Uint8Array => {
   try {
-    return base64ToUint8Array(payload)
+    return base64ToUint8Array(payload);
   } catch {
-    throw new VaultItemDecodeError(
-      itemId,
-      `Vault item ${kind} is not valid base64.`,
-    )
+    throw new VaultItemDecodeError(itemId, `Vault item ${kind} is not valid base64.`);
   }
-}
+};
 
 export const downloadAllFromResponseItems = async (
   items: any[],
-  masterKey: string | CryptoKey,
+  masterKey: string | CryptoKey
 ): Promise<VaultItem[]> => {
-  if (items.length === 0) return []
+  if (items.length === 0) return [];
 
-  const allItems: VaultItem[] = []
-  const decodeFailures: VaultItemDecodeError[] = []
+  const allItems: VaultItem[] = [];
+  const decodeFailures: VaultItemDecodeError[] = [];
   const decodeVaultDoc = async (doc: any): Promise<VaultItem | null> => {
     const itemId =
       (typeof doc?.itemId === 'string' && doc.itemId.trim()) ||
       (typeof doc?.id === 'string' && doc.id.trim()) ||
       (typeof doc?._id === 'string' && doc._id.trim()) ||
-      'unknown-item'
+      'unknown-item';
 
-    const rawCategory = doc?.category || doc?.type || doc?.kind
+    const rawCategory = doc?.category || doc?.type || doc?.kind;
 
     try {
-      const payload = doc?.payload
+      const payload = doc?.payload;
       if (typeof payload !== 'string' || payload.length === 0) {
-        throw new VaultItemDecodeError(itemId, 'Vault item payload is missing.')
+        throw new VaultItemDecodeError(itemId, 'Vault item payload is missing.');
       }
 
       // Determine what to decrypt in parallel
-      const titleDecryptNeeded = typeof doc?.title === 'string' && doc.title.startsWith('V2_ENC:')
+      const titleDecryptNeeded = typeof doc?.title === 'string' && doc.title.startsWith('V2_ENC:');
       const titlePromise = titleDecryptNeeded
         ? decryptData(doc.title.substring(7), masterKey)
-        : Promise.resolve(null)
+        : Promise.resolve(null);
 
-      let metadataDecryptNeeded = false
-      let metadataEncryptedPayload = ''
+      let metadataDecryptNeeded = false;
+      let metadataEncryptedPayload = '';
       if (typeof doc?.metadata === 'string' && doc.metadata.startsWith('V2_ENC:')) {
-        metadataDecryptNeeded = true
-        metadataEncryptedPayload = doc.metadata.substring(7)
+        metadataDecryptNeeded = true;
+        metadataEncryptedPayload = doc.metadata.substring(7);
       } else if (
         typeof doc?.metadata === 'object' &&
         doc.metadata &&
         typeof doc.metadata.payload === 'string' &&
         doc.metadata.payload.startsWith('V2_ENC:')
       ) {
-        metadataDecryptNeeded = true
-        metadataEncryptedPayload = doc.metadata.payload.substring(7)
+        metadataDecryptNeeded = true;
+        metadataEncryptedPayload = doc.metadata.payload.substring(7);
       }
       const metadataPromise = metadataDecryptNeeded
         ? decryptData(metadataEncryptedPayload, masterKey)
-        : Promise.resolve(null)
+        : Promise.resolve(null);
 
       const isBinaryOrRef =
         doc?.encoding === 'gridfs-binary' ||
         doc?.gridFsId ||
         (doc?.encoding === 'file-reference' && typeof payload === 'string') ||
-        doc?.encoding === 'binary-base64'
+        doc?.encoding === 'binary-base64';
 
-      let payloadPromise = Promise.resolve<string | null>(null)
-      let isModern = false
-      let modernEncryptedMeta = ''
-      let modernContent = ''
+      let payloadPromise = Promise.resolve<string | null>(null);
+      let isModern = false;
+      let modernEncryptedMeta = '';
+      let modernContent = '';
 
       if (!isBinaryOrRef) {
         if (payload.startsWith('V2_MODERN:')) {
-          isModern = true
-          const payloadBody = payload.substring(10)
-          const separatorIndex = payloadBody.indexOf('|')
+          isModern = true;
+          const payloadBody = payload.substring(10);
+          const separatorIndex = payloadBody.indexOf('|');
           if (separatorIndex >= 0) {
-            modernEncryptedMeta = payloadBody.slice(0, separatorIndex)
-            modernContent = payloadBody.slice(separatorIndex + 1)
-            payloadPromise = decryptData(modernEncryptedMeta, masterKey)
+            modernEncryptedMeta = payloadBody.slice(0, separatorIndex);
+            modernContent = payloadBody.slice(separatorIndex + 1);
+            payloadPromise = decryptData(modernEncryptedMeta, masterKey);
           } else {
-            throw new VaultItemDecodeError(
-              itemId,
-              'Vault item payload is malformed.',
-            )
+            throw new VaultItemDecodeError(itemId, 'Vault item payload is malformed.');
           }
         } else {
-          payloadPromise = decryptData(payload, masterKey)
+          payloadPromise = decryptData(payload, masterKey);
         }
       }
 
@@ -290,73 +275,55 @@ export const downloadAllFromResponseItems = async (
         titlePromise,
         metadataPromise,
         payloadPromise,
-      ])
+      ]);
 
-      let title = safeDecodeTitle(doc?.title, itemId || 'Untitled')
+      let title = safeDecodeTitle(doc?.title, itemId || 'Untitled');
       if (decryptedTitle !== null) {
-        title = decryptedTitle
+        title = decryptedTitle;
       }
 
-      let rawMetadata = {}
+      let rawMetadata = {};
       if (doc?.metadata) {
         if (typeof doc.metadata === 'object') {
-          rawMetadata = doc.metadata
+          rawMetadata = doc.metadata;
         } else if (typeof doc.metadata === 'string') {
           try {
-            rawMetadata = JSON.parse(doc.metadata)
+            rawMetadata = JSON.parse(doc.metadata);
           } catch {
             /* Ignore */
           }
         }
       }
-      let metadata = rawMetadata
+      let metadata = rawMetadata;
       if (decryptedMeta !== null) {
         try {
-          metadata = JSON.parse(decryptedMeta)
+          metadata = JSON.parse(decryptedMeta);
         } catch {
           /* Fallback to raw metadata */
         }
       }
 
-      const metaFolder = getFolderFromMetadata(metadata)
-      const folder =
-        typeof doc?.folder === 'string' && doc.folder.trim()
-          ? doc.folder
-          : metaFolder
+      const metaFolder = getFolderFromMetadata(metadata);
+      const folder = typeof doc?.folder === 'string' && doc.folder.trim() ? doc.folder : metaFolder;
       const metadataRecord =
-        metadata && typeof metadata === 'object'
-          ? (metadata as Record<string, unknown>)
-          : {}
-      const type = normalizeItemType(
-        rawCategory,
-        metadata as Record<string, unknown>,
-      )
+        metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>) : {};
+      const type = normalizeItemType(rawCategory, metadata as Record<string, unknown>);
 
-      const createdAt = toTimestampOrFallback(
-        doc?.createdAt ?? doc?.updatedAt,
-        Date.now(),
-      )
-      const updatedAt = toTimestampOrFallback(
-        doc?.updatedAt ?? doc?.createdAt,
-        createdAt,
-      )
+      const createdAt = toTimestampOrFallback(doc?.createdAt ?? doc?.updatedAt, Date.now());
+      const updatedAt = toTimestampOrFallback(doc?.updatedAt ?? doc?.createdAt, createdAt);
       const deletedAt = doc?.deletedAt
         ? toTimestampOrFallback(doc.deletedAt, updatedAt)
-        : undefined
+        : undefined;
       const isPinned =
-        typeof doc?.isPinned === 'boolean'
-          ? doc.isPinned
-          : Boolean(metadataRecord.isPinned)
+        typeof doc?.isPinned === 'boolean' ? doc.isPinned : Boolean(metadataRecord.isPinned);
       const pinnedAt = doc?.pinnedAt
         ? toTimestampOrFallback(doc.pinnedAt, updatedAt)
         : metadataRecord.pinnedAt
           ? toTimestampOrFallback(metadataRecord.pinnedAt, updatedAt)
-          : null
+          : null;
       const username =
         doc?.username ||
-        (typeof metadataRecord.username === 'string'
-          ? metadataRecord.username
-          : undefined)
+        (typeof metadataRecord.username === 'string' ? metadataRecord.username : undefined);
 
       if (doc?.encoding === 'gridfs-binary' || doc?.gridFsId) {
         return {
@@ -370,7 +337,7 @@ export const downloadAllFromResponseItems = async (
           updatedAt,
           isPinned,
           pinnedAt,
-        } as VaultItem
+        } as VaultItem;
       }
 
       if (doc?.encoding === 'file-reference' && typeof payload === 'string') {
@@ -385,7 +352,7 @@ export const downloadAllFromResponseItems = async (
           updatedAt,
           isPinned,
           pinnedAt,
-        } as VaultItem
+        } as VaultItem;
       }
 
       if (doc?.encoding === 'binary-base64') {
@@ -400,101 +367,63 @@ export const downloadAllFromResponseItems = async (
           updatedAt,
           isPinned,
           pinnedAt,
-        } as VaultItem
+        } as VaultItem;
       }
 
       if (isModern) {
         if (!decryptedPayload) {
-          throw new VaultItemDecodeError(
-            itemId,
-            'Vault item metadata could not be decrypted.',
-          )
+          throw new VaultItemDecodeError(itemId, 'Vault item metadata could not be decrypted.');
         }
 
         try {
-          const metaObj = JSON.parse(decryptedPayload) as Partial<VaultItem>
+          const metaObj = JSON.parse(decryptedPayload) as Partial<VaultItem>;
           return {
             id: metaObj.id || itemId,
             type: normalizeItemType(
               metaObj.type || doc?.category,
-              (metaObj.metadata || metadata) as Record<string, unknown>,
+              (metaObj.metadata || metadata) as Record<string, unknown>
             ),
             title: metaObj.title || title,
             content: modernContent,
             metadata: metaObj.metadata || metadata,
-            folder:
-              metaObj.folder ||
-              getFolderFromMetadata(metaObj.metadata || metadata) ||
-              folder,
+            folder: metaObj.folder || getFolderFromMetadata(metaObj.metadata || metadata) || folder,
             username: metaObj.username || username,
-            createdAt:
-              typeof metaObj.createdAt === 'number'
-                ? metaObj.createdAt
-                : createdAt,
-            updatedAt:
-              typeof metaObj.updatedAt === 'number'
-                ? metaObj.updatedAt
-                : updatedAt,
-            deletedAt:
-              typeof metaObj.deletedAt === 'number'
-                ? metaObj.deletedAt
-                : deletedAt,
+            createdAt: typeof metaObj.createdAt === 'number' ? metaObj.createdAt : createdAt,
+            updatedAt: typeof metaObj.updatedAt === 'number' ? metaObj.updatedAt : updatedAt,
+            deletedAt: typeof metaObj.deletedAt === 'number' ? metaObj.deletedAt : deletedAt,
             isPinned:
-              typeof (metaObj as any).isPinned === 'boolean'
-                ? (metaObj as any).isPinned
-                : isPinned,
+              typeof (metaObj as any).isPinned === 'boolean' ? (metaObj as any).isPinned : isPinned,
             pinnedAt:
-              typeof (metaObj as any).pinnedAt === 'number'
-                ? (metaObj as any).pinnedAt
-                : pinnedAt,
+              typeof (metaObj as any).pinnedAt === 'number' ? (metaObj as any).pinnedAt : pinnedAt,
             source: (metaObj as any).source || 'cloud',
-          } as VaultItem
+          } as VaultItem;
         } catch {
-          throw new VaultItemDecodeError(
-            itemId,
-            'Vault item metadata is not valid JSON.',
-          )
+          throw new VaultItemDecodeError(itemId, 'Vault item metadata is not valid JSON.');
         }
       }
 
       if (decryptedPayload) {
         try {
-          const parsed = JSON.parse(decryptedPayload) as Partial<VaultItem>
+          const parsed = JSON.parse(decryptedPayload) as Partial<VaultItem>;
           return {
             id: parsed.id || itemId,
             type: normalizeItemType(
               parsed.type || doc?.category,
-              (parsed.metadata || metadata) as Record<string, unknown>,
+              (parsed.metadata || metadata) as Record<string, unknown>
             ),
             title: parsed.title || title,
             content: parsed.content ?? decryptedPayload,
             metadata: parsed.metadata || metadata,
-            folder:
-              parsed.folder ||
-              getFolderFromMetadata(parsed.metadata || metadata) ||
-              folder,
+            folder: parsed.folder || getFolderFromMetadata(parsed.metadata || metadata) || folder,
             username: parsed.username || username,
-            createdAt:
-              typeof parsed.createdAt === 'number'
-                ? parsed.createdAt
-                : createdAt,
-            updatedAt:
-              typeof parsed.updatedAt === 'number'
-                ? parsed.updatedAt
-                : updatedAt,
-            deletedAt:
-              typeof parsed.deletedAt === 'number'
-                ? parsed.deletedAt
-                : deletedAt,
+            createdAt: typeof parsed.createdAt === 'number' ? parsed.createdAt : createdAt,
+            updatedAt: typeof parsed.updatedAt === 'number' ? parsed.updatedAt : updatedAt,
+            deletedAt: typeof parsed.deletedAt === 'number' ? parsed.deletedAt : deletedAt,
             isPinned:
-              typeof (parsed as any).isPinned === 'boolean'
-                ? (parsed as any).isPinned
-                : isPinned,
+              typeof (parsed as any).isPinned === 'boolean' ? (parsed as any).isPinned : isPinned,
             pinnedAt:
-              typeof (parsed as any).pinnedAt === 'number'
-                ? (parsed as any).pinnedAt
-                : pinnedAt,
-          } as VaultItem
+              typeof (parsed as any).pinnedAt === 'number' ? (parsed as any).pinnedAt : pinnedAt,
+          } as VaultItem;
         } catch {
           // Backward compatibility: older records may store encrypted raw
           // content (non-JSON). Decode as binary for media/base64 payloads,
@@ -518,7 +447,7 @@ export const downloadAllFromResponseItems = async (
               updatedAt,
               isPinned,
               pinnedAt,
-            } as VaultItem
+            } as VaultItem;
           }
 
           return {
@@ -532,7 +461,7 @@ export const downloadAllFromResponseItems = async (
             updatedAt,
             isPinned,
             pinnedAt,
-          } as VaultItem
+          } as VaultItem;
         }
       }
 
@@ -555,70 +484,65 @@ export const downloadAllFromResponseItems = async (
           updatedAt,
           isPinned,
           pinnedAt,
-        } as VaultItem
+        } as VaultItem;
       }
 
-      throw new VaultItemDecodeError(
-        itemId,
-        'Vault item could not be decrypted.',
-      )
+      throw new VaultItemDecodeError(itemId, 'Vault item could not be decrypted.');
     } catch (error) {
       const decodeError =
         error instanceof VaultItemDecodeError
           ? error
           : new VaultItemDecodeError(
               itemId,
-              error instanceof Error
-                ? error.message
-                : 'Vault item decode failed.',
-            )
-      decodeFailures.push(decodeError)
-      return null
+              error instanceof Error ? error.message : 'Vault item decode failed.'
+            );
+      decodeFailures.push(decodeError);
+      return null;
     }
-  }
+  };
 
-  const results: Array<VaultItem | null> = []
-  const DECODE_BATCH_SIZE = 16
-  let lastYieldTime = performance.now()
-  const BATCH_YIELD_BUDGET_MS = 8
+  const results: Array<VaultItem | null> = [];
+  const DECODE_BATCH_SIZE = 16;
+  let lastYieldTime = performance.now();
+  const BATCH_YIELD_BUDGET_MS = 8;
 
   for (let start = 0; start < items.length; start += DECODE_BATCH_SIZE) {
-    const batch = items.slice(start, start + DECODE_BATCH_SIZE)
-    const batchResults = await Promise.all(batch.map(decodeVaultDoc))
-    results.push(...batchResults)
+    const batch = items.slice(start, start + DECODE_BATCH_SIZE);
+    const batchResults = await Promise.all(batch.map(decodeVaultDoc));
+    results.push(...batchResults);
 
     // Yield to browser event loop frequently to keep UI buttery smooth at 60 FPS
-    const now = performance.now()
+    const now = performance.now();
     if (now - lastYieldTime > BATCH_YIELD_BUDGET_MS || start + DECODE_BATCH_SIZE >= items.length) {
-      await new Promise((resolve) => setTimeout(resolve, 0))
-      lastYieldTime = performance.now()
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      lastYieldTime = performance.now();
     }
   }
 
-  const validItems = results.filter((item): item is VaultItem => item !== null)
-  allItems.push(...validItems)
+  const validItems = results.filter((item): item is VaultItem => item !== null);
+  allItems.push(...validItems);
 
   if (decodeFailures.length > 0) {
     const hasVaultMismatchFailure = decodeFailures.some((failure) =>
-      failure.message.includes('metadata could not be decrypted'),
-    )
+      failure.message.includes('metadata could not be decrypted')
+    );
 
     if (hasVaultMismatchFailure && allItems.length === 0) {
       throw new Error(
-        'This cloud vault does not match the currently unlocked master Key. Please log in with the correct vault or sync the matching account.',
-      )
+        'This cloud vault does not match the currently unlocked master Key. Please log in with the correct vault or sync the matching account.'
+      );
     }
 
     const preview = decodeFailures
       .slice(0, 3)
       .map((failure) => `${failure.itemId}: ${failure.message}`)
-      .join('; ')
+      .join('; ');
 
     logger.warn('Cloud sync skipped corrupted item(s)', {
       skippedCount: decodeFailures.length,
       preview,
-    })
+    });
   }
 
-  return allItems
-}
+  return allItems;
+};

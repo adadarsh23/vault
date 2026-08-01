@@ -7,12 +7,12 @@ const TelemetrySchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now, index: true },
   metadata: {
     type: mongoose.Schema.Types.Mixed,
-    default: {}
+    default: {},
   },
   ip: String,
   userAgent: String,
   browser: String,
-  platform: String
+  platform: String,
 });
 
 export type TelemetryType = mongoose.InferSchemaType<typeof TelemetrySchema>;
@@ -24,14 +24,17 @@ export const getTelemetryModel = (username: string): mongoose.Model<TelemetryTyp
   if (!username || !username.trim()) {
     throw new Error('Username is required for isolated telemetry');
   }
-  
-  const normalized = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+
+  const normalized = username
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '_');
   const collectionName = `${normalized}.${normalized}_telemetry`;
-  
+
   if (mongoose.models[collectionName]) {
     return mongoose.models[collectionName] as mongoose.Model<TelemetryType>;
   }
-  
+
   return mongoose.model<TelemetryType>(collectionName, TelemetrySchema, collectionName);
 };
 

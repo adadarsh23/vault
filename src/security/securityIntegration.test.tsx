@@ -1,16 +1,12 @@
 /* @vitest-environment jsdom */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  DeviceManagement,
-  MFAChallenge,
-  SecuritySettings,
-} from './securityIntegration'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DeviceManagement, MFAChallenge, SecuritySettings } from './securityIntegration';
 
-const mockGet = vi.fn()
-const mockPost = vi.fn()
-const mockDelete = vi.fn()
+const mockGet = vi.fn();
+const mockPost = vi.fn();
+const mockDelete = vi.fn();
 
 vi.mock('../api/apiClient', () => ({
   default: {
@@ -24,42 +20,42 @@ vi.mock('../api/apiClient', () => ({
       },
     },
   },
-}))
+}));
 
 vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
   },
-}))
+}));
 
 describe('securityIntegration', () => {
   beforeEach(() => {
-    mockGet.mockReset()
-    mockPost.mockReset()
-    mockDelete.mockReset()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-  })
+    mockGet.mockReset();
+    mockPost.mockReset();
+    mockDelete.mockReset();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+  });
 
   it('submits MFA verification to the security endpoint', async () => {
-    mockPost.mockResolvedValue({ data: { success: true } })
-    const onComplete = vi.fn()
+    mockPost.mockResolvedValue({ data: { success: true } });
+    const onComplete = vi.fn();
 
-    render(<MFAChallenge method="totp" onComplete={onComplete} />)
+    render(<MFAChallenge method="totp" onComplete={onComplete} />);
 
     fireEvent.change(screen.getByPlaceholderText('000000'), {
       target: { value: '123456' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: /verify/i }))
+    });
+    fireEvent.click(screen.getByRole('button', { name: /verify/i }));
 
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith('/security/mfa/verify', {
         code: '123456',
         method: 'totp',
-      })
-    })
-    expect(onComplete).toHaveBeenCalledWith('123456')
-  })
+      });
+    });
+    expect(onComplete).toHaveBeenCalledWith('123456');
+  });
 
   it('forgets a selected trusted device', async () => {
     mockGet.mockResolvedValue({
@@ -75,19 +71,19 @@ describe('securityIntegration', () => {
           },
         ],
       },
-    })
-    mockDelete.mockResolvedValue({ data: { success: true } })
+    });
+    mockDelete.mockResolvedValue({ data: { success: true } });
 
-    render(<DeviceManagement />)
+    render(<DeviceManagement />);
 
-    await screen.findByText('Office Laptop')
-    fireEvent.click(screen.getByRole('button', { name: /^forget$/i }))
+    await screen.findByText('Office Laptop');
+    fireEvent.click(screen.getByRole('button', { name: /^forget$/i }));
 
     await waitFor(() => {
-      expect(mockDelete).toHaveBeenCalledWith('/security/devices/device%2F1')
-    })
-    expect(screen.queryByText('Office Laptop')).not.toBeInTheDocument()
-  })
+      expect(mockDelete).toHaveBeenCalledWith('/security/devices/device%2F1');
+    });
+    expect(screen.queryByText('Office Laptop')).not.toBeInTheDocument();
+  });
 
   it('updates login alerts in security settings', async () => {
     mockGet.mockResolvedValue({
@@ -99,25 +95,25 @@ describe('securityIntegration', () => {
         twoFactorRequired: true,
         sessionTimeout: 3600,
       },
-    })
-    mockPost.mockResolvedValue({ data: { success: true } })
+    });
+    mockPost.mockResolvedValue({ data: { success: true } });
 
-    render(<SecuritySettings />)
+    render(<SecuritySettings />);
 
     await waitFor(() => {
-      expect(screen.getByText('Security Settings')).toBeInTheDocument()
-    })
+      expect(screen.getByText('Security Settings')).toBeInTheDocument();
+    });
 
-    const checkboxes = screen.getAllByRole('checkbox')
-    fireEvent.click(checkboxes[1])
+    const checkboxes = screen.getAllByRole('checkbox');
+    fireEvent.click(checkboxes[1]);
 
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
         '/security/settings',
         expect.objectContaining({
           loginAlerts: false,
-        }),
-      )
-    })
-  })
-})
+        })
+      );
+    });
+  });
+});

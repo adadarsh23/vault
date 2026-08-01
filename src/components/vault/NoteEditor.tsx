@@ -1,32 +1,26 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from 'react'
-import { useEditor } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Link from '@tiptap/extension-link'
-import Image from '@tiptap/extension-image'
-import Highlight from '@tiptap/extension-highlight'
-import TextAlign from '@tiptap/extension-text-align'
-import { Table } from '@tiptap/extension-table'
-import TableRow from '@tiptap/extension-table-row'
-import TableCell from '@tiptap/extension-table-cell'
-import TableHeader from '@tiptap/extension-table-header'
-import { toast } from 'sonner'
-import { marked } from 'marked'
-import { cn } from '../../lib/utils'
-import { ErrorBoundary } from '../ui/ErrorBoundary'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
+import Highlight from '@tiptap/extension-highlight';
+import TextAlign from '@tiptap/extension-text-align';
+import { Table } from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import { toast } from 'sonner';
+import { marked } from 'marked';
+import { cn } from '../../lib/utils';
+import { ErrorBoundary } from '../ui/ErrorBoundary';
 
 // Imported subcomponents
-import { NoteEditorToolbar } from './NoteEditor/NoteEditorToolbar'
-import { NoteEditorPreview } from './NoteEditor/NoteEditorPreview'
-import { NoteEditorPanels } from './NoteEditor/NoteEditorPanels'
-import { NoteEditorTiptap } from './NoteEditor/NoteEditorTiptap'
-import { normalizeExternalUrl } from './NoteEditor/editorUtils'
-import type { NoteEditorProps, SaveStatus, TextAlign as AlignType } from './NoteEditor/types'
+import { NoteEditorToolbar } from './NoteEditor/NoteEditorToolbar';
+import { NoteEditorPreview } from './NoteEditor/NoteEditorPreview';
+import { NoteEditorPanels } from './NoteEditor/NoteEditorPanels';
+import { NoteEditorTiptap } from './NoteEditor/NoteEditorTiptap';
+import { normalizeExternalUrl } from './NoteEditor/editorUtils';
+import type { NoteEditorProps, SaveStatus, TextAlign as AlignType } from './NoteEditor/types';
 
 export const NoteEditor: React.FC<NoteEditorProps> = ({
   initialTitle,
@@ -34,46 +28,46 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   onSave,
   onCancel,
 }) => {
-  const [title, setTitle] = useState(initialTitle)
-  const [content, setContent] = useState('')
-  const [lineWrap, setLineWrap] = useState(false)
-  const [showLineNumbers, setShowLineNumbers] = useState(false)
-  const [activeLine] = useState(0)
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved')
-  const [showGoToLine, setShowGoToLine] = useState(false)
-  const [goToLineValue, setGoToLineValue] = useState('')
-  const [showImageUrlInput, setShowImageUrlInput] = useState(false)
-  const [imageUrlValue, setImageUrlValue] = useState('')
-  const [showLinkUrlInput, setShowLinkUrlInput] = useState(false)
-  const [linkUrlValue, setLinkUrlValue] = useState('')
-  const [showFindReplace, setShowFindReplace] = useState(false)
-  const [findValue, setFindValue] = useState('')
-  const [replaceValue, setReplaceValue] = useState('')
-  const [showMoreActions, setShowMoreActions] = useState(false)
-  const [isFullScreen, setIsFullScreen] = useState(false)
-  const [isFocusMode, setIsFocusMode] = useState(false)
-  const [showPreview, setShowPreview] = useState(false)
-  const [showHtmlPreview, setShowHtmlPreview] = useState(false)
-  const [textAlign, setTextAlign] = useState<AlignType>('left')
+  const [title, setTitle] = useState(initialTitle);
+  const [content, setContent] = useState('');
+  const [lineWrap, setLineWrap] = useState(false);
+  const [showLineNumbers, setShowLineNumbers] = useState(false);
+  const [activeLine] = useState(0);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
+  const [showGoToLine, setShowGoToLine] = useState(false);
+  const [goToLineValue, setGoToLineValue] = useState('');
+  const [showImageUrlInput, setShowImageUrlInput] = useState(false);
+  const [imageUrlValue, setImageUrlValue] = useState('');
+  const [showLinkUrlInput, setShowLinkUrlInput] = useState(false);
+  const [linkUrlValue, setLinkUrlValue] = useState('');
+  const [showFindReplace, setShowFindReplace] = useState(false);
+  const [findValue, setFindValue] = useState('');
+  const [replaceValue, setReplaceValue] = useState('');
+  const [showMoreActions, setShowMoreActions] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showHtmlPreview, setShowHtmlPreview] = useState(false);
+  const [textAlign, setTextAlign] = useState<AlignType>('left');
 
-  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const mountedRef = useRef(true)
-  const saveVersionRef = useRef(0)
-  const lastSavedRef = useRef({ title: initialTitle, content: initialContent })
-  const titleRef = useRef(title)
-  const contentRef = useRef(content)
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
+  const saveVersionRef = useRef(0);
+  const lastSavedRef = useRef({ title: initialTitle, content: initialContent });
+  const titleRef = useRef(title);
+  const contentRef = useRef(content);
 
   // Parse legacy Markdown to HTML for Tiptap
   const parsedContent = useMemo(() => {
-    if (!initialContent) return ''
-    const isHtml = /<[a-z][\s\S]*>/i.test(initialContent)
-    if (isHtml) return initialContent
+    if (!initialContent) return '';
+    const isHtml = /<[a-z][\s\S]*>/i.test(initialContent);
+    if (isHtml) return initialContent;
     try {
-      return marked.parse(initialContent, { async: false }) as string
+      return marked.parse(initialContent, { async: false }) as string;
     } catch {
-      return initialContent
+      return initialContent;
     }
-  }, [initialContent])
+  }, [initialContent]);
 
   const editor = useEditor({
     extensions: [
@@ -117,306 +111,310 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
     ],
     content: parsedContent,
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML()
-      setContent(html)
-      handleContentChange(html)
+      const html = editor.getHTML();
+      setContent(html);
+      handleContentChange(html);
     },
-  })
+  });
 
   // Synchronize editor content when initialContent prop changes
   useEffect(() => {
     if (editor && parsedContent !== editor.getHTML()) {
-      editor.commands.setContent(parsedContent)
-      setContent(parsedContent)
-      lastSavedRef.current = { title: initialTitle, content: parsedContent }
+      editor.commands.setContent(parsedContent);
+      setContent(parsedContent);
+      lastSavedRef.current = { title: initialTitle, content: parsedContent };
     }
-  }, [editor, parsedContent, initialTitle])
+  }, [editor, parsedContent, initialTitle]);
 
   useEffect(() => {
-    titleRef.current = title
-  }, [title])
+    titleRef.current = title;
+  }, [title]);
 
   useEffect(() => {
-    contentRef.current = content
-  }, [content])
+    contentRef.current = content;
+  }, [content]);
 
   useEffect(() => {
-    mountedRef.current = true
+    mountedRef.current = true;
     return () => {
-      mountedRef.current = false
-      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
-    }
-  }, [])
+      mountedRef.current = false;
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  }, []);
 
   const handleAutoSave = useCallback(
     async (t: string, c: string) => {
       if (t === lastSavedRef.current.title && c === lastSavedRef.current.content) {
-        if (mountedRef.current) setSaveStatus('saved')
-        return
+        if (mountedRef.current) setSaveStatus('saved');
+        return;
       }
 
       try {
-        if (mountedRef.current) setSaveStatus('saving')
-        await onSave(t, c)
-        if (!mountedRef.current) return
-        lastSavedRef.current = { title: t, content: c }
-        setSaveStatus('saved')
+        if (mountedRef.current) setSaveStatus('saving');
+        await onSave(t, c);
+        if (!mountedRef.current) return;
+        lastSavedRef.current = { title: t, content: c };
+        setSaveStatus('saved');
       } catch {
-        if (!mountedRef.current) return
-        setSaveStatus('error')
+        if (!mountedRef.current) return;
+        setSaveStatus('error');
       }
     },
-    [onSave],
-  )
+    [onSave]
+  );
 
   const handleContentChange = useCallback(
     (newContent: string) => {
-      setContent(newContent)
+      setContent(newContent);
       setSaveStatus(
         titleRef.current === lastSavedRef.current.title &&
           newContent === lastSavedRef.current.content
           ? 'saved'
-          : 'dirty',
-      )
-      const saveVersion = ++saveVersionRef.current
-      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+          : 'dirty'
+      );
+      const saveVersion = ++saveVersionRef.current;
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
       autoSaveTimer.current = setTimeout(() => {
-        if (saveVersion !== saveVersionRef.current) return
-        handleAutoSave(titleRef.current, newContent).catch(() => {})
-      }, 2000)
+        if (saveVersion !== saveVersionRef.current) return;
+        handleAutoSave(titleRef.current, newContent).catch(() => {});
+      }, 2000);
     },
-    [handleAutoSave],
-  )
+    [handleAutoSave]
+  );
 
   const handleTitleChange = useCallback(
     (newTitle: string) => {
-      setTitle(newTitle)
+      setTitle(newTitle);
       setSaveStatus(
         newTitle === lastSavedRef.current.title &&
           contentRef.current === lastSavedRef.current.content
           ? 'saved'
-          : 'dirty',
-      )
-      const saveVersion = ++saveVersionRef.current
-      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+          : 'dirty'
+      );
+      const saveVersion = ++saveVersionRef.current;
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
       autoSaveTimer.current = setTimeout(() => {
-        if (saveVersion !== saveVersionRef.current) return
-        handleAutoSave(newTitle, contentRef.current).catch(() => {})
-      }, 2000)
+        if (saveVersion !== saveVersionRef.current) return;
+        handleAutoSave(newTitle, contentRef.current).catch(() => {});
+      }, 2000);
     },
-    [handleAutoSave],
-  )
+    [handleAutoSave]
+  );
 
   // Undo/Redo mapped to Tiptap
   const handleUndo = useCallback(() => {
-    editor?.chain().focus().undo().run()
-  }, [editor])
+    editor?.chain().focus().undo().run();
+  }, [editor]);
 
   const handleRedo = useCallback(() => {
-    editor?.chain().focus().redo().run()
-  }, [editor])
+    editor?.chain().focus().redo().run();
+  }, [editor]);
 
   // Formatting operations mapped to Tiptap
   const applyFormatting = useCallback(
     (type: string, value?: string) => {
-      if (!editor) return
-      const chain = editor.chain().focus()
+      if (!editor) return;
+      const chain = editor.chain().focus();
 
       switch (type) {
         case 'bold':
-          chain.toggleBold().run()
-          break
+          chain.toggleBold().run();
+          break;
         case 'italic':
-          chain.toggleItalic().run()
-          break
+          chain.toggleItalic().run();
+          break;
         case 'strike':
-          chain.toggleStrike().run()
-          break
+          chain.toggleStrike().run();
+          break;
         case 'code':
-          chain.toggleCodeBlock().run()
-          break
+          chain.toggleCodeBlock().run();
+          break;
         case 'inline-code':
-          chain.toggleCode().run()
-          break
+          chain.toggleCode().run();
+          break;
         case 'blockquote':
         case 'quote':
-          chain.toggleBlockquote().run()
-          break
+          chain.toggleBlockquote().run();
+          break;
         case 'h1':
-          chain.toggleHeading({ level: 1 }).run()
-          break
+          chain.toggleHeading({ level: 1 }).run();
+          break;
         case 'h2':
-          chain.toggleHeading({ level: 2 }).run()
-          break
+          chain.toggleHeading({ level: 2 }).run();
+          break;
         case 'h3':
-          chain.toggleHeading({ level: 3 }).run()
-          break
+          chain.toggleHeading({ level: 3 }).run();
+          break;
         case 'list':
-          chain.toggleBulletList().run()
-          break
+          chain.toggleBulletList().run();
+          break;
         case 'ordered-list':
-          chain.toggleOrderedList().run()
-          break
+          chain.toggleOrderedList().run();
+          break;
         case 'hr':
-          chain.setHorizontalRule().run()
-          break
+          chain.setHorizontalRule().run();
+          break;
         case 'highlight':
-          chain.toggleHighlight().run()
-          break
+          chain.toggleHighlight().run();
+          break;
         case 'link':
           if (value) {
-            chain.setLink({ href: normalizeExternalUrl(value) || '' }).run()
+            chain.setLink({ href: normalizeExternalUrl(value) || '' }).run();
           } else {
-            chain.unsetLink().run()
+            chain.unsetLink().run();
           }
-          break
+          break;
         case 'image':
           if (value) {
-            chain.setImage({ src: normalizeExternalUrl(value) || '' }).run()
+            chain.setImage({ src: normalizeExternalUrl(value) || '' }).run();
           }
-          break
+          break;
         case 'table':
-          chain.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-          break
+          chain.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+          break;
         case 'clear':
-          chain.clearNodes().unsetAllMarks().run()
-          break
+          chain.clearNodes().unsetAllMarks().run();
+          break;
         case 'date':
-          chain.insertContent(new Date().toLocaleString()).run()
-          break
+          chain.insertContent(new Date().toLocaleString()).run();
+          break;
         default:
-          break
+          break;
       }
     },
-    [editor],
-  )
+    [editor]
+  );
 
   const handleCycleTextAlignment = useCallback(() => {
-    if (!editor) return
+    if (!editor) return;
     const nextAlign: AlignType =
-      textAlign === 'left' ? 'center' : textAlign === 'center' ? 'right' : 'left'
-    setTextAlign(nextAlign)
-    editor.chain().focus().setTextAlign(nextAlign).run()
-  }, [editor, textAlign])
+      textAlign === 'left' ? 'center' : textAlign === 'center' ? 'right' : 'left';
+    setTextAlign(nextAlign);
+    editor.chain().focus().setTextAlign(nextAlign).run();
+  }, [editor, textAlign]);
 
   const handleTableControls = useCallback(() => {
-    applyFormatting('table')
-    toast.success('Table inserted')
-  }, [applyFormatting])
+    applyFormatting('table');
+    toast.success('Table inserted');
+  }, [applyFormatting]);
 
   const insertImageFromUrl = useCallback(() => {
     if (imageUrlValue) {
-      applyFormatting('image', imageUrlValue)
-      setShowImageUrlInput(false)
-      setImageUrlValue('')
-      toast.success('Image inserted')
+      applyFormatting('image', imageUrlValue);
+      setShowImageUrlInput(false);
+      setImageUrlValue('');
+      toast.success('Image inserted');
     }
-  }, [applyFormatting, imageUrlValue])
+  }, [applyFormatting, imageUrlValue]);
 
   const insertLinkFromUrl = useCallback(() => {
     if (linkUrlValue) {
-      applyFormatting('link', linkUrlValue)
-      setShowLinkUrlInput(false)
-      setLinkUrlValue('')
-      toast.success('Link inserted')
+      applyFormatting('link', linkUrlValue);
+      setShowLinkUrlInput(false);
+      setLinkUrlValue('');
+      toast.success('Link inserted');
     }
-  }, [applyFormatting, linkUrlValue])
+  }, [applyFormatting, linkUrlValue]);
 
   const openInBrowser = useCallback(() => {
-    toast.info('Link browsing is managed within the document canvas.')
-  }, [])
+    toast.info('Link browsing is managed within the document canvas.');
+  }, []);
 
   const copyToClipboard = async () => {
     try {
-      const text = editor ? editor.getText() : content
-      await navigator.clipboard.writeText(text)
-      toast.success('Copied text to clipboard')
+      const text = editor ? editor.getText() : content;
+      await navigator.clipboard.writeText(text);
+      toast.success('Copied text to clipboard');
     } catch {
-      toast.error('Clipboard access failed')
+      toast.error('Clipboard access failed');
     } finally {
-      setShowMoreActions(false)
+      setShowMoreActions(false);
     }
-  }
+  };
 
   const formatDocument = () => {
-    toast.success('Document structure formatted')
-    setShowMoreActions(false)
-  }
+    toast.success('Document structure formatted');
+    setShowMoreActions(false);
+  };
 
   const handleAiAssist = useCallback(() => {
-    toast.success('AI Assist checked content structures')
-  }, [])
+    toast.success('AI Assist checked content structures');
+  }, []);
 
   const downloadNote = () => {
-    const blob = new Blob([content], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${title || 'Untitled'}.html`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    toast.success('Note downloaded')
-  }
+    const blob = new Blob([content], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title || 'Untitled'}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Note downloaded');
+  };
 
   const importNote = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = (e) => {
-      const text = e.target?.result as string
+      const text = e.target?.result as string;
       if (editor) {
-        editor.commands.setContent(text)
-        handleContentChange(text)
+        editor.commands.setContent(text);
+        handleContentChange(text);
       }
-      toast.success('File imported')
-      event.target.value = ''
-    }
-    reader.readAsText(file)
-  }
+      toast.success('File imported');
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  };
 
   const clearContent = () => {
     if (editor) {
-      editor.commands.clearContent()
-      handleContentChange('')
+      editor.commands.clearContent();
+      handleContentChange('');
     }
-    toast.success('Content cleared')
-    setShowMoreActions(false)
-  }
+    toast.success('Content cleared');
+    setShowMoreActions(false);
+  };
 
   const printNote = () => {
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer')
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
     if (!printWindow) {
-      toast.error('Popup blocked')
-      return
+      toast.error('Popup blocked');
+      return;
     }
-    printWindow.opener = null
-    printWindow.document.write(`<html><head><title>${title}</title></head><body>${content}</body></html>`)
-    printWindow.document.close()
-    printWindow.print()
-  }
+    printWindow.opener = null;
+    printWindow.document.write(
+      `<html><head><title>${title}</title></head><body>${content}</body></html>`
+    );
+    printWindow.document.close();
+    printWindow.print();
+  };
 
-  const toggleFullScreen = () => setIsFullScreen(!isFullScreen)
-  const toggleFocusMode = () => setIsFocusMode(!isFocusMode)
+  const toggleFullScreen = () => setIsFullScreen(!isFullScreen);
+  const toggleFocusMode = () => setIsFocusMode(!isFocusMode);
   const handleShowWordCount = () => {
-    const text = editor ? editor.getText() : ''
-    const words = text.trim().split(/\s+/).filter(Boolean).length
-    toast.info(`Word count: ${words} words`)
-  }
+    const text = editor ? editor.getText() : '';
+    const words = text.trim().split(/\s+/).filter(Boolean).length;
+    toast.info(`Word count: ${words} words`);
+  };
 
-  const handleToggleImageUrlInput = () => setShowImageUrlInput(!showImageUrlInput)
-  const handleToggleLinkUrlInput = () => setShowLinkUrlInput(!showLinkUrlInput)
+  const handleToggleImageUrlInput = () => setShowImageUrlInput(!showImageUrlInput);
+  const handleToggleLinkUrlInput = () => setShowLinkUrlInput(!showLinkUrlInput);
 
   return (
     <div
       className={cn(
         'flex h-full flex-col overflow-hidden bg-card-bg/40 rounded-2xl border border-card-border/50 shadow-2xl backdrop-blur-sm transition-all duration-300',
-        isFullScreen ? 'fixed inset-4 z-[100] bg-bg/95 backdrop-blur-xl' : 'relative',
+        isFullScreen ? 'fixed inset-4 z-[100] bg-bg/95 backdrop-blur-xl' : 'relative'
       )}
     >
-      <ErrorBoundary fallback={<div className="m-2 text-xs text-red-200">Toolbar failed to render.</div>}>
+      <ErrorBoundary
+        fallback={<div className="m-2 text-xs text-red-200">Toolbar failed to render.</div>}
+      >
         <NoteEditorToolbar
           handleUndo={handleUndo}
           handleRedo={handleRedo}
@@ -524,14 +522,28 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
           }}
         />
 
-        <div className={cn('flex w-full overflow-hidden flex-1 relative', showPreview || showHtmlPreview ? 'divide-x divide-white/10' : '')}>
-          <div className={cn('relative flex flex-col min-w-0 transition-all duration-300', showPreview || showHtmlPreview ? 'w-full md:w-1/2' : 'w-full')}>
-            <ErrorBoundary fallback={<div className="m-3 text-xs text-red-200">Editor failed to render.</div>}>
+        <div
+          className={cn(
+            'flex w-full overflow-hidden flex-1 relative',
+            showPreview || showHtmlPreview ? 'divide-x divide-white/10' : ''
+          )}
+        >
+          <div
+            className={cn(
+              'relative flex flex-col min-w-0 transition-all duration-300',
+              showPreview || showHtmlPreview ? 'w-full md:w-1/2' : 'w-full'
+            )}
+          >
+            <ErrorBoundary
+              fallback={<div className="m-3 text-xs text-red-200">Editor failed to render.</div>}
+            >
               <NoteEditorTiptap editor={editor} lineWrap={lineWrap} textAlign={textAlign} />
             </ErrorBoundary>
           </div>
 
-          <ErrorBoundary fallback={<div className="m-3 text-xs text-red-200">Preview failed to render.</div>}>
+          <ErrorBoundary
+            fallback={<div className="m-3 text-xs text-red-200">Preview failed to render.</div>}
+          >
             <NoteEditorPreview
               content={content}
               lineWrap={lineWrap}
@@ -546,5 +558,5 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

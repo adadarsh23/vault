@@ -1,2 +1,2 @@
-export * from './LiveCaptureModal'
-export * from './types'
+export * from './LiveCaptureModal';
+export * from './types';

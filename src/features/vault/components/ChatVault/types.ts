@@ -2,7 +2,7 @@
 // Chat Types & Constants
 // ===============================
 
-const DAY_MS = 24 * 60 * 60 * 1000
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 // ===============================
 // Timer Options
@@ -79,37 +79,37 @@ export const TIMER_OPTIONS = [
     label: '30 Years',
     durationMs: 10950 * DAY_MS,
   },
-] as const
+] as const;
 
 // ===============================
 // Derived Types
 // ===============================
 
-export type DisappearingTimer = (typeof TIMER_OPTIONS)[number]['value']
+export type DisappearingTimer = (typeof TIMER_OPTIONS)[number]['value'];
 
-export type ChatListFilter = 'all' | 'unread' | 'mentions'
+export type ChatListFilter = 'all' | 'unread' | 'mentions';
 
-export type ChatDetailTab = 'messages' | 'links'
+export type ChatDetailTab = 'messages' | 'links';
 
-export type AttachmentType = 'media' | 'link' | 'doc'
+export type AttachmentType = 'media' | 'link' | 'doc';
 
-export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'seen' | 'failed'
+export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'seen' | 'failed';
 
-export type ConversationType = 'direct' | 'group'
+export type ConversationType = 'direct' | 'group';
 
 // ===============================
 // Attachments
 // ===============================
 
 export interface ChatAttachment {
-  id: string
-  type: AttachmentType
-  label: string
-  url: string
-  sizeBytes?: number
-  mimeType?: string
-  thumbnailUrl?: string
-  createdAt: number
+  id: string;
+  type: AttachmentType;
+  label: string;
+  url: string;
+  sizeBytes?: number;
+  mimeType?: string;
+  thumbnailUrl?: string;
+  createdAt: number;
 }
 
 // ===============================
@@ -117,8 +117,8 @@ export interface ChatAttachment {
 // ===============================
 
 export interface MessageReaction {
-  emoji: string
-  users: string[]
+  emoji: string;
+  users: string[];
 }
 
 // ===============================
@@ -126,8 +126,8 @@ export interface MessageReaction {
 // ===============================
 
 export interface MessageMention {
-  userId: string
-  username?: string
+  userId: string;
+  username?: string;
 }
 
 // ===============================
@@ -135,27 +135,27 @@ export interface MessageMention {
 // ===============================
 
 export interface ChatMessage {
-  id: string
-  sender: string
-  senderId?: string
-  text: string
-  createdAt: number
-  updatedAt?: number
-  editedAt?: number
-  deletedAt?: number
-  expiresAt?: number | null
-  status?: MessageStatus
-  mentions: string[]
-  mentionDetails?: MessageMention[]
-  reactions: Record<string, string[]>
-  reactionDetails?: MessageReaction[]
-  attachments: ChatAttachment[]
-  readBy: string[]
-  bookmarkedBy?: string[]
-  parentMessageId?: string
-  forwardedFromMessageId?: string
-  forwardedFromUserId?: string
-  isEncrypted?: boolean
+  id: string;
+  sender: string;
+  senderId?: string;
+  text: string;
+  createdAt: number;
+  updatedAt?: number;
+  editedAt?: number;
+  deletedAt?: number;
+  expiresAt?: number | null;
+  status?: MessageStatus;
+  mentions: string[];
+  mentionDetails?: MessageMention[];
+  reactions: Record<string, string[]>;
+  reactionDetails?: MessageReaction[];
+  attachments: ChatAttachment[];
+  readBy: string[];
+  bookmarkedBy?: string[];
+  parentMessageId?: string;
+  forwardedFromMessageId?: string;
+  forwardedFromUserId?: string;
+  isEncrypted?: boolean;
 }
 
 // ===============================
@@ -163,11 +163,11 @@ export interface ChatMessage {
 // ===============================
 
 export interface ConversationSettings {
-  disappearingTimer: DisappearingTimer
-  muteNotifications?: boolean
-  allowMemberAdd?: boolean
-  allowMediaSharing?: boolean
-  encrypted?: boolean
+  disappearingTimer: DisappearingTimer;
+  muteNotifications?: boolean;
+  allowMemberAdd?: boolean;
+  allowMediaSharing?: boolean;
+  encrypted?: boolean;
 }
 
 // ===============================
@@ -175,10 +175,10 @@ export interface ConversationSettings {
 // ===============================
 
 export interface ConversationPreview {
-  messageId: string
-  senderId: string
-  text: string
-  createdAt: number
+  messageId: string;
+  senderId: string;
+  text: string;
+  createdAt: number;
 }
 
 // ===============================
@@ -186,24 +186,24 @@ export interface ConversationPreview {
 // ===============================
 
 export interface ChatConversation {
-  id?: string
-  type?: ConversationType
-  title?: string
-  description?: string
-  avatarUrl?: string
-  participantIds?: string[]
-  participants: string[]
-  adminIds?: string[]
-  messages: ChatMessage[]
-  typingUserIds?: string[]
-  pinnedMessageIds?: string[]
-  archivedBy?: string[]
-  blockedUserIds?: string[]
-  settings?: ConversationSettings
-  disappearingTimer: DisappearingTimer
-  lastMessage?: ConversationPreview
-  createdAt?: number
-  updatedAt: number
+  id?: string;
+  type?: ConversationType;
+  title?: string;
+  description?: string;
+  avatarUrl?: string;
+  participantIds?: string[];
+  participants: string[];
+  adminIds?: string[];
+  messages: ChatMessage[];
+  typingUserIds?: string[];
+  pinnedMessageIds?: string[];
+  archivedBy?: string[];
+  blockedUserIds?: string[];
+  settings?: ConversationSettings;
+  disappearingTimer: DisappearingTimer;
+  lastMessage?: ConversationPreview;
+  createdAt?: number;
+  updatedAt: number;
 }
 
 // ===============================
@@ -304,26 +304,26 @@ export const QUICK_REACTIONS = [
   '\u{1F3B5}', // 🎵
   '\u{1F3AE}', // 🎮
   '\u{1F410}', // 🐐
-] as const
+] as const;
 
-export type QuickReaction = (typeof QUICK_REACTIONS)[number]
+export type QuickReaction = (typeof QUICK_REACTIONS)[number];
 
 // ===============================
 // Utility Helpers
 // ===============================
 
 export const getTimerDuration = (timer: DisappearingTimer): number | null => {
-  const option = TIMER_OPTIONS.find((item) => item.value === timer)
-  return option?.durationMs ?? null
-}
+  const option = TIMER_OPTIONS.find((item) => item.value === timer);
+  return option?.durationMs ?? null;
+};
 
 export const createExpiresAt = (timer: DisappearingTimer): number | null => {
-  const duration = getTimerDuration(timer)
+  const duration = getTimerDuration(timer);
   if (!duration) {
-    return null
+    return null;
   }
-  return Date.now() + duration
-}
+  return Date.now() + duration;
+};
 
 // ===============================
 // Example Empty Conversation
@@ -342,4 +342,4 @@ export const EMPTY_CONVERSATION: ChatConversation = {
   disappearingTimer: 'off',
   createdAt: Date.now(),
   updatedAt: Date.now(),
-}
+};

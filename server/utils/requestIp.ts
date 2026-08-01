@@ -1,4 +1,4 @@
-import express from "express";
+import express from 'express';
 
 const normalizeRawIpAddress = (value?: string | null): string | undefined => {
   if (!value) {
@@ -6,7 +6,7 @@ const normalizeRawIpAddress = (value?: string | null): string | undefined => {
   }
 
   let normalized = value.trim();
-  if (!normalized || normalized.toLowerCase() === "unknown") {
+  if (!normalized || normalized.toLowerCase() === 'unknown') {
     return undefined;
   }
 
@@ -14,12 +14,12 @@ const normalizeRawIpAddress = (value?: string | null): string | undefined => {
     normalized = normalized.slice(1, -1).trim();
   }
 
-  if (normalized.startsWith("[") && normalized.includes("]")) {
-    normalized = normalized.slice(1, normalized.indexOf("]"));
+  if (normalized.startsWith('[') && normalized.includes(']')) {
+    normalized = normalized.slice(1, normalized.indexOf(']'));
   }
 
-  normalized = normalized.replace(/^for=/i, "").trim();
-  normalized = normalized.replace(/^::ffff:/i, "").trim();
+  normalized = normalized.replace(/^for=/i, '').trim();
+  normalized = normalized.replace(/^::ffff:/i, '').trim();
 
   return normalized || undefined;
 };
@@ -27,7 +27,7 @@ const normalizeRawIpAddress = (value?: string | null): string | undefined => {
 const normalizeIpAddress = (value?: string | null): string | undefined => {
   const normalized = normalizeRawIpAddress(value);
 
-  if (!normalized || normalized === "::1" || normalized === "127.0.0.1") {
+  if (!normalized || normalized === '::1' || normalized === '127.0.0.1') {
     return undefined;
   }
 
@@ -39,10 +39,10 @@ const parseForwardedHeader = (headerValue?: string): string | undefined => {
     return undefined;
   }
 
-  for (const segment of headerValue.split(",")) {
-    for (const token of segment.split(";")) {
+  for (const segment of headerValue.split(',')) {
+    for (const token of segment.split(';')) {
       const trimmed = token.trim();
-      if (!trimmed.toLowerCase().startsWith("for=")) {
+      if (!trimmed.toLowerCase().startsWith('for=')) {
         continue;
       }
 
@@ -61,7 +61,7 @@ const parseForwardedForHeader = (headerValue?: string): string | undefined => {
     return undefined;
   }
 
-  for (const part of headerValue.split(",")) {
+  for (const part of headerValue.split(',')) {
     const candidate = normalizeIpAddress(part);
     if (candidate) {
       return candidate;
@@ -72,16 +72,16 @@ const parseForwardedForHeader = (headerValue?: string): string | undefined => {
 };
 
 export const getClientIp = (req: express.Request): string => {
-  const trustProxy = req.app.get("trust proxy");
+  const trustProxy = req.app.get('trust proxy');
 
   if (trustProxy) {
-    const forwardedFor = req.get("x-forwarded-for");
+    const forwardedFor = req.get('x-forwarded-for');
     const fromForwardedFor = parseForwardedForHeader(forwardedFor);
     if (fromForwardedFor) {
       return fromForwardedFor;
     }
 
-    const forwarded = req.get("forwarded");
+    const forwarded = req.get('forwarded');
     const fromForwarded = parseForwardedHeader(forwarded);
     if (fromForwarded) {
       return fromForwarded;
@@ -98,5 +98,5 @@ export const getClientIp = (req: express.Request): string => {
     normalizeRawIpAddress(req.socket?.remoteAddress) ??
     normalizeRawIpAddress(req.connection?.remoteAddress);
 
-  return directIp || fallbackIp || "unknown";
+  return directIp || fallbackIp || 'unknown';
 };

@@ -1,1 +1,1 @@
-export const EmergencyAccessCard = () => null
+export const EmergencyAccessCard = () => null;

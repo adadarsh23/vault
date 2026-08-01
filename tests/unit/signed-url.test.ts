@@ -12,7 +12,7 @@ describe('Signed URL Security Service', () => {
     const signedUrl = storageService.generateSignedUrl(userId, itemId, fileName, {
       action: 'stream',
       sessionId,
-      deviceHash
+      deviceHash,
     });
 
     const url = new URL(signedUrl);
@@ -26,7 +26,7 @@ describe('Signed URL Security Service', () => {
       action: 'view',
       sessionId,
       deviceHash,
-      ipAddress: '1.1.1.1'
+      ipAddress: '1.1.1.1',
     });
 
     const url = new URL(signedUrl);
@@ -37,21 +37,23 @@ describe('Signed URL Security Service', () => {
       clientIp: '1.1.1.1',
       originalIp: '1.1.1.1',
       sessionId,
-      deviceHash
+      deviceHash,
     });
 
     expect(isValid).toBe(true);
   });
 
   it('fails verification if the signature is tampered with', () => {
-    const signedUrl = storageService.generateSignedUrl(userId, itemId, fileName, { action: 'view' });
+    const signedUrl = storageService.generateSignedUrl(userId, itemId, fileName, {
+      action: 'view',
+    });
     const url = new URL(signedUrl);
-    
+
     const isValid = storageService.verifySignedUrl(userId, itemId, {
       token: 'tampered_token',
       expires: parseInt(url.searchParams.get('expires')!),
       action: 'view',
-      clientIp: '127.0.0.1'
+      clientIp: '127.0.0.1',
     });
 
     expect(isValid).toBe(false);
@@ -59,10 +61,12 @@ describe('Signed URL Security Service', () => {
 
   it('fails verification if the URL has expired', () => {
     // Mock Date.now to many years in the past for generation
-    const past = Date.now() - (1000 * 60 * 60); // 1 hour ago
+    const past = Date.now() - 1000 * 60 * 60; // 1 hour ago
     vi.spyOn(Date, 'now').mockReturnValue(past);
-    
-    const signedUrl = storageService.generateSignedUrl(userId, itemId, fileName, { expiresInMinutes: 5 });
+
+    const signedUrl = storageService.generateSignedUrl(userId, itemId, fileName, {
+      expiresInMinutes: 5,
+    });
     const url = new URL(signedUrl);
 
     // Reset Date.now to real time for verification
@@ -72,7 +76,7 @@ describe('Signed URL Security Service', () => {
       token: url.searchParams.get('token')!,
       expires: parseInt(url.searchParams.get('expires')!),
       action: url.searchParams.get('action') || 'view',
-      clientIp: '127.0.0.1'
+      clientIp: '127.0.0.1',
     });
 
     expect(isValid).toBe(false);
@@ -80,7 +84,7 @@ describe('Signed URL Security Service', () => {
 
   it('handles IP drift within allowed boundaries (soft validation)', () => {
     const signedUrl = storageService.generateSignedUrl(userId, itemId, fileName, {
-      ipAddress: '192.168.1.1'
+      ipAddress: '192.168.1.1',
     });
 
     const url = new URL(signedUrl);
@@ -90,7 +94,7 @@ describe('Signed URL Security Service', () => {
       expires: parseInt(url.searchParams.get('expires')!),
       clientIp: '192.168.1.5', // Drifted IP
       originalIp: '192.168.1.1',
-      action: 'view'
+      action: 'view',
     });
 
     expect(isValid).toBe(true);

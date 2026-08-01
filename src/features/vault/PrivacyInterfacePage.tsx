@@ -1,33 +1,27 @@
-import React, { useState } from 'react'
-import { ArrowLeft, ShieldCheck } from 'lucide-react'
-import { Button } from '../../components/ui/Button'
-import { useVaultStore } from '../../store/vaultStore'
-import { PrivacyInterfaceCard } from './components/SettingsVault/PrivacyInterfaceCard'
+import React, { useState } from 'react';
+import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { useVaultStore } from '../../store/vaultStore';
+import { PrivacyInterfaceCard } from './components/SettingsVault/PrivacyInterfaceCard';
 
 interface PrivacyInterfacePageProps {
-  onBack: () => void
+  onBack: () => void;
 }
 
-export const PrivacyInterfacePage: React.FC<PrivacyInterfacePageProps> = ({
-  onBack,
-}) => {
-  const [showPrivacyInterface, setShowPrivacyInterface] = useState(false)
-  const preferences = useVaultStore((state) => state.preferences)
-  const updatePreferences = useVaultStore((state) => state.updatePreferences)
-  const allowRestrictedTypes = useVaultStore(
-    (state) => state.allowRestrictedTypes,
-  )
-  const setAllowRestrictedTypes = useVaultStore(
-    (state) => state.setAllowRestrictedTypes,
-  )
-  const generatedCredentialLength = preferences.generatedCredentialLength
+export const PrivacyInterfacePage: React.FC<PrivacyInterfacePageProps> = ({ onBack }) => {
+  const [showPrivacyInterface, setShowPrivacyInterface] = useState(false);
+  const preferences = useVaultStore((state) => state.preferences);
+  const updatePreferences = useVaultStore((state) => state.updatePreferences);
+  const allowRestrictedTypes = useVaultStore((state) => state.allowRestrictedTypes);
+  const setAllowRestrictedTypes = useVaultStore((state) => state.setAllowRestrictedTypes);
+  const generatedCredentialLength = preferences.generatedCredentialLength;
   const [generatedLengthInput, setGeneratedLengthInput] = useState(
-    String(generatedCredentialLength),
-  )
+    String(generatedCredentialLength)
+  );
 
   React.useEffect(() => {
-    setGeneratedLengthInput(String(generatedCredentialLength))
-  }, [generatedCredentialLength])
+    setGeneratedLengthInput(String(generatedCredentialLength));
+  }, [generatedCredentialLength]);
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-bg px-4 py-5 text-text sm:px-6 sm:py-6 lg:px-8 lg:py-8">
@@ -38,8 +32,7 @@ export const PrivacyInterfacePage: React.FC<PrivacyInterfacePageProps> = ({
               Privacy & Interface
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-text/60 sm:text-base">
-              Configure privacy protections and interface behavior for your
-              vault experience.
+              Configure privacy protections and interface behavior for your vault experience.
             </p>
           </div>
 
@@ -74,7 +67,7 @@ export const PrivacyInterfacePage: React.FC<PrivacyInterfacePageProps> = ({
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default PrivacyInterfacePage
+export default PrivacyInterfacePage;

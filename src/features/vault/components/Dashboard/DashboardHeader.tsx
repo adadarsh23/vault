@@ -1,25 +1,16 @@
-import React from 'react'
-import {
-  Lock,
-  Zap,
-  Fingerprint,
-  ShieldCheck,
-  Globe,
-  RefreshCw,
-  Cpu,
-  Key,
-} from 'lucide-react'
-import { Card, CardContent } from '../../../../components/ui/Card'
-import { motion, AnimatePresence } from 'framer-motion'
+import React from 'react';
+import { Lock, Zap, Fingerprint, ShieldCheck, Globe, RefreshCw, Cpu, Key } from 'lucide-react';
+import { Card, CardContent } from '../../../../components/ui/Card';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface DashboardHeaderProps {
-  username: string | null | undefined
-  securityScore: number
-  showHealthDetails: boolean
-  onToggleHealth: () => void
-  onOpenProfileCard: () => void
+  username: string | null | undefined;
+  securityScore: number;
+  showHealthDetails: boolean;
+  onToggleHealth: () => void;
+  onOpenProfileCard: () => void;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -73,7 +64,7 @@ const healthMetrics = [
     status: 'Active',
     icon: Key,
   },
-]
+];
 
 // ─── Animation Variants ───────────────────────────────────────────────────────
 
@@ -84,7 +75,7 @@ const healthContainerVariants = {
   show: {
     transition: { delayChildren: 0.08, staggerChildren: 0.06 },
   },
-}
+};
 
 const healthItemVariants = {
   hidden: { opacity: 0, y: 18, scale: 0.98 },
@@ -96,18 +87,18 @@ const healthItemVariants = {
       duration: 0.28,
     },
   },
-}
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const getScoreColor = (score: number) => {
-  if (score >= 80) return 'text-green-400'
-  if (score >= 50) return 'text-amber-400'
-  return 'text-red-400'
-}
+  if (score >= 80) return 'text-green-400';
+  if (score >= 50) return 'text-amber-400';
+  return 'text-red-400';
+};
 
 const getLayerStatusTheme = (status?: string) => {
-  const normalized = status?.toLowerCase() || ''
+  const normalized = status?.toLowerCase() || '';
 
   if (
     normalized.includes('active') ||
@@ -118,7 +109,7 @@ const getLayerStatusTheme = (status?: string) => {
       badge: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300',
       icon: 'text-emerald-400',
       glow: 'bg-emerald-500/10',
-    }
+    };
   }
 
   if (normalized.includes('vulnerable')) {
@@ -126,15 +117,15 @@ const getLayerStatusTheme = (status?: string) => {
       badge: 'border-red-500/20 bg-red-500/10 text-red-300',
       icon: 'text-red-400',
       glow: 'bg-red-500/10',
-    }
+    };
   }
 
   return {
     badge: 'border-amber-500/20 bg-amber-500/10 text-amber-300',
     icon: 'text-amber-400',
     glow: 'bg-amber-500/10',
-  }
-}
+  };
+};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -145,21 +136,19 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onToggleHealth,
   onOpenProfileCard,
 }) => {
-  const [currentTime, setCurrentTime] = React.useState(new Date())
+  const [currentTime, setCurrentTime] = React.useState(new Date());
 
   React.useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-    return () => clearInterval(timer)
-  }, [])
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div className="space-y-6">
       <div className="relative flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0 space-y-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-text sm:text-4xl">
-              Dashboard
-            </h1>
+            <h1 className="text-3xl font-bold tracking-tight text-text sm:text-4xl">Dashboard</h1>
             <div className="mt-3 max-w-3xl text-sm leading-6 text-text/45 flex flex-col gap-1">
               <p>
                 Welcome back,
@@ -227,9 +216,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-text/30 group-hover:text-text/50 transition-colors">
               Security
             </p>
-            <p
-              className={`text-2xl font-black tracking-tight ${getScoreColor(securityScore)}`}
-            >
+            <p className={`text-2xl font-black tracking-tight ${getScoreColor(securityScore)}`}>
               {securityScore < 100 ? `${securityScore}%` : 'Optimal'}
             </p>
           </div>
@@ -308,7 +295,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               className="grid grid-cols-1 gap-4 pt-2 pb-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             >
               {healthMetrics.map((metric) => {
-                const theme = getLayerStatusTheme(metric.status)
+                const theme = getLayerStatusTheme(metric.status);
 
                 return (
                   <motion.div
@@ -322,9 +309,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                           <div
                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-card-border/50 ${theme.glow} transition-colors`}
                           >
-                            <metric.icon
-                              className={`h-5 w-5 transition-colors ${theme.icon}`}
-                            />
+                            <metric.icon className={`h-5 w-5 transition-colors ${theme.icon}`} />
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-text/40 transition-colors truncate">
@@ -345,12 +330,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                       </CardContent>
                     </Card>
                   </motion.div>
-                )
+                );
               })}
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
-  )
-}
+  );
+};

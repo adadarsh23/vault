@@ -1,12 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react'
-import { Button } from '../../components/ui/Button'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../components/ui/Card'
-import { Input } from '../../components/ui/Input'
+import React, { useState, useEffect, useMemo } from 'react';
+import { Button } from '../../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
 import {
   Plus,
   Trash2,
@@ -25,164 +20,163 @@ import {
   Folder,
   Loader2,
   Pin,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { useVaultStore } from '../../store/vaultStore'
-import { VaultItem } from '../../lib/storage'
-import { encryptData, decryptData } from '../../lib/cryptoPrimitives'
-import { useClipboard } from '../../hooks/useClipboard'
-import { motion, AnimatePresence } from 'framer-motion'
-import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent'
-import { logActivity } from '../../lib/activity'
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop'
-import { sortPinnedFirst } from '../../lib/pinning'
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { useVaultStore } from '../../store/vaultStore';
+import { VaultItem } from '../../lib/storage';
+import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
+import { useClipboard } from '../../hooks/useClipboard';
+import { motion, AnimatePresence } from 'framer-motion';
+import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';
+import { logActivity } from '../../lib/activity';
+import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { sortPinnedFirst } from '../../lib/pinning';
 
-import { FolderSidebar } from '../../components/vault/FolderSidebar'
-import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu'
-import { useVaultFolders } from '../../hooks/useVaultFolders'
-import { useGlobalNavigationStore } from '../../store/globalNavigationStore'
+import { FolderSidebar } from '../../components/vault/FolderSidebar';
+import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
+import { useVaultFolders } from '../../hooks/useVaultFolders';
+import { useGlobalNavigationStore } from '../../store/globalNavigationStore';
 
 interface SecretPayload {
-  value: string
-  type: string
+  value: string;
+  type: string;
 }
 
 interface SecretCardProps {
-  item: VaultItem
-  masterKey: string | CryptoKey
-  onUpdate: (id: string, name: string, value: string) => Promise<void>
-  onDelete: (id: string, title: string) => void
-  onTogglePin: (id: string) => void
-  isPinning: boolean
+  item: VaultItem;
+  masterKey: string | CryptoKey;
+  onUpdate: (id: string, name: string, value: string) => Promise<void>;
+  onDelete: (id: string, title: string) => void;
+  onTogglePin: (id: string) => void;
+  isPinning: boolean;
 }
 
-const SECRET_TYPES = ['API Key', 'SSH Key', 'Recovery Phrase', 'Other'] as const
-type SecretType = (typeof SECRET_TYPES)[number]
+const SECRET_TYPES = ['API Key', 'SSH Key', 'Recovery Phrase', 'Other'] as const;
+type SecretType = (typeof SECRET_TYPES)[number];
 
 const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
   ({ item, masterKey, onUpdate, onDelete, onTogglePin, isPinning }) => {
-    const [data, setData] = useState<SecretPayload | null>(null)
-    const [error, setError] = useState(false)
-    const [isVisible, setIsVisible] = useState(false)
-    const [isEditing, setIsEditing] = useState(false)
-    const [editName, setEditName] = useState(item.title)
-    const [editValue, setEditValue] = useState('')
-    const [showEditValue, setShowEditValue] = useState(false)
-    const { copy, copiedId } = useClipboard()
+    const [data, setData] = useState<SecretPayload | null>(null);
+    const [error, setError] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState(item.title);
+    const [editValue, setEditValue] = useState('');
+    const [showEditValue, setShowEditValue] = useState(false);
+    const { copy, copiedId } = useClipboard();
 
-    const updateItem = useVaultStore((state) => state.updateItem)
-    const [isAddingTag, setIsAddingTag] = useState(false)
-    const [newTagInput, setNewTagInput] = useState('')
+    const updateItem = useVaultStore((state) => state.updateItem);
+    const [isAddingTag, setIsAddingTag] = useState(false);
+    const [newTagInput, setNewTagInput] = useState('');
 
     const tags = useMemo<string[]>(() => {
-      return Array.isArray(item.metadata?.tags) ? item.metadata.tags : []
-    }, [item])
+      return Array.isArray(item.metadata?.tags) ? item.metadata.tags : [];
+    }, [item]);
 
     const handleAddTag = async () => {
-      const cleaned = newTagInput.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '')
+      const cleaned = newTagInput
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-_]/g, '');
       if (!cleaned) {
-        setIsAddingTag(false)
-        setNewTagInput('')
-        return
+        setIsAddingTag(false);
+        setNewTagInput('');
+        return;
       }
       if (tags.includes(cleaned)) {
-        toast.error('Tag already exists')
-        setIsAddingTag(false)
-        setNewTagInput('')
-        return
+        toast.error('Tag already exists');
+        setIsAddingTag(false);
+        setNewTagInput('');
+        return;
       }
-      const updated = [...tags, cleaned]
+      const updated = [...tags, cleaned];
       try {
-        await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } })
-        toast.success(`Tag #${cleaned} added`)
+        await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } });
+        toast.success(`Tag #${cleaned} added`);
       } catch {
-        toast.error('Failed to add tag')
+        toast.error('Failed to add tag');
       } finally {
-        setIsAddingTag(false)
-        setNewTagInput('')
+        setIsAddingTag(false);
+        setNewTagInput('');
       }
-    }
+    };
 
     const handleRemoveTag = async (tagToRemove: string) => {
-      const updated = tags.filter((t) => t !== tagToRemove)
+      const updated = tags.filter((t) => t !== tagToRemove);
       try {
-        await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } })
-        toast.success(`Tag #${tagToRemove} removed`)
+        await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } });
+        toast.success(`Tag #${tagToRemove} removed`);
       } catch {
-        toast.error('Failed to remove tag')
+        toast.error('Failed to remove tag');
       }
-    }
+    };
 
     useEffect(() => {
-      let isMounted = true
+      let isMounted = true;
       const decrypt = async () => {
         try {
-          const encryptedContent = getStringContent(item.content)
+          const encryptedContent = getStringContent(item.content);
           if (!encryptedContent) {
-            if (isMounted) setError(true)
-            return
+            if (isMounted) setError(true);
+            return;
           }
 
-          const decrypted = await decryptData(encryptedContent, masterKey)
+          const decrypted = await decryptData(encryptedContent, masterKey);
           if (!decrypted || !isMounted) {
-            if (isMounted) setError(true)
-            return
+            if (isMounted) setError(true);
+            return;
           }
 
-          const parsed = parseJsonSafely<SecretPayload>(decrypted)
-          if (
-            !parsed ||
-            typeof parsed.value !== 'string' ||
-            typeof parsed.type !== 'string'
-          ) {
-            if (isMounted) setError(true)
-            return
+          const parsed = parseJsonSafely<SecretPayload>(decrypted);
+          if (!parsed || typeof parsed.value !== 'string' || typeof parsed.type !== 'string') {
+            if (isMounted) setError(true);
+            return;
           }
 
-          setData(parsed)
-          setEditValue(parsed.value)
+          setData(parsed);
+          setEditValue(parsed.value);
         } catch (err) {
-          console.error('Secret Decryption Error:', err)
-          if (isMounted) setError(true)
+          console.error('Secret Decryption Error:', err);
+          if (isMounted) setError(true);
         }
-      }
+      };
 
-      decrypt()
+      decrypt();
       return () => {
-        isMounted = false
-      }
-    }, [item.content, masterKey])
+        isMounted = false;
+      };
+    }, [item.content, masterKey]);
 
     const handleCopy = (text: string, id: string) => {
-      copy(text, id)
-      toast.success('Secret value copied to clipboard')
+      copy(text, id);
+      toast.success('Secret value copied to clipboard');
       logActivity({
         actionType: 'copy_value',
         itemName: item.title,
         description: 'Secret value copied',
         status: 'success',
-      })
-    }
+      });
+    };
 
     const handleSave = async () => {
       try {
-        await onUpdate(item.id, editName, editValue)
-        setIsEditing(false)
+        await onUpdate(item.id, editName, editValue);
+        setIsEditing(false);
         logActivity({
           actionType: 'item_update',
           itemName: editName,
           description: 'Secret updated',
           status: 'success',
-        })
+        });
       } catch (err) {
         logActivity({
           actionType: 'item_update',
           itemName: editName,
           description: 'Secret update failed',
           status: 'failure',
-        })
+        });
       }
-    }
+    };
 
     if (error) {
       return (
@@ -198,7 +192,7 @@ const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
             Delete
           </Button>
         </Card>
-      )
+      );
     }
 
     if (!data) {
@@ -207,7 +201,7 @@ const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
           <div className="h-10 w-full bg-white/5 rounded-xl" />
           <div className="h-20 w-full bg-white/5 rounded-xl" />
         </Card>
-      )
+      );
     }
 
     return (
@@ -227,8 +221,8 @@ const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
                   className="h-8 py-0 px-2 text-sm bg-white/5 border-white/10"
                   autoFocus
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSave()
-                    if (e.key === 'Escape') setIsEditing(false)
+                    if (e.key === 'Enter') handleSave();
+                    if (e.key === 'Escape') setIsEditing(false);
                   }}
                 />
               ) : (
@@ -271,8 +265,8 @@ const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
                     size="icon"
                     className="h-8 w-8 rounded-full hover:bg-white/10 text-text/20 hover:text-text/60 transition-colors"
                     onClick={() => {
-                      setIsEditing(true)
-                      setShowEditValue(false)
+                      setIsEditing(true);
+                      setShowEditValue(false);
                     }}
                   >
                     <Edit2 className="h-3.5 w-3.5" />
@@ -284,7 +278,11 @@ const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
                     className={`h-8 w-8 rounded-full ${item.isPinned ? 'text-rose-400 hover:bg-rose-400/20' : 'text-text/20 hover:text-text/60 hover:bg-white/10'} transition-colors`}
                     onClick={() => onTogglePin(item.id)}
                   >
-                    {isPinning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pin className={`h-3.5 w-3.5 ${item.isPinned ? 'fill-current' : ''}`} />}
+                    {isPinning ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pin className={`h-3.5 w-3.5 ${item.isPinned ? 'fill-current' : ''}`} />
+                    )}
                   </Button>
                   <Button
                     variant="ghost"
@@ -305,9 +303,7 @@ const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
                 <div className="inline-flex max-w-full items-center rounded-full border border-rose-400/15 bg-rose-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-rose-300/80">
                   <Folder className="h-3 w-3 mr-1.5 text-rose-400/80" />
                   <span className="truncate" title={item.folder}>
-                    {item.folder.length > 10
-                      ? `${item.folder.slice(0, 10)}...`
-                      : item.folder}
+                    {item.folder.length > 10 ? `${item.folder.slice(0, 10)}...` : item.folder}
                   </span>
                 </div>
               )}
@@ -460,8 +456,8 @@ const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
                     value={newTagInput}
                     onChange={(e) => setNewTagInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleAddTag()
-                      if (e.key === 'Escape') setIsAddingTag(false)
+                      if (e.key === 'Enter') handleAddTag();
+                      if (e.key === 'Escape') setIsAddingTag(false);
                     }}
                     onBlur={handleAddTag}
                     autoFocus
@@ -491,35 +487,32 @@ const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
           </CardContent>
         </Card>
       </motion.div>
-    )
-  },
-)
+    );
+  }
+);
 
 export const SecretsVault: React.FC = () => {
-  const items = useVaultStore((state) => state.items)
-  const addItem = useVaultStore((state) => state.addItem)
-  const removeItem = useVaultStore((state) => state.removeItem)
-  const updateItem = useVaultStore((state) => state.updateItem)
-  const masterKey = useVaultStore((state) => state.masterKey)
-  const togglePin = useVaultStore((state) => state.togglePin)
-  const pinningItemIds = useVaultStore((state) => state.pinningItemIds)
-  const targetItemId = useGlobalNavigationStore((state) => state.targetItemId)
-  const setTargetItemId = useGlobalNavigationStore((state) => state.setTargetItemId)
-  const [isAdding, setIsAdding] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
+  const items = useVaultStore((state) => state.items);
+  const addItem = useVaultStore((state) => state.addItem);
+  const removeItem = useVaultStore((state) => state.removeItem);
+  const updateItem = useVaultStore((state) => state.updateItem);
+  const masterKey = useVaultStore((state) => state.masterKey);
+  const togglePin = useVaultStore((state) => state.togglePin);
+  const pinningItemIds = useVaultStore((state) => state.pinningItemIds);
+  const targetItemId = useGlobalNavigationStore((state) => state.targetItemId);
+  const setTargetItemId = useGlobalNavigationStore((state) => state.setTargetItemId);
+  const [isAdding, setIsAdding] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const [newName, setNewName] = useState('')
-  const [newValue, setNewValue] = useState('')
-  const [newType, setNewType] = useState<SecretType>('API Key')
-  const [customType, setCustomType] = useState('')
-  const [showNewValue, setShowNewValue] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isMobileFolderOpen, setIsMobileFolderOpen] = useState(false)
+  const [newName, setNewName] = useState('');
+  const [newValue, setNewValue] = useState('');
+  const [newType, setNewType] = useState<SecretType>('API Key');
+  const [customType, setCustomType] = useState('');
+  const [showNewValue, setShowNewValue] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isMobileFolderOpen, setIsMobileFolderOpen] = useState(false);
 
-  const secrets = useMemo(
-    () => items.filter((item) => item.type === 'secret'),
-    [items],
-  )
+  const secrets = useMemo(() => items.filter((item) => item.type === 'secret'), [items]);
   const {
     folders,
     currentFolder,
@@ -536,131 +529,127 @@ export const SecretsVault: React.FC = () => {
     handleRenameFolder,
     handleDeleteFolder,
     handleMoveToFolder,
-  } = useVaultFolders('secret')
+  } = useVaultFolders('secret');
 
   useEffect(() => {
-    if (!targetItemId) return
-    const target = secrets.find((s) => s.id === targetItemId)
+    if (!targetItemId) return;
+    const target = secrets.find((s) => s.id === targetItemId);
     if (target) {
-      setCurrentFolder(null)
-      setSearchQuery(target.title)
-      setTargetItemId(null)
+      setCurrentFolder(null);
+      setSearchQuery(target.title);
+      setTargetItemId(null);
     }
-  }, [targetItemId, secrets, setTargetItemId, setCurrentFolder])
-  const normalizedSearchQuery = useMemo(
-    () => searchQuery.trim().toLowerCase(),
-    [searchQuery],
-  )
+  }, [targetItemId, secrets, setTargetItemId, setCurrentFolder]);
+  const normalizedSearchQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery]);
 
   const filteredSecrets = useMemo(
     () =>
-      sortPinnedFirst(secrets.filter((secret) => {
-        const matchesSearch =
-          normalizedSearchQuery.length === 0 ||
-          secret.title.toLowerCase().includes(normalizedSearchQuery)
-        const matchesFolder =
-          currentFolder === null || secret.folder === currentFolder
-        return matchesSearch && matchesFolder
-      })),
-    [secrets, normalizedSearchQuery, currentFolder],
-  )
+      sortPinnedFirst(
+        secrets.filter((secret) => {
+          const matchesSearch =
+            normalizedSearchQuery.length === 0 ||
+            secret.title.toLowerCase().includes(normalizedSearchQuery);
+          const matchesFolder = currentFolder === null || secret.folder === currentFolder;
+          return matchesSearch && matchesFolder;
+        })
+      ),
+    [secrets, normalizedSearchQuery, currentFolder]
+  );
 
   const getFolderCount = (folder: string | null) => {
-    return secrets.filter((s) => (folder === null ? true : s.folder === folder))
-      .length
-  }
+    return secrets.filter((s) => (folder === null ? true : s.folder === folder)).length;
+  };
 
   const handleAdd = async () => {
-    const trimmedName = newName.trim()
-    const trimmedValue = newValue.trim()
-    const resolvedType =
-      newType === 'Other' ? customType.trim() || 'Other' : newType
+    const trimmedName = newName.trim();
+    const trimmedValue = newValue.trim();
+    const resolvedType = newType === 'Other' ? customType.trim() || 'Other' : newType;
 
     if (!masterKey || !trimmedName || !trimmedValue) {
-      toast.error('Please fill in all required fields')
-      return
+      toast.error('Please fill in all required fields');
+      return;
     }
 
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       const encryptedData = await encryptData(
         JSON.stringify({
           value: trimmedValue,
           type: resolvedType,
         }),
-        masterKey,
-      )
+        masterKey
+      );
 
       await addItem({
         type: 'secret',
         title: trimmedName,
         content: encryptedData,
         folder: currentFolder || undefined,
-      })
+      });
 
-      setIsAdding(false)
-      setNewName('')
-      setNewValue('')
-      setNewType('API Key')
-      setCustomType('')
-      toast.success(`Secret "${trimmedName}" saved`)
+      setIsAdding(false);
+      setNewName('');
+      setNewValue('');
+      setNewType('API Key');
+      setCustomType('');
+      toast.success(`Secret "${trimmedName}" saved`);
       logActivity({
         actionType: 'item_create',
         itemName: trimmedName,
         description: 'Secret created',
         status: 'success',
-      })
+      });
     } catch {
-      toast.error('Failed to save secret')
+      toast.error('Failed to save secret');
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const handleUpdateItem = async (id: string, name: string, value: string) => {
-    if (!masterKey) return
+    if (!masterKey) return;
 
-    const trimmedName = name.trim()
-    const trimmedValue = value.trim()
+    const trimmedName = name.trim();
+    const trimmedValue = value.trim();
     if (!trimmedName || !trimmedValue) {
-      toast.error('Secret name and value are required')
-      return
+      toast.error('Secret name and value are required');
+      return;
     }
 
     try {
-      const item = secrets.find((secretItem) => secretItem.id === id)
-      if (!item) return
+      const item = secrets.find((secretItem) => secretItem.id === id);
+      if (!item) return;
 
-      const encryptedContent = getStringContent(item.content)
+      const encryptedContent = getStringContent(item.content);
       if (!encryptedContent) {
-        toast.error('Unsupported secret format')
-        return
+        toast.error('Unsupported secret format');
+        return;
       }
 
-      const decrypted = await decryptData(encryptedContent, masterKey)
+      const decrypted = await decryptData(encryptedContent, masterKey);
       if (!decrypted) {
-        toast.error('Unable to decrypt secret')
-        return
+        toast.error('Unable to decrypt secret');
+        return;
       }
 
-      const currentData = parseJsonSafely<SecretPayload>(decrypted)
+      const currentData = parseJsonSafely<SecretPayload>(decrypted);
       const encryptedData = await encryptData(
         JSON.stringify({
           type: currentData?.type ?? 'Other',
           value: trimmedValue,
         }),
-        masterKey,
-      )
+        masterKey
+      );
 
       await updateItem(id, {
         title: trimmedName,
         content: encryptedData,
-      })
-      toast.success(`Secret "${trimmedName}" updated`)
+      });
+      toast.success(`Secret "${trimmedName}" updated`);
     } catch {
-      toast.error('Failed to update secret')
+      toast.error('Failed to update secret');
     }
-  }
+  };
 
   return (
     <div className="relative flex h-full min-h-0 gap-6">
@@ -780,9 +769,7 @@ export const SecretsVault: React.FC = () => {
             >
               <Card className="border-white/10 bg-gradient-to-br from-white/10 to-transparent backdrop-blur-md">
                 <CardHeader>
-                  <CardTitle className="text-lg text-text transition-colors">
-                    New Secret
-                  </CardTitle>
+                  <CardTitle className="text-lg text-text transition-colors">New Secret</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
@@ -889,9 +876,7 @@ export const SecretsVault: React.FC = () => {
               key={item.id}
               draggable
               onDragStart={(event) => setDraggedVaultItem(event, item.id)}
-              onTouchStart={(event: React.TouchEvent) =>
-                setDraggedVaultItem(event as any, item.id)
-              }
+              onTouchStart={(event: React.TouchEvent) => setDraggedVaultItem(event as any, item.id)}
               onTouchMove={() => {
                 /* Allow custom touch drag logic */
               }}
@@ -902,19 +887,15 @@ export const SecretsVault: React.FC = () => {
                 masterKey={masterKey!}
                 onUpdate={handleUpdateItem}
                 onDelete={(id, title) => {
-                  if (
-                    confirm(
-                      `Are you sure you want to delete secret "${title}"?`,
-                    )
-                  ) {
-                    removeItem(id)
-                    toast.success(`Secret "${title}" deleted`)
+                  if (confirm(`Are you sure you want to delete secret "${title}"?`)) {
+                    removeItem(id);
+                    toast.success(`Secret "${title}" deleted`);
                     logActivity({
                       actionType: 'item_delete',
                       itemName: title,
                       description: 'Secret deleted',
                       status: 'success',
-                    })
+                    });
                   }
                 }}
                 onTogglePin={(id) => void togglePin(id)}
@@ -925,5 +906,5 @@ export const SecretsVault: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

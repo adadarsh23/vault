@@ -1,18 +1,15 @@
-import { getFolderModel } from '../models/folder.ts'
-import { logger } from '../utils/logger.ts'
-import {
-  encryptFolderName,
-  hashFolderName,
-} from './folderCryptoService.ts'
+import { getFolderModel } from '../models/folder.ts';
+import { logger } from '../utils/logger.ts';
+import { encryptFolderName, hashFolderName } from './folderCryptoService.ts';
 
 type FolderSeedDefinition = {
-  name: string
-  itemType: string
-  children?: FolderSeedDefinition[]
-}
+  name: string;
+  itemType: string;
+  children?: FolderSeedDefinition[];
+};
 
 export const isProtectedFolderName = (name: string): boolean =>
-  name.trim().toLowerCase().startsWith('saved')
+  name.trim().toLowerCase().startsWith('saved');
 
 const DEFAULT_FOLDER_TREE: FolderSeedDefinition[] = [
   {
@@ -62,30 +59,30 @@ const DEFAULT_FOLDER_TREE: FolderSeedDefinition[] = [
     ],
   },
   { name: 'Users', itemType: 'users' },
-]
+];
 
 const ensureFolder = async (
   userId: string,
   username: string,
   name: string,
   itemType: string,
-  parentId: string | null,
+  parentId: string | null
 ) => {
-  const Folder = getFolderModel(username)
-  const nameHash = hashFolderName(name)
-  const encryptedName = encryptFolderName(name)
+  const Folder = getFolderModel(username);
+  const nameHash = hashFolderName(name);
+  const encryptedName = encryptFolderName(name);
   return await Folder.findOneAndUpdate(
     { userId, nameHash, itemType, parentId },
     { userId, username, name: encryptedName, nameHash, itemType, parentId },
-    { upsert: true, returnDocument: 'after' },
-  )
-}
+    { upsert: true, returnDocument: 'after' }
+  );
+};
 
 const ensureFolderTree = async (
   userId: string,
   username: string,
   parentId: string,
-  definitions: FolderSeedDefinition[],
+  definitions: FolderSeedDefinition[]
 ) => {
   for (const definition of definitions) {
     const folder = await ensureFolder(
@@ -93,55 +90,36 @@ const ensureFolderTree = async (
       username,
       definition.name,
       definition.itemType,
-      parentId,
-    )
+      parentId
+    );
 
     if (definition.children?.length) {
-      await ensureFolderTree(
-        userId,
-        username,
-        folder._id.toString(),
-        definition.children,
-      )
+      await ensureFolderTree(userId, username, folder._id.toString(), definition.children);
     }
   }
-}
+};
 
-export const initializeDefaultUserFolders = async (
-  userId: string,
-  username: string,
-) => {
+export const initializeDefaultUserFolders = async (userId: string, username: string) => {
   try {
-    const rootFolder = await ensureFolder(
-      userId,
-      username,
-      'vault_items',
-      'system',
-      null,
-    )
+    const rootFolder = await ensureFolder(userId, username, 'vault_items', 'system', null);
 
     const userFolder = await ensureFolder(
       userId,
       username,
       username,
       'system',
-      rootFolder._id.toString(),
-    )
+      rootFolder._id.toString()
+    );
 
-    await ensureFolderTree(
-      userId,
-      username,
-      userFolder._id.toString(),
-      DEFAULT_FOLDER_TREE,
-    )
+    await ensureFolderTree(userId, username, userFolder._id.toString(), DEFAULT_FOLDER_TREE);
 
-    logger.info('Folder structure initialized for user', { username, userId })
+    logger.info('Folder structure initialized for user', { username, userId });
   } catch (error) {
     logger.error('Failed to initialize folders for user', {
       username,
       userId,
       error,
-    })
-    throw error
+    });
+    throw error;
   }
-}
+};

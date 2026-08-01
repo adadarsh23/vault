@@ -1,15 +1,15 @@
-import React from 'react'
-import { Smartphone, Plus, Shield, Layout, Monitor, Share2 } from 'lucide-react'
-import { Button } from '../../../../components/ui/Button'
-import { SectionCard } from './SharedComponents'
-import { SETTINGS_PANEL } from './Utils'
+import React from 'react';
+import { Smartphone, Plus, Shield, Layout, Monitor, Share2 } from 'lucide-react';
+import { Button } from '../../../../components/ui/Button';
+import { SectionCard } from './SharedComponents';
+import { SETTINGS_PANEL } from './Utils';
 
 interface MobileExperienceCardProps {
-  isInstalled: boolean
-  isStandalone: boolean
-  needsManualInstall: boolean
-  canInstall: boolean
-  onInstallRequest: () => void
+  isInstalled: boolean;
+  isStandalone: boolean;
+  needsManualInstall: boolean;
+  canInstall: boolean;
+  onInstallRequest: () => void;
 }
 
 export const MobileExperienceCard: React.FC<MobileExperienceCardProps> = ({
@@ -50,9 +50,8 @@ export const MobileExperienceCard: React.FC<MobileExperienceCardProps> = ({
           )}
         </div>
         <p className="mt-5 text-sm leading-relaxed text-text/60">
-          Run the vault as a standalone application. Enjoy more screen
-          real estate, faster access from your home screen, and improved
-          hardware acceleration for encryption tasks.
+          Run the vault as a standalone application. Enjoy more screen real estate, faster access
+          from your home screen, and improved hardware acceleration for encryption tasks.
         </p>
 
         <div className="mt-auto pt-6">
@@ -76,8 +75,7 @@ export const MobileExperienceCard: React.FC<MobileExperienceCardProps> = ({
                 App is installed on this device
               </div>
               <p className="px-1 text-[10px] text-text/40">
-                Launch the app from your home screen for the full
-                experience.
+                Launch the app from your home screen for the full experience.
               </p>
             </div>
           ) : (
@@ -98,9 +96,7 @@ export const MobileExperienceCard: React.FC<MobileExperienceCardProps> = ({
         </div>
       </div>
 
-      <div
-        className={`${SETTINGS_PANEL} flex flex-col justify-between p-5 sm:p-6`}
-      >
+      <div className={`${SETTINGS_PANEL} flex flex-col justify-between p-5 sm:p-6`}>
         <div className="space-y-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10">
@@ -122,31 +118,23 @@ export const MobileExperienceCard: React.FC<MobileExperienceCardProps> = ({
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-text/90">
                   Share
                 </span>{' '}
-                icon, then select{' '}
-                <span className="font-bold text-text">
-                  "Add to Home Screen"
-                </span>
-                .
+                icon, then select <span className="font-bold text-text">"Add to Home Screen"</span>.
               </p>
             </div>
             <div className="flex items-start gap-3">
               <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-text/30" />
               <p className="text-sm text-text/60">
-                <span className="font-bold text-text">Android:</span> Tap
-                the{' '}
+                <span className="font-bold text-text">Android:</span> Tap the{' '}
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-text/90">
                   ⋮
                 </span>{' '}
-                menu, then choose{' '}
-                <span className="font-bold text-text">"Install App"</span>
-                .
+                menu, then choose <span className="font-bold text-text">"Install App"</span>.
               </p>
             </div>
             <div className="flex items-start gap-3">
               <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-text/30" />
               <p className="text-sm text-text/60">
-                <span className="font-bold text-text">Desktop:</span> Look
-                for the{' '}
+                <span className="font-bold text-text">Desktop:</span> Look for the{' '}
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-text/90">
                   Install
                 </span>{' '}
@@ -164,4 +152,4 @@ export const MobileExperienceCard: React.FC<MobileExperienceCardProps> = ({
       </div>
     </div>
   </SectionCard>
-)
+);

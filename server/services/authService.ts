@@ -16,16 +16,16 @@ import { createNotification } from './notificationService.ts';
 const hashRefreshToken = (token: string): string =>
   createHash('sha256').update(token).digest('hex');
 
-const FALLBACK_DEVICE_ID = 'unknown-device'
+const FALLBACK_DEVICE_ID = 'unknown-device';
 
 const normalizeSessionDeviceId = (value: unknown): string => {
   if (typeof value !== 'string') {
-    return FALLBACK_DEVICE_ID
+    return FALLBACK_DEVICE_ID;
   }
 
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : FALLBACK_DEVICE_ID
-}
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : FALLBACK_DEVICE_ID;
+};
 
 const buildMetaState = (meta: UserDocument['meta']) => ({
   registeredAt: meta?.registeredAt ?? new Date(),
@@ -52,7 +52,7 @@ export const issueUserSession = (
     userAgent?: string;
     existingSessionId?: string;
     deviceName?: string;
-  },
+  }
 ): {
   sessionId: string;
   accessToken: string;
@@ -62,7 +62,7 @@ export const issueUserSession = (
   const now = new Date();
   const expiresAt = new Date(now.getTime() + getRefreshCookieMaxAgeMs());
   const sessionId = input.existingSessionId || randomUUID();
-  const normalizedDeviceId = normalizeSessionDeviceId(input.deviceId)
+  const normalizedDeviceId = normalizeSessionDeviceId(input.deviceId);
 
   const refreshToken = createRefreshToken({
     sub: user._id.toString(),
@@ -70,9 +70,9 @@ export const issueUserSession = (
     sessionId,
     deviceId: normalizedDeviceId,
   });
-  
+
   const refreshTokenHash = hashRefreshToken(refreshToken);
-  
+
   const accessToken = createAccessToken({
     sub: user._id.toString(),
     username: user.username,
@@ -100,8 +100,8 @@ export const issueUserSession = (
 
   // Ensure sessions array exists
   if (!user.sessions) user.sessions = [] as any;
-  
-  const sessionIndex = user.sessions.findIndex(s => s.sessionId === sessionId);
+
+  const sessionIndex = user.sessions.findIndex((s) => s.sessionId === sessionId);
   if (sessionIndex >= 0) {
     user.sessions[sessionIndex] = sessionData as any;
   } else {
@@ -121,21 +121,21 @@ export const authenticateUser = async (input: {
   ipAddress?: string;
   userAgent?: string;
 }) => {
-  const deviceId = normalizeSessionDeviceId(input.deviceId)
+  const deviceId = normalizeSessionDeviceId(input.deviceId);
   const user = await User.findOne({ username: input.username.toLowerCase() })
     .select('+password')
     .exec();
 
   if (!user) {
-    throw AppError.unauthorized("Invalid username or password.", "INVALID_CREDENTIALS");
+    throw AppError.unauthorized('Invalid username or password.', 'INVALID_CREDENTIALS');
   }
 
   // Decrypt the stored scrypt hash (it was stored encrypted in DB)
   const storedHash = decryptText(user.password as any);
-  
+
   // Compare with provided password
   const isValid = await comparePassword(input.password, storedHash);
-  
+
   if (!isValid) {
     // Log failed attempt for existing user
     if (!user.loginHistory) user.loginHistory = [] as any;
@@ -158,8 +158,8 @@ export const authenticateUser = async (input: {
       lastFailedLoginIp: input.ipAddress ?? 'unknown',
     };
     await user.save();
-    
-    throw AppError.unauthorized("Invalid username or password.", "INVALID_CREDENTIALS");
+
+    throw AppError.unauthorized('Invalid username or password.', 'INVALID_CREDENTIALS');
   }
 
   // Check if 2FA is enabled
@@ -233,8 +233,8 @@ export const authenticateUser = async (input: {
     user: {
       id: user._id,
       username: user.username,
-      meta: user.meta
-    }
+      meta: user.meta,
+    },
   };
 };
 
@@ -250,26 +250,26 @@ export const registerUser = async (input: {
   userAgent?: string;
   websiteMetadata?: any;
 }) => {
-  const deviceId = normalizeSessionDeviceId(input.deviceId)
+  const deviceId = normalizeSessionDeviceId(input.deviceId);
   const { username, password, masterKey } = input;
-  logger.info("Registration attempt started", { username });
-  
+  logger.info('Registration attempt started', { username });
+
   const existing = await User.findOne({ username: username.toLowerCase() });
   if (existing) {
-    logger.warn("Registration rejected - username exists", { username });
-    throw AppError.conflict("Username already exists.", "USER_EXISTS");
+    logger.warn('Registration rejected - username exists', { username });
+    throw AppError.conflict('Username already exists.', 'USER_EXISTS');
   }
 
   // 1. Hash and then Encrypt the password (as per vault protocol)
-  logger.debug("Hashing and encrypting password", { username });
+  logger.debug('Hashing and encrypting password', { username });
   const hashedPassword = await hashPassword(password);
   const encryptedPassword = encryptText(hashedPassword);
 
   // 2. Encrypt the master key
-  logger.debug("Encrypting master key", { username });
+  logger.debug('Encrypting master key', { username });
   const encryptedMasterKey = encryptText(masterKey);
-  
-  logger.debug("Creating new user document", { username });
+
+  logger.debug('Creating new user document', { username });
   const user = new User({
     username: username.toLowerCase(),
     password: encryptedPassword,
@@ -285,23 +285,35 @@ export const registerUser = async (input: {
       accountStatus: 'active',
       profileVersion: 2,
       masterKey: encryptedMasterKey, // Backup
-      masterKeyHash: encryptText(await hashPassword(masterKey))
+      masterKeyHash: encryptText(await hashPassword(masterKey)),
     },
-    loginHistory: [{
-      loggedInAt: new Date(),
-      ipAddress: input.ipAddress ?? 'unknown',
-      userAgent: input.userAgent ?? 'unknown',
-      deviceId,
-      status: 'SUCCESS',
-      requestContext: {
+    loginHistory: [
+      {
+        loggedInAt: new Date(),
         ipAddress: input.ipAddress ?? 'unknown',
         userAgent: input.userAgent ?? 'unknown',
+        deviceId,
+        status: 'SUCCESS',
+        requestContext: {
+          ipAddress: input.ipAddress ?? 'unknown',
+          userAgent: input.userAgent ?? 'unknown',
+        },
       },
-    }],
+    ],
     vault: {
-      photos: [], videos: [], audios: [], documents: [], otherFiles: [],
-      notes: [], chats: [], todos: [], passwords: [], secretKeys: [], location: [], contact: []
-    }
+      photos: [],
+      videos: [],
+      audios: [],
+      documents: [],
+      otherFiles: [],
+      notes: [],
+      chats: [],
+      todos: [],
+      passwords: [],
+      secretKeys: [],
+      location: [],
+      contact: [],
+    },
   });
 
   const session = issueUserSession(user, {
@@ -310,11 +322,10 @@ export const registerUser = async (input: {
     userAgent: input.userAgent,
   });
 
-  logger.debug("Saving user document to database", { username });
+  logger.debug('Saving user document to database', { username });
   await user.save();
-  logger.info("User document saved successfully", { username });
+  logger.info('User document saved successfully', { username });
   await initializeDefaultUserFolders(user._id.toString(), user.username);
-
 
   return {
     token: session.accessToken,
@@ -323,8 +334,8 @@ export const registerUser = async (input: {
     user: {
       id: user._id,
       username: user.username,
-      meta: user.meta
+      meta: user.meta,
     },
-    created: true
+    created: true,
   };
 };

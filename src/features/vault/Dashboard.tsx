@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import {
   Image,
   Video,
@@ -17,17 +17,17 @@ import {
   MessageSquareText,
   CreditCard,
   Wifi,
-} from 'lucide-react'
-import { ItemActivityBarChart } from '../../components/vault/ItemActivityBarChart'
-import { useVaultStore } from '../../store/vaultStore'
-import { useActivityStore } from '../../store/activityStore'
-import { useShallow } from 'zustand/react/shallow'
-import { DashboardHeader } from './components/Dashboard/DashboardHeader'
-import { DashboardStats } from './components/Dashboard/DashboardStats'
-import { DashboardSecurity } from './components/Dashboard/DashboardSecurity'
+} from 'lucide-react';
+import { ItemActivityBarChart } from '../../components/vault/ItemActivityBarChart';
+import { useVaultStore } from '../../store/vaultStore';
+import { useActivityStore } from '../../store/activityStore';
+import { useShallow } from 'zustand/react/shallow';
+import { DashboardHeader } from './components/Dashboard/DashboardHeader';
+import { DashboardStats } from './components/Dashboard/DashboardStats';
+import { DashboardSecurity } from './components/Dashboard/DashboardSecurity';
 // import { PlaybackInsights } from './components/Dashboard/PlaybackInsights'
-import { mapItemTypeToTab } from '../../lib/global-navigation'
-import { VaultItem as VaultStorageItem } from '../../lib/storage'
+import { mapItemTypeToTab } from '../../lib/global-navigation';
+import { VaultItem as VaultStorageItem } from '../../lib/storage';
 // import { SETTINGS_SURFACE } from './components/SettingsVault/Utils'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -48,9 +48,9 @@ const ITEM_TYPES = {
   CARD: 'card',
   IDENTITY: 'identity',
   WIFI: 'wifi',
-} as const
+} as const;
 
-type DashboardStatId = VaultStorageItem['type']
+type DashboardStatId = VaultStorageItem['type'];
 
 // ─── Security Scoring ─────────────────────────────────────────────────────────
 
@@ -63,39 +63,29 @@ const SECURITY_WEIGHTS = {
   AUTO_LOCK_PENALTY: 10,
   MAX_SCORE: 100,
   MIN_SCORE: 0,
-} as const
+} as const;
 
-type VaultItem = { type: string }
+type VaultItem = { type: string };
 type Preferences = {
-  isAutoLockEnabled: boolean
-  isClipboardAutoClearEnabled: boolean
-}
+  isAutoLockEnabled: boolean;
+  isClipboardAutoClearEnabled: boolean;
+};
 
-const calculateSecurityScore = (
-  items: VaultItem[],
-  preferences: Preferences,
-) => {
-  let score = SECURITY_WEIGHTS.BASE_SCORE
+const calculateSecurityScore = (items: VaultItem[], preferences: Preferences) => {
+  let score = SECURITY_WEIGHTS.BASE_SCORE;
   score += Math.min(
     SECURITY_WEIGHTS.MAX_COMPLEXITY_BONUS,
-    items.length * SECURITY_WEIGHTS.POINTS_PER_ITEM,
-  )
-  if (preferences.isAutoLockEnabled) score += SECURITY_WEIGHTS.AUTO_LOCK_BONUS
-  if (preferences.isClipboardAutoClearEnabled)
-    score += SECURITY_WEIGHTS.CLIPBOARD_BONUS
-  if (!preferences.isAutoLockEnabled)
-    score -= SECURITY_WEIGHTS.AUTO_LOCK_PENALTY
-  return Math.min(
-    SECURITY_WEIGHTS.MAX_SCORE,
-    Math.max(SECURITY_WEIGHTS.MIN_SCORE, score),
-  )
-}
+    items.length * SECURITY_WEIGHTS.POINTS_PER_ITEM
+  );
+  if (preferences.isAutoLockEnabled) score += SECURITY_WEIGHTS.AUTO_LOCK_BONUS;
+  if (preferences.isClipboardAutoClearEnabled) score += SECURITY_WEIGHTS.CLIPBOARD_BONUS;
+  if (!preferences.isAutoLockEnabled) score -= SECURITY_WEIGHTS.AUTO_LOCK_PENALTY;
+  return Math.min(SECURITY_WEIGHTS.MAX_SCORE, Math.max(SECURITY_WEIGHTS.MIN_SCORE, score));
+};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({
-  onNavigate,
-}) => {
+export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
   const {
     items,
     username,
@@ -113,11 +103,11 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({
       syncStatus: state.syncStatus,
       lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
       lastSyncError: state.lastSyncError,
-    })),
-  )
+    }))
+  );
 
-  const recentActivityCount = useActivityStore((state) => state.count)
-  const [showHealthDetails, setShowHealthDetails] = React.useState(false)
+  const recentActivityCount = useActivityStore((state) => state.count);
+  const [showHealthDetails, setShowHealthDetails] = React.useState(false);
 
   // ── Derived: item counts ──────────────────────────────────────────────────
 
@@ -139,18 +129,14 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({
       [ITEM_TYPES.IDENTITY]: 0,
       [ITEM_TYPES.WIFI]: 0,
       media: 0,
-    }
-    const mediaTypes = new Set<string>([
-      ITEM_TYPES.PHOTO,
-      ITEM_TYPES.VIDEO,
-      ITEM_TYPES.AUDIO,
-    ])
+    };
+    const mediaTypes = new Set<string>([ITEM_TYPES.PHOTO, ITEM_TYPES.VIDEO, ITEM_TYPES.AUDIO]);
     items.forEach((item) => {
-      if (item.type in counts) counts[item.type]++
-      if (mediaTypes.has(item.type)) counts.media++
-    })
-    return counts
-  }, [items])
+      if (item.type in counts) counts[item.type]++;
+      if (mediaTypes.has(item.type)) counts.media++;
+    });
+    return counts;
+  }, [items]);
 
   // ── Derived: stats ────────────────────────────────────────────────────────
 
@@ -263,40 +249,37 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({
           count: itemCounts[ITEM_TYPES.FILE],
         },
       ] as Array<{
-        id: DashboardStatId
-        label: string
-        icon: React.ElementType
-        color: string
-        count: number
+        id: DashboardStatId;
+        label: string;
+        icon: React.ElementType;
+        color: string;
+        count: number;
       }>,
-    [itemCounts],
-  )
+    [itemCounts]
+  );
 
   // ── Derived: security score ───────────────────────────────────────────────
 
   const securityScore = React.useMemo(
     () => calculateSecurityScore(items, preferences),
-    [items, preferences],
-  )
+    [items, preferences]
+  );
 
   // ── Derived: sync summary ─────────────────────────────────────────────────
 
   const syncSummary = React.useMemo(() => {
     if (syncStatus === 'success' && lastSuccessfulSyncAt) {
-      return `Last synced ${new Date(lastSuccessfulSyncAt).toLocaleString(
-        'en-IN',
-        {
-          day: '2-digit',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-        },
-      )}`
+      return `Last synced ${new Date(lastSuccessfulSyncAt).toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      })}`;
     }
-    if (syncStatus === 'syncing') return 'Sync currently running'
-    if (syncStatus === 'error') return lastSyncError || 'Sync needs attention'
-    return 'No successful sync recorded'
-  }, [syncStatus, lastSuccessfulSyncAt, lastSyncError])
+    if (syncStatus === 'syncing') return 'Sync currently running';
+    if (syncStatus === 'error') return lastSyncError || 'Sync needs attention';
+    return 'No successful sync recorded';
+  }, [syncStatus, lastSuccessfulSyncAt, lastSyncError]);
 
   // ── Derived: security status rows ─────────────────────────────────────────
 
@@ -334,8 +317,8 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({
           active: preferences.isAutoLockEnabled,
         },
       ] as const,
-    [syncSummary, syncStatus, preferences],
-  )
+    [syncSummary, syncStatus, preferences]
+  );
 
   // ── Derived: vault composition ────────────────────────────────────────────
 
@@ -345,8 +328,8 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({
       { label: 'Other Files', count: itemCounts[ITEM_TYPES.FILE] },
       { label: 'Total Items', count: items.length },
     ],
-    [itemCounts],
-  )
+    [itemCounts]
+  );
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -361,14 +344,10 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({
       />
 
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold text-text sm:text-2xl">
-          Vault Overview
-        </h2>
+        <h2 className="text-2xl font-bold text-text sm:text-2xl">Vault Overview</h2>
         <DashboardStats
           stats={stats}
-          onNavigate={(tab) =>
-            onNavigate(mapItemTypeToTab(tab as DashboardStatId))
-          }
+          onNavigate={(tab) => onNavigate(mapItemTypeToTab(tab as DashboardStatId))}
         />
       </section>
 
@@ -415,5 +394,5 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({
         />
       </section>
     </div>
-  )
-}
+  );
+};

@@ -48,9 +48,7 @@ const assertNonEmptyString = (value: unknown, field: string): string => {
   return value.trim();
 };
 
-function assertLoginCredentials(
-  value: unknown,
-): asserts value is LoginCredentials {
+function assertLoginCredentials(value: unknown): asserts value is LoginCredentials {
   if (!isPlainObject(value)) {
     throw new TypeError('credentials must be an object.');
   }
@@ -58,51 +56,43 @@ function assertLoginCredentials(
   assertNonEmptyString(value.password, 'credentials.password');
 }
 
-function assertRegisterPayload(
-  value: unknown,
-): asserts value is RegisterPayload {
+function assertRegisterPayload(value: unknown): asserts value is RegisterPayload {
   assertLoginCredentials(value);
   const candidate = value as unknown as { masterKey?: unknown };
   assertNonEmptyString(candidate.masterKey, 'userData.masterKey');
 }
 
 export const authApi = {
-  login: async (
-    credentials: LoginCredentials,
-  ): Promise<ApiResponse<AuthSessionPayload>> => {
+  login: async (credentials: LoginCredentials): Promise<ApiResponse<AuthSessionPayload>> => {
     assertLoginCredentials(credentials);
     const { data } = await apiClient.post<ApiResponse<AuthSessionPayload>>(
       '/auth/login',
-      credentials,
+      credentials
     );
     return data;
   },
-  
-  register: async (
-    userData: RegisterPayload,
-  ): Promise<ApiResponse<AuthSessionPayload>> => {
+
+  register: async (userData: RegisterPayload): Promise<ApiResponse<AuthSessionPayload>> => {
     assertRegisterPayload(userData);
     const { data } = await apiClient.post<ApiResponse<AuthSessionPayload>>(
       '/auth/register',
-      userData,
+      userData
     );
     return data;
   },
-  
+
   logout: async (): Promise<ApiResponse<LogoutPayload>> => {
     const { data } = await apiClient.post<ApiResponse<LogoutPayload>>('/auth/logout');
     return data;
   },
-  
+
   getMe: async (): Promise<ApiResponse<AuthProfilePayload>> => {
     const { data } = await apiClient.get<ApiResponse<AuthProfilePayload>>('/auth/me');
     return data;
   },
-  
+
   refreshSession: async (): Promise<ApiResponse<AuthSessionPayload>> => {
-    const { data } = await apiClient.post<ApiResponse<AuthSessionPayload>>(
-      '/auth/refresh',
-    );
+    const { data } = await apiClient.post<ApiResponse<AuthSessionPayload>>('/auth/refresh');
     return data;
-  }
+  },
 };

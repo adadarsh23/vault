@@ -1,15 +1,15 @@
-import express from 'express'
-import { AppError } from '../utils/appError.ts'
-import { logger } from '../utils/logger.ts'
-import { mediaService } from '../services/mediaService.ts'
-import { getClientIp } from '../utils/requestIp.ts'
-import { anomalyDetectionService } from '../services/anomalyDetectionService.ts'
-import { getVaultItemModel } from '../models/vaultItem.ts'
-import { User } from '../models/user.ts'
+import express from 'express';
+import { AppError } from '../utils/appError.ts';
+import { logger } from '../utils/logger.ts';
+import { mediaService } from '../services/mediaService.ts';
+import { getClientIp } from '../utils/requestIp.ts';
+import { anomalyDetectionService } from '../services/anomalyDetectionService.ts';
+import { getVaultItemModel } from '../models/vaultItem.ts';
+import { User } from '../models/user.ts';
 
 /**
  * LicenseServer Controller - Centralized DRM & Key Delivery
- * 
+ *
  * Flow:
  * 1. Player requests license (POST)
  * 2. Authenticate: Verify JWT & User
@@ -18,7 +18,12 @@ import { User } from '../models/user.ts'
  * 5. Delivery: Return encrypted license (never raw keys)
  */
 
-const validateLicensePolicy = async (userId: string, username: string, itemId: string, deviceId?: string) => {
+const validateLicensePolicy = async (
+  userId: string,
+  username: string,
+  itemId: string,
+  deviceId?: string
+) => {
   // 1. Ownership & Existence Check
   const DynamicVaultModel = getVaultItemModel(username);
   const item = await DynamicVaultModel.findOne({ userId, itemId }).lean();
@@ -30,10 +35,16 @@ const validateLicensePolicy = async (userId: string, username: string, itemId: s
   // 2. Device Continuity Check
   if (deviceId) {
     const user = await User.findById(userId).select('sessions').lean();
-    const isDeviceRegistered = user?.sessions?.some(s => s.deviceId === deviceId);
+    const isDeviceRegistered = user?.sessions?.some((s) => s.deviceId === deviceId);
     if (!isDeviceRegistered) {
-      logger.error('Security Alert: License requested from unregistered device', { userId, deviceId });
-      throw AppError.forbidden('Playback not permitted on this device. Please sign in again.', 'DEVICE_UNAUTHORIZED');
+      logger.error('Security Alert: License requested from unregistered device', {
+        userId,
+        deviceId,
+      });
+      throw AppError.forbidden(
+        'Playback not permitted on this device. Please sign in again.',
+        'DEVICE_UNAUTHORIZED'
+      );
     }
   }
 
@@ -52,15 +63,15 @@ export const handleLicenseRequest = async (req: express.Request, res: express.Re
   const uidFromQuery = Array.isArray(q.uid) ? q.uid[0] : q.uid;
   const userIdFromQuery = Array.isArray(q.userId) ? q.userId[0] : q.userId;
   const usernameFromQuery = Array.isArray(q.username) ? q.username[0] : q.username;
-  
+
   // 1. Resolve Identity (Session > Query > Auth Header)
   let userId = (req as any).user?.userId || uidFromQuery || userIdFromQuery;
   let username = (req as any).user?.username || usernameFromQuery;
-  
+
   if (!userId) {
     const authHeader = req.get('Authorization')?.split(' ')[1];
     const authToken = authTokenFromQuery || authHeader;
-    
+
     if (authToken && typeof authToken === 'string' && authToken.split('.').length === 3) {
       try {
         const { verifyAccessToken } = await import('../utils/auth.ts');
@@ -80,8 +91,13 @@ export const handleLicenseRequest = async (req: express.Request, res: express.Re
   }
 
   if (!userId || !username) {
-    logger.warn('License access denied: Identification missing', { itemId, queryKeys: Object.keys(q) });
-    throw AppError.unauthorized('License delivery requires valid user identification (userId and username)');
+    logger.warn('License access denied: Identification missing', {
+      itemId,
+      queryKeys: Object.keys(q),
+    });
+    throw AppError.unauthorized(
+      'License delivery requires valid user identification (userId and username)'
+    );
   }
 
   // Security Intelligence: IP Drift & Anomaly Tracking
@@ -94,7 +110,12 @@ export const handleLicenseRequest = async (req: express.Request, res: express.Re
   // 2. Retrieve Secure Content Key
   const contentKey = await mediaService.getStreamingKey(userId, itemId);
 
-  logger.info(`License delivered [${drmType || 'standard'}]`, { userId, itemId, ip: clientIp, deviceId });
+  logger.info(`License delivered [${drmType || 'standard'}]`, {
+    userId,
+    itemId,
+    ip: clientIp,
+    deviceId,
+  });
 
   /**
    * PROTECTED KEY DELIVERY
@@ -111,7 +132,7 @@ export const handleLicenseRequest = async (req: express.Request, res: express.Re
   // Default to secure CENC response
   return res.json({
     k: contentKey.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, ''),
-    alg: 'A128GCM'
+    alg: 'A128GCM',
   });
 };
 

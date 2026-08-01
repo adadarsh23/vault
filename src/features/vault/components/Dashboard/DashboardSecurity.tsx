@@ -1,49 +1,38 @@
-import React from 'react'
-import {
-  Lock,
-  AlertTriangle,
-  ShieldCheck,
-  Activity,
-  Database,
-} from 'lucide-react'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../../../components/ui/Card'
-import { RecentActivityPanel } from '../../../../components/vault/RecentActivityPanel'
-import { motion } from 'framer-motion'
+import React from 'react';
+import { Lock, AlertTriangle, ShieldCheck, Activity, Database } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/Card';
+import { RecentActivityPanel } from '../../../../components/vault/RecentActivityPanel';
+import { motion } from 'framer-motion';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Tone = 'green' | 'blue' | 'purple' | 'amber' | 'red' | 'slate'
+type Tone = 'green' | 'blue' | 'purple' | 'amber' | 'red' | 'slate';
 
 interface SecurityStatusRow {
-  title: string
-  description: string
-  icon: React.ElementType
-  tone: Tone
-  active: boolean
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  tone: Tone;
+  active: boolean;
 }
 
 interface VaultCompositionItem {
-  label: string
-  count: number
+  label: string;
+  count: number;
 }
 
 interface DashboardSecurityProps {
-  recentActivityCount: number
-  securityStatusRows: readonly SecurityStatusRow[]
-  vaultComposition: VaultCompositionItem[]
-  itemCount: number
-  passwordCount: number
-  allowRestrictedTypes: boolean
-  isAutoLockEnabled: boolean
-  isClipboardAutoClearEnabled: boolean
-  clipboardAutoClearDuration: number
-  syncStatus: string
-  lastSyncError?: string | null
+  recentActivityCount: number;
+  securityStatusRows: readonly SecurityStatusRow[];
+  vaultComposition: VaultCompositionItem[];
+  itemCount: number;
+  passwordCount: number;
+  allowRestrictedTypes: boolean;
+  isAutoLockEnabled: boolean;
+  isClipboardAutoClearEnabled: boolean;
+  clipboardAutoClearDuration: number;
+  syncStatus: string;
+  lastSyncError?: string | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -56,44 +45,44 @@ const getToneClasses = (tone: Tone) => {
         pulse: 'bg-green-500/10',
         icon: 'text-green-400',
         dot: 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]',
-      }
+      };
     case 'blue':
       return {
         shell: 'bg-blue-500/20',
         pulse: 'bg-blue-500/10',
         icon: 'text-blue-400',
         dot: 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]',
-      }
+      };
     case 'purple':
       return {
         shell: 'bg-purple-500/20',
         pulse: 'bg-purple-500/10',
         icon: 'text-purple-400',
         dot: 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]',
-      }
+      };
     case 'amber':
       return {
         shell: 'bg-amber-500/20',
         pulse: 'bg-amber-500/10',
         icon: 'text-amber-400',
         dot: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]',
-      }
+      };
     case 'red':
       return {
         shell: 'bg-red-500/20',
         pulse: 'bg-red-500/10',
         icon: 'text-red-400',
         dot: 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]',
-      }
+      };
     default:
       return {
         shell: 'bg-slate-500/20',
         pulse: 'bg-slate-500/10',
         icon: 'text-slate-300',
         dot: 'bg-slate-400 shadow-[0_0_8px_rgba(148,163,184,0.7)]',
-      }
+      };
   }
-}
+};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -126,8 +115,8 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
           {/* Status rows */}
           <div className="grid grid-cols-1 gap-3">
             {securityStatusRows.map((row, index) => {
-              const tone = getToneClasses(row.tone)
-              const Icon = row.icon
+              const tone = getToneClasses(row.tone);
+              const Icon = row.icon;
 
               return (
                 <div
@@ -156,9 +145,7 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
                       />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-text transition-colors">
-                        {row.title}
-                      </p>
+                      <p className="text-sm font-bold text-text transition-colors">{row.title}</p>
                       <p className="break-words text-[10px] font-medium uppercase tracking-wider text-text/40 transition-colors">
                         {row.description}
                       </p>
@@ -168,7 +155,7 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
                     className={`h-2.5 w-2.5 shrink-0 rounded-full ${tone.dot} transition-all group-hover:scale-125`}
                   />
                 </div>
-              )
+              );
             })}
           </div>
 
@@ -193,9 +180,7 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
                     <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35 transition-colors group-hover:text-text/55">
                       {comp.label}
                     </p>
-                    <p className="text-3xl font-black text-text">
-                      {comp.count}
-                    </p>
+                    <p className="text-3xl font-black text-text">{comp.count}</p>
                   </div>
 
                   {/* <div className="absolute right-4 top-4 flex gap-1 opacity-50 transition-opacity group-hover:opacity-80">
@@ -230,8 +215,8 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
                 >
                   <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
                   <span className="min-w-0 break-words">
-                    Low password density detected. Recommend migrating
-                    additional credentials to entropy-controlled environment.
+                    Low password density detected. Recommend migrating additional credentials to
+                    entropy-controlled environment.
                   </span>
                 </motion.div>
               )}
@@ -243,8 +228,8 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
                 >
                   <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" />
                   <span className="min-w-0 break-words">
-                    Auto-lock protocol deactivated. Critical risk: unauthorized
-                    physical access may compromise vault integrity.
+                    Auto-lock protocol deactivated. Critical risk: unauthorized physical access may
+                    compromise vault integrity.
                   </span>
                 </motion.div>
               )}
@@ -269,8 +254,8 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
               >
                 <ShieldCheck className="h-4 w-4 shrink-0 text-blue-400" />
                 <span className="min-w-0 break-words">
-                  All {itemCount} assets are currently secured in ephemeral
-                  memory with hardware-backed encryption.
+                  All {itemCount} assets are currently secured in ephemeral memory with
+                  hardware-backed encryption.
                 </span>
               </motion.div>
               {allowRestrictedTypes && (
@@ -281,8 +266,8 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
                 >
                   <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
                   <span className="min-w-0 break-words">
-                    Restricted asset types authorized. Enhanced vigilance
-                    recommended during payload ingestion.
+                    Restricted asset types authorized. Enhanced vigilance recommended during payload
+                    ingestion.
                   </span>
                 </motion.div>
               )}
@@ -295,8 +280,7 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
                 >
                   <Lock className="h-4 w-4 shrink-0 text-green-400" />
                   <span className="min-w-0 break-words">
-                    Clipboard sanitation active. Auto-purge cycle:{' '}
-                    {clipboardAutoClearDuration}s.
+                    Clipboard sanitation active. Auto-purge cycle: {clipboardAutoClearDuration}s.
                   </span>
                 </motion.div>
               ) : (
@@ -307,8 +291,7 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
                 >
                   <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" />
                   <span className="min-w-0 break-words">
-                    Clipboard buffer exposed. Manual sanitation or protocol
-                    activation required.
+                    Clipboard buffer exposed. Manual sanitation or protocol activation required.
                   </span>
                 </motion.div>
               )}
@@ -339,5 +322,5 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};

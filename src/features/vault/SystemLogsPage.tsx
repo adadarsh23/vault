@@ -1,14 +1,14 @@
-import React, { useState } from 'react'
-import { ArrowLeft, ClipboardList } from 'lucide-react'
-import { Button } from '../../components/ui/Button'
-import { SystemLogsCard } from './components/SettingsVault/SystemLogsCard'
+import React, { useState } from 'react';
+import { ArrowLeft, ClipboardList } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { SystemLogsCard } from './components/SettingsVault/SystemLogsCard';
 
 interface SystemLogsPageProps {
-  onBack: () => void
+  onBack: () => void;
 }
 
 export const SystemLogsPage: React.FC<SystemLogsPageProps> = ({ onBack }) => {
-  const [showLogs, setShowLogs] = useState(false)
+  const [showLogs, setShowLogs] = useState(false);
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-bg px-4 py-5 text-text sm:px-6 sm:py-6 lg:px-8 lg:py-8">
@@ -33,10 +33,7 @@ export const SystemLogsPage: React.FC<SystemLogsPageProps> = ({ onBack }) => {
               Back
             </Button>
             {!showLogs && (
-              <Button
-                onClick={() => setShowLogs(true)}
-                className="h-11 w-full rounded-2xl"
-              >
+              <Button onClick={() => setShowLogs(true)} className="h-11 w-full rounded-2xl">
                 <ClipboardList className="mr-2 h-4 w-4" />
                 Open
               </Button>
@@ -47,7 +44,7 @@ export const SystemLogsPage: React.FC<SystemLogsPageProps> = ({ onBack }) => {
         {showLogs && <SystemLogsCard />}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SystemLogsPage
+export default SystemLogsPage;

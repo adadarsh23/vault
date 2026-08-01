@@ -19,9 +19,9 @@ import { isAllowedCorsOrigin } from '../utils/cors.ts';
 const STORAGE_ROOT = path.join(process.cwd(), 'vault-storage');
 
 const toPositiveInt = (raw: string | undefined, fallback: number): number => {
-  const parsed = Number.parseInt(raw || '', 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
-}
+  const parsed = Number.parseInt(raw || '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
 
 // Monitoring rate limit for key server - Optimized for ABR
 export const keyRateLimit = rateLimit({
@@ -29,26 +29,26 @@ export const keyRateLimit = rateLimit({
   max: 150, // Higher burst allowance for ABR key requests
   standardHeaders: true,
   legacyHeaders: false,
-  message: 'ABR Key burst detected. Throttling for 1 minute.'
+  message: 'ABR Key burst detected. Throttling for 1 minute.',
 });
 
 // Simple In-Memory Cache for Streaming Keys - Aligned with 2m Token TTL
-const keyCache = new Map<string, { key: Buffer, expires: number }>();
+const keyCache = new Map<string, { key: Buffer; expires: number }>();
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 const MAX_KEY_CACHE_ENTRIES = Math.max(
   100,
-  toPositiveInt(process.env.MEDIA_KEY_CACHE_MAX_ENTRIES, 2000),
+  toPositiveInt(process.env.MEDIA_KEY_CACHE_MAX_ENTRIES, 2000)
 );
 const CACHE_SWEEP_INTERVAL_MS = Math.max(
   30_000,
-  toPositiveInt(process.env.MEDIA_CACHE_SWEEP_INTERVAL_MS, 60_000),
+  toPositiveInt(process.env.MEDIA_CACHE_SWEEP_INTERVAL_MS, 60_000)
 );
 
 const getSingleQueryValue = (value: unknown): string | undefined =>
-  typeof value === 'string' ? value : Array.isArray(value) ? value[0] : undefined
+  typeof value === 'string' ? value : Array.isArray(value) ? value[0] : undefined;
 
 const getSingleRouteParam = (value: string | string[] | undefined): string | undefined =>
-  typeof value === 'string' ? value : Array.isArray(value) ? value[0] : undefined
+  typeof value === 'string' ? value : Array.isArray(value) ? value[0] : undefined;
 
 const mimeMap: Record<string, string> = {
   '.jpg': 'image/jpeg',
@@ -63,186 +63,184 @@ const mimeMap: Record<string, string> = {
   '.m4v': 'video/x-m4v',
   '.mp3': 'audio/mpeg',
   '.wav': 'audio/wav',
-  '.ogg': 'audio/ogg'
+  '.ogg': 'audio/ogg',
 };
 
-const SIGNED_URL_WINDOW_MS = 60_000
+const SIGNED_URL_WINDOW_MS = 60_000;
 const SIGNED_URL_MAX_PER_WINDOW = Math.max(
   10,
-  toPositiveInt(process.env.SIGNED_URL_MAX_PER_MINUTE, 80),
-)
-const signedUrlCounters = new Map<string, { count: number; resetAt: number }>()
+  toPositiveInt(process.env.SIGNED_URL_MAX_PER_MINUTE, 80)
+);
+const signedUrlCounters = new Map<string, { count: number; resetAt: number }>();
 const MAX_SIGNED_URL_COUNTER_ENTRIES = Math.max(
   SIGNED_URL_MAX_PER_WINDOW,
-  toPositiveInt(process.env.SIGNED_URL_COUNTER_MAX_ENTRIES, 5000),
-)
+  toPositiveInt(process.env.SIGNED_URL_COUNTER_MAX_ENTRIES, 5000)
+);
 const MAX_MEDIA_RANGE_BYTES = Math.max(
   256 * 1024,
-  toPositiveInt(process.env.MEDIA_MAX_RANGE_BYTES, 4 * 1024 * 1024),
-)
+  toPositiveInt(process.env.MEDIA_MAX_RANGE_BYTES, 4 * 1024 * 1024)
+);
 
-const trimMapToMaxEntries = <T>(
-  map: Map<string, T>,
-  maxEntries: number,
-): void => {
+const trimMapToMaxEntries = <T>(map: Map<string, T>, maxEntries: number): void => {
   while (map.size > maxEntries) {
-    const oldestKey = map.keys().next().value
+    const oldestKey = map.keys().next().value;
     if (!oldestKey) {
-      break
+      break;
     }
-    map.delete(oldestKey)
+    map.delete(oldestKey);
   }
-}
+};
 
 const purgeExpiredKeyCacheEntries = (now = Date.now()): void => {
   for (const [cacheKey, entry] of keyCache.entries()) {
     if (entry.expires <= now) {
-      keyCache.delete(cacheKey)
+      keyCache.delete(cacheKey);
     }
   }
-}
+};
 
 const purgeExpiredSignedUrlCounters = (now = Date.now()): void => {
   for (const [counterKey, counter] of signedUrlCounters.entries()) {
     if (counter.resetAt <= now) {
-      signedUrlCounters.delete(counterKey)
+      signedUrlCounters.delete(counterKey);
     }
   }
-}
+};
 
 const parseSingleByteRange = (
   requestedRange: string,
-  fileSize: number,
+  fileSize: number
 ): { start: number; end: number } | null => {
-  if (!requestedRange.startsWith('bytes=')) return null
-  const [rawStart, rawEnd] = requestedRange.slice('bytes='.length).split('-')
+  if (!requestedRange.startsWith('bytes=')) return null;
+  const [rawStart, rawEnd] = requestedRange.slice('bytes='.length).split('-');
 
-  let start: number
-  let end: number
+  let start: number;
+  let end: number;
 
   if (!rawStart && rawEnd) {
-    const suffixLength = Number.parseInt(rawEnd, 10)
-    if (!Number.isFinite(suffixLength) || suffixLength <= 0) return null
-    const normalizedLength = Math.min(suffixLength, MAX_MEDIA_RANGE_BYTES, fileSize)
-    start = Math.max(0, fileSize - normalizedLength)
-    end = fileSize - 1
+    const suffixLength = Number.parseInt(rawEnd, 10);
+    if (!Number.isFinite(suffixLength) || suffixLength <= 0) return null;
+    const normalizedLength = Math.min(suffixLength, MAX_MEDIA_RANGE_BYTES, fileSize);
+    start = Math.max(0, fileSize - normalizedLength);
+    end = fileSize - 1;
   } else {
-    start = Number.parseInt(rawStart, 10)
-    if (!Number.isFinite(start) || start < 0 || start >= fileSize) return null
+    start = Number.parseInt(rawStart, 10);
+    if (!Number.isFinite(start) || start < 0 || start >= fileSize) return null;
     if (!rawEnd) {
-      end = Math.min(start + MAX_MEDIA_RANGE_BYTES - 1, fileSize - 1)
+      end = Math.min(start + MAX_MEDIA_RANGE_BYTES - 1, fileSize - 1);
     } else {
-      const parsedEnd = Number.parseInt(rawEnd, 10)
-      if (!Number.isFinite(parsedEnd) || parsedEnd < start) return null
-      end = Math.min(parsedEnd, fileSize - 1)
+      const parsedEnd = Number.parseInt(rawEnd, 10);
+      if (!Number.isFinite(parsedEnd) || parsedEnd < start) return null;
+      end = Math.min(parsedEnd, fileSize - 1);
     }
   }
 
   if (end - start + 1 > MAX_MEDIA_RANGE_BYTES) {
-    end = Math.min(start + MAX_MEDIA_RANGE_BYTES - 1, fileSize - 1)
+    end = Math.min(start + MAX_MEDIA_RANGE_BYTES - 1, fileSize - 1);
   }
-  if (end < start) return null
-  return { start, end }
-}
+  if (end < start) return null;
+  return { start, end };
+};
 
 const upsertKeyCache = (cacheKey: string, key: Buffer): void => {
-  const now = Date.now()
-  purgeExpiredKeyCacheEntries(now)
-  keyCache.set(cacheKey, { key, expires: now + CACHE_TTL })
-  trimMapToMaxEntries(keyCache, MAX_KEY_CACHE_ENTRIES)
-}
+  const now = Date.now();
+  purgeExpiredKeyCacheEntries(now);
+  keyCache.set(cacheKey, { key, expires: now + CACHE_TTL });
+  trimMapToMaxEntries(keyCache, MAX_KEY_CACHE_ENTRIES);
+};
 
 const enforceSignedUrlRateLimit = (userId: string) => {
-  const now = Date.now()
-  purgeExpiredSignedUrlCounters(now)
-  trimMapToMaxEntries(signedUrlCounters, MAX_SIGNED_URL_COUNTER_ENTRIES)
+  const now = Date.now();
+  purgeExpiredSignedUrlCounters(now);
+  trimMapToMaxEntries(signedUrlCounters, MAX_SIGNED_URL_COUNTER_ENTRIES);
 
-  const current = signedUrlCounters.get(userId)
+  const current = signedUrlCounters.get(userId);
   if (!current || current.resetAt <= now) {
-    signedUrlCounters.set(userId, { count: 1, resetAt: now + SIGNED_URL_WINDOW_MS })
-    return
+    signedUrlCounters.set(userId, { count: 1, resetAt: now + SIGNED_URL_WINDOW_MS });
+    return;
   }
   if (current.count >= SIGNED_URL_MAX_PER_WINDOW) {
-    throw AppError.forbidden('Signed URL rate limit exceeded. Please retry shortly.', 'SIGNED_URL_RATE_LIMIT')
+    throw AppError.forbidden(
+      'Signed URL rate limit exceeded. Please retry shortly.',
+      'SIGNED_URL_RATE_LIMIT'
+    );
   }
-  current.count += 1
-  signedUrlCounters.set(userId, current)
-}
+  current.count += 1;
+  signedUrlCounters.set(userId, current);
+};
 
 const cacheSweepTimer = setInterval(() => {
-  const now = Date.now()
-  purgeExpiredKeyCacheEntries(now)
-  purgeExpiredSignedUrlCounters(now)
-}, CACHE_SWEEP_INTERVAL_MS)
-cacheSweepTimer.unref()
+  const now = Date.now();
+  purgeExpiredKeyCacheEntries(now);
+  purgeExpiredSignedUrlCounters(now);
+}, CACHE_SWEEP_INTERVAL_MS);
+cacheSweepTimer.unref();
 
 const isLikelyBrowserNavigation = (req: express.Request) => {
-  const secFetchDest = String(req.get('sec-fetch-dest') || '').toLowerCase()
-  const secFetchMode = String(req.get('sec-fetch-mode') || '').toLowerCase()
-  return (
-    secFetchDest === 'document' ||
-    secFetchDest === 'iframe' ||
-    secFetchMode === 'navigate'
-  )
-}
+  const secFetchDest = String(req.get('sec-fetch-dest') || '').toLowerCase();
+  const secFetchMode = String(req.get('sec-fetch-mode') || '').toLowerCase();
+  return secFetchDest === 'document' || secFetchDest === 'iframe' || secFetchMode === 'navigate';
+};
 
 const enforcePlaybackRequestContext = (req: express.Request) => {
   if (isLikelyBrowserNavigation(req)) {
     throw AppError.forbidden(
       'Direct navigation to media URLs is not allowed.',
-      'DIRECT_MEDIA_NAV_BLOCKED',
-    )
+      'DIRECT_MEDIA_NAV_BLOCKED'
+    );
   }
-}
+};
 
 const normalizeOrigin = (value: string | undefined): string | null => {
-  if (!value) return null
+  if (!value) return null;
   try {
-    return new URL(value).origin
+    return new URL(value).origin;
   } catch {
-    return null
+    return null;
   }
-}
+};
 
 const enforceTrustedMediaOrigin = (req: express.Request) => {
   if (process.env.NODE_ENV === 'test') {
-    return
+    return;
   }
-  const origin = normalizeOrigin(req.get('origin'))
-  const refererOrigin = normalizeOrigin(req.get('referer'))
-  const candidate = origin || refererOrigin
+  const origin = normalizeOrigin(req.get('origin'));
+  const refererOrigin = normalizeOrigin(req.get('referer'));
+  const candidate = origin || refererOrigin;
   if (!candidate) {
     throw AppError.forbidden(
       'Origin or Referer is required for media access.',
-      'MEDIA_ORIGIN_REQUIRED',
-    )
+      'MEDIA_ORIGIN_REQUIRED'
+    );
   }
   if (!isAllowedCorsOrigin(candidate)) {
-    throw AppError.forbidden(
-      'Media origin is not allowed.',
-      'MEDIA_ORIGIN_FORBIDDEN',
-    )
+    throw AppError.forbidden('Media origin is not allowed.', 'MEDIA_ORIGIN_FORBIDDEN');
   }
-}
+};
 
 const ensureUploadIsActive = (item: any) => {
   if (process.env.NODE_ENV === 'test') {
-    return
+    return;
   }
-  const scanStatus = item?.metadata?.uploadSecurity?.scanStatus
+  const scanStatus = item?.metadata?.uploadSecurity?.scanStatus;
   if (!scanStatus || scanStatus !== 'active') {
     throw AppError.forbidden(
       'File is quarantined or pending security scan.',
-      'FILE_QUARANTINED_OR_PENDING_SCAN',
-    )
+      'FILE_QUARANTINED_OR_PENDING_SCAN'
+    );
   }
-}
+};
 
 /**
  * Universal Resilient Media Access Validation
  * Resolves User ID from any available sink and verifies HMAC signature
  */
-const validateMediaAccess = async (req: express.Request, passedUserId: string | undefined, itemId: string, action: string = 'stream') => {
+const validateMediaAccess = async (
+  req: express.Request,
+  passedUserId: string | undefined,
+  itemId: string,
+  action: string = 'stream'
+) => {
   const q = req.query as any;
   const clientIp = getClientIp(req);
 
@@ -257,10 +255,8 @@ const validateMediaAccess = async (req: express.Request, passedUserId: string | 
   if (!resolvedUserId) {
     const authHeader = req.get('Authorization')?.split(' ')[1];
     const authToken =
-      getSingleQueryValue(q.auth_token) ||
-      getSingleQueryValue(q.token) ||
-      authHeader;
-    
+      getSingleQueryValue(q.auth_token) || getSingleQueryValue(q.token) || authHeader;
+
     if (authToken && typeof authToken === 'string' && authToken.includes('.')) {
       try {
         const payload = verifyAccessToken(authToken);
@@ -268,7 +264,7 @@ const validateMediaAccess = async (req: express.Request, passedUserId: string | 
       } catch (e) {
         // Only log if it's actually a JWT-like string
         if (authToken.split('.').length === 3) {
-          logger.warn('Token identification failed in media access helper:', { 
+          logger.warn('Token identification failed in media access helper:', {
             error: (e as Error).message,
             tokenFingerprint: getTokenFingerprint(authToken),
           });
@@ -278,19 +274,22 @@ const validateMediaAccess = async (req: express.Request, passedUserId: string | 
   }
 
   if (!resolvedUserId) {
-    logger.warn('Media access denied: Identification missing', { 
-      itemId, 
+    logger.warn('Media access denied: Identification missing', {
+      itemId,
       queryKeys: Object.keys(q),
       uidValue: q.uid,
-      hasAuthHeader: !!req.get('Authorization')
+      hasAuthHeader: !!req.get('Authorization'),
     });
-    throw AppError.unauthorized('User identification required for secure media playback.', 'AUTH_REQUIRED');
+    throw AppError.unauthorized(
+      'User identification required for secure media playback.',
+      'AUTH_REQUIRED'
+    );
   }
 
   // Security Intelligence tracking
   anomalyDetectionService.trackMediaRequest(resolvedUserId, itemId, clientIp);
   anomalyDetectionService.trackIpDrift(resolvedUserId, clientIp);
-  
+
   // 2. Verify Signature
   const { token, expires, ip: tokenIp, sid: tokenSid, dev: deviceHash } = q;
 
@@ -324,11 +323,16 @@ const validateMediaAccess = async (req: express.Request, passedUserId: string | 
     clientIp: clientIp,
     originalIp: getSingleQueryValue(tokenIp),
     sessionId: getSingleQueryValue(tokenSid),
-    deviceHash: getSingleQueryValue(deviceHash)
+    deviceHash: getSingleQueryValue(deviceHash),
   });
 
   if (!isValid) {
-    logger.warn('Unauthorized media access (Signature Failure)', { userId: resolvedUserId, itemId, clientIp, action });
+    logger.warn('Unauthorized media access (Signature Failure)', {
+      userId: resolvedUserId,
+      itemId,
+      clientIp,
+      action,
+    });
     throw AppError.forbidden('Invalid, expired, or bound access token', 'ACCESS_DENIED');
   }
 
@@ -339,9 +343,9 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
   const itemId = getSingleRouteParam(req.params.itemId);
   const variant = getSingleRouteParam(req.params.variant);
   if (!itemId) throw AppError.badRequest('itemId is required.', 'ITEM_REQUIRED');
-  enforcePlaybackRequestContext(req)
-  enforceTrustedMediaOrigin(req)
-  
+  enforcePlaybackRequestContext(req);
+  enforceTrustedMediaOrigin(req);
+
   // Early CORS/CORP header setting
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
@@ -350,13 +354,12 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
 
   const username = (req as any).user?.username;
   if (!username) throw AppError.unauthorized('Username required for isolated vault access');
-  
+
   const DynamicVaultModel = getVaultItemModel(username);
   let item = await DynamicVaultModel.findOne({ userId: resolvedUserId, itemId });
-  
 
   if (!item || !item.file || !item.file.filePath) throw AppError.notFound('Media item not found');
-  ensureUploadIsActive(item)
+  ensureUploadIsActive(item);
 
   // Robust path resolution (Absolute -> Relative fallback)
   let filePath = item.file.filePath;
@@ -365,13 +368,19 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
     const fileName = path.basename(filePath);
     const category = item.category || 'other-files';
     const relativePath = path.join(STORAGE_ROOT, resolvedUserId.toString(), category, fileName);
-    
+
     if (fs.existsSync(relativePath)) {
       filePath = relativePath;
     } else {
       // Try with legacy plural categories if singular failed
-      const legacyCategory = category === 'photo' ? 'photos' : (category === 'video' ? 'videos' : category);
-      const legacyPath = path.join(STORAGE_ROOT, resolvedUserId.toString(), legacyCategory, fileName);
+      const legacyCategory =
+        category === 'photo' ? 'photos' : category === 'video' ? 'videos' : category;
+      const legacyPath = path.join(
+        STORAGE_ROOT,
+        resolvedUserId.toString(),
+        legacyCategory,
+        fileName
+      );
       if (fs.existsSync(legacyPath)) {
         filePath = legacyPath;
       }
@@ -383,7 +392,10 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
   if (!variant) {
-    const playlist = await mediaService.generateMasterPlaylist(itemId, req.originalUrl.split('?')[1]);
+    const playlist = await mediaService.generateMasterPlaylist(
+      itemId,
+      req.originalUrl.split('?')[1]
+    );
     res.setHeader('Content-Type', 'application/x-mpegURL');
     return res.send(playlist);
   } else {
@@ -398,11 +410,11 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
 
     let content = fs.readFileSync(playlistPath, 'utf8');
     const query = req.originalUrl.split('?')[1] || '';
-    
+
     // Rewrite segment URLs to use our central segment delivery route
     const baseUrl = process.env.PUBLIC_URL || '';
     const segmentPrefix = `${baseUrl}/api/vault/media/segment/${itemId}/`;
-    
+
     // Replace relative segment names with absolute route URLs
     content = content.replace(/^([^#].+\.ts)$/gm, (match) => {
       const separator = query ? '?' : '';
@@ -411,7 +423,7 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
 
     // Handle encryption key URL as well
     content = content.replace(/URI="([^"]*)"/g, (_match, p1) => {
-      const separator = p1.includes('?') ? '&' : (query ? '?' : '');
+      const separator = p1.includes('?') ? '&' : query ? '?' : '';
       return `URI="${p1}${separator}${query}"`;
     });
 
@@ -423,12 +435,12 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
 export const getMediaKey = async (req: express.Request, res: express.Response) => {
   const itemId = getSingleRouteParam(req.params.itemId);
   if (!itemId) throw AppError.badRequest('itemId is required.', 'ITEM_REQUIRED');
-  
+
   const resolvedUserId = await validateMediaAccess(req, undefined, itemId, 'stream');
 
   const sessionId = (req as any).user?.sessionId || getSingleQueryValue(req.query.sid) || 'any';
   const cacheKey = `${resolvedUserId}:${itemId}:${sessionId}`;
-  
+
   const cached = keyCache.get(cacheKey);
   if (cached) {
     if (Date.now() < cached.expires) {
@@ -436,12 +448,12 @@ export const getMediaKey = async (req: express.Request, res: express.Response) =
       res.setHeader('Content-Type', 'application/octet-stream');
       return res.send(cached.key);
     }
-    keyCache.delete(cacheKey)
+    keyCache.delete(cacheKey);
   }
 
   const key = await mediaService.getStreamingKey(resolvedUserId, itemId);
   upsertKeyCache(cacheKey, key);
-  
+
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.setHeader('Content-Type', 'application/octet-stream');
   return res.send(key);
@@ -450,23 +462,24 @@ export const getMediaKey = async (req: express.Request, res: express.Response) =
 export const getMediaSegment = async (req: express.Request, res: express.Response) => {
   const itemId = getSingleRouteParam(req.params.itemId);
   const segment = getSingleRouteParam(req.params.segment);
-  if (!itemId || !segment) throw AppError.badRequest('itemId and segment are required.', 'ITEM_REQUIRED');
+  if (!itemId || !segment)
+    throw AppError.badRequest('itemId and segment are required.', 'ITEM_REQUIRED');
   if (!/^[a-zA-Z0-9._-]+\.ts$/i.test(segment)) {
-    throw AppError.badRequest('Invalid media segment identifier.', 'INVALID_MEDIA_SEGMENT')
+    throw AppError.badRequest('Invalid media segment identifier.', 'INVALID_MEDIA_SEGMENT');
   }
-  enforcePlaybackRequestContext(req)
-  enforceTrustedMediaOrigin(req)
-  
+  enforcePlaybackRequestContext(req);
+  enforceTrustedMediaOrigin(req);
+
   const resolvedUserId = await validateMediaAccess(req, undefined, itemId, 'stream');
 
   const username = (req as any).user?.username;
   if (!username) throw AppError.unauthorized('Username required for isolated vault access');
-  
+
   const DynamicVaultModel = getVaultItemModel(username);
   let item = await DynamicVaultModel.findOne({ userId: resolvedUserId, itemId });
 
   if (!item || !item.file || !item.file.filePath) throw AppError.notFound('Media item not found');
-  ensureUploadIsActive(item)
+  ensureUploadIsActive(item);
 
   // Robust path resolution
   let filePath = item.file.filePath;
@@ -476,8 +489,14 @@ export const getMediaSegment = async (req: express.Request, res: express.Respons
     const relativePath = path.join(STORAGE_ROOT, resolvedUserId.toString(), category, fileName);
     if (fs.existsSync(relativePath)) filePath = relativePath;
     else {
-      const legacyCategory = category === 'photo' ? 'photos' : (category === 'video' ? 'videos' : category);
-      const legacyPath = path.join(STORAGE_ROOT, resolvedUserId.toString(), legacyCategory, fileName);
+      const legacyCategory =
+        category === 'photo' ? 'photos' : category === 'video' ? 'videos' : category;
+      const legacyPath = path.join(
+        STORAGE_ROOT,
+        resolvedUserId.toString(),
+        legacyCategory,
+        fileName
+      );
       if (fs.existsSync(legacyPath)) filePath = legacyPath;
     }
   }
@@ -492,29 +511,33 @@ export const getMediaSegment = async (req: express.Request, res: express.Respons
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.setHeader('Cache-Control', 'public, max-age=31536000');
   res.setHeader('Content-Type', 'video/MP2T');
-  
+
   return fs.createReadStream(segmentPath).pipe(res);
 };
 
 export const accessVaultFile = async (req: express.Request, res: express.Response) => {
   const itemId = getSingleRouteParam(req.params.itemId);
   if (!itemId) throw AppError.badRequest('itemId is required.', 'ITEM_REQUIRED');
-  enforcePlaybackRequestContext(req)
-  enforceTrustedMediaOrigin(req)
-  
+  enforcePlaybackRequestContext(req);
+  enforceTrustedMediaOrigin(req);
+
   const resolvedUserId = await validateMediaAccess(req, undefined, itemId, 'view');
 
   const username = (req as any).user?.username;
   if (!username) throw AppError.unauthorized('Username required for isolated vault access');
-  
+
   const DynamicVaultModel = getVaultItemModel(username);
   let item = await DynamicVaultModel.findOne({ userId: resolvedUserId, itemId });
 
   if (!item || !item.file || !item.file.filePath) {
-    logger.warn('Media file access failed: Item or file path missing', { itemId, userId: resolvedUserId, username });
+    logger.warn('Media file access failed: Item or file path missing', {
+      itemId,
+      userId: resolvedUserId,
+      username,
+    });
     throw AppError.notFound('File not found');
   }
-  ensureUploadIsActive(item)
+  ensureUploadIsActive(item);
 
   let filePath = item.file.filePath;
   if (!fs.existsSync(filePath)) {
@@ -523,8 +546,14 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
     const relativePath = path.join(STORAGE_ROOT, resolvedUserId.toString(), category, fileName);
     if (fs.existsSync(relativePath)) filePath = relativePath;
     else {
-      const legacyCategory = category === 'photo' ? 'photos' : (category === 'video' ? 'videos' : category);
-      const legacyPath = path.join(STORAGE_ROOT, resolvedUserId.toString(), legacyCategory, fileName);
+      const legacyCategory =
+        category === 'photo' ? 'photos' : category === 'video' ? 'videos' : category;
+      const legacyPath = path.join(
+        STORAGE_ROOT,
+        resolvedUserId.toString(),
+        legacyCategory,
+        fileName
+      );
       if (fs.existsSync(legacyPath)) filePath = legacyPath;
       else throw AppError.internal('File missing from storage');
     }
@@ -539,37 +568,36 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
   const fileEncryptedAtRest =
     Boolean(item?.file?.encryptionIv) ||
     Boolean(item?.file?.encryptionTag) ||
-    filePath.toLowerCase().endsWith('.enc')
+    filePath.toLowerCase().endsWith('.enc');
 
   // Fast path: only serve direct file ranges for non-encrypted media.
   if (isStreamableMedia && !fileEncryptedAtRest) {
-    const stats = await fs.promises.stat(filePath)
-    const fileSize = stats.size
-    res.setHeader('Accept-Ranges', 'bytes')
-    res.setHeader('Content-Type', mimeType)
+    const stats = await fs.promises.stat(filePath);
+    const fileSize = stats.size;
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Content-Type', mimeType);
 
     if (requestedRange) {
-      const parsedRange = parseSingleByteRange(requestedRange, fileSize)
+      const parsedRange = parseSingleByteRange(requestedRange, fileSize);
       if (!parsedRange) {
-        res.setHeader('Content-Range', `bytes */${fileSize}`)
-        return res.status(416).end()
+        res.setHeader('Content-Range', `bytes */${fileSize}`);
+        return res.status(416).end();
       }
-      const chunkSize = parsedRange.end - parsedRange.start + 1
-      res.status(206)
-      res.setHeader(
-        'Content-Range',
-        `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`,
-      )
-      res.setHeader('Content-Length', chunkSize.toString())
-      return fs.createReadStream(filePath, {
-        start: parsedRange.start,
-        end: parsedRange.end,
-      }).pipe(res)
+      const chunkSize = parsedRange.end - parsedRange.start + 1;
+      res.status(206);
+      res.setHeader('Content-Range', `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`);
+      res.setHeader('Content-Length', chunkSize.toString());
+      return fs
+        .createReadStream(filePath, {
+          start: parsedRange.start,
+          end: parsedRange.end,
+        })
+        .pipe(res);
     }
 
-    res.status(200)
-    res.setHeader('Content-Length', fileSize.toString())
-    return fs.createReadStream(filePath).pipe(res)
+    res.status(200);
+    res.setHeader('Content-Length', fileSize.toString());
+    return fs.createReadStream(filePath).pipe(res);
   }
 
   // Fallback: decrypt full payload for encrypted files, then respond
@@ -586,7 +614,7 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
   // Best-effort range support for decrypted in-memory payloads
   if (isStreamableMedia && requestedRange) {
     const fileSize = decrypted.length;
-    const parsedRange = parseSingleByteRange(requestedRange, fileSize)
+    const parsedRange = parseSingleByteRange(requestedRange, fileSize);
     if (!parsedRange) {
       res.setHeader('Content-Range', `bytes */${fileSize}`);
       return res.status(416).end();
@@ -611,14 +639,14 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
 export const createSignedUrl = async (req: express.Request, res: express.Response) => {
   const itemId = getSingleRouteParam(req.params.itemId);
   const userId = (req as any).user?.userId;
-  const actionRaw = getSingleQueryValue(req.query.action) || 'view'
+  const actionRaw = getSingleQueryValue(req.query.action) || 'view';
 
   if (!userId) throw AppError.unauthorized('Authentication required');
   if (!itemId) throw AppError.badRequest('itemId is required.', 'ITEM_REQUIRED');
   if (!['view', 'download', 'stream'].includes(actionRaw)) {
-    throw AppError.badRequest('Invalid signed URL action.', 'INVALID_SIGNED_URL_ACTION')
+    throw AppError.badRequest('Invalid signed URL action.', 'INVALID_SIGNED_URL_ACTION');
   }
-  enforceSignedUrlRateLimit(userId)
+  enforceSignedUrlRateLimit(userId);
 
   const fileName = getSingleQueryValue(req.query.fileName) || itemId;
   const username = (req as any).user?.username;
@@ -630,10 +658,10 @@ export const createSignedUrl = async (req: express.Request, res: express.Respons
   const url = storageService.generateSignedUrl(userId, itemId, fileName, {
     action: actionRaw as 'view' | 'download' | 'stream',
     sessionId: (req as any).user?.sessionId,
-    deviceHash: req.get('x-device-hash') || 'direct'
+    deviceHash: req.get('x-device-hash') || 'direct',
   });
 
-  return sendSuccess(res, { url }, "Signed URL generated successfully");
+  return sendSuccess(res, { url }, 'Signed URL generated successfully');
 };
 
 export const logPlaybackEvent = async (req: express.Request, res: express.Response) => {
@@ -644,7 +672,7 @@ export const logPlaybackEvent = async (req: express.Request, res: express.Respon
 
   const username = (req as any).user?.username;
   if (!username) throw AppError.unauthorized('Username required for isolated telemetry');
-  
+
   const DynamicTelemetryModel = getTelemetryModel(username);
   await DynamicTelemetryModel.create({
     userId,
@@ -652,10 +680,10 @@ export const logPlaybackEvent = async (req: express.Request, res: express.Respon
     event,
     metadata,
     userAgent: req.get('user-agent'),
-    ip: getClientIp(req)
+    ip: getClientIp(req),
   });
 
-  return sendSuccess(res, null, "Telemetry recorded");
+  return sendSuccess(res, null, 'Telemetry recorded');
 };
 
 export const getPlaybackInsights = async (req: express.Request, res: express.Response) => {
@@ -664,33 +692,39 @@ export const getPlaybackInsights = async (req: express.Request, res: express.Res
 
   const username = (req as any).user?.username;
   if (!username) throw AppError.unauthorized('Username required for isolated telemetry');
-  
+
   const DynamicTelemetryModel = getTelemetryModel(username);
   const userObjectId = new mongoose.Types.ObjectId(userId);
-  
+
   const bufferStats = await DynamicTelemetryModel.aggregate([
     { $match: { userId: userObjectId, event: 'buffering' } },
-    { $group: { _id: "$itemId", count: { $sum: 1 } } }
-  ]);
-  
-  const resolutionStats = await DynamicTelemetryModel.aggregate([
-    { $match: { userId: userObjectId, event: 'resolution_change' } },
-    { $group: { _id: "$metadata.resolution", count: { $sum: 1 } } }
-  ]);
-  
-  const errorStats = await DynamicTelemetryModel.aggregate([
-    { $match: { userId: userObjectId, event: 'error' } },
-    { $group: { 
-        _id: "$userAgent", 
-        errors: { $sum: 1 },
-        details: { $push: "$metadata.details" }
-    } },
-    { $limit: 10 }
+    { $group: { _id: '$itemId', count: { $sum: 1 } } },
   ]);
 
-  return sendSuccess(res, {
-    bufferStats,
-    resolutionStats,
-    errorStats
-  }, "Playback insights aggregated successfully");
+  const resolutionStats = await DynamicTelemetryModel.aggregate([
+    { $match: { userId: userObjectId, event: 'resolution_change' } },
+    { $group: { _id: '$metadata.resolution', count: { $sum: 1 } } },
+  ]);
+
+  const errorStats = await DynamicTelemetryModel.aggregate([
+    { $match: { userId: userObjectId, event: 'error' } },
+    {
+      $group: {
+        _id: '$userAgent',
+        errors: { $sum: 1 },
+        details: { $push: '$metadata.details' },
+      },
+    },
+    { $limit: 10 },
+  ]);
+
+  return sendSuccess(
+    res,
+    {
+      bufferStats,
+      resolutionStats,
+      errorStats,
+    },
+    'Playback insights aggregated successfully'
+  );
 };

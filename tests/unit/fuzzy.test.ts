@@ -133,9 +133,7 @@ describe('searchVaultItems', () => {
     const results = searchVaultItems(mockItems, '#money', mockTypeConfigs);
     expect(results).toHaveLength(1);
     expect(results[0].item.id).toBe('1');
-    expect(results[0].tagMatches).toEqual([
-      { tag: 'money', matches: [0, 1, 2, 3, 4] },
-    ]);
+    expect(results[0].tagMatches).toEqual([{ tag: 'money', matches: [0, 1, 2, 3, 4] }]);
   });
 
   it('should show all tagged items when query is only #', () => {

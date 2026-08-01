@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Model } from 'mongoose'
+import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface FolderType extends Document {
   userId: string;
@@ -20,13 +20,13 @@ const folderSchema = new Schema<FolderType>(
     itemType: { type: String, required: true },
     parentId: { type: String, default: null, index: true },
   },
-  { timestamps: true },
-)
+  { timestamps: true }
+);
 
 folderSchema.index(
   { userId: 1, itemType: 1, nameHash: 1, parentId: 1 },
-  { unique: true, partialFilterExpression: { nameHash: { $exists: true } } },
-)
+  { unique: true, partialFilterExpression: { nameHash: { $exists: true } } }
+);
 
 export const getFolderModel = (username: string): Model<FolderType> => {
   const collectionName = `${username}.${username}_folders`;

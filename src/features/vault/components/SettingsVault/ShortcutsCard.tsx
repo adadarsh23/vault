@@ -1,6 +1,6 @@
-import React from 'react'
-import { Keyboard, Type, Edit3, Download, MousePointer2 } from 'lucide-react'
-import { SectionCard, ShortcutCard } from './SharedComponents'
+import React from 'react';
+import { Keyboard, Type, Edit3, Download, MousePointer2 } from 'lucide-react';
+import { SectionCard, ShortcutCard } from './SharedComponents';
 
 export const ShortcutsCard: React.FC = () => (
   <SectionCard
@@ -184,4 +184,4 @@ export const ShortcutsCard: React.FC = () => (
       </div>
     </div>
   </SectionCard>
-)
+);

@@ -1,12 +1,7 @@
-import React, { useRef, useState, useMemo, useEffect } from 'react'
-import { cn } from '../../../../lib/utils'
-import { Button } from '../../../../components/ui/Button'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../../../components/ui/Card'
+import React, { useRef, useState, useMemo, useEffect } from 'react';
+import { cn } from '../../../../lib/utils';
+import { Button } from '../../../../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/Card';
 import {
   Copy,
   Check,
@@ -26,48 +21,48 @@ import {
   Loader2,
   Download,
   Paperclip,
-} from 'lucide-react'
-import { useVaultStore } from '../../../../store/vaultStore'
-import { getVaultItemPreviewUrl } from '../../../../lib/filePreview'
-import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
-import { GlobalNavigator } from '../../../../components/vault/GlobalNavigator'
-import { NoteEditor } from '../../../../components/vault/NoteEditor'
-import { ScrollButton } from '../../../../components/vault/ScrollButton'
-import { getStringContent } from '../../../../lib/vaultItemContent'
-import { DecryptedMarkdown } from '../../../../components/vault/DecryptedMarkdown'
+} from 'lucide-react';
+import { useVaultStore } from '../../../../store/vaultStore';
+import { getVaultItemPreviewUrl } from '../../../../lib/filePreview';
+import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
+import { GlobalNavigator } from '../../../../components/vault/GlobalNavigator';
+import { NoteEditor } from '../../../../components/vault/NoteEditor';
+import { ScrollButton } from '../../../../components/vault/ScrollButton';
+import { getStringContent } from '../../../../lib/vaultItemContent';
+import { DecryptedMarkdown } from '../../../../components/vault/DecryptedMarkdown';
 
 const AttachmentCard: React.FC<{
-  item: any
-  masterKey: string | CryptoKey
-  onUnlink: (id: string) => void
-  onPreview: (item: any) => void
+  item: any;
+  masterKey: string | CryptoKey;
+  onUnlink: (id: string) => void;
+  onPreview: (item: any) => void;
 }> = ({ item, masterKey, onUnlink, onPreview }) => {
-  const [thumbUrl, setThumbUrl] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [thumbUrl, setThumbUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (item.type !== 'photo') return
-    let active = true
+    if (item.type !== 'photo') return;
+    let active = true;
     const getThumb = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
-        const url = await getVaultItemPreviewUrl(item, masterKey, 'image/jpeg')
-        if (active) setThumbUrl(url)
+        const url = await getVaultItemPreviewUrl(item, masterKey, 'image/jpeg');
+        if (active) setThumbUrl(url);
       } catch (err) {
-        console.error(err)
+        console.error(err);
       } finally {
-        if (active) setLoading(false)
+        if (active) setLoading(false);
       }
-    }
-    getThumb()
+    };
+    getThumb();
     return () => {
-      active = false
+      active = false;
       if (thumbUrl && thumbUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(thumbUrl)
+        URL.revokeObjectURL(thumbUrl);
       }
-    }
-  }, [item, masterKey])
+    };
+  }, [item, masterKey]);
 
   return (
     <div className="flex items-center justify-between p-2 rounded-xl border border-card-border bg-card-bg/40 hover:bg-card-bg/80 transition-all duration-300 hover:border-text/10 group shadow-sm">
@@ -80,11 +75,7 @@ const AttachmentCard: React.FC<{
             {loading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-400" />
             ) : thumbUrl ? (
-              <img
-                src={thumbUrl}
-                alt=""
-                className="h-full w-full object-cover"
-              />
+              <img src={thumbUrl} alt="" className="h-full w-full object-cover" />
             ) : (
               <Image className="h-4.5 w-4.5 text-blue-400" />
             )}
@@ -109,27 +100,27 @@ const AttachmentCard: React.FC<{
         <X className="h-3.5 w-3.5" />
       </button>
     </div>
-  )
-}
+  );
+};
 
 export interface NoteViewerProps {
-  selectedNoteId: string | null
-  selectedNote: any
-  isEditing: boolean
-  setIsEditing: (isEditing: boolean) => void
-  setSelectedNoteId: (id: string | null) => void
-  editTitle: string
-  editContent: string
-  handleSave: (title: string, content: string) => Promise<void>
-  hasPreviousNote: boolean
-  hasNextNote: boolean
-  goToPreviousNote: () => void
-  goToNextNote: () => void
-  handleCopy: () => void
-  copiedId: string | null
-  startEditing: () => void
-  handleDelete: (id: string, title: string) => void
-  masterKey: string | CryptoKey | null
+  selectedNoteId: string | null;
+  selectedNote: any;
+  isEditing: boolean;
+  setIsEditing: (isEditing: boolean) => void;
+  setSelectedNoteId: (id: string | null) => void;
+  editTitle: string;
+  editContent: string;
+  handleSave: (title: string, content: string) => Promise<void>;
+  hasPreviousNote: boolean;
+  hasNextNote: boolean;
+  goToPreviousNote: () => void;
+  goToNextNote: () => void;
+  handleCopy: () => void;
+  copiedId: string | null;
+  startEditing: () => void;
+  handleDelete: (id: string, title: string) => void;
+  masterKey: string | CryptoKey | null;
 }
 
 export const NoteViewer: React.FC<NoteViewerProps> = ({
@@ -151,169 +142,159 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   handleDelete,
   masterKey,
 }) => {
-  const [showViewScrollTop, setShowViewScrollTop] = useState(false)
-  const [showHtmlPreview, setShowHtmlPreview] = useState(false)
-  const [isIdCopied, setIsIdCopied] = useState(false)
-  const viewRef = useRef<HTMLDivElement>(null)
+  const [showViewScrollTop, setShowViewScrollTop] = useState(false);
+  const [showHtmlPreview, setShowHtmlPreview] = useState(false);
+  const [isIdCopied, setIsIdCopied] = useState(false);
+  const viewRef = useRef<HTMLDivElement>(null);
 
   // Tags & Attachments state
-  const { items, updateItem } = useVaultStore()
-  const [isAddingTag, setIsAddingTag] = useState(false)
-  const [newTagInput, setNewTagInput] = useState('')
-  const [isPickerOpen, setIsPickerOpen] = useState(false)
-  const [pickerSearch, setPickerSearch] = useState('')
-  const [previewAttachmentItem, setPreviewAttachmentItem] = useState<
-    any | null
-  >(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false)
+  const { items, updateItem } = useVaultStore();
+  const [isAddingTag, setIsAddingTag] = useState(false);
+  const [newTagInput, setNewTagInput] = useState('');
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [pickerSearch, setPickerSearch] = useState('');
+  const [previewAttachmentItem, setPreviewAttachmentItem] = useState<any | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
   // Safe tags list
   const noteTags = useMemo<string[]>(() => {
-    return Array.isArray(selectedNote?.metadata?.tags)
-      ? selectedNote.metadata.tags
-      : []
-  }, [selectedNote])
+    return Array.isArray(selectedNote?.metadata?.tags) ? selectedNote.metadata.tags : [];
+  }, [selectedNote]);
 
   // Safe attachments list
   const attachmentIds = useMemo<string[]>(() => {
     return Array.isArray(selectedNote?.metadata?.attachments)
       ? selectedNote.metadata.attachments
-      : []
-  }, [selectedNote])
+      : [];
+  }, [selectedNote]);
 
   const attachedItems = useMemo(() => {
-    return items.filter((item) => attachmentIds.includes(item.id))
-  }, [items, attachmentIds])
+    return items.filter((item) => attachmentIds.includes(item.id));
+  }, [items, attachmentIds]);
 
   // All files that can be attached
   const attachableFiles = useMemo(() => {
-    const queryLower = pickerSearch.toLowerCase().trim()
+    const queryLower = pickerSearch.toLowerCase().trim();
     return items
       .filter(
         (item) =>
-          (item.type === 'photo' || item.type === 'document') &&
-          !attachmentIds.includes(item.id),
+          (item.type === 'photo' || item.type === 'document') && !attachmentIds.includes(item.id)
       )
-      .filter((item) => item.title.toLowerCase().includes(queryLower))
-  }, [items, attachmentIds, pickerSearch])
+      .filter((item) => item.title.toLowerCase().includes(queryLower));
+  }, [items, attachmentIds, pickerSearch]);
 
   // Handlers
   const handleAddTag = async () => {
     const cleanedTag = newTagInput
       .trim()
       .toLowerCase()
-      .replace(/[^a-z0-9-_]/g, '')
+      .replace(/[^a-z0-9-_]/g, '');
     if (!cleanedTag) {
-      setIsAddingTag(false)
-      setNewTagInput('')
-      return
+      setIsAddingTag(false);
+      setNewTagInput('');
+      return;
     }
 
     if (noteTags.includes(cleanedTag)) {
-      toast.error('Tag already exists')
-      setIsAddingTag(false)
-      setNewTagInput('')
-      return
+      toast.error('Tag already exists');
+      setIsAddingTag(false);
+      setNewTagInput('');
+      return;
     }
 
-    const updatedTags = [...noteTags, cleanedTag]
+    const updatedTags = [...noteTags, cleanedTag];
     const updatedMetadata = {
       ...(selectedNote.metadata || {}),
       tags: updatedTags,
-    }
+    };
 
     try {
-      await updateItem(selectedNote.id, { metadata: updatedMetadata })
-      toast.success(`Tag #${cleanedTag} added`)
+      await updateItem(selectedNote.id, { metadata: updatedMetadata });
+      toast.success(`Tag #${cleanedTag} added`);
     } catch {
-      toast.error('Failed to add tag')
+      toast.error('Failed to add tag');
     } finally {
-      setIsAddingTag(false)
-      setNewTagInput('')
+      setIsAddingTag(false);
+      setNewTagInput('');
     }
-  }
+  };
 
   const handleRemoveTag = async (tagToRemove: string) => {
-    const updatedTags = noteTags.filter((t) => t !== tagToRemove)
+    const updatedTags = noteTags.filter((t) => t !== tagToRemove);
     const updatedMetadata = {
       ...(selectedNote.metadata || {}),
       tags: updatedTags,
-    }
+    };
 
     try {
-      await updateItem(selectedNote.id, { metadata: updatedMetadata })
-      toast.success(`Tag #${tagToRemove} removed`)
+      await updateItem(selectedNote.id, { metadata: updatedMetadata });
+      toast.success(`Tag #${tagToRemove} removed`);
     } catch {
-      toast.error('Failed to remove tag')
+      toast.error('Failed to remove tag');
     }
-  }
+  };
 
   const handleLinkAttachment = async (itemId: string) => {
-    const updatedAttachments = [...attachmentIds, itemId]
+    const updatedAttachments = [...attachmentIds, itemId];
     const updatedMetadata = {
       ...(selectedNote.metadata || {}),
       attachments: updatedAttachments,
-    }
+    };
 
     try {
-      await updateItem(selectedNote.id, { metadata: updatedMetadata })
-      toast.success('File attached to note')
+      await updateItem(selectedNote.id, { metadata: updatedMetadata });
+      toast.success('File attached to note');
     } catch {
-      toast.error('Failed to attach file')
+      toast.error('Failed to attach file');
     }
-  }
+  };
 
   const handleUnlinkAttachment = async (itemId: string) => {
-    const updatedAttachments = attachmentIds.filter((id) => id !== itemId)
+    const updatedAttachments = attachmentIds.filter((id) => id !== itemId);
     const updatedMetadata = {
       ...(selectedNote.metadata || {}),
       attachments: updatedAttachments,
-    }
+    };
 
     try {
-      await updateItem(selectedNote.id, { metadata: updatedMetadata })
-      toast.success('Attachment unlinked')
+      await updateItem(selectedNote.id, { metadata: updatedMetadata });
+      toast.success('Attachment unlinked');
     } catch {
-      toast.error('Failed to unlink attachment')
+      toast.error('Failed to unlink attachment');
     }
-  }
+  };
 
   const handlePreviewAttachment = async (item: any) => {
-    setPreviewAttachmentItem(item)
-    setIsPreviewLoading(true)
-    setPreviewUrl(null)
+    setPreviewAttachmentItem(item);
+    setIsPreviewLoading(true);
+    setPreviewUrl(null);
 
     try {
-      const mime = item.type === 'photo' ? 'image/jpeg' : 'text/plain'
-      const url = await getVaultItemPreviewUrl(item, masterKey!, mime)
-      setPreviewUrl(url)
+      const mime = item.type === 'photo' ? 'image/jpeg' : 'text/plain';
+      const url = await getVaultItemPreviewUrl(item, masterKey!, mime);
+      setPreviewUrl(url);
     } catch (err) {
-      console.error('Error generating preview', err)
-      toast.error('Failed to generate preview')
+      console.error('Error generating preview', err);
+      toast.error('Failed to generate preview');
     } finally {
-      setIsPreviewLoading(false)
+      setIsPreviewLoading(false);
     }
-  }
+  };
 
   const closePreview = () => {
     if (previewUrl && previewUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(previewUrl)
+      URL.revokeObjectURL(previewUrl);
     }
-    setPreviewAttachmentItem(null)
-    setPreviewUrl(null)
-  }
+    setPreviewAttachmentItem(null);
+    setPreviewUrl(null);
+  };
 
   // Keep editor outside animated note viewer tree to avoid remounts during
   // store updates (e.g. autosave updating note metadata).
   if (selectedNote && isEditing) {
     return (
-      <div
-        className={cn(
-          'flex-1 min-w-0 h-full',
-          !selectedNoteId ? 'hidden md:block' : 'block',
-        )}
-      >
+      <div className={cn('flex-1 min-w-0 h-full', !selectedNoteId ? 'hidden md:block' : 'block')}>
         <div className="h-full w-full self-start">
           <NoteEditor
             initialTitle={editTitle}
@@ -323,16 +304,11 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
           />
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div
-      className={cn(
-        'flex-1 min-w-0 h-full',
-        !selectedNoteId ? 'hidden md:block' : 'block',
-      )}
-    >
+    <div className={cn('flex-1 min-w-0 h-full', !selectedNoteId ? 'hidden md:block' : 'block')}>
       <AnimatePresence mode="wait">
         {selectedNote ? (
           <motion.div
@@ -401,9 +377,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() =>
-                        handleDelete(selectedNote.id, selectedNote.title)
-                      }
+                      onClick={() => handleDelete(selectedNote.id, selectedNote.title)}
                       className="h-9 w-9 text-text/40 hover:text-red-400"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -414,9 +388,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                   <div
                     ref={viewRef}
                     className="h-full overflow-y-auto custom-scrollbar flex flex-col justify-between"
-                    onScroll={(e) =>
-                      setShowViewScrollTop(e.currentTarget.scrollTop > 100)
-                    }
+                    onScroll={(e) => setShowViewScrollTop(e.currentTarget.scrollTop > 100)}
                   >
                     <div>
                       {/* Tags Section */}
@@ -448,8 +420,8 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                             value={newTagInput}
                             onChange={(e) => setNewTagInput(e.target.value)}
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleAddTag()
-                              if (e.key === 'Escape') setIsAddingTag(false)
+                              if (e.key === 'Enter') handleAddTag();
+                              if (e.key === 'Escape') setIsAddingTag(false);
                             }}
                             onBlur={handleAddTag}
                             autoFocus
@@ -497,7 +469,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                       <div
                         className={cn(
                           'p-4 md:p-6 xl:p-8 prose prose-invert max-w-none transition-colors prose-pre:bg-bg/50 prose-pre:border prose-pre:border-card-border',
-                          showHtmlPreview ? 'p-0' : '',
+                          showHtmlPreview ? 'p-0' : ''
                         )}
                       >
                         <DecryptedMarkdown
@@ -514,9 +486,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           <Calendar className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
                           <span>
                             <span className="text-text/60">
-                              {new Date(
-                                selectedNote.createdAt,
-                              ).toLocaleDateString()}
+                              {new Date(selectedNote.createdAt).toLocaleDateString()}
                             </span>
                           </span>
                         </div>
@@ -524,10 +494,10 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           <Clock className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
                           <span>
                             <span className="text-text/60">
-                              {new Date(selectedNote.updatedAt).toLocaleString(
-                                undefined,
-                                { dateStyle: 'medium', timeStyle: 'short' },
-                              )}
+                              {new Date(selectedNote.updatedAt).toLocaleString(undefined, {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })}
                             </span>
                           </span>
                         </div>
@@ -542,10 +512,10 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           </span>
                           <button
                             onClick={() => {
-                              navigator.clipboard.writeText(selectedNote.id)
-                              setIsIdCopied(true)
-                              toast.success('Note ID copied to clipboard')
-                              setTimeout(() => setIsIdCopied(false), 2000)
+                              navigator.clipboard.writeText(selectedNote.id);
+                              setIsIdCopied(true);
+                              toast.success('Note ID copied to clipboard');
+                              setTimeout(() => setIsIdCopied(false), 2000);
                             }}
                             className="shrink-0 opacity-100 group-hover:opacity-100 transition-opacity text-emerald-400/60 hover:text-emerald-400 focus:outline-none focus:opacity-100"
                             title="Copy Note ID"
@@ -579,9 +549,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                   <ScrollButton
                     icon={ChevronUp}
                     visible={showViewScrollTop}
-                    onClick={() =>
-                      viewRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-                    }
+                    onClick={() => viewRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
                     className="bottom-6 right-8"
                   />
                 </CardContent>
@@ -612,9 +580,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-md overflow-hidden rounded-2xl border border-card-border bg-card-bg shadow-2xl p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-card-border pb-3">
-              <h3 className="text-base font-bold text-text">
-                Attach File from Vault
-              </h3>
+              <h3 className="text-base font-bold text-text">Attach File from Vault</h3>
               <button
                 onClick={() => setIsPickerOpen(false)}
                 className="text-text/40 hover:text-text"
@@ -637,8 +603,8 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                   <button
                     key={file.id}
                     onClick={() => {
-                      handleLinkAttachment(file.id)
-                      setIsPickerOpen(false)
+                      handleLinkAttachment(file.id);
+                      setIsPickerOpen(false);
                     }}
                     className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 text-left transition-colors"
                   >
@@ -647,9 +613,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                     ) : (
                       <FileText className="h-4 w-4 text-indigo-400 shrink-0" />
                     )}
-                    <span className="text-xs font-semibold text-text truncate">
-                      {file.title}
-                    </span>
+                    <span className="text-xs font-semibold text-text truncate">{file.title}</span>
                   </button>
                 ))
               ) : (
@@ -711,14 +675,12 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                   />
                 )
               ) : (
-                <p className="text-xs text-red-400">
-                  Failed to load preview for this file type.
-                </p>
+                <p className="text-xs text-red-400">Failed to load preview for this file type.</p>
               )}
             </div>
           </div>
         </div>
       )}
     </div>
-  )
-}
+  );
+};

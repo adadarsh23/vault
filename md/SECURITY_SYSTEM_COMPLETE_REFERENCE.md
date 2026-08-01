@@ -449,7 +449,7 @@ if (location new) baseScore += 20
 if (impossible travel) baseScore += 40
 
 // Device Analysis  
- if (device fingerprint new) baseScore += 25
+if (device fingerprint new) baseScore += 25
 if (signal drift > threshold) baseScore += 15
 
 // Temporal Analysis

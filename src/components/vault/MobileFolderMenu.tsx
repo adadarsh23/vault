@@ -1,32 +1,32 @@
-import React from 'react'
-import { cn } from '../../lib/utils'
-import { Button } from '../../components/ui/Button'
-import { Input } from '../../components/ui/Input'
-import { Plus, X, Folder, Edit2, Trash2, Check } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { isSavedFolderName } from '../../lib/folderGuards'
+import React from 'react';
+import { cn } from '../../lib/utils';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Plus, X, Folder, Edit2, Trash2, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { isSavedFolderName } from '../../lib/folderGuards';
 
 export interface MobileFolderMenuProps {
-  isOpen: boolean
-  onClose: () => void
-  items: any[]
-  folders: string[]
-  currentFolder: string | null
-  setCurrentFolder: (folder: string | null) => void
-  isAddingFolder: boolean
-  setIsAddingFolder: (isAdding: boolean) => void
-  newFolderName: string
-  setNewFolderName: (name: string) => void
-  handleCreateFolder: () => void
-  editingFolder?: string | null
-  setEditingFolder?: (folder: string | null) => void
-  editingFolderName?: string
-  setEditingFolderName?: (name: string) => void
-  handleRenameFolder?: (oldName: string) => void
-  handleDeleteFolder?: (folderName: string) => void
-  title?: string
-  allItemLabel?: string
-  allItemIcon?: React.ReactNode
+  isOpen: boolean;
+  onClose: () => void;
+  items: any[];
+  folders: string[];
+  currentFolder: string | null;
+  setCurrentFolder: (folder: string | null) => void;
+  isAddingFolder: boolean;
+  setIsAddingFolder: (isAdding: boolean) => void;
+  newFolderName: string;
+  setNewFolderName: (name: string) => void;
+  handleCreateFolder: () => void;
+  editingFolder?: string | null;
+  setEditingFolder?: (folder: string | null) => void;
+  editingFolderName?: string;
+  setEditingFolderName?: (name: string) => void;
+  handleRenameFolder?: (oldName: string) => void;
+  handleDeleteFolder?: (folderName: string) => void;
+  title?: string;
+  allItemLabel?: string;
+  allItemIcon?: React.ReactNode;
 }
 
 export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
@@ -54,10 +54,7 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          key="mobile-folder-menu-generic"
-          className="fixed inset-0 z-50 lg:hidden"
-        >
+        <motion.div key="mobile-folder-menu-generic" className="fixed inset-0 z-50 lg:hidden">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -82,14 +79,14 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
             <div className="space-y-2">
               <button
                 onClick={() => {
-                  setCurrentFolder(null)
-                  onClose()
+                  setCurrentFolder(null);
+                  onClose();
                 }}
                 className={cn(
                   'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all',
                   currentFolder === null
                     ? 'bg-text/10 text-text font-bold'
-                    : 'text-text/60 hover:bg-white/5',
+                    : 'text-text/60 hover:bg-white/5'
                 )}
               >
                 {allItemIcon && (
@@ -98,13 +95,11 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                   </span>
                 )}
                 {allItemLabel}
-                <span className="ml-auto text-[10px] opacity-40">
-                  {items.length}
-                </span>
+                <span className="ml-auto text-[10px] opacity-40">{items.length}</span>
               </button>
               {folders.map((folder) => {
-                const isEditing = editingFolder === folder
-                const isSavedFolder = isSavedFolderName(folder)
+                const isEditing = editingFolder === folder;
+                const isSavedFolder = isSavedFolderName(folder);
                 return (
                   <div
                     key={folder}
@@ -112,7 +107,7 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                       'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all border border-transparent',
                       currentFolder === folder
                         ? 'bg-text/10 text-text font-bold'
-                        : 'text-text/60 hover:bg-white/5',
+                        : 'text-text/60 hover:bg-white/5'
                     )}
                   >
                     <Folder className="h-5 w-5 shrink-0" />
@@ -123,16 +118,16 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                         className="h-9 flex-1 text-sm"
                         autoFocus
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleRenameFolder?.(folder)
-                          if (e.key === 'Escape') setEditingFolder?.(null)
+                          if (e.key === 'Enter') handleRenameFolder?.(folder);
+                          if (e.key === 'Escape') setEditingFolder?.(null);
                         }}
                       />
                     ) : (
                       <button
                         className="flex-1 text-left truncate"
                         onClick={() => {
-                          setCurrentFolder(folder)
-                          onClose()
+                          setCurrentFolder(folder);
+                          onClose();
                         }}
                         title={folder}
                       >
@@ -173,8 +168,8 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                           variant="ghost"
                           className="h-8 w-8"
                           onClick={() => {
-                            setEditingFolder?.(folder)
-                            setEditingFolderName?.(folder)
+                            setEditingFolder?.(folder);
+                            setEditingFolderName?.(folder);
                           }}
                         >
                           <Edit2 className="h-3 w-3" />
@@ -191,7 +186,7 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                       </div>
                     ) : null}
                   </div>
-                )
+                );
               })}
 
               <AnimatePresence mode="wait">
@@ -211,8 +206,8 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                          handleCreateFolder()
-                          if (newFolderName.trim()) onClose()
+                          handleCreateFolder();
+                          if (newFolderName.trim()) onClose();
                         }
                       }}
                     />
@@ -221,8 +216,8 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                         size="sm"
                         className="h-9 flex-1"
                         onClick={() => {
-                          handleCreateFolder()
-                          if (newFolderName.trim()) onClose()
+                          handleCreateFolder();
+                          if (newFolderName.trim()) onClose();
                         }}
                       >
                         Create
@@ -260,5 +255,5 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
         </motion.div>
       )}
     </AnimatePresence>
-  )
-}
+  );
+};

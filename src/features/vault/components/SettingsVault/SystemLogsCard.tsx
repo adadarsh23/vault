@@ -4,8 +4,14 @@ import { Button } from '../../../../components/ui/Button';
 import { systemApi, LogEntry } from '../../../../api/systemApi';
 import { SETTINGS_PANEL } from './Utils';
 import {
-  Search, RefreshCw, ChevronDown, ChevronRight,
-  ShieldAlert, AlertTriangle, Info, Trash2
+  Search,
+  RefreshCw,
+  ChevronDown,
+  ChevronRight,
+  ShieldAlert,
+  AlertTriangle,
+  Info,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -41,54 +47,56 @@ export const SystemLogsCard: React.FC = () => {
   const autoScroll = useRef(true);
 
   // 🔥 Fetch logs with cursor
-  const fetchLogs = React.useCallback(async (loadMore = false) => {
-    if (loading) return;
+  const fetchLogs = React.useCallback(
+    async (loadMore = false) => {
+      if (loading) return;
 
-    setLoading(true);
-    setError(null);
+      setLoading(true);
+      setError(null);
 
-    try {
-      const res = await systemApi.getLogs({
-        cursor: loadMore ? cursor : null,
-        limit: 50
-      });
-
-      if (!res?.success) throw new Error();
-
-      setHasMore(res.hasMore);
-      setCursor(res.nextCursor || null);
-
-      setLogs(prev => {
-        const incoming = res.logs || [];
-
-        // 🔐 Deduplicate using id with fallback
-        const map = new Map<string, LogEntry>();
-
-        // Always keep what we have
-        prev.forEach(l => {
-          const id = l.id || `${l.timestamp}-${l.message}`;
-          map.set(id, { ...l, id });
+      try {
+        const res = await systemApi.getLogs({
+          cursor: loadMore ? cursor : null,
+          limit: 50,
         });
 
-        // Add/Update with incoming
-        incoming.forEach((l: any) => {
-          const id = l.id || `${l.timestamp}-${l.message}`;
-          map.set(id, { ...l, id });
+        if (!res?.success) throw new Error();
+
+        setHasMore(res.hasMore);
+        setCursor(res.nextCursor || null);
+
+        setLogs((prev) => {
+          const incoming = res.logs || [];
+
+          // 🔐 Deduplicate using id with fallback
+          const map = new Map<string, LogEntry>();
+
+          // Always keep what we have
+          prev.forEach((l) => {
+            const id = l.id || `${l.timestamp}-${l.message}`;
+            map.set(id, { ...l, id });
+          });
+
+          // Add/Update with incoming
+          incoming.forEach((l: any) => {
+            const id = l.id || `${l.timestamp}-${l.message}`;
+            map.set(id, { ...l, id });
+          });
+
+          // Sort by timestamp and keep latest
+          return Array.from(map.values())
+            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+            .slice(-500);
         });
-
-        // Sort by timestamp and keep latest
-        return Array.from(map.values())
-          .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-          .slice(-500);
-      });
-
-    } catch (e) {
-      console.error(e);
-      setError('Failed to load logs');
-    } finally {
-      setLoading(false);
-    }
-  }, [loading, cursor]);
+      } catch (e) {
+        console.error(e);
+        setError('Failed to load logs');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loading, cursor]
+  );
 
   useEffect(() => {
     fetchLogs();
@@ -107,7 +115,7 @@ export const SystemLogsCard: React.FC = () => {
     const s = search.toLowerCase();
 
     return logs
-      .filter(l => {
+      .filter((l) => {
         if (levelFilter !== 'all' && l.level !== levelFilter) return false;
 
         if (!s) return true;
@@ -141,12 +149,11 @@ export const SystemLogsCard: React.FC = () => {
     const el = containerRef.current;
     if (!el) return;
 
-    autoScroll.current =
-      el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+    autoScroll.current = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
   };
 
   const toggle = (id: string) => {
-    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const handleClearLogs = async () => {
@@ -186,16 +193,11 @@ export const SystemLogsCard: React.FC = () => {
   return (
     <SectionCard title="System Logs" description="Production log stream">
       <div className="space-y-4">
-
         {/* Controls */}
         <div className={`${SETTINGS_PANEL} flex flex-col sm:flex-row gap-3 sm:items-center`}>
-
           {/* 🔍 Search */}
           <div className="relative flex-1">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-text/30"
-            />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text/30" />
 
             <input
               type="text"
@@ -208,7 +210,6 @@ export const SystemLogsCard: React.FC = () => {
 
           {/* 📊 Right Controls */}
           <div className="flex items-center justify-between sm:justify-end gap-3">
-
             {/* Matching count */}
             <span className="text-[11px] text-text/40 whitespace-nowrap">
               {filteredLogs.length} matching
@@ -219,26 +220,24 @@ export const SystemLogsCard: React.FC = () => {
               variant="secondary"
               size="sm"
               onClick={() => void fetchLogs()}
-              className={`rounded-xl h-9 px-3 sm:h-10 sm:w-10 sm:p-0 flex items-center justify-center ${loading ? 'opacity-50' : ''
-                }`}
+              className={`rounded-xl h-9 px-3 sm:h-10 sm:w-10 sm:p-0 flex items-center justify-center ${
+                loading ? 'opacity-50' : ''
+              }`}
             >
-              <RefreshCw
-                size={16}
-                className={loading ? 'animate-spin' : ''}
-              />
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             </Button>
-
           </div>
         </div>
 
         {/* Filters */}
         <div className="flex gap-2 flex-wrap">
-          {['all', 'info', 'warn', 'error'].map(l => (
+          {['all', 'info', 'warn', 'error'].map((l) => (
             <button
               key={l}
               onClick={() => setLevelFilter(l as any)}
-              className={`px-3 py-1 text-xs rounded-full border ${levelFilter === l ? 'bg-white text-black' : 'opacity-60'
-                }`}
+              className={`px-3 py-1 text-xs rounded-full border ${
+                levelFilter === l ? 'bg-white text-black' : 'opacity-60'
+              }`}
             >
               {l}
             </button>
@@ -256,7 +255,7 @@ export const SystemLogsCard: React.FC = () => {
           ) : filteredLogs.length === 0 ? (
             <div className="p-6 text-center opacity-40">No logs</div>
           ) : (
-            filteredLogs.map(log => (
+            filteredLogs.map((log) => (
               <div key={log.id} className="border-b">
                 <div
                   onClick={() => toggle(log.id)}
@@ -270,9 +269,7 @@ export const SystemLogsCard: React.FC = () => {
 
                   {icon(log.level)}
 
-                  <span className={`flex-1 ${color(log.level)}`}>
-                    {log.message}
-                  </span>
+                  <span className={`flex-1 ${color(log.level)}`}>{log.message}</span>
                 </div>
 
                 {expanded[log.id] && log.meta && (
@@ -290,18 +287,16 @@ export const SystemLogsCard: React.FC = () => {
           <span>{filteredLogs.length} visible</span>
 
           <div className="flex gap-2">
-            {hasMore && (
-              <button onClick={() => fetchLogs(true)}>
-                Load more
-              </button>
-            )}
+            {hasMore && <button onClick={() => fetchLogs(true)}>Load more</button>}
 
-            <button onClick={handleClearLogs} className="flex items-center gap-1 text-red-400 hover:text-red-300 transition-colors">
+            <button
+              onClick={handleClearLogs}
+              className="flex items-center gap-1 text-red-400 hover:text-red-300 transition-colors"
+            >
               <Trash2 size={12} /> Clear
             </button>
           </div>
         </div>
-
       </div>
     </SectionCard>
   );

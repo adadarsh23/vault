@@ -1,12 +1,12 @@
-import express from "express";
+import express from 'express';
 
 /**
  * Sends a standardized success response.
  */
 export const sendSuccess = <T>(
-  res: express.Response, 
-  data: T, 
-  message = "Operation successful", 
+  res: express.Response,
+  data: T,
+  message = 'Operation successful',
   status = 200
 ) => {
   return res.status(status).json({

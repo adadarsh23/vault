@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   Smartphone,
@@ -14,24 +14,24 @@ import {
   LayoutDashboard,
   Key,
   Plus,
-} from 'lucide-react'
-import { Button } from '../ui/Button'
+} from 'lucide-react';
+import { Button } from '../ui/Button';
 
 interface PWAInstallModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onInstall: () => void | Promise<void>
-  isInstalled: boolean
+  isOpen: boolean;
+  onClose: () => void;
+  onInstall: () => void | Promise<void>;
+  isInstalled: boolean;
 }
 
-type WidgetType = 'small' | 'medium' | 'large'
-type ViewType = 'preview' | 'instructions'
+type WidgetType = 'small' | 'medium' | 'large';
+type ViewType = 'preview' | 'instructions';
 
 interface PlatformInfo {
-  isIOS: boolean
-  isAndroid: boolean
-  isDesktop: boolean
-  isSafari: boolean
+  isIOS: boolean;
+  isAndroid: boolean;
+  isDesktop: boolean;
+  isSafari: boolean;
 }
 
 export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
@@ -40,86 +40,86 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
   onInstall,
   isInstalled,
 }) => {
-  const [selectedWidget, setSelectedWidget] = useState<WidgetType>('small')
-  const [view, setView] = useState<ViewType>('preview')
+  const [selectedWidget, setSelectedWidget] = useState<WidgetType>('small');
+  const [view, setView] = useState<ViewType>('preview');
   const [platform, setPlatform] = useState<PlatformInfo>({
     isIOS: false,
     isAndroid: false,
     isDesktop: false,
     isSafari: false,
-  })
-  const [isInstalling, setIsInstalling] = useState(false)
+  });
+  const [isInstalling, setIsInstalling] = useState(false);
 
-  const modalRef = useRef<HTMLDivElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Platform detection
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return;
 
-    const ua = window.navigator.userAgent.toLowerCase()
-    const isIOS = /iphone|ipad|ipod/.test(ua)
-    const isAndroid = /android/.test(ua)
-    const isSafari = isIOS && /safari/.test(ua)
-    const isDesktop = !isIOS && !isAndroid
+    const ua = window.navigator.userAgent.toLowerCase();
+    const isIOS = /iphone|ipad|ipod/.test(ua);
+    const isAndroid = /android/.test(ua);
+    const isSafari = isIOS && /safari/.test(ua);
+    const isDesktop = !isIOS && !isAndroid;
 
-    setPlatform({ isIOS, isAndroid, isDesktop, isSafari })
+    setPlatform({ isIOS, isAndroid, isDesktop, isSafari });
 
     // Default iOS to instructions view since they can't trigger native prompt
-    setView(isIOS ? 'instructions' : 'preview')
-  }, [isOpen])
+    setView(isIOS ? 'instructions' : 'preview');
+  }, [isOpen]);
 
   // Accessibility: Handle Escape key
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return;
 
-    const originalOverflow = document.body.style.overflow
+    const originalOverflow = document.body.style.overflow;
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
+      if (e.key === 'Escape') onClose();
+    };
 
-    document.addEventListener('keydown', handleEscape)
-    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', handleEscape);
+    document.body.style.overflow = 'hidden';
 
     return () => {
-      document.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = originalOverflow
-    }
-  }, [isOpen, onClose])
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen, onClose]);
 
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return;
 
-    const previouslyFocused = document.activeElement as HTMLElement | null
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    )
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
 
-    const first = focusable?.[0]
-    const last = focusable?.[focusable.length - 1]
+    const first = focusable?.[0];
+    const last = focusable?.[focusable.length - 1];
 
     const handleTab = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab' || !first || !last) return
+      if (e.key !== 'Tab' || !first || !last) return;
 
       if (e.shiftKey) {
         if (document.activeElement === first) {
-          e.preventDefault()
-          last.focus()
+          e.preventDefault();
+          last.focus();
         }
       } else if (document.activeElement === last) {
-        e.preventDefault()
-        first.focus()
+        e.preventDefault();
+        first.focus();
       }
-    }
+    };
 
-    document.addEventListener('keydown', handleTab)
-    first?.focus()
+    document.addEventListener('keydown', handleTab);
+    first?.focus();
 
     return () => {
-      document.removeEventListener('keydown', handleTab)
-      previouslyFocused?.focus()
-    }
-  }, [isOpen])
+      document.removeEventListener('keydown', handleTab);
+      previouslyFocused?.focus();
+    };
+  }, [isOpen]);
 
   const widgetContent = useMemo(
     () => ({
@@ -128,9 +128,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
           <div className="rounded-full bg-text/10 p-2">
             <Lock className="h-5 w-5 text-text" />
           </div>
-          <p className="text-[10px] font-bold uppercase tracking-tight text-text/90">
-            Vault
-          </p>
+          <p className="text-[10px] font-bold uppercase tracking-tight text-text/90">Vault</p>
           <div className="h-1 w-8 rounded-full bg-text/20" />
         </div>
       ),
@@ -181,17 +179,17 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
         </div>
       ),
     }),
-    [],
-  )
+    []
+  );
 
   const InstructionStep = ({
     icon: Icon,
     text,
     step,
   }: {
-    icon: React.ElementType
-    text: string
-    step: number
+    icon: React.ElementType;
+    text: string;
+    step: number;
   }) => (
     <motion.div
       initial={{ opacity: 0, x: -10 }}
@@ -209,7 +207,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
         </div>
       </div>
     </motion.div>
-  )
+  );
 
   return (
     <AnimatePresence mode="wait">
@@ -265,12 +263,13 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                       key={selectedWidget}
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className={`mx-auto ${selectedWidget === 'small'
-                        ? 'aspect-square w-24 sm:w-32'
-                        : selectedWidget === 'medium'
-                          ? 'aspect-[2/1] w-full'
-                          : 'aspect-square w-full'
-                        }`}
+                      className={`mx-auto ${
+                        selectedWidget === 'small'
+                          ? 'aspect-square w-24 sm:w-32'
+                          : selectedWidget === 'medium'
+                            ? 'aspect-[2/1] w-full'
+                            : 'aspect-square w-full'
+                      }`}
                     >
                       {widgetContent[selectedWidget]}
                     </motion.div>
@@ -369,9 +368,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                           <Lock className="h-6 w-6" />
                         </motion.div>
                         <div>
-                          <p className="text-sm font-bold text-text">
-                            Install Vault
-                          </p>
+                          <p className="text-sm font-bold text-text">Install Vault</p>
                           <p className="mt-1 text-xs leading-5 text-text/50">
                             full-screen access with a smoother app-like feel.
                           </p>
@@ -379,20 +376,19 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                       </div>
 
                       <div className="relative mt-4 grid grid-cols-3 gap-2">
-                        {(['small', 'medium', 'large'] as WidgetType[]).map(
-                          (type) => (
-                            <button
-                              key={type}
-                              onClick={() => setSelectedWidget(type)}
-                              className={`rounded-2xl border px-3 py-2 text-xs font-bold capitalize transition-all ${selectedWidget === type
+                        {(['small', 'medium', 'large'] as WidgetType[]).map((type) => (
+                          <button
+                            key={type}
+                            onClick={() => setSelectedWidget(type)}
+                            className={`rounded-2xl border px-3 py-2 text-xs font-bold capitalize transition-all ${
+                              selectedWidget === type
                                 ? 'border-text/40 bg-text/10 text-text'
                                 : 'border-white/10 bg-white/5 text-text/55'
-                                }`}
-                            >
-                              {type}
-                            </button>
-                          ),
-                        )}
+                            }`}
+                          >
+                            {type}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
@@ -400,16 +396,15 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                       id="modal-title"
                       className="mt-4 text-2xl font-bold tracking-tight text-text sm:text-3xl lg:mt-6 lg:text-4xl"
                     >
-                      Vault is Better as a{' '}
-                      <span className="text-text/70">Real App</span>
+                      Vault is Better as a <span className="text-text/70">Real App</span>
                     </h1>
 
                     <p
                       id="modal-description"
                       className="mt-3 max-w-md text-sm leading-relaxed text-text/45 lg:mt-4"
                     >
-                      Install to your home screen for instant access, sleek
-                      widgets, and an immersive standalone experience.
+                      Install to your home screen for instant access, sleek widgets, and an
+                      immersive standalone experience.
                     </p>
 
                     <div
@@ -417,59 +412,53 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                       role="radiogroup"
                       aria-label="Widget options"
                     >
-                      {(['small', 'medium', 'large'] as WidgetType[]).map(
-                        (type) => {
-                          const icons = {
-                            small: Lock,
-                            medium: Layout,
-                            large: Clock,
-                          }
-                          const Icon = icons[type]
-                          const titles = {
-                            small: 'Status Widget',
-                            medium: 'Action Matrix',
-                            large: 'Intelligence Feed',
-                          }
-                          const descriptions = {
-                            small: 'Know your vault state at a glance.',
-                            medium: 'Capture notes and media instantly.',
-                            large: 'Quick access to your primary records.',
-                          }
+                      {(['small', 'medium', 'large'] as WidgetType[]).map((type) => {
+                        const icons = {
+                          small: Lock,
+                          medium: Layout,
+                          large: Clock,
+                        };
+                        const Icon = icons[type];
+                        const titles = {
+                          small: 'Status Widget',
+                          medium: 'Action Matrix',
+                          large: 'Intelligence Feed',
+                        };
+                        const descriptions = {
+                          small: 'Know your vault state at a glance.',
+                          medium: 'Capture notes and media instantly.',
+                          large: 'Quick access to your primary records.',
+                        };
 
-                          return (
-                            <button
-                              key={type}
-                              onClick={() => setSelectedWidget(type)}
-                              role="radio"
-                              aria-checked={selectedWidget === type}
-                              className={`hidden items-center gap-3 rounded-2xl border p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-text/20 sm:flex lg:gap-4 ${selectedWidget === type
+                        return (
+                          <button
+                            key={type}
+                            onClick={() => setSelectedWidget(type)}
+                            role="radio"
+                            aria-checked={selectedWidget === type}
+                            className={`hidden items-center gap-3 rounded-2xl border p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-text/20 sm:flex lg:gap-4 ${
+                              selectedWidget === type
                                 ? 'border-text/50 bg-text/5'
                                 : 'border-card-border bg-text/[0.02] hover:bg-text/[0.04] dark:border-white/5'
-                                }`}
-                            >
-                              <div
-                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors ${selectedWidget === type
+                            }`}
+                          >
+                            <div
+                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors ${
+                                selectedWidget === type
                                   ? 'bg-text text-bg border-text'
                                   : 'bg-text/5 border-card-border text-text'
-                                  }`}
-                              >
-                                <Icon className="h-5 w-5" />
-                              </div>
-                              <div className="flex-1">
-                                <h3 className="text-sm font-bold text-text">
-                                  {titles[type]}
-                                </h3>
-                                <p className="text-xs text-text/40">
-                                  {descriptions[type]}
-                                </p>
-                              </div>
-                              {selectedWidget === type && (
-                                <Check className="h-4 w-4 text-text" />
-                              )}
-                            </button>
-                          )
-                        },
-                      )}
+                              }`}
+                            >
+                              <Icon className="h-5 w-5" />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-sm font-bold text-text">{titles[type]}</h3>
+                              <p className="text-xs text-text/40">{descriptions[type]}</p>
+                            </div>
+                            {selectedWidget === type && <Check className="h-4 w-4 text-text" />}
+                          </button>
+                        );
+                      })}
                     </div>
                   </>
                 ) : (
@@ -483,8 +472,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                       id="modal-title"
                       className="text-2xl font-bold tracking-tight text-text sm:text-3xl lg:text-4xl"
                     >
-                      Add Vault to{' '}
-                      <span className="text-text/70">Home Screen</span>
+                      Add Vault to <span className="text-text/70">Home Screen</span>
                     </h1>
 
                     <p
@@ -526,11 +514,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                             icon={Smartphone}
                             text='Select "Install app" or "Add to Home screen"'
                           />
-                          <InstructionStep
-                            step={3}
-                            icon={Check}
-                            text="Confirm the installation"
-                          />
+                          <InstructionStep step={3} icon={Check} text="Confirm the installation" />
                         </>
                       )}
                     </div>
@@ -546,14 +530,14 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                       loading={isInstalling}
                       onClick={async () => {
                         if (platform.isIOS) {
-                          setView('instructions')
+                          setView('instructions');
                         } else {
-                          setIsInstalling(true)
+                          setIsInstalling(true);
                           try {
-                            await onInstall()
+                            await onInstall();
                           } finally {
                             // Give some time for the native prompt to appear/process
-                            setTimeout(() => setIsInstalling(false), 800)
+                            setTimeout(() => setIsInstalling(false), 800);
                           }
                         }
                       }}
@@ -608,5 +592,5 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
         </div>
       )}
     </AnimatePresence>
-  )
-}
+  );
+};

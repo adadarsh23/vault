@@ -1,8 +1,4 @@
-import axios, {
-  AxiosError,
-  InternalAxiosRequestConfig,
-  type AxiosRequestConfig,
-} from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig, type AxiosRequestConfig } from 'axios';
 import { addBreadcrumb, captureException } from '../lib/sentry.js';
 import { getCsrfTokenForApiRequest } from '../lib/csrf.ts';
 import {
@@ -74,9 +70,7 @@ const isApiResponse = (value: unknown): value is ApiResponse<unknown> => {
   return typeof candidate.success === 'boolean';
 };
 
-const normalizeApiError = (
-  error: AxiosError<ApiResponse<unknown>>,
-): ApiClientError => {
+const normalizeApiError = (error: AxiosError<ApiResponse<unknown>>): ApiClientError => {
   const status = error.response?.status;
   const rawPayload = error.response?.data;
   const payload = isApiResponse(rawPayload) ? rawPayload : null;
@@ -109,28 +103,20 @@ const requestSessionRefresh = async (): Promise<RefreshSessionResult | null> => 
 
   pendingRefreshRequest = (async () => {
     try {
-      const csrfToken = await getCsrfTokenForApiRequest(
-        `${API_BASE_URL}/auth/refresh`,
-        'POST',
-      );
+      const csrfToken = await getCsrfTokenForApiRequest(`${API_BASE_URL}/auth/refresh`, 'POST');
 
       const config: AxiosRequestConfig = {
         withCredentials: true,
         timeout: API_TIMEOUT_MS,
-        headers: csrfToken
-          ? { 'X-CSRF-Token': csrfToken }
-          : undefined,
+        headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : undefined,
       };
       const { data } = await axios.post<ApiResponse<RefreshSessionPayload>>(
         `${API_BASE_URL}/auth/refresh`,
         {},
-        config,
+        config
       );
 
-      if (
-        data.success &&
-        isNonEmptyString(data.data?.token)
-      ) {
+      if (data.success && isNonEmptyString(data.data?.token)) {
         return {
           token: data.data.token.trim(),
           sessionId: data.data.sessionId,
@@ -206,8 +192,8 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiResponse>) => {
-    const originalRequest =
-      error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    const originalRequest = error.config as
+      (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
     const isAuthRefreshCall = Boolean(originalRequest?.url?.includes('/auth/refresh'));
 
     // Handle 401 Unauthorized
@@ -229,10 +215,7 @@ apiClient.interceptors.response.use(
           sessionId: refreshed.sessionId,
           refreshToken: refreshed.refreshToken,
           rememberMe: refreshed.rememberMe ?? true,
-          maxAgeSeconds:
-            typeof refreshed.expiresIn === 'number'
-              ? refreshed.expiresIn
-              : undefined,
+          maxAgeSeconds: typeof refreshed.expiresIn === 'number' ? refreshed.expiresIn : undefined,
         });
 
         const username = refreshed.username?.trim().toLowerCase();

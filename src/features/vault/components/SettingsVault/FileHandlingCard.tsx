@@ -1,15 +1,15 @@
-import React, { memo } from 'react'
-import { FileStack, Film, Image, Music, ShieldCheck } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/Card'
-import { FILE_TYPE_SUPPORT, MAX_UPLOAD_SIZE_MB } from '../../../../lib/fileHandling'
-import type { SecurityPreferences } from '../../../../store/vaultStore'
-import { ToggleRow } from './ToggleRow'
+import React, { memo } from 'react';
+import { FileStack, Film, Image, Music, ShieldCheck } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/Card';
+import { FILE_TYPE_SUPPORT, MAX_UPLOAD_SIZE_MB } from '../../../../lib/fileHandling';
+import type { SecurityPreferences } from '../../../../store/vaultStore';
+import { ToggleRow } from './ToggleRow';
 
 interface FileHandlingCardProps {
-  preferences: SecurityPreferences
-  updatePreferences: (updates: Partial<SecurityPreferences>) => void
-  allowRestrictedTypes: boolean
-  setAllowRestrictedTypes: (value: boolean) => void
+  preferences: SecurityPreferences;
+  updatePreferences: (updates: Partial<SecurityPreferences>) => void;
+  allowRestrictedTypes: boolean;
+  setAllowRestrictedTypes: (value: boolean) => void;
 }
 
 const supportRows = [
@@ -37,15 +37,10 @@ const supportRows = [
     formats: FILE_TYPE_SUPPORT.document.join(', '),
     preview: 'Preview available for PDF, text, images, audio, and video files',
   },
-] as const
+] as const;
 
 export const FileHandlingCard: React.FC<FileHandlingCardProps> = memo(
-  ({
-    preferences,
-    updatePreferences,
-    allowRestrictedTypes,
-    setAllowRestrictedTypes,
-  }) => (
+  ({ preferences, updatePreferences, allowRestrictedTypes, setAllowRestrictedTypes }) => (
     <Card className="border-card-border bg-card-bg">
       <CardHeader>
         <CardTitle className="text-lg">File Handling</CardTitle>
@@ -57,14 +52,13 @@ export const FileHandlingCard: React.FC<FileHandlingCardProps> = memo(
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-text">
-                Upload policy
-              </p>
+              <p className="text-sm font-medium text-text">Upload policy</p>
               <p className="text-xs text-text/50">
                 Files larger than {MAX_UPLOAD_SIZE_MB} MB are blocked before upload.
               </p>
               <p className="text-xs text-text/50">
-                Restricted executables and scripts are {allowRestrictedTypes ? 'allowed' : 'blocked'} by your current security setting.
+                Restricted executables and scripts are{' '}
+                {allowRestrictedTypes ? 'allowed' : 'blocked'} by your current security setting.
               </p>
             </div>
           </div>
@@ -86,16 +80,15 @@ export const FileHandlingCard: React.FC<FileHandlingCardProps> = memo(
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-text">{label}</p>
                   <p className="text-xs leading-5 text-text/45">{formats}</p>
-                  <p className="mt-1 text-xs leading-5 text-emerald-300/75">
-                    {preview}
-                  </p>
+                  <p className="mt-1 text-xs leading-5 text-emerald-300/75">{preview}</p>
                 </div>
               </div>
             ))}
             <div className="rounded-2xl border border-white/5 bg-white/[0.02] px-3 py-3">
               <p className="text-sm font-medium text-text">Other Files</p>
               <p className="text-xs leading-5 text-text/45">
-                Archives, source files, installers, and miscellaneous files are allowed here. Dangerous executable/script types still follow the restricted-types setting.
+                Archives, source files, installers, and miscellaneous files are allowed here.
+                Dangerous executable/script types still follow the restricted-types setting.
               </p>
             </div>
           </div>
@@ -181,7 +174,7 @@ export const FileHandlingCard: React.FC<FileHandlingCardProps> = memo(
         </div> */}
       </CardContent>
     </Card>
-  ),
-)
+  )
+);
 
-FileHandlingCard.displayName = 'FileHandlingCard'
+FileHandlingCard.displayName = 'FileHandlingCard';

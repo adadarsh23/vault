@@ -21,10 +21,7 @@ const isLikelyEncryptedString = (value: string): boolean => {
   return /^[A-Za-z0-9+/=]+$/.test(normalized);
 };
 
-const looksLikeReadableMediaBytes = (
-  bytes: Uint8Array,
-  mimeType?: string,
-): boolean => {
+const looksLikeReadableMediaBytes = (bytes: Uint8Array, mimeType?: string): boolean => {
   if (!bytes || bytes.length < 4) return false;
 
   const mt = (mimeType || '').toLowerCase();
@@ -133,7 +130,7 @@ const looksLikeReadableMediaBytes = (
     return true;
   }
 
-  // AVI: RIFF....AVI 
+  // AVI: RIFF....AVI
   if (
     isLikelyVideo &&
     bytes.length >= 12 &&
@@ -172,12 +169,7 @@ const looksLikeReadableMediaBytes = (
   }
 
   // FLV
-  if (
-    isLikelyVideo &&
-    bytes[0] === 0x46 &&
-    bytes[1] === 0x4c &&
-    bytes[2] === 0x56
-  ) {
+  if (isLikelyVideo && bytes[0] === 0x46 && bytes[1] === 0x4c && bytes[2] === 0x56) {
     return true;
   }
 
@@ -196,7 +188,7 @@ const normalizeMetadata = (value: unknown): Record<string, unknown> | undefined 
   if (typeof value === 'string') {
     try {
       const parsed = JSON.parse(value);
-      return parsed && typeof parsed === 'object' ? parsed as Record<string, unknown> : undefined;
+      return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : undefined;
     } catch {
       return undefined;
     }
@@ -214,20 +206,33 @@ export const inferMimeTypeFromItem = (item: VaultItem): string | undefined => {
   const filename = item.title || (typeof metadata?.filename === 'string' ? metadata.filename : '');
   const ext = filename.split('.').pop()?.toLowerCase();
   switch (ext) {
-    case 'mp3': return 'audio/mpeg';
-    case 'wav': return 'audio/wav';
-    case 'm4a': return 'audio/mp4';
-    case 'aac': return 'audio/aac';
-    case 'ogg': return 'audio/ogg';
-    case 'flac': return 'audio/flac';
-    case 'webm': return item.type === 'audio' ? 'audio/webm' : 'video/webm';
-    case 'opus': return 'audio/opus';
-    case 'mp4': return item.type === 'audio' ? 'audio/mp4' : 'video/mp4';
-    case 'png': return 'image/png';
+    case 'mp3':
+      return 'audio/mpeg';
+    case 'wav':
+      return 'audio/wav';
+    case 'm4a':
+      return 'audio/mp4';
+    case 'aac':
+      return 'audio/aac';
+    case 'ogg':
+      return 'audio/ogg';
+    case 'flac':
+      return 'audio/flac';
+    case 'webm':
+      return item.type === 'audio' ? 'audio/webm' : 'video/webm';
+    case 'opus':
+      return 'audio/opus';
+    case 'mp4':
+      return item.type === 'audio' ? 'audio/mp4' : 'video/mp4';
+    case 'png':
+      return 'image/png';
     case 'jpg':
-    case 'jpeg': return 'image/jpeg';
-    case 'gif': return 'image/gif';
-    case 'webp': return 'image/webp';
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'gif':
+      return 'image/gif';
+    case 'webp':
+      return 'image/webp';
     default:
       if (item.type === 'audio') return 'audio/mpeg';
       return undefined;
@@ -245,21 +250,28 @@ const resolveServerFileUrl = (value: string): string => {
 export const getVaultItemFileUrl = (item: VaultItem): string | null => {
   const metadata = normalizeMetadata(item.metadata);
   const metadataFilePath =
-    typeof metadata?.filePath === 'string' ? metadata.filePath
-      : typeof metadata?.url === 'string' ? metadata.url
-        : typeof metadata?.previewUrl === 'string' ? metadata.previewUrl
+    typeof metadata?.filePath === 'string'
+      ? metadata.filePath
+      : typeof metadata?.url === 'string'
+        ? metadata.url
+        : typeof metadata?.previewUrl === 'string'
+          ? metadata.previewUrl
           : null;
-  const contentPath = typeof item.content === 'string' && (looksLikeServerPath(item.content) || isAbsoluteUrl(item.content) || isBlobOrDataUrl(item.content))
-    ? item.content
-    : null;
+  const contentPath =
+    typeof item.content === 'string' &&
+    (looksLikeServerPath(item.content) ||
+      isAbsoluteUrl(item.content) ||
+      isBlobOrDataUrl(item.content))
+      ? item.content
+      : null;
 
   const candidate = metadataFilePath || contentPath;
   return candidate ? resolveServerFileUrl(candidate) : null;
 };
 
 export const getVaultItemPreviewUrl = async (
-  item: VaultItem, 
-  masterKey: string | CryptoKey, 
+  item: VaultItem,
+  masterKey: string | CryptoKey,
   mimeType?: string,
   rsaPrivateKey?: CryptoKeyPair['privateKey'] | null
 ): Promise<string | null> => {
@@ -269,7 +281,9 @@ export const getVaultItemPreviewUrl = async (
   }
 
   if (typeof item.content === 'string' && !isLikelyEncryptedString(item.content)) {
-    return looksLikeServerPath(item.content) || isAbsoluteUrl(item.content) || isBlobOrDataUrl(item.content)
+    return looksLikeServerPath(item.content) ||
+      isAbsoluteUrl(item.content) ||
+      isBlobOrDataUrl(item.content)
       ? resolveServerFileUrl(item.content)
       : null;
   }
@@ -337,7 +351,11 @@ export const describeVaultPreviewError = (error: unknown): string => {
   if (text.includes('404') || text.includes('not found')) {
     return 'This file is not available on the server anymore. It may only exist as encrypted data—try downloading or re-syncing.';
   }
-  if (text.includes('network') || text.includes('failed to fetch') || text.includes('load failed')) {
+  if (
+    text.includes('network') ||
+    text.includes('failed to fetch') ||
+    text.includes('load failed')
+  ) {
     return 'Network error. Check your connection and try again.';
   }
   if (

@@ -69,8 +69,8 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({ comp
             status === 'connected'
               ? `Cloud Connected (${dbName ? `Database: ${dbName}` : 'MongoDB Atlas'})`
               : status === 'error'
-              ? 'Connection Lost - Click to retry'
-              : 'Checking cloud connection...'
+                ? 'Connection Lost - Click to retry'
+                : 'Checking cloud connection...'
           }
           className={`relative flex items-center justify-center h-10 w-10 rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-text/10 ${
             status === 'error'
@@ -78,9 +78,7 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({ comp
               : 'bg-text/5 border-text/10 text-text/70 hover:bg-text/10 cursor-pointer'
           }`}
           aria-label={
-            status === 'error'
-              ? 'Connection error. Click to reconnect.'
-              : 'Cloud connection status'
+            status === 'error' ? 'Connection error. Click to reconnect.' : 'Cloud connection status'
           }
         >
           {status === 'error' ? (
@@ -88,7 +86,9 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({ comp
           ) : (
             <Database
               className={`h-4 w-4 transition-colors ${
-                status === 'connected' ? 'text-blue-500 dark:text-blue-400' : 'text-text/30 animate-pulse'
+                status === 'connected'
+                  ? 'text-blue-500 dark:text-blue-400'
+                  : 'text-text/30 animate-pulse'
               }`}
             />
           )}
@@ -97,8 +97,8 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({ comp
               status === 'connected'
                 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]'
                 : status === 'error'
-                ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'
-                : 'bg-amber-500 animate-pulse'
+                  ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'
+                  : 'bg-amber-500 animate-pulse'
             }`}
           />
         </button>
@@ -122,9 +122,7 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({ comp
         ) : (
           <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 dark:text-blue-400">
             <Database
-              className={`h-4 w-4 ${
-                status === 'loading' ? 'animate-pulse text-text/40' : ''
-              }`}
+              className={`h-4 w-4 ${status === 'loading' ? 'animate-pulse text-text/40' : ''}`}
             />
           </div>
         )}
@@ -133,8 +131,8 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({ comp
             status === 'connected'
               ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]'
               : status === 'error'
-              ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'
-              : 'bg-amber-500 animate-pulse'
+                ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'
+                : 'bg-amber-500 animate-pulse'
           }`}
         />
       </div>
@@ -144,16 +142,14 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({ comp
           <span className="text-[10px] font-bold uppercase tracking-wider text-text/60">
             Cloud Status
           </span>
-          {status === 'connected' && (
-            <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" />
-          )}
+          {status === 'connected' && <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" />}
         </div>
         <span className="text-[11px] font-medium text-text/80 truncate">
           {status === 'connected'
             ? 'MongoDB Atlas Connected'
             : status === 'error'
-            ? 'Connection Lost'
-            : 'Checking connection...'}
+              ? 'Connection Lost'
+              : 'Checking connection...'}
         </span>
       </div>
 
@@ -169,12 +165,8 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({ comp
             : 'bg-text/5 text-text/50 hover:text-text hover:bg-text/10 border-text/10'
         }`}
       >
-        <RefreshCw
-          className={`h-3.5 w-3.5 ${isReconnecting ? 'animate-spin' : ''}`}
-        />
+        <RefreshCw className={`h-3.5 w-3.5 ${isReconnecting ? 'animate-spin' : ''}`} />
       </button>
     </div>
   );
 };
-
-

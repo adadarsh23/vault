@@ -1,4 +1,4 @@
-import mongoose, { InferSchemaType, Model } from 'mongoose'
+import mongoose, { InferSchemaType, Model } from 'mongoose';
 
 const totalUserSchema = new mongoose.Schema(
   {
@@ -11,15 +11,14 @@ const totalUserSchema = new mongoose.Schema(
   {
     collection: 'total_users',
     versionKey: false,
-  },
-)
+  }
+);
 
-totalUserSchema.index({ username: 1 }, { unique: true })
+totalUserSchema.index({ username: 1 }, { unique: true });
 
-type TotalUserShape = InferSchemaType<typeof totalUserSchema>
-type TotalUserModel = Model<TotalUserShape>
+type TotalUserShape = InferSchemaType<typeof totalUserSchema>;
+type TotalUserModel = Model<TotalUserShape>;
 
 export const TotalUser =
   (mongoose.models.TotalUser as TotalUserModel) ||
-  mongoose.model<TotalUserShape>('TotalUser', totalUserSchema)
-
+  mongoose.model<TotalUserShape>('TotalUser', totalUserSchema);

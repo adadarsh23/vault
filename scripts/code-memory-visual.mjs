@@ -1,53 +1,56 @@
-import fs from 'node:fs'
-import path from 'node:path'
+import fs from 'node:fs';
+import path from 'node:path';
 
-const ROOT = process.cwd()
-const memoryDir = path.join(ROOT, '.memory')
-const indexPath = path.join(memoryDir, 'code-index.json')
-const htmlPath = path.join(memoryDir, 'index.html')
-const dataPath = path.join(memoryDir, 'index-data.json')
-const reportPath = path.join(memoryDir, 'visual-report.md')
+const ROOT = process.cwd();
+const memoryDir = path.join(ROOT, '.memory');
+const indexPath = path.join(memoryDir, 'code-index.json');
+const htmlPath = path.join(memoryDir, 'index.html');
+const dataPath = path.join(memoryDir, 'index-data.json');
+const reportPath = path.join(memoryDir, 'visual-report.md');
 
 const parseArgs = (argv) => {
   const options = {
     detailLevel: 'summary',
     maxSignals: 5,
-  }
+  };
   for (let i = 0; i < argv.length; i += 1) {
-    const token = argv[i]
+    const token = argv[i];
     if (token === '--detail-level') {
-      const value = String(argv[i + 1] || '').toLowerCase().trim()
-      if (value === 'summary' || value === 'full') options.detailLevel = value
-      i += 1
-      continue
+      const value = String(argv[i + 1] || '')
+        .toLowerCase()
+        .trim();
+      if (value === 'summary' || value === 'full') options.detailLevel = value;
+      i += 1;
+      continue;
     }
     if (token === '--max-signals') {
-      const value = Number(argv[i + 1])
-      if (Number.isFinite(value) && value >= 1 && value <= 20) options.maxSignals = Math.floor(value)
-      i += 1
+      const value = Number(argv[i + 1]);
+      if (Number.isFinite(value) && value >= 1 && value <= 20)
+        options.maxSignals = Math.floor(value);
+      i += 1;
     }
   }
-  return options
-}
+  return options;
+};
 
-const options = parseArgs(process.argv.slice(2))
+const options = parseArgs(process.argv.slice(2));
 
 if (!fs.existsSync(indexPath)) {
-  console.error('Missing .memory/code-index.json. Run: npm run memory:index')
-  process.exit(1)
+  console.error('Missing .memory/code-index.json. Run: npm run memory:index');
+  process.exit(1);
 }
 
-let index
+let index;
 try {
-  index = JSON.parse(fs.readFileSync(indexPath, 'utf8'))
+  index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
 } catch (error) {
-  console.error(`Unable to parse ${indexPath}: ${error?.message || 'invalid JSON'}`)
-  process.exit(1)
+  console.error(`Unable to parse ${indexPath}: ${error?.message || 'invalid JSON'}`);
+  process.exit(1);
 }
 
-const isIndexHtmlPath = (p) => /(^|\/)index\.html$/i.test(String(p || '').replace(/\\/g, '/'))
-const hideIndexHtmlRows = (rows = []) => rows.filter((row) => !isIndexHtmlPath(row.path))
-const visibleFiles = (index.files || []).filter((f) => !isIndexHtmlPath(f.path))
+const isIndexHtmlPath = (p) => /(^|\/)index\.html$/i.test(String(p || '').replace(/\\/g, '/'));
+const hideIndexHtmlRows = (rows = []) => rows.filter((row) => !isIndexHtmlPath(row.path));
+const visibleFiles = (index.files || []).filter((f) => !isIndexHtmlPath(f.path));
 const shapeFileForVisual = (file) => {
   const minimal = {
     path: file.path,
@@ -58,7 +61,7 @@ const shapeFileForVisual = (file) => {
     riskScore: file.riskScore || 0,
     tagCount: file.tagCount || 0,
     tags: file.tags || [],
-  }
+  };
   if (options.detailLevel === 'full') {
     return {
       ...minimal,
@@ -66,7 +69,7 @@ const shapeFileForVisual = (file) => {
       importSpecifiers: file.importSpecifiers || [],
       importsDetailed: file.importsDetailed || [],
       keywordCounts: file.keywordCounts || {},
-    }
+    };
   }
   return {
     ...minimal,
@@ -76,8 +79,8 @@ const shapeFileForVisual = (file) => {
       ...(file.symbols || []).slice(0, options.maxSignals),
     ].slice(0, options.maxSignals),
     importCount: (file.importSpecifiers || []).length,
-  }
-}
+  };
+};
 
 const payload = {
   generatedAt: index.generatedAt,
@@ -99,12 +102,17 @@ const payload = {
     highestRisk: hideIndexHtmlRows(index.hotspots?.highestRisk),
     highestAsyncDensity: hideIndexHtmlRows(index.hotspots?.highestAsyncDensity),
   },
-  dependencyStats: index.dependencyStats || { hubsByInDegree: [], hubsByOutDegree: [], missingRelativeTargets: [], totals: {} },
+  dependencyStats: index.dependencyStats || {
+    hubsByInDegree: [],
+    hubsByOutDegree: [],
+    missingRelativeTargets: [],
+    totals: {},
+  },
   changes: index.changes || { counts: {}, changed: [], added: [], removed: [] },
   recommendations: index.recommendations || [],
   files: visibleFiles.map(shapeFileForVisual),
   renderOptions: options,
-}
+};
 
 const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -248,11 +256,11 @@ document.getElementById('exportFiles').addEventListener('click', ()=>{
   const csv = [['path','extension','riskScore','lines','complexity','symbols','imports','tags']].concat(rows.map((f)=>[f.path,f.extension,f.riskScore||0,lineCount(f),f.complexityScore||0,f.symbolCount||0,importCount(f),(f.tags||[]).join('|')]));
   dl('code-memory-files-page.csv', csv);
 });
-</script></body></html>`
+</script></body></html>`;
 
-fs.mkdirSync(memoryDir, { recursive: true })
-fs.writeFileSync(htmlPath, html.replace('__PAYLOAD__', JSON.stringify(payload)), 'utf8')
-fs.writeFileSync(dataPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8')
+fs.mkdirSync(memoryDir, { recursive: true });
+fs.writeFileSync(htmlPath, html.replace('__PAYLOAD__', JSON.stringify(payload)), 'utf8');
+fs.writeFileSync(dataPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
 const reportLines = [
   '# Code Memory Visual Report',
   '',
@@ -272,6 +280,8 @@ const reportLines = [
   `- High: ${payload.riskSummary.high || 0}`,
   `- Medium: ${payload.riskSummary.medium || 0}`,
   `- Low: ${payload.riskSummary.low || 0}`,
-]
-fs.writeFileSync(reportPath, `${reportLines.join('\n')}\n`, 'utf8')
-console.log(`Code memory visual created: ${htmlPath} | data=${dataPath} | report=${reportPath} | schema=${payload.schema} | files=${payload.files.length} | detail=${options.detailLevel}`)
+];
+fs.writeFileSync(reportPath, `${reportLines.join('\n')}\n`, 'utf8');
+console.log(
+  `Code memory visual created: ${htmlPath} | data=${dataPath} | report=${reportPath} | schema=${payload.schema} | files=${payload.files.length} | detail=${options.detailLevel}`
+);

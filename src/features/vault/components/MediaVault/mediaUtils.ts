@@ -1,65 +1,61 @@
 export const getFileExtension = (fileName: string) =>
-  fileName.split('.').pop()?.trim().toUpperCase() || ''
+  fileName.split('.').pop()?.trim().toUpperCase() || '';
 
 export const getMediaDimensions = async (
   file: File,
-  type: 'photo' | 'video',
+  type: 'photo' | 'video'
 ): Promise<{ width: number; height: number; aspectRatio: number } | null> => {
   try {
-    const objectUrl = URL.createObjectURL(file)
+    const objectUrl = URL.createObjectURL(file);
     try {
       if (type === 'photo') {
-        const image = new Image()
+        const image = new Image();
         const dimensions = await new Promise<{ width: number; height: number }>(
           (resolve, reject) => {
             image.onload = () =>
               resolve({
                 width: image.naturalWidth,
                 height: image.naturalHeight,
-              })
-            image.onerror = () =>
-              reject(new Error('Failed to read image dimensions.'))
-            image.src = objectUrl
-          },
-        )
+              });
+            image.onerror = () => reject(new Error('Failed to read image dimensions.'));
+            image.src = objectUrl;
+          }
+        );
 
         return {
           ...dimensions,
           aspectRatio: dimensions.width / dimensions.height,
-        }
+        };
       }
 
-      const video = document.createElement('video')
-      const dimensions = await new Promise<{ width: number; height: number }>(
-        (resolve, reject) => {
-          video.onloadedmetadata = () =>
-            resolve({ width: video.videoWidth, height: video.videoHeight })
-          video.onerror = () =>
-            reject(new Error('Failed to read video dimensions.'))
-          video.preload = 'metadata'
-          video.src = objectUrl
-        },
-      )
+      const video = document.createElement('video');
+      const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+        video.onloadedmetadata = () =>
+          resolve({ width: video.videoWidth, height: video.videoHeight });
+        video.onerror = () => reject(new Error('Failed to read video dimensions.'));
+        video.preload = 'metadata';
+        video.src = objectUrl;
+      });
 
       return {
         ...dimensions,
         aspectRatio: dimensions.width / dimensions.height,
-      }
+      };
     } finally {
-      URL.revokeObjectURL(objectUrl)
+      URL.revokeObjectURL(objectUrl);
     }
   } catch {
-    return null
+    return null;
   }
-}
+};
 
 export const normalizeMediaMimeType = (file: File, type: 'photo' | 'video') => {
-  const extension = getFileExtension(file.name)
+  const extension = getFileExtension(file.name);
 
   if (type === 'photo') {
-    if (extension === 'HEIC') return 'image/heic'
-    if (extension === 'HEIF') return 'image/heif'
-    if (extension === 'AVIF') return 'image/avif'
+    if (extension === 'HEIC') return 'image/heic';
+    if (extension === 'HEIF') return 'image/heif';
+    if (extension === 'AVIF') return 'image/avif';
   } else if (type === 'video') {
     const extensionToVideoMime: Record<string, string> = {
       MP4: 'video/mp4',
@@ -125,16 +121,16 @@ export const normalizeMediaMimeType = (file: File, type: 'photo' | 'video') => {
       ARX: 'application/octet-stream',
       MJP2: 'video/mj2',
       MJ2: 'video/mj2',
-    }
+    };
 
-    const normalized = extensionToVideoMime[extension]
-    if (normalized) return normalized
+    const normalized = extensionToVideoMime[extension];
+    if (normalized) return normalized;
   }
 
   if (file.type && file.type !== 'application/octet-stream') {
-    return file.type
+    return file.type;
   }
 
-  if (type === 'photo') return 'image/jpeg'
-  return 'video/mp4'
-}
+  if (type === 'photo') return 'image/jpeg';
+  return 'video/mp4';
+};

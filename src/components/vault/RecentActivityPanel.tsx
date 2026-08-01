@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react'
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import {
   Activity,
   AlertTriangle,
@@ -18,184 +18,182 @@ import {
   Edit,
   Copy,
   Clock,
-} from 'lucide-react'
-import { useActivityStore, ActivityEntry } from '../../store/activityStore'
-import { useVaultStore } from '../../store/vaultStore'
-import { Button } from '../ui/Button'
+} from 'lucide-react';
+import { useActivityStore, ActivityEntry } from '../../store/activityStore';
+import { useVaultStore } from '../../store/vaultStore';
+import { Button } from '../ui/Button';
 
-const PAGE_SIZE = 12
-const PAGE_TRANSITION_MS = 220
+const PAGE_SIZE = 12;
+const PAGE_TRANSITION_MS = 220;
 
-type DisplayActivityEntry = ActivityEntry & { parsedTimestamp: number }
+type DisplayActivityEntry = ActivityEntry & { parsedTimestamp: number };
 
 const actionIcon = (entry: ActivityEntry) => {
-  if (entry.status === 'failure') return AlertTriangle
+  if (entry.status === 'failure') return AlertTriangle;
 
   switch (entry.actionType) {
     case 'file_upload':
-      return FileUp
+      return FileUp;
     case 'file_preview':
-      return Eye
+      return Eye;
     case 'file_download':
-      return Download
+      return Download;
     case 'password_create':
     case 'password_change':
-      return KeyRound
+      return KeyRound;
     case 'auth_login':
     case 'auth_lock':
-      return Lock
+      return Lock;
     case 'vault_sync':
-      return RefreshCw
+      return RefreshCw;
     case 'import':
-      return Upload
+      return Upload;
     case 'export':
-      return Download
+      return Download;
     case 'item_delete':
-      return Trash2
+      return Trash2;
     case 'item_create':
-      return PlusCircle
+      return PlusCircle;
     case 'item_update':
-      return Edit
+      return Edit;
     case 'copy_value':
-      return Copy
+      return Copy;
     default:
-      return Activity
+      return Activity;
   }
-}
+};
 
 const toTimestamp = (timestamp: number | string | Date): number => {
-  const parsed = new Date(timestamp).getTime()
-  return Number.isFinite(parsed) ? parsed : 0
-}
+  const parsed = new Date(timestamp).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 function formatRelativeTime(timestamp: number | string | Date) {
-  const date = new Date(timestamp)
+  const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) {
-    return 'Unknown time'
+    return 'Unknown time';
   }
 
-  const now = Date.now()
-  const diffInSeconds = Math.floor((now - date.getTime()) / 1000)
+  const now = Date.now();
+  const diffInSeconds = Math.floor((now - date.getTime()) / 1000);
 
-  if (diffInSeconds < 0) return 'Just now'
-  if (diffInSeconds < 60) return 'Just now'
+  if (diffInSeconds < 0) return 'Just now';
+  if (diffInSeconds < 60) return 'Just now';
 
-  const diffInMinutes = Math.floor(diffInSeconds / 60)
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
 
-  const diffInHours = Math.floor(diffInMinutes / 60)
-  if (diffInHours < 24) return `${diffInHours}h ago`
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
 
-  const diffInDays = Math.floor(diffInHours / 24)
-  if (diffInDays < 7) return `${diffInDays}d ago`
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) return `${diffInDays}d ago`;
 
   return date.toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
     year: date.getFullYear() !== new Date(now).getFullYear() ? 'numeric' : undefined,
-  })
+  });
 }
 
 export const RecentActivityPanel: React.FC = () => {
-  const entries = useActivityStore((state) => state.entries)
-  const isSyncingLogs = useVaultStore((state) => state.isSyncingLogs)
-  const syncStatus = useVaultStore((state) => state.syncStatus)
-  const [page, setPage] = useState(0)
-  const [isPageChanging, setIsPageChanging] = useState(false)
-  const [pageChangeDirection, setPageChangeDirection] = useState<
-    'next' | 'prev' | null
-  >(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const entries = useActivityStore((state) => state.entries);
+  const isSyncingLogs = useVaultStore((state) => state.isSyncingLogs);
+  const syncStatus = useVaultStore((state) => state.syncStatus);
+  const [page, setPage] = useState(0);
+  const [isPageChanging, setIsPageChanging] = useState(false);
+  const [pageChangeDirection, setPageChangeDirection] = useState<'next' | 'prev' | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Force re-render every minute to update relative times
-  const [, setTick] = useState(0)
+  const [, setTick] = useState(0);
   useEffect(() => {
-    const timer = setInterval(() => setTick((t) => t + 1), 60000)
-    return () => clearInterval(timer)
-  }, [])
+    const timer = setInterval(() => setTick((t) => t + 1), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const normalizedEntries = useMemo<DisplayActivityEntry[]>(() => {
     return entries.map((entry) => ({
       ...entry,
       parsedTimestamp: toTimestamp(entry.timestamp),
-    }))
-  }, [entries])
+    }));
+  }, [entries]);
 
   // Sort newest first with stable tie-breaker by id.
   const sortedEntries = useMemo(() => {
     return [...normalizedEntries].sort((a, b) => {
       if (b.parsedTimestamp !== a.parsedTimestamp) {
-        return b.parsedTimestamp - a.parsedTimestamp
+        return b.parsedTimestamp - a.parsedTimestamp;
       }
-      return b.id.localeCompare(a.id)
-    })
-  }, [normalizedEntries])
+      return b.id.localeCompare(a.id);
+    });
+  }, [normalizedEntries]);
 
-  const pageCount = Math.max(1, Math.ceil(sortedEntries.length / PAGE_SIZE))
-  const currentPage = Math.min(Math.max(page, 0), pageCount - 1)
-  const pageStart = currentPage * PAGE_SIZE
-  const pageEnd = pageStart + PAGE_SIZE
+  const pageCount = Math.max(1, Math.ceil(sortedEntries.length / PAGE_SIZE));
+  const currentPage = Math.min(Math.max(page, 0), pageCount - 1);
+  const pageStart = currentPage * PAGE_SIZE;
+  const pageEnd = pageStart + PAGE_SIZE;
 
-  const visibleStart = sortedEntries.length === 0 ? 0 : pageStart + 1
-  const visibleEnd = Math.min(sortedEntries.length, pageEnd)
+  const visibleStart = sortedEntries.length === 0 ? 0 : pageStart + 1;
+  const visibleEnd = Math.min(sortedEntries.length, pageEnd);
   const isInitialLoading =
-    sortedEntries.length === 0 && (isSyncingLogs || syncStatus === 'syncing')
+    sortedEntries.length === 0 && (isSyncingLogs || syncStatus === 'syncing');
 
   // Keep state aligned when data changes shrink total pages.
   useEffect(() => {
     if (page !== currentPage) {
-      setPage(currentPage)
+      setPage(currentPage);
     }
-  }, [page, currentPage])
+  }, [page, currentPage]);
 
   const pagedEntries = useMemo(() => {
-    return sortedEntries.slice(pageStart, pageEnd)
-  }, [sortedEntries, pageStart, pageEnd])
+    return sortedEntries.slice(pageStart, pageEnd);
+  }, [sortedEntries, pageStart, pageEnd]);
 
-  const canPrevious = currentPage > 0
-  const canNext = currentPage < pageCount - 1
+  const canPrevious = currentPage > 0;
+  const canNext = currentPage < pageCount - 1;
 
   const changePage = useCallback(
     (direction: 'next' | 'prev') => {
-      const nextPage = direction === 'next' ? currentPage + 1 : currentPage - 1
+      const nextPage = direction === 'next' ? currentPage + 1 : currentPage - 1;
       if (nextPage < 0 || nextPage >= pageCount || nextPage === currentPage) {
-        return
+        return;
       }
 
-      setPageChangeDirection(direction)
-      setIsPageChanging(true)
-      setPage(nextPage)
+      setPageChangeDirection(direction);
+      setIsPageChanging(true);
+      setPage(nextPage);
     },
-    [currentPage, pageCount],
-  )
+    [currentPage, pageCount]
+  );
 
   // Handle scroll to top on page change.
   useEffect(() => {
-    const scrollContainer = containerRef.current?.querySelector('.overflow-y-auto')
+    const scrollContainer = containerRef.current?.querySelector('.overflow-y-auto');
     if (scrollContainer) {
-      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' })
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [currentPage])
+  }, [currentPage]);
 
   useEffect(() => {
     if (!isPageChanging) {
-      return
+      return;
     }
 
     const timer = setTimeout(() => {
-      setIsPageChanging(false)
-      setPageChangeDirection(null)
-    }, PAGE_TRANSITION_MS)
+      setIsPageChanging(false);
+      setPageChangeDirection(null);
+    }, PAGE_TRANSITION_MS);
 
-    return () => clearTimeout(timer)
-  }, [isPageChanging, currentPage])
+    return () => clearTimeout(timer);
+  }, [isPageChanging, currentPage]);
 
   // If list updates while transitioning, avoid sticky loading states.
   useEffect(() => {
     if (isPageChanging) {
-      setIsPageChanging(false)
+      setIsPageChanging(false);
     }
-  }, [sortedEntries.length, isPageChanging])
+  }, [sortedEntries.length, isPageChanging]);
 
   return (
     <div className="flex flex-col h-full space-y-4" ref={containerRef}>
@@ -241,9 +239,9 @@ export const RecentActivityPanel: React.FC = () => {
             }`}
           >
             {pagedEntries.map((entry, index) => {
-              const Icon = actionIcon(entry)
-              const isFailure = entry.status === 'failure'
-              const animationDelay = `${index * 30}ms`
+              const Icon = actionIcon(entry);
+              const isFailure = entry.status === 'failure';
+              const animationDelay = `${index * 30}ms`;
 
               return (
                 <div
@@ -251,7 +249,9 @@ export const RecentActivityPanel: React.FC = () => {
                   className="group flex flex-row items-center gap-2.5 rounded-2xl border border-card-border/50 bg-card-bg/30 p-2 sm:p-3 transition-all duration-300 hover:shadow-lg hover:border-text/20 animate-fade-in-up opacity-0 relative overflow-hidden"
                   style={{ animationDelay }}
                 >
-                  <div className={`absolute left-0 top-0 bottom-0 w-0.5 sm:hidden ${isFailure ? 'bg-red-500/40' : 'bg-emerald-500/40'}`} />
+                  <div
+                    className={`absolute left-0 top-0 bottom-0 w-0.5 sm:hidden ${isFailure ? 'bg-red-500/40' : 'bg-emerald-500/40'}`}
+                  />
 
                   <div
                     className={`flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-500 group-hover:scale-110 ${
@@ -304,7 +304,7 @@ export const RecentActivityPanel: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              )
+              );
             })}
 
             {sortedEntries.length === 0 && (
@@ -363,5 +363,5 @@ export const RecentActivityPanel: React.FC = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};

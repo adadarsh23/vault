@@ -1,5 +1,5 @@
-import React, { memo, useState, useCallback, useMemo, useEffect } from 'react'
-import { Share2, Link, Check, X } from 'lucide-react'
+import React, { memo, useState, useCallback, useMemo, useEffect } from 'react';
+import { Share2, Link, Check, X } from 'lucide-react';
 import {
   FaSquareFacebook,
   FaSquareXTwitter,
@@ -12,11 +12,11 @@ import {
   FaPinterest,
   FaTiktok,
   FaMessage,
-} from 'react-icons/fa6'
-import { QRCodeSVG } from 'qrcode.react'
-import { SectionCard } from './SharedComponents'
-import { toast } from 'sonner'
-import { SETTINGS_PANEL } from './Utils'
+} from 'react-icons/fa6';
+import { QRCodeSVG } from 'qrcode.react';
+import { SectionCard } from './SharedComponents';
+import { toast } from 'sonner';
+import { SETTINGS_PANEL } from './Utils';
 
 const LIGHT_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" rx="8" ry="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" />
@@ -24,7 +24,7 @@ const LIGHT_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 
     <rect width="16" height="10" x="4" y="11" rx="2" ry="2"/>
     <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
   </g>
-</svg>`
+</svg>`;
 
 const DARK_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" rx="8" ry="8" fill="#18181b" stroke="#27272a" stroke-width="1" />
@@ -32,66 +32,72 @@ const DARK_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 3
     <rect width="16" height="10" x="4" y="11" rx="2" ry="2"/>
     <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
   </g>
-</svg>`
+</svg>`;
 
-const QR_LOGO_RATIO = 0.22
+const QR_LOGO_RATIO = 0.22;
 
 const getQrLogoSettings = (qrSize: number, isDark: boolean) => {
-  const logoSize = Math.round(qrSize * QR_LOGO_RATIO)
-  const svg = isDark ? DARK_LOGO_SVG : LIGHT_LOGO_SVG
-  const src = typeof window !== 'undefined'
-    ? `data:image/svg+xml;base64,${window.btoa(svg)}`
-    : `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+  const logoSize = Math.round(qrSize * QR_LOGO_RATIO);
+  const svg = isDark ? DARK_LOGO_SVG : LIGHT_LOGO_SVG;
+  const src =
+    typeof window !== 'undefined'
+      ? `data:image/svg+xml;base64,${window.btoa(svg)}`
+      : `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 
   return {
     src,
     height: logoSize,
     width: logoSize,
     excavate: true,
-  }
-}
+  };
+};
 
 export const ShareVaultCard: React.FC = memo(() => {
-  const [copied, setCopied] = useState(false)
-  const [isQrPreviewOpen, setIsQrPreviewOpen] = useState(false)
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
+  const [copied, setCopied] = useState(false);
+  const [isQrPreviewOpen, setIsQrPreviewOpen] = useState(false);
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
     const updateTheme = () => {
-      const isDark = document.documentElement.classList.contains('dark')
-      setResolvedTheme(isDark ? 'dark' : 'light')
-    }
+      const isDark = document.documentElement.classList.contains('dark');
+      setResolvedTheme(isDark ? 'dark' : 'light');
+    };
 
-    updateTheme()
+    updateTheme();
 
-    const observer = new MutationObserver(updateTheme)
+    const observer = new MutationObserver(updateTheme);
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class'],
-    })
+    });
 
-    return () => observer.disconnect()
-  }, [])
+    return () => observer.disconnect();
+  }, []);
 
-  const shareUrl = typeof window !== 'undefined' ? window.location.origin : ''
-  const shareTitle =
-    'Vault - Secure, end-to-end encrypted storage for your digital assets.'
-  const compactQrLogoSettings = useMemo(() => getQrLogoSettings(200, resolvedTheme === 'dark'), [resolvedTheme])
-  const previewQrLogoSettings = useMemo(() => getQrLogoSettings(420, resolvedTheme === 'dark'), [resolvedTheme])
+  const shareUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const shareTitle = 'Vault - Secure, end-to-end encrypted storage for your digital assets.';
+  const compactQrLogoSettings = useMemo(
+    () => getQrLogoSettings(200, resolvedTheme === 'dark'),
+    [resolvedTheme]
+  );
+  const previewQrLogoSettings = useMemo(
+    () => getQrLogoSettings(420, resolvedTheme === 'dark'),
+    [resolvedTheme]
+  );
 
   const handleCopyLink = useCallback(() => {
-    if (!shareUrl) return
+    if (!shareUrl) return;
     navigator.clipboard
       .writeText(shareUrl)
       .then(() => {
-        setCopied(true)
-        toast.success('Link copied to clipboard')
-        setTimeout(() => setCopied(false), 2000)
+        setCopied(true);
+        toast.success('Link copied to clipboard');
+        setTimeout(() => setCopied(false), 2000);
       })
       .catch(() => {
-        toast.error('Failed to copy link')
-      })
-  }, [shareUrl])
+        toast.error('Failed to copy link');
+      });
+  }, [shareUrl]);
 
   const handleNativeShare = useCallback(async () => {
     if (typeof navigator !== 'undefined' && navigator.share) {
@@ -100,51 +106,51 @@ export const ShareVaultCard: React.FC = memo(() => {
           title: 'Vault',
           text: shareTitle,
           url: shareUrl,
-        })
+        });
       } catch (err) {
         // User cancelled or error - typically silent for cancels
       }
     } else {
-      handleCopyLink()
+      handleCopyLink();
     }
-  }, [shareTitle, shareUrl, handleCopyLink])
+  }, [shareTitle, shareUrl, handleCopyLink]);
 
-  const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share
+  const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
 
   const openQrPreview = useCallback(() => {
-    setIsQrPreviewOpen(true)
-  }, [])
+    setIsQrPreviewOpen(true);
+  }, []);
 
   const closeQrPreview = useCallback(() => {
-    setIsQrPreviewOpen(false)
-  }, [])
+    setIsQrPreviewOpen(false);
+  }, []);
 
   useEffect(() => {
-    if (!isQrPreviewOpen) return
+    if (!isQrPreviewOpen) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        closeQrPreview()
+        closeQrPreview();
       }
-    }
+    };
 
-    document.addEventListener('keydown', handleKeyDown)
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', handleKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = previousOverflow
-    }
-  }, [isQrPreviewOpen, closeQrPreview])
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isQrPreviewOpen, closeQrPreview]);
 
   const shareLinks = useMemo(() => {
-    const cleanTitle = shareTitle.trim()
-    const cleanUrl = shareUrl.trim()
+    const cleanTitle = shareTitle.trim();
+    const cleanUrl = shareUrl.trim();
 
-    const encodedTitle = encodeURIComponent(cleanTitle)
-    const encodedUrl = encodeURIComponent(cleanUrl)
-    const encodedCombined = encodeURIComponent(`${cleanTitle} ${cleanUrl}`)
+    const encodedTitle = encodeURIComponent(cleanTitle);
+    const encodedUrl = encodeURIComponent(cleanUrl);
+    const encodedCombined = encodeURIComponent(`${cleanTitle} ${cleanUrl}`);
 
     return [
       {
@@ -232,13 +238,13 @@ export const ShareVaultCard: React.FC = memo(() => {
         name: 'Email',
         icon: FaEnvelope,
         href: `mailto:?subject=${encodedTitle}&body=${encodeURIComponent(
-          `Check out Vault:\n\n${cleanUrl}`,
+          `Check out Vault:\n\n${cleanUrl}`
         )}`,
         hoverClass: 'hover:text-muted-foreground hover:scale-110',
         ariaLabel: 'Share via Email',
       },
-    ] as const
-  }, [shareTitle, shareUrl])
+    ] as const;
+  }, [shareTitle, shareUrl]);
 
   return (
     <SectionCard
@@ -247,17 +253,13 @@ export const ShareVaultCard: React.FC = memo(() => {
     >
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {/* URL Copy Card */}
-        <div
-          className={`${SETTINGS_PANEL} flex flex-col justify-between gap-4 overflow-hidden`}
-        >
+        <div className={`${SETTINGS_PANEL} flex flex-col justify-between gap-4 overflow-hidden`}>
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text/40">
               Direct Link
             </p>
             <div className="flex items-center gap-2 overflow-hidden rounded-lg bg-text/5 p-2 transition-colors focus-within:ring-1 focus-within:ring-text/20 hover:bg-text/10">
-              <code className="flex-1 truncate font-mono text-xs text-text/70">
-                {shareUrl}
-              </code>
+              <code className="flex-1 truncate font-mono text-xs text-text/70">{shareUrl}</code>
               <button
                 onClick={handleCopyLink}
                 className="flex h-8 w-8 items-center justify-center rounded-md bg-text/10 text-text transition-all hover:bg-text hover:text-bg focus:outline-none focus:ring-2 focus:ring-text/20"
@@ -272,9 +274,7 @@ export const ShareVaultCard: React.FC = memo(() => {
               </button>
             </div>
           </div>
-          <p className="text-xs text-text/30">
-            Copy the URL to share anywhere manually.
-          </p>
+          <p className="text-xs text-text/30">Copy the URL to share anywhere manually.</p>
         </div>
 
         {/* QR Code Card */}
@@ -354,9 +354,7 @@ export const ShareVaultCard: React.FC = memo(() => {
               ))}
             </div>
           </div>
-          <p className="text-xs text-text/30">
-            Connect and share with your network.
-          </p>
+          <p className="text-xs text-text/30">Connect and share with your network.</p>
         </div>
       </div>
 
@@ -399,7 +397,7 @@ export const ShareVaultCard: React.FC = memo(() => {
         </div>
       )}
     </SectionCard>
-  )
-})
+  );
+});
 
-ShareVaultCard.displayName = 'ShareVaultCard'
+ShareVaultCard.displayName = 'ShareVaultCard';

@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import {
   HardDrive,
   Image,
@@ -15,41 +15,41 @@ import {
   // ClipboardList,
   // MonitorSmartphone,
   // Lock,
-} from 'lucide-react'
-import { SectionCard, StatCard } from './SharedComponents'
+} from 'lucide-react';
+import { SectionCard, StatCard } from './SharedComponents';
 import {
   formatBytes,
   formatDate,
   formatCountLabel,
   SETTINGS_PANEL,
   SETTINGS_PANEL_SOFT,
-} from './Utils'
-import { type AuthenticatedProfile } from '../../../../lib/auth-api'
-import { Button } from '../../../../components/ui/Button'
-import { Input } from '../../../../components/ui/Input'
-import { useLocation } from 'react-router-dom'
+} from './Utils';
+import { type AuthenticatedProfile } from '../../../../lib/auth-api';
+import { Button } from '../../../../components/ui/Button';
+import { Input } from '../../../../components/ui/Input';
+import { useLocation } from 'react-router-dom';
 
 interface ProfileCardProps {
-  username: string | null
-  profile: AuthenticatedProfile | null
-  isSavingProfile: boolean
+  username: string | null;
+  profile: AuthenticatedProfile | null;
+  isSavingProfile: boolean;
   onSaveProfile: (
     profileName: string,
-    profilePhoto: string,
-  ) => Promise<{ saved: boolean; errorMessage?: string }>
-  syncHealthLabel: string
-  lastSuccessfulSyncAt: number | string | null | undefined
-  storageUsedBytes: number
-  itemCount: number
-  sessionsCount: number
+    profilePhoto: string
+  ) => Promise<{ saved: boolean; errorMessage?: string }>;
+  syncHealthLabel: string;
+  lastSuccessfulSyncAt: number | string | null | undefined;
+  storageUsedBytes: number;
+  itemCount: number;
+  sessionsCount: number;
   mediaBreakdown: {
-    photo: { count: number; bytes: number }
-    video: { count: number; bytes: number }
-    audio: { count: number; bytes: number }
-    other: { count: number; bytes: number }
-  }
-  onNavigate: (tab: string) => void
-  openProfileEditorRequestToken?: number
+    photo: { count: number; bytes: number };
+    video: { count: number; bytes: number };
+    audio: { count: number; bytes: number };
+    other: { count: number; bytes: number };
+  };
+  onNavigate: (tab: string) => void;
+  openProfileEditorRequestToken?: number;
 }
 
 export const ProfileCard: React.FC<ProfileCardProps> = ({
@@ -66,12 +66,12 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   // onNavigate,
   openProfileEditorRequestToken,
 }) => {
-  const location = useLocation()
+  const location = useLocation();
 
   const isValidProfilePhotoInput = (value: string): boolean => {
-    const normalized = value.trim()
+    const normalized = value.trim();
     if (!normalized || normalized.toLowerCase() === 'none') {
-      return true
+      return true;
     }
 
     if (
@@ -80,80 +80,77 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
       normalized.startsWith('/') ||
       normalized.startsWith('./')
     ) {
-      return true
+      return true;
     }
 
     try {
-      const parsed = new URL(normalized)
+      const parsed = new URL(normalized);
       return (
         parsed.protocol === 'https:' ||
         parsed.protocol === 'http:' ||
         parsed.protocol === 'data:' ||
         parsed.protocol === 'blob:'
-      )
+      );
     } catch {
-      return false
+      return false;
     }
-  }
+  };
 
-  const savedProfileName = (profile?.profileName || 'none').trim()
-  const savedProfilePhoto = (profile?.profilePhoto || 'none').trim()
+  const savedProfileName = (profile?.profileName || 'none').trim();
+  const savedProfilePhoto = (profile?.profilePhoto || 'none').trim();
   const accountName = (
     (savedProfileName !== 'none' ? savedProfileName : '') ||
     username ||
     profile?.username ||
     'Unknown'
-  ).trim()
-  const avatarInitial = accountName.charAt(0).toUpperCase() || 'U'
-  const hasProfilePhoto =
-    savedProfilePhoto !== 'none' && savedProfilePhoto.length > 0
+  ).trim();
+  const avatarInitial = accountName.charAt(0).toUpperCase() || 'U';
+  const hasProfilePhoto = savedProfilePhoto !== 'none' && savedProfilePhoto.length > 0;
   // const [showDetails, setShowDetails] = React.useState(false)
-  const [showProfilePopup, setShowProfilePopup] = React.useState(false)
+  const [showProfilePopup, setShowProfilePopup] = React.useState(false);
   const [previewImage, setPreviewImage] = React.useState<{
-    src: string
-    alt: string
-  } | null>(null)
+    src: string;
+    alt: string;
+  } | null>(null);
   const [profileNameInput, setProfileNameInput] = React.useState(
-    savedProfileName === 'none' ? '' : savedProfileName,
-  )
+    savedProfileName === 'none' ? '' : savedProfileName
+  );
   const [profilePhotoInput, setProfilePhotoInput] = React.useState(
-    savedProfilePhoto === 'none' ? '' : savedProfilePhoto,
-  )
-  const [profileSaveError, setProfileSaveError] = React.useState<string | null>(
-    null,
-  )
-  const popupAccountName = (profileNameInput.trim() || accountName).trim()
-  const popupAvatarInitial = popupAccountName.charAt(0).toUpperCase() || 'U'
-  const popupPhotoValue = profilePhotoInput.trim()
-  const isPhotoInputValid = isValidProfilePhotoInput(profilePhotoInput)
+    savedProfilePhoto === 'none' ? '' : savedProfilePhoto
+  );
+  const [profileSaveError, setProfileSaveError] = React.useState<string | null>(null);
+  const popupAccountName = (profileNameInput.trim() || accountName).trim();
+  const popupAvatarInitial = popupAccountName.charAt(0).toUpperCase() || 'U';
+  const popupPhotoValue = profilePhotoInput.trim();
+  const isPhotoInputValid = isValidProfilePhotoInput(profilePhotoInput);
 
-  const [isCardImageBroken, setIsCardImageBroken] = React.useState(false)
-  const [isPopupImageBroken, setIsPopupImageBroken] = React.useState(false)
+  const [isCardImageBroken, setIsCardImageBroken] = React.useState(false);
+  const [isPopupImageBroken, setIsPopupImageBroken] = React.useState(false);
 
   React.useEffect(() => {
-    setProfileNameInput(savedProfileName === 'none' ? '' : savedProfileName)
-    setProfilePhotoInput(savedProfilePhoto === 'none' ? '' : savedProfilePhoto)
-    setIsCardImageBroken(false)
-    setIsPopupImageBroken(false)
-  }, [savedProfileName, savedProfilePhoto])
+    setProfileNameInput(savedProfileName === 'none' ? '' : savedProfileName);
+    setProfilePhotoInput(savedProfilePhoto === 'none' ? '' : savedProfilePhoto);
+    setIsCardImageBroken(false);
+    setIsPopupImageBroken(false);
+  }, [savedProfileName, savedProfilePhoto]);
 
   React.useEffect(() => {
-    setIsPopupImageBroken(false)
-  }, [profilePhotoInput])
+    setIsPopupImageBroken(false);
+  }, [profilePhotoInput]);
 
   React.useEffect(() => {
     if (location.hash === '#edit-profile') {
-      setShowProfilePopup(true)
-      setProfileSaveError(null)
+      setShowProfilePopup(true);
+      setProfileSaveError(null);
     }
-  }, [location.hash])
+  }, [location.hash]);
 
   React.useEffect(() => {
     if (location.hash === '#edit-profile' && openProfileEditorRequestToken) {
-      setShowProfilePopup(true)
-      setProfileSaveError(null)
+      setShowProfilePopup(true);
+      setProfileSaveError(null);
     }
-  }, [location.hash, openProfileEditorRequestToken])
+  }, [location.hash, openProfileEditorRequestToken]);
 
   return (
     <SectionCard
@@ -170,8 +167,8 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
               onClick={() => setShowProfilePopup(true)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  setShowProfilePopup(true)
+                  event.preventDefault();
+                  setShowProfilePopup(true);
                 }
               }}
               className="flex w-full min-w-0 items-start gap-3 rounded-2xl border border-transparent p-2 text-left transition-colors hover:border-card-border hover:bg-card-bg/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/20 sm:items-center sm:gap-4"
@@ -181,11 +178,11 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                   type="button"
                   aria-label="Open profile image preview"
                   onClick={(event) => {
-                    event.stopPropagation()
+                    event.stopPropagation();
                     setPreviewImage({
                       src: savedProfilePhoto,
                       alt: `${accountName} profile preview`,
-                    })
+                    });
                   }}
                   className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/30"
                 >
@@ -258,9 +255,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
               {username ? `@${username}` : 'Unknown'}
             </p>
             <p className="mt-1 text-xs text-text/45">
-              {profile?.username
-                ? `@${profile.username}`
-                : 'Secure vault account'}
+              {profile?.username ? `@${profile.username}` : 'Secure vault account'}
             </p>
           </div>
           <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
@@ -279,13 +274,9 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
               Profile Created
             </p>
             <p className="mt-2 text-sm font-semibold text-text">
-              {formatDate(
-                profile?.profileDetails?.createdAt || profile?.createdAt,
-              )}
+              {formatDate(profile?.profileDetails?.createdAt || profile?.createdAt)}
             </p>
-            <p className="mt-1 text-xs text-text/45">
-              Initial profile save timestamp
-            </p>
+            <p className="mt-1 text-xs text-text/45">Initial profile save timestamp</p>
           </div>
           <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
@@ -294,22 +285,16 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
             <p className="mt-2 text-sm font-semibold text-text">
               {formatDate(profile?.meta?.lastLoginAt)}
             </p>
-            <p className="mt-1 text-xs text-text/45">
-              Most recent authenticated access
-            </p>
+            <p className="mt-1 text-xs text-text/45">Most recent authenticated access</p>
           </div>
           <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
               Profile Updated
             </p>
             <p className="mt-2 text-sm font-semibold text-text">
-              {formatDate(
-                profile?.profileDetails?.updatedAt || profile?.updatedAt,
-              )}
+              {formatDate(profile?.profileDetails?.updatedAt || profile?.updatedAt)}
             </p>
-            <p className="mt-1 text-xs text-text/45">
-              Latest profile change timestamp
-            </p>
+            <p className="mt-1 text-xs text-text/45">Latest profile change timestamp</p>
           </div>
           <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
@@ -337,9 +322,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 </div>
                 <p className="text-xs font-semibold text-text/60">Photos</p>
               </div>
-              <p className="text-xl font-bold text-text">
-                {mediaBreakdown.photo.count}
-              </p>
+              <p className="text-xl font-bold text-text">{mediaBreakdown.photo.count}</p>
               <p className="text-[10px] text-text/40 mt-2 font-medium">
                 {formatBytes(mediaBreakdown.photo.bytes)}
               </p>
@@ -352,9 +335,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 </div>
                 <p className="text-xs font-semibold text-text/60">Videos</p>
               </div>
-              <p className="text-xl font-bold text-text">
-                {mediaBreakdown.video.count}
-              </p>
+              <p className="text-xl font-bold text-text">{mediaBreakdown.video.count}</p>
               <p className="text-[10px] text-text/40 mt-2 font-medium">
                 {formatBytes(mediaBreakdown.video.bytes)}
               </p>
@@ -367,9 +348,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 </div>
                 <p className="text-xs font-semibold text-text/60">Audio</p>
               </div>
-              <p className="text-xl font-bold text-text">
-                {mediaBreakdown.audio.count}
-              </p>
+              <p className="text-xl font-bold text-text">{mediaBreakdown.audio.count}</p>
               <p className="text-[10px] text-text/40 mt-2 font-medium">
                 {formatBytes(mediaBreakdown.audio.bytes)}
               </p>
@@ -382,9 +361,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 </div>
                 <p className="text-xs font-semibold text-text/60">All Other</p>
               </div>
-              <p className="text-xl font-bold text-text">
-                {mediaBreakdown.other.count}
-              </p>
+              <p className="text-xl font-bold text-text">{mediaBreakdown.other.count}</p>
               <p className="text-[10px] text-text/40 mt-2 font-medium">
                 {formatBytes(mediaBreakdown.other.bytes)}
               </p>
@@ -429,9 +406,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-text">
-                    {popupAccountName}
-                  </p>
+                  <p className="truncate text-sm font-semibold text-text">{popupAccountName}</p>
                   <p className="truncate text-xs text-text/50">
                     {popupPhotoValue && !isPopupImageBroken
                       ? 'Profile photo preview'
@@ -445,7 +420,13 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                     Username (cannot be changed)
                   </p>
                   <Input
-                    value={username ? `@${username}` : profile?.username ? `@${profile.username}` : 'Unknown'}
+                    value={
+                      username
+                        ? `@${username}`
+                        : profile?.username
+                          ? `@${profile.username}`
+                          : 'Unknown'
+                    }
                     readOnly
                     disabled
                     aria-label="Username"
@@ -458,9 +439,9 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                   <Input
                     value={profileNameInput}
                     onChange={(event) => {
-                      setProfileNameInput(event.target.value)
+                      setProfileNameInput(event.target.value);
                       if (profileSaveError) {
-                        setProfileSaveError(null)
+                        setProfileSaveError(null);
                       }
                     }}
                     placeholder="Enter display name"
@@ -479,25 +460,25 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                         accept="image/*"
                         className="hidden"
                         onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (!file) return
+                          const file = e.target.files?.[0];
+                          if (!file) return;
                           if (!file.type.startsWith('image/')) {
-                            setProfileSaveError('Please select an image file.')
-                            return
+                            setProfileSaveError('Please select an image file.');
+                            return;
                           }
                           if (file.size > 3 * 1024 * 1024) {
-                            setProfileSaveError('Image file must be under 3MB.')
-                            return
+                            setProfileSaveError('Image file must be under 3MB.');
+                            return;
                           }
-                          const reader = new FileReader()
+                          const reader = new FileReader();
                           reader.onload = (evt) => {
-                            const result = evt.target?.result
+                            const result = evt.target?.result;
                             if (typeof result === 'string') {
-                              setProfilePhotoInput(result)
-                              setProfileSaveError(null)
+                              setProfilePhotoInput(result);
+                              setProfileSaveError(null);
                             }
-                          }
-                          reader.readAsDataURL(file)
+                          };
+                          reader.readAsDataURL(file);
                         }}
                       />
                     </label>
@@ -505,9 +486,9 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                   <Input
                     value={profilePhotoInput}
                     onChange={(event) => {
-                      setProfilePhotoInput(event.target.value)
+                      setProfilePhotoInput(event.target.value);
                       if (profileSaveError) {
-                        setProfileSaveError(null)
+                        setProfileSaveError(null);
                       }
                     }}
                     placeholder="Enter HTTP/HTTPS URL or upload image"
@@ -533,15 +514,15 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                   onClick={async () => {
                     const result = await onSaveProfile(
                       profileNameInput.trim() || 'none',
-                      profilePhotoInput.trim() || 'none',
-                    )
+                      profilePhotoInput.trim() || 'none'
+                    );
                     if (result.saved) {
-                      setProfileSaveError(null)
-                      setShowProfilePopup(false)
-                      return
+                      setProfileSaveError(null);
+                      setShowProfilePopup(false);
+                      return;
                     }
 
-                    setProfileSaveError(result.errorMessage || 'Failed to save.')
+                    setProfileSaveError(result.errorMessage || 'Failed to save.');
                   }}
                 >
                   Save Profile
@@ -549,8 +530,8 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 <Button
                   variant="ghost"
                   onClick={() => {
-                    setProfileSaveError(null)
-                    setShowProfilePopup(false)
+                    setProfileSaveError(null);
+                    setShowProfilePopup(false);
                   }}
                   disabled={isSavingProfile}
                 >
@@ -566,10 +547,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
             className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
             onClick={() => setPreviewImage(null)}
           >
-            <div
-              className="relative w-full max-w-3xl"
-              onClick={(event) => event.stopPropagation()}
-            >
+            <div className="relative w-full max-w-3xl" onClick={(event) => event.stopPropagation()}>
               <button
                 type="button"
                 aria-label="Close image preview"
@@ -590,5 +568,5 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         )}
       </div>
     </SectionCard>
-  )
-}
+  );
+};

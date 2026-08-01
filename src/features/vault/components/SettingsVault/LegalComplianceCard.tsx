@@ -1,9 +1,9 @@
-import React from 'react'
-import { Shield, Scale, Mail } from 'lucide-react'
-import { SectionCard, ActionButton } from './SharedComponents'
+import React from 'react';
+import { Shield, Scale, Mail } from 'lucide-react';
+import { SectionCard, ActionButton } from './SharedComponents';
 
 interface LegalComplianceCardProps {
-  onNavigate: (tab: string) => void
+  onNavigate: (tab: string) => void;
 }
 
 export const LegalComplianceCard: React.FC<LegalComplianceCardProps> = ({ onNavigate }) => (
@@ -35,4 +35,4 @@ export const LegalComplianceCard: React.FC<LegalComplianceCardProps> = ({ onNavi
       Vault V(1.0.0) • Built for privacy
     </p>
   </SectionCard>
-)
+);

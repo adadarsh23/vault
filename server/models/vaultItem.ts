@@ -1,21 +1,42 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const vaultItemSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     itemId: { type: String, required: true, index: true },
-    category: { 
-      type: String, 
-      required: true, 
+    category: {
+      type: String,
+      required: true,
       index: true,
-      enum: ['photo', 'video', 'audio', 'document', 'note', 'chat', 'todo', 'password', 'secret', 'contact', 'location', 'file', 'other-files', 'other', 'settings', 'system', 'users', 'card', 'identity', 'wifi']
+      enum: [
+        'photo',
+        'video',
+        'audio',
+        'document',
+        'note',
+        'chat',
+        'todo',
+        'password',
+        'secret',
+        'contact',
+        'location',
+        'file',
+        'other-files',
+        'other',
+        'settings',
+        'system',
+        'users',
+        'card',
+        'identity',
+        'wifi',
+      ],
     },
     folder: { type: String, trim: true, default: null, index: true },
     title: { type: String, trim: true, default: '' },
-    
+
     // For encrypted text content
     payload: { type: String, default: null },
-    
+
     // For files
     file: {
       fileName: { type: String },
@@ -25,39 +46,39 @@ const vaultItemSchema = new mongoose.Schema(
       encryptionIv: { type: String }, // Store for at-rest AES-GCM
       encryptionTag: { type: String }, // Store for at-rest AES-GCM
     },
-    
+
     // Modern structure (V2)
-    modernPayload: { 
-      type: String, 
+    modernPayload: {
+      type: String,
       default: null,
-      description: 'Used for V2 encrypted payloads which might combine metadata and content'
+      description: 'Used for V2 encrypted payloads which might combine metadata and content',
     },
-    
-    encoding: { 
-      type: String, 
+
+    encoding: {
+      type: String,
       default: 'utf-8',
-      enum: ['utf-8', 'base64', 'binary-base64', 'gridfs-binary', 'file-reference']
+      enum: ['utf-8', 'base64', 'binary-base64', 'gridfs-binary', 'file-reference'],
     },
     gridFsId: { type: String, default: null },
-    
+
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
-    
+
     isDeleted: { type: Boolean, default: false, index: true },
     deletedAt: { type: Date, default: null },
     clientUpdatedAt: { type: Date, default: null },
     isPinned: { type: Boolean, default: false, index: true },
     pinnedAt: { type: Date, default: null },
-    
+
     // Tracking
     deviceId: { type: String, default: 'unknown' },
     ipAddress: { type: String, default: 'unknown' },
   },
   {
     timestamps: true,
-    collection: "vault_items"
+    collection: 'vault_items',
   }
 );
 
@@ -80,14 +101,17 @@ export const getVaultItemModel = (username: string): mongoose.Model<VaultItemTyp
   if (!username || !username.trim()) {
     throw new Error('Username is required for isolated vault items');
   }
-  
-  const normalized = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+
+  const normalized = username
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '_');
   const collectionName = `${normalized}.${normalized}_vault_items`;
-  
+
   if (mongoose.models[collectionName]) {
     return mongoose.models[collectionName] as mongoose.Model<VaultItemType>;
   }
-  
+
   const model = mongoose.model<VaultItemType>(collectionName, vaultItemSchema, collectionName);
   model.createIndexes().catch(() => {});
   return model;

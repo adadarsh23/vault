@@ -14,19 +14,11 @@
     "url": "https://github.com/adadarsh23/vault"
   },
   "homepage": "",
-  "keywords": [
-    "vault",
-    "encryption",
-    "password-manager",
-    "secure-storage",
-    "privacy"
-  ],
+  "keywords": ["vault", "encryption", "password-manager", "secure-storage", "privacy"],
   "security": {
     "encryption": "AES-256",
     "keyDerivation": "PBKDF2",
-    "authentication": [
-      "password"
-    ],
+    "authentication": ["password"],
     "zeroKnowledge": true,
     "clientSideEncryption": true
   },
@@ -53,17 +45,9 @@
   },
   "createdAt": "2026-03-10",
   "appType": "secure-storage",
-  "platformSupport": [
-    "web",
-    "mobile"
-  ],
+  "platformSupport": ["web", "mobile"],
   "compatibility": {
-    "browsers": [
-      "Chrome >= 100",
-      "Firefox >= 100",
-      "Edge >= 100",
-      "Safari >= 15"
-    ],
+    "browsers": ["Chrome >= 100", "Firefox >= 100", "Edge >= 100", "Safari >= 15"],
     "devices": ["desktop", "mobile", "tablet", "wearable"],
     "pwa": true
   },

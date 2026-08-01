@@ -6,11 +6,7 @@
   "id": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": [
-    "window-controls-overlay",
-    "standalone",
-    "minimal-ui"
-  ],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#000000",
   "theme_color": "#000000",
   "orientation": "portrait",
@@ -46,11 +42,7 @@
       "purpose": "maskable"
     }
   ],
-  "categories": [
-    "utilities",
-    "productivity",
-    "security"
-  ],
+  "categories": ["utilities", "productivity", "security"],
   "dir": "ltr",
   "lang": "en-US",
   "prefer_related_applications": false,

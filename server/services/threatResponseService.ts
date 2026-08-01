@@ -9,28 +9,28 @@
  * - Create audit trail
  */
 
-import { Schema, model, Document } from 'mongoose'
-import { randomUUID } from 'crypto'
-import { logger } from '../utils/logger.ts'
+import { Schema, model, Document } from 'mongoose';
+import { randomUUID } from 'crypto';
+import { logger } from '../utils/logger.ts';
 
 interface SecurityIncident extends Document {
-  id: string
-  timestamp: number
-  severity: 'low' | 'medium' | 'high' | 'critical'
-  type: string // e.g., 'brute_force', 'data_exfil', 'suspicious_login'
-  userId?: string
-  ip: string
-  details: Record<string, any>
-  status: 'open' | 'investigating' | 'mitigated' | 'resolved'
+  id: string;
+  timestamp: number;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  type: string; // e.g., 'brute_force', 'data_exfil', 'suspicious_login'
+  userId?: string;
+  ip: string;
+  details: Record<string, any>;
+  status: 'open' | 'investigating' | 'mitigated' | 'resolved';
   autoResponse: {
-    action: string
-    timestamp: number
-    success: boolean
-    details?: Record<string, any>
-  }[]
-  adminNotes?: string
-  createdAt: Date
-  updatedAt: Date
+    action: string;
+    timestamp: number;
+    success: boolean;
+    details?: Record<string, any>;
+  }[];
+  adminNotes?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const incidentSchema = new Schema<SecurityIncident>(
@@ -57,18 +57,15 @@ const incidentSchema = new Schema<SecurityIncident>(
     ],
     adminNotes: String,
   },
-  { timestamps: true },
-)
+  { timestamps: true }
+);
 
-const IncidentModel = model<SecurityIncident>(
-  'SecurityIncident',
-  incidentSchema,
-)
+const IncidentModel = model<SecurityIncident>('SecurityIncident', incidentSchema);
 
 interface ThreatResponse {
-  threatened: boolean
-  severity: 'low' | 'medium' | 'high' | 'critical'
-  actions: string[]
+  threatened: boolean;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  actions: string[];
 }
 
 class ThreatResponseService {
@@ -77,27 +74,22 @@ class ThreatResponseService {
     medium: 40,
     high: 60,
     critical: 80,
-  }
+  };
 
   /**
    * Process threat and trigger automated response
    */
   async processThreat(params: {
-    userId?: string
-    ip: string
-    riskScore: number
-    type:
-      | 'brute_force'
-      | 'api_abuse'
-      | 'suspicious_login'
-      | 'data_exfil'
-      | 'malware_upload'
-    details: Record<string, any>
+    userId?: string;
+    ip: string;
+    riskScore: number;
+    type: 'brute_force' | 'api_abuse' | 'suspicious_login' | 'data_exfil' | 'malware_upload';
+    details: Record<string, any>;
   }): Promise<ThreatResponse> {
-    const { userId, ip, riskScore, type, details } = params
-    const severity = this.calculateSeverity(riskScore, type)
+    const { userId, ip, riskScore, type, details } = params;
+    const severity = this.calculateSeverity(riskScore, type);
 
-    const actions: string[] = []
+    const actions: string[] = [];
 
     // Create incident record
     const incident = await this.createIncident({
@@ -106,41 +98,41 @@ class ThreatResponseService {
       userId,
       ip,
       details,
-    })
+    });
 
     // Automated response based on severity
     if (severity === 'critical') {
       // Immediate action required
       if (userId) {
-        actions.push('logout_user')
-        await this.logoutUser(userId)
+        actions.push('logout_user');
+        await this.logoutUser(userId);
       }
-      actions.push('block_ip')
-      await this.blockIp(ip, 3600) // 1 hour
+      actions.push('block_ip');
+      await this.blockIp(ip, 3600); // 1 hour
 
-      actions.push('escalate_admin')
-      await this.escalateToAdmin(incident)
+      actions.push('escalate_admin');
+      await this.escalateToAdmin(incident);
     } else if (severity === 'high') {
       if (userId) {
-        actions.push('challenge_mfa')
+        actions.push('challenge_mfa');
         // Send MFA challenge to user
       }
-      actions.push('throttle_ip')
-      await this.throttleIp(ip, 300000) // 5 minutes
+      actions.push('throttle_ip');
+      await this.throttleIp(ip, 300000); // 5 minutes
 
-      actions.push('alert_admin')
-      await this.sendAdminAlert(incident)
+      actions.push('alert_admin');
+      await this.sendAdminAlert(incident);
     } else if (severity === 'medium') {
-      actions.push('monitor_user')
+      actions.push('monitor_user');
       // Increase monitoring frequency
-      actions.push('flag_ip')
-      await this.flagIp(ip)
+      actions.push('flag_ip');
+      await this.flagIp(ip);
     } else {
-      actions.push('log_event')
+      actions.push('log_event');
     }
 
     // Record automated response
-    await this.recordResponse(incident.id, actions)
+    await this.recordResponse(incident.id, actions);
 
     logger.warn(`[THREAT] ${severity.toUpperCase()}: ${type}`, {
       incident: incident.id,
@@ -148,23 +140,19 @@ class ThreatResponseService {
       ip,
       riskScore,
       actions,
-    })
+    });
 
     return {
       threatened: severity !== 'low',
       severity,
       actions,
-    }
+    };
   }
 
   /**
    * Brute force attack detection and response
    */
-  async handleBruteForceAttempt(
-    userId: string,
-    ip: string,
-    failedAttempts: number,
-  ): Promise<void> {
+  async handleBruteForceAttempt(userId: string, ip: string, failedAttempts: number): Promise<void> {
     if (failedAttempts > 10) {
       // Critical
       await this.processThreat({
@@ -173,7 +161,7 @@ class ThreatResponseService {
         riskScore: 90,
         type: 'brute_force',
         details: { failedAttempts },
-      })
+      });
     } else if (failedAttempts > 5) {
       // High
       await this.processThreat({
@@ -182,7 +170,7 @@ class ThreatResponseService {
         riskScore: 70,
         type: 'brute_force',
         details: { failedAttempts },
-      })
+      });
     } else {
       // Medium
       await this.processThreat({
@@ -191,7 +179,7 @@ class ThreatResponseService {
         riskScore: 50,
         type: 'brute_force',
         details: { failedAttempts },
-      })
+      });
     }
   }
 
@@ -202,11 +190,11 @@ class ThreatResponseService {
     userId: string,
     ip: string,
     endpoint: string,
-    requestsPerMinute: number,
+    requestsPerMinute: number
   ): Promise<void> {
-    const baselineRequestsPerMinute = 10
-    const ratio = requestsPerMinute / baselineRequestsPerMinute
-    const riskScore = Math.min(100, ratio * 20)
+    const baselineRequestsPerMinute = 10;
+    const ratio = requestsPerMinute / baselineRequestsPerMinute;
+    const riskScore = Math.min(100, ratio * 20);
 
     if (ratio > 20) {
       // Critical
@@ -216,7 +204,7 @@ class ThreatResponseService {
         riskScore: 85,
         type: 'api_abuse',
         details: { endpoint, requestsPerMinute, ratio },
-      })
+      });
     } else if (ratio > 10) {
       // High
       await this.processThreat({
@@ -225,7 +213,7 @@ class ThreatResponseService {
         riskScore: 65,
         type: 'api_abuse',
         details: { endpoint, requestsPerMinute, ratio },
-      })
+      });
     } else if (ratio > 5) {
       // Medium
       await this.processThreat({
@@ -234,7 +222,7 @@ class ThreatResponseService {
         riskScore: 45,
         type: 'api_abuse',
         details: { endpoint, requestsPerMinute, ratio },
-      })
+      });
     }
   }
 
@@ -245,23 +233,23 @@ class ThreatResponseService {
     userId: string,
     ip: string,
     itemCount: number,
-    dataSize: number,
+    dataSize: number
   ): Promise<void> {
     // Heuristics: Large bulk download/export is suspicious
-    const itemThreshold = 500
-    const dataThreshold = 1024 * 1024 * 500 // 500 MB
+    const itemThreshold = 500;
+    const dataThreshold = 1024 * 1024 * 500; // 500 MB
 
-    let riskScore = 0
-    const details: Record<string, any> = { itemCount, dataSize }
+    let riskScore = 0;
+    const details: Record<string, any> = { itemCount, dataSize };
 
     if (itemCount > itemThreshold) {
-      riskScore += 40
-      details.reason = 'Excessive item count'
+      riskScore += 40;
+      details.reason = 'Excessive item count';
     }
 
     if (dataSize > dataThreshold) {
-      riskScore += 40
-      details.reason = 'Excessive data size'
+      riskScore += 40;
+      details.reason = 'Excessive data size';
     }
 
     if (riskScore > 0) {
@@ -271,7 +259,7 @@ class ThreatResponseService {
         riskScore: Math.min(100, riskScore),
         type: 'data_exfil',
         details,
-      })
+      });
     }
   }
 
@@ -282,7 +270,7 @@ class ThreatResponseService {
     userId: string,
     ip: string,
     fileName: string,
-    reason: string,
+    reason: string
   ): Promise<void> {
     await this.processThreat({
       userId,
@@ -290,7 +278,7 @@ class ThreatResponseService {
       riskScore: 90,
       type: 'malware_upload',
       details: { fileName, reason },
-    })
+    });
   }
 
   // ==================== PRIVATE RESPONSE ACTIONS ====================
@@ -301,11 +289,11 @@ class ThreatResponseService {
   private async logoutUser(userId: string): Promise<void> {
     try {
       // In production, update user sessions in database
-      logger.warn(`[SECURITY] Force logout user: ${userId}`)
+      logger.warn(`[SECURITY] Force logout user: ${userId}`);
       // DELETE all active sessions for this user
       // Notify user via email
     } catch (error) {
-      logger.error(`Failed to logout user ${userId}`, error)
+      logger.error(`Failed to logout user ${userId}`, error);
     }
   }
 
@@ -315,9 +303,9 @@ class ThreatResponseService {
   private async blockIp(ip: string, durationMs: number): Promise<void> {
     try {
       // In production, set in Redis cache
-      logger.warn(`[SECURITY] Blocked IP: ${ip} for ${durationMs}ms`)
+      logger.warn(`[SECURITY] Blocked IP: ${ip} for ${durationMs}ms`);
     } catch (error) {
-      logger.error(`Failed to block IP ${ip}`, error)
+      logger.error(`Failed to block IP ${ip}`, error);
     }
   }
 
@@ -326,9 +314,9 @@ class ThreatResponseService {
    */
   private async throttleIp(ip: string, durationMs: number): Promise<void> {
     try {
-      logger.warn(`[SECURITY] Throttled IP: ${ip} for ${durationMs}ms`)
+      logger.warn(`[SECURITY] Throttled IP: ${ip} for ${durationMs}ms`);
     } catch (error) {
-      logger.error(`Failed to throttle IP ${ip}`, error)
+      logger.error(`Failed to throttle IP ${ip}`, error);
     }
   }
 
@@ -337,9 +325,9 @@ class ThreatResponseService {
    */
   private async flagIp(ip: string): Promise<void> {
     try {
-      logger.info(`[SECURITY] Flagged IP for monitoring: ${ip}`)
+      logger.info(`[SECURITY] Flagged IP for monitoring: ${ip}`);
     } catch (error) {
-      logger.error(`Failed to flag IP ${ip}`, error)
+      logger.error(`Failed to flag IP ${ip}`, error);
     }
   }
 
@@ -347,47 +335,41 @@ class ThreatResponseService {
    * Create security incident record
    */
   private async createIncident(params: {
-    severity: string
-    type: string
-    userId?: string
-    ip: string
-    details: Record<string, any>
+    severity: string;
+    type: string;
+    userId?: string;
+    ip: string;
+    details: Record<string, any>;
   }): Promise<SecurityIncident> {
     const incident = new IncidentModel({
       id: `incident_${randomUUID()}`,
       timestamp: Date.now(),
       ...params,
       autoResponse: [],
-    })
+    });
 
-    await incident.save()
-    return incident
+    await incident.save();
+    return incident;
   }
 
   /**
    * Record automated response actions
    */
-  private async recordResponse(
-    incidentId: string,
-    actions: string[],
-  ): Promise<void> {
+  private async recordResponse(incidentId: string, actions: string[]): Promise<void> {
     try {
-      const incident = await IncidentModel.findOne({ id: incidentId })
+      const incident = await IncidentModel.findOne({ id: incidentId });
       if (incident) {
         for (const action of actions) {
           incident.autoResponse.push({
             action,
             timestamp: Date.now(),
             success: true,
-          })
+          });
         }
-        await incident.save()
+        await incident.save();
       }
     } catch (error) {
-      logger.error(
-        `Failed to record response for incident ${incidentId}`,
-        error,
-      )
+      logger.error(`Failed to record response for incident ${incidentId}`, error);
     }
   }
 
@@ -397,10 +379,10 @@ class ThreatResponseService {
   private async escalateToAdmin(incident: SecurityIncident): Promise<void> {
     try {
       // In production, send email/Slack alert
-      logger.error(`[ADMIN ALERT] Critical security incident: ${incident.id}`)
+      logger.error(`[ADMIN ALERT] Critical security incident: ${incident.id}`);
       // Notify administrators via email/Slack
     } catch (error) {
-      logger.error(`Failed to escalate incident ${incident.id}`, error)
+      logger.error(`Failed to escalate incident ${incident.id}`, error);
     }
   }
 
@@ -409,9 +391,9 @@ class ThreatResponseService {
    */
   private async sendAdminAlert(incident: SecurityIncident): Promise<void> {
     try {
-      logger.warn(`[ADMIN ALERT] High severity incident: ${incident.id}`)
+      logger.warn(`[ADMIN ALERT] High severity incident: ${incident.id}`);
     } catch (error) {
-      logger.error(`Failed to send admin alert for ${incident.id}`, error)
+      logger.error(`Failed to send admin alert for ${incident.id}`, error);
     }
   }
 
@@ -420,22 +402,22 @@ class ThreatResponseService {
    */
   private calculateSeverity(
     riskScore: number,
-    type: string,
+    type: string
   ): 'low' | 'medium' | 'high' | 'critical' {
     // Certain threat types are always high severity
-    const criticalTypes = ['malware_upload', 'data_exfil']
+    const criticalTypes = ['malware_upload', 'data_exfil'];
     if (criticalTypes.includes(type) && riskScore > 60) {
-      return 'critical'
+      return 'critical';
     }
 
     if (riskScore >= this.SEVERITY_THRESHOLDS.critical) {
-      return 'critical'
+      return 'critical';
     } else if (riskScore >= this.SEVERITY_THRESHOLDS.high) {
-      return 'high'
+      return 'high';
     } else if (riskScore >= this.SEVERITY_THRESHOLDS.medium) {
-      return 'medium'
+      return 'medium';
     } else {
-      return 'low'
+      return 'low';
     }
   }
 
@@ -443,26 +425,26 @@ class ThreatResponseService {
    * Get incident statistics
    */
   async getIncidentStats(timeWindowMs: number = 86400000): Promise<{
-    total: number
-    bySeverity: Record<string, number>
-    byType: Record<string, number>
+    total: number;
+    bySeverity: Record<string, number>;
+    byType: Record<string, number>;
   }> {
-    const since = Date.now() - timeWindowMs
-    const incidents = await IncidentModel.find({ timestamp: { $gte: since } })
+    const since = Date.now() - timeWindowMs;
+    const incidents = await IncidentModel.find({ timestamp: { $gte: since } });
 
     const stats = {
       total: incidents.length,
       bySeverity: { low: 0, medium: 0, high: 0, critical: 0 },
       byType: {} as Record<string, number>,
-    }
+    };
 
     for (const incident of incidents) {
-      stats.bySeverity[incident.severity]++
-      stats.byType[incident.type] = (stats.byType[incident.type] || 0) + 1
+      stats.bySeverity[incident.severity]++;
+      stats.byType[incident.type] = (stats.byType[incident.type] || 0) + 1;
     }
 
-    return stats
+    return stats;
   }
 }
 
-export const threatResponseService = new ThreatResponseService()
+export const threatResponseService = new ThreatResponseService();
