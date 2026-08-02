@@ -79,13 +79,13 @@ const normalizeProfileName = z
   .max(120, 'Profile name must be 120 characters or fewer')
   .transform((value) => (value.length === 0 ? 'none' : value));
 
-// ~5.5M chars covers a 3 MB file encoded as base64 plus JSON overhead
-const MAX_PROFILE_PHOTO_LENGTH = 5_500_000;
+// ~50M chars covers up to ~35 MB image file encoded as base64
+const MAX_PROFILE_PHOTO_LENGTH = 50_000_000;
 
 const normalizeProfilePhoto = z
   .string()
   .trim()
-  .max(MAX_PROFILE_PHOTO_LENGTH, 'Profile photo is too large (max ~3 MB).')
+  .max(MAX_PROFILE_PHOTO_LENGTH, 'Profile photo is too large (max ~35 MB).')
   .transform((value, ctx) => {
     if (value.length === 0 || value.toLowerCase() === 'none') {
       return 'none';

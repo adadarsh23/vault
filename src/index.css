@@ -15,7 +15,8 @@
   --color-sidebar-bg: var(--sidebar-bg);
   --color-sidebar-border: var(--sidebar-border);
 
-  /* Ultra-wide Breakpoints */
+  /* Responsive Breakpoints */
+  --breakpoint-xs: 480px;
   --breakpoint-3xl: 1920px;
   --breakpoint-4xl: 2560px;
   --breakpoint-5xl: 3840px;
@@ -444,3 +445,117 @@ button {
   scrollbar-width: thin;
   scrollbar-color: rgba(var(--text-rgb), 0.1) transparent;
 }
+
+/* Clean 4K HD PNG Exporting Overrides */
+.is-exporting-png,
+.is-exporting-png * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+.is-exporting-png {
+  background: #080c14 !important;
+  border-radius: 1.5rem !important;
+}
+
+.is-exporting-png .group\/node > div {
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Global Print Media Rules for Full Multi-Page Document Printing */
+@media print {
+  @page {
+    margin: 1.5cm 1cm;
+    size: auto;
+  }
+
+  html,
+  body,
+  #root,
+  #root > div,
+  main,
+  div[class*='overflow'],
+  div[class*='h-screen'] {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+    position: static !important;
+    float: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Completely collapse & hide sidebars, navigation, headers & dialogs */
+  #primary-sidebar,
+  [role='navigation'],
+  nav,
+  aside,
+  header,
+  footer,
+  .no-print,
+  .print\:hidden,
+  [role='dialog'],
+  button.print\:hidden {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    max-width: 0 !important;
+    min-width: 0 !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex: none !important;
+    border: none !important;
+  }
+
+  /* Stretch main content to 100% full width without sidebar offsets */
+  main,
+  .print-container,
+  section,
+  #root > div > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    flex: 1 1 100% !important;
+  }
+
+  /* Page break rules for clean multi-page print flow */
+  .shortcut-card-item {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    border: 1px solid #e5e7eb !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  kbd {
+    border: 1px solid #9ca3af !important;
+    background-color: #f3f4f6 !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+  }
+
+  /* Force multi-column layout for printed shortcut grid */
+  .grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.75rem !important;
+  }
+}
+

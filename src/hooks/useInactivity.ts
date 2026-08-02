@@ -8,6 +8,7 @@ interface InactivityOptions {
   isAutoLockEnabled: boolean;
   autoLockDuration: number; // in minutes
   isBlurOnTabHideEnabled: boolean;
+  isLockOnTabHideEnabled?: boolean;
   lock: () => void;
 }
 
@@ -32,6 +33,7 @@ export const useInactivity = ({
   isAutoLockEnabled,
   autoLockDuration,
   isBlurOnTabHideEnabled,
+  isLockOnTabHideEnabled,
   lock,
 }: InactivityOptions) => {
   const [isInactive, setIsInactive] = useState(false);
@@ -141,8 +143,12 @@ export const useInactivity = ({
     resetTimerRef.current = resetTimer;
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && isBlurOnTabHideEnabled) {
-        setIsInactive(true);
+      if (document.visibilityState === 'hidden') {
+        if (isLockOnTabHideEnabled) {
+          runAutoLock();
+        } else if (isBlurOnTabHideEnabled) {
+          setIsInactive(true);
+        }
       } else if (document.visibilityState === 'visible') {
         resetTimer();
       }
@@ -169,7 +175,14 @@ export const useInactivity = ({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearTimers();
     };
-  }, [isUnlocked, lock, isAutoLockEnabled, autoLockDuration, isBlurOnTabHideEnabled]);
+  }, [
+    isUnlocked,
+    lock,
+    isAutoLockEnabled,
+    autoLockDuration,
+    isBlurOnTabHideEnabled,
+    isLockOnTabHideEnabled,
+  ]);
 
   const resetTimer = useCallback(() => {
     resetTimerRef.current();

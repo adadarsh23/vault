@@ -1,4 +1,5 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useRef } from 'react';
+import { useScrollRestoration } from '../../../../hooks/useScrollRestoration';
 import { cn } from '../../../../lib/utils';
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
@@ -55,6 +56,8 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
 }) => {
   const [dropTarget, setDropTarget] = useState<string | null | undefined>();
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const folderSidebarRef = useRef<HTMLElement>(null);
+  useScrollRestoration('notes_folder_sidebar', folderSidebarRef);
 
   React.useEffect(() => {
     const handleGlobalDragStart = (e: DragEvent) => {
@@ -144,6 +147,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
 
   return (
     <aside
+      ref={folderSidebarRef}
       aria-label="Folder Sidebar"
       className="hidden lg:flex lg:w-48 xl:w-56 shrink-0 flex-col gap-4 h-full overflow-y-auto pr-2 custom-scrollbar"
     >

@@ -55,6 +55,43 @@ const normalizeItemType = (
 ): VaultItem['type'] => {
   const normalized = typeof category === 'string' ? category.trim() : 'file';
   switch (normalized.toLowerCase()) {
+    // Personal Information
+    case 'identity':
+    case 'identities':
+      return 'identity';
+    case 'contact':
+    case 'contacts':
+      return 'contact';
+    case 'password':
+    case 'passwords':
+      return 'password';
+    case 'card':
+    case 'cards':
+      return 'card';
+    case 'wifi':
+    case 'wifis':
+      return 'wifi';
+    case 'secret':
+    case 'secrets':
+    case 'secretkey':
+    case 'secretkeys':
+      return 'secret';
+
+    // Notes & Productivity
+    case 'note':
+    case 'notes':
+      return 'note';
+    case 'todo':
+    case 'todos':
+      return 'todo';
+    case 'chat':
+    case 'chats':
+      return 'chat';
+    case 'location':
+    case 'locations':
+      return 'location';
+
+    // Media
     case 'photo':
     case 'photos':
       return 'photo';
@@ -64,41 +101,11 @@ const normalizeItemType = (
     case 'audio':
     case 'audios':
       return 'audio';
-    case 'note':
-    case 'notes':
-      return 'note';
-    case 'chat':
-    case 'chats':
-      return 'chat';
-    case 'todo':
-    case 'todos':
-      return 'todo';
-    case 'password':
-    case 'passwords':
-      return 'password';
-    case 'secret':
-    case 'secrets':
-    case 'secretkey':
-    case 'secretkeys':
-      return 'secret';
-    case 'contact':
-    case 'contacts':
-      return 'contact';
-    case 'location':
-    case 'locations':
-      return 'location';
+
+    // Documents & Files
     case 'document':
     case 'documents':
       return 'document';
-    case 'card':
-    case 'cards':
-      return 'card';
-    case 'identity':
-    case 'identities':
-      return 'identity';
-    case 'wifi':
-    case 'wifis':
-      return 'wifi';
     case 'file':
     case 'files':
     case 'otherfiles':

@@ -2,7 +2,6 @@ import React, { lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Route, Routes } from 'react-router-dom';
 import { Sidebar } from '../layout/Sidebar';
-// import { Button } from '../ui/Button'
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 import { ErrorFallback } from '../ui/ErrorFallback';
 import type { TabId } from './NavigationHandler';
@@ -13,136 +12,150 @@ import { useNotificationStore } from '../../store/notificationStore';
 import { Lock, X } from 'lucide-react';
 import { AppHeader } from './AppHeader';
 import { LoadingScreen } from './LoadingScreen';
+import { useScrollRestoration } from '../../hooks/useScrollRestoration';
 
 const MaintenanceModal = lazy(() =>
   import('../vault/MaintenanceModal').then((m) => ({
-    default: m.MaintenanceModal,
+    default: m.MaintenanceModal || m.default,
   }))
 );
 const CommandPalette = lazy(() =>
   import('../vault/CommandPalette').then((m) => ({
-    default: m.CommandPalette,
+    default: m.CommandPalette || m.default,
   }))
 );
 
+// Main
 const Dashboard = lazy(() =>
   import('../../features/vault/Dashboard').then((m) => ({
-    default: m.Dashboard,
+    default: m.Dashboard || m.default,
   }))
 );
-const MediaVault = lazy(() =>
-  import('../../features/vault/MediaVault').then((m) => ({
-    default: m.MediaVault,
-  }))
-);
-const AudioVault = lazy(() =>
-  import('../../features/vault/AudioVault').then((m) => ({
-    default: m.AudioVault,
-  }))
-);
-const NotesVault = lazy(() =>
-  import('../../features/vault/NotesVault').then((m) => ({
-    default: m.NotesVault,
-  }))
-);
-const ChatVault = lazy(() =>
-  import('../../features/vault/ChatVault').then((m) => ({
-    default: m.ChatVault,
-  }))
-);
-const TodoVault = lazy(() =>
-  import('../../features/vault/TodoVault').then((m) => ({
-    default: m.TodoVault,
-  }))
-);
-const DocumentsVault = lazy(() =>
-  import('../../features/vault/DocumentsVault').then((m) => ({
-    default: m.DocumentsVault,
-  }))
-);
-const OtherFilesVault = lazy(() =>
-  import('../../features/vault/OtherFilesVault').then((m) => ({
-    default: m.OtherFilesVault,
-  }))
-);
-const PasswordManager = lazy(() =>
-  import('../../features/vault/PasswordManager').then((m) => ({
-    default: m.PasswordManager,
-  }))
-);
-const SecretsVault = lazy(() =>
-  import('../../features/vault/SecretsVault').then((m) => ({
-    default: m.SecretsVault,
+
+// Personal Information
+const IdentitiesVault = lazy(() =>
+  import('../../features/vault/IdentitiesVault').then((m) => ({
+    default: m.IdentitiesVault || m.default,
   }))
 );
 const ContactsVault = lazy(() =>
   import('../../features/vault/ContactsVault').then((m) => ({
-    default: m.ContactsVault,
+    default: m.ContactsVault || m.default,
   }))
 );
-const LocationVault = lazy(() =>
-  import('../../features/vault/LocationVault').then((m) => ({
-    default: m.LocationVault,
+const PasswordManager = lazy(() =>
+  import('../../features/vault/PasswordManager').then((m) => ({
+    default: m.PasswordManager || m.default,
   }))
 );
 const CardsVault = lazy(() =>
   import('../../features/vault/CardsVault').then((m) => ({
-    default: m.CardsVault,
-  }))
-);
-const IdentitiesVault = lazy(() =>
-  import('../../features/vault/IdentitiesVault').then((m) => ({
-    default: m.IdentitiesVault,
+    default: m.CardsVault || m.default,
   }))
 );
 const WifiVault = lazy(() =>
   import('../../features/vault/WifiVault').then((m) => ({
-    default: m.WifiVault,
+    default: m.WifiVault || m.default,
   }))
 );
-const SettingsVault = lazy(() =>
-  import('../../features/vault/SettingsVault').then((m) => ({
-    default: m.SettingsVault,
+const SecretsVault = lazy(() =>
+  import('../../features/vault/SecretsVault').then((m) => ({
+    default: m.SecretsVault || m.default,
+  }))
+);
+
+// Notes & Productivity
+const NotesVault = lazy(() =>
+  import('../../features/vault/NotesVault').then((m) => ({
+    default: m.NotesVault || m.default,
+  }))
+);
+const TodoVault = lazy(() =>
+  import('../../features/vault/TodoVault').then((m) => ({
+    default: m.TodoVault || m.default,
+  }))
+);
+const ChatVault = lazy(() =>
+  import('../../features/vault/ChatVault').then((m) => ({
+    default: m.ChatVault || m.default,
+  }))
+);
+const LocationVault = lazy(() =>
+  import('../../features/vault/LocationVault').then((m) => ({
+    default: m.LocationVault || m.default,
+  }))
+);
+
+// Media
+const MediaVault = lazy(() =>
+  import('../../features/vault/MediaVault').then((m) => ({
+    default: m.MediaVault || m.default,
+  }))
+);
+const AudioVault = lazy(() =>
+  import('../../features/vault/AudioVault').then((m) => ({
+    default: m.AudioVault || m.default,
+  }))
+);
+
+// Documents & Files
+const DocumentsVault = lazy(() =>
+  import('../../features/vault/DocumentsVault').then((m) => ({
+    default: m.DocumentsVault || m.default,
+  }))
+);
+const OtherFilesVault = lazy(() =>
+  import('../../features/vault/OtherFilesVault').then((m) => ({
+    default: m.OtherFilesVault || m.default,
+  }))
+);
+
+// App
+const PrivacyInterfacePage = lazy(() =>
+  import('../../features/vault/PrivacyInterfacePage').then((m) => ({
+    default: m.PrivacyInterfacePage || m.default,
   }))
 );
 const ShortcutsPage = lazy(() =>
   import('../../features/vault/ShortcutsPage').then((m) => ({
-    default: m.ShortcutsPage,
+    default: m.ShortcutsPage || m.default,
   }))
 );
-const VaultEcosystemPage = lazy(() =>
-  import('../../features/vault/VaultEcosystemPage').then((m) => ({
-    default: m.VaultEcosystemPage,
+const SettingsVault = lazy(() =>
+  import('../../features/vault/SettingsVault').then((m) => ({
+    default: m.SettingsVault || m.default,
   }))
 );
-const PrivacyInterfacePage = lazy(() =>
-  import('../../features/vault/PrivacyInterfacePage').then((m) => ({
-    default: m.PrivacyInterfacePage,
-  }))
-);
+
+// System & Other
 const SystemLogsPage = lazy(() =>
   import('../../features/vault/SystemLogsPage').then((m) => ({
-    default: m.SystemLogsPage,
+    default: m.SystemLogsPage || m.default,
   }))
 );
 const DeviceSessionsPage = lazy(() =>
   import('../../features/vault/DeviceSessionsPage').then((m) => ({
-    default: m.DeviceSessionsPage,
+    default: m.DeviceSessionsPage || m.default,
   }))
 );
-const NotFoundPage = lazy(() =>
-  import('../../features/NotFoundPage').then((m) => ({
-    default: m.NotFoundPage,
+const VaultEcosystemPage = lazy(() =>
+  import('../../features/vault/VaultEcosystemPage').then((m) => ({
+    default: m.VaultEcosystemPage || m.default,
   }))
 );
 const LegalPage = lazy(() =>
   import('../../features/LegalPage').then((m) => ({
-    default: m.LegalPage,
+    default: m.LegalPage || m.default,
   }))
 );
 const ContactPage = lazy(() =>
   import('../../features/ContactPage').then((m) => ({
-    default: m.ContactPage,
+    default: m.ContactPage || m.default,
+  }))
+);
+const NotFoundPage = lazy(() =>
+  import('../../features/NotFoundPage').then((m) => ({
+    default: m.NotFoundPage || m.default,
   }))
 );
 
@@ -153,34 +166,40 @@ type MaintenanceState = { isOpen: false } | { isOpen: true; type: MaintenanceTyp
 const PROFILE_UPDATED_EVENT = 'vault:profile-updated';
 
 const TAB_ORDER: readonly TabId[] = [
+  // Main
   'dashboard',
+
+  // Personal Information
+  'identities',
+  'contacts',
+  'passwords',
+  'cards',
+  'wifi',
+  'secrets',
+
+  // Notes & Productivity
   'notes',
+  'todos',
   'chats',
   'locations',
-  'todos',
-  'passwords',
-  'secrets',
-  'contacts',
+
+  // Media
   'photos',
   'videos',
   'audio',
+
+  // Documents & Files
   'documents',
   'files',
-  'cards',
-  'identities',
-  'wifi',
+
+  // App
+  'privacy',
+  'shortcuts',
   'settings',
-  // 'shortcuts',
-  // 'ecosystem',
-  // 'privacy',
-  // 'systemlogs',
-  // 'devicesessions',
-  // 'legal',
-  // 'contact',
 ];
 
 const TAB_LABELS: Partial<Record<TabId, string>> = {
-  ecosystem: 'ecosystem',
+  ecosystem: 'vault ecosystem',
   systemlogs: 'system logs',
   devicesessions: 'device sessions',
 };
@@ -298,7 +317,8 @@ export function AppShell({
   const sidebarPosition = useVaultStore((state) => state.preferences.sidebarPosition);
   const username = useVaultStore((state) => state.username);
 
-  const { unreadCount, fetchNotifications } = useNotificationStore();
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const fetchNotifications = useNotificationStore((state) => state.fetchNotifications);
   const [showNotifications, setShowNotifications] = React.useState(false);
 
   React.useEffect(() => {
@@ -316,11 +336,25 @@ export function AppShell({
         if (isMounted) isFetching = false;
       }
     };
+
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        void pollNotifications();
+      }
+    };
+
     void pollNotifications();
     const interval = setInterval(pollNotifications, 30000);
+    if (typeof window !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
     return () => {
       isMounted = false;
       clearInterval(interval);
+      if (typeof window !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
     };
   }, [fetchNotifications]);
 
@@ -337,29 +371,52 @@ export function AppShell({
   const profileLoadRequestIdRef = React.useRef(0);
   const [profileEditorRequestToken, setProfileEditorRequestToken] = React.useState(0);
 
-  React.useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo(0, 0);
-    }
-  }, [locationPath]);
+  const isPopStateRef = React.useRef(false);
+  const { restoreScrollPosition } = useScrollRestoration(`route_${locationPath}`, scrollRef, {
+    enabled: true,
+    autoRestore: false,
+  });
 
   React.useEffect(() => {
-    const preload = () => {
-      void import('../../features/vault/SettingsVault');
+    const handlePopState = () => {
+      isPopStateRef.current = true;
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (scrollRef.current) {
+      if (isPopStateRef.current) {
+        restoreScrollPosition();
+        isPopStateRef.current = false;
+      } else {
+        scrollRef.current.scrollTo(0, 0);
+      }
+    }
+  }, [locationPath, restoreScrollPosition]);
+
+  React.useEffect(() => {
+    const preloadPriorityRoutes = () => {
+      void import('../../features/vault/Dashboard');
       void import('../../features/vault/NotesVault');
+      void import('../../features/vault/SettingsVault');
       void import('../../features/vault/MediaVault');
+      void import('../../features/vault/PasswordManager');
     };
 
     if (typeof window === 'undefined') return;
 
     if ('requestIdleCallback' in window) {
-      const idleId = window.requestIdleCallback(preload, { timeout: 1500 });
+      const idleId = window.requestIdleCallback(preloadPriorityRoutes, { timeout: 1000 });
       return () => {
         window.cancelIdleCallback(idleId);
       };
     }
 
-    const timeoutId = globalThis.setTimeout(preload, 600);
+    const timeoutId = globalThis.setTimeout(preloadPriorityRoutes, 400);
     return () => {
       globalThis.clearTimeout(timeoutId);
     };
@@ -503,11 +560,13 @@ export function AppShell({
     <>
       <Suspense fallback={null}>
         <CommandPalette />
-        <MaintenanceModal
-          isOpen={maintenanceModal.isOpen}
-          onClose={onCloseMaintenance}
-          type={maintenanceModal.isOpen ? maintenanceModal.type : 'export'}
-        />
+        {maintenanceModal.isOpen && (
+          <MaintenanceModal
+            isOpen={maintenanceModal.isOpen}
+            onClose={onCloseMaintenance}
+            type={maintenanceModal.type}
+          />
+        )}
       </Suspense>
 
       <AnimatePresence mode="wait">
@@ -634,22 +693,43 @@ export function AppShell({
                       )}
                     >
                       <Routes>
+                        {/* Main */}
                         <Route path="/" element={<Dashboard onNavigate={safeNavigateToTab} />} />
+
+                        {/* Personal Information */}
+                        <Route path="/identities" element={<IdentitiesVault />} />
+                        <Route path="/contacts" element={<ContactsVault />} />
+                        <Route path="/passwords" element={<PasswordManager />} />
+                        <Route path="/cards" element={<CardsVault />} />
+                        <Route path="/wifi" element={<WifiVault />} />
+                        <Route path="/secrets" element={<SecretsVault />} />
+
+                        {/* Notes & Productivity */}
+                        <Route path="/notes" element={<NotesVault />} />
+                        <Route path="/todos" element={<TodoVault />} />
+                        <Route path="/chats" element={<ChatVault />} />
+                        <Route path="/locations" element={<LocationVault />} />
+
+                        {/* Media */}
                         <Route path="/photos" element={<MediaVault type="photo" />} />
                         <Route path="/videos" element={<MediaVault type="video" />} />
                         <Route path="/audio" element={<AudioVault />} />
-                        <Route path="/notes" element={<NotesVault />} />
-                        <Route path="/chats" element={<ChatVault />} />
-                        <Route path="/todos" element={<TodoVault />} />
+
+                        {/* Documents & Files */}
                         <Route path="/documents" element={<DocumentsVault />} />
                         <Route path="/files" element={<OtherFilesVault />} />
-                        <Route path="/passwords" element={<PasswordManager />} />
-                        <Route path="/secrets" element={<SecretsVault />} />
-                        <Route path="/locations" element={<LocationVault />} />
-                        <Route path="/contacts" element={<ContactsVault />} />
-                        <Route path="/cards" element={<CardsVault />} />
-                        <Route path="/identities" element={<IdentitiesVault />} />
-                        <Route path="/wifi" element={<WifiVault />} />
+
+                        {/* App */}
+                        <Route
+                          path="/privacy"
+                          element={
+                            <PrivacyInterfacePage onBack={() => navigateToTab('settings')} />
+                          }
+                        />
+                        <Route
+                          path="/shortcuts"
+                          element={<ShortcutsPage />}
+                        />
                         <Route
                           path="/settings"
                           element={
@@ -660,20 +740,8 @@ export function AppShell({
                             />
                           }
                         />
-                        <Route
-                          path="/shortcuts"
-                          element={<ShortcutsPage onBack={() => navigateToTab('settings')} />}
-                        />
-                        <Route
-                          path="/eco"
-                          element={<VaultEcosystemPage onBack={() => navigateToTab('settings')} />}
-                        />
-                        <Route
-                          path="/privacy"
-                          element={
-                            <PrivacyInterfacePage onBack={() => navigateToTab('settings')} />
-                          }
-                        />
+
+                        {/* System & Other */}
                         <Route
                           path="/system-logs"
                           element={<SystemLogsPage onBack={() => navigateToTab('settings')} />}
@@ -681,6 +749,10 @@ export function AppShell({
                         <Route
                           path="/device-sessions"
                           element={<DeviceSessionsPage onBack={() => navigateToTab('settings')} />}
+                        />
+                        <Route
+                          path="/eco"
+                          element={<VaultEcosystemPage onBack={() => navigateToTab('settings')} />}
                         />
                         <Route path="/legal" element={<LegalPage />} />
                         <Route

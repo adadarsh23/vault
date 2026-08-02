@@ -13,16 +13,23 @@ type MaintenanceType = 'export' | 'import' | 'changeKey' | 'changePassword';
 type MaintenanceState = { isOpen: false } | { isOpen: true; type: MaintenanceType };
 
 export function UnlockedVaultHost({ shouldReduceMotion }: { shouldReduceMotion: boolean }) {
-  const { isVaultReady, lock, isAutoLockEnabled, autoLockDuration, isBlurOnTabHideEnabled } =
-    useVaultStore(
-      useShallow((state) => ({
-        isVaultReady: state.isVaultReady,
-        lock: state.lock,
-        isAutoLockEnabled: state.preferences.isAutoLockEnabled,
-        autoLockDuration: state.preferences.autoLockDuration,
-        isBlurOnTabHideEnabled: state.preferences.isBlurOnTabHideEnabled,
-      }))
-    );
+  const {
+    isVaultReady,
+    lock,
+    isAutoLockEnabled,
+    autoLockDuration,
+    isBlurOnTabHideEnabled,
+    isLockOnTabHideEnabled,
+  } = useVaultStore(
+    useShallow((state) => ({
+      isVaultReady: state.isVaultReady,
+      lock: state.lock,
+      isAutoLockEnabled: state.preferences.isAutoLockEnabled,
+      autoLockDuration: state.preferences.autoLockDuration,
+      isBlurOnTabHideEnabled: state.preferences.isBlurOnTabHideEnabled,
+      isLockOnTabHideEnabled: state.preferences.isLockOnTabHideEnabled,
+    }))
+  );
 
   const navigation = useNavigationHandler();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -41,6 +48,7 @@ export function UnlockedVaultHost({ shouldReduceMotion }: { shouldReduceMotion: 
     isAutoLockEnabled,
     autoLockDuration,
     isBlurOnTabHideEnabled,
+    isLockOnTabHideEnabled,
     lock,
   });
 

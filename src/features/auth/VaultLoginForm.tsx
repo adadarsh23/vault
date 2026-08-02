@@ -691,6 +691,27 @@ export const VaultLoginForm: React.FC<Props> = memo(
                   </div>
                 )}
 
+                {cloudSessionActive && !twoFactorRequired && (
+                  <div className="flex items-center justify-between px-4 py-3 text-sm text-emerald-400">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      <span>
+                        Cloud session restored for{' '}
+                        <strong className="font-semibold">{username}</strong>
+                      </span>
+                    </div>
+                    {onGoBack && (
+                      <button
+                        type="button"
+                        onClick={onGoBack}
+                        className="text-xs text-emerald-300/80 hover:text-emerald-200 underline transition-colors "
+                      >
+                        Sign Out
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 {!twoFactorRequired && (
                   <div className="group w-full">
                     <label htmlFor="master-key" className="sr-only">

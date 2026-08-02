@@ -20,8 +20,10 @@ import { marked } from 'marked';
 import { Button } from '../../ui/Button';
 import { cn } from '../../../lib/utils';
 import { ScrollButton } from '../ScrollButton';
+import { useScrollRestoration } from '../../../hooks/useScrollRestoration';
 
 interface NoteEditorPreviewProps {
+  noteId?: string;
   content: string;
   lineWrap: boolean;
   showPreview: boolean;
@@ -197,6 +199,7 @@ const buildHtmlDocument = (body: string) => `
 const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreviewProps>(
   (
     {
+      noteId,
       content,
       lineWrap,
       showPreview,
@@ -209,6 +212,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
     ref
   ) => {
     const internalRef = useRef<HTMLDivElement>(null);
+    useScrollRestoration(`note_preview_${noteId || 'default'}`, internalRef);
 
     const deferredContent = useDeferredValue(content);
     const prefersReducedMotion = useReducedMotion();

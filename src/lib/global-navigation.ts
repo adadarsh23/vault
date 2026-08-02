@@ -1,55 +1,72 @@
 import { VaultItem } from './storage';
 
 export const GLOBAL_NAVIGABLE_TYPES: VaultItem['type'][] = [
+  // Personal Information
+  'identity',
+  'contact',
+  'password',
+  'card',
+  'wifi',
+  'secret',
+
+  // Notes & Productivity
+  'note',
+  'todo',
+  'chat',
+  'location',
+
+  // Media
   'photo',
   'video',
   'audio',
+
+  // Documents & Files
   'document',
   'file',
-  'password',
-  'contact',
-  'location',
-  'todo',
-  'chat',
-  'card',
-  'identity',
-  'wifi',
 ];
 
 export const GLOBAL_NAVIGATION_EVENT = 'vault:global-navigate-to-item';
 
 export const mapItemTypeToTab = (type: VaultItem['type']): string => {
   switch (type) {
+    // Personal Information
+    case 'identity':
+      return 'identities';
+    case 'contact':
+      return 'contacts';
+    case 'password':
+      return 'passwords';
+    case 'card':
+      return 'cards';
+    case 'wifi':
+      return 'wifi';
+    case 'secret':
+      return 'secrets';
+
+    // Notes & Productivity
+    case 'note':
+      return 'notes';
+    case 'todo':
+      return 'todos';
+    case 'chat':
+      return 'chats';
+    case 'location':
+      return 'locations';
+
+    // Media
     case 'photo':
       return 'photos';
     case 'video':
       return 'videos';
     case 'audio':
       return 'audio';
+
+    // Documents & Files
     case 'document':
       return 'documents';
     case 'file':
       return 'files';
-    case 'password':
-      return 'passwords';
-    case 'contact':
-      return 'contacts';
-    case 'note':
-      return 'notes';
-    case 'chat':
-      return 'chats';
-    case 'todo':
-      return 'todos';
-    case 'secret':
-      return 'secrets';
-    case 'location':
-      return 'locations';
-    case 'card':
-      return 'cards';
-    case 'identity':
-      return 'identities';
-    case 'wifi':
-      return 'wifi';
+
     default:
       return 'dashboard';
   }

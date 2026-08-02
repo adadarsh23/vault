@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { useScrollRestoration } from '../../../../hooks/useScrollRestoration';
 import { cn } from '../../../../lib/utils';
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
@@ -81,6 +82,12 @@ export const NotesList: React.FC<NotesListProps> = ({
 }) => {
   const [showListScrollTop, setShowListScrollTop] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+
+  // Restore scroll position when switching folders or clearing search
+  const scrollKey = searchQuery
+    ? `notes_list_search_${searchQuery.slice(0, 32)}`
+    : `notes_list_folder_${currentFolder ?? '__all__'}`;
+  useScrollRestoration(scrollKey, listRef);
 
   const suggestions = React.useMemo(() => {
     if (!notes) return [];

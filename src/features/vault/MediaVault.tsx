@@ -77,6 +77,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     (state) => state.preferences.isLightweightPreviewModeEnabled
   );
   const [isUploading, setIsUploading] = useState(false);
+  const [overallProgress, setOverallProgress] = useState(0); // 0-100 overall upload progress
   const [isLiveRecordOpen, setIsLiveRecordOpen] = useState(false);
   const [previewItem, setPreviewItem] = useState<string | null>(null);
   const [activePreviewItem, setActivePreviewItem] = useState<string | null>(null);

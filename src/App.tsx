@@ -7,7 +7,7 @@ import { LoadingScreen } from './components/app/LoadingScreen';
 import { useVaultStore } from './store/vaultStore';
 import { useMediaQuery } from './hooks/use-media-query';
 import { logger } from './lib/logger';
-import { useAnalyticsPageTracking } from './lib/analytics';
+import { useAnalyticsPageTracking } from './lib/telemetry';
 
 type TrustedTypesPolicy = {
   createScriptURL: (input: string) => string;
@@ -30,13 +30,13 @@ type WindowWithTrustedTypes = Window &
 
 const LockedVaultHost = lazy(() =>
   import('./components/app/LockedVaultHost').then((module) => ({
-    default: module.LockedVaultHost,
+    default: module.LockedVaultHost || module.default,
   }))
 );
 
 const UnlockedVaultHost = lazy(() =>
   import('./components/app/UnlockedVaultHost').then((module) => ({
-    default: module.UnlockedVaultHost,
+    default: module.UnlockedVaultHost || module.default,
   }))
 );
 
@@ -129,13 +129,10 @@ export default function App() {
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       // Modern browsers require a very specific pattern for the refresh prompt.
-      // We trigger this if the vault is ready and the user has enabled the confirmation preference.
-      if (isVaultReady && isRefreshConfirmationEnabled) {
-        // High-importance warning as requested by user
+      // Trigger the confirmation when the vault is NOT ready (locked) and the user has enabled the preference.
+      if (!isVaultReady && isRefreshConfirmationEnabled) {
         const message = 'You have unsaved changes. Are you sure you want to refresh the page?';
-
         e.preventDefault();
-        // Included for legacy support / Chrome historical behavior
         e.returnValue = message;
         return message;
       }

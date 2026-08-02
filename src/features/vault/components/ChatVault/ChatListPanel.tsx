@@ -74,6 +74,20 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
   const [showListScrollTop, setShowListScrollTop] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
+  const categoryCounts = React.useMemo(() => {
+    let unreadCount = 0;
+    let mentionsCount = 0;
+    Object.values(chatMetrics).forEach((metric) => {
+      if (metric.unread > 0) unreadCount += 1;
+      if (metric.mentions > 0) mentionsCount += 1;
+    });
+    return {
+      all: totalFilteredChats,
+      unread: unreadCount,
+      mentions: mentionsCount,
+    };
+  }, [chatMetrics, totalFilteredChats]);
+
   return (
     <aside
       className={cn(
@@ -127,7 +141,7 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
         </Button>
       </div>
 
-      <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 custom-scrollbar">
+      <div className="flex flex-nowrap gap-1 overflow-x-auto pb-1 custom-scrollbar">
         {(
           [
             { id: 'all', label: 'All', icon: Filter },
@@ -137,20 +151,31 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
         ).map((entry) => {
           const Icon = entry.icon;
           const active = filter === entry.id;
+          const count = categoryCounts[entry.id];
           return (
             <button
               key={entry.id}
               type="button"
               onClick={() => onFilterChange(entry.id)}
               className={cn(
-                'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+                'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors',
                 active
                   ? 'border-emerald-500/20 bg-emerald-500/10 text-text'
                   : 'border-text/10 bg-bg/60 text-text/65 hover:text-text'
               )}
             >
               <Icon className="h-3.5 w-3.5" />
-              {entry.label}
+              <span>{entry.label}</span>
+              {typeof count === 'number' && (
+                <span
+                  className={cn(
+                    'rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none',
+                    active ? 'bg-emerald-500/20 text-fuchsia-400' : 'bg-text/10 text-text/50'
+                  )}
+                >
+                  {count}
+                </span>
+              )}
             </button>
           );
         })}
@@ -180,8 +205,7 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <>
-              <Plus className="h-4 w-4 sm:mr-0 md:mr-1" />
-              <span className="text-sm font-semibold sm:hidden md:inline">Create</span>
+              <Plus className="h-4 w-4" />
             </>
           )}
         </Button>

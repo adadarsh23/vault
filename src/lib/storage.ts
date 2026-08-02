@@ -1,36 +1,44 @@
 export type VaultItemType =
+  // Personal Information
+  | 'identity'
+  | 'contact'
+  | 'password'
+  | 'card'
+  | 'wifi'
+  | 'secret'
+  // Notes & Productivity
+  | 'note'
+  | 'todo'
+  | 'chat'
+  | 'location'
+  // Media
   | 'photo'
   | 'video'
   | 'audio'
-  | 'note'
-  | 'chat'
-  | 'todo'
-  | 'password'
-  | 'secret'
-  | 'contact'
+  // Documents & Files
   | 'document'
-  | 'file'
-  | 'location'
-  | 'card'
-  | 'identity'
-  | 'wifi';
+  | 'file';
 
 const VAULT_ITEM_TYPES = new Set<VaultItemType>([
+  // Personal Information
+  'identity',
+  'contact',
+  'password',
+  'card',
+  'wifi',
+  'secret',
+  // Notes & Productivity
+  'note',
+  'todo',
+  'chat',
+  'location',
+  // Media
   'photo',
   'video',
   'audio',
-  'note',
-  'chat',
-  'todo',
-  'password',
-  'secret',
-  'contact',
+  // Documents & Files
   'document',
   'file',
-  'location',
-  'card',
-  'identity',
-  'wifi',
 ]);
 
 export type VaultItemMetadata = Record<string, any>;

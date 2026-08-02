@@ -5,8 +5,13 @@ import {
   Check,
   ChevronLeft,
   Clock,
+  Compass,
   Copy,
   Edit2,
+  Folder,
+  Layers,
+  Navigation,
+  Pin,
   ShieldCheck,
   Trash2,
   ChevronUp,
@@ -48,9 +53,11 @@ const Editor = ({
   onCancel,
   onCapture,
   onFetchAddress,
+  onFetchAltitude,
   isCapturing,
   isSaving,
   isFetchingAddress,
+  isFetchingAltitude,
   label,
 }: {
   form: FormState;
@@ -59,9 +66,11 @@ const Editor = ({
   onCancel: () => void;
   onCapture: () => Promise<void>;
   onFetchAddress: () => Promise<void>;
+  onFetchAltitude: () => Promise<void>;
   isCapturing: boolean;
   isSaving: boolean;
   isFetchingAddress: boolean;
+  isFetchingAltitude: boolean;
   label: string;
 }) => (
   <Card className="flex h-full flex-col border-none bg-card-bg/30 shadow-none overflow-hidden">
@@ -202,14 +211,26 @@ const Editor = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">
-              Altitude (m)
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-text/30 ml-1">
+                Altitude (m)
+              </label>
+              {(form.latitude || form.longitude) && (
+                <button
+                  type="button"
+                  onClick={onFetchAltitude}
+                  disabled={isFetchingAltitude || isSaving}
+                  className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-400/10 px-2 py-0.5 rounded flex items-center gap-1"
+                >
+                  {isFetchingAltitude ? 'Fetching...' : <>Fetch</>}
+                </button>
+              )}
+            </div>
             <Input
               placeholder="Altitude (m)"
               value={form.altitude}
               onChange={(e) => setForm((p) => ({ ...p, altitude: e.target.value }))}
-              disabled={isSaving}
+              disabled={isSaving || isFetchingAltitude}
               className="bg-white/5 border-white/5 h-11"
             />
           </div>
@@ -229,7 +250,7 @@ const Editor = ({
         </div>
       </div>
 
-      <div className="border-t border-white/5 p-4 grid grid-cols-2 gap-3 sm:flex sm:flex-row shrink-0 bg-white/[0.01]">
+      <div className="border-t border-white/5 p-4 flex items-center gap-2 sm:gap-3 shrink-0 bg-white/[0.01]">
         <Button
           onClick={() => void onSave()}
           disabled={isSaving}
@@ -251,7 +272,7 @@ const Editor = ({
           variant="ghost"
           onClick={onCancel}
           disabled={isSaving}
-          className="col-span-2 sm:flex-1 rounded-xl h-11"
+          className="flex-1 rounded-xl h-11"
         >
           Cancel
         </Button>
@@ -288,7 +309,9 @@ export interface LocationViewerProps {
   startEdit: () => void;
   currentCoords: { lat: number; lng: number } | null;
   isFetchingAddress: boolean;
+  isFetchingAltitude: boolean;
   fetchAddress: () => Promise<void>;
+  fetchAltitude: () => Promise<void>;
 }
 
 export const LocationViewer: React.FC<LocationViewerProps> = ({
@@ -319,7 +342,9 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
   startEdit,
   currentCoords,
   isFetchingAddress,
+  isFetchingAltitude,
   fetchAddress,
+  fetchAltitude,
 }) => {
   const [showViewScrollTop, setShowViewScrollTop] = useState(false);
   const viewRef = useRef<HTMLDivElement>(null);
@@ -347,9 +372,11 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
               onCancel={resetEditor}
               onCapture={captureCurrentLocation}
               onFetchAddress={fetchAddress}
+              onFetchAltitude={fetchAltitude}
               isCapturing={isCapturing}
               isSaving={isSaving}
               isFetchingAddress={isFetchingAddress}
+              isFetchingAltitude={isFetchingAltitude}
               label="Save New Location"
             />
           </motion.div>
@@ -372,9 +399,11 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                 }}
                 onCapture={captureCurrentLocation}
                 onFetchAddress={fetchAddress}
+                onFetchAltitude={fetchAltitude}
                 isCapturing={isCapturing}
                 isSaving={isSaving}
                 isFetchingAddress={isFetchingAddress}
+                isFetchingAltitude={isFetchingAltitude}
                 label="Update Location"
               />
             ) : (
@@ -548,13 +577,19 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                     {/* Footer */}
                     <div className="flex items-center justify-between gap-4 px-4 xl:px-6 py-3 border-t border-card-border bg-white/[0.01] mt-auto w-full overflow-x-auto custom-scrollbar whitespace-nowrap">
                       <div className="flex items-center gap-4 md:gap-6 shrink-0">
-                        <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0">
+                        <div
+                          className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
+                          title="Date Created"
+                        >
                           <Calendar className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
                           <span className="text-text/60">
                             {new Date(selectedItem.createdAt).toLocaleDateString()}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium tracking-tight shrink-0">
+                        <div
+                          className="flex items-center gap-2 text-[11px] text-text/40 font-medium tracking-tight shrink-0"
+                          title="Last Updated"
+                        >
                           <Clock className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
                           <span className="text-text/60">
                             {new Date(selectedItem.updatedAt).toLocaleString(undefined, {
@@ -563,8 +598,82 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                             })}
                           </span>
                         </div>
+                        {selectedItem.folder && (
+                          <div
+                            className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
+                            title="Category / Folder"
+                          >
+                            <Folder className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <span className="text-emerald-400/70 font-semibold">
+                              {selectedItem.folder}
+                            </span>
+                          </div>
+                        )}
+                        {currentCoords && (
+                          <div
+                            className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
+                            title="Coordinates (Lat, Lng)"
+                          >
+                            <Compass className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <span className="text-text/60 font-mono text-[10px]">
+                              {currentCoords.lat.toFixed(4)}°, {currentCoords.lng.toFixed(4)}°
+                            </span>
+                          </div>
+                        )}
+                        {typeof payload?.accuracy === 'number' && (
+                          <div
+                            className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
+                            title="GPS Accuracy"
+                          >
+                            <Navigation className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <span className="text-text/60">
+                              ±{payload.accuracy.toFixed(1)}m
+                            </span>
+                          </div>
+                        )}
+                        {typeof payload?.altitude === 'number' && (
+                          <div
+                            className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
+                            title="Altitude"
+                          >
+                            <Layers className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <span className="text-text/60">
+                              {payload.altitude.toFixed(1)}m elev
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
+                        {selectedItem.isPinned && (
+                          <div
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-[9px] uppercase tracking-wider shrink-0"
+                            title="Pinned item"
+                          >
+                            <Pin className="h-3 w-3 fill-current" />
+                            <span>Pinned</span>
+                          </div>
+                        )}
+                        {currentCoords && (
+                          <div
+                            className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/5 border border-emerald-500/10 shadow-inner shrink-0"
+                            title="Copy Coordinates"
+                          >
+                            <span className="text-[9px] text-emerald-400/50 font-mono font-bold tracking-tight">
+                              {currentCoords.lat.toFixed(4)}, {currentCoords.lng.toFixed(4)}
+                            </span>
+                            <button
+                              onClick={() => void copyValue('coords')}
+                              className="text-emerald-400/40 hover:text-emerald-400 transition-colors"
+                              title="Copy Coordinates"
+                            >
+                              {copied === 'coords' ? (
+                                <Check className="h-3 w-3 text-emerald-400" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </button>
+                          </div>
+                        )}
                         <div
                           className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/5 border border-emerald-500/10 shadow-inner shrink-0"
                           title={selectedItem.id}

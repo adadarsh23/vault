@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { User, UserDocument } from '../models/user.ts';
-import { issueUserSession } from './authService.ts';
+import { RefreshToken } from '../models/RefreshToken.ts';
+import { issueUserSession, parseDeviceNameFromUserAgent } from './authService.ts';
 import { verifyRefreshToken } from '../utils/auth.ts';
 import { comparePassword, decryptText, encryptText, hashPassword } from '../utils/crypto.ts';
 import { AppError } from '../utils/appError.ts';
@@ -68,7 +69,7 @@ const decodeProfileValueFromStorage = (value: unknown): string => {
   }
 };
 
-const normalizeStoredProfileValue = (value: unknown): string => normalizeProfileValue(value);
+
 
 const normalizeNewPassword = (value: unknown): string => {
   if (typeof value !== 'string') {
@@ -93,10 +94,20 @@ const normalizeNewPassword = (value: unknown): string => {
 };
 
 const migrateLegacyPlaintextProfileFields = async (user: UserDocument): Promise<void> => {
+  // Fast path: skip entirely if both fields are already encrypted or empty.
+  // This avoids unnecessary decryption on every getAuthenticatedUserProfile call.
+  const nameStored = normalizeProfileValue((user as any).profileName);
+  const photoStored = normalizeProfileValue((user as any).profilePhoto);
+  const nameIsClean = nameStored === NONE_PROFILE_VALUE || isEncryptedProfileValue(nameStored);
+  const photoIsClean = photoStored === NONE_PROFILE_VALUE || isEncryptedProfileValue(photoStored);
+  if (nameIsClean && photoIsClean) {
+    return;
+  }
+
   let changed = false;
 
   for (const field of ['profileName', 'profilePhoto'] as const) {
-    const currentStored = normalizeStoredProfileValue((user as any)[field]);
+    const currentStored = normalizeProfileValue((user as any)[field]);
     if (currentStored === NONE_PROFILE_VALUE || isEncryptedProfileValue(currentStored)) {
       continue;
     }
@@ -247,7 +258,7 @@ const buildSessionSummaries = (user: UserDocument, currentSessionId?: string) =>
       ipAddress: session.ipAddress,
       userAgent: session.userAgent,
       isCurrent: session.sessionId === currentSessionId,
-      deviceName: session.deviceName || '',
+      deviceName: session.deviceName || parseDeviceNameFromUserAgent(session.userAgent) || 'Web Client',
     }));
 
 const getUserOrThrow = async (
@@ -283,27 +294,64 @@ export const refreshAuthenticatedSession = async (input: {
     throw AppError.unauthorized(SESSION_REFRESH_FAILED, 'SESSION_REFRESH_FAILED');
   }
 
+  const tokenHash = hashRefreshToken(input.refreshToken);
+  const existingTokenDoc = await RefreshToken.findOne({ tokenHash });
+
   const user = await getUserOrThrow(payload.sub, '+sessions.refreshTokenHash', {
     requireRefreshTokenHash: true,
   });
-  const session = user.sessions?.find((entry: any) => entry.sessionId === payload.sessionId);
 
-  if (!session || session.revokedAt) {
+  const session = user.sessions?.find((entry: any) => entry.sessionId === payload.sessionId);
+  const familyId = existingTokenDoc?.familyId || (session as any)?.familyId || payload.sessionId;
+
+  const isReuseAttack = Boolean(
+    (existingTokenDoc && existingTokenDoc.isRevoked) ||
+    (session && session.revokedAt) ||
+    (session && session.refreshTokenHash !== tokenHash)
+  );
+
+  if (isReuseAttack) {
+    logger.error('CRITICAL SECURITY BREACH: Refresh token reuse attack detected!', {
+      userId: user._id,
+      familyId,
+      sessionId: payload.sessionId,
+    });
+
+    if (familyId) {
+      await RefreshToken.updateMany({ familyId }, { isRevoked: true });
+    }
+
+    if (user.sessions) {
+      user.sessions.forEach((s: any) => {
+        if (s.familyId === familyId || s.sessionId === payload.sessionId) {
+          s.revokedAt = new Date();
+        }
+      });
+      syncActiveDevices(user);
+      await user.save();
+    }
+
+    throw new AppError(403, 'TOKEN_REUSE_DETECTED', 'Token reuse detected. Session lineage revoked.');
+  }
+
+  if (!session) {
     throw AppError.unauthorized(SESSION_REFRESH_FAILED, 'SESSION_REFRESH_FAILED');
   }
 
   if ((toTimestamp(session.expiresAt) ?? 0) <= Date.now()) {
     session.revokedAt = new Date();
+    if (existingTokenDoc) {
+      existingTokenDoc.isRevoked = true;
+      await existingTokenDoc.save();
+    }
     syncActiveDevices(user);
     await user.save();
     throw AppError.unauthorized(SESSION_REFRESH_FAILED, 'SESSION_REFRESH_FAILED');
   }
 
-  if (session.refreshTokenHash !== hashRefreshToken(input.refreshToken)) {
-    session.revokedAt = new Date();
-    syncActiveDevices(user);
-    await user.save();
-    throw AppError.unauthorized(SESSION_REFRESH_FAILED, 'SESSION_REFRESH_FAILED');
+  if (existingTokenDoc) {
+    existingTokenDoc.isRevoked = true;
+    await existingTokenDoc.save();
   }
 
   const rotatedSession = issueUserSession(user, {
@@ -311,6 +359,7 @@ export const refreshAuthenticatedSession = async (input: {
     ipAddress: input.ipAddress ?? session.ipAddress,
     userAgent: input.userAgent ?? session.userAgent,
     existingSessionId: session.sessionId,
+    familyId,
     deviceName: session.deviceName,
   });
 
@@ -318,11 +367,14 @@ export const refreshAuthenticatedSession = async (input: {
 
   return {
     token: rotatedSession.accessToken,
+    accessToken: rotatedSession.accessToken,
     refreshToken: rotatedSession.refreshToken,
     sessionId: rotatedSession.sessionId,
+    familyId: rotatedSession.familyId,
     user: {
       id: user._id,
       username: user.username,
+      email: user.email,
       meta: user.meta,
       twoFactorEnabled: user.twoFactorEnabled === true,
     },
@@ -336,6 +388,9 @@ export const revokeCurrentSession = async (refreshToken: string): Promise<{ revo
   } catch {
     return { revoked: false };
   }
+
+  const tokenHash = hashRefreshToken(refreshToken);
+  await RefreshToken.updateMany({ tokenHash }, { isRevoked: true });
 
   const user = await getUserOrThrow(payload.sub);
   const session = user.sessions?.find((entry: any) => entry.sessionId === payload.sessionId);
@@ -519,9 +574,6 @@ export const updateAuthenticatedUserProfile = async (input: {
 
   if (changed) {
     (user as any).profileDetails.updatedAt = now;
-  }
-
-  if (changed) {
     await user.save();
   }
 

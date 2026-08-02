@@ -166,6 +166,7 @@ const cloudUnlockCaptchaLimiter = rateLimit({
 });
 
 // Routes
+authRouter.post('/signup', asyncHandler(register));
 authRouter.post(
   '/register',
   requireTrustedBrowserOrigin,
@@ -231,6 +232,41 @@ authRouter.post(
 );
 authRouter.post(
   '/profile',
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  validate(updateProfileSchema),
+  asyncHandler(updateProfile)
+);
+authRouter.put(
+  '/profile',
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  validate(updateProfileSchema),
+  asyncHandler(updateProfile)
+);
+authRouter.patch(
+  '/profile',
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  validate(updateProfileSchema),
+  asyncHandler(updateProfile)
+);
+authRouter.post(
+  '/me/profile',
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  validate(updateProfileSchema),
+  asyncHandler(updateProfile)
+);
+authRouter.put(
+  '/me',
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  validate(updateProfileSchema),
+  asyncHandler(updateProfile)
+);
+authRouter.patch(
+  '/me',
   requireTrustedBrowserOrigin,
   requireAuth,
   validate(updateProfileSchema),

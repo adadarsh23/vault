@@ -23,6 +23,7 @@ import { normalizeExternalUrl } from './NoteEditor/editorUtils';
 import type { NoteEditorProps, SaveStatus, TextAlign as AlignType } from './NoteEditor/types';
 
 export const NoteEditor: React.FC<NoteEditorProps> = ({
+  noteId,
   initialTitle,
   initialContent,
   onSave,
@@ -383,15 +384,18 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
   const printNote = () => {
     const printWindow = window.open('', '_blank', 'noopener,noreferrer');
     if (!printWindow) {
-      toast.error('Popup blocked');
+      toast.error('Popup blocked. Please allow popups to print notes.');
       return;
     }
     printWindow.opener = null;
     printWindow.document.write(
-      `<html><head><title>${title}</title></head><body>${content}</body></html>`
+      `<!DOCTYPE html><html><head><title>${title || 'Note'}</title><style>body{font-family:system-ui,-apple-system,sans-serif;padding:24px;line-height:1.6;color:#111;max-width:800px;margin:0 auto;}h1{font-size:24px;margin-bottom:16px;border-bottom:1px solid #eee;padding-bottom:8px;}</style></head><body><h1>${title || 'Untitled Note'}</h1><div>${content}</div></body></html>`
     );
     printWindow.document.close();
-    printWindow.print();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
   };
 
   const toggleFullScreen = () => setIsFullScreen(!isFullScreen);
@@ -545,6 +549,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
             fallback={<div className="m-3 text-xs text-red-200">Preview failed to render.</div>}
           >
             <NoteEditorPreview
+              noteId={noteId}
               content={content}
               lineWrap={lineWrap}
               showPreview={showPreview}

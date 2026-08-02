@@ -353,8 +353,10 @@ export const useVaultAuth = (options?: {
               )
             );
 
+            const triedSalts: string[] = [];
             let unlockedWithAlt = false;
             for (const altSalt of candidateSalts) {
+              triedSalts.push(altSalt);
               try {
                 console.warn(
                   `Primary salt unlock failed. Retrying unlock with candidate salt (${altSalt})...`
@@ -380,6 +382,10 @@ export const useVaultAuth = (options?: {
             }
 
             if (!unlockedWithAlt) {
+              console.error(
+                `All candidate salts exhausted (${triedSalts.join(', ')}) – unlock failed.`,
+                unlockErr
+              );
               throw unlockErr;
             }
           } else {
@@ -707,8 +713,10 @@ export const useVaultAuth = (options?: {
               )
             );
 
+            const triedSalts: string[] = [];
             let unlockedWithAlt = false;
             for (const altSalt of candidateSalts) {
+              triedSalts.push(altSalt);
               try {
                 console.warn(
                   `Primary salt unlock failed during OTP. Retrying unlock with candidate salt (${altSalt})...`
@@ -734,6 +742,10 @@ export const useVaultAuth = (options?: {
             }
 
             if (!unlockedWithAlt) {
+              console.error(
+                `All candidate salts exhausted during OTP (${triedSalts.join(', ')}) – unlock failed.`,
+                unlockErr
+              );
               throw unlockErr;
             }
           } else {

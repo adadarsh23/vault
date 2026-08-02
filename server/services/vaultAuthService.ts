@@ -6,6 +6,7 @@ import { verifyRefreshToken } from '../utils/auth.ts';
 import { comparePassword, decryptText, encryptText, hashPassword } from '../utils/crypto.ts';
 import { AppError } from '../utils/appError.ts';
 import { logger } from '../utils/logger.ts';
+import { getAuthenticatedUserProfile as getAuthenticatedUserProfileFromAccountSession } from './accountSessionService.ts';
 import {
   asDeviceId,
   buildSessionSummaries,
@@ -583,12 +584,7 @@ export const changeAuthenticatedPassword = async (
  * @returns Public user profile with session summaries
  */
 export const getAuthenticatedUserProfile = async (userId: string, currentSessionId?: string) => {
-  const user = await getUserOrThrow(userId);
-  pruneExpiredSessions(user);
-  return {
-    ...publicUser(user),
-    sessions: buildSessionSummaries(user, currentSessionId),
-  };
+  return getAuthenticatedUserProfileFromAccountSession(userId, currentSessionId);
 };
 
 /**

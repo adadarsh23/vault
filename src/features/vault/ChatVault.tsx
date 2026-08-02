@@ -24,6 +24,7 @@ import {
   ChatMessage,
   extractAttachmentsFromText,
   extractMentions,
+  isUserMentioned,
   getSafeExternalHref,
   isExpiredMessage,
   resolveMessageLifetime,
@@ -255,14 +256,30 @@ export const ChatVault: React.FC = () => {
   const loadNextChatBatch = useCallback(async () => {
     if (!masterKey || chatBatchInFlightRef.current) return;
 
-    const start = chatBatchCursorRef.current;
-    if (start >= chats.length) {
+    const unloadedIndex = chats.findIndex(
+      (chatItem) => !chatPayloads[chatItem.id] && !failedChatIds.has(chatItem.id)
+    );
+
+    if (unloadedIndex === -1) {
       setHasMoreChatPayloads(false);
       return;
     }
 
-    const end = Math.min(start + CHAT_DECRYPT_BATCH_SIZE, chats.length);
-    const chatBatch = chats.slice(start, end);
+    chatBatchCursorRef.current = unloadedIndex;
+    const end = Math.min(unloadedIndex + CHAT_DECRYPT_BATCH_SIZE, chats.length);
+    const chatBatch = chats
+      .slice(unloadedIndex, end)
+      .filter((chatItem) => !chatPayloads[chatItem.id] && !failedChatIds.has(chatItem.id));
+
+    if (chatBatch.length === 0) {
+      chatBatchCursorRef.current = end;
+      const remainingUnloaded = chats.some(
+        (c) => !chatPayloads[c.id] && !failedChatIds.has(c.id)
+      );
+      setHasMoreChatPayloads(remainingUnloaded);
+      return;
+    }
+
     const payloadEntries: Array<[string, ChatConversation]> = [];
 
     chatBatchInFlightRef.current = true;
@@ -286,31 +303,43 @@ export const ChatVault: React.FC = () => {
         ...Object.fromEntries(payloadEntries),
       }));
       chatBatchCursorRef.current = end;
-      setHasMoreChatPayloads(end < chats.length);
+      const remainingUnloaded = chats.some(
+        (c) => !payloadEntries.some(([id]) => id === c.id) && !chatPayloads[c.id] && !failedChatIds.has(c.id)
+      );
+      setHasMoreChatPayloads(remainingUnloaded);
     } finally {
       chatBatchInFlightRef.current = false;
       setIsLoadingChatBatch(false);
     }
-  }, [chats, loadConversationForChat, markChatLoadFailed, markChatLoadSucceeded, masterKey]);
+  }, [chatPayloads, chats, failedChatIds, loadConversationForChat, markChatLoadFailed, markChatLoadSucceeded, masterKey]);
 
   useEffect(() => {
-    chatBatchCursorRef.current = 0;
-    chatBatchInFlightRef.current = false;
-    setVisibleChatCount(CHAT_LIST_PAGE_SIZE);
-    setChatPayloads({});
-    setFailedChatIds(new Set());
-    setChatLoadErrors({});
-    setLoadingChatIds(new Set());
-
     if (!masterKey) {
       setHasMoreChatPayloads(false);
       setIsLoadingChatBatch(false);
       return;
     }
 
-    setHasMoreChatPayloads(chats.length > 0);
-    void loadNextChatBatch();
-  }, [chats, loadNextChatBatch, masterKey]);
+    const currentChatIds = new Set(chats.map((c) => c.id));
+    setChatPayloads((previous) => {
+      let changed = false;
+      const next = { ...previous };
+      for (const id of Object.keys(next)) {
+        if (!currentChatIds.has(id)) {
+          delete next[id];
+          changed = true;
+        }
+      }
+      return changed ? next : previous;
+    });
+
+    const hasUnloaded = chats.some((c) => !chatPayloads[c.id] && !failedChatIds.has(c.id));
+    setHasMoreChatPayloads(hasUnloaded);
+
+    if (hasUnloaded && !chatBatchInFlightRef.current) {
+      void loadNextChatBatch();
+    }
+  }, [chats, masterKey]);
 
   const chatMetrics = useMemo(() => {
     const now = Date.now();
@@ -330,7 +359,7 @@ export const ChatVault: React.FC = () => {
         const mentionCount = visibleMessages.filter(
           (message) =>
             message.sender !== username &&
-            message.mentions.some((mention) => mention.toLowerCase() === username.toLowerCase()) &&
+            isUserMentioned(message.mentions, username) &&
             !message.readBy.includes(username)
         ).length;
         return [chatItem.id, { unread: unreadCount, mentions: mentionCount }];
@@ -345,12 +374,17 @@ export const ChatVault: React.FC = () => {
       const matchesSearch = normalizedSearch.length === 0 || chatTitle.includes(normalizedSearch);
       const matchesFolder = currentFolder === null ? true : chatItem.folder === currentFolder;
       const metrics = chatMetrics[chatItem.id] || { unread: 0, mentions: 0 };
+      const isCurrentlyActive = chatItem.id === activeChatId;
       const matchesFilter =
-        filter === 'all' ? true : filter === 'unread' ? metrics.unread > 0 : metrics.mentions > 0;
+        filter === 'all'
+          ? true
+          : filter === 'unread'
+          ? metrics.unread > 0 || isCurrentlyActive
+          : metrics.mentions > 0 || isCurrentlyActive;
       return matchesSearch && matchesFolder && matchesFilter;
     });
     return sortPinnedFirst(filtered);
-  }, [chatMetrics, chats, currentFolder, filter, searchQuery]);
+  }, [activeChatId, chatMetrics, chats, currentFolder, filter, searchQuery]);
 
   useEffect(() => {
     setVisibleChatCount(CHAT_LIST_PAGE_SIZE);
@@ -380,19 +414,21 @@ export const ChatVault: React.FC = () => {
   );
 
   useEffect(() => {
-    if (!masterKey || !hasMoreChatPayloads) return;
-    if (visibleChats.length === 0) return;
+    if (!masterKey || !hasMoreChatPayloads || isLoadingChatBatch) return;
 
+    const isFilterActive = filter === 'unread' || filter === 'mentions';
     const hasMissingPayload = visibleChats.some(
       (chatItem) => !chatPayloads[chatItem.id] && !failedChatIds.has(chatItem.id)
     );
-    if (!hasMissingPayload) return;
+    if (!isFilterActive && !hasMissingPayload) return;
 
     void loadNextChatBatch();
   }, [
     chatPayloads,
     failedChatIds,
+    filter,
     hasMoreChatPayloads,
+    isLoadingChatBatch,
     loadNextChatBatch,
     masterKey,
     visibleChats,
@@ -571,6 +607,7 @@ export const ChatVault: React.FC = () => {
         ...previous,
         [createdItem.id]: seedConversation,
       }));
+      setFilter('all');
       setActiveChatId(createdItem.id);
       setNewChatTitle('');
       toast.success('Chat created');

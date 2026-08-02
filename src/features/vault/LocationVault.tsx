@@ -100,6 +100,7 @@ const LocationVaultInternal: React.FC = () => {
   const [copied, setCopied] = useState<'coords' | 'id' | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+  const [isFetchingAltitude, setIsFetchingAltitude] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   // Debounce search query
@@ -243,6 +244,26 @@ const LocationVaultInternal: React.FC = () => {
     }
   }, []);
 
+  const fetchAltitudeApi = useCallback(async (lat: number, lng: number) => {
+    setIsFetchingAltitude(true);
+    try {
+      const response = await fetch(
+        `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`
+      );
+      if (!response.ok) throw new Error('Elevation network error');
+      const data = await response.json();
+      if (data && Array.isArray(data.elevation) && typeof data.elevation[0] === 'number') {
+        return data.elevation[0] as number;
+      }
+      return null;
+    } catch (error) {
+      console.error('Elevation API fetch failed:', error);
+      return null;
+    } finally {
+      setIsFetchingAltitude(false);
+    }
+  }, []);
+
   const captureCurrentLocation = useCallback(async () => {
     if (!navigator.geolocation) {
       toast.error('Geolocation is not available in this browser');
@@ -268,15 +289,17 @@ const LocationVaultInternal: React.FC = () => {
         );
       });
 
+      let altitudeVal =
+        typeof position.coords.altitude === 'number' && position.coords.altitude !== 0
+          ? position.coords.altitude.toFixed(2)
+          : '';
+
       setForm((prev) => ({
         ...prev,
         latitude: String(position.coords.latitude),
         longitude: String(position.coords.longitude),
         accuracy: position.coords.accuracy.toFixed(2),
-        altitude:
-          typeof position.coords.altitude === 'number'
-            ? position.coords.altitude.toFixed(2)
-            : prev.altitude,
+        altitude: altitudeVal || prev.altitude,
         title:
           prev.title ||
           `Location ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
@@ -285,6 +308,15 @@ const LocationVaultInternal: React.FC = () => {
       if (!isCreating && !isEditing) {
         setSelectedId(null);
         setIsCreating(true);
+      }
+
+      // Automatically fetch altitude from Open-Meteo Elevation API if browser altitude is unavailable
+      if (!altitudeVal) {
+        void fetchAltitudeApi(position.coords.latitude, position.coords.longitude).then((alt) => {
+          if (alt !== null) {
+            setForm((prev) => ({ ...prev, altitude: alt.toFixed(2) }));
+          }
+        });
       }
 
       toast.promise(fetchAddress(position.coords.latitude, position.coords.longitude), {
@@ -306,7 +338,7 @@ const LocationVaultInternal: React.FC = () => {
     } finally {
       setIsCapturing(false);
     }
-  }, [isCreating, isEditing]);
+  }, [fetchAddress, fetchAltitudeApi, isCreating, isEditing]);
 
   const saveNewLocation = useCallback(async () => {
     if (!masterKey) {
@@ -578,16 +610,40 @@ const LocationVaultInternal: React.FC = () => {
         startEdit={startEdit}
         currentCoords={currentCoords}
         isFetchingAddress={isFetchingAddress}
+        isFetchingAltitude={isFetchingAltitude}
         fetchAddress={async () => {
           const lat = parseCoordinate(form.latitude);
           const lng = parseCoordinate(form.longitude);
           if (validCoords(lat, lng)) {
-            const addr = await fetchAddress(lat!, lng!);
-            if (addr) {
-              setForm((p) => ({ ...p, address: addr }));
-              toast.success('Address updated from coordinates');
+            const addrPromise = fetchAddress(lat!, lng!);
+            const altPromise = !form.altitude ? fetchAltitudeApi(lat!, lng!) : Promise.resolve(null);
+
+            const [addr, alt] = await Promise.all([addrPromise, altPromise]);
+
+            if (addr || alt !== null) {
+              setForm((p) => ({
+                ...p,
+                ...(addr ? { address: addr } : {}),
+                ...(alt !== null ? { altitude: alt.toFixed(2) } : {}),
+              }));
+              toast.success('Address and coordinates data updated');
             } else {
               toast.error('Could not find address for these coordinates');
+            }
+          } else {
+            toast.error('Enter valid coordinates first');
+          }
+        }}
+        fetchAltitude={async () => {
+          const lat = parseCoordinate(form.latitude);
+          const lng = parseCoordinate(form.longitude);
+          if (validCoords(lat, lng)) {
+            const alt = await fetchAltitudeApi(lat!, lng!);
+            if (alt !== null) {
+              setForm((p) => ({ ...p, altitude: alt.toFixed(2) }));
+              toast.success(`Altitude fetched: ${alt.toFixed(2)}m`);
+            } else {
+              toast.error('Could not fetch altitude for these coordinates');
             }
           } else {
             toast.error('Enter valid coordinates first');

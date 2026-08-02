@@ -7,7 +7,7 @@ interface DurationSelectorProps {
   formatLabel: (value: number) => string;
 }
 
-export const DurationSelector: React.FC<DurationSelectorProps> = ({
+export const DurationSelector = React.memo<DurationSelectorProps>(({
   options,
   current,
   onChange,
@@ -28,4 +28,5 @@ export const DurationSelector: React.FC<DurationSelectorProps> = ({
       </button>
     ))}
   </div>
-);
+));
+DurationSelector.displayName = 'DurationSelector';

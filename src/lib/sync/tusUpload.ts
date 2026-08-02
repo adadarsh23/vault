@@ -163,7 +163,8 @@ export async function uploadFileTus(options: TusUploadOptions): Promise<{ upload
     }
 
     if (nextOffset !== null) {
-      currentOffset = end;
+      // Update currentOffset based on server-reported offset to stay in sync with encrypted chunk size
+      currentOffset = nextOffset;
       if (onProgress) {
         onProgress(currentOffset, totalSize);
       }

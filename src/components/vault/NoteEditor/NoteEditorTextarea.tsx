@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ScrollButton } from '../ScrollButton';
+import { useScrollRestoration } from '../../../hooks/useScrollRestoration';
 
 const EDITOR_LINE_HEIGHT = 20;
 const EDITOR_PADDING = 32;
@@ -19,6 +20,7 @@ const MAX_LINE_RENDER = 10000;
 let lastKnownEditorScrollTop = 0;
 
 interface NoteEditorTextareaProps {
+  noteId?: string;
   content: string;
   handleContentChange: (newContent: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
@@ -76,6 +78,7 @@ Gutter.displayName = 'Gutter';
 export const NoteEditorTextarea = forwardRef<HTMLTextAreaElement, NoteEditorTextareaProps>(
   (props, ref) => {
     const {
+      noteId,
       content,
       handleContentChange,
       onKeyDown,
@@ -99,6 +102,16 @@ export const NoteEditorTextarea = forwardRef<HTMLTextAreaElement, NoteEditorText
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
     const [scrollTop, setScrollTop] = useState(0);
     const savedScrollTopRef = useRef(0);
+
+    useScrollRestoration(`note_editor_${noteId || 'default'}`, textareaRef, {
+      onRestore: (pos) => {
+        savedScrollTopRef.current = pos.top;
+        if (gutterRef.current) {
+          gutterRef.current.scrollTop = pos.top;
+        }
+        setScrollTop(pos.top);
+      },
+    });
 
     useImperativeHandle(ref, () => {
       if (!textareaRef.current) {

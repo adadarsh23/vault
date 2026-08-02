@@ -21,6 +21,15 @@ import {
   Loader2,
   Download,
   Paperclip,
+  AlignLeft,
+  BookOpen,
+  Folder,
+  Pin,
+  Code,
+  Link,
+  CheckSquare,
+  HardDrive,
+  List,
 } from 'lucide-react';
 import { useVaultStore } from '../../../../store/vaultStore';
 import { getVaultItemPreviewUrl } from '../../../../lib/filePreview';
@@ -31,6 +40,7 @@ import { NoteEditor } from '../../../../components/vault/NoteEditor';
 import { ScrollButton } from '../../../../components/vault/ScrollButton';
 import { getStringContent } from '../../../../lib/vaultItemContent';
 import { DecryptedMarkdown } from '../../../../components/vault/DecryptedMarkdown';
+import { useScrollRestoration } from '../../../../hooks/useScrollRestoration';
 
 const AttachmentCard: React.FC<{
   item: any;
@@ -146,6 +156,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   const [showHtmlPreview, setShowHtmlPreview] = useState(false);
   const [isIdCopied, setIsIdCopied] = useState(false);
   const viewRef = useRef<HTMLDivElement>(null);
+  useScrollRestoration(`note_viewer_${selectedNoteId || 'default'}`, viewRef);
 
   // Tags & Attachments state
   const { items, updateItem } = useVaultStore();
@@ -172,6 +183,40 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   const attachedItems = useMemo(() => {
     return items.filter((item) => attachmentIds.includes(item.id));
   }, [items, attachmentIds]);
+
+  // Content statistics (words, chars, lines, read time, size, code blocks, links, checklists)
+  const contentStats = useMemo(() => {
+    const text = getStringContent(selectedNote?.content) || '';
+    const charCount = text.length;
+    const words = text.trim() ? text.trim().split(/\s+/).filter(Boolean).length : 0;
+    const lines = text ? text.split('\n').length : 0;
+    const readTimeMinutes = Math.max(1, Math.ceil(words / 200));
+
+    const byteSize = new Blob([text]).size;
+    const formattedSize =
+      byteSize < 1024 ? `${byteSize} B` : `${(byteSize / 1024).toFixed(1)} KB`;
+
+    const codeBlockMatches = text.match(/```[a-z]*[\s\S]*?```/gi);
+    const codeBlockCount = codeBlockMatches ? codeBlockMatches.length : 0;
+
+    const linkMatches = text.match(/https?:\/\/[^\s<)]+/gi);
+    const linkCount = linkMatches ? linkMatches.length : 0;
+
+    const totalCheckboxes = (text.match(/- \[[ xX]\]/g) || []).length;
+    const completedCheckboxes = (text.match(/- \[[xX]\]/g) || []).length;
+
+    return {
+      charCount,
+      words,
+      lines,
+      readTimeMinutes,
+      formattedSize,
+      codeBlockCount,
+      linkCount,
+      totalCheckboxes,
+      completedCheckboxes,
+    };
+  }, [selectedNote?.content]);
 
   // All files that can be attached
   const attachableFiles = useMemo(() => {
@@ -297,6 +342,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       <div className={cn('flex-1 min-w-0 h-full', !selectedNoteId ? 'hidden md:block' : 'block')}>
         <div className="h-full w-full self-start">
           <NoteEditor
+            noteId={selectedNote.id}
             initialTitle={editTitle}
             initialContent={editContent}
             onSave={handleSave}
@@ -480,9 +526,17 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between gap-4 px-4 xl:px-6 py-3 border-t border-card-border bg-white/[0.01] mt-auto w-full overflow-x-auto custom-scrollbar whitespace-nowrap">
-                      <div className="flex items-center gap-4 md:gap-6 shrink-0">
-                        <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0">
+                    <motion.div
+                      className="flex items-center justify-between gap-4 px-4 xl:px-6 py-3 border-t border-card-border bg-white/[0.01] mt-auto w-full overflow-x-auto custom-scrollbar whitespace-nowrap"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, ease: 'easeOut' }}
+                    >
+                      <div className="flex items-center gap-4 md:gap-5 shrink-0">
+                        <div
+                          className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
+                          title="Date Created"
+                        >
                           <Calendar className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
                           <span>
                             <span className="text-text/60">
@@ -490,7 +544,10 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                             </span>
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0">
+                        <div
+                          className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
+                          title="Last Updated"
+                        >
                           <Clock className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
                           <span>
                             <span className="text-text/60">
@@ -501,8 +558,134 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                             </span>
                           </span>
                         </div>
+                        <div
+                          className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
+                          title="Word & character count"
+                        >
+                          <AlignLeft className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <span>
+                            <span className="text-text/60">{contentStats.words}</span> words (
+                            {contentStats.charCount} chars)
+                          </span>
+                        </div>
+                        <div
+                          className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
+                          title="Line count"
+                        >
+                          <List className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <span>
+                            <span className="text-text/60">{contentStats.lines}</span> lines
+                          </span>
+                        </div>
+                        <div
+                          className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
+                          title="Estimated reading time"
+                        >
+                          <BookOpen className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <span>
+                            <span className="text-text/60">~{contentStats.readTimeMinutes} min</span> read
+                          </span>
+                        </div>
+                        <div
+                          className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
+                          title="Unencrypted text size"
+                        >
+                          <HardDrive className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <span>
+                            <span className="text-text/60">{contentStats.formattedSize}</span>
+                          </span>
+                        </div>
+                        {contentStats.totalCheckboxes > 0 && (
+                          <div
+                            className="flex items-center gap-1.5 text-[11px] text-text/40 font-medium shrink-0"
+                            title="Checklist progress"
+                          >
+                            <CheckSquare className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <span>
+                              <span className="text-text/60">
+                                {contentStats.completedCheckboxes}/{contentStats.totalCheckboxes}
+                              </span>{' '}
+                              tasks (
+                              {Math.round(
+                                (contentStats.completedCheckboxes / contentStats.totalCheckboxes) *
+                                  100
+                              )}
+                              %)
+                            </span>
+                          </div>
+                        )}
+                        {contentStats.codeBlockCount > 0 && (
+                          <div
+                            className="flex items-center gap-1.5 text-[11px] text-text/40 font-medium shrink-0"
+                            title="Code blocks"
+                          >
+                            <Code className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <span>
+                              <span className="text-text/60">{contentStats.codeBlockCount}</span> code
+                              block{contentStats.codeBlockCount > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        )}
+                        {contentStats.linkCount > 0 && (
+                          <div
+                            className="flex items-center gap-1.5 text-[11px] text-text/40 font-medium shrink-0"
+                            title="Embedded links"
+                          >
+                            <Link className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <span>
+                              <span className="text-text/60">{contentStats.linkCount}</span> link
+                              {contentStats.linkCount > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        )}
+                        {selectedNote.folder && (
+                          <div
+                            className="flex items-center gap-1.5 text-[11px] text-text/40 font-medium shrink-0"
+                            title="Folder"
+                          >
+                            <Folder className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <span className="text-emerald-400/70 font-semibold uppercase tracking-wider text-[10px]">
+                              {selectedNote.folder}
+                            </span>
+                          </div>
+                        )}
+                        {noteTags.length > 0 && (
+                          <div
+                            className="flex items-center gap-1.5 text-[11px] text-text/40 font-medium shrink-0"
+                            title="Tags count"
+                          >
+                            <Tag className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <span>
+                              <span className="text-text/60">{noteTags.length}</span> tag
+                              {noteTags.length > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        )}
+                        {attachedItems.length > 0 && (
+                          <div
+                            className="flex items-center gap-1.5 text-[11px] text-text/40 font-medium shrink-0"
+                            title="Attachments count"
+                          >
+                            <Paperclip className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <span>
+                              <span className="text-text/60">{attachedItems.length}</span> attachment
+                              {attachedItems.length > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
+                        {selectedNote.isPinned && (
+                          <div
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold shrink-0"
+                            title="Pinned Note"
+                          >
+                            <Pin className="h-3 w-3 fill-current" />
+                            <span className="leading-none text-[9px] uppercase tracking-wider">
+                              Pinned
+                            </span>
+                          </div>
+                        )}
                         <div
                           className="group flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/5 border border-emerald-500/10 shadow-inner max-w-[200px] shrink-0"
                           title={selectedNote.id}
@@ -544,8 +727,9 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           </span>
                         </motion.div>
                       </div>
-                    </div>
+                    </motion.div>
                   </div>
+
                   <ScrollButton
                     icon={ChevronUp}
                     visible={showViewScrollTop}

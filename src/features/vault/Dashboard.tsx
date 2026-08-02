@@ -33,21 +33,28 @@ import { VaultItem as VaultStorageItem } from '../../lib/storage';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ITEM_TYPES = {
-  NOTE: 'note',
-  LOCATION: 'location',
-  TODO: 'todo',
-  PASSWORD: 'password',
-  SECRET: 'secret',
+  // Personal Information
+  IDENTITY: 'identity',
   CONTACT: 'contact',
+  PASSWORD: 'password',
+  CARD: 'card',
+  WIFI: 'wifi',
+  SECRET: 'secret',
+
+  // Notes & Productivity
+  NOTE: 'note',
+  TODO: 'todo',
+  CHAT: 'chat',
+  LOCATION: 'location',
+
+  // Media
   PHOTO: 'photo',
   VIDEO: 'video',
   AUDIO: 'audio',
+
+  // Documents & Files
   DOCUMENT: 'document',
   FILE: 'file',
-  CHAT: 'chat',
-  CARD: 'card',
-  IDENTITY: 'identity',
-  WIFI: 'wifi',
 } as const;
 
 type DashboardStatId = VaultStorageItem['type'];
@@ -113,21 +120,29 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
 
   const itemCounts = React.useMemo(() => {
     const counts: Record<string, number> = {
-      [ITEM_TYPES.NOTE]: 0,
-      [ITEM_TYPES.LOCATION]: 0,
-      [ITEM_TYPES.TODO]: 0,
-      [ITEM_TYPES.PASSWORD]: 0,
-      [ITEM_TYPES.SECRET]: 0,
+      // Personal Information
+      [ITEM_TYPES.IDENTITY]: 0,
       [ITEM_TYPES.CONTACT]: 0,
+      [ITEM_TYPES.PASSWORD]: 0,
+      [ITEM_TYPES.CARD]: 0,
+      [ITEM_TYPES.WIFI]: 0,
+      [ITEM_TYPES.SECRET]: 0,
+
+      // Notes & Productivity
+      [ITEM_TYPES.NOTE]: 0,
+      [ITEM_TYPES.TODO]: 0,
+      [ITEM_TYPES.CHAT]: 0,
+      [ITEM_TYPES.LOCATION]: 0,
+
+      // Media
       [ITEM_TYPES.PHOTO]: 0,
       [ITEM_TYPES.VIDEO]: 0,
       [ITEM_TYPES.AUDIO]: 0,
+
+      // Documents & Files
       [ITEM_TYPES.DOCUMENT]: 0,
       [ITEM_TYPES.FILE]: 0,
-      [ITEM_TYPES.CHAT]: 0,
-      [ITEM_TYPES.CARD]: 0,
-      [ITEM_TYPES.IDENTITY]: 0,
-      [ITEM_TYPES.WIFI]: 0,
+
       media: 0,
     };
     const mediaTypes = new Set<string>([ITEM_TYPES.PHOTO, ITEM_TYPES.VIDEO, ITEM_TYPES.AUDIO]);
@@ -143,12 +158,64 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
   const stats = React.useMemo(
     () =>
       [
+        // Personal Information
+        {
+          id: ITEM_TYPES.IDENTITY,
+          label: 'Identities',
+          icon: Fingerprint,
+          color: 'text-cyan-400',
+          count: itemCounts[ITEM_TYPES.IDENTITY],
+        },
+        {
+          id: ITEM_TYPES.CONTACT,
+          label: 'Contacts',
+          icon: Users,
+          color: 'text-teal-400',
+          count: itemCounts[ITEM_TYPES.CONTACT],
+        },
+        {
+          id: ITEM_TYPES.PASSWORD,
+          label: 'Passwords',
+          icon: Key,
+          color: 'text-amber-400',
+          count: itemCounts[ITEM_TYPES.PASSWORD],
+        },
+        {
+          id: ITEM_TYPES.CARD,
+          label: 'Cards & Bank',
+          icon: CreditCard,
+          color: 'text-emerald-400',
+          count: itemCounts[ITEM_TYPES.CARD],
+        },
+        {
+          id: ITEM_TYPES.WIFI,
+          label: 'Wi-Fi',
+          icon: Wifi,
+          color: 'text-amber-400',
+          count: itemCounts[ITEM_TYPES.WIFI],
+        },
+        {
+          id: ITEM_TYPES.SECRET,
+          label: 'Secrets',
+          icon: ShieldCheck,
+          color: 'text-rose-400',
+          count: itemCounts[ITEM_TYPES.SECRET],
+        },
+
+        // Notes & Productivity
         {
           id: ITEM_TYPES.NOTE,
           label: 'Notes',
           icon: FileText,
           color: 'text-emerald-400',
           count: itemCounts[ITEM_TYPES.NOTE],
+        },
+        {
+          id: ITEM_TYPES.TODO,
+          label: 'Todos',
+          icon: ListTodo,
+          color: 'text-orange-400',
+          count: itemCounts[ITEM_TYPES.TODO],
         },
         {
           id: ITEM_TYPES.CHAT,
@@ -164,55 +231,8 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
           color: 'text-lime-400',
           count: itemCounts[ITEM_TYPES.LOCATION],
         },
-        {
-          id: ITEM_TYPES.TODO,
-          label: 'Todos',
-          icon: ListTodo,
-          color: 'text-orange-400',
-          count: itemCounts[ITEM_TYPES.TODO],
-        },
-        {
-          id: ITEM_TYPES.PASSWORD,
-          label: 'Passwords',
-          icon: Key,
-          color: 'text-amber-400',
-          count: itemCounts[ITEM_TYPES.PASSWORD],
-        },
-        {
-          id: ITEM_TYPES.SECRET,
-          label: 'Secrets',
-          icon: ShieldCheck,
-          color: 'text-rose-400',
-          count: itemCounts[ITEM_TYPES.SECRET],
-        },
-        {
-          id: ITEM_TYPES.CARD,
-          label: 'Cards & Bank',
-          icon: CreditCard,
-          color: 'text-emerald-400',
-          count: itemCounts[ITEM_TYPES.CARD],
-        },
-        {
-          id: ITEM_TYPES.IDENTITY,
-          label: 'Identities',
-          icon: Fingerprint,
-          color: 'text-cyan-400',
-          count: itemCounts[ITEM_TYPES.IDENTITY],
-        },
-        {
-          id: ITEM_TYPES.WIFI,
-          label: 'Wi-Fi',
-          icon: Wifi,
-          color: 'text-amber-400',
-          count: itemCounts[ITEM_TYPES.WIFI],
-        },
-        {
-          id: ITEM_TYPES.CONTACT,
-          label: 'Contacts',
-          icon: Users,
-          color: 'text-teal-400',
-          count: itemCounts[ITEM_TYPES.CONTACT],
-        },
+
+        // Media
         {
           id: ITEM_TYPES.PHOTO,
           label: 'Photos',
@@ -234,6 +254,8 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
           color: 'text-cyan-400',
           count: itemCounts[ITEM_TYPES.AUDIO],
         },
+
+        // Documents & Files
         {
           id: ITEM_TYPES.DOCUMENT,
           label: 'Documents',

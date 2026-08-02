@@ -1,4 +1,20 @@
 import React from 'react';
+import {
+  Image,
+  Video,
+  Music,
+  FileText,
+  Fingerprint,
+  CreditCard,
+  ShieldCheck,
+  Wifi,
+  MessageSquare,
+  MapPin,
+  HardDrive,
+  CheckCircle2,
+  ShieldAlert,
+  ListTodo,
+} from 'lucide-react';
 import { SectionCard, ToggleCard } from './SharedComponents';
 import { DurationSelector } from './DurationSelector';
 import { FILE_TYPE_SUPPORT, MAX_UPLOAD_SIZE_MB } from '../../../../lib/fileHandling';
@@ -6,6 +22,16 @@ import {
   MIN_GENERATED_CREDENTIAL_LENGTH,
   MAX_GENERATED_CREDENTIAL_LENGTH,
 } from '../../../../lib/utils';
+
+const AUTO_LOCK_OPTIONS = [1, 5, 10, 15, 30, 60];
+const CLIPBOARD_CLEAR_OPTIONS = [10, 15, 30, 45, 60];
+const formatMinutes = (v: number) => `${v}m`;
+const formatSeconds = (v: number) => `${v}s`;
+
+const PHOTO_TYPES_TEXT = FILE_TYPE_SUPPORT.photo.join(', ');
+const VIDEO_TYPES_TEXT = FILE_TYPE_SUPPORT.video.join(', ');
+const AUDIO_TYPES_TEXT = FILE_TYPE_SUPPORT.audio.join(', ');
+const DOCUMENT_TYPES_TEXT = FILE_TYPE_SUPPORT.document.join(', ');
 
 interface PrivacyInterfaceCardProps {
   preferences: any;
@@ -16,7 +42,7 @@ interface PrivacyInterfaceCardProps {
   setGeneratedLengthInput: (value: string) => void;
 }
 
-export const PrivacyInterfaceCard: React.FC<PrivacyInterfaceCardProps> = ({
+export const PrivacyInterfaceCard = React.memo<PrivacyInterfaceCardProps>(({
   preferences,
   updatePreferences,
   allowRestrictedTypes,
@@ -26,7 +52,7 @@ export const PrivacyInterfaceCard: React.FC<PrivacyInterfaceCardProps> = ({
 }) => (
   <SectionCard
     title="Privacy and Interface"
-    description="Customize the vault behavior and interface to match your workflow. Controls here are arranged for mobile screens first, with a strict black-and-white look."
+    description="Customize the vault behavior and interface to match your workflow."
   >
     <div className="grid gap-4 xl:grid-cols-2">
       <div className="space-y-3">
@@ -50,10 +76,10 @@ export const PrivacyInterfaceCard: React.FC<PrivacyInterfaceCardProps> = ({
           {preferences.isAutoLockEnabled && (
             <div className="rounded-xl border border-card-border bg-card-bg p-3 shadow-sm transition-colors dark:border-white/10 dark:bg-black">
               <DurationSelector
-                options={[1, 5, 10, 15, 30, 60]}
+                options={AUTO_LOCK_OPTIONS}
                 current={preferences.autoLockDuration}
                 onChange={(value) => updatePreferences({ autoLockDuration: value })}
-                formatLabel={(v) => `${v}m`}
+                formatLabel={formatMinutes}
               />
             </div>
           )}
@@ -65,16 +91,58 @@ export const PrivacyInterfaceCard: React.FC<PrivacyInterfaceCardProps> = ({
           onChange={(value) => updatePreferences({ isBlurOnTabHideEnabled: value })}
         />
         <ToggleCard
-          title="Clipboard auto-clear"
-          description="Remove copied secrets from the clipboard automatically."
-          checked={preferences.isClipboardAutoClearEnabled}
-          onChange={(value) => updatePreferences({ isClipboardAutoClearEnabled: value })}
+          title="Lock vault on tab hide"
+          description="Immediately lock the vault when switching browser tabs or minimizing."
+          checked={preferences.isLockOnTabHideEnabled || false}
+          onChange={(value) => updatePreferences({ isLockOnTabHideEnabled: value })}
         />
+        <div className="space-y-1">
+          <ToggleCard
+            title="Clipboard auto-clear"
+            description="Remove copied secrets from the clipboard automatically."
+            checked={preferences.isClipboardAutoClearEnabled}
+            onChange={(value) => updatePreferences({ isClipboardAutoClearEnabled: value })}
+          />
+          {preferences.isClipboardAutoClearEnabled && (
+            <div className="rounded-xl border border-card-border bg-card-bg p-3 shadow-sm transition-colors dark:border-white/10 dark:bg-black">
+              <DurationSelector
+                options={CLIPBOARD_CLEAR_OPTIONS}
+                current={preferences.clipboardAutoClearDuration || 30}
+                onChange={(value) => updatePreferences({ clipboardAutoClearDuration: value })}
+                formatLabel={formatSeconds}
+              />
+            </div>
+          )}
+        </div>
         <ToggleCard
           title="Mask passwords and secrets"
           description="Obscure sensitive values by default."
           checked={preferences.isMaskPasswordsEnabled}
           onChange={(value) => updatePreferences({ isMaskPasswordsEnabled: value })}
+        />
+        <ToggleCard
+          title="Conceal secret length"
+          description="Mask passwords with a constant fixed-length string (••••••••••••) to prevent length inference."
+          checked={preferences.isFixedMaskLengthEnabled || false}
+          onChange={(value) => updatePreferences({ isFixedMaskLengthEnabled: value })}
+        />
+        <ToggleCard
+          title="Auto-purge trash on lock"
+          description="Permanently delete soft-deleted items from trash when locking the vault."
+          checked={preferences.isPurgeTrashOnLockEnabled || false}
+          onChange={(value) => updatePreferences({ isPurgeTrashOnLockEnabled: value })}
+        />
+        <ToggleCard
+          title="Require delete confirmation"
+          description="Prompt for user confirmation before moving items to trash or deleting."
+          checked={preferences.isRequireConfirmationOnDelete !== false}
+          onChange={(value) => updatePreferences({ isRequireConfirmationOnDelete: value })}
+        />
+        <ToggleCard
+          title="Ephemeral search mode"
+          description="Automatically clear active search queries when switching between vault views."
+          checked={preferences.isEphemeralSearchEnabled || false}
+          onChange={(value) => updatePreferences({ isEphemeralSearchEnabled: value })}
         />
         <ToggleCard
           title="Strip photo metadata"
@@ -251,44 +319,208 @@ export const PrivacyInterfaceCard: React.FC<PrivacyInterfaceCardProps> = ({
       </div>
     </div>
 
-    <div className="mt-4 rounded-2xl border border-card-border bg-card-bg p-4">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
-        Supported Data & Uploads
-      </p>
-      <div className="mt-3 grid gap-3 min-[520px]:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-card-border bg-bg p-3">
-          <p className="text-sm font-semibold text-text">Photos</p>
-          <p className="mt-1 text-xs text-text/45">{FILE_TYPE_SUPPORT.photo.join(', ')}</p>
+    <div className="mt-4 rounded-2xl border border-card-border bg-card-bg p-5 shadow-sm transition-colors dark:border-white/10 dark:bg-black">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-card-border/60 pb-4 dark:border-white/10">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
+            Supported Data Ecosystem &amp; Upload Policy
+          </p>
+          <p className="mt-1 text-xs text-text/60">
+            Real-time security treatment, file extension coverage, and payload parameters for your vault.
+          </p>
         </div>
-        <div className="rounded-2xl border border-card-border bg-bg p-3">
-          <p className="text-sm font-semibold text-text">Videos</p>
-          <p className="mt-1 text-xs text-text/45">{FILE_TYPE_SUPPORT.video.join(', ')}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-card-border bg-bg px-2.5 py-1 text-[11px] font-medium text-text/70">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+            AES-256-GCM
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-card-border bg-bg px-2.5 py-1 text-[11px] font-medium text-text/70">
+            <HardDrive className="h-3.5 w-3.5 text-text/40" />
+            {MAX_UPLOAD_SIZE_MB} MB Limit
+          </span>
         </div>
-        <div className="rounded-2xl border border-card-border bg-bg p-3">
-          <p className="text-sm font-semibold text-text">Audio</p>
-          <p className="mt-1 text-xs text-text/45">{FILE_TYPE_SUPPORT.audio.join(', ')}</p>
+      </div>
+
+      <div className="mt-4 grid gap-3 min-[520px]:grid-cols-2 xl:grid-cols-3">
+        {/* Photos */}
+        <div className="rounded-xl border border-card-border bg-bg p-3.5 transition-colors dark:border-white/10">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-text">
+              <Image className="h-4 w-4 text-text/60" />
+              <span>Photos &amp; Images</span>
+            </div>
+            <span className="rounded-md bg-text/5 px-2 py-0.5 text-[10px] font-medium text-text/60">
+              {preferences.isPhotoExifStripped ? 'EXIF Stripped' : 'EXIF Kept'}
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-text/45">{PHOTO_TYPES_TEXT}</p>
         </div>
-        <div className="rounded-2xl border border-card-border bg-bg p-3">
-          <p className="text-sm font-semibold text-text">Documents</p>
-          <p className="mt-1 text-xs text-text/45">{FILE_TYPE_SUPPORT.document.join(', ')}</p>
+
+        {/* Videos */}
+        <div className="rounded-xl border border-card-border bg-bg p-3.5 transition-colors dark:border-white/10">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-text">
+              <Video className="h-4 w-4 text-text/60" />
+              <span>Videos</span>
+            </div>
+            <span className="rounded-md bg-text/5 px-2 py-0.5 text-[10px] font-medium text-text/60">
+              Stream Decrypted
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-text/45">{VIDEO_TYPES_TEXT}</p>
         </div>
-        <div className="rounded-2xl border border-card-border bg-bg p-3">
-          <p className="text-sm font-semibold text-text">Notes</p>
-          <p className="mt-1 text-xs text-text/45">Rich Markdown text with live preview</p>
+
+        {/* Audio */}
+        <div className="rounded-xl border border-card-border bg-bg p-3.5 transition-colors dark:border-white/10">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-text">
+              <Music className="h-4 w-4 text-text/60" />
+              <span>Audio Records</span>
+            </div>
+            <span className="rounded-md bg-text/5 px-2 py-0.5 text-[10px] font-medium text-text/60">
+              {preferences.isAudioWaveformEnabled ? 'Waveforms On' : 'Encrypted Audio'}
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-text/45">{AUDIO_TYPES_TEXT}</p>
         </div>
-        <div className="rounded-2xl border border-card-border bg-bg p-3">
-          <p className="text-sm font-semibold text-text">Credentials & Secrets</p>
-          <p className="mt-1 text-xs text-text/45">Passwords, API keys, SSH keys, phrases</p>
+
+        {/* Documents */}
+        <div className="rounded-xl border border-card-border bg-bg p-3.5 transition-colors dark:border-white/10">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-text">
+              <FileText className="h-4 w-4 text-text/60" />
+              <span>Documents</span>
+            </div>
+            <span className="rounded-md bg-text/5 px-2 py-0.5 text-[10px] font-medium text-text/60">
+              Zero-Knowledge
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-text/45">{DOCUMENT_TYPES_TEXT}</p>
         </div>
-        <div className="rounded-2xl border border-card-border bg-bg p-3">
-          <p className="text-sm font-semibold text-text">Other Files</p>
-          <p className="mt-1 text-xs text-text/45">Any format (executables blocked by default)</p>
+
+        {/* Identities */}
+        <div className="rounded-xl border border-card-border bg-bg p-3.5 transition-colors dark:border-white/10">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-text">
+              <Fingerprint className="h-4 w-4 text-text/60" />
+              <span>Identities &amp; Passports</span>
+            </div>
+            <span className="rounded-md bg-text/5 px-2 py-0.5 text-[10px] font-medium text-text/60">
+              Field Obscured
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-text/45">SSN, Passport, Driver License, Tax IDs</p>
         </div>
-        <div className="rounded-2xl border border-card-border bg-bg p-3">
-          <p className="text-sm font-semibold text-text">Upload limit</p>
-          <p className="mt-1 text-xs text-text/45">{MAX_UPLOAD_SIZE_MB} MB max per file</p>
+
+        {/* Financial Cards */}
+        <div className="rounded-xl border border-card-border bg-bg p-3.5 transition-colors dark:border-white/10">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-text">
+              <CreditCard className="h-4 w-4 text-text/60" />
+              <span>Cards &amp; Bank Accounts</span>
+            </div>
+            <span className="rounded-md bg-text/5 px-2 py-0.5 text-[10px] font-medium text-text/60">
+              PAN/CVV Protected
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-text/45">Credit/Debit Cards, IBAN, SWIFT, PINs</p>
+        </div>
+
+        {/* Credentials & Secrets */}
+        <div className="rounded-xl border border-card-border bg-bg p-3.5 transition-colors dark:border-white/10">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-text">
+              <ShieldCheck className="h-4 w-4 text-text/60" />
+              <span>Credentials &amp; Secrets</span>
+            </div>
+            <span className="rounded-md bg-text/5 px-2 py-0.5 text-[10px] font-medium text-text/60">
+              {preferences.isFixedMaskLengthEnabled
+                ? 'Fixed Mask'
+                : preferences.isMaskPasswordsEnabled
+                ? 'Masked Display'
+                : 'Plaintext Reveal'}
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-text/45">Passwords, API Keys, SSH Keys, Phrases</p>
+        </div>
+
+        {/* Wi-Fi Credentials */}
+        <div className="rounded-xl border border-card-border bg-bg p-3.5 transition-colors dark:border-white/10">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-text">
+              <Wifi className="h-4 w-4 text-text/60" />
+              <span>Wi-Fi Credentials</span>
+            </div>
+            <span className="rounded-md bg-text/5 px-2 py-0.5 text-[10px] font-medium text-text/60">
+              WPA2/3 &amp; QR
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-text/45">Network SSIDs, Passwords, Security Protocols</p>
+        </div>
+
+        {/* Notes & Checklists */}
+        <div className="rounded-xl border border-card-border bg-bg p-3.5 transition-colors dark:border-white/10">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-text">
+              <ListTodo className="h-4 w-4 text-text/60" />
+              <span>Notes &amp; Checklists</span>
+            </div>
+            <span className="rounded-md bg-text/5 px-2 py-0.5 text-[10px] font-medium text-text/60">
+              Rich Markdown
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-text/45">Markdown Notes, Tasks, To-dos, Schedules</p>
+        </div>
+
+        {/* Chat Logs */}
+        <div className="rounded-xl border border-card-border bg-bg p-3.5 transition-colors dark:border-white/10">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-text">
+              <MessageSquare className="h-4 w-4 text-text/60" />
+              <span>Encrypted Chat Logs</span>
+            </div>
+            <span className="rounded-md bg-text/5 px-2 py-0.5 text-[10px] font-medium text-text/60">
+              E2E Encrypted
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-text/45">Message Transcripts &amp; Media Attachments</p>
+        </div>
+
+        {/* Locations */}
+        <div className="rounded-xl border border-card-border bg-bg p-3.5 transition-colors dark:border-white/10">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-text">
+              <MapPin className="h-4 w-4 text-text/60" />
+              <span>Geographic Locations</span>
+            </div>
+            <span className="rounded-md bg-text/5 px-2 py-0.5 text-[10px] font-medium text-text/60">
+              Client Obfuscated
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-text/45">GPS Coordinates, Addresses, Pinned Places</p>
+        </div>
+
+        {/* Restricted Executables Policy */}
+        <div className="rounded-xl border border-card-border bg-bg p-3.5 transition-colors dark:border-white/10">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-text">
+              <ShieldAlert className="h-4 w-4 text-text/60" />
+              <span>Executables &amp; Binaries</span>
+            </div>
+            <span
+              className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                allowRestrictedTypes
+                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                  : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+              }`}
+            >
+              {allowRestrictedTypes ? 'Permitted' : 'Blocked'}
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-text/45">.exe, .sh, .bat, .apk, .iso (Controlled by Policy)</p>
         </div>
       </div>
     </div>
   </SectionCard>
-);
+));
+PrivacyInterfaceCard.displayName = 'PrivacyInterfaceCard';

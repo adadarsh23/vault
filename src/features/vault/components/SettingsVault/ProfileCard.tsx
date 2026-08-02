@@ -9,12 +9,7 @@ import {
   Smartphone,
   Wifi,
   X,
-  // ChevronDown,
-  // ChevronUp,
-  // Network,
-  // ClipboardList,
-  // MonitorSmartphone,
-  // Lock,
+  Trash2,
 } from 'lucide-react';
 import { SectionCard, StatCard } from './SharedComponents';
 import {
@@ -28,6 +23,30 @@ import { type AuthenticatedProfile } from '../../../../lib/auth-api';
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { useLocation } from 'react-router-dom';
+
+// Pure function — no React closure, safe to define outside component
+const isValidProfilePhotoInput = (value: string): boolean => {
+  const normalized = value.trim();
+  if (!normalized || normalized.toLowerCase() === 'none') {
+    return true;
+  }
+
+  if (
+    normalized.startsWith('data:image/') ||
+    normalized.startsWith('blob:') ||
+    normalized.startsWith('/') ||
+    normalized.startsWith('./')
+  ) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(normalized);
+    return parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
 
 interface ProfileCardProps {
   username: string | null;
@@ -68,34 +87,6 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
 }) => {
   const location = useLocation();
 
-  const isValidProfilePhotoInput = (value: string): boolean => {
-    const normalized = value.trim();
-    if (!normalized || normalized.toLowerCase() === 'none') {
-      return true;
-    }
-
-    if (
-      normalized.startsWith('data:image/') ||
-      normalized.startsWith('blob:') ||
-      normalized.startsWith('/') ||
-      normalized.startsWith('./')
-    ) {
-      return true;
-    }
-
-    try {
-      const parsed = new URL(normalized);
-      return (
-        parsed.protocol === 'https:' ||
-        parsed.protocol === 'http:' ||
-        parsed.protocol === 'data:' ||
-        parsed.protocol === 'blob:'
-      );
-    } catch {
-      return false;
-    }
-  };
-
   const savedProfileName = (profile?.profileName || 'none').trim();
   const savedProfilePhoto = (profile?.profilePhoto || 'none').trim();
   const accountName = (
@@ -106,7 +97,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   ).trim();
   const avatarInitial = accountName.charAt(0).toUpperCase() || 'U';
   const hasProfilePhoto = savedProfilePhoto !== 'none' && savedProfilePhoto.length > 0;
-  // const [showDetails, setShowDetails] = React.useState(false)
+
   const [showProfilePopup, setShowProfilePopup] = React.useState(false);
   const [previewImage, setPreviewImage] = React.useState<{
     src: string;
@@ -119,14 +110,21 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
     savedProfilePhoto === 'none' ? '' : savedProfilePhoto
   );
   const [profileSaveError, setProfileSaveError] = React.useState<string | null>(null);
+
   const popupAccountName = (profileNameInput.trim() || accountName).trim();
   const popupAvatarInitial = popupAccountName.charAt(0).toUpperCase() || 'U';
   const popupPhotoValue = profilePhotoInput.trim();
-  const isPhotoInputValid = isValidProfilePhotoInput(profilePhotoInput);
+
+  // Memoize — avoids re-running URL parse on every render cycle
+  const isPhotoInputValid = React.useMemo(
+    () => isValidProfilePhotoInput(profilePhotoInput),
+    [profilePhotoInput]
+  );
 
   const [isCardImageBroken, setIsCardImageBroken] = React.useState(false);
   const [isPopupImageBroken, setIsPopupImageBroken] = React.useState(false);
 
+  // Sync form inputs when persisted profile values change from outside
   React.useEffect(() => {
     setProfileNameInput(savedProfileName === 'none' ? '' : savedProfileName);
     setProfilePhotoInput(savedProfilePhoto === 'none' ? '' : savedProfilePhoto);
@@ -134,19 +132,17 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
     setIsPopupImageBroken(false);
   }, [savedProfileName, savedProfilePhoto]);
 
+  // Reset broken-image flag whenever user changes the photo input
   React.useEffect(() => {
     setIsPopupImageBroken(false);
   }, [profilePhotoInput]);
 
+  // Merged: open editor on hash change OR when a new external open-request token fires
   React.useEffect(() => {
-    if (location.hash === '#edit-profile') {
-      setShowProfilePopup(true);
-      setProfileSaveError(null);
-    }
-  }, [location.hash]);
-
-  React.useEffect(() => {
-    if (location.hash === '#edit-profile' && openProfileEditorRequestToken) {
+    const shouldOpen =
+      location.hash === '#edit-profile' ||
+      (openProfileEditorRequestToken !== undefined && openProfileEditorRequestToken > 0);
+    if (shouldOpen) {
       setShowProfilePopup(true);
       setProfileSaveError(null);
     }
@@ -215,11 +211,26 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                   </p>
                 ) : null}
               </div>
+              {/* <div className="shrink-0 pt-1 sm:pt-0">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setShowProfilePopup(true);
+                  }}
+                  className="flex items-center gap-1.5 rounded-xl border border-card-border/80 bg-card-bg/80 px-3 py-1.5 text-xs font-semibold text-text shadow-sm hover:bg-card-bg focus-visible:outline-none"
+                >
+                  <Pencil className="h-3.5 w-3.5 text-primary" />
+                  <span>Edit Profile</span>
+                </Button>
+              </div> */}
             </div>
           </div>
         </div>
 
-        <div className="grid gap-3 min-[520px]:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-2.5 sm:gap-3 min-[480px]:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Account"
             value={accountName}
@@ -246,7 +257,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
           />
         </div>
 
-        <div className="grid gap-3 min-[520px]:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-2.5 sm:gap-3 min-[480px]:grid-cols-2 xl:grid-cols-3">
           <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
               Username
@@ -254,7 +265,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
             <p className="mt-2 truncate text-base font-semibold text-text">
               {username ? `@${username}` : 'Unknown'}
             </p>
-            <p className="mt-1 text-xs text-text/45">
+            <p className="mt-1 text-xs text-text/45 truncate">
               {profile?.username ? `@${profile.username}` : 'Secure vault account'}
             </p>
           </div>
@@ -314,55 +325,55 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
             <Image className="h-3.5 w-3.5" />
             Media & File Breakdown
           </h3>
-          <div className="grid gap-3 min-[520px]:grid-cols-2 lg:grid-cols-4">
-            <div className={`${SETTINGS_PANEL_SOFT} p-4`}>
-              <div className="flex items-center gap-2 mb-3">
+          <div className="grid gap-2.5 sm:gap-3 min-[380px]:grid-cols-2 lg:grid-cols-4">
+            <div className={`${SETTINGS_PANEL_SOFT} p-3.5 sm:p-4 min-w-0`}>
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
                   <Image className="h-4 w-4 text-blue-400" />
                 </div>
-                <p className="text-xs font-semibold text-text/60">Photos</p>
+                <p className="text-xs font-semibold text-text/60 truncate">Photos</p>
               </div>
-              <p className="text-xl font-bold text-text">{mediaBreakdown.photo.count}</p>
-              <p className="text-[10px] text-text/40 mt-2 font-medium">
+              <p className="text-lg sm:text-xl font-bold text-text">{mediaBreakdown.photo.count}</p>
+              <p className="text-[10px] text-text/40 mt-1.5 font-medium truncate">
                 {formatBytes(mediaBreakdown.photo.bytes)}
               </p>
             </div>
 
-            <div className={`${SETTINGS_PANEL_SOFT} p-4`}>
-              <div className="flex items-center gap-2 mb-3">
+            <div className={`${SETTINGS_PANEL_SOFT} p-3.5 sm:p-4 min-w-0`}>
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10">
                   <Video className="h-4 w-4 text-purple-400" />
                 </div>
-                <p className="text-xs font-semibold text-text/60">Videos</p>
+                <p className="text-xs font-semibold text-text/60 truncate">Videos</p>
               </div>
-              <p className="text-xl font-bold text-text">{mediaBreakdown.video.count}</p>
-              <p className="text-[10px] text-text/40 mt-2 font-medium">
+              <p className="text-lg sm:text-xl font-bold text-text">{mediaBreakdown.video.count}</p>
+              <p className="text-[10px] text-text/40 mt-1.5 font-medium truncate">
                 {formatBytes(mediaBreakdown.video.bytes)}
               </p>
             </div>
 
-            <div className={`${SETTINGS_PANEL_SOFT} p-4`}>
-              <div className="flex items-center gap-2 mb-3">
+            <div className={`${SETTINGS_PANEL_SOFT} p-3.5 sm:p-4 min-w-0`}>
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10">
                   <Music className="h-4 w-4 text-green-400" />
                 </div>
-                <p className="text-xs font-semibold text-text/60">Audio</p>
+                <p className="text-xs font-semibold text-text/60 truncate">Audio</p>
               </div>
-              <p className="text-xl font-bold text-text">{mediaBreakdown.audio.count}</p>
-              <p className="text-[10px] text-text/40 mt-2 font-medium">
+              <p className="text-lg sm:text-xl font-bold text-text">{mediaBreakdown.audio.count}</p>
+              <p className="text-[10px] text-text/40 mt-1.5 font-medium truncate">
                 {formatBytes(mediaBreakdown.audio.bytes)}
               </p>
             </div>
 
-            <div className={`${SETTINGS_PANEL_SOFT} p-4`}>
-              <div className="flex items-center gap-2 mb-3">
+            <div className={`${SETTINGS_PANEL_SOFT} p-3.5 sm:p-4 min-w-0`}>
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
                   <WalletCards className="h-4 w-4 text-amber-400" />
                 </div>
-                <p className="text-xs font-semibold text-text/60">All Other</p>
+                <p className="text-xs font-semibold text-text/60 truncate">All Other</p>
               </div>
-              <p className="text-xl font-bold text-text">{mediaBreakdown.other.count}</p>
-              <p className="text-[10px] text-text/40 mt-2 font-medium">
+              <p className="text-lg sm:text-xl font-bold text-text">{mediaBreakdown.other.count}</p>
+              <p className="text-[10px] text-text/40 mt-1.5 font-medium truncate">
                 {formatBytes(mediaBreakdown.other.bytes)}
               </p>
             </div>
@@ -370,10 +381,10 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         </div>
 
         {showProfilePopup && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-[2px]">
-            <div className="w-full max-w-xl rounded-2xl border border-card-border bg-bg p-5 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)] dark:bg-black">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-3 sm:p-5 backdrop-blur-[2px]">
+            <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-card-border bg-bg p-4 sm:p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)] dark:bg-black">
               <h3 className="text-lg font-semibold text-text">Edit Profile</h3>
-              <p className="mt-1 text-sm text-text/50">
+              <p className="mt-1 text-xs sm:text-sm text-text/50">
                 Update profile name and profile image URL.
               </p>
               <div className="mt-4 flex items-center gap-3 rounded-xl border border-card-border/70 bg-card-bg/50 p-3">
@@ -449,39 +460,62 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-text/45">
                       Profile Image URL / Data
                     </p>
-                    <label className="cursor-pointer text-xs font-semibold text-primary hover:underline flex items-center gap-1">
-                      <span>Upload Photo</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          if (!file.type.startsWith('image/')) {
-                            setProfileSaveError('Please select an image file.');
-                            return;
-                          }
-                          if (file.size > 3 * 1024 * 1024) {
-                            setProfileSaveError('Image file must be under 3MB.');
-                            return;
-                          }
-                          const reader = new FileReader();
-                          reader.onload = (evt) => {
-                            const result = evt.target?.result;
-                            if (typeof result === 'string') {
-                              setProfilePhotoInput(result);
+                    <div className="flex items-center gap-3">
+                      {profilePhotoInput.trim() &&
+                      profilePhotoInput.trim().toLowerCase() !== 'none' ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfilePhotoInput('');
+                            setIsPopupImageBroken(false);
+                            if (profileSaveError) {
                               setProfileSaveError(null);
                             }
-                          };
-                          reader.readAsDataURL(file);
-                        }}
-                      />
-                    </label>
+                          }}
+                          className="flex items-center gap-1 text-xs font-semibold text-red-500 transition-colors hover:underline"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          <span>Remove Photo</span>
+                        </button>
+                      ) : null}
+                      <label className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-primary hover:underline">
+                        <span>Upload Photo</span>
+                        <input
+                          id="profile-photo-file-input"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (!file.type.startsWith('image/')) {
+                              setProfileSaveError('Please select an image file.');
+                              return;
+                            }
+                            if (file.size > 35 * 1024 * 1024) {
+                              setProfileSaveError('Image file must be under 35MB.');
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = (evt) => {
+                              const result = evt.target?.result;
+                              if (typeof result === 'string') {
+                                setProfilePhotoInput(result);
+                                setProfileSaveError(null);
+                              }
+                            };
+                            reader.onerror = () => {
+                              setProfileSaveError('Failed to read the image file. Please try again.');
+                            };
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+                    </div>
                   </div>
                   <Input
                     value={profilePhotoInput}
@@ -491,26 +525,25 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                         setProfileSaveError(null);
                       }
                     }}
-                    placeholder="Enter HTTP/HTTPS URL or upload image"
-                    maxLength={20480}
+                    placeholder="Enter HTTPS URL or upload image (up to 35MB)"
+                    maxLength={75000000}
                   />
                 </div>
                 {!isPhotoInputValid ? (
                   <p className="text-xs text-red-500">
-                    Please use a valid image URL (HTTP/HTTPS/data URI), or leave it blank.
+                    Please use a valid HTTPS image URL or upload an image file, or leave it blank.
                   </p>
                 ) : null}
                 {profileSaveError ? (
-                  <p className="text-xs text-red-500">
-                    Failed to save profile. {profileSaveError}
-                  </p>
+                  <p className="text-xs text-red-500">Failed to save profile. {profileSaveError}</p>
                 ) : null}
               </div>
-              <div className="mt-4 flex gap-2">
+              <div className="mt-5 flex flex-col-reverse min-[420px]:flex-row gap-2 sm:gap-3">
                 <Button
                   variant="secondary"
                   loading={isSavingProfile}
                   disabled={!isPhotoInputValid}
+                  className="w-full min-[420px]:w-auto justify-center"
                   onClick={async () => {
                     const result = await onSaveProfile(
                       profileNameInput.trim() || 'none',
@@ -529,6 +562,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 </Button>
                 <Button
                   variant="ghost"
+                  className="w-full min-[420px]:w-auto justify-center"
                   onClick={() => {
                     setProfileSaveError(null);
                     setShowProfilePopup(false);

@@ -37,46 +37,7 @@ interface TypeConfig {
 }
 
 const TYPE_CONFIGS: Record<string, TypeConfig> = {
-  note: {
-    label: 'Notes',
-    icon: FileText,
-    styles: {
-      selected: 'bg-emerald-500/10 text-white border-l-2 border-emerald-400 pl-[12px] shadow-inner',
-      iconBg: 'bg-emerald-500/5 group-hover:bg-emerald-500/10',
-      icon: 'text-emerald-400',
-      tag: 'bg-emerald-500/5 border-emerald-500/10 text-emerald-400/70',
-    },
-  },
-  password: {
-    label: 'Passwords',
-    icon: Key,
-    styles: {
-      selected: 'bg-amber-500/10 text-white border-l-2 border-amber-400 pl-[12px] shadow-inner',
-      iconBg: 'bg-amber-500/5 group-hover:bg-amber-500/10',
-      icon: 'text-amber-400',
-      tag: 'bg-amber-500/5 border-amber-500/10 text-amber-400/70',
-    },
-  },
-  secret: {
-    label: 'Secrets',
-    icon: ShieldCheck,
-    styles: {
-      selected: 'bg-rose-500/10 text-white border-l-2 border-rose-400 pl-[12px] shadow-inner',
-      iconBg: 'bg-rose-500/5 group-hover:bg-rose-500/10',
-      icon: 'text-rose-400',
-      tag: 'bg-rose-500/5 border-rose-500/10 text-rose-400/70',
-    },
-  },
-  card: {
-    label: 'Cards & Bank',
-    icon: CreditCard,
-    styles: {
-      selected: 'bg-yellow-500/10 text-white border-l-2 border-yellow-400 pl-[12px] shadow-inner',
-      iconBg: 'bg-yellow-500/5 group-hover:bg-yellow-500/10',
-      icon: 'text-yellow-400',
-      tag: 'bg-yellow-500/5 border-yellow-500/10 text-yellow-400/70',
-    },
-  },
+  // Personal Information
   identity: {
     label: 'Identities',
     icon: Fingerprint,
@@ -85,16 +46,6 @@ const TYPE_CONFIGS: Record<string, TypeConfig> = {
       iconBg: 'bg-lime-500/5 group-hover:bg-lime-500/10',
       icon: 'text-lime-400',
       tag: 'bg-lime-500/5 border-lime-500/10 text-lime-400/70',
-    },
-  },
-  wifi: {
-    label: 'Wi-Fi Networks',
-    icon: Wifi,
-    styles: {
-      selected: 'bg-purple-500/10 text-white border-l-2 border-purple-400 pl-[12px] shadow-inner',
-      iconBg: 'bg-purple-500/5 group-hover:bg-purple-500/10',
-      icon: 'text-purple-400',
-      tag: 'bg-purple-500/5 border-purple-500/10 text-purple-400/70',
     },
   },
   contact: {
@@ -107,14 +58,56 @@ const TYPE_CONFIGS: Record<string, TypeConfig> = {
       tag: 'bg-orange-500/5 border-orange-500/10 text-orange-400/70',
     },
   },
-  chat: {
-    label: 'Chats',
-    icon: MessageSquareText,
+  password: {
+    label: 'Passwords',
+    icon: Key,
     styles: {
-      selected: 'bg-pink-500/10 text-white border-l-2 border-pink-400 pl-[12px] shadow-inner',
-      iconBg: 'bg-pink-500/5 group-hover:bg-pink-500/10',
-      icon: 'text-pink-400',
-      tag: 'bg-pink-500/5 border-pink-500/10 text-pink-400/70',
+      selected: 'bg-amber-500/10 text-white border-l-2 border-amber-400 pl-[12px] shadow-inner',
+      iconBg: 'bg-amber-500/5 group-hover:bg-amber-500/10',
+      icon: 'text-amber-400',
+      tag: 'bg-amber-500/5 border-amber-500/10 text-amber-400/70',
+    },
+  },
+  card: {
+    label: 'Cards & Bank',
+    icon: CreditCard,
+    styles: {
+      selected: 'bg-yellow-500/10 text-white border-l-2 border-yellow-400 pl-[12px] shadow-inner',
+      iconBg: 'bg-yellow-500/5 group-hover:bg-yellow-500/10',
+      icon: 'text-yellow-400',
+      tag: 'bg-yellow-500/5 border-yellow-500/10 text-yellow-400/70',
+    },
+  },
+  wifi: {
+    label: 'Wi-Fi Networks',
+    icon: Wifi,
+    styles: {
+      selected: 'bg-purple-500/10 text-white border-l-2 border-purple-400 pl-[12px] shadow-inner',
+      iconBg: 'bg-purple-500/5 group-hover:bg-purple-500/10',
+      icon: 'text-purple-400',
+      tag: 'bg-purple-500/5 border-purple-500/10 text-purple-400/70',
+    },
+  },
+  secret: {
+    label: 'Secrets',
+    icon: ShieldCheck,
+    styles: {
+      selected: 'bg-rose-500/10 text-white border-l-2 border-rose-400 pl-[12px] shadow-inner',
+      iconBg: 'bg-rose-500/5 group-hover:bg-rose-500/10',
+      icon: 'text-rose-400',
+      tag: 'bg-rose-500/5 border-rose-500/10 text-rose-400/70',
+    },
+  },
+
+  // Notes & Productivity
+  note: {
+    label: 'Notes',
+    icon: FileText,
+    styles: {
+      selected: 'bg-emerald-500/10 text-white border-l-2 border-emerald-400 pl-[12px] shadow-inner',
+      iconBg: 'bg-emerald-500/5 group-hover:bg-emerald-500/10',
+      icon: 'text-emerald-400',
+      tag: 'bg-emerald-500/5 border-emerald-500/10 text-emerald-400/70',
     },
   },
   todo: {
@@ -127,6 +120,16 @@ const TYPE_CONFIGS: Record<string, TypeConfig> = {
       tag: 'bg-fuchsia-500/5 border-fuchsia-500/10 text-fuchsia-400/70',
     },
   },
+  chat: {
+    label: 'Chats',
+    icon: MessageSquareText,
+    styles: {
+      selected: 'bg-pink-500/10 text-white border-l-2 border-pink-400 pl-[12px] shadow-inner',
+      iconBg: 'bg-pink-500/5 group-hover:bg-pink-500/10',
+      icon: 'text-pink-400',
+      tag: 'bg-pink-500/5 border-pink-500/10 text-pink-400/70',
+    },
+  },
   location: {
     label: 'Locations',
     icon: MapPin,
@@ -137,6 +140,8 @@ const TYPE_CONFIGS: Record<string, TypeConfig> = {
       tag: 'bg-cyan-500/5 border-cyan-500/10 text-cyan-400/70',
     },
   },
+
+  // Media
   photo: {
     label: 'Photos',
     icon: Image,
@@ -167,6 +172,8 @@ const TYPE_CONFIGS: Record<string, TypeConfig> = {
       tag: 'bg-violet-500/5 border-violet-500/10 text-violet-400/70',
     },
   },
+
+  // Documents & Files
   document: {
     label: 'Documents',
     icon: FilePlus,

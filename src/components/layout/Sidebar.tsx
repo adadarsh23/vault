@@ -6,6 +6,7 @@ import {
   AudioLines,
   Key,
   ShieldCheck,
+  Shield,
   FilePlus,
   FileText,
   Settings,
@@ -64,13 +65,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const menuItems: MenuItem[] = useMemo(
     () => [
+      // Main
       {
         id: 'dashboard',
         label: 'Dashboard',
         icon: LayoutDashboard,
         group: 'core',
       },
+
+      // Personal Information
+      { id: 'identities', label: 'Identities', icon: Fingerprint, group: 'vaults' },
+      { id: 'contacts', label: 'Contacts', icon: Users, group: 'vaults' },
+      { id: 'passwords', label: 'Passwords', icon: Key, group: 'vaults' },
+      { id: 'cards', label: 'Cards & Bank', icon: CreditCard, group: 'vaults' },
+      { id: 'wifi', label: 'Wi-Fi', icon: Wifi, group: 'vaults' },
+      { id: 'secrets', label: 'Secrets', icon: ShieldCheck, group: 'vaults' },
+
+      // Notes & Productivity
       { id: 'notes', label: 'Notes', icon: FileText, group: 'vaults' },
+      { id: 'todos', label: 'Todos', icon: ListTodo, group: 'vaults' },
       {
         id: 'chats',
         label: 'Chats',
@@ -78,18 +91,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
         group: 'vaults',
       },
       { id: 'locations', label: 'Locations', icon: MapPin, group: 'vaults' },
-      { id: 'todos', label: 'Todos', icon: ListTodo, group: 'vaults' },
-      { id: 'passwords', label: 'Passwords', icon: Key, group: 'vaults' },
-      { id: 'secrets', label: 'Secrets', icon: ShieldCheck, group: 'vaults' },
-      { id: 'cards', label: 'Cards & Bank', icon: CreditCard, group: 'vaults' },
-      { id: 'identities', label: 'Identities', icon: Fingerprint, group: 'vaults' },
-      { id: 'wifi', label: 'Wi-Fi', icon: Wifi, group: 'vaults' },
-      { id: 'contacts', label: 'Contacts', icon: Users, group: 'vaults' },
+
+      // Media
       { id: 'photos', label: 'Photos', icon: Image, group: 'vaults' },
       { id: 'videos', label: 'Videos', icon: Video, group: 'vaults' },
       { id: 'audio', label: 'Audio', icon: AudioLines, group: 'vaults' },
+
+      // Documents & Files
       { id: 'documents', label: 'Documents', icon: FilePlus, group: 'vaults' },
       { id: 'files', label: 'Other Files', icon: Box, group: 'vaults' },
+
+      // App
+      { id: 'privacy', label: 'Privacy', icon: Shield, group: 'system' },
+      { id: 'shortcuts', label: 'Shortcuts', icon: ListTodo, group: 'system' },
       { id: 'settings', label: 'Settings', icon: Settings, group: 'system' },
     ],
     []
@@ -173,7 +187,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       role="navigation"
       aria-label="Sidebar"
       className={cn(
-        'touch-pan-y flex h-screen w-[17.5rem] max-w-[85vw] flex-col bg-sidebar-bg backdrop-blur-xl transition-all duration-300 lg:w-64',
+        'touch-pan-y flex h-screen w-[17.5rem] max-w-[85vw] flex-col bg-sidebar-bg backdrop-blur-xl transition-all duration-300 lg:w-64 print:hidden',
         compact && 'lg:w-20',
         sidebarPosition === 'right'
           ? 'border-l border-sidebar-border shadow-[-4px_0_24px_rgba(0,0,0,0.05)]'

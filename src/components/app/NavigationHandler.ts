@@ -5,25 +5,38 @@ import { VaultItem } from '../../lib/storage';
 import { useGlobalNavigationStore } from '../../store/globalNavigationStore';
 
 export const TAB_PATHS = {
+  // Main
   dashboard: '/',
-  notes: '/notes',
-  chats: '/chats',
-  todos: '/todos',
-  passwords: '/passwords',
-  secrets: '/secrets',
+
+  // Personal Information
+  identities: '/identities',
   contacts: '/contacts',
+  passwords: '/passwords',
+  cards: '/cards',
+  wifi: '/wifi',
+  secrets: '/secrets',
+
+  // Notes & Productivity
+  notes: '/notes',
+  todos: '/todos',
+  chats: '/chats',
+  locations: '/locations',
+
+  // Media
   photos: '/photos',
   videos: '/videos',
   audio: '/audio',
+
+  // Documents & Files
   documents: '/documents',
-  locations: '/locations',
   files: '/files',
-  cards: '/cards',
-  identities: '/identities',
-  wifi: '/wifi',
-  settings: '/settings',
-  shortcuts: '/shortcuts',
+
+  // App
   privacy: '/privacy',
+  shortcuts: '/shortcuts',
+  settings: '/settings',
+
+  // System & Other
   systemlogs: '/system-logs',
   devicesessions: '/device-sessions',
   ecosystem: '/eco',

@@ -298,6 +298,24 @@ export const extractMentions = (text: string): string[] => {
   return Array.from(new Set(Array.from(matches).map(([, username]) => username)));
 };
 
+export const isUserMentioned = (mentions: string[], username: string): boolean => {
+  if (!Array.isArray(mentions) || mentions.length === 0) return false;
+  const normUser = username.trim().toLowerCase();
+  if (!normUser) return false;
+  return mentions.some((mention) => {
+    if (typeof mention !== 'string') return false;
+    const normMention = mention.trim().toLowerCase();
+    if (!normMention) return false;
+    return (
+      normMention === normUser ||
+      normMention === 'all' ||
+      normMention === 'everyone' ||
+      normUser.includes(normMention) ||
+      normMention.includes(normUser)
+    );
+  });
+};
+
 export const isExpiredMessage = (message: ChatMessage, now: number): boolean =>
   typeof message.expiresAt === 'number' && message.expiresAt <= now;
 

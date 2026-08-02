@@ -2,7 +2,7 @@ import express from 'express';
 import { AppError } from '../utils/appError.ts';
 import { logger } from '../utils/logger.ts';
 
-const JSON_LIMIT = `${Math.max(1, Number.parseInt(process.env.MAX_JSON_BODY_MB || '5', 10))}mb`;
+const JSON_LIMIT = `${Math.max(1, Number.parseInt(process.env.MAX_JSON_BODY_MB || '100', 10))}mb`;
 const jsonParser = express.json({ limit: JSON_LIMIT });
 const urlencodedParser = express.urlencoded({
   limit: JSON_LIMIT,

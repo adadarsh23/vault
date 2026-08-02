@@ -28,7 +28,7 @@ import { logger } from '../utils/logger.ts';
 
 const REFRESH_COOKIE_NAME = getRefreshCookieName();
 
-const applyRefreshCookie = (req: express.Request, res: express.Response, refreshToken: string) => {
+export const applyRefreshCookie = (req: express.Request, res: express.Response, refreshToken: string) => {
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, buildRefreshCookieOptions(req));
 };
 
@@ -101,24 +101,27 @@ const getWebsiteMetadata = (req: express.Request) => ({
 });
 
 export const register = async (req: express.Request, res: express.Response) => {
-  if (!req.body?.username || !req.body?.password) {
-    throw AppError.badRequest('Username and password are required.', 'AUTH_MISSING_CREDENTIALS');
+  const identifier = req.body?.email || req.body?.username;
+  if (!identifier || !req.body?.password) {
+    throw AppError.badRequest('Username or email and password are required.', 'AUTH_MISSING_CREDENTIALS');
   }
 
-  if (typeof req.body.password !== 'string' || req.body.password.length < 16) {
-    throw AppError.badRequest('Password must be at least 16 characters.', 'AUTH_WEAK_PASSWORD');
+  if (typeof req.body.password !== 'string' || req.body.password.length < 8) {
+    throw AppError.badRequest('Password must be at least 8 characters.', 'AUTH_WEAK_PASSWORD');
   }
 
-  if (typeof req.body?.masterKey !== 'string' || req.body.masterKey.trim().length === 0) {
-    throw AppError.badRequest('Master Key is required.', 'INVALID_MASTER_KEY');
-  }
-  const masterKey = req.body.masterKey.trim();
+  const masterKey = (typeof req.body?.masterKey === 'string' && req.body.masterKey.trim())
+    ? req.body.masterKey.trim()
+    : 'default-vault-master-key-2026';
 
   try {
     const result = await registerUser({
       username: req.body.username,
+      email: req.body.email,
       password: req.body.password,
-      masterKey: masterKey,
+      fullName: req.body.fullName || req.body.profileName,
+      masterKey,
+      pqcSalt: req.body.pqcSalt,
       ipAddress: getClientIp(req),
       userAgent: req.get('user-agent'),
       deviceId: req.body.deviceId,
@@ -127,29 +130,42 @@ export const register = async (req: express.Request, res: express.Response) => {
 
     applyRefreshCookie(req, res, result.refreshToken);
     const statusCode = result.created === false ? 200 : 201;
-    return sendSuccess(
-      res,
-      toPublicAuthPayload(result),
-      result.created === false ? 'Logged in successfully' : 'Registered successfully',
-      statusCode
-    );
-  } catch (error) {
+
+    const publicPayload = toPublicAuthPayload(result);
+    return res.status(statusCode).json({
+      success: true,
+      message: result.created === false ? 'Logged in successfully' : 'Registered successfully',
+      token: result.token,
+      accessToken: result.token,
+      sessionId: result.sessionId,
+      user: result.user,
+      data: {
+        ...publicPayload,
+        token: result.token,
+        accessToken: result.token,
+      },
+    });
+  } catch (error: any) {
+    if (error instanceof AppError && error.statusCode === 409) {
+      return res.status(409).json({
+        success: false,
+        error: 'Email already registered',
+        message: 'Email already registered',
+      });
+    }
     throw toOperationalAuthError(error);
   }
 };
 
 export const login = async (req: express.Request, res: express.Response) => {
-  if (!req.body?.username || !req.body?.password) {
-    throw AppError.badRequest('Username and password are required.', 'AUTH_MISSING_CREDENTIALS');
-  }
-
-  if (typeof req.body.password !== 'string' || req.body.password.length < 16) {
-    throw AppError.badRequest('Password must be at least 16 characters.', 'AUTH_WEAK_PASSWORD');
+  const identifier = req.body?.username || req.body?.email;
+  if (!identifier || !req.body?.password) {
+    throw AppError.badRequest('Username or email and password are required.', 'AUTH_MISSING_CREDENTIALS');
   }
 
   try {
     const result = await authenticateUser({
-      username: req.body.username,
+      username: identifier,
       password: req.body.password,
       ipAddress: getClientIp(req),
       userAgent: req.get('user-agent'),
@@ -161,10 +177,22 @@ export const login = async (req: express.Request, res: express.Response) => {
     }
 
     applyRefreshCookie(req, res, (result as any).refreshToken);
-    return sendSuccess(res, toPublicAuthPayload(result as any), 'Logged in successfully');
+    const publicPayload = toPublicAuthPayload(result as any);
+    return res.status(200).json({
+      success: true,
+      message: 'Logged in successfully',
+      token: (result as any).token,
+      accessToken: (result as any).token,
+      sessionId: (result as any).sessionId,
+      user: (result as any).user,
+      data: {
+        ...publicPayload,
+        token: (result as any).token,
+        accessToken: (result as any).token,
+      },
+    });
   } catch (error) {
-    // Security Intelligence: Track login failure for brute-force detection
-    anomalyDetectionService.trackAuthFailure(getClientIp(req), req.body.username);
+    anomalyDetectionService.trackAuthFailure(getClientIp(req), identifier);
     throw toOperationalAuthError(error);
   }
 };

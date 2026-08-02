@@ -4,13 +4,13 @@ import { Button } from '../components/ui/Button';
 
 const Background = lazy(() =>
   import('../components/layout/Background').then((module) => ({
-    default: module.Background,
+    default: module.Background || module.default,
   }))
 );
 
 const Footer = lazy(() =>
   import('../components/layout/Footer').then((module) => ({
-    default: module.Footer,
+    default: module.Footer || module.default,
   }))
 );
 

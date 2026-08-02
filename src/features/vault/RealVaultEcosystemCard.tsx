@@ -109,10 +109,15 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> = mem
 
     const [positions, setPositions] = useState<Record<string, NodePosition>>(() => {
       try {
-        const saved = localStorage.getItem('vault_ecosystem_positions');
-        if (saved) {
-          // Merge with defaults so new nodes still get an initial placement
-          return { ...defaultPositions, ...JSON.parse(saved) };
+        const savedVer = localStorage.getItem('vault_ecosystem_layout_version');
+        if (savedVer === 'v2') {
+          const saved = localStorage.getItem('vault_ecosystem_positions');
+          if (saved) {
+            return { ...defaultPositions, ...JSON.parse(saved) };
+          }
+        } else {
+          localStorage.setItem('vault_ecosystem_layout_version', 'v2');
+          localStorage.removeItem('vault_ecosystem_positions');
         }
       } catch (e) {
         console.error('Failed to load node positions', e);
@@ -145,36 +150,57 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> = mem
     }, []);
 
     // ─────────────────────────────────────────────
-    // Persist positions to local storage
+    // Persist positions to local storage (Debounced)
     // ─────────────────────────────────────────────
+    const savePositionsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     useEffect(() => {
-      try {
-        localStorage.setItem('vault_ecosystem_positions', JSON.stringify(positions));
-      } catch (e) {
-        console.error('Failed to save node positions', e);
-      }
+      if (savePositionsTimer.current) clearTimeout(savePositionsTimer.current);
+      savePositionsTimer.current = setTimeout(() => {
+        try {
+          localStorage.setItem('vault_ecosystem_positions', JSON.stringify(positions));
+        } catch (e) {
+          console.error('Failed to save node positions', e);
+        }
+      }, 300);
+      return () => {
+        if (savePositionsTimer.current) clearTimeout(savePositionsTimer.current);
+      };
     }, [positions]);
 
     // ─────────────────────────────────────────────
-    // Persist scale to local storage
+    // Persist scale to local storage (Debounced)
     // ─────────────────────────────────────────────
+    const saveScaleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     useEffect(() => {
-      try {
-        localStorage.setItem('vault_ecosystem_scale', String(scale));
-      } catch (e) {
-        console.error('Failed to save scale to localStorage', e);
-      }
+      if (saveScaleTimer.current) clearTimeout(saveScaleTimer.current);
+      saveScaleTimer.current = setTimeout(() => {
+        try {
+          localStorage.setItem('vault_ecosystem_scale', String(scale));
+        } catch (e) {
+          console.error('Failed to save scale to localStorage', e);
+        }
+      }, 300);
+      return () => {
+        if (saveScaleTimer.current) clearTimeout(saveScaleTimer.current);
+      };
     }, [scale]);
 
     // ─────────────────────────────────────────────
-    // Persist pan to local storage
+    // Persist pan to local storage (Debounced)
     // ─────────────────────────────────────────────
+    const savePanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     useEffect(() => {
-      try {
-        localStorage.setItem('vault_ecosystem_pan', JSON.stringify(pan));
-      } catch (e) {
-        console.error('Failed to save pan to localStorage', e);
-      }
+      if (savePanTimer.current) clearTimeout(savePanTimer.current);
+      savePanTimer.current = setTimeout(() => {
+        try {
+          localStorage.setItem('vault_ecosystem_pan', JSON.stringify(pan));
+        } catch (e) {
+          console.error('Failed to save pan to localStorage', e);
+        }
+      }, 300);
+      return () => {
+        if (savePanTimer.current) clearTimeout(savePanTimer.current);
+      };
     }, [pan]);
 
     useEffect(
@@ -316,34 +342,52 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> = mem
     }, [defaultPositions]);
 
     // ─────────────────────────────────────────────
-    // Export Diagram
+    // Export Diagram (4K Ultra-HD Resolution)
     // ─────────────────────────────────────────────
     const handleExportImage = useCallback(async () => {
       if (!graphRef.current || isExporting) return;
       setIsExporting(true);
+      const element = graphRef.current;
+      element.classList.add('is-exporting-png');
+
       try {
         // Dynamically import to keep initial bundle size small
         const { toBlob, toPng } = await import('html-to-image');
+
+        // Target 4K Ultra-HD canvas width for maximum sharpness
+        const targetWidth = 3840;
+        const currentWidth = Math.max(element.clientWidth || GRAPH_WIDTH, 1);
+        const currentHeight = Math.max(element.clientHeight || GRAPH_HEIGHT, 1);
+        const targetHeight = Math.round(targetWidth * (currentHeight / currentWidth));
+
         const exportOptions = {
           quality: 1,
           cacheBust: true,
-          pixelRatio: Math.min(window.devicePixelRatio || 1, 2), // Crisp export without oversized files
+          pixelRatio: 4, // 4x supersampling for Ultra-HD vector text and curved edges
+          canvasWidth: targetWidth,
+          canvasHeight: targetHeight,
+          style: {
+            backdropFilter: 'none',
+            webkitBackdropFilter: 'none',
+            backgroundColor: '#090d16',
+            color: '#ffffff',
+          },
           filter: (node: Node) =>
             !(node instanceof HTMLElement && node.dataset.exportIgnore === 'true'),
         };
 
-        const blob = await toBlob(graphRef.current, exportOptions);
+        const blob = await toBlob(element, exportOptions);
         let href = '';
         if (blob) {
           href = URL.createObjectURL(blob);
         } else {
-          const dataUrl = await toPng(graphRef.current, exportOptions);
+          const dataUrl = await toPng(element, exportOptions);
           href = dataUrl;
         }
 
         const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
         const link = document.createElement('a');
-        link.download = `vault-ecosystem-${timestamp}.png`;
+        link.download = `vault-ecosystem-4k-${timestamp}.png`;
         link.href = href;
         link.rel = 'noopener';
         document.body.appendChild(link);
@@ -352,11 +396,12 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> = mem
         if (href.startsWith('blob:')) {
           setTimeout(() => URL.revokeObjectURL(href), 0);
         }
-        toast.success('Diagram exported successfully');
+        toast.success('4K Ultra-HD Diagram exported successfully');
       } catch (error) {
         console.error('Failed to export image', error);
         toast.error('Failed to export diagram');
       } finally {
+        element.classList.remove('is-exporting-png');
         setIsExporting(false);
       }
     }, [isExporting]);
@@ -658,6 +703,7 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> = mem
                 style={{
                   aspectRatio: `${GRAPH_WIDTH} / ${GRAPH_HEIGHT}`,
                   minHeight: graphMinHeight,
+                  touchAction: 'none',
                 }}
                 onWheel={handleWheel}
                 onPointerDown={handlePointerDown}
@@ -709,18 +755,19 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> = mem
                           className="text-text/10"
                         />
                       </pattern>
-                      <linearGradient id="ecosystem-edge" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="rgba(0,0,0,0.18)" />
-                        <stop offset="50%" stopColor="rgba(255,255,255,0.95)" />
-                        <stop offset="100%" stopColor="rgba(0,0,0,0.18)" />
-                      </linearGradient>
-                      <filter id="ecosystem-edge-glow" x="-30%" y="-30%" width="160%" height="160%">
-                        <feGaussianBlur stdDeviation="2.2" result="blur" />
-                        <feMerge>
-                          <feMergeNode in="blur" />
-                          <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                      </filter>
+                      {EDGES.map((edge) => (
+                        <linearGradient
+                          key={`grad-${edge.id}`}
+                          id={`edge-grad-${edge.id}`}
+                          x1="0%"
+                          y1="0%"
+                          x2="100%"
+                          y2="100%"
+                        >
+                          <stop offset="0%" stopColor={edge.colorFrom} stopOpacity="0.85" />
+                          <stop offset="100%" stopColor={edge.colorTo} stopOpacity="0.85" />
+                        </linearGradient>
+                      ))}
                     </defs>
 
                     <rect
@@ -759,37 +806,49 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> = mem
                         y: endJoin.y + end.normalY * controlDistance,
                       };
 
+                      const gradId = `edge-grad-${edge.id}`;
+                      const pathD = `M ${startJoin.x} ${startJoin.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${endJoin.x} ${endJoin.y}`;
+
                       return (
                         <g key={edge.id}>
+                          {/* Soft ambient glow stroke */}
                           <path
-                            d={`M ${startJoin.x} ${startJoin.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${endJoin.x} ${endJoin.y}`}
+                            d={pathD}
                             fill="none"
-                            stroke="currentColor"
-                            className="text-text/28"
-                            strokeWidth="3.4"
+                            stroke={`url(#${gradId})`}
+                            strokeWidth="6"
                             strokeLinecap="round"
-                            opacity="0.9"
+                            opacity="0.22"
                           />
-                          <motion.path
-                            d={`M ${startJoin.x} ${startJoin.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${endJoin.x} ${endJoin.y}`}
+                          {/* Main gradient stroke line */}
+                          <path
+                            d={pathD}
                             fill="none"
-                            stroke="url(#ecosystem-edge)"
-                            filter="url(#ecosystem-edge-glow)"
+                            stroke={`url(#${gradId})`}
                             strokeWidth="2.6"
                             strokeLinecap="round"
-                            strokeDasharray="16 6"
-                            initial={{ opacity: 0.72 }}
+                            opacity="0.82"
+                          />
+                          {/* Animated particle dash flow */}
+                          <motion.path
+                            d={pathD}
+                            fill="none"
+                            stroke="#ffffff"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeDasharray="6 14"
+                            initial={{ opacity: 0.5 }}
                             animate={
                               shouldReduceMotion
-                                ? { opacity: 0.9 }
+                                ? { opacity: 0.7 }
                                 : {
-                                    opacity: [0.75, 1, 0.75],
-                                    strokeDashoffset: [0, -22],
+                                    opacity: [0.35, 0.95, 0.35],
+                                    strokeDashoffset: [0, -20],
                                   }
                             }
                             transition={{
-                              duration: 3.8,
-                              delay: i * 0.14,
+                              duration: 2.8,
+                              delay: i * 0.12,
                               repeat: Infinity,
                               ease: 'linear',
                             }}
@@ -902,12 +961,9 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> = mem
                                 </div>
 
                                 <div className="min-w-0 flex-1">
-                                  <p className="mt-1 truncate text-xs font-semibold tracking-tight text-text sm:text-sm">
+                                  <p className="mt-0.5 text-xs font-semibold tracking-tight text-text sm:text-sm leading-snug break-words">
                                     {node.title}
                                   </p>
-                                  {/* <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-text/45">
-                                    {isHighlighted ? 'Selected Node' : 'Secure Node'}
-                                  </p> */}
                                 </div>
                               </div>
 
@@ -941,7 +997,54 @@ export const RealVaultEcosystemCard: React.FC<RealVaultEcosystemCardProps> = mem
                   })}
                 </motion.div>
 
-                {/* Minimap Overview */}
+                {/* Mobile Floating Zoom Controls (< sm screens) */}
+                <div
+                  data-export-ignore="true"
+                  className="absolute bottom-3 left-3 z-40 flex sm:hidden items-center gap-1.5 rounded-xl border border-card-border bg-card-bg/95 p-1 shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-black/90"
+                  aria-label="Mobile diagram controls"
+                >
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleZoomStep(0.25);
+                    }}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-card-border bg-text/10 text-text/80 transition-colors active:bg-text/20"
+                    aria-label="Zoom in"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                  <span className="px-1 text-[10px] font-bold text-text/60">
+                    {Math.round(scale * 100)}%
+                  </span>
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleZoomStep(-0.25);
+                    }}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-card-border bg-text/10 text-text/80 transition-colors active:bg-text/20"
+                    aria-label="Zoom out"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleResetLayout();
+                    }}
+                    className="flex h-8 px-2 text-[10px] font-bold items-center justify-center rounded-lg border border-card-border bg-text/10 text-text/80 transition-colors active:bg-text/20"
+                    aria-label="Reset layout"
+                  >
+                    Reset
+                  </button>
+                </div>
+
+                {/* Minimap Overview (sm+ screens) */}
                 <div
                   data-export-ignore="true"
                   className="absolute bottom-4 left-4 z-40 hidden cursor-crosshair overflow-hidden rounded-xl border border-card-border bg-card-bg/90 shadow-xl backdrop-blur-md transition-opacity duration-300 hover:opacity-100 sm:block dark:border-white/10 dark:bg-black/70"

@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Keyboard, Network, ShieldCheck, ClipboardList, MonitorSmartphone } from 'lucide-react';
+import { Network, ClipboardList, MonitorSmartphone } from 'lucide-react';
 import { useVaultStore } from '../../store/vaultStore';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { PWAInstallModal } from '../../components/vault/PWAInstallModal';
@@ -260,7 +260,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
               </Button>
             </div>
 
-            <div className="rounded-[1.25rem] border border-card-border bg-card-bg p-4 shadow-[0_12px_30px_-22px_rgba(0,0,0,0.24)] transition-colors dark:border-white/10 dark:bg-black">
+            {/* <div className="rounded-[1.25rem] border border-card-border bg-card-bg p-4 shadow-[0_12px_30px_-22px_rgba(0,0,0,0.24)] transition-colors dark:border-white/10 dark:bg-black">
               <p className="text-sm font-semibold text-text">Controls & Shortcuts</p>
               <p className="mt-1 text-xs leading-5 text-text/45">
                 Discover keyboard shortcuts for faster navigation.
@@ -273,7 +273,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
                 <Keyboard className="mr-2 h-4 w-4" />
                 Open Shortcuts
               </Button>
-            </div>
+            </div> */}
 
             <div className="rounded-[1.25rem] border border-card-border bg-card-bg p-4 shadow-[0_12px_30px_-22px_rgba(0,0,0,0.24)] transition-colors dark:border-white/10 dark:bg-black">
               <p className="text-sm font-semibold text-text">Device Sessions</p>
@@ -330,7 +330,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
           cancelActivityLogSync={cancelActivityLogSync}
         />
 
-        <SectionCard
+        {/* <SectionCard
           title="Privacy & Interface"
           description="Open the dedicated privacy and interface page to configure behavior, upload controls, and secure display options."
         >
@@ -351,7 +351,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
               </Button>
             </div>
           </div>
-        </SectionCard>
+        </SectionCard> */}
 
         <ShareVaultCard />
         <TwoFactorSettingsCard

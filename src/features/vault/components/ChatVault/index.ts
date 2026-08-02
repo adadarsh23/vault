@@ -33,6 +33,7 @@ export {
   resolveMessageLifetime,
   extractAttachmentsFromText,
   extractMentions,
+  isUserMentioned,
   isExpiredMessage,
   formatMessageTime,
   formatListTime,

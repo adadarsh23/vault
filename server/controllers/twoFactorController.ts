@@ -4,6 +4,7 @@ import { AuthenticatedRequest } from '../utils/requestTypes.ts';
 import { sendSuccess } from '../responses.ts';
 import { AppError } from '../utils/appError.ts';
 import { issueUserSession } from '../services/authService.ts';
+import { applyRefreshCookie } from './authController.ts';
 import { verifyMfaToken } from '../utils/auth.ts';
 import { User } from '../models/user.ts';
 import { getClientIp } from '../utils/requestIp.ts';
@@ -80,10 +81,13 @@ export const login2FA = async (req: Request, res: Response) => {
     logger.warn('Failed to create 2FA login notification', { error: err });
   }
 
+  applyRefreshCookie(req, res, session.refreshToken);
+
   return sendSuccess(
     res,
     {
       token: session.accessToken,
+      accessToken: session.accessToken,
       refreshToken: session.refreshToken,
       sessionId: session.sessionId,
       user: {

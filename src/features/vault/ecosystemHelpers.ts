@@ -17,12 +17,19 @@ import {
 export interface VaultCategoryStats {
   password: number;
   note: number;
+  chat: number;
+  todo: number;
   photo: number;
   video: number;
   audio: number;
   secret: number;
+  contact: number;
   document: number;
+  file: number;
   location: number;
+  card: number;
+  identity: number;
+  wifi: number;
   other: number;
 }
 
@@ -76,12 +83,19 @@ export interface AnchorPoint {
 const CATEGORY_LABELS: Record<keyof VaultCategoryStats, string> = {
   password: 'Passwords',
   note: 'Notes',
+  chat: 'Chats',
+  todo: 'Todos',
   photo: 'Photos',
   video: 'Videos',
   audio: 'Audio',
   secret: 'Secrets',
+  contact: 'Contacts',
   document: 'Documents',
+  file: 'Files',
   location: 'Locations',
+  card: 'Cards & Bank',
+  identity: 'Identities',
+  wifi: 'Wi-Fi',
   other: 'Other',
 };
 
@@ -287,7 +301,7 @@ export const createNodes = (
       icon: ShieldCheck,
       tone: tones.cyan,
       x: 8,
-      y: 8,
+      y: 12,
     },
     {
       id: 'key',
@@ -303,7 +317,7 @@ export const createNodes = (
       icon: Fingerprint,
       tone: tones.violet,
       x: 35,
-      y: 8,
+      y: 12,
     },
     {
       id: 'crypto',
@@ -319,7 +333,7 @@ export const createNodes = (
       icon: Lock,
       tone: tones.emerald,
       x: 62,
-      y: 8,
+      y: 12,
     },
     {
       id: 'store',
@@ -335,7 +349,7 @@ export const createNodes = (
       icon: LayoutGrid,
       tone: tones.amber,
       x: 89,
-      y: 8,
+      y: 12,
     },
     {
       id: 'local',
@@ -350,8 +364,8 @@ export const createNodes = (
       ],
       icon: Smartphone,
       tone: tones.sky,
-      x: 8,
-      y: 66,
+      x: 89,
+      y: 68,
     },
     {
       id: 'sync',
@@ -366,8 +380,8 @@ export const createNodes = (
       ],
       icon: RefreshCw,
       tone: tones.indigo,
-      x: 35,
-      y: 66,
+      x: 62,
+      y: 68,
     },
     {
       id: 'api',
@@ -382,8 +396,8 @@ export const createNodes = (
       ],
       icon: Network,
       tone: tones.rose,
-      x: 62,
-      y: 66,
+      x: 35,
+      y: 68,
     },
     {
       id: 'mongo',
@@ -398,8 +412,8 @@ export const createNodes = (
       ],
       icon: Database,
       tone: tones.emerald,
-      x: 89,
-      y: 66,
+      x: 8,
+      y: 68,
     },
   ] as const;
 };
@@ -408,13 +422,17 @@ export const createNodes = (
  * Edges
  * --------------------------*/
 
-export const EDGES: readonly DiagramEdge[] = [
-  { id: 'auth-key', from: 'auth', to: 'key' },
-  { id: 'key-crypto', from: 'key', to: 'crypto' },
-  { id: 'crypto-store', from: 'crypto', to: 'store' },
-  { id: 'store-local', from: 'store', to: 'local' },
-  { id: 'store-sync', from: 'store', to: 'sync' },
-  { id: 'sync-api', from: 'sync', to: 'api' },
-  { id: 'api-mongo', from: 'api', to: 'mongo' },
-  { id: 'crypto-sync', from: 'crypto', to: 'sync' },
+export interface ColoredEdge extends DiagramEdge {
+  colorFrom: string;
+  colorTo: string;
+}
+
+export const EDGES: readonly ColoredEdge[] = [
+  { id: 'auth-key', from: 'auth', to: 'key', colorFrom: '#06b6d4', colorTo: '#8b5cf6' },
+  { id: 'key-crypto', from: 'key', to: 'crypto', colorFrom: '#8b5cf6', colorTo: '#10b981' },
+  { id: 'crypto-store', from: 'crypto', to: 'store', colorFrom: '#10b981', colorTo: '#f59e0b' },
+  { id: 'store-local', from: 'store', to: 'local', colorFrom: '#f59e0b', colorTo: '#0ea5e9' },
+  { id: 'crypto-sync', from: 'crypto', to: 'sync', colorFrom: '#10b981', colorTo: '#6366f1' },
+  { id: 'sync-api', from: 'sync', to: 'api', colorFrom: '#6366f1', colorTo: '#f43f5e' },
+  { id: 'api-mongo', from: 'api', to: 'mongo', colorFrom: '#f43f5e', colorTo: '#10b981' },
 ] as const;

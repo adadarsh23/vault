@@ -41,10 +41,15 @@ export interface SecurityPreferences {
   isAutoLockEnabled: boolean;
   autoLockDuration: number;
   isBlurOnTabHideEnabled: boolean;
+  isLockOnTabHideEnabled: boolean;
   isClipboardAutoClearEnabled: boolean;
   clipboardAutoClearDuration: number;
   isActivityLoggingEnabled: boolean;
   isMaskPasswordsEnabled: boolean;
+  isFixedMaskLengthEnabled: boolean;
+  isPurgeTrashOnLockEnabled: boolean;
+  isRequireConfirmationOnDelete: boolean;
+  isEphemeralSearchEnabled: boolean;
   isInlineMediaPreviewEnabled: boolean;
   isLightweightPreviewModeEnabled: boolean;
   isMediaAutoplayEnabled: boolean;
@@ -168,10 +173,15 @@ const DEFAULT_PREFERENCES: SecurityPreferences = {
   isAutoLockEnabled: true,
   autoLockDuration: 5, // 5 minutes
   isBlurOnTabHideEnabled: true,
+  isLockOnTabHideEnabled: false,
   isClipboardAutoClearEnabled: true,
   clipboardAutoClearDuration: 30, // 30 seconds
   isActivityLoggingEnabled: true, // Default to logging enabled
   isMaskPasswordsEnabled: true, // Default to masking passwords
+  isFixedMaskLengthEnabled: false,
+  isPurgeTrashOnLockEnabled: false,
+  isRequireConfirmationOnDelete: true,
+  isEphemeralSearchEnabled: false,
   isInlineMediaPreviewEnabled: true,
   isLightweightPreviewModeEnabled: false,
   isMediaAutoplayEnabled: true,
@@ -671,7 +681,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   lock: () => {
-    const { masterKey, preferences } = get();
+    const { masterKey, preferences, items } = get();
 
     logActivity({
       actionType: 'auth_lock',
@@ -682,6 +692,20 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
     if (masterKey && preferences.isActivityLoggingEnabled) {
       runInBackground(uploadLogsToCloud(useActivityStore.getState().entries), 'Activity log sync');
+    }
+
+    if (preferences.isPurgeTrashOnLockEnabled && items.length > 0) {
+      const activeItems = items.filter((item) => !item.deletedAt);
+      if (activeItems.length !== items.length) {
+        // Persist active items only, removing soft-deleted trash
+        void (async () => {
+          try {
+            await VaultService.saveItems(masterKey, activeItems);
+          } catch (e) {
+            // Ignore lock save errors
+          }
+        })();
+      }
     }
 
     useActivityStore.getState().clearActivity();

@@ -14,24 +14,32 @@ import {
   restoreAuthSessionFromCookies,
 } from '../../lib/auth-session';
 
-import { refreshVaultSession } from '../../lib/auth-api';
+import { logoutVaultSession, refreshVaultSession } from '../../lib/auth-api';
 import { logger } from '../../lib/logger';
 
-const LandingPage = lazy(() => import('../../features/LandingPage'));
-const NotFoundPage = lazy(() =>
-  import('../../features/NotFoundPage').then((module) => ({
-    default: module.NotFoundPage,
+const LandingPage = lazy(() =>
+  import('../../features/LandingPage').then((module) => ({
+    default: module.LandingPage || module.default,
   }))
 );
-const AuthScreen = lazy(() => import('../../features/auth/AuthScreen'));
+const NotFoundPage = lazy(() =>
+  import('../../features/NotFoundPage').then((module) => ({
+    default: module.NotFoundPage || module.default,
+  }))
+);
+const AuthScreen = lazy(() =>
+  import('../../features/auth/AuthScreen').then((module) => ({
+    default: module.AuthScreen || module.default,
+  }))
+);
 const LegalPage = lazy(() =>
   import('../../features/LegalPage').then((module) => ({
-    default: module.LegalPage,
+    default: module.LegalPage || module.default,
   }))
 );
 const ContactPage = lazy(() =>
   import('../../features/ContactPage').then((module) => ({
-    default: module.ContactPage,
+    default: module.ContactPage || module.default,
   }))
 );
 
@@ -122,19 +130,16 @@ export function useAuthManager() {
     try {
       const sessionHint = readCloudSessionHint();
       const sessionHintUsername = normalizeUsername(sessionHint?.username);
-      const restored = restoreAuthSessionFromCookies();
-      const shouldAttemptRefresh = Boolean(restored.token || sessionHintUsername);
 
-      if (restored.token && sessionHintUsername) {
+      if (sessionHintUsername) {
         setHasCloudSession(true);
         setRestoredUsername(sessionHintUsername);
         setShowLanding(false);
-      }
-
-      if (!shouldAttemptRefresh) {
+      } else {
         setHasCloudSession(false);
         setRestoredUsername('');
         setShowLanding(true);
+        setIsRestoringSession(false);
         return;
       }
 
@@ -201,12 +206,28 @@ export function useAuthManager() {
     };
   }, [restoreCloudSession]);
 
+  const handleSignOut = useCallback(async () => {
+    try {
+      await logoutVaultSession();
+    } catch (err) {
+      logger.warn('Sign out request failed during handleSignOut', { error: err });
+    } finally {
+      clearCloudSessionHint();
+      clearAuthToken();
+      clearRememberedVaultAccess();
+      setHasCloudSession(false);
+      setRestoredUsername('');
+      setShowLanding(true);
+    }
+  }, []);
+
   return {
     hasCloudSession,
     isRestoringSession,
     restoredUsername,
     showLanding,
     setShowLanding,
+    handleSignOut,
   };
 }
 

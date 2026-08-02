@@ -1,4 +1,5 @@
 export interface NoteEditorProps {
+  noteId?: string;
   initialTitle: string;
   initialContent: string;
   onSave: (title: string, content: string) => Promise<void>;

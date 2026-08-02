@@ -114,7 +114,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
   };
 
   return (
-    <aside className="hidden lg:flex lg:w-48 xl:w-56 shrink-0 flex-col gap-4 sticky top-0 h-fit max-h-full overflow-y-auto pr-2 custom-scrollbar">
+    <aside className="hidden lg:flex lg:w-48 xl:w-56 shrink-0 flex-col gap-4 sticky top-0 h-fit max-h-full overflow-y-auto pr-2 custom-scrollbar print:hidden">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-text/40">{title}</h2>
         <Button

@@ -158,9 +158,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
             className={cn(
               'relative flex items-center justify-center bg-black/90 overflow-hidden',
-              type === 'photo'
-                ? 'h-[100svh] w-[100vw] rounded-none border-0 shadow-none'
-                : 'w-full h-[85vh] max-w-[95vw] rounded-2xl border border-white/10 shadow-[0_80px_160px_-30px_rgba(0,0,0,0.8)] md:max-w-[85vw] lg:max-w-6xl md:rounded-[32px]'
+              'h-[100svh] w-[100vw] rounded-none border-0 shadow-none'
             )}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}

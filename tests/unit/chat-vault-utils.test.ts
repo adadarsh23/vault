@@ -67,4 +67,14 @@ describe('chat vault utils', () => {
     expect(getSafeExternalHref('https://example.com/path')).toBe('https://example.com/path');
     expect(getSafeExternalHref('ftp://example.com/file')).toBeNull();
   });
+
+  it('correctly matches user mentions including case sensitivity, @all, and @everyone', () => {
+    const { isUserMentioned } = require('../../src/features/vault/components/ChatVault/utils.tsx');
+    expect(isUserMentioned(['adarsh'], 'Adarsh')).toBe(true);
+    expect(isUserMentioned(['all'], 'Alice')).toBe(true);
+    expect(isUserMentioned(['everyone'], 'Bob')).toBe(true);
+    expect(isUserMentioned(['adarsh23'], 'adarsh23')).toBe(true);
+    expect(isUserMentioned(['john'], 'Jane')).toBe(false);
+    expect(isUserMentioned([], 'Adarsh')).toBe(false);
+  });
 });

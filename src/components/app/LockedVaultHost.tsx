@@ -47,7 +47,7 @@ export function LockedVaultHost({
       cloudSessionActive={authManager.hasCloudSession}
       initialUsername={authManager.restoredUsername}
       onEnterVault={() => authManager.setShowLanding(false)}
-      onGoBack={() => authManager.setShowLanding(true)}
+      onGoBack={() => authManager.handleSignOut()}
       showLanding={authManager.showLanding}
     />
   );
