@@ -25,6 +25,7 @@ import { systemRouter } from './server/routes/systemRoutes.ts';
 import { twoFactorRouter } from './server/routes/twoFactorRoutes.ts';
 import { securityRouter } from './server/routes/securityRoutes.ts';
 import { notificationRouter } from './server/routes/notificationRoutes.ts';
+import { avatarRouter } from './server/routes/avatarRoutes.ts';
 
 import { setupFrontendMiddleware } from './server/vite.ts';
 import { installBodyParsers } from './server/middleware/bodyParsers.ts';
@@ -602,6 +603,7 @@ async function startServer() {
       app.use('/api/2fa', twoFactorRouter);
       app.use('/api/security', securityRouter);
       app.use('/api/notifications', notificationRouter);
+      app.use('/api/avatar', avatarRouter);
       registerVaultRoutes(app);
     });
 

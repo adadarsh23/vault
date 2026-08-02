@@ -1171,6 +1171,19 @@ export const updateAuthenticatedProfile = async (input: {
         writeProfileRouteUnavailableState(true);
         continue;
       }
+      // Network-level failure (no connectivity / server down): save locally and
+      // surface a dedicated code so the caller can show a friendlier message.
+      if (candidateError?.code === 'NETWORK_ERROR') {
+        writeLocalProfileOverride({
+          profileName: normalizedInput.profileName,
+          profilePhoto: normalizedInput.profilePhoto,
+        });
+        const networkErr = createApiRequestError(
+          'Profile saved locally. Changes will sync when the server is reachable.',
+          { code: 'SAVED_LOCALLY', cause }
+        );
+        throw networkErr;
+      }
       throw candidateError;
     }
   }

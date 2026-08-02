@@ -29,12 +29,12 @@ describe('updateProfileSchema', () => {
     expect(parsed.profilePhoto).toBe('none');
   });
 
-  it('rejects non-https profile photo URLs', () => {
-    const result = updateProfileSchema.safeParse({
-      profilePhoto: 'http://example.com/avatar.png',
+  it('accepts http profile photo URLs', () => {
+    const parsed = updateProfileSchema.parse({
+      profilePhoto: 'http://localhost:4000/api/avatar/raw/6a6f318fc96229128b86b05f/9084394ec33895a6.avif',
     });
 
-    expect(result.success).toBe(false);
+    expect(parsed.profilePhoto).toBe('http://localhost:4000/api/avatar/raw/6a6f318fc96229128b86b05f/9084394ec33895a6.avif');
   });
 
   it('rejects malformed profile photo URLs', () => {

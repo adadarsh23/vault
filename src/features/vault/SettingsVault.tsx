@@ -194,6 +194,18 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
           toast.success('Profile updated');
           return { saved: true as const };
         } catch (error: unknown) {
+          const apiError = error as { code?: string };
+          if (apiError?.code === 'SAVED_LOCALLY') {
+            // Network was unreachable but profile was saved to local storage.
+            // Treat this as a soft success so the modal closes and the UI updates.
+            try {
+              await loadSessionState();
+            } catch {
+              // Ignore — session refresh failure is non-critical here.
+            }
+            toast.info('No connection — profile saved locally and will sync when online.');
+            return { saved: true as const };
+          }
           const errorMessage = getErrorMessage(error, 'Failed to update profile');
           toast.error(errorMessage);
           return { saved: false as const, errorMessage };

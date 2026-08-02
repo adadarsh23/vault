@@ -111,15 +111,15 @@ const normalizeProfilePhoto = z
     } catch {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Profile photo must be a valid HTTPS URL, a base64 data URI, or "none".',
+        message: 'Profile photo must be a valid HTTP/HTTPS URL, a base64 data URI, or "none".',
       });
       return z.NEVER;
     }
 
-    if (parsed.protocol !== 'https:') {
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Profile photo URL must use HTTPS (or upload a file directly).',
+        message: 'Profile photo URL must use HTTP or HTTPS (or upload a file directly).',
       });
       return z.NEVER;
     }

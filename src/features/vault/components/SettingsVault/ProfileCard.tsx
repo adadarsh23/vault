@@ -23,6 +23,8 @@ import { type AuthenticatedProfile } from '../../../../lib/auth-api';
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { useLocation } from 'react-router-dom';
+import { SmartAvatar } from '../../../../components/SmartAvatar';
+import { useFastAvatar } from '../../../../hooks/useFastAvatar';
 
 // Pure function — no React closure, safe to define outside component
 const isValidProfilePhotoInput = (value: string): boolean => {
@@ -42,7 +44,7 @@ const isValidProfilePhotoInput = (value: string): boolean => {
 
   try {
     const parsed = new URL(normalized);
-    return parsed.protocol === 'https:';
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
   } catch {
     return false;
   }
@@ -111,6 +113,21 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   );
   const [profileSaveError, setProfileSaveError] = React.useState<string | null>(null);
 
+  const handleAvatarUploadSuccess = React.useCallback(
+    (avatarUrl: string) => {
+      setProfilePhotoInput(avatarUrl);
+      setProfileSaveError(null);
+      onSaveProfile(savedProfileName !== 'none' ? savedProfileName : accountName, avatarUrl);
+    },
+    [onSaveProfile, savedProfileName, accountName]
+  );
+
+  const fastAvatar = useFastAvatar({
+    userId: profile?.id || 'u_guest',
+    initialAvatarUrl: hasProfilePhoto ? savedProfilePhoto : undefined,
+    onUploadSuccess: handleAvatarUploadSuccess,
+  });
+
   const popupAccountName = (profileNameInput.trim() || accountName).trim();
   const popupAvatarInitial = popupAccountName.charAt(0).toUpperCase() || 'U';
   const popupPhotoValue = profilePhotoInput.trim();
@@ -169,35 +186,20 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
               }}
               className="flex w-full min-w-0 items-start gap-3 rounded-2xl border border-transparent p-2 text-left transition-colors hover:border-card-border hover:bg-card-bg/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/20 sm:items-center sm:gap-4"
             >
-              {hasProfilePhoto && !isCardImageBroken ? (
-                <button
-                  type="button"
-                  aria-label="Open profile image preview"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setPreviewImage({
-                      src: savedProfilePhoto,
-                      alt: `${accountName} profile preview`,
-                    });
-                  }}
-                  className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/30"
-                >
-                  <img
-                    src={savedProfilePhoto}
-                    alt={accountName || 'User profile photo'}
-                    loading="lazy"
-                    decoding="async"
-                    width={80}
-                    height={80}
-                    className="h-16 w-16 rounded-full object-cover sm:h-20 sm:w-20"
-                    onError={() => setIsCardImageBroken(true)}
-                  />
-                </button>
-              ) : (
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/15 text-2xl font-bold text-primary sm:h-20 sm:w-20 sm:text-3xl">
-                  {avatarInitial}
-                </div>
-              )}
+              <SmartAvatar
+                src={
+                  fastAvatar.avatarUrl ||
+                  (hasProfilePhoto && !isCardImageBroken ? savedProfilePhoto : null)
+                }
+                blurHash={fastAvatar.blurHash}
+                name={accountName}
+                size={80}
+                isProcessing={fastAvatar.isProcessing}
+                isUploading={fastAvatar.isUploading}
+                isOfflineQueued={fastAvatar.isOfflineQueued}
+                error={fastAvatar.error}
+                onFileSelect={fastAvatar.processAndUploadAvatar}
+              />
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
                   Active account
@@ -489,7 +491,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          onChange={(e) => {
+                          onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
                             if (!file.type.startsWith('image/')) {
@@ -500,18 +502,24 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                               setProfileSaveError('Image file must be under 35MB.');
                               return;
                             }
-                            const reader = new FileReader();
-                            reader.onload = (evt) => {
-                              const result = evt.target?.result;
-                              if (typeof result === 'string') {
-                                setProfilePhotoInput(result);
-                                setProfileSaveError(null);
-                              }
-                            };
-                            reader.onerror = () => {
-                              setProfileSaveError('Failed to read the image file. Please try again.');
-                            };
-                            reader.readAsDataURL(file);
+                            try {
+                              await fastAvatar.processAndUploadAvatar(file);
+                            } catch {
+                              const reader = new FileReader();
+                              reader.onload = (evt) => {
+                                const result = evt.target?.result;
+                                if (typeof result === 'string') {
+                                  setProfilePhotoInput(result);
+                                  setProfileSaveError(null);
+                                }
+                              };
+                              reader.onerror = () => {
+                                setProfileSaveError(
+                                  'Failed to read the image file. Please try again.'
+                                );
+                              };
+                              reader.readAsDataURL(file);
+                            }
                           }}
                         />
                       </label>
@@ -525,13 +533,13 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                         setProfileSaveError(null);
                       }
                     }}
-                    placeholder="Enter HTTPS URL or upload image (up to 35MB)"
+                    placeholder="Enter HTTP/HTTPS URL or upload image (up to 35MB)"
                     maxLength={75000000}
                   />
                 </div>
                 {!isPhotoInputValid ? (
                   <p className="text-xs text-red-500">
-                    Please use a valid HTTPS image URL or upload an image file, or leave it blank.
+                    Please use a valid HTTP/HTTPS image URL or upload an image file, or leave it blank.
                   </p>
                 ) : null}
                 {profileSaveError ? (
