@@ -81,7 +81,7 @@ jobs:
           fi
 
       - name: Run Tests
-        run: npm test
+        run: c
 
       - name: Security Audit
         continue-on-error: true

@@ -10,9 +10,18 @@ const writeHealthHeaders = (res: express.Response) => {
   res.setHeader('Expires', '0');
 };
 
+const isTestRuntime = (): boolean => {
+  if (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
+    return true;
+  }
+
+  return process.argv.some((arg) => arg.includes('vitest'));
+};
+
 const isMongoOptionalMode = (): boolean => {
   const raw = process.env.SKIP_MONGO_CONNECT?.trim().toLowerCase();
-  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
+  const skipMongo = raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
+  return skipMongo && !isTestRuntime();
 };
 
 export const getHealthStatus = async (_req: express.Request, res: express.Response) => {

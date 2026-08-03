@@ -23,7 +23,8 @@ const registrationLookupTemplateKeys = [
 
 const isMongoOptionalMode = (): boolean => {
   const raw = process.env.SKIP_MONGO_CONNECT?.trim().toLowerCase();
-  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
+  const skipMongo = raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
+  return skipMongo;
 };
 
 export const validateRuntimeEnv = (): void => {

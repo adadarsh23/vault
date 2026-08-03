@@ -113,6 +113,34 @@ describe('/api/auth endpoints', () => {
 
   // ---- POST /login ---------------------------------------------------------
 
+  it('POST /api/auth/login ignores SKIP_MONGO_CONNECT in test mode so mocked auth services still run', async () => {
+    vi.stubEnv('SKIP_MONGO_CONNECT', '1');
+    vi.stubEnv('NODE_ENV', 'test');
+
+    vaultServiceMocks.authenticateUser.mockResolvedValue({
+      token: 'access-token-test-mode',
+      refreshToken: 'refresh-token-test-mode',
+      sessionId: 'session-test-mode',
+      user: {
+        id: 'user-test-mode',
+        username: 'alice',
+      },
+    });
+
+    const app = createAuthTestApp();
+    const response = await request(app).post('/api/auth/login').send({
+      username: 'alice',
+      password: 'SecureVaultPass2026!',
+      captchaToken: CAPTCHA_TOKEN,
+      deviceId: 'test-device',
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.token).toBe('access-token-test-mode');
+    expect(vaultServiceMocks.authenticateUser).toHaveBeenCalled();
+  });
+
   it('POST /api/auth/login returns an access token and sets a refresh cookie', async () => {
     vaultServiceMocks.authenticateUser.mockResolvedValue({
       token: 'access-token-1',
