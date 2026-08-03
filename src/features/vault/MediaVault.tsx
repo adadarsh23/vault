@@ -20,11 +20,7 @@ import { VaultLayout } from '../../components/layout/VaultLayout';
 import { VaultItem } from '../../lib/storage';
 import { LiveCaptureModal } from './components/LiveCaptureModal';
 import { vaultApi } from '../../api/vaultApi';
-import {
-  compressFileInWorker,
-  generateBlurhashInWorker,
-  generateThumbnailInWorker,
-} from '../../lib/mediaWorker';
+import { compressFileInWorker, generateBlurhashInWorker } from '../../lib/mediaWorker';
 import { uploadFileTus } from '../../lib/sync/tusUpload';
 
 // New extracted components and utilities
@@ -77,7 +73,6 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     (state) => state.preferences.isLightweightPreviewModeEnabled
   );
   const [isUploading, setIsUploading] = useState(false);
-  const [overallProgress, setOverallProgress] = useState(0); // 0-100 overall upload progress
   const [isLiveRecordOpen, setIsLiveRecordOpen] = useState(false);
   const [previewItem, setPreviewItem] = useState<string | null>(null);
   const [activePreviewItem, setActivePreviewItem] = useState<string | null>(null);
@@ -608,7 +603,9 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
           let uploadFileObj = file;
           let blurhash: string | null = null;
           if (type === 'photo' && !isAlreadyEncrypted) {
-            toast.loading(`Processing image in Web Worker ${index + 1}/${total}...`, { id: toastId });
+            toast.loading(`Processing image in Web Worker ${index + 1}/${total}...`, {
+              id: toastId,
+            });
             uploadFileObj = await compressFileInWorker(file, 0.85);
             blurhash = await generateBlurhashInWorker(uploadFileObj);
           }
@@ -628,7 +625,8 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
             ? new Uint8Array(await file.arrayBuffer())
             : await encryptFileInWorker(uploadFileObj, masterKey);
 
-          const dimensions = type === 'photo' ? await getMediaDimensions(uploadFileObj, 'photo') : undefined;
+          const dimensions =
+            type === 'photo' ? await getMediaDimensions(uploadFileObj, 'photo') : undefined;
 
           await addItem(
             {

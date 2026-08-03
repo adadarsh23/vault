@@ -352,12 +352,18 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
 
   if (isVideo) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-black p-2 sm:p-4">
+      <div className="flex h-full w-full items-center justify-center bg-black p-2 sm:p-4 overflow-hidden">
         <video
           src={url}
           controls
           preload="metadata"
-          className="h-auto max-h-full w-full max-w-5xl rounded-lg object-contain"
+          className="max-h-full max-w-full rounded-lg object-contain"
+          onLoadedMetadata={(e) => {
+            const v = e.currentTarget;
+            if (v.videoWidth && v.videoHeight) {
+              v.style.aspectRatio = `${v.videoWidth} / ${v.videoHeight}`;
+            }
+          }}
         />
       </div>
     );

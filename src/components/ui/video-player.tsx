@@ -279,6 +279,8 @@ const VideoPlayer = ({
   itemId,
   title,
   className,
+  style,
+  aspectRatio,
   autoPlay = false,
   lowDataMode = false,
   networkAwareAutoplay = true,
@@ -293,6 +295,8 @@ const VideoPlayer = ({
   itemId?: string;
   title?: string;
   className?: string;
+  style?: React.CSSProperties;
+  aspectRatio?: number | string;
   autoPlay?: boolean;
   lowDataMode?: boolean;
   networkAwareAutoplay?: boolean;
@@ -325,6 +329,11 @@ const VideoPlayer = ({
   const [duration, setDuration] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
   const [isVideoReady, setIsVideoReady] = useState(false);
+  const [videoDimensions, setVideoDimensions] = useState<{
+    width: number;
+    height: number;
+    aspectRatio: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reconnectMessage, setReconnectMessage] = useState<string | null>(null);
   const [useLiteSkeleton, setUseLiteSkeleton] = useState(false);
@@ -340,6 +349,16 @@ const VideoPlayer = ({
     () => isAllowedMediaUrl(src, allowedMediaDomains),
     [src, allowedMediaDomains]
   );
+
+  const effectiveAspectRatio = useMemo(() => {
+    if (videoDimensions?.aspectRatio) return videoDimensions.aspectRatio;
+    if (typeof aspectRatio === 'number' && aspectRatio > 0) return aspectRatio;
+    if (typeof aspectRatio === 'string') {
+      const parsed = parseFloat(aspectRatio);
+      if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    }
+    return undefined;
+  }, [videoDimensions, aspectRatio]);
 
   useEffect(() => {
     const mediaQuery =
@@ -627,6 +646,13 @@ const VideoPlayer = ({
   const handleLoadedMetadata = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
+    if (video.videoWidth && video.videoHeight) {
+      setVideoDimensions({
+        width: video.videoWidth,
+        height: video.videoHeight,
+        aspectRatio: video.videoWidth / video.videoHeight,
+      });
+    }
     const safeDuration = finiteOrZero(video.duration);
     setDuration(safeDuration);
     setError(null);
@@ -1023,9 +1049,14 @@ const VideoPlayer = ({
     <motion.div
       ref={containerRef}
       className={cn(
-        'group relative w-full h-full max-h-full min-h-[220px] bg-black overflow-hidden',
+        'group relative flex items-center justify-center bg-black overflow-hidden max-w-full max-h-full',
+        effectiveAspectRatio ? 'w-full h-auto' : 'w-full h-full min-h-[220px]',
         className
       )}
+      style={{
+        aspectRatio: effectiveAspectRatio ? String(effectiveAspectRatio) : undefined,
+        ...style,
+      }}
       onMouseMove={resetHideTimer}
       onTouchStart={resetHideTimer}
       onClick={resetHideTimer}

@@ -150,7 +150,10 @@ export async function compressFileInWorker(
     }
 
     const blob = new Blob([response.compressedBuffer], { type: response.mimeType });
-    return new File([blob], file.name, { type: response.mimeType, lastModified: file.lastModified });
+    return new File([blob], file.name, {
+      type: response.mimeType,
+      lastModified: file.lastModified,
+    });
   } catch {
     return file;
   } finally {

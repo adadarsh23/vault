@@ -54,10 +54,7 @@ function clearTusSession(key: string): void {
   }
 }
 
-async function encryptChunk(
-  chunkData: Uint8Array,
-  cryptoKey: CryptoKey
-): Promise<Uint8Array> {
+async function encryptChunk(chunkData: Uint8Array, cryptoKey: CryptoKey): Promise<Uint8Array> {
   const iv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
   const ciphertext = await crypto.subtle.encrypt(
     {
@@ -81,8 +78,17 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * Resumable Encrypted File Upload using the TUS Protocol (v1.0.0).
  * Handles network drops, pause/resume, and chunk-level AES-GCM encryption.
  */
-export async function uploadFileTus(options: TusUploadOptions): Promise<{ uploadId: string; location: string }> {
-  const { file, masterKey, chunkSize = DEFAULT_TUS_CHUNK_SIZE, metadata = {}, onProgress, signal } = options;
+export async function uploadFileTus(
+  options: TusUploadOptions
+): Promise<{ uploadId: string; location: string }> {
+  const {
+    file,
+    masterKey,
+    chunkSize = DEFAULT_TUS_CHUNK_SIZE,
+    metadata = {},
+    onProgress,
+    signal,
+  } = options;
 
   const cryptoKey = await getOrCreateCryptoKey(masterKey);
   if (!cryptoKey) {

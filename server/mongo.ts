@@ -173,13 +173,19 @@ export const switchToNextMongoUri = async (): Promise<boolean> => {
   return false;
 };
 
+if (!mongoose.connection.listeners('error').length) {
+  mongoose.connection.on('error', () => {
+    // Prevent unhandled 'error' events on mongoose.connection EventEmitter
+  });
+}
+
 export const connectToMongo = async (): Promise<typeof mongoose> => {
   if (mongoose.connection.readyState === 1) {
     return mongoose;
   }
 
   if (!connectionPromise) {
-    connectionPromise = (async () => {
+    const rawPromise = (async () => {
       const candidates = buildUriCandidates();
       let lastError: unknown;
 
@@ -189,7 +195,9 @@ export const connectToMongo = async (): Promise<typeof mongoose> => {
         try {
           const connection = await connectWithUri(candidate);
           console.log(
-            `Connected to MongoDB successfully${candidate === primaryUri ? '.' : ` using candidate #${index + 1}.`}`
+            `Connected to MongoDB successfully${
+              candidate === primaryUri ? '.' : ` using candidate #${index + 1}.`
+            }`
           );
           return connection;
         } catch (error) {
@@ -220,9 +228,17 @@ export const connectToMongo = async (): Promise<typeof mongoose> => {
       }
 
       throw lastError;
-    })().finally(() => {
-      connectionPromise = null;
-    });
+    })();
+
+    connectionPromise = rawPromise;
+
+    rawPromise
+      .catch(() => {})
+      .finally(() => {
+        if (connectionPromise === rawPromise) {
+          connectionPromise = null;
+        }
+      });
   }
 
   return connectionPromise;

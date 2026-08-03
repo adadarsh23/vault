@@ -31,10 +31,13 @@ describe('updateProfileSchema', () => {
 
   it('accepts http profile photo URLs', () => {
     const parsed = updateProfileSchema.parse({
-      profilePhoto: 'http://localhost:4000/api/avatar/raw/6a6f318fc96229128b86b05f/9084394ec33895a6.avif',
+      profilePhoto:
+        'http://localhost:4000/api/avatar/raw/6a6f318fc96229128b86b05f/9084394ec33895a6.avif',
     });
 
-    expect(parsed.profilePhoto).toBe('http://localhost:4000/api/avatar/raw/6a6f318fc96229128b86b05f/9084394ec33895a6.avif');
+    expect(parsed.profilePhoto).toBe(
+      'http://localhost:4000/api/avatar/raw/6a6f318fc96229128b86b05f/9084394ec33895a6.avif'
+    );
   });
 
   it('rejects malformed profile photo URLs', () => {

@@ -1,6 +1,5 @@
 /* @vitest-environment jsdom */
 
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ShortcutsCard from '../components/SettingsVault/ShortcutsCard';
@@ -9,16 +8,18 @@ import ShortcutsPage from '../ShortcutsPage';
 describe('ShortcutsCard & ShortcutsPage Component Test Suite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    Object.assign(navigator, {
-      clipboard: {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
         writeText: vi.fn().mockResolvedValue(undefined),
       },
+      writable: true,
+      configurable: true,
     });
   });
 
   it('renders Controls & Shortcuts title and section card description', () => {
     render(<ShortcutsPage />);
-    expect(screen.getByText('Controls & Shortcuts')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: /Controls & Shortcuts/i })).toBeTruthy();
     expect(
       screen.getByText(
         'Keyboard and gesture shortcuts for fast, secure, and efficient vault navigation.'

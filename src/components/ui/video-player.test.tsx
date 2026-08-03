@@ -152,6 +152,20 @@ describe('VideoPlayer phase 1 controls', () => {
     expect(video.muted).toBe(false);
     expect(screen.getByRole('button', { name: /mute/i })).toBeInTheDocument();
   });
+
+  it('updates dynamic aspect ratio when video metadata is loaded', () => {
+    const { container } = render(<VideoPlayer src="https://cdn.example.com/video.mp4" />);
+    const video = container.querySelector('video') as HTMLVideoElement;
+    expect(video).toBeTruthy();
+
+    Object.defineProperty(video, 'videoWidth', { configurable: true, value: 1080 });
+    Object.defineProperty(video, 'videoHeight', { configurable: true, value: 1920 });
+
+    fireEvent.loadedMetadata(video);
+
+    const playerContainer = container.firstElementChild as HTMLElement;
+    expect(playerContainer.style.aspectRatio).toContain('0.5625');
+  });
 });
 
 describe('sanitizeTelemetryMetadata', () => {

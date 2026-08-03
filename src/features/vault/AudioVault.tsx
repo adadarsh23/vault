@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 import { Button } from '../../components/ui/Button';
 import { AudioPlayer } from '../../components/ui/audio-player';
 import { useVaultStore } from '../../store/vaultStore';
-import { encryptFile, encryptFileInWorker } from '../../lib/cryptoPrimitives';
+import { encryptFileInWorker } from '../../lib/cryptoPrimitives';
 import { uploadFileTus } from '../../lib/sync/tusUpload';
 import {
   getVaultItemFileUrl,
@@ -363,7 +363,9 @@ export const AudioVault: React.FC = () => {
             masterKey,
             onProgress: (uploadedBytes, totalBytes) => {
               const pct = Math.round((uploadedBytes / totalBytes) * 100);
-              toast.loading(`Uploading audio via TUS ${index + 1}/${total}: ${pct}%...`, { id: toastId });
+              toast.loading(`Uploading audio via TUS ${index + 1}/${total}: ${pct}%...`, {
+                id: toastId,
+              });
             },
           });
 

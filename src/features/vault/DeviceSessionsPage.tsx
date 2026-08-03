@@ -151,7 +151,8 @@ export const DeviceSessionsPage: React.FC<DeviceSessionsPageProps> = ({ onBack }
               Device Sessions
             </h1>
             <p className="mt-2 max-w-3xl text-xs leading-relaxed text-text/60 sm:text-sm lg:text-base">
-              Manage trusted devices, track active login sessions, and revoke access for lost or untrusted hardware.
+              Manage trusted devices, track active login sessions, and revoke access for lost or
+              untrusted hardware.
             </p>
           </div>
 

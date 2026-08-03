@@ -190,7 +190,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                         lowDataMode={isLowDataModeEnabled}
                         networkAwareAutoplay={isNetworkAwareAutoplayEnabled}
                         performanceHud={isPerformanceHudEnabled}
-                        className="w-full h-full object-contain"
+                        className="max-w-full max-h-full flex items-center justify-center"
                       />
                     )}
                   </ErrorBoundary>

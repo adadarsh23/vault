@@ -22,12 +22,21 @@ export async function ensureVisibleWithRecovery(
       }
 
       const loadingVisible = await loadingLabel.isVisible().catch(() => false);
-      if (!loadingVisible) {
-        throw error;
+      if (loadingVisible) {
+        await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+        await page.waitForTimeout(1000).catch(() => {});
+        continue;
       }
 
-      await page.reload({ waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(1000);
+      const targetVisibleNow = await target.isVisible().catch(() => false);
+      if (targetVisibleNow) {
+        return;
+      }
+
+      await page.waitForTimeout(1000).catch(() => {});
+      if (await target.isVisible().catch(() => false)) {
+        return;
+      }
     }
   }
 }

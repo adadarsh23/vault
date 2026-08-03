@@ -689,9 +689,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                   </button>
 
                   {/* Separator */}
-                  {folders.length > 0 && (
-                    <div className="h-px bg-text/5 mx-1 my-2" />
-                  )}
+                  {folders.length > 0 && <div className="h-px bg-text/5 mx-1 my-2" />}
 
                   {/* Folder list */}
                   {folders.map((folder) => {

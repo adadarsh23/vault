@@ -326,6 +326,7 @@ export default defineConfig(({ mode, command }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        'pqc-kyber': path.resolve(__dirname, './node_modules/pqc-kyber/pqc_kyber.js'),
       },
     },
 
@@ -395,9 +396,10 @@ export default defineConfig(({ mode, command }) => {
       strictPort,
     },
 
-    esbuild: {
-      target: 'es2022',
-      legalComments: 'none',
+    oxc: {
+      transform: {
+        target: 'es2022',
+      },
     },
 
     build: {

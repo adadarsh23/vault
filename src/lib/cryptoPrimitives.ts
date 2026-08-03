@@ -102,7 +102,9 @@ const computeKeyHash = async (secretKey: string): Promise<string> => {
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 };
 
-export const getOrCreateCryptoKey = async (secretKey: string | CryptoKey): Promise<CryptoKey | null> => {
+export const getOrCreateCryptoKey = async (
+  secretKey: string | CryptoKey
+): Promise<CryptoKey | null> => {
   if (secretKey instanceof CryptoKey) {
     return secretKey;
   }

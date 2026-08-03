@@ -700,7 +700,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         // Persist active items only, removing soft-deleted trash
         void (async () => {
           try {
-            await VaultService.saveItems(masterKey, activeItems);
+            await (VaultService as any).saveItems?.(masterKey, activeItems);
           } catch (e) {
             // Ignore lock save errors
           }

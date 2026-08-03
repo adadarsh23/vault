@@ -626,9 +626,7 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                             title="GPS Accuracy"
                           >
                             <Navigation className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
-                            <span className="text-text/60">
-                              ±{payload.accuracy.toFixed(1)}m
-                            </span>
+                            <span className="text-text/60">±{payload.accuracy.toFixed(1)}m</span>
                           </div>
                         )}
                         {typeof payload?.altitude === 'number' && (

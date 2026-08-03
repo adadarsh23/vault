@@ -111,7 +111,10 @@ export const VaultLoginForm: React.FC<Props> = memo(
       clearFeedback: clearCaptchaFeedback,
     } = useRecaptchaChallenge();
 
-    const requiresCaptcha = !twoFactorRequired;
+    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim() || '';
+    const skipCaptcha =
+      import.meta.env.VITE_SKIP_CAPTCHA === 'true' || import.meta.env.MODE === 'test';
+    const requiresCaptcha = !twoFactorRequired && Boolean(siteKey) && !skipCaptcha;
 
     useEffect(() => {
       // Only auto-focus if the user isn't already focused on one of the inputs

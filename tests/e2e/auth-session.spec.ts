@@ -46,7 +46,9 @@ test.describe('🌐 Browser Session Persistence & Page Reload (F5)', () => {
     });
   });
 
-  test('3.1 should retain logged-in session on hard page refresh without flashing login page', async ({ page }) => {
+  test('3.1 should retain logged-in session on hard page refresh without flashing login page', async ({
+    page,
+  }) => {
     // 1. Go to login page
     await page.goto('/login');
 
@@ -109,7 +111,9 @@ test.describe('🌐 Browser Session Persistence & Page Reload (F5)', () => {
     // Switch to Tab B & verify redirection to /login
     await pageB.bringToFront();
     await pageB.evaluate(() => {
-      window.dispatchEvent(new StorageEvent('storage', { key: 'vault_auth_token', newValue: null }));
+      window.dispatchEvent(
+        new StorageEvent('storage', { key: 'vault_auth_token', newValue: null })
+      );
     });
 
     // Verify Tab B handles logout redirect

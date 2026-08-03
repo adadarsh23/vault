@@ -18,7 +18,9 @@ test.describe('Privacy & Interface Deep Settings Audit', () => {
     expect(updatedState).not.toBe(initialState);
   });
 
-  test('Conditional duration selectors render properly when toggles are enabled', async ({ page }) => {
+  test('Conditional duration selectors render properly when toggles are enabled', async ({
+    page,
+  }) => {
     const autoLockToggle = page.getByRole('switch', { name: /Auto-lock on inactivity/i });
     const isChecked = (await autoLockToggle.getAttribute('aria-checked')) === 'true';
 

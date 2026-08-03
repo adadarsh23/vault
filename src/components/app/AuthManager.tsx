@@ -11,7 +11,6 @@ import {
   clearCloudSessionHint,
   clearRememberedVaultAccess,
   readCloudSessionHint,
-  restoreAuthSessionFromCookies,
 } from '../../lib/auth-session';
 
 import { logoutVaultSession, refreshVaultSession } from '../../lib/auth-api';
@@ -19,27 +18,27 @@ import { logger } from '../../lib/logger';
 
 const LandingPage = lazy(() =>
   import('../../features/LandingPage').then((module) => ({
-    default: module.LandingPage || module.default,
+    default: module.LandingPage || (module as any).default,
   }))
 );
 const NotFoundPage = lazy(() =>
   import('../../features/NotFoundPage').then((module) => ({
-    default: module.NotFoundPage || module.default,
+    default: module.NotFoundPage || (module as any).default,
   }))
 );
 const AuthScreen = lazy(() =>
   import('../../features/auth/AuthScreen').then((module) => ({
-    default: module.AuthScreen || module.default,
+    default: module.AuthScreen || (module as any).default,
   }))
 );
 const LegalPage = lazy(() =>
   import('../../features/LegalPage').then((module) => ({
-    default: module.LegalPage || module.default,
+    default: module.LegalPage || (module as any).default,
   }))
 );
 const ContactPage = lazy(() =>
   import('../../features/ContactPage').then((module) => ({
-    default: module.ContactPage || module.default,
+    default: module.ContactPage || (module as any).default,
   }))
 );
 

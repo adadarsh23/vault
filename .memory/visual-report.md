@@ -1,18 +1,18 @@
 # Code Memory Visual Report
 
-Generated: 2026-08-01T12:48:00.970Z
+Generated: 2026-08-03T05:29:35.866Z
 Schema: code-memory-index/v5
 Detail Level: summary
-Files in Visual: 500
+Files in Visual: 503
 
 ## Totals
-- Indexed Files: 500
-- Lines: 139566
-- Symbols: 2462
-- Imports: 1685
+- Indexed Files: 503
+- Lines: 168596
+- Symbols: 2640
+- Imports: 1788
 
 ## Risk
-- Critical: 9
-- High: 35
-- Medium: 61
-- Low: 395
+- Critical: 10
+- High: 39
+- Medium: 65
+- Low: 389

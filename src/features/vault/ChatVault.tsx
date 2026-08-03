@@ -273,9 +273,7 @@ export const ChatVault: React.FC = () => {
 
     if (chatBatch.length === 0) {
       chatBatchCursorRef.current = end;
-      const remainingUnloaded = chats.some(
-        (c) => !chatPayloads[c.id] && !failedChatIds.has(c.id)
-      );
+      const remainingUnloaded = chats.some((c) => !chatPayloads[c.id] && !failedChatIds.has(c.id));
       setHasMoreChatPayloads(remainingUnloaded);
       return;
     }
@@ -304,14 +302,25 @@ export const ChatVault: React.FC = () => {
       }));
       chatBatchCursorRef.current = end;
       const remainingUnloaded = chats.some(
-        (c) => !payloadEntries.some(([id]) => id === c.id) && !chatPayloads[c.id] && !failedChatIds.has(c.id)
+        (c) =>
+          !payloadEntries.some(([id]) => id === c.id) &&
+          !chatPayloads[c.id] &&
+          !failedChatIds.has(c.id)
       );
       setHasMoreChatPayloads(remainingUnloaded);
     } finally {
       chatBatchInFlightRef.current = false;
       setIsLoadingChatBatch(false);
     }
-  }, [chatPayloads, chats, failedChatIds, loadConversationForChat, markChatLoadFailed, markChatLoadSucceeded, masterKey]);
+  }, [
+    chatPayloads,
+    chats,
+    failedChatIds,
+    loadConversationForChat,
+    markChatLoadFailed,
+    markChatLoadSucceeded,
+    masterKey,
+  ]);
 
   useEffect(() => {
     if (!masterKey) {
@@ -379,8 +388,8 @@ export const ChatVault: React.FC = () => {
         filter === 'all'
           ? true
           : filter === 'unread'
-          ? metrics.unread > 0 || isCurrentlyActive
-          : metrics.mentions > 0 || isCurrentlyActive;
+            ? metrics.unread > 0 || isCurrentlyActive
+            : metrics.mentions > 0 || isCurrentlyActive;
       return matchesSearch && matchesFolder && matchesFilter;
     });
     return sortPinnedFirst(filtered);

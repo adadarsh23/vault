@@ -22,7 +22,8 @@ export const SystemLogsPage: React.FC<SystemLogsPageProps> = ({ onBack }) => {
               System Logs
             </h1>
             <p className="mt-2 max-w-3xl text-xs leading-relaxed text-text/60 sm:text-sm lg:text-base">
-              Review security events, runtime telemetry, and sync activity logs from your vault environment.
+              Review security events, runtime telemetry, and sync activity logs from your vault
+              environment.
             </p>
           </div>
 

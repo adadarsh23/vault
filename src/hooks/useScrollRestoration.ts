@@ -28,7 +28,7 @@ export function useScrollRestoration(
   } = options;
 
   const storageKey = `scroll_pos_${key}`;
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Helper to read position from cache/sessionStorage
   const getSavedPosition = useCallback((): { top: number; left: number } => {

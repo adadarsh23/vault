@@ -64,6 +64,8 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
     e.stopPropagation();
   };
 
+  const [dynamicAspectRatio, setDynamicAspectRatio] = React.useState<number | null>(null);
+
   const rawLiveCapture = item.metadata?.isLiveCapture;
   const isLiveCapture =
     rawLiveCapture === true ||
@@ -112,9 +114,11 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
         aspectRatio:
           typeof item.metadata?.aspectRatio === 'number' && item.metadata.aspectRatio > 0
             ? String(item.metadata.aspectRatio)
-            : type === 'video'
-              ? '16 / 9'
-              : '16 / 10',
+            : dynamicAspectRatio
+              ? String(dynamicAspectRatio)
+              : type === 'video'
+                ? '16 / 9'
+                : '16 / 10',
       }}
     >
       <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
@@ -147,6 +151,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
               type={type}
               isThumbnail={true}
               autoPlayVideo={false}
+              onAspectRatioLoaded={setDynamicAspectRatio}
               className="h-full w-full object-cover transition-all duration-700 group-hover:scale-105"
             />
           )}

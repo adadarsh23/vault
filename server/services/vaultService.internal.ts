@@ -161,6 +161,8 @@ export type VaultCategoryAlias =
 export interface AuthInput {
   username: unknown;
   password: unknown;
+  email?: unknown;
+  fullName?: unknown;
   masterKey?: unknown;
   pqcSalt?: unknown;
   ipAddress?: string;

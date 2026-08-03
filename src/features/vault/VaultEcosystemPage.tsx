@@ -49,10 +49,7 @@ export const VaultEcosystemPage: React.FC<VaultEcosystemPageProps> = ({ onBack }
   const items = useVaultStore((state) => state.items);
 
   // Filter active non-deleted items
-  const activeItems = useMemo(
-    () => items.filter((item) => !item.deletedAt),
-    [items]
-  );
+  const activeItems = useMemo(() => items.filter((item) => !item.deletedAt), [items]);
 
   const categoryStats = useMemo(() => {
     const stats: VaultCategoryStats = { ...INITIAL_STATS };
@@ -87,7 +84,8 @@ export const VaultEcosystemPage: React.FC<VaultEcosystemPageProps> = ({ onBack }
             </h1>
 
             <p className="mt-2 max-w-3xl text-xs leading-relaxed text-text/60 sm:text-sm lg:text-base">
-              Explore how your encrypted vault components connect together in an interactive, real-time security architecture view.
+              Explore how your encrypted vault components connect together in an interactive,
+              real-time security architecture view.
             </p>
           </div>
 

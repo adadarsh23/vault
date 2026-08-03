@@ -23,6 +23,7 @@ interface SafeMediaProps {
   lowDataMode?: boolean;
   networkAwareAutoplay?: boolean;
   performanceHud?: boolean;
+  onAspectRatioLoaded?: (aspectRatio: number) => void;
 }
 
 type Heic2AnyFn = (options: {
@@ -154,6 +155,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
     lowDataMode = false,
     networkAwareAutoplay = true,
     performanceHud = false,
+    onAspectRatioLoaded,
   }) => {
     const [url, setUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -487,16 +489,28 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
             playsInline
             preload="metadata"
             aria-label="Video thumbnail"
+            onLoadedMetadata={(e) => {
+              const v = e.currentTarget;
+              if (v.videoWidth && v.videoHeight && onAspectRatioLoaded) {
+                onAspectRatioLoaded(v.videoWidth / v.videoHeight);
+              }
+            }}
           />
         );
       }
 
       return (
-        <div className={cn(className, 'relative')}>
+        <div
+          className={cn(
+            'relative flex items-center justify-center max-w-full max-h-full',
+            className
+          )}
+        >
           <VideoPlayer
             src={url}
             itemId={item.id}
             title={item.title}
+            aspectRatio={item.metadata?.aspectRatio}
             autoPlay={autoPlayVideo}
             lowDataMode={lowDataMode}
             networkAwareAutoplay={networkAwareAutoplay}

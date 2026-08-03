@@ -30,13 +30,13 @@ type WindowWithTrustedTypes = Window &
 
 const LockedVaultHost = lazy(() =>
   import('./components/app/LockedVaultHost').then((module) => ({
-    default: module.LockedVaultHost || module.default,
+    default: module.LockedVaultHost || (module as any).default,
   }))
 );
 
 const UnlockedVaultHost = lazy(() =>
   import('./components/app/UnlockedVaultHost').then((module) => ({
-    default: module.UnlockedVaultHost || module.default,
+    default: module.UnlockedVaultHost || (module as any).default,
   }))
 );
 

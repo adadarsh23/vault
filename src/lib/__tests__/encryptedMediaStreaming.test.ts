@@ -1,14 +1,21 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createChunkedDecryptTransformStream, decryptStream, getDecryptStreamResponseUrl } from '../streamDecryption';
+import { describe, it, expect, vi } from 'vitest';
+import {
+  createChunkedDecryptTransformStream,
+  getDecryptStreamResponseUrl,
+} from '../streamDecryption';
 import { uploadFileTus } from '../sync/tusUpload';
-import { generateThumbnailInWorker, generateBlurhashInWorker, compressFileInWorker } from '../mediaWorker';
+import { compressFileInWorker } from '../mediaWorker';
 import { vaultApi } from '../../api/vaultApi';
 
+import { encryptData, base64ToUint8Array } from '../cryptoPrimitives';
+
 describe('Encrypted Media Streaming & TUS Upload Pipeline', () => {
-  const mockMasterKey = 'dGVzdC1tYXN0ZXIta2V5LTMyLWJ5dGVzLWxvbmctc3RyaW5nIQ=='; // 32 byte base64
+  const mockMasterKey = 'dGVzdC1tYXN0ZXIta2V5LTMyLWJ5dGVzLWxvbmchITE='; // 32 byte base64
 
   it('should initialize TransformStream for chunk-by-chunk stream decryption', async () => {
-    const rawData = new TextEncoder().encode('Hello world, testing encrypted streaming video/audio chunks!');
+    const rawData = new TextEncoder().encode(
+      'Hello world, testing encrypted streaming video/audio chunks!'
+    );
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
         controller.enqueue(rawData);
@@ -21,14 +28,17 @@ describe('Encrypted Media Streaming & TUS Upload Pipeline', () => {
   });
 
   it('should generate decrypt stream response URL for HTML5 media elements', async () => {
-    const fakeEncryptedBlob = new Blob([new Uint8Array(64)]);
-    const url = await getDecryptStreamResponseUrl(fakeEncryptedBlob, mockMasterKey, 'video/mp4');
+    const encryptedBase64 = await encryptData('sample-video-chunk-data', mockMasterKey);
+    const encryptedBlob = new Blob([base64ToUint8Array(encryptedBase64) as unknown as BlobPart]);
+    const url = await getDecryptStreamResponseUrl(encryptedBlob, mockMasterKey, 'video/mp4');
     expect(url).toBeDefined();
     expect(typeof url).toBe('string');
   });
 
   it('should perform TUS protocol upload creation and chunk streaming', async () => {
-    const dummyFile = new File([new Uint8Array(1024 * 1024)], 'test-video.mp4', { type: 'video/mp4' });
+    const dummyFile = new File([new Uint8Array(1024 * 1024)], 'test-video.mp4', {
+      type: 'video/mp4',
+    });
 
     vi.spyOn(vaultApi, 'createTusUpload').mockResolvedValue({
       uploadId: 'test-tus-id-123',

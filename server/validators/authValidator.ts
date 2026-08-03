@@ -91,6 +91,14 @@ const normalizeProfilePhoto = z
       return 'none';
     }
 
+    if (!value.startsWith('data:image/') && value.length > 2048) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Profile photo URL cannot exceed 2048 characters.',
+      });
+      return z.NEVER;
+    }
+
     // Allow base64 data URIs for locally-uploaded images
     if (value.startsWith('data:image/')) {
       // Only permit safe image MIME types

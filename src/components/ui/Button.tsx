@@ -9,7 +9,16 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { className, variant = 'primary', size = 'md', loading, children, type = 'button', ...props },
+    {
+      className,
+      variant = 'primary',
+      size = 'md',
+      loading,
+      children,
+      type = 'button',
+      disabled,
+      ...props
+    },
     ref
   ) => {
     const variants = {
@@ -39,7 +48,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         ref={ref}
         type={type}
-        disabled={loading || props.disabled}
+        disabled={loading || disabled}
         {...props}
       >
         {loading && (

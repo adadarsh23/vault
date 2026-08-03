@@ -294,13 +294,17 @@ export const vaultApi = {
       .map(([k, v]) => `${k} ${btoa(v)}`)
       .join(',');
 
-    const response = await apiClient.post('/vault/files/tus', {}, {
-      headers: {
-        'Tus-Resumable': '1.0.0',
-        'Upload-Length': fileSize.toString(),
-        'Upload-Metadata': encodedMetadata,
-      },
-    });
+    const response = await apiClient.post(
+      '/vault/files/tus',
+      {},
+      {
+        headers: {
+          'Tus-Resumable': '1.0.0',
+          'Upload-Length': fileSize.toString(),
+          'Upload-Metadata': encodedMetadata,
+        },
+      }
+    );
 
     const location = response.headers['location'] || response.headers['Location'] || '';
     const uploadId = location.split('/').pop() || `${Date.now()}`;
@@ -318,11 +322,7 @@ export const vaultApi = {
     return parseInt(offsetHeader || '0', 10);
   },
 
-  uploadTusChunk: async (
-    uploadId: string,
-    offset: number,
-    chunk: Uint8Array
-  ): Promise<number> => {
+  uploadTusChunk: async (uploadId: string, offset: number, chunk: Uint8Array): Promise<number> => {
     const response = await apiClient.patch(
       `/vault/files/tus/${encodeURIComponent(uploadId)}`,
       chunk,

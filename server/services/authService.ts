@@ -228,7 +228,7 @@ export const issueUserSession = (
   const familyId = input.familyId || randomUUID();
   const normalizedDeviceId = normalizeSessionDeviceId(input.deviceId);
   const computedDeviceName =
-    (typeof input.deviceName === 'string' && input.deviceName.trim())
+    typeof input.deviceName === 'string' && input.deviceName.trim()
       ? input.deviceName.trim()
       : parseDeviceNameFromUserAgent(input.userAgent);
 
@@ -444,26 +444,27 @@ export const registerUser = async (input: {
   }
 
   if (typeof input.password !== 'string' || input.password.length < 8) {
-    throw AppError.badRequest(
-      'Password must be at least 8 characters long.',
-      'AUTH_WEAK_PASSWORD'
-    );
+    throw AppError.badRequest('Password must be at least 8 characters long.', 'AUTH_WEAK_PASSWORD');
   }
 
-  const username = (input.username || rawIdentifier.split('@')[0] || rawIdentifier).trim().toLowerCase();
-  const email = input.email ? input.email.trim().toLowerCase() : rawIdentifier.includes('@') ? rawIdentifier : undefined;
+  const username = (input.username || rawIdentifier.split('@')[0] || rawIdentifier)
+    .trim()
+    .toLowerCase();
+  const email = input.email
+    ? input.email.trim().toLowerCase()
+    : rawIdentifier.includes('@')
+      ? rawIdentifier
+      : undefined;
   const masterKey = (input.masterKey || 'default-vault-master-key-2026').trim();
-  const pqcSalt = (typeof input.pqcSalt === 'string' && input.pqcSalt.trim())
-    ? input.pqcSalt.trim()
-    : `${username}-vault-pqc-salt`;
+  const pqcSalt =
+    typeof input.pqcSalt === 'string' && input.pqcSalt.trim()
+      ? input.pqcSalt.trim()
+      : `${username}-vault-pqc-salt`;
 
   logger.info('Registration attempt started', { username, email });
 
   const existing = await User.findOne({
-    $or: [
-      { username },
-      ...(email ? [{ email }] : []),
-    ],
+    $or: [{ username }, ...(email ? [{ email }] : [])],
   });
 
   if (existing) {

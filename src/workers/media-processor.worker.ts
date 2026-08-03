@@ -29,13 +29,26 @@ export type MediaProcessorRequest =
     };
 
 export type MediaProcessorResponse =
-  | { id: string; ok: true; type: 'GENERATE_THUMBNAIL'; thumbnailBuffer: ArrayBuffer; mimeType: string }
+  | {
+      id: string;
+      ok: true;
+      type: 'GENERATE_THUMBNAIL';
+      thumbnailBuffer: ArrayBuffer;
+      mimeType: string;
+    }
   | { id: string; ok: true; type: 'GENERATE_BLURHASH'; blurhash: string }
-  | { id: string; ok: true; type: 'COMPRESS_IMAGE'; compressedBuffer: ArrayBuffer; mimeType: string }
+  | {
+      id: string;
+      ok: true;
+      type: 'COMPRESS_IMAGE';
+      compressedBuffer: ArrayBuffer;
+      mimeType: string;
+    }
   | { id: string; ok: false; error: string };
 
 function encode83(value: number, length: number): string {
-  const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#$%*+,-.:;=?@[]^_{|}~';
+  const characters =
+    '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#$%*+,-.:;=?@[]^_{|}~';
   let result = '';
   for (let i = 1; i <= length; i++) {
     const digit = Math.floor(value / Math.pow(83, length - i)) % 83;
@@ -62,8 +75,7 @@ function calculateBlurhash(imageData: ImageData, compX = 4, compY = 3): string {
       for (let i = 0; i < numPixels; i++) {
         const px = i % width;
         const py = Math.floor(i / width);
-        const basis =
-          Math.cos((Math.PI * x * px) / width) * Math.cos((Math.PI * y * py) / height);
+        const basis = Math.cos((Math.PI * x * px) / width) * Math.cos((Math.PI * y * py) / height);
         const idx = i * 4;
         r += basis * Math.pow(data[idx] / 255, 2.2);
         g += basis * Math.pow(data[idx + 1] / 255, 2.2);
@@ -93,7 +105,6 @@ function calculateBlurhash(imageData: ImageData, compX = 4, compY = 3): string {
     hash += encode83(0, 1);
   }
 
-  const srgbToLinear = (v: number) => Math.pow(v, 2.2);
   const linearToSrgb = (v: number) =>
     v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
 
@@ -115,7 +126,9 @@ self.onmessage = async (event: MessageEvent<MediaProcessorRequest>) => {
 
   try {
     if (typeof OffscreenCanvas === 'undefined' || typeof createImageBitmap === 'undefined') {
-      throw new Error('OffscreenCanvas or createImageBitmap is not supported in Web Worker environment');
+      throw new Error(
+        'OffscreenCanvas or createImageBitmap is not supported in Web Worker environment'
+      );
     }
 
     const blob = new Blob([req.fileBuffer], { type: req.mimeType });

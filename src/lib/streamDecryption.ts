@@ -15,20 +15,20 @@ async function decryptBlock(
     return await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
-        iv: ivBuffer,
+        iv: ivBuffer as BufferSource,
         additionalData: AES_GCM_AAD.buffer as ArrayBuffer,
       },
       cryptoKey,
-      cipherBuffer
+      cipherBuffer as BufferSource
     );
   } catch {
     return await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
-        iv: ivBuffer,
+        iv: ivBuffer as BufferSource,
       },
       cryptoKey,
-      cipherBuffer
+      cipherBuffer as BufferSource
     );
   }
 }
@@ -122,8 +122,7 @@ export async function decryptStream(
     throw new Error('Failed to import cryptographic key for stream decryption');
   }
 
-  const inputStream =
-    encryptedInput instanceof Blob ? encryptedInput.stream() : encryptedInput;
+  const inputStream = encryptedInput instanceof Blob ? encryptedInput.stream() : encryptedInput;
 
   const decryptTransform = createChunkedDecryptTransformStream(cryptoKey);
   return inputStream.pipeThrough(decryptTransform as any);

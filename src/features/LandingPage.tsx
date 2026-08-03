@@ -5,13 +5,13 @@ import { Input } from '../components/ui/Input';
 
 const Background = lazy(() =>
   import('../components/layout/Background').then((module) => ({
-    default: module.Background || module.default,
+    default: module.Background || (module as any).default,
   }))
 );
 
 const Footer = lazy(() =>
   import('../components/layout/Footer').then((module) => ({
-    default: module.Footer || module.default,
+    default: module.Footer || (module as any).default,
   }))
 );
 
@@ -50,7 +50,11 @@ interface LandingPageProps {
   isSavingProfile?: boolean;
 }
 
-export function LandingPage({ onEnterVault, onSaveProfile, isSavingProfile = false }: LandingPageProps) {
+export function LandingPage({
+  onEnterVault,
+  onSaveProfile,
+  isSavingProfile = false,
+}: LandingPageProps) {
   const [showDecorativeEffects, setShowDecorativeEffects] = useState(false);
 
   // Profile popup state — only used when onSaveProfile is provided
@@ -390,7 +394,8 @@ export function LandingPage({ onEnterVault, onSaveProfile, isSavingProfile = fal
 
               {!isPhotoInputValid ? (
                 <p className="text-xs text-red-500">
-                  Please use a valid HTTP/HTTPS image URL or upload an image file, or leave it blank.
+                  Please use a valid HTTP/HTTPS image URL or upload an image file, or leave it
+                  blank.
                 </p>
               ) : null}
               {profileSaveError ? (

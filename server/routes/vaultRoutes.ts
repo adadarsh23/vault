@@ -259,7 +259,10 @@ vaultRouter.head('/files/tus/:uploadId', requireAuth, asyncHandler(getTusOffsetC
 vaultRouter.patch(
   '/files/tus/:uploadId',
   requireAuth,
-  express.raw({ type: ['application/offset+octet-stream', 'application/octet-stream'], limit: '500mb' }),
+  express.raw({
+    type: ['application/offset+octet-stream', 'application/octet-stream'],
+    limit: '500mb',
+  }),
   asyncHandler(uploadTusChunkController)
 );
 

@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   extractAttachmentsFromText,
   getSafeExternalHref,
+  isUserMentioned,
   toConversation,
-} from '../../src/features/vault/components/ChatVault/utils.tsx';
+} from '../../src/features/vault/components/ChatVault/utils';
 
 describe('chat vault utils', () => {
   it('normalizes legacy or malformed conversation payloads safely', () => {
@@ -69,7 +70,6 @@ describe('chat vault utils', () => {
   });
 
   it('correctly matches user mentions including case sensitivity, @all, and @everyone', () => {
-    const { isUserMentioned } = require('../../src/features/vault/components/ChatVault/utils.tsx');
     expect(isUserMentioned(['adarsh'], 'Adarsh')).toBe(true);
     expect(isUserMentioned(['all'], 'Alice')).toBe(true);
     expect(isUserMentioned(['everyone'], 'Bob')).toBe(true);

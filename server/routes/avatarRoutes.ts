@@ -46,16 +46,24 @@ const isValidImageMagicBytes = (buffer: Buffer): boolean => {
   if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return true;
 
   // PNG: 89 50 4E 47
-  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return true;
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47)
+    return true;
 
   // GIF: GIF87a / GIF89a (47 49 46 38)
-  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) return true;
+  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38)
+    return true;
 
   // WebP: RIFF (52 49 46 46) ... WEBP (57 45 42 50 at offset 8)
   if (
     buffer.length >= 12 &&
-    buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
-    buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50
+    buffer[0] === 0x52 &&
+    buffer[1] === 0x49 &&
+    buffer[2] === 0x46 &&
+    buffer[3] === 0x46 &&
+    buffer[8] === 0x57 &&
+    buffer[9] === 0x45 &&
+    buffer[10] === 0x42 &&
+    buffer[11] === 0x50
   ) {
     return true;
   }
@@ -63,7 +71,10 @@ const isValidImageMagicBytes = (buffer: Buffer): boolean => {
   // AVIF / HEIC: ftyp at offset 4 (66 74 79 70)
   if (
     buffer.length >= 12 &&
-    buffer[4] === 0x66 && buffer[5] === 0x74 && buffer[6] === 0x79 && buffer[7] === 0x70
+    buffer[4] === 0x66 &&
+    buffer[5] === 0x74 &&
+    buffer[6] === 0x79 &&
+    buffer[7] === 0x70
   ) {
     return true;
   }
@@ -106,7 +117,7 @@ router.post('/presign', (req: Request, res: Response) => {
 
   const host = req.get('host') || 'localhost:4000';
   const protocol = req.protocol || 'http';
-  
+
   const uploadUrl = `${protocol}://${host}/api/avatar/upload/${sanitizedUserId}/${sanitizedHash}?ext=${ext}`;
   const publicUrl = `${protocol}://${host}/api/avatar/raw/${sanitizedUserId}/${sanitizedHash}.${ext}`;
   const expiresAt = Date.now() + 5 * 60 * 1000; // 5-minute expiry
@@ -122,7 +133,11 @@ router.post('/presign', (req: Request, res: Response) => {
 const rawBodyParser = express.raw({ type: ['image/*', 'application/octet-stream'], limit: '35mb' });
 
 function expressRawBodyMiddleware(req: Request, res: Response, next: () => void) {
-  if (req.is('application/octet-stream') || req.is('image/*') || req.headers['content-type']?.includes('image/')) {
+  if (
+    req.is('application/octet-stream') ||
+    req.is('image/*') ||
+    req.headers['content-type']?.includes('image/')
+  ) {
     rawBodyParser(req, res, next);
   } else {
     next();
@@ -132,86 +147,94 @@ function expressRawBodyMiddleware(req: Request, res: Response, next: () => void)
 /**
  * Direct binary stream upload endpoint storing to MongoAtlas GridFS with local fallback
  */
-router.put('/upload/:userId/:contentHash', expressRawBodyMiddleware, async (req: Request, res: Response) => {
-  try {
-    const { userId, contentHash } = req.params;
-    const ext = (req.query.ext as string) || 'webp';
-    const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '');
-    const sanitizedHash = String(contentHash).replace(/[^a-zA-Z0-9_-]/g, '');
-    const gridFsFilename = `${sanitizedUserId}/${sanitizedHash}.${ext}`;
-    const contentType = getContentTypeFromExt(ext);
-
-    let buffer: Buffer;
-    if (Buffer.isBuffer(req.body) && req.body.length > 0) {
-      buffer = req.body;
-    } else {
-      const chunks: Buffer[] = [];
-      for await (const chunk of req) {
-        chunks.push(chunk as Buffer);
-      }
-      buffer = Buffer.concat(chunks);
-    }
-
-    if (!buffer || buffer.length === 0) {
-      return res.status(400).json({ success: false, error: 'Avatar upload payload is empty.' });
-    }
-
-    if (buffer.length > 35 * 1024 * 1024) {
-      return res.status(400).json({ success: false, error: 'Avatar upload exceeds maximum size limit of 35MB.' });
-    }
-
-    // Security check: Magic Byte Content Validation
-    if (!isValidImageMagicBytes(buffer)) {
-      return res.status(400).json({ success: false, error: 'Invalid image format or corrupted image payload.' });
-    }
-
-    // 1. Write local disk cache fallback
-    const userDir = path.join(AVATAR_STORE_DIR, sanitizedUserId);
-    if (!fs.existsSync(userDir)) {
-      fs.mkdirSync(userDir, { recursive: true });
-    }
-    const filePath = path.join(userDir, `${sanitizedHash}.${ext}`);
+router.put(
+  '/upload/:userId/:contentHash',
+  expressRawBodyMiddleware,
+  async (req: Request, res: Response) => {
     try {
-      await fs.promises.writeFile(filePath, buffer);
-    } catch (localErr) {
-      console.warn('Local disk write skipped or failed:', localErr);
-    }
+      const { userId, contentHash } = req.params;
+      const ext = (req.query.ext as string) || 'webp';
+      const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '');
+      const sanitizedHash = String(contentHash).replace(/[^a-zA-Z0-9_-]/g, '');
+      const gridFsFilename = `${sanitizedUserId}/${sanitizedHash}.${ext}`;
+      const contentType = getContentTypeFromExt(ext);
 
-    // 2. Write to MongoDB Atlas Cloud GridFS bucket
-    const bucket = getAvatarGridFsBucket();
-    if (bucket) {
-      try {
-        // Overwrite existing file with same filename if present
-        const existingFiles = await bucket.find({ filename: gridFsFilename }).toArray();
-        for (const file of existingFiles) {
-          await bucket.delete(file._id).catch(() => {});
+      let buffer: Buffer;
+      if (Buffer.isBuffer(req.body) && req.body.length > 0) {
+        buffer = req.body;
+      } else {
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) {
+          chunks.push(chunk as Buffer);
         }
-
-        const uploadStream = bucket.openUploadStream(gridFsFilename, {
-          contentType,
-          metadata: {
-            userId: sanitizedUserId,
-            contentHash: sanitizedHash,
-            ext,
-            uploadedAt: new Date(),
-          },
-        });
-
-        await new Promise<void>((resolve, reject) => {
-          uploadStream.on('finish', () => resolve());
-          uploadStream.on('error', (err) => reject(err));
-          uploadStream.end(buffer);
-        });
-      } catch (cloudErr) {
-        console.error('Failed to write avatar to MongoDB Atlas GridFS:', cloudErr);
+        buffer = Buffer.concat(chunks);
       }
-    }
 
-    return res.status(200).json({ success: true, message: 'Avatar upload complete' });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, error: err.message || 'Avatar upload failed' });
+      if (!buffer || buffer.length === 0) {
+        return res.status(400).json({ success: false, error: 'Avatar upload payload is empty.' });
+      }
+
+      if (buffer.length > 35 * 1024 * 1024) {
+        return res
+          .status(400)
+          .json({ success: false, error: 'Avatar upload exceeds maximum size limit of 35MB.' });
+      }
+
+      // Security check: Magic Byte Content Validation
+      if (!isValidImageMagicBytes(buffer)) {
+        return res
+          .status(400)
+          .json({ success: false, error: 'Invalid image format or corrupted image payload.' });
+      }
+
+      // 1. Write local disk cache fallback
+      const userDir = path.join(AVATAR_STORE_DIR, sanitizedUserId);
+      if (!fs.existsSync(userDir)) {
+        fs.mkdirSync(userDir, { recursive: true });
+      }
+      const filePath = path.join(userDir, `${sanitizedHash}.${ext}`);
+      try {
+        await fs.promises.writeFile(filePath, buffer);
+      } catch (localErr) {
+        console.warn('Local disk write skipped or failed:', localErr);
+      }
+
+      // 2. Write to MongoDB Atlas Cloud GridFS bucket
+      const bucket = getAvatarGridFsBucket();
+      if (bucket) {
+        try {
+          // Overwrite existing file with same filename if present
+          const existingFiles = await bucket.find({ filename: gridFsFilename }).toArray();
+          for (const file of existingFiles) {
+            await bucket.delete(file._id).catch(() => {});
+          }
+
+          const uploadStream = bucket.openUploadStream(gridFsFilename, {
+            contentType,
+            metadata: {
+              userId: sanitizedUserId,
+              contentHash: sanitizedHash,
+              ext,
+              uploadedAt: new Date(),
+            },
+          } as any);
+
+          await new Promise<void>((resolve, reject) => {
+            uploadStream.on('finish', () => resolve());
+            uploadStream.on('error', (err) => reject(err));
+            uploadStream.end(buffer);
+          });
+        } catch (cloudErr) {
+          console.error('Failed to write avatar to MongoDB Atlas GridFS:', cloudErr);
+        }
+      }
+
+      return res.status(200).json({ success: true, message: 'Avatar upload complete' });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message || 'Avatar upload failed' });
+    }
   }
-});
+);
 
 /**
  * Serves avatar binary files from MongoAtlas GridFS (or local disk fallback) with SLA HTTP Headers & ETag caching
@@ -262,5 +285,3 @@ router.get('/raw/:userId/:fileKey', async (req: Request, res: Response) => {
 });
 
 export { router as avatarRouter };
-
-

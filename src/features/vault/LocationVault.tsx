@@ -616,7 +616,9 @@ const LocationVaultInternal: React.FC = () => {
           const lng = parseCoordinate(form.longitude);
           if (validCoords(lat, lng)) {
             const addrPromise = fetchAddress(lat!, lng!);
-            const altPromise = !form.altitude ? fetchAltitudeApi(lat!, lng!) : Promise.resolve(null);
+            const altPromise = !form.altitude
+              ? fetchAltitudeApi(lat!, lng!)
+              : Promise.resolve(null);
 
             const [addr, alt] = await Promise.all([addrPromise, altPromise]);
 

@@ -19,7 +19,7 @@ export const errorHandler = (
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
   // Default values
-  let statusCode = err.statusCode || 500;
+  let statusCode = err.statusCode || err.status || 500;
   let code = err.code || 'INTERNAL_SERVER_ERROR';
   let message = err.message || 'An unexpected error occurred.';
   let details: any = undefined;
@@ -46,7 +46,14 @@ export const errorHandler = (
     statusCode = 409;
     code = 'DUPLICATE_RESOURCE';
     message = 'The requested resource already exists.';
-  } else if (err?.code === 'EBADCSRFTOKEN') {
+  } else if (
+    err?.code === 'EBADCSRFTOKEN' ||
+    err?.code === 'CSRF_TOKEN_INVALID' ||
+    err?.message === 'invalid csrf token' ||
+    (err?.status === 403 &&
+      typeof err?.message === 'string' &&
+      err.message.toLowerCase().includes('csrf'))
+  ) {
     statusCode = 403;
     code = 'CSRF_TOKEN_INVALID';
     message = 'Invalid or missing CSRF token.';

@@ -14,13 +14,11 @@ describe('MongoAtlas GridFS Avatar Router', () => {
   });
 
   it('generates presigned upload and public URLs', async () => {
-    const res = await supertest(app)
-      .post('/api/avatar/presign')
-      .send({
-        userId: 'user_123',
-        contentHash: 'hash_456',
-        mimeType: 'image/webp',
-      });
+    const res = await supertest(app).post('/api/avatar/presign').send({
+      userId: 'user_123',
+      contentHash: 'hash_456',
+      mimeType: 'image/webp',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);

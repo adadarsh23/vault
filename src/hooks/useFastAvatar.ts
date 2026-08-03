@@ -3,7 +3,12 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { ImageProcessorResponse } from '../workers/ImageProcessorWorker';
-import { queueOfflineAvatar, getPendingAvatars, removeQueuedAvatar, registerAvatarSync } from '../lib/avatarDb';
+import {
+  queueOfflineAvatar,
+  getPendingAvatars,
+  removeQueuedAvatar,
+  registerAvatarSync,
+} from '../lib/avatarDb';
 
 // Isolated Registry for Blob Lifecycle Revocation to guarantee zero memory leaks
 class BlobLifecycleRegistry {
@@ -38,8 +43,8 @@ class BlobLifecycleRegistry {
 
 export interface FastAvatarOptions {
   userId: string;
-  initialAvatarUrl?: string;
-  initialBlurHash?: string;
+  initialAvatarUrl?: string | null;
+  initialBlurHash?: string | null;
   presignEndpoint?: string; // default '/api/avatar/presign'
   onUploadSuccess?: (avatarUrl: string, blurHash: string) => void;
   onUploadError?: (error: Error) => void;
@@ -83,12 +88,23 @@ export function useFastAvatar({
     onUploadErrorRef.current = onUploadError;
   }, [onUploadSuccess, onUploadError]);
 
+  // Sync avatar state when initialAvatarUrl prop updates externally
+  useEffect(() => {
+    if (!state.isProcessing && !state.isUploading) {
+      setState((prev) => {
+        if (prev.avatarUrl !== initialAvatarUrl) {
+          return { ...prev, avatarUrl: initialAvatarUrl ?? null, error: null };
+        }
+        return prev;
+      });
+    }
+  }, [initialAvatarUrl, state.isProcessing, state.isUploading]);
+
   // Initialize Web Worker
   useEffect(() => {
-    workerRef.current = new Worker(
-      new URL('../workers/ImageProcessorWorker.ts', import.meta.url),
-      { type: 'module' }
-    );
+    workerRef.current = new Worker(new URL('../workers/ImageProcessorWorker.ts', import.meta.url), {
+      type: 'module',
+    });
 
     return () => {
       if (workerRef.current) {
@@ -112,7 +128,10 @@ export function useFastAvatar({
   const computeHash = useCallback(async (buffer: ArrayBuffer): Promise<string> => {
     const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
+    return hashArray
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+      .substring(0, 16);
   }, []);
 
   // Process offline queued avatars when network reconnects
@@ -193,41 +212,45 @@ export function useFastAvatar({
         const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
         // Promise wrapper for worker message
-        const processedResult = await new Promise<Extract<ImageProcessorResponse, { ok: true }>>((resolve, reject) => {
-          const worker = workerRef.current;
-          if (!worker) return reject(new Error('Worker unavailable'));
+        const processedResult = await new Promise<Extract<ImageProcessorResponse, { ok: true }>>(
+          (resolve, reject) => {
+            const worker = workerRef.current;
+            if (!worker) return reject(new Error('Worker unavailable'));
 
-          const handleMessage = (event: MessageEvent<ImageProcessorResponse>) => {
-            const data = event.data;
-            if (data.id === requestId) {
-              worker.removeEventListener('message', handleMessage);
-              if (data.ok) {
-                resolve(data);
-              } else {
-                reject(new Error(data.error));
+            const handleMessage = (event: MessageEvent<ImageProcessorResponse>) => {
+              const data = event.data;
+              if (data.id === requestId) {
+                worker.removeEventListener('message', handleMessage);
+                if (data.ok) {
+                  resolve(data);
+                } else {
+                  reject(new Error(data.error));
+                }
               }
-            }
-          };
+            };
 
-          worker.addEventListener('message', handleMessage);
+            worker.addEventListener('message', handleMessage);
 
-          // Zero-copy postMessage transfer of fileBuffer
-          worker.postMessage(
-            {
-              id: requestId,
-              type: 'PROCESS_IMAGE',
-              fileBuffer,
-              fileName: file.name,
-              mimeType: file.type,
-              targetSize: 400,
-              quality: 0.78,
-            },
-            [fileBuffer]
-          );
-        });
+            // Zero-copy postMessage transfer of fileBuffer
+            worker.postMessage(
+              {
+                id: requestId,
+                type: 'PROCESS_IMAGE',
+                fileBuffer,
+                fileName: file.name,
+                mimeType: file.type,
+                targetSize: 400,
+                quality: 0.78,
+              },
+              [fileBuffer]
+            );
+          }
+        );
 
         // Create Blob from zero-copy ArrayBuffer
-        const processedBlob = new Blob([processedResult.buffer], { type: processedResult.mimeType });
+        const processedBlob = new Blob([processedResult.buffer], {
+          type: processedResult.mimeType,
+        });
 
         // Revoke previous optimistic Blob URL if active
         if (activeBlobUrlRef.current) {
@@ -321,7 +344,7 @@ export function useFastAvatar({
         }
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Avatar ingestion failed.');
-        
+
         // Rollback state on unrecoverable processing error
         setState((prev) => ({
           ...prev,

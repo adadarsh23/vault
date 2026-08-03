@@ -6,7 +6,10 @@ const e2eUsername = process.env.E2E_USERNAME || 'demo-user';
 const e2eAccountPassword = process.env.E2E_ACCOUNT_PASSWORD || 'DemoPassword123!';
 const e2eMasterKey = process.env.E2E_MASTER_KEY || 'DemoMasterKey123!';
 
-export const hasE2ECredentials = Boolean(e2eUsername && e2eAccountPassword && e2eMasterKey);
+// True only when all three credentials were explicitly set by the user
+// (before playwright.config.ts applies its defaults). The config sets
+// E2E_CREDENTIALS_CONFIGURED=1 for exactly this purpose.
+export const hasE2ECredentials = process.env.E2E_CREDENTIALS_CONFIGURED === '1';
 
 export async function openLoginForm(page: Page) {
   await page.goto('/');
@@ -35,5 +38,11 @@ export async function loginWithEnvCredentials(page: Page) {
   await page.getByTestId(testIds.usernameInput).fill(e2eUsername!);
   await page.getByTestId(testIds.accountPasswordInput).fill(e2eAccountPassword!);
   await page.getByTestId(testIds.masterKeyInput).fill(e2eMasterKey!);
+  // Wait for React to process the filled values so isFormValid becomes true
+  // before clicking — otherwise the disabled button ignores the click.
+  await expect(page.getByTestId(testIds.submitButton)).toBeEnabled({ timeout: 10_000 });
   await page.getByTestId(testIds.submitButton).click();
+  await expect(page.getByRole('navigation', { name: /Sidebar/i })).toBeVisible({
+    timeout: 20_000,
+  });
 }

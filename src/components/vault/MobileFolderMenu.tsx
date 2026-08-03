@@ -55,7 +55,7 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
   allItemIcon,
 }) => {
   const [dropTarget, setDropTarget] = useState<string | null | undefined>(undefined);
-  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [, setDraggedItemId] = useState<string | null>(null);
 
   useEffect(() => {
     const handleGlobalDragStart = (e: DragEvent) => {

@@ -79,7 +79,7 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({ type, previewUrl
           <MemoVideoPlayer
             key={previewUrl}
             src={previewUrl}
-            className="w-full h-full"
+            className="max-w-full max-h-full flex items-center justify-center"
             autoPlay={true}
           />
         </div>

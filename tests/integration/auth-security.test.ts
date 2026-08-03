@@ -1,15 +1,39 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';
 import supertest from 'supertest';
+import mongoose from 'mongoose';
 import { createAuthTestApp } from '../helpers/createAuthTestApp.ts';
 import { User } from '../../server/models/user.ts';
 import { RefreshToken } from '../../server/models/RefreshToken.ts';
 import { createAccessToken } from '../../server/utils/auth.ts';
+import { connectToMongo } from '../../server/mongo.ts';
 
 const app = createAuthTestApp();
 const request = supertest(app);
 
+let isMongoConnected = false;
+
 describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
-  beforeEach(async () => {
+  beforeAll(async () => {
+    try {
+      await connectToMongo();
+      isMongoConnected = mongoose.connection.readyState === 1;
+    } catch {
+      console.warn('MongoDB connection unavailable. Skipping DB integration tests.');
+      isMongoConnected = false;
+    }
+  });
+
+  afterAll(async () => {
+    if (isMongoConnected) {
+      await mongoose.disconnect();
+    }
+  });
+
+  beforeEach(async (context) => {
+    if (!isMongoConnected) {
+      context.skip();
+      return;
+    }
     await User.deleteMany({});
     await RefreshToken.deleteMany({});
   });
@@ -142,13 +166,10 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
     });
 
     it('should record client IP and User-Agent in RefreshToken collection document', async () => {
-      await request
-        .post('/api/auth/login')
-        .set('User-Agent', 'SecurityAuditorAgent/2.0')
-        .send({
-          email: 'login@example.com',
-          password: 'Password123!',
-        });
+      await request.post('/api/auth/login').set('User-Agent', 'SecurityAuditorAgent/2.0').send({
+        email: 'login@example.com',
+        password: 'Password123!',
+      });
 
       const tokenDoc = await RefreshToken.findOne().sort({ createdAt: -1 });
       expect(tokenDoc).not.toBeNull();
@@ -170,9 +191,7 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
       const cookieHeader1 = signupRes.get('Set-Cookie');
 
       // Refresh session
-      const refreshRes1 = await request
-        .post('/api/auth/refresh')
-        .set('Cookie', cookieHeader1);
+      const refreshRes1 = await request.post('/api/auth/refresh').set('Cookie', cookieHeader1);
 
       expect(refreshRes1.status).toBe(200);
       expect(refreshRes1.body).toHaveProperty('accessToken');
@@ -196,17 +215,13 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
       const cookieHeader1 = signupRes.get('Set-Cookie');
 
       // 2. Perform legitimate token refresh (rotates token)
-      const refreshRes1 = await request
-        .post('/api/auth/refresh')
-        .set('Cookie', cookieHeader1);
+      const refreshRes1 = await request.post('/api/auth/refresh').set('Cookie', cookieHeader1);
 
       expect(refreshRes1.status).toBe(200);
       const cookieHeader2 = refreshRes1.get('Set-Cookie');
 
       // 3. REUSE ATTACK: Attacker uses the stolen OLD cookieHeader1
-      const attackRes = await request
-        .post('/api/auth/refresh')
-        .set('Cookie', cookieHeader1);
+      const attackRes = await request.post('/api/auth/refresh').set('Cookie', cookieHeader1);
 
       expect(attackRes.status).toBe(403); // Forbidden
 
@@ -215,9 +230,7 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
       expect(activeTokens.length).toBe(0);
 
       // 5. Verify even the legitimate user (cookieHeader2) is now locked out for safety
-      const victimRes = await request
-        .post('/api/auth/refresh')
-        .set('Cookie', cookieHeader2);
+      const victimRes = await request.post('/api/auth/refresh').set('Cookie', cookieHeader2);
 
       expect(victimRes.status).toBe(401);
     });
@@ -236,9 +249,7 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
 
       const token = signupRes.body.accessToken || signupRes.body.token;
 
-      const meRes = await request
-        .get('/api/auth/me')
-        .set('Authorization', `Bearer ${token}`);
+      const meRes = await request.get('/api/auth/me').set('Authorization', `Bearer ${token}`);
 
       expect(meRes.status).toBe(200);
       expect(meRes.body).toHaveProperty('data');
@@ -257,9 +268,7 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
         -10 // Expired 10 seconds ago
       );
 
-      const res = await request
-        .get('/api/auth/me')
-        .set('Authorization', `Bearer ${expiredToken}`);
+      const res = await request.get('/api/auth/me').set('Authorization', `Bearer ${expiredToken}`);
 
       expect(res.status).toBe(401);
     });
@@ -267,9 +276,7 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
     it('should reject malformed or forged access token with 401 Unauthorized', async () => {
       const forgedToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalidpayload.forgedsignature';
 
-      const res = await request
-        .get('/api/auth/me')
-        .set('Authorization', `Bearer ${forgedToken}`);
+      const res = await request.get('/api/auth/me').set('Authorization', `Bearer ${forgedToken}`);
 
       expect(res.status).toBe(401);
     });
@@ -283,9 +290,7 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
 
       const cookieHeader = signupRes.get('Set-Cookie');
 
-      const logoutRes = await request
-        .post('/api/auth/logout')
-        .set('Cookie', cookieHeader);
+      const logoutRes = await request.post('/api/auth/logout').set('Cookie', cookieHeader);
 
       expect(logoutRes.status).toBe(200);
 

@@ -295,18 +295,20 @@ export const getVaultItemPreviewUrl = async (
   const isAudioOrVideo =
     item.type === 'audio' ||
     item.type === 'video' ||
-    Boolean(effectiveMimeType && (effectiveMimeType.startsWith('audio/') || effectiveMimeType.startsWith('video/')));
+    Boolean(
+      effectiveMimeType &&
+      (effectiveMimeType.startsWith('audio/') || effectiveMimeType.startsWith('video/'))
+    );
 
   if (
     isAudioOrVideo &&
-    (item.content instanceof Uint8Array || (typeof item.content === 'string' && isLikelyEncryptedString(item.content)))
+    (item.content instanceof Uint8Array ||
+      (typeof item.content === 'string' && isLikelyEncryptedString(item.content)))
   ) {
     try {
       const rawBytes =
-        item.content instanceof Uint8Array
-          ? item.content
-          : base64ToUint8Array(item.content);
-      const blobInput = new Blob([rawBytes]);
+        item.content instanceof Uint8Array ? item.content : base64ToUint8Array(item.content);
+      const blobInput = new Blob([rawBytes as unknown as BlobPart]);
       return await getDecryptStreamResponseUrl(
         blobInput,
         masterKey,

@@ -1,7 +1,8 @@
 // blurhash.ts
 // Utility for decoding BlurHash strings into Data URLs for micro-placeholder rendering
 
-const BASE83_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#$%*+,-.:;=?@[]^_{|}~';
+const BASE83_CHARS =
+  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#$%*+,-.:;=?@[]^_{|}~';
 
 function decode83(str: string): number {
   let value = 0;
@@ -22,15 +23,24 @@ function srgbToLinear(value: number): number {
 
 function linearToSrgb(value: number): number {
   const v = Math.max(0, Math.min(1, value));
-  return v <= 0.0031308 ? Math.round(v * 12.92 * 255) : Math.round((1.055 * Math.pow(v, 1 / 2.4) - 0.055) * 255);
+  return v <= 0.0031308
+    ? Math.round(v * 12.92 * 255)
+    : Math.round((1.055 * Math.pow(v, 1 / 2.4) - 0.055) * 255);
 }
 
 function signPow(val: number, exp: number): number {
   return Math.sign(val) * Math.pow(Math.abs(val), exp);
 }
 
-export function decodeBlurHash(blurHash: string, width: number = 16, height: number = 16): Uint8ClampedArray | null {
-  if (!blurHash || blurHash.length < 6) return null;
+export function decodeBlurHash(
+  blurHash: string,
+  width: number = 16,
+  height: number = 16
+): Uint8ClampedArray | null {
+  if (!blurHash || blurHash.length < 6 || (blurHash.length - 6) % 2 !== 0) return null;
+  for (let i = 0; i < blurHash.length; i++) {
+    if (BASE83_CHARS.indexOf(blurHash[i]) === -1) return null;
+  }
 
   try {
     const sizeFlag = decode83(blurHash[0]);
@@ -68,11 +78,14 @@ export function decodeBlurHash(blurHash: string, width: number = 16, height: num
 
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        let r = 0, g = 0, b = 0;
+        let r = 0,
+          g = 0,
+          b = 0;
 
         for (let j = 0; y < height && j < numY; j++) {
           for (let i = 0; i < numX; i++) {
-            const basis = Math.cos((Math.PI * x * i) / width) * Math.cos((Math.PI * y * j) / height);
+            const basis =
+              Math.cos((Math.PI * x * i) / width) * Math.cos((Math.PI * y * j) / height);
             const color = colors[j * numX + i] || [0, 0, 0];
             r += color[0] * basis;
             g += color[1] * basis;

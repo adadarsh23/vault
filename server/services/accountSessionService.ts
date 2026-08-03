@@ -69,8 +69,6 @@ const decodeProfileValueFromStorage = (value: unknown): string => {
   }
 };
 
-
-
 const normalizeNewPassword = (value: unknown): string => {
   if (typeof value !== 'string') {
     throw AppError.badRequest('Current and new password are required.', 'INVALID_PASSWORD');
@@ -258,7 +256,8 @@ const buildSessionSummaries = (user: UserDocument, currentSessionId?: string) =>
       ipAddress: session.ipAddress,
       userAgent: session.userAgent,
       isCurrent: session.sessionId === currentSessionId,
-      deviceName: session.deviceName || parseDeviceNameFromUserAgent(session.userAgent) || 'Web Client',
+      deviceName:
+        session.deviceName || parseDeviceNameFromUserAgent(session.userAgent) || 'Web Client',
     }));
 
 const getUserOrThrow = async (
@@ -331,7 +330,11 @@ export const refreshAuthenticatedSession = async (input: {
       await user.save();
     }
 
-    throw new AppError(403, 'TOKEN_REUSE_DETECTED', 'Token reuse detected. Session lineage revoked.');
+    throw new AppError(
+      403,
+      'TOKEN_REUSE_DETECTED',
+      'Token reuse detected. Session lineage revoked.'
+    );
   }
 
   if (!session) {

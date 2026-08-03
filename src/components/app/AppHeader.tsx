@@ -43,13 +43,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   profileMonogram,
   connectionStatus: connectionStatusProp,
 }) => {
-  const [connectionStatus, setConnectionStatus] = React.useState<'connected' | 'error' | 'loading'>(() => {
-    if (connectionStatusProp) return connectionStatusProp;
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return 'error';
+  const [connectionStatus, setConnectionStatus] = React.useState<'connected' | 'error' | 'loading'>(
+    () => {
+      if (connectionStatusProp) return connectionStatusProp;
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        return 'error';
+      }
+      return 'connected';
     }
-    return 'connected';
-  });
+  );
 
   React.useEffect(() => {
     if (connectionStatusProp) {
@@ -261,10 +263,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               'absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-sidebar-bg transition-all duration-300 pointer-events-none z-10',
               connectionStatus === 'connected' &&
                 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]',
-              connectionStatus === 'error' &&
-                'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]',
-              connectionStatus === 'loading' &&
-                'bg-amber-500 animate-pulse'
+              connectionStatus === 'error' && 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]',
+              connectionStatus === 'loading' && 'bg-amber-500 animate-pulse'
             )}
             title={
               connectionStatus === 'connected'

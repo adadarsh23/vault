@@ -24,9 +24,18 @@ describe('Avatar Pipeline - Magic Byte & Security Validation', () => {
 
   it('detects WebP magic bytes (RIFF...WEBP)', () => {
     const webpBuffer = new Uint8Array([
-      0x52, 0x49, 0x46, 0x46, // RIFF
-      0x00, 0x00, 0x00, 0x00, // length
-      0x57, 0x45, 0x42, 0x50, // WEBP
+      0x52,
+      0x49,
+      0x46,
+      0x46, // RIFF
+      0x00,
+      0x00,
+      0x00,
+      0x00, // length
+      0x57,
+      0x45,
+      0x42,
+      0x50, // WEBP
     ]).buffer;
     const bytes = new Uint8Array(webpBuffer);
     expect(bytes[0]).toBe(0x52);

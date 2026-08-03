@@ -1,12 +1,15 @@
 {
   "requestedUrl": "http://127.0.0.1:4173/",
   "finalUrl": "http://127.0.0.1:4173/",
-  "fetchTime": "2026-08-01T12:48:29.430Z",
+  "fetchTime": "2026-08-03T05:30:06.775Z",
   "category": {
     "title": "SEO",
     "description": "These checks ensure that your page is following basic search engine optimization advice. There are many additional factors Lighthouse does not score here that may affect your search ranking, including performance on [Core Web Vitals](https://web.dev/explore/vitals). [Learn more about Google Search Essentials](https://support.google.com/webmasters/answer/35769).",
     "manualDescription": "Run these additional validators on your site to check additional SEO best practices.",
-    "supportedModes": ["navigation", "snapshot"],
+    "supportedModes": [
+      "navigation",
+      "snapshot"
+    ],
     "auditRefs": [
       {
         "id": "is-crawlable",

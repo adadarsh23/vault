@@ -24,9 +24,13 @@ export function detectDevice(): DeviceInfo {
   }
 
   const ua = navigator.userAgent || '';
-  const platform = (navigator as unknown as { userAgentData?: { platform?: string } }).userAgentData?.platform || navigator.platform || '';
+  const platform =
+    (navigator as unknown as { userAgentData?: { platform?: string } }).userAgentData?.platform ||
+    navigator.platform ||
+    '';
 
-  const isIOS = /iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const isAndroid = /Android/.test(ua);
   const isMac = /Mac/.test(platform) || /Macintosh/.test(ua) || isIOS;
   const isWindows = /Win/.test(platform) || /Windows/.test(ua);
@@ -92,7 +96,10 @@ export function getEffectivePlatform(
 /**
  * Translate generic shortcut key names into OS-native display strings
  */
-export function formatKeyForPlatform(key: string, platform: 'mac' | 'windows' | 'linux' | 'touch'): string {
+export function formatKeyForPlatform(
+  key: string,
+  platform: 'mac' | 'windows' | 'linux' | 'touch'
+): string {
   const isMac = platform === 'mac';
 
   // Normalize key name comparisons
@@ -151,7 +158,10 @@ export function formatKeyForPlatform(key: string, platform: 'mac' | 'windows' | 
 /**
  * Convert array of key tokens into OS formatted keys
  */
-export function formatKeysForPlatform(keys: string[], platform: 'mac' | 'windows' | 'linux' | 'touch'): string[] {
+export function formatKeysForPlatform(
+  keys: string[],
+  platform: 'mac' | 'windows' | 'linux' | 'touch'
+): string[] {
   return keys.map((key) => formatKeyForPlatform(key, platform));
 }
 
@@ -159,7 +169,9 @@ export function formatKeysForPlatform(keys: string[], platform: 'mac' | 'windows
  * Helper to match a live KeyboardEvent against a target key combo array
  */
 export function matchesShortcut(event: KeyboardEvent, keys: string[]): boolean {
-  const isMac = typeof navigator !== 'undefined' && (/Mac/.test(navigator.platform) || /Macintosh/.test(navigator.userAgent));
+  const isMac =
+    typeof navigator !== 'undefined' &&
+    (/Mac/.test(navigator.platform) || /Macintosh/.test(navigator.userAgent));
 
   const reqCtrlOrCmd = keys.some((k) => ['ctrl', 'cmd', 'mod'].includes(k.toLowerCase()));
   const reqAlt = keys.some((k) => ['alt', 'option', 'opt'].includes(k.toLowerCase()));

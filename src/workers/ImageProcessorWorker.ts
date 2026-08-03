@@ -31,7 +31,8 @@ export interface ImageProcessorErrorResponse {
 export type ImageProcessorResponse = ImageProcessorSuccessResponse | ImageProcessorErrorResponse;
 
 // Base83 Encoding for BlurHash
-const BASE83_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#$%*+,-.:;=?@[]^_{|}~';
+const BASE83_CHARS =
+  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#$%*+,-.:;=?@[]^_{|}~';
 
 function encode83(value: number, length: number): string {
   let result = '';
@@ -49,7 +50,9 @@ function srgbToLinear(value: number): number {
 
 function linearToSrgb(value: number): number {
   const v = Math.max(0, Math.min(1, value));
-  return v <= 0.0031308 ? Math.round(v * 12.92 * 255) : Math.round((1.055 * Math.pow(v, 1 / 2.4) - 0.055) * 255);
+  return v <= 0.0031308
+    ? Math.round(v * 12.92 * 255)
+    : Math.round((1.055 * Math.pow(v, 1 / 2.4) - 0.055) * 255);
 }
 
 function signPow(val: number, exp: number): number {
@@ -63,7 +66,9 @@ function encodeBlurHash(imageData: ImageData, componentX = 4, componentY = 3): s
 
   for (let y = 0; y < componentY; y++) {
     for (let x = 0; x < componentX; x++) {
-      let r = 0, g = 0, b = 0;
+      let r = 0,
+        g = 0,
+        b = 0;
       const normalisation = x === 0 && y === 0 ? 1 : 2;
 
       for (let i = 0; i < numPixels; i++) {
@@ -102,7 +107,7 @@ function encodeBlurHash(imageData: ImageData, componentX = 4, componentY = 3): s
   // Encode DC
   const quantiseDc = (val: number) => {
     const srgb = linearToSrgb(val);
-    return (Math.round(srgb) & 0xff);
+    return Math.round(srgb) & 0xff;
   };
   const dcR = quantiseDc(dc[0]);
   const dcG = quantiseDc(dc[1]);
@@ -113,9 +118,15 @@ function encodeBlurHash(imageData: ImageData, componentX = 4, componentY = 3): s
   // Encode AC
   const maxVal = maxAc === 0 ? 1 : maxAc;
   for (const factor of ac) {
-    const quantR = Math.floor(Math.max(0, Math.min(18, Math.floor(signPow(factor[0] / maxVal, 0.5) * 9 + 9.5))));
-    const quantG = Math.floor(Math.max(0, Math.min(18, Math.floor(signPow(factor[1] / maxVal, 0.5) * 9 + 9.5))));
-    const quantB = Math.floor(Math.max(0, Math.min(18, Math.floor(signPow(factor[2] / maxVal, 0.5) * 9 + 9.5))));
+    const quantR = Math.floor(
+      Math.max(0, Math.min(18, Math.floor(signPow(factor[0] / maxVal, 0.5) * 9 + 9.5)))
+    );
+    const quantG = Math.floor(
+      Math.max(0, Math.min(18, Math.floor(signPow(factor[1] / maxVal, 0.5) * 9 + 9.5)))
+    );
+    const quantB = Math.floor(
+      Math.max(0, Math.min(18, Math.floor(signPow(factor[2] / maxVal, 0.5) * 9 + 9.5)))
+    );
     const acValue = quantR * 19 * 19 + quantG * 19 + quantB;
     hash += encode83(acValue, 2);
   }
@@ -126,9 +137,12 @@ function encodeBlurHash(imageData: ImageData, componentX = 4, componentY = 3): s
 /**
  * Validates raw binary signatures (Magic Bytes)
  */
-function validateMagicBytes(buffer: ArrayBuffer, mimeType: string): { valid: boolean; detectedFormat: string } {
+function validateMagicBytes(
+  buffer: ArrayBuffer,
+  mimeType: string
+): { valid: boolean; detectedFormat: string } {
   const bytes = new Uint8Array(buffer.slice(0, 16));
-  
+
   // JPEG: FF D8 FF
   if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
     return { valid: true, detectedFormat: 'image/jpeg' };
@@ -189,7 +203,7 @@ function sanitizeSvgString(svgCode: string): string {
 }
 
 self.onmessage = async (event: MessageEvent<ImageProcessorRequest>) => {
-  const { id, type, fileBuffer, fileName, mimeType, targetSize = 400, quality = 0.78 } = event.data;
+  const { id, type, fileBuffer, mimeType, targetSize = 400, quality = 0.78 } = event.data;
 
   if (type !== 'PROCESS_IMAGE') {
     return;
@@ -256,7 +270,9 @@ self.onmessage = async (event: MessageEvent<ImageProcessorRequest>) => {
 
     // 4. OffscreenCanvas Processing
     let canvas: OffscreenCanvas | null = new OffscreenCanvas(finalSize, finalSize);
-    let ctx: OffscreenCanvasRenderingContext2D | null = canvas.getContext('2d', { willReadFrequently: true });
+    let ctx: OffscreenCanvasRenderingContext2D | null = canvas.getContext('2d', {
+      willReadFrequently: true,
+    });
 
     if (!ctx) {
       imageBitmap.close();
@@ -274,7 +290,9 @@ self.onmessage = async (event: MessageEvent<ImageProcessorRequest>) => {
     let blurHash = 'L00000fQ00fQ00fQ00fQ'; // Fallback
     try {
       let blurCanvas: OffscreenCanvas | null = new OffscreenCanvas(32, 32);
-      let blurCtx: OffscreenCanvasRenderingContext2D | null = blurCanvas.getContext('2d', { willReadFrequently: true });
+      let blurCtx: OffscreenCanvasRenderingContext2D | null = blurCanvas.getContext('2d', {
+        willReadFrequently: true,
+      });
       if (blurCtx) {
         blurCtx.drawImage(canvas, 0, 0, 32, 32);
         const blurData = blurCtx.getImageData(0, 0, 32, 32);
@@ -336,7 +354,7 @@ self.onmessage = async (event: MessageEvent<ImageProcessorRequest>) => {
     };
 
     // Post message back using Transferable Objects [outputBuffer]
-    self.postMessage(response, [outputBuffer]);
+    (self as any).postMessage(response, [outputBuffer]);
   } catch (error) {
     const response: ImageProcessorErrorResponse = {
       id,

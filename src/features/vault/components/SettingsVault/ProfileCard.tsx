@@ -97,7 +97,6 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
     profile?.username ||
     'Unknown'
   ).trim();
-  const avatarInitial = accountName.charAt(0).toUpperCase() || 'U';
   const hasProfilePhoto = savedProfilePhoto !== 'none' && savedProfilePhoto.length > 0;
 
   const [showProfilePopup, setShowProfilePopup] = React.useState(false);
@@ -117,9 +116,14 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
     (avatarUrl: string) => {
       setProfilePhotoInput(avatarUrl);
       setProfileSaveError(null);
-      onSaveProfile(savedProfileName !== 'none' ? savedProfileName : accountName, avatarUrl);
+      const activeName = (
+        profileNameInput.trim() || savedProfileName !== 'none'
+          ? profileNameInput.trim() || savedProfileName
+          : accountName
+      ).trim();
+      onSaveProfile(activeName || accountName, avatarUrl);
     },
-    [onSaveProfile, savedProfileName, accountName]
+    [onSaveProfile, profileNameInput, savedProfileName, accountName]
   );
 
   const fastAvatar = useFastAvatar({
@@ -539,7 +543,8 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 </div>
                 {!isPhotoInputValid ? (
                   <p className="text-xs text-red-500">
-                    Please use a valid HTTP/HTTPS image URL or upload an image file, or leave it blank.
+                    Please use a valid HTTP/HTTPS image URL or upload an image file, or leave it
+                    blank.
                   </p>
                 ) : null}
                 {profileSaveError ? (

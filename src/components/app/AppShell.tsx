@@ -16,146 +16,146 @@ import { useScrollRestoration } from '../../hooks/useScrollRestoration';
 
 const MaintenanceModal = lazy(() =>
   import('../vault/MaintenanceModal').then((m) => ({
-    default: m.MaintenanceModal || m.default,
+    default: m.MaintenanceModal || (m as any).default,
   }))
 );
 const CommandPalette = lazy(() =>
   import('../vault/CommandPalette').then((m) => ({
-    default: m.CommandPalette || m.default,
+    default: m.CommandPalette || (m as any).default,
   }))
 );
 
 // Main
 const Dashboard = lazy(() =>
   import('../../features/vault/Dashboard').then((m) => ({
-    default: m.Dashboard || m.default,
+    default: m.Dashboard || (m as any).default,
   }))
 );
 
 // Personal Information
 const IdentitiesVault = lazy(() =>
   import('../../features/vault/IdentitiesVault').then((m) => ({
-    default: m.IdentitiesVault || m.default,
+    default: m.IdentitiesVault || (m as any).default,
   }))
 );
 const ContactsVault = lazy(() =>
   import('../../features/vault/ContactsVault').then((m) => ({
-    default: m.ContactsVault || m.default,
+    default: m.ContactsVault || (m as any).default,
   }))
 );
 const PasswordManager = lazy(() =>
   import('../../features/vault/PasswordManager').then((m) => ({
-    default: m.PasswordManager || m.default,
+    default: m.PasswordManager || (m as any).default,
   }))
 );
 const CardsVault = lazy(() =>
   import('../../features/vault/CardsVault').then((m) => ({
-    default: m.CardsVault || m.default,
+    default: m.CardsVault || (m as any).default,
   }))
 );
 const WifiVault = lazy(() =>
   import('../../features/vault/WifiVault').then((m) => ({
-    default: m.WifiVault || m.default,
+    default: m.WifiVault || (m as any).default,
   }))
 );
 const SecretsVault = lazy(() =>
   import('../../features/vault/SecretsVault').then((m) => ({
-    default: m.SecretsVault || m.default,
+    default: m.SecretsVault || (m as any).default,
   }))
 );
 
 // Notes & Productivity
 const NotesVault = lazy(() =>
   import('../../features/vault/NotesVault').then((m) => ({
-    default: m.NotesVault || m.default,
+    default: m.NotesVault || (m as any).default,
   }))
 );
 const TodoVault = lazy(() =>
   import('../../features/vault/TodoVault').then((m) => ({
-    default: m.TodoVault || m.default,
+    default: m.TodoVault || (m as any).default,
   }))
 );
 const ChatVault = lazy(() =>
   import('../../features/vault/ChatVault').then((m) => ({
-    default: m.ChatVault || m.default,
+    default: m.ChatVault || (m as any).default,
   }))
 );
 const LocationVault = lazy(() =>
   import('../../features/vault/LocationVault').then((m) => ({
-    default: m.LocationVault || m.default,
+    default: m.LocationVault || (m as any).default,
   }))
 );
 
 // Media
 const MediaVault = lazy(() =>
   import('../../features/vault/MediaVault').then((m) => ({
-    default: m.MediaVault || m.default,
+    default: m.MediaVault || (m as any).default,
   }))
 );
 const AudioVault = lazy(() =>
   import('../../features/vault/AudioVault').then((m) => ({
-    default: m.AudioVault || m.default,
+    default: m.AudioVault || (m as any).default,
   }))
 );
 
 // Documents & Files
 const DocumentsVault = lazy(() =>
   import('../../features/vault/DocumentsVault').then((m) => ({
-    default: m.DocumentsVault || m.default,
+    default: m.DocumentsVault || (m as any).default,
   }))
 );
 const OtherFilesVault = lazy(() =>
   import('../../features/vault/OtherFilesVault').then((m) => ({
-    default: m.OtherFilesVault || m.default,
+    default: m.OtherFilesVault || (m as any).default,
   }))
 );
 
 // App
 const PrivacyInterfacePage = lazy(() =>
   import('../../features/vault/PrivacyInterfacePage').then((m) => ({
-    default: m.PrivacyInterfacePage || m.default,
+    default: m.PrivacyInterfacePage || (m as any).default,
   }))
 );
 const ShortcutsPage = lazy(() =>
   import('../../features/vault/ShortcutsPage').then((m) => ({
-    default: m.ShortcutsPage || m.default,
+    default: m.ShortcutsPage || (m as any).default,
   }))
 );
 const SettingsVault = lazy(() =>
   import('../../features/vault/SettingsVault').then((m) => ({
-    default: m.SettingsVault || m.default,
+    default: m.SettingsVault || (m as any).default,
   }))
 );
 
 // System & Other
 const SystemLogsPage = lazy(() =>
   import('../../features/vault/SystemLogsPage').then((m) => ({
-    default: m.SystemLogsPage || m.default,
+    default: m.SystemLogsPage || (m as any).default,
   }))
 );
 const DeviceSessionsPage = lazy(() =>
   import('../../features/vault/DeviceSessionsPage').then((m) => ({
-    default: m.DeviceSessionsPage || m.default,
+    default: m.DeviceSessionsPage || (m as any).default,
   }))
 );
 const VaultEcosystemPage = lazy(() =>
   import('../../features/vault/VaultEcosystemPage').then((m) => ({
-    default: m.VaultEcosystemPage || m.default,
+    default: m.VaultEcosystemPage || (m as any).default,
   }))
 );
 const LegalPage = lazy(() =>
   import('../../features/LegalPage').then((m) => ({
-    default: m.LegalPage || m.default,
+    default: m.LegalPage || (m as any).default,
   }))
 );
 const ContactPage = lazy(() =>
   import('../../features/ContactPage').then((m) => ({
-    default: m.ContactPage || m.default,
+    default: m.ContactPage || (m as any).default,
   }))
 );
 const NotFoundPage = lazy(() =>
   import('../../features/NotFoundPage').then((m) => ({
-    default: m.NotFoundPage || m.default,
+    default: m.NotFoundPage || (m as any).default,
   }))
 );
 
@@ -726,10 +726,7 @@ export function AppShell({
                             <PrivacyInterfacePage onBack={() => navigateToTab('settings')} />
                           }
                         />
-                        <Route
-                          path="/shortcuts"
-                          element={<ShortcutsPage />}
-                        />
+                        <Route path="/shortcuts" element={<ShortcutsPage />} />
                         <Route
                           path="/settings"
                           element={

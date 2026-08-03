@@ -193,8 +193,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     const readTimeMinutes = Math.max(1, Math.ceil(words / 200));
 
     const byteSize = new Blob([text]).size;
-    const formattedSize =
-      byteSize < 1024 ? `${byteSize} B` : `${(byteSize / 1024).toFixed(1)} KB`;
+    const formattedSize = byteSize < 1024 ? `${byteSize} B` : `${(byteSize / 1024).toFixed(1)} KB`;
 
     const codeBlockMatches = text.match(/```[a-z]*[\s\S]*?```/gi);
     const codeBlockCount = codeBlockMatches ? codeBlockMatches.length : 0;
@@ -583,7 +582,10 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                         >
                           <BookOpen className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
                           <span>
-                            <span className="text-text/60">~{contentStats.readTimeMinutes} min</span> read
+                            <span className="text-text/60">
+                              ~{contentStats.readTimeMinutes} min
+                            </span>{' '}
+                            read
                           </span>
                         </div>
                         <div
@@ -621,8 +623,8 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           >
                             <Code className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
                             <span>
-                              <span className="text-text/60">{contentStats.codeBlockCount}</span> code
-                              block{contentStats.codeBlockCount > 1 ? 's' : ''}
+                              <span className="text-text/60">{contentStats.codeBlockCount}</span>{' '}
+                              code block{contentStats.codeBlockCount > 1 ? 's' : ''}
                             </span>
                           </div>
                         )}
@@ -668,7 +670,8 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           >
                             <Paperclip className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
                             <span>
-                              <span className="text-text/60">{attachedItems.length}</span> attachment
+                              <span className="text-text/60">{attachedItems.length}</span>{' '}
+                              attachment
                               {attachedItems.length > 1 ? 's' : ''}
                             </span>
                           </div>

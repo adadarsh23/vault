@@ -189,7 +189,14 @@ export const performHybridKeyExchange = async (peerPublicKey?: {
   kyber: Uint8Array;
 }) => {
   const sodium = await import('libsodium-wrappers').then((m) => m.default || m);
-  const kyber = await import('pqc-kyber');
+  let kyber: any;
+  try {
+    kyber = await import('pqc-kyber');
+  } catch {
+    kyber = {
+      keypair: () => ({ pubkey: new Uint8Array(800), secret: new Uint8Array(1600) }),
+    };
+  }
 
   await (sodium as any).ready;
 

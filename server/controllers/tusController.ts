@@ -21,14 +21,20 @@ interface TusSession {
 
 const tusSessions = new Map<string, TusSession>();
 
-export const createTusUploadController = async (req: AuthenticatedRequest, res: express.Response) => {
+export const createTusUploadController = async (
+  req: AuthenticatedRequest,
+  res: express.Response
+) => {
   const userId = req.user.userId;
   const username = req.user.username;
 
   const lengthHeader = req.headers['upload-length'];
   const metadataHeader = req.headers['upload-metadata'];
 
-  const fileSize = parseInt((Array.isArray(lengthHeader) ? lengthHeader[0] : lengthHeader) || '0', 10);
+  const fileSize = parseInt(
+    (Array.isArray(lengthHeader) ? lengthHeader[0] : lengthHeader) || '0',
+    10
+  );
   if (isNaN(fileSize) || fileSize <= 0) {
     throw AppError.badRequest('Missing or invalid Upload-Length header.', 'INVALID_TUS_LENGTH');
   }
@@ -78,7 +84,9 @@ export const createTusUploadController = async (req: AuthenticatedRequest, res: 
 };
 
 export const getTusOffsetController = async (req: AuthenticatedRequest, res: express.Response) => {
-  const { uploadId } = req.params;
+  const uploadId = Array.isArray(req.params.uploadId)
+    ? req.params.uploadId[0]
+    : req.params.uploadId;
   const session = tusSessions.get(uploadId);
 
   if (!session) {
@@ -93,8 +101,13 @@ export const getTusOffsetController = async (req: AuthenticatedRequest, res: exp
   return res.status(200).end();
 };
 
-export const uploadTusChunkController = async (req: AuthenticatedRequest, res: express.Response) => {
-  const { uploadId } = req.params;
+export const uploadTusChunkController = async (
+  req: AuthenticatedRequest,
+  res: express.Response
+) => {
+  const uploadId = Array.isArray(req.params.uploadId)
+    ? req.params.uploadId[0]
+    : req.params.uploadId;
   const session = tusSessions.get(uploadId);
 
   if (!session) {
@@ -102,7 +115,10 @@ export const uploadTusChunkController = async (req: AuthenticatedRequest, res: e
   }
 
   const offsetHeader = req.headers['upload-offset'];
-  const reqOffset = parseInt((Array.isArray(offsetHeader) ? offsetHeader[0] : offsetHeader) || '0', 10);
+  const reqOffset = parseInt(
+    (Array.isArray(offsetHeader) ? offsetHeader[0] : offsetHeader) || '0',
+    10
+  );
 
   if (reqOffset !== session.offset) {
     res.setHeader('Tus-Resumable', '1.0.0');
@@ -115,8 +131,8 @@ export const uploadTusChunkController = async (req: AuthenticatedRequest, res: e
   const chunkBuffer = Buffer.isBuffer(req.body)
     ? req.body
     : req.body instanceof Uint8Array
-    ? Buffer.from(req.body)
-    : Buffer.from(req.body || []);
+      ? Buffer.from(req.body)
+      : Buffer.from(req.body || []);
 
   if (chunkBuffer.length > 0) {
     await fs.appendFile(session.filePath, chunkBuffer);

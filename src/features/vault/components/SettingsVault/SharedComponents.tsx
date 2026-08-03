@@ -28,14 +28,22 @@ export const StatCard = React.memo<{
   icon: React.ElementType;
   iconClassName?: string;
 }>(({ label, value, hint, icon: Icon, iconClassName = 'text-text/80' }) => (
-  <div className={`${SETTINGS_PANEL} flex h-full flex-col justify-between gap-2.5 p-3.5 sm:p-4 min-w-0`}>
+  <div
+    className={`${SETTINGS_PANEL} flex h-full flex-col justify-between gap-2.5 p-3.5 sm:p-4 min-w-0`}
+  >
     <div className="flex items-center gap-2 min-w-0">
       <Icon className={`h-4 w-4 shrink-0 ${iconClassName}`} />
-      <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.18em] text-text/40 truncate">{label}</p>
+      <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.18em] text-text/40 truncate">
+        {label}
+      </p>
     </div>
     <div className="space-y-1 min-w-0">
-      <div className="text-base sm:text-lg font-bold leading-tight text-text truncate max-w-full">{value}</div>
-      <p className="text-[11px] sm:text-xs leading-tight sm:leading-5 text-text/45 truncate">{hint}</p>
+      <div className="text-base sm:text-lg font-bold leading-tight text-text truncate max-w-full">
+        {value}
+      </div>
+      <p className="text-[11px] sm:text-xs leading-tight sm:leading-5 text-text/45 truncate">
+        {hint}
+      </p>
     </div>
   </div>
 ));
@@ -63,7 +71,9 @@ export const ShortcutCard = React.memo<{
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          <p className={`text-xs sm:text-sm font-semibold sm:font-medium leading-tight sm:leading-snug print:text-black ${isHighlighted ? 'text-emerald-400 font-semibold' : 'text-text'}`}>
+          <p
+            className={`text-xs sm:text-sm font-semibold sm:font-medium leading-tight sm:leading-snug print:text-black ${isHighlighted ? 'text-emerald-400 font-semibold' : 'text-text'}`}
+          >
             {label}
           </p>
           {badge && (
@@ -72,7 +82,11 @@ export const ShortcutCard = React.memo<{
             </span>
           )}
         </div>
-        {description ? <p className="mt-0.5 text-[11px] sm:text-xs text-text/45 leading-relaxed print:text-gray-600">{description}</p> : null}
+        {description ? (
+          <p className="mt-0.5 text-[11px] sm:text-xs text-text/45 leading-relaxed print:text-gray-600">
+            {description}
+          </p>
+        ) : null}
       </div>
       <div className="flex flex-wrap shrink-0 items-center gap-1 sm:gap-1.5 justify-start xs:justify-end mt-0.5 xs:mt-0">
         {formattedKeys.map((key, index) => (

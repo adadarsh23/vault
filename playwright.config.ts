@@ -3,6 +3,13 @@ import { chromium, defineConfig, devices, firefox, webkit } from '@playwright/te
 
 process.env.NO_PROXY = process.env.NO_PROXY ?? '127.0.0.1,localhost';
 process.env.no_proxy = process.env.no_proxy ?? '127.0.0.1,localhost';
+
+// Set a sentinel BEFORE applying defaults so auth helpers can distinguish
+// "user explicitly provided credentials" from "config-supplied fallbacks".
+if (process.env.E2E_USERNAME && process.env.E2E_ACCOUNT_PASSWORD && process.env.E2E_MASTER_KEY) {
+  process.env.E2E_CREDENTIALS_CONFIGURED = '1';
+}
+
 process.env.E2E_USERNAME = process.env.E2E_USERNAME || 'demo-user';
 process.env.E2E_ACCOUNT_PASSWORD = process.env.E2E_ACCOUNT_PASSWORD || 'DemoPassword123!';
 process.env.E2E_MASTER_KEY = process.env.E2E_MASTER_KEY || 'DemoMasterKey123!';
@@ -83,6 +90,9 @@ export default defineConfig({
             VITE_APP_PUBLIC_URL: baseURL,
             TRUST_PROXY: '1',
             SKIP_MONGO_CONNECT: '1',
+            SKIP_CAPTCHA: '1',
+            SKIP_RECAPTCHA: '1',
+            VITE_SKIP_CAPTCHA: 'true',
             KEEP_ALIVE_ENABLED: '0',
             ENABLE_OVERLOAD_PROTECTION: '0',
             ALLOW_LOCAL_CORS_ORIGINS: '1',

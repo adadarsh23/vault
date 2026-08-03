@@ -1,7 +1,6 @@
 /* @vitest-environment jsdom */
 
-import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShortcutsPage } from '../ShortcutsPage';
 import { ShortcutsCard } from '../components/SettingsVault/ShortcutsCard';
@@ -10,10 +9,12 @@ import { matchesShortcut, formatKeyForPlatform, detectDevice } from '../../../li
 describe('Controls & Shortcuts Integration Test Suite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    Object.assign(navigator, {
-      clipboard: {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
         writeText: vi.fn().mockResolvedValue(undefined),
       },
+      writable: true,
+      configurable: true,
     });
   });
 
@@ -69,7 +70,9 @@ describe('Controls & Shortcuts Integration Test Suite', () => {
     it('handles search input and clear button', () => {
       render(<ShortcutsCard />);
 
-      const searchInput = screen.getByPlaceholderText(/Search shortcuts by name/i) as HTMLInputElement;
+      const searchInput = screen.getByPlaceholderText(
+        /Search shortcuts by name/i
+      ) as HTMLInputElement;
       fireEvent.change(searchInput, { target: { value: 'password' } });
 
       expect(searchInput.value).toBe('password');

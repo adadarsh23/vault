@@ -1,10 +1,14 @@
 {
   "requestedUrl": "http://127.0.0.1:4173/",
   "finalUrl": "http://127.0.0.1:4173/",
-  "fetchTime": "2026-08-01T12:48:29.430Z",
+  "fetchTime": "2026-08-03T05:30:06.775Z",
   "category": {
     "title": "Best Practices",
-    "supportedModes": ["navigation", "timespan", "snapshot"],
+    "supportedModes": [
+      "navigation",
+      "timespan",
+      "snapshot"
+    ],
     "auditRefs": [
       {
         "id": "is-on-https",
@@ -604,10 +608,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-UtPjT5ss.js",
+              "url": "http://127.0.0.1:4173/assets/index-C8Q4iUEF.js",
               "urlProvider": "network",
               "line": 1,
-              "column": 5241
+              "column": 5264
             }
           },
           {
@@ -794,10 +798,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/react-framework-i9PqEzaV.js",
+              "url": "http://127.0.0.1:4173/assets/react-framework-B2Raobs-.js",
               "urlProvider": "network",
               "line": 7,
-              "column": 126573
+              "column": 126513
             }
           },
           {
@@ -893,6 +897,25 @@
               "urlProvider": "network",
               "line": -2,
               "column": -2
+            }
+          },
+          {
+            "featureId": {
+              "type": "link",
+              "text": "nullish-coalescing",
+              "url": "https://webstatus.dev/features/nullish-coalescing"
+            },
+            "displayStatus": {
+              "type": "baseline-status",
+              "status": "high",
+              "displayString": "Widely Available (2020-09-16)"
+            },
+            "source": {
+              "type": "source-location",
+              "url": "http://127.0.0.1:4173/",
+              "urlProvider": "network",
+              "line": 0,
+              "column": 0
             }
           },
           {
@@ -1107,8 +1130,8 @@
           {
             "featureId": {
               "type": "link",
-              "text": "nullish-coalescing",
-              "url": "https://webstatus.dev/features/nullish-coalescing"
+              "text": "logical-assignments",
+              "url": "https://webstatus.dev/features/logical-assignments"
             },
             "displayStatus": {
               "type": "baseline-status",
@@ -1126,25 +1149,6 @@
           {
             "featureId": {
               "type": "link",
-              "text": "logical-assignments",
-              "url": "https://webstatus.dev/features/logical-assignments"
-            },
-            "displayStatus": {
-              "type": "baseline-status",
-              "status": "high",
-              "displayString": "Widely Available (2020-09-16)"
-            },
-            "source": {
-              "type": "source-location",
-              "url": "http://127.0.0.1:4173/",
-              "urlProvider": "network",
-              "line": 0,
-              "column": 0
-            }
-          },
-          {
-            "featureId": {
-              "type": "link",
               "text": "template",
               "url": "https://webstatus.dev/features/template"
             },
@@ -1155,10 +1159,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/markdown-B4yeINSJ.js",
+              "url": "http://127.0.0.1:4173/assets/markdown-DhEi6gt8.js",
               "urlProvider": "network",
               "line": 92,
-              "column": 10449
+              "column": 10439
             }
           },
           {
@@ -1174,7 +1178,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/sonner-BQLKe6mf.js",
+              "url": "http://127.0.0.1:4173/assets/sonner-BdNwiVwJ.js",
               "urlProvider": "network",
               "line": 0,
               "column": 389
@@ -1193,10 +1197,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/react-framework-i9PqEzaV.js",
+              "url": "http://127.0.0.1:4173/assets/react-framework-B2Raobs-.js",
               "urlProvider": "network",
               "line": 7,
-              "column": 35309
+              "column": 35301
             }
           },
           {
@@ -1212,10 +1216,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/motion-DPW2syRc.js",
+              "url": "http://127.0.0.1:4173/assets/motion-BHcRPNbT.js",
               "urlProvider": "network",
               "line": 0,
-              "column": 3077
+              "column": 3064
             }
           },
           {
@@ -1421,10 +1425,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/motion-DPW2syRc.js",
+              "url": "http://127.0.0.1:4173/assets/motion-BHcRPNbT.js",
               "urlProvider": "network",
               "line": 8,
-              "column": 29203
+              "column": 29192
             }
           },
           {
@@ -1440,7 +1444,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/Background-HQJNYX7h.js",
+              "url": "http://127.0.0.1:4173/assets/Background-Dnu9gCo4.js",
               "urlProvider": "network",
               "line": 0,
               "column": 952
@@ -1459,10 +1463,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/motion-DPW2syRc.js",
+              "url": "http://127.0.0.1:4173/assets/motion-BHcRPNbT.js",
               "urlProvider": "network",
               "line": 0,
-              "column": 24435
+              "column": 24403
             }
           },
           {
@@ -1478,10 +1482,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/particles-B8VACB6u.js",
+              "url": "http://127.0.0.1:4173/assets/particles-CGs9XHh0.js",
               "urlProvider": "network",
               "line": 0,
-              "column": 70667
+              "column": 70601
             }
           },
           {
@@ -1497,10 +1501,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/particles-B8VACB6u.js",
+              "url": "http://127.0.0.1:4173/assets/particles-CGs9XHh0.js",
               "urlProvider": "network",
               "line": 0,
-              "column": 22102
+              "column": 22094
             }
           },
           {
@@ -1516,10 +1520,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/particles-B8VACB6u.js",
+              "url": "http://127.0.0.1:4173/assets/particles-CGs9XHh0.js",
               "urlProvider": "network",
               "line": 0,
-              "column": 24554
+              "column": 24528
             }
           }
         ]
@@ -1626,48 +1630,48 @@
         ],
         "items": [
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/vendor-BAxwZ9Fw.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/vendor-BAxwZ9Fw.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/vendor-Cki8RIZ6.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/vendor-Cki8RIZ6.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/vaultStore-BSrrCT83.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultStore-BSrrCT83.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/vaultStore-Dms2UzJV.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultStore-Dms2UzJV.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/vaultDragDrop-BtvKIJz5.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultDragDrop-BtvKIJz5.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/vaultDragDrop-CLM1w5Fm.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultDragDrop-CLM1w5Fm.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/utils-DPbvEFr8.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/utils-DPbvEFr8.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/utils-DLAuqZKG.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/utils-DLAuqZKG.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/utils-Dey0ucG2.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/utils-Dey0ucG2.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/utils-BOWRQTpg.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/utils-BOWRQTpg.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/use-media-query-_vfXllCX.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/use-media-query-_vfXllCX.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/use-media-query-BA1yWSUG.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/use-media-query-BA1yWSUG.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1682,232 +1686,240 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/themeStore-D7kmHb7a.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/themeStore-D7kmHb7a.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/themeStore-es6M66xv.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/themeStore-es6M66xv.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/sonner-BQLKe6mf.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/sonner-BQLKe6mf.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/sonner-BdNwiVwJ.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/sonner-BdNwiVwJ.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/sentry-DPoeIDRM.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/sentry-DPoeIDRM.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/sentry-D-_lWFY-.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/sentry-D-_lWFY-.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/sentry-DOhDoUrs.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/sentry-DOhDoUrs.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/sentry-BZyRakuo.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/sentry-BZyRakuo.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/react-framework-i9PqEzaV.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/react-framework-i9PqEzaV.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/react-framework-B2Raobs-.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/react-framework-B2Raobs-.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/particles-B8VACB6u.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/particles-B8VACB6u.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/particles-CGs9XHh0.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/particles-CGs9XHh0.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/NavigationHandler-Cia8YwDf.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/NavigationHandler-Cia8YwDf.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/NavigationHandler-C6gESuY5.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/NavigationHandler-C6gESuY5.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/motion-DPW2syRc.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/motion-DPW2syRc.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/motion-BHcRPNbT.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/motion-BHcRPNbT.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/markdown-B4yeINSJ.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/markdown-B4yeINSJ.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/markdown-DhEi6gt8.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/markdown-DhEi6gt8.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/logrocket-B_7NlU5U.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/logrocket-B_7NlU5U.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/logrocket-BzhIMjA0.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/logrocket-BzhIMjA0.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-ChOmu8r5.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-ChOmu8r5.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-DQPyXhZv.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-DQPyXhZv.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LoadingScreen-CGXgo2jK.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LoadingScreen-CGXgo2jK.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/LoadingScreen-Cb0LXZJX.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LoadingScreen-Cb0LXZJX.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LandingPage-D3fHCoWi.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LandingPage-D3fHCoWi.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/LandingPage-D-OD75W2.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LandingPage-D-OD75W2.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/index-UtPjT5ss.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-UtPjT5ss.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/Input-DURNafGl.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/Input-DURNafGl.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/icons-Dfph14Gf.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/icons-Dfph14Gf.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/index-C8Q4iUEF.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-C8Q4iUEF.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/globalNavigationStore-Y0vtQR3H.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/globalNavigationStore-Y0vtQR3H.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/icons-BcapvwfL.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/icons-BcapvwfL.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/global-navigation-VlBHGmpa.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/global-navigation-VlBHGmpa.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/globalNavigationStore-JxbFqpNi.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/globalNavigationStore-JxbFqpNi.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/Footer-1zh5Kjza.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/Footer-1zh5Kjza.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/global-navigation-Bq0poNiB.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/global-navigation-Bq0poNiB.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/ErrorFallback-H65sLBo0.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/ErrorFallback-H65sLBo0.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/Footer-CU-vfVIU.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/Footer-CU-vfVIU.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/ErrorBoundary-Czx-pkUo.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/ErrorBoundary-Czx-pkUo.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/ErrorFallback-DdPrSejM.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/ErrorFallback-DdPrSejM.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/csrf-9atKLAaH.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/csrf-9atKLAaH.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/ErrorBoundary-CIhBh5gY.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/ErrorBoundary-CIhBh5gY.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/crypto-core-BncuEOiR.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/crypto-core-BncuEOiR.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/csrf-DS7cV9NI.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/csrf-DS7cV9NI.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/Button-DtOLtlVA.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/Button-DtOLtlVA.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/crypto-core-DlvLAump.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/crypto-core-DlvLAump.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/Background-HQJNYX7h.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/Background-HQJNYX7h.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/Button-AJ4Jl1Zf.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/Button-AJ4Jl1Zf.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/auth-api-sNHiKFeb.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/auth-api-sNHiKFeb.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/Background-Dnu9gCo4.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/Background-Dnu9gCo4.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/apiClient-DD5PzMsJ.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/apiClient-DD5PzMsJ.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/auth-api-zi_nKkiU.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/auth-api-zi_nKkiU.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/activityStore-C8Pz8WCl.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/activityStore-C8Pz8WCl.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/apiClient-BeuY8qKp.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/apiClient-BeuY8qKp.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/activity-aqn1hmXb.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/activity-aqn1hmXb.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/activityStore-YYa4m0if.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/activityStore-YYa4m0if.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/2fa-qrcode-MVA1BCSr.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/2fa-qrcode-MVA1BCSr.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/activity-CL5-jRQd.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/activity-CL5-jRQd.js.map",
+            "subItems": {
+              "type": "subitems",
+              "items": []
+            }
+          },
+          {
+            "scriptUrl": "http://127.0.0.1:4173/assets/2fa-qrcode-BycBnbbb.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/2fa-qrcode-BycBnbbb.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
