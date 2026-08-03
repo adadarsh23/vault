@@ -23,7 +23,8 @@ const encryptedKeySchema = new mongoose.Schema(
     },
     salt: {
       type: String,
-      required: true,
+      required: false,
+      default: null,
       description: 'Salt for key derivation',
     },
     algorithm: {

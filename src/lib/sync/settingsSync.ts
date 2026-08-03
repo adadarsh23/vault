@@ -12,6 +12,7 @@ export const uploadSettingsToCloud = async (
   masterKey: string | CryptoKey,
   options: { force?: boolean } = {}
 ) => {
+  const force = options.force ?? true;
   try {
     const encryptedSettings = await encryptData(JSON.stringify(settings), masterKey);
 
@@ -32,7 +33,7 @@ export const uploadSettingsToCloud = async (
       },
       'Settings Cloud Sync',
       MAX_RETRIES,
-      options.force ? {} : { silentStatuses: [409] }
+      force ? {} : { silentStatuses: [409] }
     );
   } catch (error) {
     const candidate = error as Error & { status?: number; code?: string };
@@ -41,7 +42,7 @@ export const uploadSettingsToCloud = async (
       candidate.code === 'DUPLICATE_RESOURCE' ||
       (error instanceof Error && error.message.toLowerCase().includes('already exists'));
 
-    if (isDuplicate && !options.force) {
+    if (isDuplicate && !force) {
       logger.warn('Settings already exist on cloud; skipping initial upload.');
       return;
     }

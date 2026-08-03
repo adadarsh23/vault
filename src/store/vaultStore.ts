@@ -320,6 +320,8 @@ const exportRsaKeysIfAvailable = async (
   return exportRSAKeyPair(rsaKeyPair);
 };
 
+let settingsSyncChain: Promise<void> = Promise.resolve();
+
 const queueSettingsSync = ({
   masterKey,
   preferences,
@@ -337,13 +339,16 @@ const queueSettingsSync = ({
     return;
   }
 
-  runInBackground(
-    (async () => {
-      const exportedRsa = await exportRsaKeysIfAvailable(rsaKeyPair);
-      await VaultService.syncSettings(masterKey, preferences, allowRestrictedTypes, exportedRsa);
-    })(),
-    context
-  );
+  settingsSyncChain = settingsSyncChain
+    .catch(() => {})
+    .then(async () => {
+      try {
+        const exportedRsa = await exportRsaKeysIfAvailable(rsaKeyPair);
+        await VaultService.syncSettings(masterKey, preferences, allowRestrictedTypes, exportedRsa);
+      } catch (error) {
+        console.warn(`[${context}] Settings sync failed:`, getErrorMessage(error, 'Sync error'));
+      }
+    });
 };
 
 const hasPreferenceUpdates = (

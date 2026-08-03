@@ -1,7 +1,7 @@
 {
   "requestedUrl": "http://127.0.0.1:4173/",
   "finalUrl": "http://127.0.0.1:4173/",
-  "fetchTime": "2026-08-03T05:30:06.775Z",
+  "fetchTime": "2026-08-03T10:59:26.010Z",
   "category": {
     "title": "Best Practices",
     "supportedModes": [
@@ -608,7 +608,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-C8Q4iUEF.js",
+              "url": "http://127.0.0.1:4173/assets/index-EeCQ33TH.js",
               "urlProvider": "network",
               "line": 1,
               "column": 5264
@@ -798,10 +798,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/react-framework-B2Raobs-.js",
+              "url": "http://127.0.0.1:4173/assets/react-framework-CFQyJwF9.js",
               "urlProvider": "network",
               "line": 7,
-              "column": 126513
+              "column": 126520
             }
           },
           {
@@ -1142,7 +1142,7 @@
               "type": "source-location",
               "url": "http://127.0.0.1:4173/",
               "urlProvider": "network",
-              "line": 232,
+              "line": 237,
               "column": 0
             }
           },
@@ -1178,7 +1178,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/sonner-BdNwiVwJ.js",
+              "url": "http://127.0.0.1:4173/assets/sonner-BcDKWKPp.js",
               "urlProvider": "network",
               "line": 0,
               "column": 389
@@ -1197,10 +1197,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/react-framework-B2Raobs-.js",
+              "url": "http://127.0.0.1:4173/assets/react-framework-CFQyJwF9.js",
               "urlProvider": "network",
               "line": 7,
-              "column": 35301
+              "column": 35308
             }
           },
           {
@@ -1638,8 +1638,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/vaultStore-Dms2UzJV.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultStore-Dms2UzJV.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/vaultStore-JjENyXKM.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultStore-JjENyXKM.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1686,16 +1686,16 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/themeStore-es6M66xv.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/themeStore-es6M66xv.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/themeStore-BeEYyRzX.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/themeStore-BeEYyRzX.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/sonner-BdNwiVwJ.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/sonner-BdNwiVwJ.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/sonner-BcDKWKPp.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/sonner-BcDKWKPp.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1718,8 +1718,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/react-framework-B2Raobs-.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/react-framework-B2Raobs-.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/react-framework-CFQyJwF9.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/react-framework-CFQyJwF9.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1734,8 +1734,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/NavigationHandler-C6gESuY5.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/NavigationHandler-C6gESuY5.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/NavigationHandler-CdwFDycj.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/NavigationHandler-CdwFDycj.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1766,8 +1766,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-DQPyXhZv.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-DQPyXhZv.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-BClWM02T.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-BClWM02T.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1782,8 +1782,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LandingPage-D-OD75W2.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LandingPage-D-OD75W2.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/LandingPage-K5eFR-ZZ.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LandingPage-K5eFR-ZZ.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1798,8 +1798,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/index-C8Q4iUEF.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-C8Q4iUEF.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/index-EeCQ33TH.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-EeCQ33TH.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1814,8 +1814,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/globalNavigationStore-JxbFqpNi.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/globalNavigationStore-JxbFqpNi.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/globalNavigationStore-CTHmr11C.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/globalNavigationStore-CTHmr11C.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1830,8 +1830,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/Footer-CU-vfVIU.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/Footer-CU-vfVIU.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/Footer-BROwMDBc.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/Footer-BROwMDBc.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1902,16 +1902,16 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/activityStore-YYa4m0if.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/activityStore-YYa4m0if.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/activityStore-B--U_StL.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/activityStore-B--U_StL.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/activity-CL5-jRQd.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/activity-CL5-jRQd.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/activity-DjsegF5S.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/activity-DjsegF5S.js.map",
             "subItems": {
               "type": "subitems",
               "items": []

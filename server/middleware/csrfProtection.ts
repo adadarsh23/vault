@@ -1,12 +1,13 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import csurf from 'csurf';
+import crypto from 'node:crypto';
 
 type SameSitePolicy = 'strict' | 'lax' | 'none';
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const CSRF_COOKIE_NAME = process.env.CSRF_COOKIE_NAME?.trim() || 'vault_csrf_secret';
 const CSRF_COOKIE_PATH = process.env.CSRF_COOKIE_PATH?.trim() || '/';
+const CSRF_SECRET = process.env.CSRF_SECRET || 'vault_super_secret_csrf_key_2026';
 
 const resolveCsrfCookieSameSite = (): SameSitePolicy => {
   const raw = process.env.CSRF_COOKIE_SAME_SITE?.trim().toLowerCase();
@@ -57,16 +58,21 @@ const shouldSkipCsrfInCurrentRuntime = (): boolean => {
   return isKnownTestRunner();
 };
 
-const csrfProtection = csurf({
-  cookie: {
-    key: CSRF_COOKIE_NAME,
-    httpOnly: true,
-    secure: resolveCsrfCookieSecure(),
-    sameSite: resolveCsrfCookieSameSite(),
-    path: CSRF_COOKIE_PATH,
-  },
-  ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
-});
+const generateTokenAndSecret = (): { secret: string; token: string } => {
+  const secret = crypto.randomBytes(32).toString('hex');
+  const token = crypto.createHmac('sha256', CSRF_SECRET).update(secret).digest('hex');
+  return { secret, token };
+};
+
+const verifyToken = (secret: string | undefined, token: string | undefined): boolean => {
+  if (!secret || !token) return false;
+  try {
+    const expectedToken = crypto.createHmac('sha256', CSRF_SECRET).update(secret).digest('hex');
+    return crypto.timingSafeEqual(Buffer.from(expectedToken), Buffer.from(token));
+  } catch {
+    return false;
+  }
+};
 
 const writeCsrfTokenResponseHeaders = (res: express.Response) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -76,7 +82,7 @@ const writeCsrfTokenResponseHeaders = (res: express.Response) => {
 
 /**
  * Installs cookie parsing and CSRF token validation for /api routes.
- * Also exposes a token bootstrap endpoint for SPA clients.
+ * Uses modern Double-Submit Cookie pattern with HMAC timing-safe validation.
  */
 export const installCsrfProtection = (app: express.Express): void => {
   app.use(cookieParser());
@@ -92,13 +98,43 @@ export const installCsrfProtection = (app: express.Express): void => {
     return;
   }
 
-  app.get('/api/auth/csrf-token', csrfProtection, (req, res) => {
+  app.get('/api/auth/csrf-token', (req, res) => {
     writeCsrfTokenResponseHeaders(res);
+    const { secret, token } = generateTokenAndSecret();
+
+    res.cookie(CSRF_COOKIE_NAME, secret, {
+      httpOnly: true,
+      secure: resolveCsrfCookieSecure(),
+      sameSite: resolveCsrfCookieSameSite(),
+      path: CSRF_COOKIE_PATH,
+    });
+
     return res.status(200).json({
       success: true,
-      data: { csrfToken: req.csrfToken() },
+      data: { csrfToken: token },
     });
   });
 
-  app.use('/api', csrfProtection);
+  app.use('/api', (req, res, next) => {
+    const method = req.method.toUpperCase();
+    if (['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+      return next();
+    }
+
+    const secret = req.cookies?.[CSRF_COOKIE_NAME];
+    const headerToken =
+      (req.headers['x-csrf-token'] as string) ||
+      (req.headers['csrf-token'] as string) ||
+      (req.body && (req.body._csrf as string));
+
+    if (!verifyToken(secret, headerToken)) {
+      const csrfError = new Error('Invalid or missing CSRF token.');
+      (csrfError as any).status = 403;
+      (csrfError as any).statusCode = 403;
+      (csrfError as any).code = 'CSRF_TOKEN_INVALID';
+      return next(csrfError);
+    }
+
+    next();
+  });
 };

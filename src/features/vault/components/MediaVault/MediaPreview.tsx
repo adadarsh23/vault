@@ -156,6 +156,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className={cn(
               'relative flex items-center justify-center bg-black/90 overflow-hidden',
               'h-[100svh] w-[100vw] rounded-none border-0 shadow-none'

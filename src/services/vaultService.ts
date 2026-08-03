@@ -308,6 +308,6 @@ export const VaultService = {
       payload.rsaKeys = normalizedRsaKeys;
     }
 
-    await uploadSettingsToCloud(payload, key, options);
+    await uploadSettingsToCloud(payload, key, { force: true, ...options });
   },
 };

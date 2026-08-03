@@ -115,6 +115,8 @@ export const saveMasterKeyToCloud = async (payload: {
     keyVersion: string;
   };
   masterKeyHash: string;
+  masterKey?: string;
+  password?: string;
   deviceId: string;
   recoveryPhrasesEncrypted?: string;
   metadata?: {

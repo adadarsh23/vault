@@ -208,6 +208,10 @@ export const prepareMasterKeyForCloud = async (
     // Generate salt if not provided
     const usedSalt = salt || uint8ArrayToBase64(crypto.getRandomValues(new Uint8Array(16)));
 
+    if (masterKey && password && masterKey === password) {
+      throw new Error('Master key and account password must not be identical');
+    }
+
     // Generate cloud protection key
     const cloudProtectionKey = await generateCloudProtectionKey(password, usedSalt);
 

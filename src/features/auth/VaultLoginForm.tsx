@@ -356,6 +356,17 @@ export const VaultLoginForm: React.FC<Props> = memo(
         return;
       }
 
+      if (
+        !twoFactorRequired &&
+        !cloudSessionActive &&
+        accountPassword &&
+        vaultKey &&
+        accountPassword === vaultKey
+      ) {
+        toast.warning('Account password and Master Key must not be identical');
+        return;
+      }
+
       if (requiresCaptcha && !isCaptchaCompleted) {
         toast.warning('Please complete CAPTCHA before submitting.');
         return;
@@ -391,6 +402,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
 
         const isConflict = error?.status === 409 || error?.code === 'DUPLICATE_RESOURCE';
 
+        const msg = String(error?.message || '');
         if (isConflict && authMode === 'register') {
           toast.error('Account Already Exists', {
             description: 'This username is already taken. Would you like to sign in instead?',
@@ -401,6 +413,15 @@ export const VaultLoginForm: React.FC<Props> = memo(
                 toast.dismiss();
               },
             },
+          });
+        } else if (
+          /candidate salts exhausted/i.test(msg) ||
+          /master key is incorrect/i.test(msg) ||
+          /could not be decrypted/i.test(msg)
+        ) {
+          toast.error('Master Key Incorrect', {
+            description:
+              'The account password is valid, but the Master Key is incorrect or cannot decrypt this vault.',
           });
         } else {
           handleError(error, twoFactorRequired ? '2FA Verification' : 'Vault Unlock');

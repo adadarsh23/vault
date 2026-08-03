@@ -12,7 +12,7 @@ interface EncryptedMasterKeyPayload {
   cipherText: string;
   iv: string;
   authTag: string;
-  salt: string;
+  salt?: string | null;
   algorithm?: string;
   keyVersion?: string;
 }
@@ -55,14 +55,14 @@ const formatEncryptedMasterKeyForDisplay = (
         cipherTextLength: encryptedKey.cipherText.length,
         ivLength: encryptedKey.iv.length,
         authTagLength: encryptedKey.authTag.length,
-        saltLength: encryptedKey.salt.length,
+        saltLength: encryptedKey.salt ? encryptedKey.salt.length : 0,
       },
     },
     security: {
       cipherTextPreview: `${encryptedKey.cipherText.substring(0, 20)}...${encryptedKey.cipherText.substring(encryptedKey.cipherText.length - 20)}`,
       ivPreview: `${encryptedKey.iv.substring(0, 12)}...`,
       authTagPreview: `${encryptedKey.authTag.substring(0, 12)}...`,
-      saltPreview: `${encryptedKey.salt.substring(0, 12)}...`,
+      saltPreview: encryptedKey.salt ? `${encryptedKey.salt.substring(0, 12)}...` : null,
     },
   };
 };

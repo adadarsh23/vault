@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: vault-mongodb
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+    restart: always
+
+  app:
+    build: .
+    container_name: vault-app
+    ports:
+      - '4000:4000'
+    environment:
+      - NODE_ENV=development
+      - PORT=4000
+      - MONGODB_URI=mongodb://mongodb:27017/personal-vault
+      - JWT_SECRET=dev-jwt-secret-key-at-least-32-chars-long-for-signing
+      - REFRESH_TOKEN_SECRET=dev-refresh-token-secret-key-for-refreshing
+      - VAULT_ENCRYPTION_KEY=dGhpcy1pcy1hLTMyLWJ5dGUtYmFzZTY0LWtleS1mb3ItZGV2ZWxvcG1lbnQ=
+      - AUTH_PEPPER=dev-auth-pepper-string
+      - VITE_API_BASE_URL=http://localhost:4000
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+    restart: always
+
+volumes:
+  mongodb_data:

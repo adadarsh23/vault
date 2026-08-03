@@ -456,6 +456,12 @@ export const registerUser = async (input: {
       ? rawIdentifier
       : undefined;
   const masterKey = (input.masterKey || 'default-vault-master-key-2026').trim();
+  if (input.password && masterKey && input.password === masterKey) {
+    throw AppError.badRequest(
+      'Account password and master key must not be identical.',
+      'AUTH_SAME_CREDENTIALS'
+    );
+  }
   const pqcSalt =
     typeof input.pqcSalt === 'string' && input.pqcSalt.trim()
       ? input.pqcSalt.trim()

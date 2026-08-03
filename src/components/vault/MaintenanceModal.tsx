@@ -21,7 +21,16 @@ import {
   normalizeGeneratedCredentialLength,
   validatePassword,
 } from '../../lib/utils';
-import { changeAccountPassword, verifyMasterKeyChangeCaptcha } from '../../lib/auth-api';
+import { getDeviceId } from '../../lib/auth-session';
+import {
+  changeAccountPassword,
+  fetchVaultSalt,
+  verifyMasterKeyChangeCaptcha,
+} from '../../lib/auth-api';
+import { getVaultId } from '../../lib/sync';
+import { deriveKey } from '../../lib/cryptoPrimitives';
+import { prepareMasterKeyForCloud } from '../../lib/cloudMasterKey';
+import { saveMasterKeyToCloud } from '../../lib/cloudMasterKeyApi';
 import { useRecaptchaChallenge } from '../../hooks/useRecaptchaChallenge';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
@@ -77,8 +86,7 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
 
   useLayoutEffect(() => {
     if (isOpen && step === 1) {
-      if (type === 'changePassword') currentPasswordRef.current?.focus();
-      if (type === 'changeKey') newKeyRef.current?.focus();
+      if (type === 'changePassword' || type === 'changeKey') currentPasswordRef.current?.focus();
     }
   }, [isOpen, step, type]);
 
@@ -275,11 +283,29 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
     reader.readAsText(importFile);
   };
   const handleChangeKey = async () => {
+    if (!currentPassword) return toast.error('Current account password is required');
     if (!newKey || !confirmKey) return toast.error('New key and confirmation required');
     if (newKey.length < 16) return toast.error('Master key must be 16+ characters');
     if (newKey !== confirmKey) return toast.error('Keys do not match');
+    if (newKey === currentPassword)
+      return toast.error('Master key and account password must not be identical');
     if (!isCaptchaCompleted || !captchaToken)
       return toast.error('Please complete CAPTCHA before continuing.');
+
+    const username = useVaultStore.getState().username;
+    const activeVaultId = useVaultStore.getState().vaultId;
+    if (username && activeVaultId) {
+      try {
+        const salt = await fetchVaultSalt(username).catch(() => `${username}-vault-pqc-salt`);
+        const derivedNewKey = await deriveKey(newKey, salt);
+        const newVaultId = await getVaultId(derivedNewKey);
+        if (newVaultId === activeVaultId) {
+          return toast.error('New master key must be different from current master key');
+        }
+      } catch (e) {
+        console.error('Key derivation check failed:', e);
+      }
+    }
 
     const validation = validatePassword(newKey);
     if (!validation.isValid)
@@ -289,6 +315,17 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
     setStep(2);
     try {
       await verifyMasterKeyChangeCaptcha(captchaToken);
+
+      const deviceId = getDeviceId();
+      if (username && deviceId) {
+        const cloudPayload = await prepareMasterKeyForCloud(newKey, currentPassword, deviceId);
+        await saveMasterKeyToCloud({
+          ...cloudPayload,
+          password: currentPassword,
+          masterKey: newKey,
+        });
+      }
+
       await changeMasterKey(newKey, (done, total) => setProgress(Math.round((done / total) * 100)));
       setStep(3);
       resetCaptchaChallenge();
@@ -298,10 +335,18 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
       fullLogout({ skipServerLogout: true });
       onClose();
       toast.info('Please sign in again with your new master key.');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      const message = typeof err?.message === 'string' ? err.message.toLowerCase() : '';
+      const code = typeof err?.code === 'string' ? err.code : '';
       setCaptchaRejected('Security verification failed. Complete CAPTCHA and retry.');
-      toast.error('Failed to change master key');
+      if (code === 'INVALID_CREDENTIALS' || message.includes('current password is incorrect')) {
+        toast.error('Current password is incorrect');
+      } else if (code === 'AUTH_SAME_CREDENTIALS' || message.includes('must not be identical')) {
+        toast.error('Master key and account password must not be identical');
+      } else {
+        toast.error(err?.message || 'Failed to change master key');
+      }
       setStep(1);
     } finally {
       setIsProcessing(false);
@@ -313,6 +358,24 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
     if (!currentPassword) return toast.error('Current password is required');
     if (!newKey || !confirmKey) return toast.error('New password and confirmation required');
     if (newKey !== confirmKey) return toast.error('New password and confirmation do not match');
+    if (newKey === currentPassword)
+      return toast.error('New password must be different from current password');
+
+    const username = useVaultStore.getState().username;
+    const activeVaultId = useVaultStore.getState().vaultId;
+    if (username && activeVaultId) {
+      try {
+        const salt = await fetchVaultSalt(username).catch(() => `${username}-vault-pqc-salt`);
+        const derivedNewKey = await deriveKey(newKey, salt);
+        const newVaultId = await getVaultId(derivedNewKey);
+        if (newVaultId === activeVaultId) {
+          return toast.error('Account password and master key must not be identical');
+        }
+      } catch (e) {
+        console.error('Password derivation check failed:', e);
+      }
+    }
+
     if (!isCaptchaCompleted || !captchaToken)
       return toast.error('Please complete CAPTCHA before continuing.');
 
@@ -343,6 +406,8 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
         toast.error('Current password is incorrect');
       } else if (code === 'PASSWORD_UNCHANGED') {
         toast.error('New password must be different from current password');
+      } else if (code === 'AUTH_SAME_CREDENTIALS' || message.includes('must not be identical')) {
+        toast.error('Account password and master key must not be identical');
       } else if (code === 'AUTH_WEAK_PASSWORD') {
         toast.error('New password does not meet security requirements');
       } else if (code === 'TOO_MANY_PASSWORD_CHANGE_ATTEMPTS') {
@@ -517,6 +582,51 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
 
                   {type === 'changeKey' && (
                     <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="change-key-current-account-password"
+                          className="text-[10px] font-bold uppercase tracking-widest text-text/30"
+                        >
+                          Current Account Password
+                        </label>
+                        <div className="relative">
+                          <Input
+                            id="change-key-current-account-password"
+                            type={showCurrentPassword ? 'text' : 'password'}
+                            autoComplete="current-password"
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            placeholder="Enter your current sign-in password"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            ref={currentPasswordRef}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                newKeyRef.current?.focus();
+                              }
+                            }}
+                            className="pr-10 bg-white/5 border-white/10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-text/20 hover:text-text/60 transition-colors"
+                            aria-label={
+                              showCurrentPassword
+                                ? 'Hide current password'
+                                : 'Show current password'
+                            }
+                          >
+                            {showCurrentPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
                       <div className="space-y-2">
                         <label
                           htmlFor="new-master-key"

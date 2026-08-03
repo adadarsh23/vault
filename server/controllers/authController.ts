@@ -174,6 +174,13 @@ export const register = async (req: express.Request, res: express.Response) => {
       ? req.body.masterKey.trim()
       : 'default-vault-master-key-2026';
 
+  if (req.body.password && masterKey && req.body.password === masterKey) {
+    throw AppError.badRequest(
+      'Account password and master key must not be identical.',
+      'AUTH_SAME_CREDENTIALS'
+    );
+  }
+
   try {
     const result = await registerUser({
       username: req.body.username,

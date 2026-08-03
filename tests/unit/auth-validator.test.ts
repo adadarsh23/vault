@@ -132,6 +132,17 @@ describe('registerSchema', () => {
     expect(result.success).toBe(false);
   });
 
+  it('rejects registration when password and master key are identical', () => {
+    const result = registerSchema.safeParse({
+      username: 'Alice',
+      password: 'Strongpassword123!',
+      masterKey: 'Strongpassword123!',
+      captchaToken: CAPTCHA_TOKEN,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it('accepts valid registration payloads', () => {
     const parsed = registerSchema.parse({
       username: 'Alice',
@@ -151,6 +162,16 @@ describe('changePasswordSchema', () => {
     const result = changePasswordSchema.safeParse({
       currentPassword: '',
       newPassword: 'Validpassword123!',
+      captchaToken: CAPTCHA_TOKEN,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects newPassword equal to currentPassword', () => {
+    const result = changePasswordSchema.safeParse({
+      currentPassword: 'Replacementpass123!',
+      newPassword: 'Replacementpass123!',
       captchaToken: CAPTCHA_TOKEN,
     });
 

@@ -9,6 +9,8 @@ import {
 } from '../services/masterKeyService.ts';
 import { logger } from '../utils/logger.ts';
 import { getClientIp } from '../utils/requestIp.ts';
+import { User } from '../models/user.ts';
+import { comparePassword, decryptText } from '../utils/crypto.ts';
 
 /**
  * Master Key Controller
@@ -198,6 +200,50 @@ export const handleSaveMasterKey = async (
           message: 'Invalid metadata derivation parameters',
         },
       });
+    }
+
+    const userDoc = await User.findById(userId).select('+password').lean().exec();
+    if (userDoc?.password) {
+      try {
+        const passwordHash = decryptText(userDoc.password as any);
+
+        const currentAccountPassword =
+          typeof (req.body as any).password === 'string' && (req.body as any).password.trim()
+            ? (req.body as any).password.trim()
+            : undefined;
+
+        if (currentAccountPassword) {
+          const isPasswordValid = await comparePassword(currentAccountPassword, passwordHash);
+          if (!isPasswordValid) {
+            return res.status(401).json({
+              success: false,
+              error: {
+                code: 'INVALID_CREDENTIALS',
+                message: 'Current password is incorrect',
+              },
+            });
+          }
+        }
+
+        const rawKeyCandidate =
+          typeof (req.body as any).masterKey === 'string' ? (req.body as any).masterKey : undefined;
+        if (rawKeyCandidate) {
+          const isSameAsPassword = await comparePassword(rawKeyCandidate, passwordHash);
+          if (isSameAsPassword) {
+            return res.status(400).json({
+              success: false,
+              error: {
+                code: 'AUTH_SAME_CREDENTIALS',
+                message: 'Master key and account password must not be identical',
+              },
+            });
+          }
+        }
+      } catch (error) {
+        if ((error as any)?.statusCode || (error as any)?.code) {
+          throw error;
+        }
+      }
     }
 
     await saveCloudMasterKey(userId, username, encryptedMasterKey, {

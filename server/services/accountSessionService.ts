@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { User, UserDocument } from '../models/user.ts';
 import { RefreshToken } from '../models/RefreshToken.ts';
+import { getMasterKeyModel } from '../models/masterKey.ts';
 import { issueUserSession, parseDeviceNameFromUserAgent } from './authService.ts';
 import { verifyRefreshToken } from '../utils/auth.ts';
 import { comparePassword, decryptText, encryptText, hashPassword } from '../utils/crypto.ts';
@@ -481,11 +482,49 @@ export const changeAuthenticatedPassword = async (input: {
     );
   }
 
-  const user = await getUserOrThrow(input.userId, '+password');
+  const user = await getUserOrThrow(input.userId, '+password +masterKey +meta.masterKey');
   const currentHash = decryptText(user.password as any);
   const isValid = await comparePassword(currentPassword, currentHash);
   if (!isValid) {
     throw AppError.unauthorized('Current password is incorrect.', 'INVALID_CREDENTIALS');
+  }
+
+  const rawMasterKey = (user as any).masterKey || (user as any).meta?.masterKey;
+  if (rawMasterKey) {
+    try {
+      const decryptedMasterKey = decryptText(rawMasterKey as any);
+      if (decryptedMasterKey && decryptedMasterKey === nextPassword) {
+        throw AppError.badRequest(
+          'Account password and master key must not be identical.',
+          'AUTH_SAME_CREDENTIALS'
+        );
+      }
+    } catch {
+      // Ignore decryption failure if masterKey format differs
+    }
+  }
+
+  try {
+    const MasterKeyModel = getMasterKeyModel(user.username);
+    const cloudMasterKeyDoc = await MasterKeyModel.findOne({
+      userId: user._id.toString(),
+      isDeleted: false,
+    })
+      .select({ masterKeyHash: 1 })
+      .lean()
+      .exec();
+    if (cloudMasterKeyDoc?.masterKeyHash) {
+      const decryptedHash = decryptText(cloudMasterKeyDoc.masterKeyHash as any);
+      const matchesMasterKey = await comparePassword(nextPassword, decryptedHash);
+      if (matchesMasterKey) {
+        throw AppError.badRequest(
+          'Account password and master key must not be identical.',
+          'AUTH_SAME_CREDENTIALS'
+        );
+      }
+    }
+  } catch (error) {
+    if (error instanceof AppError) throw error;
   }
 
   const nextHash = await hashPassword(nextPassword);

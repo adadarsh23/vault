@@ -1,0 +1,241 @@
+{
+  "requestedUrl": "http://127.0.0.1:4173/",
+  "finalUrl": "http://127.0.0.1:4173/",
+  "fetchTime": "2026-08-03T05:30:06.775Z",
+  "category": {
+    "title": "SEO",
+    "description": "These checks ensure that your page is following basic search engine optimization advice. There are many additional factors Lighthouse does not score here that may affect your search ranking, including performance on [Core Web Vitals](https://web.dev/explore/vitals). [Learn more about Google Search Essentials](https://support.google.com/webmasters/answer/35769).",
+    "manualDescription": "Run these additional validators on your site to check additional SEO best practices.",
+    "supportedModes": [
+      "navigation",
+      "snapshot"
+    ],
+    "auditRefs": [
+      {
+        "id": "is-crawlable",
+        "weight": 4.043478260869565,
+        "group": "seo-crawl"
+      },
+      {
+        "id": "document-title",
+        "weight": 1,
+        "group": "seo-content"
+      },
+      {
+        "id": "meta-description",
+        "weight": 1,
+        "group": "seo-content"
+      },
+      {
+        "id": "http-status-code",
+        "weight": 1,
+        "group": "seo-crawl"
+      },
+      {
+        "id": "link-text",
+        "weight": 1,
+        "group": "seo-content"
+      },
+      {
+        "id": "crawlable-anchors",
+        "weight": 1,
+        "group": "seo-crawl"
+      },
+      {
+        "id": "robots-txt",
+        "weight": 1,
+        "group": "seo-crawl"
+      },
+      {
+        "id": "image-alt",
+        "weight": 0,
+        "group": "seo-content"
+      },
+      {
+        "id": "hreflang",
+        "weight": 1,
+        "group": "seo-content"
+      },
+      {
+        "id": "canonical",
+        "weight": 1,
+        "group": "seo-content"
+      },
+      {
+        "id": "structured-data",
+        "weight": 0
+      }
+    ],
+    "id": "seo",
+    "score": 1
+  },
+  "audits": {
+    "is-crawlable": {
+      "id": "is-crawlable",
+      "title": "Page isn’t blocked from indexing",
+      "description": "Search engines are unable to include your pages in search results if they don't have permission to crawl them. [Learn more about crawler directives](https://developer.chrome.com/docs/lighthouse/seo/is-crawlable/).",
+      "score": 1,
+      "scoreDisplayMode": "binary",
+      "warnings": [],
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "source",
+            "valueType": "code",
+            "label": "Blocking Directive Source"
+          }
+        ],
+        "items": []
+      }
+    },
+    "document-title": {
+      "id": "document-title",
+      "title": "Document has a `<title>` element",
+      "description": "The title gives screen reader users an overview of the page, and search engine users rely on it heavily to determine if a page is relevant to their search. [Learn more about document titles](https://dequeuniversity.com/rules/axe/4.11/document-title).",
+      "score": 1,
+      "scoreDisplayMode": "binary",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "node",
+            "valueType": "node",
+            "subItemsHeading": {
+              "key": "relatedNode",
+              "valueType": "node"
+            },
+            "label": "Failing Elements"
+          }
+        ],
+        "items": []
+      }
+    },
+    "meta-description": {
+      "id": "meta-description",
+      "title": "Document has a meta description",
+      "description": "Meta descriptions may be included in search results to concisely summarize page content. [Learn more about the meta description](https://developer.chrome.com/docs/lighthouse/seo/meta-description/).",
+      "score": 1,
+      "scoreDisplayMode": "binary"
+    },
+    "http-status-code": {
+      "id": "http-status-code",
+      "title": "Page has successful HTTP status code",
+      "description": "Pages with unsuccessful HTTP status codes may not be indexed properly. [Learn more about HTTP status codes](https://developer.chrome.com/docs/lighthouse/seo/http-status-code/).",
+      "score": 1,
+      "scoreDisplayMode": "binary"
+    },
+    "link-text": {
+      "id": "link-text",
+      "title": "Links have descriptive text",
+      "description": "Descriptive link text helps search engines understand your content. [Learn how to make links more accessible](https://developer.chrome.com/docs/lighthouse/seo/link-text/).",
+      "score": 1,
+      "scoreDisplayMode": "binary",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "href",
+            "valueType": "url",
+            "label": "Link destination"
+          },
+          {
+            "key": "text",
+            "valueType": "text",
+            "label": "Link Text"
+          }
+        ],
+        "items": []
+      }
+    },
+    "crawlable-anchors": {
+      "id": "crawlable-anchors",
+      "title": "Links are crawlable",
+      "description": "Search engines may use `href` attributes on links to crawl websites. Ensure that the `href` attribute of anchor elements links to an appropriate destination, so more pages of the site can be discovered. [Learn how to make links crawlable](https://support.google.com/webmasters/answer/9112205)",
+      "score": 1,
+      "scoreDisplayMode": "binary",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "node",
+            "valueType": "node",
+            "label": "Uncrawlable Link"
+          }
+        ],
+        "items": []
+      }
+    },
+    "robots-txt": {
+      "id": "robots-txt",
+      "title": "robots.txt is valid",
+      "description": "If your robots.txt file is malformed, crawlers may not be able to understand how you want your website to be crawled or indexed. [Learn more about robots.txt](https://developer.chrome.com/docs/lighthouse/seo/invalid-robots-txt/).",
+      "score": 1,
+      "scoreDisplayMode": "binary",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "index",
+            "valueType": "text",
+            "label": "Line #"
+          },
+          {
+            "key": "line",
+            "valueType": "code",
+            "label": "Content"
+          },
+          {
+            "key": "message",
+            "valueType": "code",
+            "label": "Error"
+          }
+        ],
+        "items": []
+      }
+    },
+    "image-alt": {
+      "id": "image-alt",
+      "title": "Image elements have `[alt]` attributes",
+      "description": "Informative elements should aim for short, descriptive alternate text. Decorative elements can be ignored with an empty alt attribute. [Learn more about the `alt` attribute](https://dequeuniversity.com/rules/axe/4.11/image-alt).",
+      "score": null,
+      "scoreDisplayMode": "notApplicable"
+    },
+    "hreflang": {
+      "id": "hreflang",
+      "title": "Document has a valid `hreflang`",
+      "description": "hreflang links tell search engines what version of a page they should list in search results for a given language or region. [Learn more about `hreflang`](https://developer.chrome.com/docs/lighthouse/seo/hreflang/).",
+      "score": 1,
+      "scoreDisplayMode": "binary",
+      "details": {
+        "type": "table",
+        "headings": [
+          {
+            "key": "source",
+            "valueType": "code",
+            "subItemsHeading": {
+              "key": "reason",
+              "valueType": "text"
+            },
+            "label": ""
+          }
+        ],
+        "items": []
+      }
+    },
+    "canonical": {
+      "id": "canonical",
+      "title": "Document has a valid `rel=canonical`",
+      "description": "Canonical links suggest which URL to show in search results. [Learn more about canonical links](https://developer.chrome.com/docs/lighthouse/seo/canonical/).",
+      "score": 1,
+      "scoreDisplayMode": "binary"
+    },
+    "structured-data": {
+      "id": "structured-data",
+      "title": "Structured data is valid",
+      "description": "Run the [Structured Data Testing Tool](https://developers.google.com/search/docs/appearance/structured-data/) to validate structured data. [Learn more about Structured Data](https://developer.chrome.com/docs/lighthouse/seo/structured-data/).",
+      "score": null,
+      "scoreDisplayMode": "manual"
+    }
+  }
+}

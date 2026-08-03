@@ -63,8 +63,6 @@ type WindowWithIdle = Window & {
 const HLS_WARM_CACHE_MAX = 3;
 const hlsWarmCache = new Map<string, string>();
 const PREVIEW_REQUEST_TIMEOUT_MS = 10000;
-const HLS_READY_WAIT_MAX_MS = 30000;
-const HLS_READY_RETRY_DELAY_MS = 3000;
 
 const withTimeout = async <T,>(
   promise: Promise<T>,
@@ -78,11 +76,6 @@ const withTimeout = async <T,>(
     ),
   ]);
 };
-
-const sleep = (ms: number) =>
-  new Promise<void>((resolve) => {
-    setTimeout(resolve, ms);
-  });
 
 const touchWarmCache = (key: string, url: string) => {
   if (hlsWarmCache.has(key)) {
@@ -257,22 +250,15 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
                 return;
               }
 
-              const hlsStart = Date.now();
               let hlsUrl: string | null = null;
-              while (!hlsUrl && !cancelled) {
-                try {
-                  hlsUrl = await withTimeout(getHlsPlaylistUrl(current.id), 3500, 'HLS_TIMEOUT');
-                } catch {
-                  const waited = Date.now() - hlsStart;
-                  if (waited >= HLS_READY_WAIT_MAX_MS) {
-                    break;
-                  }
-                  await sleep(HLS_READY_RETRY_DELAY_MS);
-                }
+              try {
+                hlsUrl = await withTimeout(getHlsPlaylistUrl(current.id), 1500, 'HLS_TIMEOUT');
+              } catch {
+                hlsUrl = null;
               }
 
               if (!hlsUrl) {
-                // If HLS is still not ready, fallback to direct signed playback URL.
+                // If HLS is not immediately available, fallback to direct signed playback URL.
                 hlsUrl = await withTimeout(
                   getSignedUrl(current.id, 'view'),
                   PREVIEW_REQUEST_TIMEOUT_MS,
@@ -281,7 +267,9 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
               }
 
               if (cancelled) return;
-              touchWarmCache(current.id, hlsUrl);
+              if (hlsUrl.includes('.m3u8')) {
+                touchWarmCache(current.id, hlsUrl);
+              }
               setManagedBlob(null);
               setUrl(hlsUrl);
               return;

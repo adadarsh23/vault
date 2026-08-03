@@ -276,6 +276,13 @@ export const useVaultAuth = (options?: {
         return false;
       }
 
+      if (accountPassword && vaultKey && accountPassword === vaultKey) {
+        toast.error('Security Requirement Error', {
+          description: 'Account password and Master Key must not be identical.',
+        });
+        return false;
+      }
+
       setStatus('authenticating');
       setCurrentLayer(-1);
       pendingMasterKeyRef.current = null;
@@ -597,11 +604,13 @@ export const useVaultAuth = (options?: {
             status: 'failure',
           });
         } else if (
-          /master key is incorrect or the vault data could not be decrypted/i.test(errorMessage)
+          /candidate salts exhausted/i.test(errorMessage) ||
+          /master key is incorrect/i.test(errorMessage) ||
+          /could not be decrypted/i.test(errorMessage)
         ) {
-          toast.error('Master Key does not match', {
+          toast.error('Master Key Incorrect', {
             description:
-              'The account password is valid, but the Master Key cannot decrypt this vault.',
+              'The account password is valid, but the Master Key is incorrect or cannot decrypt this vault.',
           });
           logActivity({
             actionType: 'auth_login',

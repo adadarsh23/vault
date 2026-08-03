@@ -4,6 +4,13 @@ import { logger } from './logger.ts';
 
 export enum ErrorCode {
   AUTH_FAILED = 'auth/failed',
+  INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
+  AUTH_SAME_CREDENTIALS = 'AUTH_SAME_CREDENTIALS',
+  AUTH_WEAK_PASSWORD = 'AUTH_WEAK_PASSWORD',
+  USER_EXISTS = 'USER_EXISTS',
+  TOO_MANY_AUTH_ATTEMPTS = 'TOO_MANY_AUTH_ATTEMPTS',
+  CAPTCHA_FAILED = 'CAPTCHA_FAILED',
+  SESSION_EXPIRED = 'SESSION_EXPIRED',
   STORAGE_DISCONNECTED = 'storage/disconnected',
   PERMISSION_DENIED = 'permission-denied',
   QUOTA_EXCEEDED = 'quota-exceeded',
@@ -37,7 +44,7 @@ const extractErrorMessage = (error: any): string | null => {
     error?.data?.error?.message,
     error?.data?.message,
     error?.message,
-    error?.name, // Add error name (e.g. DataError, QuotaExceededError)
+    error?.name,
     typeof error === 'string' ? error : null,
   ];
 
@@ -47,7 +54,6 @@ const extractErrorMessage = (error: any): string | null => {
     }
   }
 
-  // Fallback for objects that might just have a code
   if (error?.code && typeof error.code === 'string') {
     return `Error code: ${error.code}`;
   }
@@ -57,12 +63,19 @@ const extractErrorMessage = (error: any): string | null => {
 
 const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.AUTH_FAILED]: 'Failed to authenticate with security server.',
+  [ErrorCode.INVALID_CREDENTIALS]: 'The username or password provided is incorrect.',
+  [ErrorCode.AUTH_SAME_CREDENTIALS]: 'Master key and account password must not be identical.',
+  [ErrorCode.AUTH_WEAK_PASSWORD]: 'Password does not meet security requirements.',
+  [ErrorCode.USER_EXISTS]: 'This username is already registered.',
+  [ErrorCode.TOO_MANY_AUTH_ATTEMPTS]: 'Too many failed attempts. Please try again later.',
+  [ErrorCode.CAPTCHA_FAILED]: 'Security verification failed. Please retry CAPTCHA.',
+  [ErrorCode.SESSION_EXPIRED]: 'Your session has expired. Please sign in again.',
   [ErrorCode.STORAGE_DISCONNECTED]: 'Storage connection lost. Please check your internet.',
   [ErrorCode.PERMISSION_DENIED]: 'You do not have permission to perform this action.',
   [ErrorCode.QUOTA_EXCEEDED]: 'Storage quota exceeded. Please contact support.',
   [ErrorCode.UPLOAD_FAILED]: 'Failed to backup data to cloud.',
   [ErrorCode.DOWNLOAD_FAILED]: 'Failed to sync data from cloud.',
-  [ErrorCode.DECRYPTION_FAILED]: 'Failed to decrypt data. Master key might be incorrect.',
+  [ErrorCode.DECRYPTION_FAILED]: 'Master key is incorrect or vault data could not be decrypted.',
   [ErrorCode.ENCRYPTION_FAILED]: 'Failed to encrypt data.',
   [ErrorCode.NETWORK_ERROR]: 'Network error occurred. Please try again.',
   [ErrorCode.UNKNOWN]: 'An unexpected error occurred.',
@@ -78,49 +91,59 @@ export const handleError = (error: any, context?: string): AppError => {
   let code = ErrorCode.UNKNOWN;
   let message = ERROR_MESSAGES[ErrorCode.UNKNOWN];
 
-  // Cloud Storage Error Mapping
-  if (error?.code || error?.status) {
-    const errCode = error.code || error.status;
-    switch (errCode) {
-      case 'storage/unauthorized':
-      case 'permission-denied':
-      case 403:
-        code = ErrorCode.PERMISSION_DENIED;
-        break;
-      case 'storage/quota-exceeded':
-        code = ErrorCode.QUOTA_EXCEEDED;
-        break;
-      case 'storage/retry-limit-exceeded':
-      case 'network-error':
-      case 503:
-        code = ErrorCode.NETWORK_ERROR;
-        break;
-      case 'auth/network-request-failed':
-      case 504:
-        code = ErrorCode.STORAGE_DISCONNECTED;
-        break;
-      case 404:
-        code = ErrorCode.DOWNLOAD_FAILED;
-        break;
-    }
-  }
+  const rawCode = error?.code || error?.error?.code || error?.status || error?.response?.status;
+  const rawMsg = extractErrorMessage(error) || '';
 
-  if (error instanceof DOMException && error.name === 'AbortError') {
+  if (
+    rawCode === 'INVALID_CREDENTIALS' ||
+    rawCode === 401 ||
+    /invalid username or password/i.test(rawMsg)
+  ) {
+    code = ErrorCode.INVALID_CREDENTIALS;
+  } else if (rawCode === 'AUTH_SAME_CREDENTIALS' || /must not be identical/i.test(rawMsg)) {
+    code = ErrorCode.AUTH_SAME_CREDENTIALS;
+  } else if (rawCode === 'AUTH_WEAK_PASSWORD' || /password requirement/i.test(rawMsg)) {
+    code = ErrorCode.AUTH_WEAK_PASSWORD;
+  } else if (
+    rawCode === 'USER_EXISTS' ||
+    rawCode === 409 ||
+    /username already exists/i.test(rawMsg)
+  ) {
+    code = ErrorCode.USER_EXISTS;
+  } else if (
+    rawCode === 'TOO_MANY_AUTH_ATTEMPTS' ||
+    rawCode === 429 ||
+    /too many attempts/i.test(rawMsg)
+  ) {
+    code = ErrorCode.TOO_MANY_AUTH_ATTEMPTS;
+  } else if (/captcha/i.test(rawCode) || /captcha/i.test(rawMsg)) {
+    code = ErrorCode.CAPTCHA_FAILED;
+  } else if (
+    /master key is incorrect/i.test(rawMsg) ||
+    /candidate salts exhausted/i.test(rawMsg) ||
+    /could not be decrypted/i.test(rawMsg)
+  ) {
+    code = ErrorCode.DECRYPTION_FAILED;
+  } else if (
+    rawCode === 'storage/unauthorized' ||
+    rawCode === 'permission-denied' ||
+    rawCode === 403
+  ) {
+    code = ErrorCode.PERMISSION_DENIED;
+  } else if (rawCode === 'storage/quota-exceeded') {
+    code = ErrorCode.QUOTA_EXCEEDED;
+  } else if (rawCode === 'network-error' || rawCode === 503 || rawCode === 504) {
     code = ErrorCode.NETWORK_ERROR;
-  }
-
-  if (error instanceof TypeError && /fetch/i.test(error.message)) {
+  } else if (error instanceof DOMException && error.name === 'AbortError') {
+    code = ErrorCode.NETWORK_ERROR;
+  } else if (error instanceof TypeError && /fetch/i.test(error.message)) {
     code = ErrorCode.STORAGE_DISCONNECTED;
   }
 
-  // Custom mapping if code was found
   if (code !== ErrorCode.UNKNOWN) {
     message = ERROR_MESSAGES[code];
-  } else {
-    const extractedMessage = extractErrorMessage(error);
-    if (extractedMessage) {
-      message = extractedMessage;
-    }
+  } else if (rawMsg) {
+    message = rawMsg;
   }
 
   logActivity({
@@ -130,9 +153,8 @@ export const handleError = (error: any, context?: string): AppError => {
     status: 'failure',
   });
 
-  // Show user-friendly toast
   toast.error(message, {
-    description: context ? `In context: ${context}` : undefined,
+    description: context ? `Context: ${context}` : undefined,
   });
 
   return { code, message, originalError: error };

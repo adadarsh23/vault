@@ -1049,7 +1049,7 @@ const VideoPlayer = ({
     <motion.div
       ref={containerRef}
       className={cn(
-        'group relative flex items-center justify-center bg-black overflow-hidden max-w-full max-h-full',
+        'group relative flex items-center justify-center bg-black overflow-hidden max-w-full max-h-full transition-all duration-300',
         effectiveAspectRatio ? 'w-full h-auto' : 'w-full h-full min-h-[220px]',
         className
       )}
@@ -1068,7 +1068,10 @@ const VideoPlayer = ({
       <video
         ref={videoRef}
         src={src.includes('.m3u8') ? undefined : src}
-        className={cn('h-full w-full max-h-full object-contain', isMirrored ? 'scale-x-[-1]' : '')}
+        className={cn(
+          'h-full w-full max-h-full object-contain transition-opacity duration-300',
+          isMirrored ? 'scale-x-[-1]' : ''
+        )}
         preload="auto"
         playsInline
         autoPlay={autoPlay}
@@ -1090,21 +1093,23 @@ const VideoPlayer = ({
         onError={handleError}
       />
 
-      {!isVideoReady && !error && (
-        <div className="absolute inset-0 z-[5] overflow-hidden bg-zinc-950">
-          {useLiteSkeleton ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/90">
-              <Loader2 className="h-8 w-8 animate-spin text-white/60" />
-            </div>
-          ) : (
-            <>
-              <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black" />
-              <div className="absolute inset-0 animate-pulse bg-white/[0.02]" />
-              <div className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-white/5 shadow-[0_0_45px_rgba(255,255,255,0.08)]" />
-            </>
-          )}
-        </div>
-      )}
+      <AnimatePresence>
+        {!isVideoReady && !error && (
+          <motion.div
+            key="video-loading-skeleton"
+            initial={useLiteSkeleton ? false : { opacity: 1 }}
+            exit={useLiteSkeleton ? undefined : { opacity: 0 }}
+            transition={useLiteSkeleton ? { duration: 0 } : { duration: 0.3 }}
+            className={cn(
+              'absolute inset-0 z-[5] flex flex-col items-center justify-center bg-black/80 gap-3 text-white/70',
+              !useLiteSkeleton && 'backdrop-blur-sm'
+            )}
+          >
+            <Loader2 className={cn('h-8 w-8 text-white/80', !useLiteSkeleton && 'animate-spin')} />
+            <p className="text-xs uppercase tracking-wider text-white/50">Loading Video...</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* BUFFER */}
       {isBuffering && (

@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Network, ClipboardList, MonitorSmartphone } from 'lucide-react';
+import { Network, ClipboardList, MonitorSmartphone, ShieldCheck } from 'lucide-react';
 import { useVaultStore } from '../../store/vaultStore';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { PWAInstallModal } from '../../components/vault/PWAInstallModal';
@@ -342,7 +342,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
           cancelActivityLogSync={cancelActivityLogSync}
         />
 
-        {/* <SectionCard
+        <SectionCard
           title="Privacy & Interface"
           description="Open the dedicated privacy and interface page to configure behavior, upload controls, and secure display options."
         >
@@ -363,7 +363,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
               </Button>
             </div>
           </div>
-        </SectionCard> */}
+        </SectionCard>
 
         <ShareVaultCard />
         <TwoFactorSettingsCard

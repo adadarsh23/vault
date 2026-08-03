@@ -98,28 +98,10 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     }
   }, []);
 
-  const schedulePreviewActivation = useCallback(
-    (id: string) => {
-      cancelScheduledPreviewActivation();
-      previewRafOneRef.current = window.requestAnimationFrame(() => {
-        previewRafOneRef.current = null;
-        previewRafTwoRef.current = window.requestAnimationFrame(() => {
-          previewRafTwoRef.current = null;
-          setActivePreviewItem(id);
-        });
-      });
-    },
-    [cancelScheduledPreviewActivation]
-  );
-
-  const openPreview = useCallback(
-    (id: string) => {
-      setPreviewItem(id);
-      setActivePreviewItem(null);
-      schedulePreviewActivation(id);
-    },
-    [schedulePreviewActivation]
-  );
+  const openPreview = useCallback((id: string) => {
+    setPreviewItem(id);
+    setActivePreviewItem(id);
+  }, []);
 
   const closePreview = useCallback(() => {
     cancelScheduledPreviewActivation();

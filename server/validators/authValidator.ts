@@ -47,23 +47,33 @@ export const loginSchema = z.object({
   captchaToken: captchaTokenSchema,
 });
 
-export const registerSchema = z.object({
-  username: usernameSchema,
-  password: passwordSchema,
-  masterKey: masterKeySchema,
-  pqcSalt: z.string().trim().min(8).max(128).optional(),
-  deviceId: deviceIdSchema.optional(),
-  captchaToken: captchaTokenSchema,
-});
+export const registerSchema = z
+  .object({
+    username: usernameSchema,
+    password: passwordSchema,
+    masterKey: masterKeySchema,
+    pqcSalt: z.string().trim().min(8).max(128).optional(),
+    deviceId: deviceIdSchema.optional(),
+    captchaToken: captchaTokenSchema,
+  })
+  .refine((data) => data.password !== data.masterKey, {
+    message: 'Account password and Master Key must not be identical',
+    path: ['masterKey'],
+  });
 
-export const changePasswordSchema = z.object({
-  currentPassword: z
-    .string()
-    .min(1, 'Current password is required')
-    .max(128, 'Current password is too long'),
-  newPassword: passwordSchema,
-  captchaToken: captchaTokenSchema,
-});
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z
+      .string()
+      .min(1, 'Current password is required')
+      .max(128, 'Current password is too long'),
+    newPassword: passwordSchema,
+    captchaToken: captchaTokenSchema,
+  })
+  .refine((data) => data.newPassword !== data.currentPassword, {
+    message: 'New password must be different from current password',
+    path: ['newPassword'],
+  });
 
 export const masterKeyCaptchaSchema = z.object({
   captchaToken: captchaTokenSchema,
