@@ -1,9 +1,15 @@
-import React from 'react';
-import { RefreshCw, Lock, Edit3, Loader2, ShieldAlert } from 'lucide-react';
+import React, { useMemo, useState, useCallback } from 'react';
+import { RefreshCw, Lock, Edit3, Loader2, X } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import { SectionCard, ActionButton } from './SharedComponents';
 import { formatDate, formatCountLabel } from './Utils';
 import { type AuthSessionSummary } from '../../../../lib/auth-api';
+
+type RenameSessionRequest = {
+  id: string;
+  label: string;
+  isCurrent?: boolean;
+};
 
 interface SessionControlsCardProps {
   sessions: AuthSessionSummary[];
@@ -13,7 +19,7 @@ interface SessionControlsCardProps {
   onRefreshSessions: () => Promise<void>;
   onLockAllSessions: () => Promise<void>;
   onRevokeSession: (session: AuthSessionSummary) => Promise<void>;
-  onRenameRequest: (session: { id: string; label: string; isCurrent?: boolean }) => void;
+  onRenameRequest: (session: RenameSessionRequest) => void;
 }
 
 export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
@@ -26,9 +32,29 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
   onRevokeSession,
   onRenameRequest,
 }) => {
-  const currentSession = sessions.find((session) => session.isCurrent) ?? null;
+  const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
+
+  const currentSession = useMemo(
+    () => sessions.find((session) => session.isCurrent) ?? null,
+    [sessions]
+  );
   const currentDeviceId = currentSession?.deviceId ?? '';
   const canRenameCurrentSession = currentDeviceId.trim().length > 0;
+  const currentLabel = currentDeviceId
+    ? (trustedDeviceLabels[currentDeviceId] ?? currentSessionName)
+    : currentSessionName;
+
+  const handleRevoke = useCallback(
+    async (session: AuthSessionSummary) => {
+      setLoadingSessionId(session.sessionId);
+      try {
+        await onRevokeSession(session);
+      } finally {
+        setLoadingSessionId(null);
+      }
+    },
+    [onRevokeSession]
+  );
 
   return (
     <SectionCard
@@ -46,7 +72,6 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
           icon={Lock}
           label="Lock all sessions"
           onClick={onLockAllSessions}
-          loading={false}
           disabled={isSessionActionLoading}
           variant="danger"
         />
@@ -70,7 +95,7 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
                 if (!canRenameCurrentSession) return;
                 onRenameRequest({
                   id: currentDeviceId,
-                  label: trustedDeviceLabels[currentDeviceId] || currentSessionName,
+                  label: currentLabel,
                   isCurrent: true,
                 });
               }}
@@ -95,13 +120,13 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
             ) : (
               sessions.map((session) => {
                 const savedLabel =
-                  trustedDeviceLabels[session.deviceId] ||
-                  session.deviceName ||
+                  trustedDeviceLabels[session.deviceId] ??
+                  session.deviceName ??
                   (session.isCurrent ? currentSessionName : 'Unnamed device');
 
                 return (
                   <div
-                    key={`${session.sessionId}-${session.deviceId}`}
+                    key={session.sessionId}
                     className="rounded-2xl border border-card-border bg-card-bg p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -115,28 +140,31 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
                           ) : null}
                         </div>
                         <p className="mt-1 truncate text-xs text-text/45">
-                          {session.userAgent || session.deviceId}
+                          {session.userAgent ?? session.deviceId}
                         </p>
                       </div>
 
                       <button
+                        aria-label="Edit device label"
                         type="button"
                         onClick={() => {
+                          if (!session.deviceId) return;
                           onRenameRequest({
                             id: session.deviceId,
                             label: savedLabel,
                             isCurrent: session.isCurrent,
                           });
                         }}
-                        className="rounded-lg border border-card-border bg-text/5 p-2 text-text/55 transition-colors hover:bg-text/10 hover:text-text"
+                        className="rounded-lg border border-card-border bg-text/5 p-2 text-text/55 transition-colors hover:bg-text/10 hover:text-text disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Edit device label"
+                        disabled={!session.deviceId}
                       >
                         <Edit3 className="h-3.5 w-3.5" />
                       </button>
                     </div>
 
-                    <div className="space-y-1 text-xs text-text/50">
-                      <p>Device ID: {session.deviceId}</p>
+                    <div className="mt-3 space-y-1 text-xs text-text/50">
+                      <p className="break-all">Device ID: {session.deviceId}</p>
                       <p>Last used: {formatDate(session.lastUsedAt)}</p>
                       <p>Expires: {formatDate(session.expiresAt)}</p>
                       <p>IP: {session.ipAddress || 'Unknown'}</p>
@@ -145,18 +173,20 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
                     {!session.isCurrent ? (
                       <Button
                         variant="outline"
-                        onClick={() => {
-                          void onRevokeSession(session);
-                        }}
-                        disabled={isSessionActionLoading}
+                        onClick={() => void handleRevoke(session)}
+                        disabled={
+                          isSessionActionLoading ||
+                          (loadingSessionId !== null && loadingSessionId !== session.sessionId)
+                        }
+                        aria-busy={loadingSessionId === session.sessionId}
                         className="mt-4 w-full justify-center"
                       >
-                        {isSessionActionLoading ? (
+                        {loadingSessionId === session.sessionId ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
-                          <ShieldAlert className="mr-2 h-4 w-4" />
+                          <X className="mr-2 h-4 w-4" />
                         )}
-                        Revoke session
+                        {loadingSessionId === session.sessionId ? 'Revoking...' : 'Revoke session'}
                       </Button>
                     ) : null}
                   </div>

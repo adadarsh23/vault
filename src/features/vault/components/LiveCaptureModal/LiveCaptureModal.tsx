@@ -81,6 +81,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
   const [isEncrypting, setIsEncrypting] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isClosing, setIsClosing] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
 
   const isIOS =
     typeof window !== 'undefined' &&
@@ -262,6 +263,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
 
   const startCamera = async () => {
     try {
+      setPermissionError(null);
       stopCamera();
 
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -339,15 +341,26 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
 
       setStream(newStream);
     } catch (err: any) {
-      console.error(err);
-      if (err.name === 'NotAllowedError') {
-        toast.error('Permission denied. Please allow camera/mic access.');
-      } else if (err.name === 'NotFoundError') {
+      console.error('Camera initialization error:', err);
+      const isPermissionErr =
+        err?.name === 'NotAllowedError' ||
+        err?.name === 'PermissionDeniedError' ||
+        err?.name === 'SecurityError' ||
+        String(err?.message || '').toLowerCase().includes('permission') ||
+        String(err?.message || '').toLowerCase().includes('dismissed');
+
+      if (isPermissionErr) {
+        setPermissionError(
+          'Camera or microphone permission was dismissed or blocked. Click site settings icon in address bar to allow access, then click "RETRY PERMISSION".'
+        );
+        toast.error('Permission dismissed or denied. Please allow camera/mic access in browser settings.');
+      } else if (err?.name === 'NotFoundError') {
+        setPermissionError('No camera or microphone device found on this system.');
         toast.error('No camera or microphone found.');
       } else {
+        setPermissionError(err?.message || 'Failed to initialize media devices.');
         toast.error('Failed to initialize media devices.');
       }
-      onClose();
     }
   };
 
@@ -724,6 +737,12 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
                     <CameraFeed
                       videoRef={videoRef}
                       isInitializing={isInitializing}
+                      permissionError={permissionError}
+                      onRetryPermission={() => {
+                        setPermissionError(null);
+                        setIsInitializing(true);
+                        startCamera().finally(() => setIsInitializing(false));
+                      }}
                       cameraFacing={cameraFacing}
                       isHorizontallyFlipped={isHorizontallyFlipped}
                       captureRatio={captureRatio}

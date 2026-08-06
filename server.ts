@@ -84,6 +84,8 @@ const buildHelmetConfig = (): Parameters<typeof helmet>[0] => {
     'https://www.google.com',
     'https://www.gstatic.com',
     'https://www.recaptcha.net',
+    // Password breach checking
+    'https://api.pwnedpasswords.com',
     // Analytics / monitoring
     'https://www.googletagmanager.com',
     'https://www.google-analytics.com',

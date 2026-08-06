@@ -9,7 +9,7 @@ export interface LogEntry {
 }
 
 export interface GetLogsOptions {
-  cursor?: string | null;
+  cursor?: string | number | null;
   limit?: number;
 }
 
@@ -33,7 +33,9 @@ const normalizeGetLogsOptions = (options?: GetLogsOptions): { cursor?: string; l
   const cursor =
     typeof options?.cursor === 'string' && options.cursor.trim().length > 0
       ? options.cursor.trim()
-      : undefined;
+      : typeof options?.cursor === 'number' && Number.isFinite(options.cursor)
+        ? String(options.cursor)
+        : undefined;
 
   const requestedLimit =
     typeof options?.limit === 'number' && Number.isFinite(options.limit)

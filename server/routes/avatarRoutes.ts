@@ -2,17 +2,10 @@
 // Express routes for Presigned S3/MongoAtlas avatar uploads and immutable CDN asset delivery
 
 import express, { Router, Request, Response } from 'express';
-import fs from 'fs';
 import path from 'path';
 import mongoose from 'mongoose';
 
 const router = Router();
-const AVATAR_STORE_DIR = path.join(process.cwd(), 'uploads', 'avatars');
-
-// Ensure local storage directory exists for offline/cache fallback
-if (!fs.existsSync(AVATAR_STORE_DIR)) {
-  fs.mkdirSync(AVATAR_STORE_DIR, { recursive: true });
-}
 
 /**
  * Returns GridFSBucket for avatar storage if MongoDB / MongoAtlas connection is ready
@@ -95,9 +88,11 @@ router.get('/status', (_req: Request, res: Response) => {
   const bucket = getAvatarGridFsBucket();
   return res.json({
     success: true,
-    storageMode: bucket ? 'MongoDB Atlas GridFS (Cloud)' : 'Local Disk Fallback',
+    storageMode: bucket
+      ? 'MongoDB Atlas GridFS (Cloud)'
+      : 'MongoDB Atlas GridFS (Cloud) - unavailable',
     mongoReady: mongoose.connection.readyState === 1,
-    localCacheDirectory: AVATAR_STORE_DIR,
+    localCacheDirectory: null,
   });
 });
 
@@ -187,19 +182,7 @@ router.put(
           .json({ success: false, error: 'Invalid image format or corrupted image payload.' });
       }
 
-      // 1. Write local disk cache fallback
-      const userDir = path.join(AVATAR_STORE_DIR, sanitizedUserId);
-      if (!fs.existsSync(userDir)) {
-        fs.mkdirSync(userDir, { recursive: true });
-      }
-      const filePath = path.join(userDir, `${sanitizedHash}.${ext}`);
-      try {
-        await fs.promises.writeFile(filePath, buffer);
-      } catch (localErr) {
-        console.warn('Local disk write skipped or failed:', localErr);
-      }
-
-      // 2. Write to MongoDB Atlas Cloud GridFS bucket
+      // Stream directly to MongoDB Atlas GridFS without creating a local disk cache.
       const bucket = getAvatarGridFsBucket();
       if (bucket) {
         try {
@@ -271,14 +254,6 @@ router.get('/raw/:userId/:fileKey', async (req: Request, res: Response) => {
     } catch (gridFsErr) {
       console.warn('GridFS read attempt failed, attempting local disk fallback:', gridFsErr);
     }
-  }
-
-  // 2. Fallback to local disk storage
-  const filePath = path.join(AVATAR_STORE_DIR, sanitizedUserId, sanitizedFileKey);
-  if (fs.existsSync(filePath)) {
-    const readStream = fs.createReadStream(filePath);
-    readStream.pipe(res);
-    return;
   }
 
   return res.status(404).send('Avatar not found');

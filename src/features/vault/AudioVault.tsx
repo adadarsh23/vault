@@ -80,14 +80,15 @@ const SafeAudioPreview: React.FC<{
         const mime = metadata?.mimeType;
 
         const result = await getVaultItemPreviewUrl(item, masterKey, mime, rsaKeyPair?.privateKey);
-        if (!result) {
-          throw new Error('Preview unavailable');
-        }
-
         if (!isMounted) {
-          if (result.startsWith('blob:')) {
+          if (result && result.startsWith('blob:')) {
             URL.revokeObjectURL(result);
           }
+          return;
+        }
+
+        if (!result) {
+          setErrorMessage('Audio preview is unavailable. The file may be missing or corrupted.');
           return;
         }
 
@@ -107,7 +108,6 @@ const SafeAudioPreview: React.FC<{
 
         setUrl(result);
       } catch (err: any) {
-        console.error('SafeAudioPreview load error:', err);
         if (isMounted) {
           setErrorMessage(describeVaultPreviewError(err));
         }
@@ -157,6 +157,7 @@ const SafeAudioPreview: React.FC<{
         src={url}
         isWaveformEnabled={isAudioWaveformEnabled}
         compact={compact}
+        fileSize={typeof item.metadata?.size === 'number' ? item.metadata.size : undefined}
         className={cn(
           'max-w-none border-none bg-transparent shadow-none backdrop-blur-none',
           compact ? 'p-2' : 'p-6'
@@ -421,7 +422,8 @@ export const AudioVault: React.FC = () => {
               toast.loading(`Uploading ${index + 1}/${total}: ${progress}%...`, {
                 id: toastId,
               });
-            }
+            },
+            { source: 'cloud' }
           );
 
           toast.success(`${file.name} uploaded successfully`, { id: toastId });
@@ -808,7 +810,7 @@ export const AudioVault: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 sm:p-6 backdrop-blur-md"
             ref={modalRef}
           >
             <Button
@@ -816,6 +818,7 @@ export const AudioVault: React.FC = () => {
               size="icon"
               className="absolute right-6 top-6 z-50 h-12 w-12 rounded-full text-white hover:bg-white/10"
               onClick={() => setPreviewItem(null)}
+              aria-label="Close preview"
             >
               <X className="h-7 w-7" />
             </Button>
@@ -828,7 +831,80 @@ export const AudioVault: React.FC = () => {
               layout="overlay"
             />
 
-            <div className="w-full max-w-4xl overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03]">
+            <div className="w-full max-w-3xl overflow-hidden rounded-3xl border border-white/10 bg-black/80 backdrop-blur-2xl shadow-2xl p-6 sm:p-8">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-md">
+                    <AudioLines className="h-6 w-6" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="truncate text-base sm:text-lg font-bold text-white" title={previewedAudio.title}>
+                      {previewedAudio.title}
+                    </h2>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/40">
+                      <span>
+                        {(((previewedAudio.metadata?.size || 0) as number) / (1024 * 1024)).toFixed(2)} MB
+                      </span>
+                      {previewedAudio.folder && (
+                        <span className="flex items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-cyan-300">
+                          <Folder className="h-3 w-3" />
+                          {previewedAudio.folder}
+                        </span>
+                      )}
+                      {isLiveCaptureItem(previewedAudio.metadata?.isLiveCapture) && (
+                        <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-400 border border-emerald-500/20">
+                          <ShieldCheck className="h-3 w-3" />
+                          Live Capture
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 bg-white/5 hover:bg-white/10 text-white"
+                    onClick={() => void handleDownload(previewedAudio)}
+                    title="Download"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={pinningItemIds.includes(previewedAudio.id)}
+                    className={cn(
+                      'h-10 w-10 transition-all',
+                      previewedAudio.isPinned
+                        ? 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-400/30'
+                        : 'bg-white/5 hover:bg-white/10 text-white'
+                    )}
+                    onClick={() => void togglePin(previewedAudio.id)}
+                    title={previewedAudio.isPinned ? 'Unpin' : 'Pin'}
+                  >
+                    {pinningItemIds.includes(previewedAudio.id) ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pin className={cn('h-4 w-4', previewedAudio.isPinned && 'fill-current')} />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 border border-red-500/10 bg-white/5 text-red-400/70 hover:bg-red-500/10 hover:text-red-400"
+                    onClick={() => {
+                      handleDelete(previewedAudio.id, previewedAudio.title);
+                      setPreviewItem(null);
+                    }}
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
               <SafeAudioPreview item={previewedAudio} masterKey={masterKey!} />
             </div>
           </motion.div>

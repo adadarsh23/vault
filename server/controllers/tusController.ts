@@ -6,6 +6,8 @@ import { AuthenticatedRequest } from '../utils/requestTypes.ts';
 import { AppError } from '../utils/appError.ts';
 
 const TUS_TMP_ROOT = path.join(process.cwd(), 'vault-tmp', 'tus-uploads');
+const MEMORY_ONLY_TUS_UPLOADS =
+  (process.env.MEMORY_ONLY_TUS_UPLOADS ?? 'true').trim().toLowerCase() !== 'false';
 
 interface TusSession {
   uploadId: string;
@@ -15,6 +17,7 @@ interface TusSession {
   offset: number;
   metadata: Record<string, string>;
   filePath: string;
+  chunks: Buffer[];
   createdAt: number;
   updatedAt: number;
 }
@@ -59,9 +62,12 @@ export const createTusUploadController = async (
 
   const uploadId = `tus_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
   const uploadDir = path.join(TUS_TMP_ROOT, uploadId);
-  await fs.mkdir(uploadDir, { recursive: true });
   const filePath = path.join(uploadDir, 'chunk_data.bin');
-  await fs.writeFile(filePath, Buffer.alloc(0));
+
+  if (!MEMORY_ONLY_TUS_UPLOADS) {
+    await fs.mkdir(uploadDir, { recursive: true });
+    await fs.writeFile(filePath, Buffer.alloc(0));
+  }
 
   const session: TusSession = {
     uploadId,
@@ -71,6 +77,7 @@ export const createTusUploadController = async (
     offset: 0,
     metadata,
     filePath,
+    chunks: [],
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -135,7 +142,11 @@ export const uploadTusChunkController = async (
       : Buffer.from(req.body || []);
 
   if (chunkBuffer.length > 0) {
-    await fs.appendFile(session.filePath, chunkBuffer);
+    if (MEMORY_ONLY_TUS_UPLOADS) {
+      session.chunks.push(Buffer.from(chunkBuffer));
+    } else {
+      await fs.appendFile(session.filePath, chunkBuffer);
+    }
     session.offset += chunkBuffer.length;
     session.updatedAt = Date.now();
   }

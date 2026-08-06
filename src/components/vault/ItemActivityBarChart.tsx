@@ -33,6 +33,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
   const [rangeDays, setRangeDays] = React.useState<RangeOption>(14);
   const [chartMode, setChartMode] = React.useState<ChartMode>('bar');
   const [hoveredKey, setHoveredKey] = React.useState<string | null>(null);
+  const [hoveredSliceId, setHoveredSliceId] = React.useState<string | null>(null);
   const [isRangeChanging, startRangeTransition] = React.useTransition();
   const chartId = React.useId().replace(/:/g, '');
   const lineGradientId = `item-activity-line-${chartId}`;
@@ -107,37 +108,68 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
 
     return [
       {
-        label: 'Active',
+        id: 'active',
+        label: 'Active Days',
         value: active,
-        color: '#22c55e',
+        gradientId: `pie-active-${chartId}`,
+        badgeBg: 'bg-text text-bg shadow-xs',
+        badgeText: 'font-bold text-bg',
+        dotBg: 'bg-text',
       },
       {
-        label: 'Inactive',
+        id: 'inactive',
+        label: 'Inactive Days',
         value: inactive,
-        color: '#64748b',
+        gradientId: `pie-inactive-${chartId}`,
+        badgeBg: 'bg-text/[0.08] text-text/65',
+        badgeText: 'font-semibold text-text/75',
+        dotBg: 'bg-text/30',
       },
     ];
-  }, [chartState.activeDays, rangeDays]);
+  }, [chartState.activeDays, rangeDays, chartId]);
 
   const radius = 85;
   const circumference = 2 * Math.PI * radius;
 
-  let accumulated = 0;
+  const slices = React.useMemo(() => {
+    const activeSlices = pieData.filter((slice) => slice.value > 0);
+    const hasMultipleSlices = activeSlices.length > 1;
+    const gap = hasMultipleSlices ? 8 : 0;
+    const totalGap = activeSlices.length * gap;
+    const availableCircumference = circumference - totalGap;
 
-  const slices = pieData.map((slice) => {
-    const percent = slice.value / rangeDays;
-    const dash = percent * circumference;
+    let accumulatedOffset = 0;
 
-    const result = {
-      ...slice,
-      dash,
-      offset: accumulated,
-    };
+    return pieData.map((slice) => {
+      if (slice.value <= 0) {
+        return {
+          ...slice,
+          dash: 0,
+          offset: 0,
+          percent: 0,
+        };
+      }
 
-    accumulated += dash;
+      const ratio = slice.value / rangeDays;
+      const percent = Math.round(ratio * 100);
+      const dash = ratio * availableCircumference;
+      const offset = accumulatedOffset;
 
-    return result;
-  });
+      accumulatedOffset += dash + gap;
+
+      return {
+        ...slice,
+        dash,
+        offset,
+        percent,
+      };
+    });
+  }, [pieData, rangeDays, circumference]);
+
+  const activeSliceInfo = React.useMemo(() => {
+    if (!hoveredSliceId) return null;
+    return slices.find((s) => s.id === hoveredSliceId) || null;
+  }, [hoveredSliceId, slices]);
 
   const chartMinWidth =
     rangeDays === 180
@@ -149,6 +181,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
           : rangeDays === 28
             ? 720
             : 560;
+
   const hoveredIndex = chartState.buckets.findIndex((bucket) => bucket.key === hoveredKey);
   const hoveredBucket = hoveredIndex >= 0 ? chartState.buckets[hoveredIndex] : null;
   const previousBucket = hoveredIndex > 0 ? chartState.buckets[hoveredIndex - 1] : null;
@@ -165,6 +198,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
     hoveredBucket && previousBucket && previousBucket.count > 0
       ? ((hoveredBucket.count - previousBucket.count) / previousBucket.count) * 100
       : null;
+
   const linePoints = React.useMemo(() => {
     const plotWidth = chartMinWidth - CHART_SIDE_PADDING * 2;
     const columnWidth = plotWidth / chartState.buckets.length;
@@ -200,6 +234,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
       },
     ];
   }, [chartMinWidth, chartState.buckets.length, linePoints]);
+
   const linePath = React.useMemo(() => {
     if (linePathPoints.length === 0) return '';
 
@@ -207,6 +242,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
       .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`)
       .join(' ');
   }, [linePathPoints]);
+
   const lineAreaPath = React.useMemo(() => {
     if (linePathPoints.length === 0) return '';
 
@@ -231,15 +267,15 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
   return (
     <Card
       className={cn(
-        'overflow-hidden border-card-border bg-card-bg rounded-[2rem] dark:border-white/10 dark:bg-black shadow-sm',
+        'overflow-hidden rounded-[2rem] border-card-border bg-card-bg shadow-sm dark:border-white/10 dark:bg-black',
         className
       )}
     >
       <CardHeader className="border-b border-card-border/80 bg-gradient-to-r from-text/[0.02] via-transparent to-text/[0.02]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-cyan-400" />
+              <BarChart3 className="h-5 w-5 text-text" />
               Item Activity
             </CardTitle>
             <CardDescription>
@@ -248,7 +284,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
             </CardDescription>
           </div>
 
-          <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+          <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:flex sm:flex-wrap sm:items-center">
             <div className="grid w-full grid-cols-3 rounded-xl border border-card-border/80 bg-text/[0.03] p-1 sm:inline-flex sm:w-auto sm:grid-cols-none">
               <Button
                 size="sm"
@@ -327,14 +363,21 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="rounded-[1.5rem] border border-card-border/80 bg-gradient-to-b from-text/[0.035] via-text/[0.02] to-transparent p-3 sm:p-4"
         >
-          <div className="custom-scrollbar overflow-x-auto overflow-y-visible pb-2">
+          <div
+            className={cn(
+              'custom-scrollbar pb-2',
+              chartMode === 'pie'
+                ? 'w-full overflow-x-hidden'
+                : 'overflow-x-auto overflow-y-visible'
+            )}
+          >
             <div
-              className="relative h-72 min-w-full overflow-visible"
+              className={cn(
+                'relative overflow-visible',
+                chartMode === 'pie' ? 'w-full min-h-[288px]' : 'h-72 min-w-full'
+              )}
               style={{
-                minWidth:
-                  typeof chartMinWidth === 'number' && chartMinWidth > 100
-                    ? `${chartMinWidth}px`
-                    : undefined,
+                minWidth: chartMode !== 'pie' ? `${chartMinWidth}px` : undefined,
               }}
             >
               <motion.div
@@ -344,14 +387,17 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                 transition={{ duration: 0.22, ease: 'easeInOut' }}
                 className="pointer-events-none absolute inset-0 z-10 rounded-[1.25rem] bg-bg/20 backdrop-blur-[2px]"
               />
-              <div className="pointer-events-none absolute inset-0 flex flex-col justify-between">
-                {[0, 1, 2, 3].map((row) => (
-                  <div key={row} className="border-t border-dashed border-card-border/60" />
-                ))}
-              </div>
+
+              {chartMode !== 'pie' && (
+                <div className="pointer-events-none absolute inset-0 flex flex-col justify-between">
+                  {[0, 1, 2, 3].map((row) => (
+                    <div key={row} className="border-t border-dashed border-card-border/60" />
+                  ))}
+                </div>
+              )}
 
               <AnimatePresence initial={false}>
-                {hoveredBucket && (
+                {hoveredBucket && chartMode !== 'pie' && (
                   <motion.div
                     key={hoveredBucket.key}
                     initial={{ opacity: 0, y: 8, scale: 0.985 }}
@@ -380,14 +426,14 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                       y: { duration: 0.18, ease: 'easeOut' },
                       scale: { duration: 0.18, ease: 'easeOut' },
                     }}
-                    className="pointer-events-none absolute top-2 z-20 w-[220px] rounded-3xl border border-white/10 bg-bg/80 p-4 backdrop-blur-2xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.45)]"
+                    className="pointer-events-none absolute top-2 z-20 w-[220px] rounded-3xl border border-white/10 bg-bg/80 p-4 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.45)] backdrop-blur-2xl"
                   >
                     <div className="space-y-4">
                       {/* Header */}
                       <div className="space-y-1">
-                        <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/15 bg-cyan-500/10 px-2 py-1">
-                          <Calendar className="h-3 w-3 text-cyan-400" />
-                          <span className="text-[10px] font-medium uppercase tracking-wider text-cyan-400">
+                        <div className="inline-flex items-center gap-1.5 rounded-full border border-text/15 bg-text/10 px-2 py-1">
+                          <Calendar className="h-3 w-3 text-text" />
+                          <span className="text-[10px] font-medium uppercase tracking-wider text-text">
                             {hoveredBucket.fullLabel}
                           </span>
                         </div>
@@ -450,7 +496,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                           <span className="text-xs text-text/60">Activity Share</span>
 
                           <div className="flex items-center gap-1.5">
-                            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                            <Sparkles className="h-3.5 w-3.5 text-text/80" />
 
                             <span className="text-xs font-semibold text-text">
                               {activityShare.toFixed(1)}%
@@ -466,458 +512,295 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
               <LayoutGroup id="item-activity-bars">
                 {chartMode === 'pie' ? (
                   <motion.div
-                    initial={{ opacity: 0, y: 16 }}
+                    key="pie-view"
+                    initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
                     transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                    className="
-    grid
-    h-full
-    grid-cols-[0.9fr_1.1fr]
-    items-center
-    gap-3
-    overflow-hidden
-    px-3
-    py-4
-
-    sm:grid-cols-[0.9fr_1.1fr]
-    sm:gap-4
-    sm:px-4
-
-    md:grid-cols-[1fr_1fr]
-    md:gap-6
-    md:px-6
-
-    lg:grid-cols-[1.1fr_0.9fr]
-    lg:gap-8
-    lg:px-8
-  "
+                    className="grid w-full grid-cols-1 items-center gap-6 px-2 py-3 sm:grid-cols-2 sm:gap-8 sm:px-4"
                   >
-                    {/* ====================== Donut Chart ====================== */}
-
-                    <div className="relative flex min-w-0 items-center justify-center">
-                      {/* Animated Glow */}
+                    {/* ================= Donut Chart Section ================= */}
+                    <div className="relative flex w-full min-w-0 items-center justify-center py-2">
+                      {/* Monochrome Background Glow matching Bar/Line chart theme */}
                       <motion.div
                         animate={{
-                          scale: [1, 1.05, 1],
-                          opacity: [0.15, 0.35, 0.15],
+                          scale: [1, 1.08, 1],
+                          opacity: [0.15, 0.3, 0.15],
                         }}
                         transition={{
                           repeat: Infinity,
                           duration: 4,
                           ease: 'easeInOut',
                         }}
-                        className="
-        absolute
-        size-28
-
-        sm:size-36
-
-        md:size-48
-
-        lg:size-56
-
-        rounded-full
-        bg-cyan-500/10
-        blur-3xl
-      "
+                        className="absolute size-40 rounded-full bg-text/[0.06] blur-3xl sm:size-52 md:size-60"
                       />
 
                       <svg
                         viewBox="0 0 280 280"
-                        className="
-        h-[105px]
-        w-[105px]
-        shrink-0
-        -rotate-90
-        overflow-visible
-
-        sm:h-[135px]
-        sm:w-[135px]
-
-        md:h-[180px]
-        md:w-[180px]
-
-        lg:h-[240px]
-        lg:w-[240px]
-
-        drop-shadow-[0_0_22px_rgba(34,211,238,.15)]
-      "
+                        className="h-[150px] w-[150px] shrink-0 -rotate-90 overflow-visible transition-all duration-300 sm:h-[190px] sm:w-[190px] md:h-[230px] md:w-[230px]"
                       >
-                        {/* Background Ring */}
+                        <defs>
+                          <linearGradient
+                            id={`pie-active-${chartId}`}
+                            x1="0%"
+                            y1="0%"
+                            x2="100%"
+                            y2="100%"
+                          >
+                            <stop offset="0%" stopColor="currentColor" stopOpacity="1" />
+                            <stop offset="100%" stopColor="currentColor" stopOpacity="0.75" />
+                          </linearGradient>
+                          <linearGradient
+                            id={`pie-inactive-${chartId}`}
+                            x1="0%"
+                            y1="0%"
+                            x2="100%"
+                            y2="100%"
+                          >
+                            <stop offset="0%" stopColor="currentColor" stopOpacity="0.28" />
+                            <stop offset="100%" stopColor="currentColor" stopOpacity="0.12" />
+                          </linearGradient>
+                          <filter
+                            id={`pie-glow-${chartId}`}
+                            x="-20%"
+                            y="-20%"
+                            width="140%"
+                            height="140%"
+                          >
+                            <feGaussianBlur stdDeviation="4" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                          </filter>
+                        </defs>
+
+                        {/* Decorative Animated Dash Orbit */}
+                        <motion.circle
+                          cx="140"
+                          cy="140"
+                          r={radius + 18}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeDasharray="4 8"
+                          className="text-text/20"
+                          animate={{ rotate: [0, 360] }}
+                          transition={{ repeat: Infinity, duration: 40, ease: 'linear' }}
+                          style={{ transformOrigin: '140px 140px' }}
+                        />
+
+                        {/* Background Track Ring */}
                         <circle
                           cx="140"
                           cy="140"
                           r={radius}
                           fill="none"
-                          stroke="rgb(255 255 255 / .06)"
-                          strokeWidth="22"
+                          stroke="currentColor"
+                          strokeWidth="20"
+                          className="text-text/[0.06]"
                         />
 
-                        {/* Animated Slices */}
-                        {slices.map((slice, index) => (
-                          <motion.circle
-                            key={slice.label}
-                            cx="140"
-                            cy="140"
-                            r={radius}
-                            fill="none"
-                            stroke={slice.color}
-                            strokeWidth="22"
-                            strokeLinecap="round"
-                            strokeDasharray={`${slice.dash} ${circumference}`}
-                            strokeDashoffset={-slice.offset}
-                            initial={{
-                              strokeDasharray: `0 ${circumference}`,
-                            }}
-                            animate={{
-                              strokeDasharray: `${slice.dash} ${circumference}`,
-                            }}
-                            whileHover={{
-                              strokeWidth: 25,
-                            }}
-                            transition={{
-                              duration: 0.9,
-                              delay: index * 0.08,
-                              ease: [0.22, 1, 0.36, 1],
-                            }}
-                          />
-                        ))}
+                        {/* Animated Pie Slices */}
+                        {slices
+                          .filter((slice) => slice.value > 0)
+                          .map((slice, index) => {
+                            const isHovered = hoveredSliceId === slice.id;
+                            const isOtherHovered = hoveredSliceId !== null && !isHovered;
+
+                            return (
+                              <motion.circle
+                                key={slice.id}
+                                cx="140"
+                                cy="140"
+                                r={radius}
+                                fill="none"
+                                stroke={`url(#${slice.gradientId})`}
+                                strokeWidth={isHovered ? 26 : 20}
+                                strokeLinecap="round"
+                                strokeDasharray={`${slice.dash} ${circumference}`}
+                                strokeDashoffset={-slice.offset}
+                                initial={{ strokeDasharray: `0 ${circumference}` }}
+                                animate={{
+                                  strokeDasharray: `${slice.dash} ${circumference}`,
+                                  opacity: isOtherHovered ? 0.4 : 1,
+                                  scale: isHovered ? 1.03 : 1,
+                                }}
+                                style={{ transformOrigin: '140px 140px' }}
+                                onMouseEnter={() => setHoveredSliceId(slice.id)}
+                                onMouseLeave={() => setHoveredSliceId(null)}
+                                transition={{
+                                  duration: 0.85,
+                                  delay: index * 0.1,
+                                  ease: [0.22, 1, 0.36, 1],
+                                  scale: { duration: 0.25 },
+                                  strokeWidth: { duration: 0.25 },
+                                  opacity: { duration: 0.25 },
+                                }}
+                                className="text-text cursor-pointer drop-shadow-sm transition-all duration-300"
+                                filter={isHovered ? `url(#pie-glow-${chartId})` : undefined}
+                              />
+                            );
+                          })}
                       </svg>
 
-                      {/* ====================== Center Card ====================== */}
-
+                      {/* Donut Center Content */}
                       <div className="absolute inset-0 flex items-center justify-center">
                         <motion.div
-                          initial={{
-                            scale: 0.85,
-                            opacity: 0,
-                          }}
-                          animate={{
-                            scale: 1,
-                            opacity: 1,
-                          }}
+                          initial={{ scale: 0.85, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
                           transition={{
-                            delay: 0.2,
+                            delay: 0.15,
                             type: 'spring',
-                            stiffness: 180,
-                            damping: 18,
+                            stiffness: 200,
+                            damping: 20,
                           }}
-                          className="
-          flex
-          size-12
-
-          sm:size-14
-
-          md:size-20
-
-          lg:size-24
-
-          flex-col
-          items-center
-          justify-center
-
-          rounded-full
-          border
-          border-card-border/80
-
-          bg-gradient-to-b
-          from-text/[0.08]
-          via-text/[0.04]
-          to-transparent
-
-          backdrop-blur-xl
-
-          shadow-[0_12px_30px_rgba(0,0,0,.35)]
-        "
+                          className={cn(
+                            'flex size-20 flex-col items-center justify-center rounded-full border p-2 text-center shadow-[0_16px_36px_rgba(0,0,0,0.35)] backdrop-blur-2xl transition-all duration-300 sm:size-24 md:size-28',
+                            hoveredSliceId
+                              ? 'border-text/30 bg-bg/95 dark:bg-black/90 shadow-[0_0_24px_rgba(255,255,255,0.15)]'
+                              : 'border-card-border/80 bg-bg/80 dark:bg-black/80'
+                          )}
                         >
-                          <motion.h2
-                            initial={{ scale: 0.8 }}
-                            animate={{ scale: 1 }}
-                            transition={{
-                              delay: 0.3,
-                              type: 'spring',
-                              stiffness: 220,
-                            }}
-                            className="
-            text-base
-            font-black
-
-            sm:text-lg
-
-            md:text-2xl
-
-            lg:text-3xl
-          "
-                          >
-                            {chartState.total}
-                          </motion.h2>
-
-                          <span
-                            className="
-            mt-0.5
-
-            text-[6px]
-
-            uppercase
-            tracking-[0.18em]
-            text-text/55
-
-            sm:text-[7px]
-
-            md:text-[9px]
-          "
-                          >
-                            Items
-                          </span>
-
-                          <div className="my-1 h-px w-5 bg-card-border/80 md:w-8" />
-
-                          <span
-                            className="
-            text-[6px]
-            font-semibold
-            text-cyan-400
-
-            sm:text-[7px]
-
-            md:text-[9px]
-          "
-                          >
-                            {Math.round((chartState.activeDays / rangeDays) * 100)}%
-                          </span>
+                          <AnimatePresence mode="wait">
+                            {activeSliceInfo ? (
+                              <motion.div
+                                key={activeSliceInfo.id}
+                                initial={{ opacity: 0, scale: 0.9, y: 4 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: -4 }}
+                                transition={{ duration: 0.18, ease: 'easeOut' }}
+                                className="flex flex-col items-center justify-center"
+                              >
+                                <span
+                                  className={cn(
+                                    'text-xl font-black sm:text-2xl md:text-3xl text-text'
+                                  )}
+                                >
+                                  {activeSliceInfo.value}
+                                </span>
+                                <span className="mt-0.5 text-[8px] font-semibold uppercase tracking-wider text-text/50 sm:text-[9px] md:text-[10px]">
+                                  {activeSliceInfo.label}
+                                </span>
+                                <div className="my-1 h-px w-6 bg-card-border/80 sm:w-8" />
+                                <span className="text-[9px] font-bold text-text/80 sm:text-[10px] md:text-[11px]">
+                                  {activeSliceInfo.percent}% of Range
+                                </span>
+                              </motion.div>
+                            ) : (
+                              <motion.div
+                                key="default-center"
+                                initial={{ opacity: 0, scale: 0.9, y: 4 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: -4 }}
+                                transition={{ duration: 0.18, ease: 'easeOut' }}
+                                className="flex flex-col items-center justify-center"
+                              >
+                                <h2 className="text-xl font-black text-text sm:text-2xl md:text-3xl">
+                                  {chartState.total}
+                                </h2>
+                                <span className="mt-0.5 text-[8px] font-semibold uppercase tracking-wider text-text/50 sm:text-[9px] md:text-[10px]">
+                                  Total Items
+                                </span>
+                                <div className="my-1 h-px w-6 bg-card-border/80 sm:w-8" />
+                                <span className="text-[9px] font-bold text-text/80 sm:text-[10px] md:text-[11px]">
+                                  {Math.round((chartState.activeDays / rangeDays) * 100)}% Active
+                                </span>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </motion.div>
                       </div>
                     </div>
+
+                    {/* ================= Breakdown Cards Section ================= */}
                     <motion.div
-                      initial={{ opacity: 0, x: 18 }}
+                      initial={{ opacity: 0, x: 16 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{
-                        delay: 0.2,
+                        delay: 0.15,
                         duration: 0.45,
                         ease: [0.22, 1, 0.36, 1],
                       }}
-                      className="
-    flex
-    h-full
-    min-w-0
-    flex-col
-    justify-center
-    gap-2
-
-    sm:gap-3
-
-    md:gap-4
-  "
+                      className="flex w-full min-w-0 flex-col justify-center gap-3"
                     >
-                      {[
-                        {
-                          title: 'Active Days',
-                          value: chartState.activeDays,
-                          percent: Math.round((chartState.activeDays / rangeDays) * 100),
-                          color: 'text-emerald-400',
-                          bg: 'bg-emerald-500/10',
-                          dot: 'bg-emerald-400',
-                        },
-                        {
-                          title: 'Inactive',
-                          value: rangeDays - chartState.activeDays,
-                          percent: 100 - Math.round((chartState.activeDays / rangeDays) * 100),
-                          color: 'text-slate-400',
-                          bg: 'bg-slate-500/10',
-                          dot: 'bg-slate-400',
-                        },
-                      ].map((item) => (
-                        <motion.div
-                          key={item.title}
-                          whileHover={{
-                            y: -2,
-                            scale: 1.02,
-                          }}
-                          whileTap={{
-                            scale: 0.98,
-                          }}
-                          className="
-        flex
-        min-h-[74px]
-        flex-col
-        justify-between
+                      {slices.map((item) => {
+                        const isHovered = hoveredSliceId === item.id;
+                        const isOtherHovered = hoveredSliceId !== null && !isHovered;
 
-        rounded-2xl
-        border
-        border-card-border/80
-
-        bg-gradient-to-br
-        from-text/[0.04]
-        to-transparent
-
-        p-2.5
-
-        shadow-sm
-        backdrop-blur-xl
-
-        transition-all
-        duration-300
-
-        sm:min-h-[90px]
-        sm:p-3
-
-        md:min-h-[110px]
-        md:p-4
-      "
-                        >
-                          {/* Header */}
-
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex min-w-0 items-center gap-2">
-                              <span className={`h-2 w-2 shrink-0 rounded-full ${item.dot}`} />
-
+                        return (
+                          <motion.div
+                            key={item.id}
+                            onMouseEnter={() => setHoveredSliceId(item.id)}
+                            onMouseLeave={() => setHoveredSliceId(null)}
+                            whileHover={{ y: -2, scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
+                            className={cn(
+                              'cursor-pointer flex items-center justify-between rounded-2xl border p-3.5 shadow-sm backdrop-blur-xl transition-all duration-300 sm:p-4',
+                              isHovered
+                                ? 'border-text/30 bg-gradient-to-r from-text/[0.08] via-text/[0.04] to-transparent shadow-md'
+                                : isOtherHovered
+                                  ? 'border-card-border/40 bg-text/[0.02] opacity-50'
+                                  : 'border-card-border/80 bg-gradient-to-r from-text/[0.04] to-transparent'
+                            )}
+                          >
+                            <div className="flex items-center gap-3">
                               <span
-                                className="
-              truncate
-              text-[9px]
-              font-semibold
-              uppercase
-              tracking-wider
-              text-text/60
-
-              sm:text-[10px]
-
-              md:text-[11px]
-            "
-                              >
-                                {item.title}
-                              </span>
+                                className={cn(
+                                  'h-3 w-3 shrink-0 rounded-full shadow-sm',
+                                  item.dotBg
+                                )}
+                              />
+                              <div>
+                                <p className="text-xs font-semibold text-text sm:text-sm">
+                                  {item.label}
+                                </p>
+                                <p className="text-[11px] text-text/55">
+                                  {item.value} day{item.value === 1 ? '' : 's'} in {rangeDays}D
+                                  range
+                                </p>
+                              </div>
                             </div>
 
-                            <span
-                              className={`
-            shrink-0
-            rounded-full
+                            <div className="flex items-center gap-2">
+                              <span className="text-base font-bold text-text sm:text-lg">
+                                {item.value}
+                              </span>
+                              <span
+                                className={cn(
+                                  'rounded-full px-2.5 py-0.5 text-xs font-bold shadow-xs',
+                                  item.badgeBg,
+                                  item.badgeText
+                                )}
+                              >
+                                {item.percent}%
+                              </span>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
 
-            px-2
-            py-0.5
-
-            text-[8px]
-            font-bold
-
-            sm:text-[9px]
-
-            md:text-[10px]
-
-            ${item.bg}
-            ${item.color}
-          `}
-                            >
-                              {item.percent}%
-                            </span>
-                          </div>
-
-                          {/* Value */}
-
-                          <div className="mt-3 flex items-end justify-between gap-3">
-                            <motion.h3
-                              layout
-                              className="
-            text-base
-            font-black
-            text-text
-
-            sm:text-xl
-
-            md:text-2xl
-
-            lg:text-3xl
-          "
-                            >
-                              {item.value}
-                            </motion.h3>
-
-                            <div
-                              className={`
-            h-8
-            w-1
-            shrink-0
-            rounded-full
-            ${item.dot}
-            opacity-70
-          `}
-                            />
-                          </div>
-                        </motion.div>
-                      ))}
-
-                      {/* ================= Activity Score ================= */}
-
+                      {/* Activity Consistency Progress Bar */}
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.45 }}
-                        className="
-      mt-auto
-
-      rounded-2xl
-      border
-      border-card-border/80
-
-      bg-text/[0.03]
-
-      p-3
-
-      sm:p-4
-    "
+                        transition={{ delay: 0.35 }}
+                        className="rounded-2xl border border-card-border/80 bg-text/[0.03] p-3.5 sm:p-4"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span
-                            className="
-          truncate
-          text-[10px]
-          font-medium
-          text-text/60
-
-          sm:text-xs
-        "
-                          >
-                            Activity Score
+                          <span className="text-xs font-medium text-text/65">
+                            Activity Consistency
                           </span>
-
-                          <span
-                            className="
-          shrink-0
-          rounded-full
-
-          bg-cyan-500/10
-
-          px-2
-          py-1
-
-          text-[10px]
-          font-bold
-          text-cyan-400
-
-          sm:text-xs
-        "
-                          >
+                          <span className="rounded-full bg-text/10 px-2.5 py-0.5 text-xs font-bold text-text">
                             {Math.round((chartState.activeDays / rangeDays) * 100)}%
                           </span>
                         </div>
 
-                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/5">
+                        <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-text/10">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{
                               width: `${Math.round((chartState.activeDays / rangeDays) * 100)}%`,
                             }}
-                            transition={{
-                              duration: 1,
-                              ease: [0.22, 1, 0.36, 1],
-                            }}
-                            className="
-          h-full
-          rounded-full
-          bg-gradient-to-r
-          from-cyan-500
-          to-emerald-400
-        "
+                            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                            className="h-full rounded-full bg-gradient-to-r from-text via-text/85 to-text/55 shadow-xs"
                           />
                         </div>
                       </motion.div>

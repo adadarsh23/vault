@@ -1154,7 +1154,7 @@ export const CardsVault: React.FC = () => {
                     {/* Left: Input Fields */}
                     <div className="space-y-4">
                       <div>
-                        <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
+                        <label className="text-[8px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
                           Asset Name
                         </label>
                         <Input
@@ -1165,7 +1165,7 @@ export const CardsVault: React.FC = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
+                          <label className="text-[8px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
                             Cardholder Name
                           </label>
                           <Input
@@ -1180,7 +1180,7 @@ export const CardsVault: React.FC = () => {
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
+                          <label className="text-[8px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
                             Card Number
                           </label>
                           <Input
@@ -1199,7 +1199,7 @@ export const CardsVault: React.FC = () => {
 
                       <div className="grid grid-cols-3 gap-2">
                         <div>
-                          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
+                          <label className="text-[8px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
                             Expiry Month
                           </label>
                           <Input
@@ -1214,7 +1214,7 @@ export const CardsVault: React.FC = () => {
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
+                          <label className="text-[8px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
                             Expiry Year
                           </label>
                           <Input
@@ -1229,7 +1229,7 @@ export const CardsVault: React.FC = () => {
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
+                          <label className="text-[8px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
                             CVV
                           </label>
                           <Input
@@ -1248,7 +1248,7 @@ export const CardsVault: React.FC = () => {
                       </div>
 
                       <div className="border-t border-white/5 pt-4 space-y-3">
-                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
+                        <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-text/30 block mb-1">
                           Linked Bank Account (Optional)
                         </span>
                         <div className="grid grid-cols-3 gap-2">

@@ -19,12 +19,10 @@ import {
   ChatDetailTab,
   ChatAttachment,
   DisappearingTimer,
-  ChatListFilter,
   ChatListPanel,
   ChatMessage,
   extractAttachmentsFromText,
   extractMentions,
-  isUserMentioned,
   getSafeExternalHref,
   isExpiredMessage,
   resolveMessageLifetime,
@@ -74,7 +72,6 @@ export const ChatVault: React.FC = () => {
   const [failedChatIds, setFailedChatIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [newChatTitle, setNewChatTitle] = useState('');
-  const [filter, setFilter] = useState<ChatListFilter>('all');
   const [isMobileFolderMenuOpen, setIsMobileFolderMenuOpen] = useState(false);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [detailTab, setDetailTab] = useState<ChatDetailTab>('messages');
@@ -350,54 +347,20 @@ export const ChatVault: React.FC = () => {
     }
   }, [chats, masterKey]);
 
-  const chatMetrics = useMemo(() => {
-    const now = Date.now();
-    return Object.fromEntries(
-      chats.map((chatItem) => {
-        const conversation = chatPayloads[chatItem.id];
-        if (!conversation) {
-          return [chatItem.id, { unread: 0, mentions: 0 }];
-        }
-
-        const visibleMessages = conversation.messages.filter(
-          (message) => !isExpiredMessage(message, now)
-        );
-        const unreadCount = visibleMessages.filter(
-          (message) => message.sender !== username && !message.readBy.includes(username)
-        ).length;
-        const mentionCount = visibleMessages.filter(
-          (message) =>
-            message.sender !== username &&
-            isUserMentioned(message.mentions, username) &&
-            !message.readBy.includes(username)
-        ).length;
-        return [chatItem.id, { unread: unreadCount, mentions: mentionCount }];
-      })
-    ) as Record<string, { unread: number; mentions: number }>;
-  }, [chatPayloads, chats, username]);
-
   const filteredChats = useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
     const filtered = chats.filter((chatItem) => {
       const chatTitle = chatItem.title?.toLowerCase() || '';
       const matchesSearch = normalizedSearch.length === 0 || chatTitle.includes(normalizedSearch);
       const matchesFolder = currentFolder === null ? true : chatItem.folder === currentFolder;
-      const metrics = chatMetrics[chatItem.id] || { unread: 0, mentions: 0 };
-      const isCurrentlyActive = chatItem.id === activeChatId;
-      const matchesFilter =
-        filter === 'all'
-          ? true
-          : filter === 'unread'
-            ? metrics.unread > 0 || isCurrentlyActive
-            : metrics.mentions > 0 || isCurrentlyActive;
-      return matchesSearch && matchesFolder && matchesFilter;
+      return matchesSearch && matchesFolder;
     });
     return sortPinnedFirst(filtered);
-  }, [activeChatId, chatMetrics, chats, currentFolder, filter, searchQuery]);
+  }, [chats, currentFolder, searchQuery]);
 
   useEffect(() => {
     setVisibleChatCount(CHAT_LIST_PAGE_SIZE);
-  }, [currentFolder, filter, searchQuery]);
+  }, [currentFolder, searchQuery]);
 
   const visibleChats = useMemo(
     () => filteredChats.slice(0, visibleChatCount),
@@ -425,17 +388,15 @@ export const ChatVault: React.FC = () => {
   useEffect(() => {
     if (!masterKey || !hasMoreChatPayloads || isLoadingChatBatch) return;
 
-    const isFilterActive = filter === 'unread' || filter === 'mentions';
     const hasMissingPayload = visibleChats.some(
       (chatItem) => !chatPayloads[chatItem.id] && !failedChatIds.has(chatItem.id)
     );
-    if (!isFilterActive && !hasMissingPayload) return;
+    if (!hasMissingPayload) return;
 
     void loadNextChatBatch();
   }, [
     chatPayloads,
     failedChatIds,
-    filter,
     hasMoreChatPayloads,
     isLoadingChatBatch,
     loadNextChatBatch,
@@ -518,35 +479,6 @@ export const ChatVault: React.FC = () => {
   }, [activeChatId, chatItemById]);
 
   useEffect(() => {
-    if (!activeChatItem || !activeConversation) return;
-    const unreadMessages = activeConversation.messages.filter(
-      (message) =>
-        !isExpiredMessage(message, Date.now()) &&
-        message.sender !== username &&
-        !message.readBy.includes(username)
-    );
-
-    if (unreadMessages.length === 0) return;
-
-    const nextConversation: ChatConversation = {
-      ...activeConversation,
-      messages: activeConversation.messages.map((message) =>
-        message.sender !== username && !message.readBy.includes(username)
-          ? { ...message, readBy: [...message.readBy, username] }
-          : message
-      ),
-      updatedAt: Date.now(),
-    };
-
-    void persistConversation(activeChatItem, nextConversation).catch((error) => {
-      logger.warn('Failed to mark chat messages as read', {
-        chatId: activeChatItem.id,
-        error,
-      });
-    });
-  }, [activeChatItem, activeConversation, persistConversation, username]);
-
-  useEffect(() => {
     if (!masterKey) return;
     const now = Date.now();
     for (const chatItem of chats) {
@@ -616,7 +548,7 @@ export const ChatVault: React.FC = () => {
         ...previous,
         [createdItem.id]: seedConversation,
       }));
-      setFilter('all');
+      setSearchQuery('');
       setActiveChatId(createdItem.id);
       setNewChatTitle('');
       toast.success('Chat created');
@@ -955,17 +887,14 @@ export const ChatVault: React.FC = () => {
           activeChatId={activeChatId}
           filteredChats={visibleChats}
           totalFilteredChats={filteredChats.length}
-          chatMetrics={chatMetrics}
           lastMessagesByChatId={lastMessagesByChatId}
           pinningItemIds={pinningItemIds}
-          filter={filter}
           searchQuery={searchQuery}
           newChatTitle={newChatTitle}
           isCreatingChat={isCreatingChat}
           hasMoreChats={hasMoreVisibleChats}
           isLoadingMoreChats={isLoadingChatBatch}
           onOpenFolders={() => setIsMobileFolderMenuOpen(true)}
-          onFilterChange={setFilter}
           onSearchQueryChange={setSearchQuery}
           onNewChatTitleChange={setNewChatTitle}
           onCreateChat={handleCreateChat}

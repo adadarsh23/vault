@@ -14,11 +14,14 @@ const looksLikeServerPath = (value: string): boolean =>
   value.startsWith('api/');
 
 const isLikelyEncryptedString = (value: string): boolean => {
-  const normalized = value.trim();
-  if (!normalized || normalized.length < 32) {
+  let normalized = value.trim();
+  if (!normalized || normalized.length < 16) {
     return false;
   }
-
+  if (normalized.startsWith('V2_ENC:')) {
+    normalized = normalized.substring(7).trim();
+  }
+  normalized = normalized.replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '');
   return /^[A-Za-z0-9+/=]+$/.test(normalized);
 };
 
@@ -305,18 +308,74 @@ export const getVaultItemPreviewUrl = async (
     (item.content instanceof Uint8Array ||
       (typeof item.content === 'string' && isLikelyEncryptedString(item.content)))
   ) {
-    try {
-      const rawBytes =
-        item.content instanceof Uint8Array ? item.content : base64ToUint8Array(item.content);
-      const blobInput = new Blob([rawBytes as unknown as BlobPart]);
-      return await getDecryptStreamResponseUrl(
-        blobInput,
-        masterKey,
-        effectiveMimeType || 'application/octet-stream'
-      );
-    } catch {
-      // Fallback to standard decryptToFile if streaming decryption fails
+    const rawBytes =
+      item.content instanceof Uint8Array ? item.content : base64ToUint8Array(item.content);
+
+    if (rawBytes.length > 0) {
+      // Check if payload is an E2EE bundle (starts with a 2-byte length for RSA encrypted key)
+      const isE2EEBundle =
+        rawBytes.length > 2 &&
+        Boolean(rsaPrivateKey) &&
+        (() => {
+          const view = new DataView(rawBytes.buffer, rawBytes.byteOffset, rawBytes.byteLength);
+          const encKeyLen = view.getUint16(0);
+          return encKeyLen > 0 && encKeyLen < rawBytes.length && (encKeyLen === 256 || encKeyLen === 512);
+        })();
+
+      if (!isE2EEBundle) {
+        try {
+          const blobInput = new Blob([rawBytes as unknown as BlobPart]);
+          const streamedUrl = await getDecryptStreamResponseUrl(
+            blobInput,
+            masterKey,
+            effectiveMimeType || 'application/octet-stream'
+          );
+          if (streamedUrl) return streamedUrl;
+        } catch {
+          // Fallback to standard decryptToFile if streaming decryption fails
+        }
+      }
+
+      try {
+        const decryptedUrl = await decryptToFile(
+          rawBytes,
+          masterKey,
+          effectiveMimeType,
+          rsaPrivateKey
+        );
+        if (decryptedUrl) return decryptedUrl;
+      } catch {
+        // Fallback
+      }
     }
+  }
+
+  // Fallback: Try fetching server signed URL if content decryption didn't produce a URL
+  try {
+    const { getSignedUrl } = await import('./sync/media');
+    const signedUrl = await getSignedUrl(item.id, 'view');
+    const response = await fetch(signedUrl);
+    if (response.ok) {
+      const encryptedBlob = await response.blob();
+      if (encryptedBlob.size > 0) {
+        try {
+          return await getDecryptStreamResponseUrl(
+            encryptedBlob,
+            masterKey,
+            effectiveMimeType || 'application/octet-stream'
+          );
+        } catch {
+          return await decryptToFile(
+            new Uint8Array(await encryptedBlob.arrayBuffer()),
+            masterKey,
+            effectiveMimeType,
+            rsaPrivateKey
+          );
+        }
+      }
+    }
+  } catch {
+    // Ignore server signed URL fallback error
   }
 
   if (

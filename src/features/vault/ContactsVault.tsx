@@ -617,7 +617,7 @@ export const ContactsVault: React.FC = () => {
         allItemIcon={<Users className="h-4 w-4" />}
       />
 
-      <div className="custom-scrollbar flex min-w-0 flex-1 flex-col space-y-6 overflow-y-auto pr-2">
+      <div className="custom-scrollbar flex min-w-0 flex-1 flex-col space-y-6 overflow-y-auto pr-2 h-full">
         <div className="flex items-center justify-between">
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex items-center gap-3">

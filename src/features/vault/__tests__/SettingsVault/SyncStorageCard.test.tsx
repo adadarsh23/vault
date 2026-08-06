@@ -89,6 +89,9 @@ describe('SyncStorageCard Component Test Suite', () => {
 
     render(<SyncStorageCard {...defaultProps} syncStatus="syncing" cancelSync={cancelSyncMock} />);
 
+    const moreButton = screen.getByRole('button', { name: /toggle more sync options/i });
+    fireEvent.click(moreButton);
+
     const cancelButton = screen.getByRole('button', { name: /^cancel sync$/i });
     expect(cancelButton.hasAttribute('disabled')).toBe(false);
 
@@ -103,6 +106,9 @@ describe('SyncStorageCard Component Test Suite', () => {
       <SyncStorageCard {...defaultProps} migrateLocalToCloud={migrateLocalToCloudMock} />
     );
 
+    const moreButton = screen.getByRole('button', { name: /toggle more sync options/i });
+    fireEvent.click(moreButton);
+
     const migrateButton = screen.getByRole('button', { name: /^migrate$/i });
     fireEvent.click(migrateButton);
 
@@ -116,6 +122,9 @@ describe('SyncStorageCard Component Test Suite', () => {
       />
     );
 
+    const moreButtonRerender = screen.getByRole('button', { name: /toggle more sync options/i });
+    fireEvent.click(moreButtonRerender);
+
     const loadingMigrateButton = screen.getByRole('button', { name: /^migrate$/i });
     expect(loadingMigrateButton.hasAttribute('disabled')).toBe(true);
   });
@@ -125,12 +134,18 @@ describe('SyncStorageCard Component Test Suite', () => {
 
     const { rerender } = render(<SyncStorageCard {...defaultProps} syncLogs={syncLogsMock} />);
 
+    const moreButton = screen.getByRole('button', { name: /toggle more sync options/i });
+    fireEvent.click(moreButton);
+
     const syncLogsButton = screen.getByRole('button', { name: /^sync logs$/i });
     fireEvent.click(syncLogsButton);
 
     expect(syncLogsMock).toHaveBeenCalledTimes(1);
 
     rerender(<SyncStorageCard {...defaultProps} isSyncingLogs={true} syncLogs={syncLogsMock} />);
+
+    const moreButtonRerender = screen.getByRole('button', { name: /toggle more sync options/i });
+    fireEvent.click(moreButtonRerender);
 
     const loadingSyncLogsButton = screen.getByRole('button', { name: /^sync logs$/i });
     expect(loadingSyncLogsButton.hasAttribute('disabled')).toBe(true);
@@ -147,6 +162,9 @@ describe('SyncStorageCard Component Test Suite', () => {
       />
     );
 
+    const moreButton = screen.getByRole('button', { name: /toggle more sync options/i });
+    fireEvent.click(moreButton);
+
     const cancelLogsButton = screen.getByRole('button', { name: /cancel logs sync/i });
     expect(cancelLogsButton.hasAttribute('disabled')).toBe(false);
 
@@ -154,3 +172,4 @@ describe('SyncStorageCard Component Test Suite', () => {
     expect(cancelActivityLogSyncMock).toHaveBeenCalledTimes(1);
   });
 });
+

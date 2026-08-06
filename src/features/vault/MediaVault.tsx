@@ -603,9 +603,14 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
             },
           });
 
-          const encryptedData = isAlreadyEncrypted
-            ? new Uint8Array(await file.arrayBuffer())
-            : await encryptFileInWorker(uploadFileObj, masterKey);
+          // Memory Optimization: For TUS uploads, chunks are already encrypted and stored on the server.
+          // Avoid loading the entire file as a single massive ArrayBuffer into heap memory for large media files.
+          const encryptedData =
+            type === 'video' && tusResult?.uploadId
+              ? new Uint8Array(0)
+              : isAlreadyEncrypted
+                ? new Uint8Array(await file.arrayBuffer())
+                : await encryptFileInWorker(uploadFileObj, masterKey);
 
           const dimensions =
             type === 'photo' ? await getMediaDimensions(uploadFileObj, 'photo') : undefined;

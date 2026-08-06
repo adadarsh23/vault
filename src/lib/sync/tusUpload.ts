@@ -22,6 +22,8 @@ export interface TusSession {
   fileName: string;
   mimeType: string;
   createdAt: number;
+  rawOffset?: number;
+  encryptedOffset?: number;
 }
 
 function getSessionKey(file: File): string {
@@ -77,6 +79,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /**
  * Resumable Encrypted File Upload using the TUS Protocol (v1.0.0).
  * Handles network drops, pause/resume, and chunk-level AES-GCM encryption.
+ * Uses dual-pointer offset tracking to separate raw unencrypted file slicing from server encrypted bytes.
  */
 export async function uploadFileTus(
   options: TusUploadOptions
@@ -99,15 +102,22 @@ export async function uploadFileTus(
   let session = loadTusSession(sessionKey);
   let uploadId = session?.uploadId || '';
   let location = session?.location || '';
-  let currentOffset = 0;
+  let rawOffset = session?.rawOffset || 0;
+  let encryptedOffset = session?.encryptedOffset || 0;
 
   // Step 1: Query existing session or create a new upload
   if (session && uploadId) {
     try {
-      currentOffset = await vaultApi.getTusOffset(uploadId);
+      const serverOffset = await vaultApi.getTusOffset(uploadId);
+      encryptedOffset = serverOffset;
+      if (serverOffset === 0) {
+        rawOffset = 0;
+      }
     } catch {
       // If server session expired or invalid, reset session
       session = null;
+      rawOffset = 0;
+      encryptedOffset = 0;
       clearTusSession(sessionKey);
     }
   }
@@ -123,6 +133,8 @@ export async function uploadFileTus(
     uploadId = created.uploadId;
     location = created.location;
 
+    rawOffset = 0;
+    encryptedOffset = 0;
     session = {
       uploadId,
       location,
@@ -130,20 +142,21 @@ export async function uploadFileTus(
       fileName: file.name,
       mimeType: file.type || 'application/octet-stream',
       createdAt: Date.now(),
+      rawOffset: 0,
+      encryptedOffset: 0,
     };
     saveTusSession(sessionKey, session);
-    currentOffset = 0;
   }
 
-  // Step 2: Upload remaining file chunks starting from currentOffset
+  // Step 2: Upload remaining file chunks starting from rawOffset
   const totalSize = file.size;
 
-  while (currentOffset < totalSize) {
+  while (rawOffset < totalSize) {
     if (signal?.aborted) {
       throw new Error('TUS upload aborted by caller');
     }
 
-    const start = currentOffset;
+    const start = rawOffset;
     const end = Math.min(start + chunkSize, totalSize);
     const rawChunkSlice = await file.slice(start, end).arrayBuffer();
     const rawChunkBytes = new Uint8Array(rawChunkSlice);
@@ -152,12 +165,12 @@ export async function uploadFileTus(
     const encryptedChunk = await encryptChunk(rawChunkBytes, cryptoKey);
 
     let retryCount = 0;
-    let nextOffset: number | null = null;
+    let nextServerOffset: number | null = null;
 
     while (retryCount <= MAX_RETRIES) {
       if (signal?.aborted) throw new Error('TUS upload aborted');
       try {
-        nextOffset = await vaultApi.uploadTusChunk(uploadId, currentOffset, encryptedChunk);
+        nextServerOffset = await vaultApi.uploadTusChunk(uploadId, encryptedOffset, encryptedChunk);
         break; // Success
       } catch (err: any) {
         retryCount++;
@@ -168,11 +181,15 @@ export async function uploadFileTus(
       }
     }
 
-    if (nextOffset !== null) {
-      // Update currentOffset based on server-reported offset to stay in sync with encrypted chunk size
-      currentOffset = nextOffset;
+    if (nextServerOffset !== null) {
+      rawOffset += rawChunkBytes.length;
+      encryptedOffset = nextServerOffset;
+      session.rawOffset = rawOffset;
+      session.encryptedOffset = encryptedOffset;
+      saveTusSession(sessionKey, session);
+
       if (onProgress) {
-        onProgress(currentOffset, totalSize);
+        onProgress(rawOffset, totalSize);
       }
     }
   }

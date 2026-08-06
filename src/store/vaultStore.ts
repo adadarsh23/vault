@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { VaultItem } from '../lib/storage';
+import { VaultItem, loadLocalItemsFromDb, saveItem, deleteItem } from '../lib/storage';
 import {
   base64ToUint8Array,
   deriveKey,
@@ -272,8 +272,20 @@ const reportProgress = (
 
 const mergeCloudWithLocalRuntimeItems = (
   localItems: VaultItem[],
-  cloudItems: VaultItem[]
-): VaultItem[] => [...localItems.filter((item) => item.source === LOCAL_SOURCE), ...cloudItems];
+  cloudItems: VaultItem[],
+  additionalLocalItems: VaultItem[] = []
+): VaultItem[] => {
+  const localMap = new Map<string, VaultItem>();
+  for (const item of [
+    ...localItems.filter((i) => i.source === LOCAL_SOURCE),
+    ...additionalLocalItems.filter((i) => i.source === LOCAL_SOURCE),
+  ]) {
+    localMap.set(item.id, item);
+  }
+  const cloudIdSet = new Set(cloudItems.map((c) => c.id));
+  const remainingLocals = Array.from(localMap.values()).filter((l) => !cloudIdSet.has(l.id));
+  return [...remainingLocals, ...cloudItems];
+};
 
 const resolveActivityLoggingPreference = (
   snapshot: LoadedVaultSnapshot,
@@ -286,7 +298,7 @@ const resolveActivityLoggingPreference = (
 const buildSyncedSnapshotState = (
   state: VaultState,
   snapshot: LoadedVaultSnapshot,
-  options: { includeLocalRuntimeItems: boolean; now: number }
+  options: { includeLocalRuntimeItems: boolean; additionalLocalItems?: VaultItem[]; now: number }
 ) => {
   const nextPreferences = snapshot.settings?.preferences
     ? {
@@ -297,8 +309,12 @@ const buildSyncedSnapshotState = (
 
   return {
     items: options.includeLocalRuntimeItems
-      ? mergeCloudWithLocalRuntimeItems(state.items, snapshot.items)
-      : snapshot.items,
+      ? mergeCloudWithLocalRuntimeItems(
+          state.items,
+          snapshot.items,
+          options.additionalLocalItems || []
+        )
+      : mergeCloudWithLocalRuntimeItems([], snapshot.items, options.additionalLocalItems || []),
     preferences: nextPreferences,
     allowRestrictedTypes: snapshot.settings?.allowRestrictedTypes ?? state.allowRestrictedTypes,
     isLoading: false,
@@ -599,10 +615,13 @@ export const useVaultStore = create<VaultState>((set, get) => ({
           ? initialSnapshot
           : await loadVaultSnapshot(cryptoKey);
 
+      const localItems = await loadLocalItemsFromDb().catch(() => []);
+
       const now = Date.now();
       set((state) => ({
         ...buildSyncedSnapshotState(state, snapshot, {
-          includeLocalRuntimeItems: false,
+          includeLocalRuntimeItems: true,
+          additionalLocalItems: localItems,
           now,
         }),
         isUnlocked: true,
@@ -1053,11 +1072,13 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     });
     try {
       const snapshot = await loadVaultSnapshot(masterKey);
+      const localItems = await loadLocalItemsFromDb().catch(() => []);
 
       const now = Date.now();
       set((state) =>
         buildSyncedSnapshotState(state, snapshot, {
           includeLocalRuntimeItems: true,
+          additionalLocalItems: localItems,
           now,
         })
       );
@@ -1130,8 +1151,16 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      if (newItem.source !== 'local') {
-        await uploadItemToCloud(newItem, masterKey, onProgress);
+      if (newItem.source === 'local') {
+        await saveItem(newItem);
+      } else {
+        try {
+          await uploadItemToCloud(newItem, masterKey, onProgress);
+        } catch (uploadErr) {
+          console.warn('Cloud upload failed, saving item locally to IndexedDB as fallback:', uploadErr);
+          newItem.source = 'local';
+          await saveItem(newItem);
+        }
       }
       set((state) => ({ items: [newItem, ...state.items], isLoading: false }));
       toast.success(
@@ -1160,7 +1189,12 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     set({ isLoading: true });
 
     try {
-      await deleteItemFromCloud(id, masterKey);
+      if (item?.source === 'local') {
+        await deleteItem(id);
+      } else {
+        await deleteItemFromCloud(id, masterKey).catch(() => {});
+        await deleteItem(id);
+      }
       set((state) => ({
         items: state.items.filter((i) => i.id !== id),
         isLoading: false,
@@ -1193,7 +1227,11 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      await uploadItemToCloud(updatedItem, masterKey);
+      if (updatedItem.source === 'local') {
+        await saveItem(updatedItem);
+      } else {
+        await uploadItemToCloud(updatedItem, masterKey);
+      }
       set((state) => ({
         items: state.items.map((i) => (i.id === id ? updatedItem : i)),
         isLoading: false,

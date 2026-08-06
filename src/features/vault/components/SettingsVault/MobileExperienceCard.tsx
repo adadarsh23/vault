@@ -146,7 +146,7 @@ export const MobileExperienceCard: React.FC<MobileExperienceCardProps> = ({
 
         <div className="mt-6 border-t border-card-border/50 pt-4">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-text/30">
-            Recommended for Daily Security
+            Daily Security
           </p>
         </div>
       </div>

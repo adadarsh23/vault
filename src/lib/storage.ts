@@ -59,8 +59,105 @@ export interface VaultItem {
   pinnedAt?: number | null;
 }
 
-// Permanent vault data lives in the cloud. Browser-side vault data is runtime-only.
+// Permanent vault data lives in the cloud. Browser-side local vault data is persisted in IndexedDB.
 const sessionVaultItems = new Map<string, VaultItem>();
+
+const LOCAL_DB_NAME = 'VaultLocalStorage';
+const LOCAL_DB_VERSION = 1;
+const LOCAL_STORE_NAME = 'vault_local_items';
+
+const openLocalDB = (): Promise<IDBDatabase | null> => {
+  if (typeof window === 'undefined' || !window.indexedDB) {
+    return Promise.resolve(null);
+  }
+  return new Promise((resolve) => {
+    try {
+      const request = window.indexedDB.open(LOCAL_DB_NAME, LOCAL_DB_VERSION);
+      request.onupgradeneeded = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains(LOCAL_STORE_NAME)) {
+          db.createObjectStore(LOCAL_STORE_NAME, { keyPath: 'id' });
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+};
+
+export const saveItemToLocalDb = async (item: VaultItem): Promise<void> => {
+  const db = await openLocalDB();
+  if (!db) return;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(LOCAL_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(LOCAL_STORE_NAME);
+      store.put(item);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+};
+
+export const loadLocalItemsFromDb = async (): Promise<VaultItem[]> => {
+  const db = await openLocalDB();
+  if (!db) return [];
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(LOCAL_STORE_NAME, 'readonly');
+      const store = tx.objectStore(LOCAL_STORE_NAME);
+      const request = store.getAll();
+      request.onsuccess = () => {
+        const items = (request.result as VaultItem[]) || [];
+        items.forEach((item) => {
+          if (item && item.id) {
+            sessionVaultItems.set(item.id, item);
+          }
+        });
+        resolve(items);
+      };
+      request.onerror = () => resolve([]);
+    } catch {
+      resolve([]);
+    }
+  });
+};
+
+export const deleteItemFromLocalDb = async (id: string): Promise<void> => {
+  const db = await openLocalDB();
+  if (!db) return;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(LOCAL_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(LOCAL_STORE_NAME);
+      store.delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+};
+
+export const clearLocalDb = async (): Promise<void> => {
+  const db = await openLocalDB();
+  if (!db) return;
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(LOCAL_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(LOCAL_STORE_NAME);
+      store.clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+};
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -169,24 +266,33 @@ const normalizeVaultItem = (item: VaultItem): VaultItem => {
 export const saveItem = async (item: VaultItem): Promise<void> => {
   const normalizedItem = normalizeVaultItem(item);
   sessionVaultItems.set(normalizedItem.id, normalizedItem);
+  if (normalizedItem.source === 'local') {
+    await saveItemToLocalDb(normalizedItem);
+  }
 };
 
 export const getItems = async (type?: VaultItem['type']): Promise<VaultItem[]> => {
+  if (sessionVaultItems.size === 0) {
+    await loadLocalItemsFromDb();
+  }
   const items = Array.from(sessionVaultItems.values());
   const filteredItems = type ? items.filter((item) => item.type === type) : items;
   return filteredItems.map((item) => cloneVaultItem(item));
 };
 
-export const getItem = async (id: string): Promise<VaultItem | undefined> =>
-  (() => {
-    const normalizedId = normalizeOptionalString(id);
-    if (!normalizedId) {
-      return undefined;
-    }
+export const getItem = async (id: string): Promise<VaultItem | undefined> => {
+  const normalizedId = normalizeOptionalString(id);
+  if (!normalizedId) {
+    return undefined;
+  }
 
-    const item = sessionVaultItems.get(normalizedId);
-    return item ? cloneVaultItem(item) : undefined;
-  })();
+  let item = sessionVaultItems.get(normalizedId);
+  if (!item) {
+    await loadLocalItemsFromDb();
+    item = sessionVaultItems.get(normalizedId);
+  }
+  return item ? cloneVaultItem(item) : undefined;
+};
 
 export const deleteItem = async (id: string): Promise<void> => {
   const normalizedId = normalizeOptionalString(id);
@@ -195,8 +301,11 @@ export const deleteItem = async (id: string): Promise<void> => {
   }
 
   sessionVaultItems.delete(normalizedId);
+  await deleteItemFromLocalDb(normalizedId);
 };
 
 export const clearVault = async (): Promise<void> => {
   sessionVaultItems.clear();
+  await clearLocalDb();
 };
+

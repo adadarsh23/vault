@@ -1,41 +1,25 @@
 import React, { useRef, useState } from 'react';
-import {
-  AtSign,
-  ChevronUp,
-  ChevronRight,
-  Filter,
-  Loader2,
-  Menu,
-  MessageSquareText,
-  Pin,
-  Plus,
-  Search,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { ChevronUp, ChevronRight, Loader2, Menu, Pin, Plus, Search, Trash2, X } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { ScrollButton } from '../../../../components/vault/ScrollButton';
 import { VaultItem } from '../../../../lib/storage';
 import { cn } from '../../../../lib/utils';
-import { ChatListFilter, ChatMessage } from './types';
+import { ChatMessage } from './types';
 import { formatListTime, getAvatarLabel } from './utils';
 
 interface ChatListPanelProps {
   activeChatId: string | null;
   filteredChats: VaultItem[];
   totalFilteredChats: number;
-  chatMetrics: Record<string, { unread: number; mentions: number }>;
   lastMessagesByChatId: Record<string, ChatMessage | null>;
   pinningItemIds: string[];
-  filter: ChatListFilter;
   searchQuery: string;
   newChatTitle: string;
   isCreatingChat: boolean;
   hasMoreChats: boolean;
   isLoadingMoreChats: boolean;
   onOpenFolders: () => void;
-  onFilterChange: (value: ChatListFilter) => void;
   onSearchQueryChange: (value: string) => void;
   onNewChatTitleChange: (value: string) => void;
   onCreateChat: () => Promise<void>;
@@ -50,17 +34,14 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
   activeChatId,
   filteredChats,
   totalFilteredChats,
-  chatMetrics,
   lastMessagesByChatId,
   pinningItemIds,
-  filter,
   searchQuery,
   newChatTitle,
   isCreatingChat,
   hasMoreChats,
   isLoadingMoreChats,
   onOpenFolders,
-  onFilterChange,
   onSearchQueryChange,
   onNewChatTitleChange,
   onCreateChat,
@@ -73,20 +54,6 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
   const headerTitle = searchQuery.trim() ? 'Search Results' : 'Chats';
   const [showListScrollTop, setShowListScrollTop] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
-
-  const categoryCounts = React.useMemo(() => {
-    let unreadCount = 0;
-    let mentionsCount = 0;
-    Object.values(chatMetrics).forEach((metric) => {
-      if (metric.unread > 0) unreadCount += 1;
-      if (metric.mentions > 0) mentionsCount += 1;
-    });
-    return {
-      all: totalFilteredChats,
-      unread: unreadCount,
-      mentions: mentionsCount,
-    };
-  }, [chatMetrics, totalFilteredChats]);
 
   return (
     <aside
@@ -141,46 +108,6 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
         </Button>
       </div>
 
-      <div className="flex flex-nowrap gap-1 overflow-x-auto pb-1 custom-scrollbar">
-        {(
-          [
-            { id: 'all', label: 'All', icon: Filter },
-            { id: 'unread', label: 'Unread', icon: MessageSquareText },
-            { id: 'mentions', label: 'Mentions', icon: AtSign },
-          ] as const
-        ).map((entry) => {
-          const Icon = entry.icon;
-          const active = filter === entry.id;
-          const count = categoryCounts[entry.id];
-          return (
-            <button
-              key={entry.id}
-              type="button"
-              onClick={() => onFilterChange(entry.id)}
-              className={cn(
-                'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors',
-                active
-                  ? 'border-emerald-500/20 bg-emerald-500/10 text-text'
-                  : 'border-text/10 bg-bg/60 text-text/65 hover:text-text'
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              <span>{entry.label}</span>
-              {typeof count === 'number' && (
-                <span
-                  className={cn(
-                    'rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none',
-                    active ? 'bg-emerald-500/20 text-fuchsia-400' : 'bg-text/10 text-text/50'
-                  )}
-                >
-                  {count}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
           value={newChatTitle}
@@ -233,7 +160,6 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
           )}
 
           {filteredChats.map((chatItem) => {
-            const metrics = chatMetrics[chatItem.id] || { unread: 0, mentions: 0 };
             const lastMessage = lastMessagesByChatId[chatItem.id];
             const isActive = activeChatId === chatItem.id;
             const isPinning = pinningItemIds.includes(chatItem.id);
@@ -291,19 +217,6 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
                   <p className="mt-0.5 truncate text-xs text-text/55">
                     {lastMessage?.text?.trim() || 'No messages yet'}
                   </p>
-
-                  <div className="mt-1.5 flex items-center gap-1.5">
-                    {metrics.unread > 0 && (
-                      <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-white">
-                        {metrics.unread}
-                      </span>
-                    )}
-                    {metrics.mentions > 0 && (
-                      <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-semibold text-fuchsia-400">
-                        @{metrics.mentions}
-                      </span>
-                    )}
-                  </div>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-0.5 self-center">

@@ -334,25 +334,28 @@ export const AudioPlayer = ({
 
       const arrayBuffer = await response.arrayBuffer();
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      try {
+        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
 
-      const channelData = audioBuffer.getChannelData(0);
-      const samples = 100;
-      const blockSize = Math.floor(channelData.length / samples);
-      const peaks = [];
+        const channelData = audioBuffer.getChannelData(0);
+        const samples = 100;
+        const blockSize = Math.floor(channelData.length / samples);
+        const peaks = [];
 
-      for (let i = 0; i < samples; i++) {
-        let max = 0;
-        const start = i * blockSize;
-        for (let j = 0; j < blockSize; j += 10) {
-          const val = Math.abs(channelData[start + j]);
-          if (val > max) max = val;
+        for (let i = 0; i < samples; i++) {
+          let max = 0;
+          const start = i * blockSize;
+          for (let j = 0; j < blockSize; j += 10) {
+            const val = Math.abs(channelData[start + j]);
+            if (val > max) max = val;
+          }
+          peaks.push(max);
         }
-        peaks.push(max);
-      }
 
-      setWaveformPeaks(peaks);
-      audioCtx.close();
+        setWaveformPeaks(peaks);
+      } finally {
+        audioCtx.close().catch(() => {});
+      }
     } catch (err) {
       console.warn('Waveform generation failed:', err);
     } finally {
@@ -553,11 +556,14 @@ export const AudioPlayer = ({
       <div className={cn('flex justify-between items-end mb-4', compact && 'mb-2')}>
         <div>
           <p
-            className="text-white/40 text-[10px] uppercase tracking-wider font-semibold"
+            className={cn(
+              'text-[10px] uppercase tracking-wider font-semibold',
+              hasError ? 'text-amber-400 font-bold' : 'text-white/40'
+            )}
             aria-live={hasError ? 'assertive' : 'polite'}
           >
             {hasError
-              ? 'Unable to load audio'
+              ? 'Unable to load audio (Click play to retry)'
               : isWaiting
                 ? 'Buffering...'
                 : isLoading

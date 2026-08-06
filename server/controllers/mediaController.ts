@@ -223,7 +223,7 @@ const ensureUploadIsActive = (item: any) => {
     return;
   }
   const scanStatus = item?.metadata?.uploadSecurity?.scanStatus;
-  if (!scanStatus || scanStatus !== 'active') {
+  if (scanStatus === 'quarantined' || scanStatus === 'infected' || scanStatus === 'blocked') {
     throw AppError.forbidden(
       'File is quarantined or pending security scan.',
       'FILE_QUARANTINED_OR_PENDING_SCAN'
@@ -529,8 +529,8 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
   const DynamicVaultModel = getVaultItemModel(username);
   let item = await DynamicVaultModel.findOne({ userId: resolvedUserId, itemId });
 
-  if (!item || !item.file || !item.file.filePath) {
-    logger.warn('Media file access failed: Item or file path missing', {
+  if (!item) {
+    logger.warn('Media file access failed: Item missing', {
       itemId,
       userId: resolvedUserId,
       username,
@@ -539,101 +539,272 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
   }
   ensureUploadIsActive(item);
 
-  let filePath = item.file.filePath;
-  if (!fs.existsSync(filePath)) {
-    const fileName = path.basename(filePath);
-    const category = item.category || 'other-files';
-    const relativePath = path.join(STORAGE_ROOT, resolvedUserId.toString(), category, fileName);
-    if (fs.existsSync(relativePath)) filePath = relativePath;
-    else {
-      const legacyCategory =
-        category === 'photo' ? 'photos' : category === 'video' ? 'videos' : category;
-      const legacyPath = path.join(
-        STORAGE_ROOT,
-        resolvedUserId.toString(),
-        legacyCategory,
-        fileName
-      );
-      if (fs.existsSync(legacyPath)) filePath = legacyPath;
-      else throw AppError.internal('File missing from storage');
-    }
-  }
-
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
-  const ext = path.extname(item.file.fileName || '').toLowerCase();
-  const mimeType = mimeMap[ext] || 'application/octet-stream';
+  const fileName = item.file?.fileName || item.title || 'file';
+  const ext = path.extname(fileName).toLowerCase();
+  const mimeType = item.file?.mimeType || (item.metadata as any)?.mimeType || mimeMap[ext] || 'application/octet-stream';
   const isStreamableMedia = mimeType.startsWith('video/') || mimeType.startsWith('audio/');
   const requestedRange = req.headers.range;
-  const fileEncryptedAtRest =
-    Boolean(item?.file?.encryptionIv) ||
-    Boolean(item?.file?.encryptionTag) ||
-    filePath.toLowerCase().endsWith('.enc');
 
-  // Fast path: only serve direct file ranges for non-encrypted media.
-  if (isStreamableMedia && !fileEncryptedAtRest) {
-    const stats = await fs.promises.stat(filePath);
-    const fileSize = stats.size;
-    res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Content-Type', mimeType);
+  // 1. Try reading from MongoDB Atlas GridFS Cloud Storage
+  const gridFsId =
+    item.gridFsId ||
+    (item.file?.filePath?.startsWith('cloud://')
+      ? item.file.filePath.replace('cloud://', '')
+      : null);
 
-    if (requestedRange) {
-      const parsedRange = parseSingleByteRange(requestedRange, fileSize);
-      if (!parsedRange) {
-        res.setHeader('Content-Range', `bytes */${fileSize}`);
-        return res.status(416).end();
+  if (gridFsId && mongoose.connection && mongoose.connection.db) {
+    try {
+      const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+        bucketName: 'vault_item_files',
+      });
+      const objectId = new mongoose.Types.ObjectId(gridFsId);
+      const files = await bucket.find({ _id: objectId }).toArray();
+
+      if (files && files.length > 0) {
+        const gridFile = files[0];
+        const fileSize = gridFile.length;
+        const fileMetadata = gridFile.metadata || {};
+        const isServerEncrypted = Boolean(item?.file?.encryptionIv || fileMetadata?.encryption);
+
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Content-Type', mimeType);
+
+        if (!isServerEncrypted && isStreamableMedia) {
+          if (requestedRange) {
+            const parsedRange = parseSingleByteRange(requestedRange, fileSize);
+            if (!parsedRange) {
+              res.setHeader('Content-Range', `bytes */${fileSize}`);
+              return res.status(416).end();
+            }
+            const chunkSize = parsedRange.end - parsedRange.start + 1;
+            res.status(206);
+            res.setHeader('Content-Range', `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`);
+            res.setHeader('Content-Length', chunkSize.toString());
+            return bucket
+              .openDownloadStream(objectId, { start: parsedRange.start, end: parsedRange.end + 1 })
+              .pipe(res);
+          }
+
+          res.status(200);
+          res.setHeader('Content-Length', fileSize.toString());
+          return bucket.openDownloadStream(objectId).pipe(res);
+        } else {
+          const chunks: Buffer[] = [];
+          const downloadStream = bucket.openDownloadStream(objectId);
+          const gridBuffer: Buffer = await new Promise((resolve, reject) => {
+            downloadStream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+            downloadStream.on('error', reject);
+            downloadStream.on('end', () => resolve(Buffer.concat(chunks)));
+          });
+
+          let decrypted: Buffer;
+          try {
+            const payloadObj: EncryptedPayload = JSON.parse(gridBuffer.toString());
+            decrypted = decryptBuffer(payloadObj);
+          } catch {
+            if (item.file?.encryptionIv && item.file?.encryptionTag) {
+              try {
+                decrypted = decryptBuffer({
+                  iv: item.file.encryptionIv,
+                  tag: item.file.encryptionTag,
+                  encryptedData: gridBuffer.toString('hex'),
+                });
+              } catch {
+                decrypted = gridBuffer;
+              }
+            } else {
+              decrypted = gridBuffer;
+            }
+          }
+
+          const size = decrypted.length;
+          if (isStreamableMedia && requestedRange) {
+            const parsedRange = parseSingleByteRange(requestedRange, size);
+            if (!parsedRange) {
+              res.setHeader('Content-Range', `bytes */${size}`);
+              return res.status(416).end();
+            }
+            const chunk = decrypted.subarray(parsedRange.start, parsedRange.end + 1);
+            res.status(206);
+            res.setHeader('Content-Range', `bytes ${parsedRange.start}-${parsedRange.end}/${size}`);
+            res.setHeader('Content-Length', String(chunk.length));
+            return res.send(chunk);
+          }
+
+          res.status(200);
+          res.setHeader('Content-Length', size.toString());
+          return res.send(decrypted);
+        }
       }
-      const chunkSize = parsedRange.end - parsedRange.start + 1;
-      res.status(206);
-      res.setHeader('Content-Range', `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`);
-      res.setHeader('Content-Length', chunkSize.toString());
-      return fs
-        .createReadStream(filePath, {
-          start: parsedRange.start,
-          end: parsedRange.end,
-        })
-        .pipe(res);
+    } catch (gridFsError) {
+      logger.warn('GridFS read attempt error, attempting payload/disk fallback', {
+        itemId,
+        gridFsError: gridFsError instanceof Error ? gridFsError.message : String(gridFsError),
+      });
+    }
+  }
+
+  // 2. Try reading from MongoDB Atlas Document Payload (Base64 / Binary)
+  if (item.payload || item.modernPayload) {
+    let rawBuffer: Buffer | null = null;
+    const rawPayload = item.payload || item.modernPayload || '';
+    if (Buffer.isBuffer(rawPayload)) {
+      rawBuffer = rawPayload;
+    } else if (typeof rawPayload === 'string' && rawPayload.length > 0) {
+      if (item.encoding === 'base64' || item.encoding === 'binary-base64') {
+        try {
+          rawBuffer = Buffer.from(rawPayload, 'base64');
+        } catch {
+          rawBuffer = Buffer.from(rawPayload);
+        }
+      } else if (item.encoding === 'utf-8' || item.encoding === 'modern') {
+        rawBuffer = Buffer.from(rawPayload, 'utf8');
+      } else {
+        try {
+          rawBuffer = Buffer.from(rawPayload, 'base64');
+        } catch {
+          rawBuffer = Buffer.from(rawPayload);
+        }
+      }
     }
 
-    res.status(200);
-    res.setHeader('Content-Length', fileSize.toString());
-    return fs.createReadStream(filePath).pipe(res);
-  }
+    if (rawBuffer && rawBuffer.length > 0) {
+      let decrypted: Buffer;
+      try {
+        const payloadObj: EncryptedPayload = JSON.parse(rawBuffer.toString());
+        decrypted = decryptBuffer(payloadObj);
+      } catch {
+        if (item.file?.encryptionIv && item.file?.encryptionTag) {
+          try {
+            decrypted = decryptBuffer({
+              iv: item.file.encryptionIv,
+              tag: item.file.encryptionTag,
+              encryptedData: rawBuffer.toString('hex'),
+            });
+          } catch {
+            decrypted = rawBuffer;
+          }
+        } else {
+          decrypted = rawBuffer;
+        }
+      }
 
-  // Fallback: decrypt full payload for encrypted files, then respond
-  const encryptedContent = await fs.promises.readFile(filePath);
-  let decrypted: Buffer;
+      const size = decrypted.length;
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Content-Type', mimeType);
 
-  try {
-    const payload: EncryptedPayload = JSON.parse(encryptedContent.toString());
-    decrypted = decryptBuffer(payload);
-  } catch {
-    decrypted = encryptedContent;
-  }
+      if (isStreamableMedia && requestedRange) {
+        const parsedRange = parseSingleByteRange(requestedRange, size);
+        if (!parsedRange) {
+          res.setHeader('Content-Range', `bytes */${size}`);
+          return res.status(416).end();
+        }
+        const chunk = decrypted.subarray(parsedRange.start, parsedRange.end + 1);
+        res.status(206);
+        res.setHeader('Content-Range', `bytes ${parsedRange.start}-${parsedRange.end}/${size}`);
+        res.setHeader('Content-Length', String(chunk.length));
+        return res.send(chunk);
+      }
 
-  // Best-effort range support for decrypted in-memory payloads
-  if (isStreamableMedia && requestedRange) {
-    const fileSize = decrypted.length;
-    const parsedRange = parseSingleByteRange(requestedRange, fileSize);
-    if (!parsedRange) {
-      res.setHeader('Content-Range', `bytes */${fileSize}`);
-      return res.status(416).end();
+      res.status(200);
+      res.setHeader('Content-Length', size.toString());
+      return res.send(decrypted);
     }
-    const chunk = decrypted.subarray(parsedRange.start, parsedRange.end + 1);
-
-    res.status(206);
-    res.setHeader('Content-Type', mimeType);
-    res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Content-Range', `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`);
-    res.setHeader('Content-Length', String(chunk.length));
-    return res.send(chunk);
   }
 
-  res.setHeader('Content-Type', mimeType);
-  if (isStreamableMedia) {
-    res.setHeader('Accept-Ranges', 'bytes');
+  // 3. Fallback: Local Disk Storage (Legacy local files)
+  let filePath = item.file?.filePath;
+  if (filePath && !filePath.startsWith('cloud://')) {
+    let resolvedFilePath = filePath;
+    if (!fs.existsSync(resolvedFilePath)) {
+      const fn = path.basename(filePath);
+      const cat = item.category || 'other-files';
+      const relPath = path.join(STORAGE_ROOT, resolvedUserId.toString(), cat, fn);
+      if (fs.existsSync(relPath)) resolvedFilePath = relPath;
+      else {
+        const legacyCat = cat === 'photo' ? 'photos' : cat === 'video' ? 'videos' : cat;
+        const legacyPath = path.join(STORAGE_ROOT, resolvedUserId.toString(), legacyCat, fn);
+        if (fs.existsSync(legacyPath)) resolvedFilePath = legacyPath;
+        else resolvedFilePath = '';
+      }
+    }
+
+    if (resolvedFilePath && fs.existsSync(resolvedFilePath)) {
+      const fileEncryptedAtRest =
+        Boolean(item?.file?.encryptionIv) ||
+        Boolean(item?.file?.encryptionTag) ||
+        resolvedFilePath.toLowerCase().endsWith('.enc');
+
+      if (isStreamableMedia && !fileEncryptedAtRest) {
+        const stats = await fs.promises.stat(resolvedFilePath);
+        const fileSize = stats.size;
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Content-Type', mimeType);
+
+        if (requestedRange) {
+          const parsedRange = parseSingleByteRange(requestedRange, fileSize);
+          if (!parsedRange) {
+            res.setHeader('Content-Range', `bytes */${fileSize}`);
+            return res.status(416).end();
+          }
+          const chunkSize = parsedRange.end - parsedRange.start + 1;
+          res.status(206);
+          res.setHeader(
+            'Content-Range',
+            `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`
+          );
+          res.setHeader('Content-Length', chunkSize.toString());
+          return fs
+            .createReadStream(resolvedFilePath, {
+              start: parsedRange.start,
+              end: parsedRange.end,
+            })
+            .pipe(res);
+        }
+
+        res.status(200);
+        res.setHeader('Content-Length', fileSize.toString());
+        return fs.createReadStream(resolvedFilePath).pipe(res);
+      }
+
+      const encryptedContent = await fs.promises.readFile(resolvedFilePath);
+      let decrypted: Buffer;
+
+      try {
+        const payloadObj: EncryptedPayload = JSON.parse(encryptedContent.toString());
+        decrypted = decryptBuffer(payloadObj);
+      } catch {
+        decrypted = encryptedContent;
+      }
+
+      if (isStreamableMedia && requestedRange) {
+        const fileSize = decrypted.length;
+        const parsedRange = parseSingleByteRange(requestedRange, fileSize);
+        if (!parsedRange) {
+          res.setHeader('Content-Range', `bytes */${fileSize}`);
+          return res.status(416).end();
+        }
+        const chunk = decrypted.subarray(parsedRange.start, parsedRange.end + 1);
+
+        res.status(206);
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Content-Range', `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`);
+        res.setHeader('Content-Length', String(chunk.length));
+        return res.send(chunk);
+      }
+
+      res.setHeader('Content-Type', mimeType);
+      if (isStreamableMedia) {
+        res.setHeader('Accept-Ranges', 'bytes');
+      }
+      return res.send(decrypted);
+    }
   }
-  return res.send(decrypted);
+
+  throw AppError.notFound('Media file content not found in MongoDB Atlas cloud or storage');
 };
 
 export const createSignedUrl = async (req: express.Request, res: express.Response) => {

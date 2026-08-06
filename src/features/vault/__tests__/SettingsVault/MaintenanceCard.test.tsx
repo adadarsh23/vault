@@ -125,4 +125,43 @@ describe('MaintenanceCard Component Test Suite', () => {
 
     expect(loadSessionStateMock).toHaveBeenCalledTimes(2);
   });
+
+  it('toggles More button to reveal and collapse enhanced maintenance options', () => {
+    render(<MaintenanceCard {...defaultProps} />);
+
+    const moreButton = screen.getByRole('button', { name: /toggle more maintenance options/i });
+    expect(moreButton).toBeTruthy();
+    expect(screen.queryByText('Advanced Maintenance & System Diagnostics')).toBeNull();
+
+    // Click More button to expand
+    fireEvent.click(moreButton);
+    expect(screen.getByText('Advanced Maintenance & System Diagnostics')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /reset device labels/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /verify vault integrity/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /purge temp cache/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /export diagnostics/i })).toBeTruthy();
+
+    // Click Show Less to collapse
+    fireEvent.click(moreButton);
+    expect(screen.queryByText('Advanced Maintenance & System Diagnostics')).toBeNull();
+  });
+
+  it('triggers clearTrustedDeviceLabels callback when Reset device labels button inside More section is clicked', () => {
+    const clearTrustedDeviceLabelsMock = vi.fn();
+    render(
+      <MaintenanceCard
+        {...defaultProps}
+        clearTrustedDeviceLabels={clearTrustedDeviceLabelsMock}
+      />
+    );
+
+    const moreButton = screen.getByRole('button', { name: /toggle more maintenance options/i });
+    fireEvent.click(moreButton);
+
+    const resetButton = screen.getByRole('button', { name: /reset device labels/i });
+    fireEvent.click(resetButton);
+
+    expect(clearTrustedDeviceLabelsMock).toHaveBeenCalledTimes(1);
+  });
 });
+

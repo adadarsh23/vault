@@ -254,24 +254,56 @@ export const ShareVaultCard: React.FC = memo(() => {
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {/* URL Copy Card */}
         <div className={`${SETTINGS_PANEL} flex flex-col justify-between gap-4 overflow-hidden`}>
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text/40">
-              Direct Link
-            </p>
-            <div className="flex items-center gap-2 overflow-hidden rounded-lg bg-text/5 p-2 transition-colors focus-within:ring-1 focus-within:ring-text/20 hover:bg-text/10">
-              <code className="flex-1 truncate font-mono text-xs text-text/70">{shareUrl}</code>
-              <button
-                onClick={handleCopyLink}
-                className="flex h-8 w-8 items-center justify-center rounded-md bg-text/10 text-text transition-all hover:bg-text hover:text-bg focus:outline-none focus:ring-2 focus:ring-text/20"
-                title="Copy Link"
-                aria-label="Copy direct link to clipboard"
-              >
-                {copied ? (
-                  <Check className="h-4 w-4" aria-hidden="true" />
-                ) : (
-                  <Link className="h-4 w-4" aria-hidden="true" />
-                )}
-              </button>
+          <div className="space-y-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text/40">
+                Direct Link
+              </p>
+
+              <div className="mt-2 flex items-center gap-2 overflow-hidden rounded-lg bg-text/5 p-2 transition-colors hover:bg-text/10 focus-within:ring-1 focus-within:ring-text/20">
+                <code className="flex-1 truncate font-mono text-xs text-text/70">{shareUrl}</code>
+
+                <button
+                  onClick={handleCopyLink}
+                  className="flex h-8 w-8 items-center justify-center rounded-md bg-text/10 text-text transition-all hover:bg-text hover:text-bg focus:outline-none focus:ring-2 focus:ring-text/20"
+                  title="Copy Link"
+                  aria-label="Copy direct link to clipboard"
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Link className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Link Information */}
+            <div className="rounded-xl border border-card-border bg-card-bg/50 p-3">
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-text/45">Website Name</span>
+                  <span className="font-medium text-text">Vault</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-text/45">Connection</span>
+                  <span className="font-medium text-green-500">
+                    {shareUrl.startsWith('https://') ? 'HTTPS Secure' : 'HTTP'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-text/45">QR Available</span>
+                  <span className="font-medium text-text">Yes</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-text/45">Share Status</span>
+                  <span className="font-medium text-blue-500">Public Landing Page</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-text/45">Compatible</span>
+                  <span className="font-medium text-text">Android • iOS • Desktop</span>
+                </div>
+              </div>
             </div>
           </div>
           <p className="text-xs text-text/30">Copy the URL to share anywhere manually.</p>

@@ -1,4 +1,5 @@
 import { getOrCreateCryptoKey, AES_GCM_IV_LENGTH, AES_GCM_AAD } from './cryptoPrimitives';
+import { detectMimeTypeFromBytes } from './encryption';
 
 async function decryptBlock(
   cryptoKey: CryptoKey,
@@ -146,5 +147,30 @@ export async function getDecryptStreamResponseUrl(
   });
 
   const blob = await response.blob();
-  return URL.createObjectURL(blob);
+
+  let finalMimeType = mimeType;
+  if (
+    !finalMimeType ||
+    finalMimeType === 'application/octet-stream' ||
+    finalMimeType === 'audio/mpeg'
+  ) {
+    const headerBuffer = await blob.slice(0, 512).arrayBuffer();
+    const detected = detectMimeTypeFromBytes(new Uint8Array(headerBuffer));
+    if (detected !== 'application/octet-stream') {
+      if (
+        !finalMimeType ||
+        finalMimeType === 'application/octet-stream' ||
+        (finalMimeType === 'audio/mpeg' && detected !== 'audio/mpeg')
+      ) {
+        finalMimeType = detected;
+      }
+    }
+  }
+
+  const finalBlob =
+    finalMimeType && finalMimeType !== blob.type
+      ? blob.slice(0, blob.size, finalMimeType)
+      : blob;
+
+  return URL.createObjectURL(finalBlob);
 }

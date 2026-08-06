@@ -1,5 +1,15 @@
 import React, { memo } from 'react';
-import { Network, ClipboardList, MonitorSmartphone, ShieldCheck } from 'lucide-react';
+import {
+  Network,
+  ClipboardList,
+  MonitorSmartphone,
+  ShieldCheck,
+  ChevronDown,
+  ChevronUp,
+  Sliders,
+  Keyboard,
+  Activity,
+} from 'lucide-react';
 import { useVaultStore } from '../../store/vaultStore';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { PWAInstallModal } from '../../components/vault/PWAInstallModal';
@@ -71,6 +81,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
     const [isDestroyingVault, setIsDestroyingVault] = React.useState(false);
     const [isSavingProfile, setIsSavingProfile] = React.useState(false);
     const [isMigrating, setIsMigrating] = React.useState(false);
+    const [showMoreNav, setShowMoreNav] = React.useState(false);
     const [destructionStage, setDestructionStage] = React.useState<'idle' | 'confirm' | 'final'>(
       'idle'
     );
@@ -256,68 +267,115 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
           title="Vault Navigation"
           description="Quick access to Vault Ecosystem, Controls & Shortcuts, Device Sessions, and System Logs."
         >
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div className="rounded-[1.25rem] border border-card-border bg-card-bg p-4 shadow-[0_12px_30px_-22px_rgba(0,0,0,0.24)] transition-colors dark:border-white/10 dark:bg-black">
-              <p className="text-sm font-semibold text-text">Vault Ecosystem</p>
-              <p className="mt-1 text-xs leading-5 text-text/45">
-                Explore how identity, encryption, sync, and protected content connect.
-              </p>
-              <Button
-                variant="secondary"
-                onClick={() => onNavigate('ecosystem')}
-                className="mt-4 w-full justify-center"
-              >
-                <Network className="mr-2 h-4 w-4" />
-                Open Ecosystem
-              </Button>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="rounded-[1.25rem] border border-card-border bg-card-bg p-4 shadow-[0_12px_30px_-22px_rgba(0,0,0,0.24)] transition-colors dark:border-white/10 dark:bg-black">
+                <p className="text-sm font-semibold text-text">Vault Ecosystem</p>
+                <p className="mt-1 text-xs leading-5 text-text/45">
+                  Explore how identity, encryption, sync, and protected content connect.
+                </p>
+                <Button
+                  variant="secondary"
+                  onClick={() => onNavigate('ecosystem')}
+                  className="mt-4 w-full justify-center"
+                >
+                  <Network className="mr-2 h-4 w-4" />
+                  Open Ecosystem
+                </Button>
+              </div>
+
+              <div className="rounded-[1.25rem] border border-card-border bg-card-bg p-4 shadow-[0_12px_30px_-22px_rgba(0,0,0,0.24)] transition-colors dark:border-white/10 dark:bg-black">
+                <p className="text-sm font-semibold text-text">Device Sessions</p>
+                <p className="mt-1 text-xs leading-5 text-text/45">
+                  Manage trusted devices and active session access.
+                </p>
+                <Button
+                  variant="secondary"
+                  onClick={() => onNavigate('devicesessions')}
+                  className="mt-4 w-full justify-center"
+                >
+                  <MonitorSmartphone className="mr-2 h-4 w-4" />
+                  Open Sessions
+                </Button>
+              </div>
+
+              <div className="rounded-[1.25rem] border border-card-border bg-card-bg p-4 shadow-[0_12px_30px_-22px_rgba(0,0,0,0.24)] transition-colors dark:border-white/10 dark:bg-black md:col-span-2">
+                <p className="text-sm font-semibold text-text">System Logs</p>
+                <p className="mt-1 text-xs leading-5 text-text/45">
+                  Review runtime telemetry and recent security events.
+                </p>
+                <Button
+                  variant="secondary"
+                  onClick={() => onNavigate('systemlogs')}
+                  className="mt-4 w-full justify-center"
+                >
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  Open Logs
+                </Button>
+              </div>
             </div>
 
-            {/* <div className="rounded-[1.25rem] border border-card-border bg-card-bg p-4 shadow-[0_12px_30px_-22px_rgba(0,0,0,0.24)] transition-colors dark:border-white/10 dark:bg-black">
-              <p className="text-sm font-semibold text-text">Controls & Shortcuts</p>
-              <p className="mt-1 text-xs leading-5 text-text/45">
-                Discover keyboard shortcuts for faster navigation.
-              </p>
-              <Button
-                variant="secondary"
-                onClick={() => onNavigate('shortcuts')}
-                className="mt-4 w-full justify-center"
-              >
-                <Keyboard className="mr-2 h-4 w-4" />
-                Open Shortcuts
-              </Button>
-            </div> */}
+            {/* MORE NAVIGATION BUTTON & EXPANDED SECTION */}
+            <div className="flex flex-col gap-3 pt-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-text/50">
+                  {showMoreNav ? 'Expanded Navigation Routes' : 'Additional Quick Routes'}
+                </span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowMoreNav((prev) => !prev)}
+                  className="gap-2"
+                  aria-expanded={showMoreNav}
+                  aria-label="Toggle more navigation routes"
+                >
+                  <Sliders className="h-3.5 w-3.5 text-text/50" />
+                  <span>{showMoreNav ? 'Show Less' : 'More Navigation Options'}</span>
+                  {showMoreNav ? (
+                    <ChevronUp className="h-3.5 w-3.5" />
+                  ) : (
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              </div>
 
-            <div className="rounded-[1.25rem] border border-card-border bg-card-bg p-4 shadow-[0_12px_30px_-22px_rgba(0,0,0,0.24)] transition-colors dark:border-white/10 dark:bg-black">
-              <p className="text-sm font-semibold text-text">Device Sessions</p>
-              <p className="mt-1 text-xs leading-5 text-text/45">
-                Manage trusted devices and active session access.
-              </p>
-              <Button
-                variant="secondary"
-                onClick={() => onNavigate('devicesessions')}
-                className="mt-4 w-full justify-center"
-              >
-                <MonitorSmartphone className="mr-2 h-4 w-4" />
-                Open Sessions
-              </Button>
-            </div>
+              {showMoreNav && (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 rounded-[1.25rem] border border-card-border/80 bg-black/20 p-4 transition-all">
+                  <div className="rounded-[1rem] border border-card-border bg-card-bg p-3.5 dark:bg-black">
+                    <p className="text-sm font-semibold text-text">Controls & Shortcuts</p>
+                    <p className="mt-1 text-xs leading-5 text-text/45">
+                      Discover keyboard shortcuts for faster navigation.
+                    </p>
+                    <Button
+                      variant="secondary"
+                      onClick={() => onNavigate('shortcuts')}
+                      className="mt-3 w-full justify-center"
+                    >
+                      <Keyboard className="mr-2 h-4 w-4" />
+                      Open Shortcuts
+                    </Button>
+                  </div>
 
-            <div className="rounded-[1.25rem] border border-card-border bg-card-bg p-4 shadow-[0_12px_30px_-22px_rgba(0,0,0,0.24)] transition-colors dark:border-white/10 dark:bg-black">
-              <p className="text-sm font-semibold text-text">System Logs</p>
-              <p className="mt-1 text-xs leading-5 text-text/45">
-                Review runtime telemetry and recent security events.
-              </p>
-              <Button
-                variant="secondary"
-                onClick={() => onNavigate('systemlogs')}
-                className="mt-4 w-full justify-center"
-              >
-                <ClipboardList className="mr-2 h-4 w-4" />
-                Open Logs
-              </Button>
+                  <div className="rounded-[1rem] border border-card-border bg-card-bg p-3.5 dark:bg-black">
+                    <p className="text-sm font-semibold text-text">Privacy Controls</p>
+                    <p className="mt-1 text-xs leading-5 text-text/45">
+                      Toggle clipboard auto-clear and interface privacy masks.
+                    </p>
+                    <Button
+                      variant="secondary"
+                      onClick={() => onNavigate('privacy')}
+                      className="mt-3 w-full justify-center"
+                    >
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      Open Privacy
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </SectionCard>
+
 
         <SyncStorageCard
           storageUsedBytes={storageUsedBytes}

@@ -808,9 +808,9 @@ export const IdentitiesVault: React.FC = () => {
               <Card className="border-white/10 bg-gradient-to-br from-white/10 to-transparent backdrop-blur-md p-6">
                 <CardHeader className="flex justify-between items-start flex-row pb-4 border-b border-white/5 mb-4">
                   <CardTitle className="text-lg font-bold">Add Identity Document</CardTitle>
-                  <Button variant="ghost" size="icon" onClick={() => setIsAdding(false)}>
+                  {/* <Button variant="ghost" size="icon" onClick={() => setIsAdding(false)}>
                     <X className="h-4 w-4" />
-                  </Button>
+                  </Button> */}
                 </CardHeader>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

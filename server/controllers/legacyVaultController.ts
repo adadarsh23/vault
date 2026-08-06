@@ -22,7 +22,7 @@ import {
 
 const MAX_LEGACY_ID_LENGTH = 256;
 const SAFE_LEGACY_ID_PATTERN = /^[a-zA-Z0-9:_-]+$/;
-const LEGACY_RAW_LIMIT = `${Number(process.env.LEGACY_RAW_LIMIT_MB || process.env.MAX_FILE_SIZE_MB || 500)}mb`;
+const LEGACY_RAW_LIMIT = `${Number(process.env.LEGACY_RAW_LIMIT_MB || process.env.MAX_FILE_SIZE_MB || 4096)}mb`;
 const MAX_SCOPED_TEXT_PAYLOAD_BYTES = Math.max(
   1_000_000,
   Number(process.env.MAX_SCOPED_TEXT_PAYLOAD_BYTES || 4 * 1024 * 1024)
@@ -65,7 +65,7 @@ const CHUNK_UPLOAD_MAX_PART_BYTES = Math.max(
 );
 const LEGACY_MAX_FILE_SIZE_BYTES = Math.max(
   1,
-  Number(process.env.MAX_FILE_SIZE_MB || 500) * 1024 * 1024
+  Number(process.env.MAX_FILE_SIZE_MB || 4096) * 1024 * 1024
 );
 const CHUNK_ASSEMBLY_LOCK_STALE_MS = Math.max(
   5_000,

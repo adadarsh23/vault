@@ -1,11 +1,9 @@
 import { getVaultItemModel } from '../models/vaultItem.ts';
+import mongoose from 'mongoose';
 import { AppError } from '../utils/appError.ts';
 import { logger } from '../utils/logger.ts';
 import { encryptBuffer } from '../utils/crypto.ts';
-import fs from 'fs/promises';
-import path from 'path';
 
-const STORAGE_ROOT = path.join(process.cwd(), 'vault-storage');
 const MAX_TEXT_PAYLOAD_BYTES = Math.max(
   1_000_000,
   Number(process.env.MAX_SCOPED_TEXT_PAYLOAD_BYTES || 4 * 1024 * 1024)
@@ -180,6 +178,12 @@ export const saveEncryptedVaultItem = async (input: {
           modernPayload,
           encoding,
           title: itemTitle,
+          file: {
+            fileName: itemTitle || (itemMetadata as any)?.fileName || (itemMetadata as any)?.originalName || 'file',
+            filePath: `cloud://${itemId}`,
+            mimeType: (itemMetadata as any)?.mimeType || 'application/octet-stream',
+            size: (itemMetadata as any)?.size || (isBinary ? payload.length : 0),
+          },
           metadata: itemMetadata,
           isPinned,
           pinnedAt,
@@ -320,25 +324,50 @@ export const saveFileToVault = async (input: {
   }
 
   const itemId = `file-${Date.now()}`;
-  const userStorageDir = path.join(STORAGE_ROOT, userId.toString(), category);
-  await fs.mkdir(userStorageDir, { recursive: true });
+  if (!mongoose.connection || mongoose.connection.readyState !== 1 || !mongoose.connection.db) {
+    throw new AppError(503, 'DB_UNAVAILABLE', 'Database connection lost. Please try again later.');
+  }
 
-  logger.info(`Encrypting and saving file: ${file.originalname}`, {
+  logger.info(`Encrypting and streaming file to MongoDB GridFS: ${file.originalname}`, {
     userId,
     category,
     size: file.size,
   });
 
-  // 1. Encrypt Buffer with AES-256-GCM
   const encrypted = encryptBuffer(file.buffer);
+  const encryptedPayload = Buffer.from(JSON.stringify(encrypted), 'utf8');
+  const filename = `${userId}/${category}/${itemId}-${file.originalname}`;
+  const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+    bucketName: 'vault_item_files',
+  });
 
-  // 2. Save Encrypted CipherText to Disk
-  const fileName = `${itemId}-${file.originalname}.enc`;
-  const filePath = path.join(userStorageDir, fileName);
+  const uploadStream = bucket.openUploadStream(filename, {
+    metadata: {
+      userId,
+      itemId,
+      category,
+      folder: folder || null,
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+      size: file.size,
+      encryption: {
+        algorithm: 'aes-256-gcm',
+        iv: encrypted.iv,
+        authTag: encrypted.tag,
+        keyVersion: 'v1',
+        keyId: 'vault-file-v1',
+      },
+    },
+  });
 
-  await fs.writeFile(filePath, JSON.stringify(encrypted));
+  await new Promise<void>((resolve, reject) => {
+    uploadStream.on('error', reject);
+    uploadStream.on('finish', resolve);
+    uploadStream.end(encryptedPayload);
+  });
 
-  // 3. Register in MongoDB with encryption metadata
+  const gridFsId = uploadStream.id?.toString?.() ?? itemId;
+  const cloudFilePath = `cloud://${gridFsId}`;
   const DynamicVaultModel = getVaultItemModel(input.username);
   const newItem = new DynamicVaultModel({
     userId,
@@ -347,15 +376,21 @@ export const saveFileToVault = async (input: {
     folder: folder || null,
     file: {
       fileName: file.originalname,
-      filePath: filePath, // Stores path to encrypted file
+      filePath: cloudFilePath,
       mimeType: file.mimetype,
       size: file.size,
       encryptionIv: encrypted.iv,
       encryptionTag: encrypted.tag,
     },
+    gridFsId,
+    encoding: 'gridfs-binary',
     deviceId: input.deviceId,
     ipAddress: input.ipAddress,
   });
 
-  return await newItem.save();
+  try {
+    return await newItem.save();
+  } finally {
+    file.buffer.fill(0);
+  }
 };

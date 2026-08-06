@@ -241,7 +241,7 @@ export const NotesVault: React.FC = () => {
   };
 
   return (
-    <div className="flex h-full gap-6 relative overflow-hidden p-4 lg:p-4 xl:p-8">
+    <div className="flex h-full min-h-0 gap-6 relative overflow-hidden p-4 lg:p-4 xl:p-8">
       <FolderSidebar
         notes={notes}
         folders={folders}

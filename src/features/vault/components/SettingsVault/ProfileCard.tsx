@@ -181,6 +181,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
               role="button"
               tabIndex={0}
               aria-label="Open profile editor"
+              aria-haspopup="dialog"
               onClick={() => setShowProfilePopup(true)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
@@ -389,7 +390,9 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         {showProfilePopup && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-3 sm:p-5 backdrop-blur-[2px]">
             <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-card-border bg-bg p-4 sm:p-6 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)] dark:bg-black">
-              <h3 className="text-lg font-semibold text-text">Edit Profile</h3>
+              <h3 id="edit-profile-title" className="text-lg font-semibold text-text">
+                Edit Profile
+              </h3>
               <p className="mt-1 text-xs sm:text-sm text-text/50">
                 Update profile name and profile image URL.
               </p>
@@ -458,12 +461,14 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                     onChange={(event) => {
                       setProfileNameInput(event.target.value);
                       if (profileSaveError) {
+                        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                         setProfileSaveError(null);
                       }
                     }}
                     placeholder="Enter display name"
                     maxLength={120}
                   />
+                  <span className="sr-only">Display Name</span>
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center justify-between gap-1.5">
@@ -533,12 +538,14 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                     value={profilePhotoInput}
                     onChange={(event) => {
                       setProfilePhotoInput(event.target.value);
+                      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                       if (profileSaveError) {
                         setProfileSaveError(null);
                       }
                     }}
                     placeholder="Enter HTTP/HTTPS URL or upload image (up to 35MB)"
                     maxLength={75000000}
+                    aria-label="Profile Image URL or Data"
                   />
                 </div>
                 {!isPhotoInputValid ? (

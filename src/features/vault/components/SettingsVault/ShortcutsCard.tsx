@@ -463,7 +463,7 @@ export const ShortcutsCard: React.FC = () => {
           tabIndex={0}
           onFocus={() => setIsTesterActive(true)}
           onBlur={() => setIsTesterActive(false)}
-          className={`relative overflow-hidden rounded-xl border p-3.5 sm:p-4 transition-all duration-300 print:hidden ${
+          className={`hidden lg:block relative overflow-hidden rounded-xl border p-3.5 sm:p-4 transition-all duration-300 print:hidden ${
             isTesterActive
               ? 'border-emerald-500/60 bg-emerald-500/[0.04] ring-2 ring-emerald-500/20'
               : 'border-card-border bg-card/20 hover:border-text/20'

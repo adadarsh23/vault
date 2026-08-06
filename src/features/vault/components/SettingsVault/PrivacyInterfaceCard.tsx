@@ -11,7 +11,6 @@ import {
   MessageSquare,
   MapPin,
   HardDrive,
-  CheckCircle2,
   ShieldAlert,
   ListTodo,
 } from 'lucide-react';
@@ -333,10 +332,6 @@ export const PrivacyInterfaceCard = React.memo<PrivacyInterfaceCardProps>(
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-card-border bg-bg px-2.5 py-1 text-[11px] font-medium text-text/70">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-              AES-256-GCM
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-card-border bg-bg px-2.5 py-1 text-[11px] font-medium text-text/70">
               <HardDrive className="h-3.5 w-3.5 text-text/40" />
               {MAX_UPLOAD_SIZE_MB} MB Limit
             </span>
@@ -349,7 +344,7 @@ export const PrivacyInterfaceCard = React.memo<PrivacyInterfaceCardProps>(
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-sm font-semibold text-text">
                 <Image className="h-4 w-4 text-text/60" />
-                <span>Photos &amp; Images</span>
+                <span>Images</span>
               </div>
               <span className="rounded-md bg-text/5 px-2 py-0.5 text-[10px] font-medium text-text/60">
                 {preferences.isPhotoExifStripped ? 'EXIF Stripped' : 'EXIF Kept'}

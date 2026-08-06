@@ -87,7 +87,7 @@ export const TIMER_OPTIONS = [
 
 export type DisappearingTimer = (typeof TIMER_OPTIONS)[number]['value'];
 
-export type ChatListFilter = 'all' | 'unread' | 'mentions';
+export type ChatListFilter = 'all';
 
 export type ChatDetailTab = 'messages' | 'links';
 

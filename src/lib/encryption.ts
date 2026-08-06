@@ -61,7 +61,27 @@ export const uint8ArrayToBase64 = (array: Uint8Array): string => {
 export const base64ToUint8Array = (base64: string): Uint8Array => {
   if (!base64) return new Uint8Array(0);
   try {
-    const binaryString = atob(base64.trim());
+    let clean = base64.trim();
+    if (clean.includes('%')) {
+      try {
+        clean = decodeURIComponent(clean);
+      } catch {
+        /* ignore */
+      }
+    }
+    if (clean.startsWith('V2_ENC:')) {
+      clean = clean.substring(7).trim();
+    }
+    const dataUrlMatch = clean.match(/^data:[^,]*;base64,(.*)$/i);
+    if (dataUrlMatch) {
+      clean = dataUrlMatch[1];
+    }
+    clean = clean.replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '');
+    const pad = clean.length % 4;
+    if (pad === 2) clean += '==';
+    else if (pad === 3) clean += '=';
+
+    const binaryString = atob(clean);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
@@ -433,7 +453,7 @@ export const decryptFileE2EE = async (
     const data = typeof bundle === 'string' ? base64ToUint8Array(bundle) : bundle;
     if (data.length < 2) return null;
 
-    const view = new DataView(data.buffer);
+    const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
     const encKeyLen = view.getUint16(0);
 
     const encKey = data.slice(2, 2 + encKeyLen);
@@ -454,7 +474,19 @@ export const decryptFileE2EE = async (
 
     const decrypted = await decryptAesGcmWithFallback(cryptoKey, iv, encFile);
 
-    const blob = new Blob([decrypted], { type: mimeType || 'application/octet-stream' });
+    let finalMimeType = mimeType;
+    const detected = detectMimeTypeFromBytes(new Uint8Array(decrypted));
+    if (detected !== 'application/octet-stream') {
+      if (
+        !finalMimeType ||
+        finalMimeType === 'application/octet-stream' ||
+        (finalMimeType === 'audio/mpeg' && detected !== 'audio/mpeg')
+      ) {
+        finalMimeType = detected;
+      }
+    }
+
+    const blob = new Blob([decrypted], { type: finalMimeType || 'application/octet-stream' });
     return URL.createObjectURL(blob);
   } catch (error) {
     handleError(error, 'E2EE File Decryption');
@@ -522,6 +554,11 @@ export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {
   // MP3 Sync Word (without ID3 header): 0xFF 0xFB, 0xFF 0xF3, 0xFF 0xF2, 0xFF 0xE3
   if (bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0) {
     return 'audio/mpeg';
+  }
+
+  // AAC / ADTS Sync Word: 0xFF 0xF1, 0xFF 0xF9
+  if (bytes[0] === 0xff && (bytes[1] & 0xf6) === 0xf0) {
+    return 'audio/aac';
   }
 
   // RIFF container (WAV or AVI)

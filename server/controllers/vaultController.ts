@@ -42,6 +42,8 @@ const MULTIPART_MAX_PARTS = Math.max(1, Number(process.env.MULTIPART_MAX_PARTS |
 const FILE_CATEGORY_SET = new Set(['photo', 'video', 'audio', 'document', 'other-files']);
 const MULTIPART_SECURE_CLEANUP =
   (process.env.MULTIPART_SECURE_CLEANUP?.trim().toLowerCase() || 'true') === 'true';
+const MEMORY_ONLY_MULTIPART_UPLOADS =
+  (process.env.MEMORY_ONLY_MULTIPART_UPLOADS ?? 'true').trim().toLowerCase() !== 'false';
 
 const getRouteParam = (value: string | string[] | undefined): string | undefined =>
   typeof value === 'string' ? value : undefined;
@@ -118,6 +120,13 @@ const multipartSessionPath = (userId: string, uploadId: string) =>
 const multipartPartsDir = (userId: string, uploadId: string) =>
   path.join(MULTIPART_ROOT, userId, uploadId, 'parts');
 
+const multipartMemorySessions = new Map<string, MultipartSessionRecord>();
+const multipartMemoryParts = new Map<string, Buffer>();
+
+const multipartMemoryKey = (userId: string, uploadId: string) => `${userId}:${uploadId}`;
+const multipartPartMemoryKey = (userId: string, uploadId: string, partNumber: number) =>
+  `${multipartMemoryKey(userId, uploadId)}:${partNumber}`;
+
 const safeRm = async (target: string): Promise<{ filesDeleted: number; bytesDeleted: number }> => {
   const absoluteTarget = path.resolve(target);
   if (!absoluteTarget.startsWith(MULTIPART_ROOT)) {
@@ -191,6 +200,10 @@ const loadMultipartSession = async (
   userId: string,
   uploadId: string
 ): Promise<MultipartSessionRecord | null> => {
+  if (MEMORY_ONLY_MULTIPART_UPLOADS) {
+    return multipartMemorySessions.get(multipartMemoryKey(userId, uploadId)) ?? null;
+  }
+
   try {
     const raw = await fs.readFile(multipartSessionPath(userId, uploadId), 'utf8');
     return JSON.parse(raw) as MultipartSessionRecord;
@@ -200,6 +213,11 @@ const loadMultipartSession = async (
 };
 
 const saveMultipartSession = async (session: MultipartSessionRecord): Promise<void> => {
+  if (MEMORY_ONLY_MULTIPART_UPLOADS) {
+    multipartMemorySessions.set(multipartMemoryKey(session.userId, session.uploadId), session);
+    return;
+  }
+
   const dir = path.dirname(multipartSessionPath(session.userId, session.uploadId));
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(
@@ -369,7 +387,9 @@ export const startMultipartUpload = async (req: AuthenticatedRequest, res: expre
     updatedAt: Date.now(),
     parts: {},
   };
-  await fs.mkdir(multipartPartsDir(userId, uploadId), { recursive: true });
+  if (!MEMORY_ONLY_MULTIPART_UPLOADS) {
+    await fs.mkdir(multipartPartsDir(userId, uploadId), { recursive: true });
+  }
   await saveMultipartSession(session);
   return sendSuccess(
     res,
@@ -416,9 +436,19 @@ export const uploadMultipartPart = async (req: AuthenticatedRequest, res: expres
     throw AppError.badRequest('Part hash mismatch.', 'PART_HASH_MISMATCH');
   }
 
-  const partFile = path.join(multipartPartsDir(sessionOwnerUserId, uploadId), `${partNumber}.part`);
-  await fs.mkdir(path.dirname(partFile), { recursive: true });
-  await fs.writeFile(partFile, partBuffer);
+  if (MEMORY_ONLY_MULTIPART_UPLOADS) {
+    multipartMemoryParts.set(
+      multipartPartMemoryKey(sessionOwnerUserId, uploadId, partNumber),
+      Buffer.from(partBuffer)
+    );
+  } else {
+    const partFile = path.join(
+      multipartPartsDir(sessionOwnerUserId, uploadId),
+      `${partNumber}.part`
+    );
+    await fs.mkdir(path.dirname(partFile), { recursive: true });
+    await fs.writeFile(partFile, partBuffer);
+  }
   const persisted = await mergeAndSaveMultipartPartMetadata(
     sessionOwnerUserId,
     uploadId,
@@ -459,12 +489,22 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
   const finalBuffer = Buffer.allocUnsafe(session.fileSize);
   let writeOffset = 0;
   for (let i = 1; i <= partCount; i += 1) {
-    const partFile = path.join(multipartPartsDir(sessionOwnerUserId, uploadId), `${i}.part`);
     let data: Buffer;
-    try {
-      data = await fs.readFile(partFile);
-    } catch {
-      throw AppError.badRequest(`Missing part ${i}.`, 'MISSING_UPLOAD_PART');
+    if (MEMORY_ONLY_MULTIPART_UPLOADS) {
+      const partData = multipartMemoryParts.get(
+        multipartPartMemoryKey(sessionOwnerUserId, uploadId, i)
+      );
+      if (!partData) {
+        throw AppError.badRequest(`Missing part ${i}.`, 'MISSING_UPLOAD_PART');
+      }
+      data = partData;
+    } else {
+      const partFile = path.join(multipartPartsDir(sessionOwnerUserId, uploadId), `${i}.part`);
+      try {
+        data = await fs.readFile(partFile);
+      } catch {
+        throw AppError.badRequest(`Missing part ${i}.`, 'MISSING_UPLOAD_PART');
+      }
     }
     const expectedPartSize = getExpectedMultipartPartSize(session, i);
     if (data.length !== expectedPartSize) {
@@ -512,13 +552,22 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
   const normalizedResult =
     typeof (result as any)?.toObject === 'function' ? (result as any).toObject() : result;
 
-  const cleanupMetrics = await safeRm(path.join(MULTIPART_ROOT, sessionOwnerUserId, uploadId));
-  if (cleanupMetrics.filesDeleted > 0) {
-    logger.info('Multipart upload temp data cleaned', {
-      userId,
-      uploadId,
-      ...cleanupMetrics,
-    });
+  if (MEMORY_ONLY_MULTIPART_UPLOADS) {
+    multipartMemorySessions.delete(multipartMemoryKey(sessionOwnerUserId, uploadId));
+    for (const key of Array.from(multipartMemoryParts.keys())) {
+      if (key.startsWith(`${multipartMemoryKey(sessionOwnerUserId, uploadId)}:`)) {
+        multipartMemoryParts.delete(key);
+      }
+    }
+  } else {
+    const cleanupMetrics = await safeRm(path.join(MULTIPART_ROOT, sessionOwnerUserId, uploadId));
+    if (cleanupMetrics.filesDeleted > 0) {
+      logger.info('Multipart upload temp data cleaned', {
+        userId,
+        uploadId,
+        ...cleanupMetrics,
+      });
+    }
   }
   return sendSuccess(
     res,

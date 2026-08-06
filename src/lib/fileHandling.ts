@@ -1,7 +1,7 @@
 const parseMaxUploadSizeMb = () => {
   const rawValue = import.meta.env.VITE_MAX_FILE_SIZE_MB;
   const parsed = Number.parseInt(rawValue ?? '', 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 500;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 4096;
 };
 
 export const MAX_UPLOAD_SIZE_MB = parseMaxUploadSizeMb();

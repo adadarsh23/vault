@@ -737,9 +737,7 @@ export const WifiVault: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-bold text-text truncate">
-                {currentFolder || 'Wi-Fi Networks'}
-              </h1>
+              <h1 className="text-3xl font-bold text-text truncate">{currentFolder || 'Wi-Fi'}</h1>
               <span className="px-2.5 py-0.5 rounded-full bg-text/5 border border-text/10 text-text/50 text-xs font-bold shadow-inner">
                 {filteredWifis.length} items
               </span>

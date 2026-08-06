@@ -841,7 +841,7 @@ export const TodoVault: React.FC = () => {
           </Button>
         </div>
 
-        <div className="flex w-full min-w-0 max-w-full flex-nowrap items-center gap-2 sm:gap-3 md:gap-3 overflow-x-auto overflow-y-hidden px-3 sm:px-4 md:px-6 py-7 sm:py-7 md:py-7 snap-x snap-mandatory scroll-smooth overscroll-x-contain touch-pan-x whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden [&>*]:shrink-0">
+        <div className="flex w-full min-w-0 max-w-full flex-nowrap items-center gap-2 sm:gap-3 md:gap-3 overflow-x-auto overflow-y-hidden px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 snap-x snap-mandatory scroll-smooth overscroll-x-contain touch-pan-x whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden [&>*]:shrink-0">
           {categoryFilters.map((filter) => {
             const isActive = filter.key === activeCategoryKey;
             return (
@@ -850,10 +850,8 @@ export const TodoVault: React.FC = () => {
                 type="button"
                 aria-pressed={isActive}
                 onClick={() => setCurrentFolder(filter.folderValue)}
-                className={`inline-flex shrink-0 snap-start last:mr-2 items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/45 ${
-                  isActive
-                    ? 'border-emerald-300/45 bg-emerald-400/20 text-emerald-200 shadow-[0_6px_14px_-10px_rgba(52,211,153,0.9)]'
-                    : 'border-white/10 bg-white/[0.05] text-text/65 hover:border-white/20 hover:bg-white/[0.1] hover:text-text/90'
+                className={`inline-flex shrink-0 snap-start last:mr-2 items-center gap-1 whitespace-nowrap px-2.5 py-1 text-[11px] font-semibold transition-colors duration-200 focus-visible:outline-none ${
+                  isActive ? 'text-emerald-400' : 'text-text/65 hover:text-emerald-400'
                 }`}
               >
                 <span

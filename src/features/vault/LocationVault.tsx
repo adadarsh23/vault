@@ -513,7 +513,7 @@ const LocationVaultInternal: React.FC = () => {
   }, [payload, form.latitude, form.longitude]);
 
   return (
-    <div className="relative flex h-full gap-6 overflow-hidden p-4 lg:p-4 xl:p-8">
+    <div className="relative flex h-full min-h-0 gap-6 overflow-hidden p-4 lg:p-4 xl:p-8">
       <FolderSidebar
         items={locations}
         folders={folders}

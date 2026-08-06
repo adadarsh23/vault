@@ -16,12 +16,12 @@ Error: expect(locator).toBeVisible() failed
 
 Locator: getByRole('navigation', { name: /Sidebar/i })
 Expected: visible
-Timeout: 20000ms
 Error: element(s) not found
 
 Call log:
   - Expect "toBeVisible" with timeout 20000ms
   - waiting for getByRole('navigation', { name: /Sidebar/i })
+  - Target page, context or browser has been closed
 
 ```
 

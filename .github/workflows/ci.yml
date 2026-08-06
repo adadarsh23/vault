@@ -1,0 +1,47 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    env:
+      NODE_ENV: test
+      JWT_SECRET: ci-jwt-secret-key-test-32-chars-long!!
+      REFRESH_TOKEN_SECRET: ci-refresh-secret-key-test-32-chars!!
+      VAULT_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef
+      SKIP_MONGO_CONNECT: '1'
+      CLIENT_URL: http://localhost:4000
+      PUBLIC_URL: http://localhost:4000
+      VITE_API_BASE_URL: http://localhost:4000
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build project
+        run: npm run build
