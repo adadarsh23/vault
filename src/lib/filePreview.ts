@@ -319,7 +319,9 @@ export const getVaultItemPreviewUrl = async (
         (() => {
           const view = new DataView(rawBytes.buffer, rawBytes.byteOffset, rawBytes.byteLength);
           const encKeyLen = view.getUint16(0);
-          return encKeyLen > 0 && encKeyLen < rawBytes.length && (encKeyLen === 256 || encKeyLen === 512);
+          return (
+            encKeyLen > 0 && encKeyLen < rawBytes.length && (encKeyLen === 256 || encKeyLen === 512)
+          );
         })();
 
       if (!isE2EEBundle) {

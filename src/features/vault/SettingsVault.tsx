@@ -314,68 +314,8 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
                 </Button>
               </div>
             </div>
-
-            {/* MORE NAVIGATION BUTTON & EXPANDED SECTION */}
-            <div className="flex flex-col gap-3 pt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-text/50">
-                  {showMoreNav ? 'Expanded Navigation Routes' : 'Additional Quick Routes'}
-                </span>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setShowMoreNav((prev) => !prev)}
-                  className="gap-2"
-                  aria-expanded={showMoreNav}
-                  aria-label="Toggle more navigation routes"
-                >
-                  <Sliders className="h-3.5 w-3.5 text-text/50" />
-                  <span>{showMoreNav ? 'Show Less' : 'More Navigation Options'}</span>
-                  {showMoreNav ? (
-                    <ChevronUp className="h-3.5 w-3.5" />
-                  ) : (
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  )}
-                </Button>
-              </div>
-
-              {showMoreNav && (
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 rounded-[1.25rem] border border-card-border/80 bg-black/20 p-4 transition-all">
-                  <div className="rounded-[1rem] border border-card-border bg-card-bg p-3.5 dark:bg-black">
-                    <p className="text-sm font-semibold text-text">Controls & Shortcuts</p>
-                    <p className="mt-1 text-xs leading-5 text-text/45">
-                      Discover keyboard shortcuts for faster navigation.
-                    </p>
-                    <Button
-                      variant="secondary"
-                      onClick={() => onNavigate('shortcuts')}
-                      className="mt-3 w-full justify-center"
-                    >
-                      <Keyboard className="mr-2 h-4 w-4" />
-                      Open Shortcuts
-                    </Button>
-                  </div>
-
-                  <div className="rounded-[1rem] border border-card-border bg-card-bg p-3.5 dark:bg-black">
-                    <p className="text-sm font-semibold text-text">Privacy Controls</p>
-                    <p className="mt-1 text-xs leading-5 text-text/45">
-                      Toggle clipboard auto-clear and interface privacy masks.
-                    </p>
-                    <Button
-                      variant="secondary"
-                      onClick={() => onNavigate('privacy')}
-                      className="mt-3 w-full justify-center"
-                    >
-                      <ShieldCheck className="mr-2 h-4 w-4" />
-                      Open Privacy
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         </SectionCard>
-
 
         <SyncStorageCard
           storageUsedBytes={storageUsedBytes}

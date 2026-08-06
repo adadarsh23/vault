@@ -543,7 +543,11 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
 
   const fileName = item.file?.fileName || item.title || 'file';
   const ext = path.extname(fileName).toLowerCase();
-  const mimeType = item.file?.mimeType || (item.metadata as any)?.mimeType || mimeMap[ext] || 'application/octet-stream';
+  const mimeType =
+    item.file?.mimeType ||
+    (item.metadata as any)?.mimeType ||
+    mimeMap[ext] ||
+    'application/octet-stream';
   const isStreamableMedia = mimeType.startsWith('video/') || mimeType.startsWith('audio/');
   const requestedRange = req.headers.range;
 
@@ -580,7 +584,10 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
             }
             const chunkSize = parsedRange.end - parsedRange.start + 1;
             res.status(206);
-            res.setHeader('Content-Range', `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`);
+            res.setHeader(
+              'Content-Range',
+              `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`
+            );
             res.setHeader('Content-Length', chunkSize.toString());
             return bucket
               .openDownloadStream(objectId, { start: parsedRange.start, end: parsedRange.end + 1 })

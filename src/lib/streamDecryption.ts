@@ -168,9 +168,7 @@ export async function getDecryptStreamResponseUrl(
   }
 
   const finalBlob =
-    finalMimeType && finalMimeType !== blob.type
-      ? blob.slice(0, blob.size, finalMimeType)
-      : blob;
+    finalMimeType && finalMimeType !== blob.type ? blob.slice(0, blob.size, finalMimeType) : blob;
 
   return URL.createObjectURL(finalBlob);
 }

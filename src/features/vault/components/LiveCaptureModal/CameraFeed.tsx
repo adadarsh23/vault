@@ -115,7 +115,9 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
             className={cn(
               'absolute inset-0 h-full w-full object-contain transition-all duration-700',
               (cameraFacing === 'user') !== isHorizontallyFlipped && 'scale-x-[-1]',
-              isInitializing || permissionError ? 'opacity-0 scale-95 blur-xl' : 'opacity-100 scale-100 blur-0'
+              isInitializing || permissionError
+                ? 'opacity-0 scale-95 blur-xl'
+                : 'opacity-100 scale-100 blur-0'
             )}
           />
         </div>

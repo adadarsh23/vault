@@ -1157,7 +1157,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         try {
           await uploadItemToCloud(newItem, masterKey, onProgress);
         } catch (uploadErr) {
-          console.warn('Cloud upload failed, saving item locally to IndexedDB as fallback:', uploadErr);
+          console.warn(
+            'Cloud upload failed, saving item locally to IndexedDB as fallback:',
+            uploadErr
+          );
           newItem.source = 'local';
           await saveItem(newItem);
         }

@@ -346,14 +346,20 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
         err?.name === 'NotAllowedError' ||
         err?.name === 'PermissionDeniedError' ||
         err?.name === 'SecurityError' ||
-        String(err?.message || '').toLowerCase().includes('permission') ||
-        String(err?.message || '').toLowerCase().includes('dismissed');
+        String(err?.message || '')
+          .toLowerCase()
+          .includes('permission') ||
+        String(err?.message || '')
+          .toLowerCase()
+          .includes('dismissed');
 
       if (isPermissionErr) {
         setPermissionError(
           'Camera or microphone permission was dismissed or blocked. Click site settings icon in address bar to allow access, then click "RETRY PERMISSION".'
         );
-        toast.error('Permission dismissed or denied. Please allow camera/mic access in browser settings.');
+        toast.error(
+          'Permission dismissed or denied. Please allow camera/mic access in browser settings.'
+        );
       } else if (err?.name === 'NotFoundError') {
         setPermissionError('No camera or microphone device found on this system.');
         toast.error('No camera or microphone found.');

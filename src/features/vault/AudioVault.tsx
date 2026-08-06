@@ -838,12 +838,18 @@ export const AudioVault: React.FC = () => {
                     <AudioLines className="h-6 w-6" />
                   </div>
                   <div className="min-w-0">
-                    <h2 className="truncate text-base sm:text-lg font-bold text-white" title={previewedAudio.title}>
+                    <h2
+                      className="truncate text-base sm:text-lg font-bold text-white"
+                      title={previewedAudio.title}
+                    >
                       {previewedAudio.title}
                     </h2>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/40">
                       <span>
-                        {(((previewedAudio.metadata?.size || 0) as number) / (1024 * 1024)).toFixed(2)} MB
+                        {(((previewedAudio.metadata?.size || 0) as number) / (1024 * 1024)).toFixed(
+                          2
+                        )}{' '}
+                        MB
                       </span>
                       {previewedAudio.folder && (
                         <span className="flex items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-cyan-300">

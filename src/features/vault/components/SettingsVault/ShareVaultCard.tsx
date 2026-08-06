@@ -296,7 +296,7 @@ export const ShareVaultCard: React.FC = memo(() => {
 
                 <div className="flex items-center justify-between">
                   <span className="text-text/45">Share Status</span>
-                  <span className="font-medium text-blue-500">Public Landing Page</span>
+                  <span className="font-medium text-blue-500">Public Page</span>
                 </div>
 
                 <div className="flex items-center justify-between">

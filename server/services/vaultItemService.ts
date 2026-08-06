@@ -179,7 +179,11 @@ export const saveEncryptedVaultItem = async (input: {
           encoding,
           title: itemTitle,
           file: {
-            fileName: itemTitle || (itemMetadata as any)?.fileName || (itemMetadata as any)?.originalName || 'file',
+            fileName:
+              itemTitle ||
+              (itemMetadata as any)?.fileName ||
+              (itemMetadata as any)?.originalName ||
+              'file',
             filePath: `cloud://${itemId}`,
             mimeType: (itemMetadata as any)?.mimeType || 'application/octet-stream',
             size: (itemMetadata as any)?.size || (isBinary ? payload.length : 0),

@@ -172,4 +172,3 @@ describe('SyncStorageCard Component Test Suite', () => {
     expect(cancelActivityLogSyncMock).toHaveBeenCalledTimes(1);
   });
 });
-

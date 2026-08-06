@@ -632,7 +632,8 @@ export const saveScopedVaultItem = async (input: ScopedSaveInput) => {
           encoding,
           title,
           file: {
-            fileName: title || (metadata as any)?.originalName || (metadata as any)?.fileName || 'file',
+            fileName:
+              title || (metadata as any)?.originalName || (metadata as any)?.fileName || 'file',
             filePath: gridFsId ? `cloud://${gridFsId}` : `cloud://${itemId}`,
             mimeType: (metadata as any)?.mimeType || 'application/octet-stream',
             size: (metadata as any)?.size || (isBinary ? binaryPayload.length : 0),

@@ -48,7 +48,7 @@ function safeJsonParse<T>(value: string | null, fallback: T): T {
 }
 
 const clearTimer = (ref: React.MutableRefObject<number | null>) => {
-  if (ref.current) {
+  if (ref.current !== null) {
     clearTimeout(ref.current);
     ref.current = null;
   }
@@ -56,8 +56,6 @@ const clearTimer = (ref: React.MutableRefObject<number | null>) => {
 
 const PAN_LIMIT = 0.6;
 const EDGE_CURVE_CONTROL_DISTANCE = 0.35;
-const EDGE_CURVE_MAX_CONTROL = 96;
-const EDGE_CURVE_MIN_CONTROL = 32;
 
 export type { VaultCategoryStats };
 
@@ -94,6 +92,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       positions: safeJsonParse(localStorage.getItem('vault_ecosystem_positions'), {}),
     };
   }, []);
+
   const svgId = useId();
   const performance = usePerformanceMetrics();
   const graphRef = useRef<HTMLDivElement>(null);
@@ -102,8 +101,15 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
   // Drag / modal safety flags
   // ─────────────────────────────────────────────
   const dragSuppressRef = useRef(false);
-  const modalSuppressRef = useRef(false); // Used for debouncing modal open
-  const dragOriginRef = useRef<Record<string, NodePosition>>({}); // Used to store node positions before dragging starts
+  const modalSuppressRef = useRef(false);
+  const dragOriginRef = useRef<Record<string, NodePosition>>({});
+
+  // ─────────────────────────────────────────────
+  // Multi-pointer & Gesture tracking
+  // ─────────────────────────────────────────────
+  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const initialPinchDistRef = useRef<number | null>(null);
+  const initialPinchScaleRef = useRef<number>(1);
 
   // ─────────────────────────────────────────────
   // Zoom + Pan (State and Persistence)
@@ -116,10 +122,10 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
   const panPendingRef = useRef<{ x: number; y: number } | null>(null);
   const wheelFrameRef = useRef<number | null>(null);
   const wheelDeltaRef = useRef(0);
-  const [isResetting, setIsResetting] = useState(false); // For animation smoothing on reset
+  const [isResetting, setIsResetting] = useState(false);
   const isMinimapPanning = useRef(false);
   const [isDraggingNode, setIsDraggingNode] = useState(false);
-  const [isExporting, setIsExporting] = useState(false); // For export button loading state
+  const [isExporting, setIsExporting] = useState(false);
 
   const resetTimeoutRef = useRef<number | null>(null);
   const dragSuppressTimeoutRef = useRef<number | null>(null);
@@ -132,6 +138,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
     width: GRAPH_WIDTH,
     height: GRAPH_HEIGHT,
   });
+
   // ─────────────────────────────────────────────
   // Nodes
   // ─────────────────────────────────────────────
@@ -154,8 +161,8 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       return defaultPositions;
     }
     try {
-      if (localStorage.getItem('vault_ecosystem_layout_version') !== 'v2') {
-        localStorage.setItem('vault_ecosystem_layout_version', 'v2');
+      if (localStorage.getItem('vault_ecosystem_layout_version') !== 'v3') {
+        localStorage.setItem('vault_ecosystem_layout_version', 'v3');
         localStorage.removeItem('vault_ecosystem_positions');
         return defaultPositions;
       }
@@ -180,7 +187,6 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       let needsUpdate = false;
       const currentNodeIds = new Set(nodeTemplates.map((n) => n.id));
 
-      // Cleanup unused motion values to prevent memory leaks
       for (const id in currentPositions) {
         if (!currentNodeIds.has(id)) {
           needsUpdate = true;
@@ -321,10 +327,12 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
 
     clearTimer(resetTimeoutRef);
     resetTimeoutRef.current = window.setTimeout(() => {
-      setIsResetting(false);
-      dragSuppressRef.current = false;
-      modalSuppressRef.current = false;
-    }, 400); // Increased to match animation
+      if (mountedRef.current) {
+        setIsResetting(false);
+        dragSuppressRef.current = false;
+        modalSuppressRef.current = false;
+      }
+    }, 400);
   }, [defaultPositions]);
 
   // ─────────────────────────────────────────────
@@ -402,8 +410,8 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
 
       setPositions((prev) => ({ ...prev, [nodeId]: { x, y } }));
     },
-    [positions, ndW, ndH, canvasPadding]
-  ); // This is now only for dragEnd
+    [positions, ndW, ndH, canvasPadding, motionPositions]
+  );
 
   // ─────────────────────────────────────────────
   // Drag handlers
@@ -428,7 +436,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
   );
 
   const handleDragEnd = useCallback(
-    (id: string, _e: any, info: { offset: { x: number; y: number } }) => {
+    (id: string, _e: unknown, info: { offset: { x: number; y: number } }) => {
       setIsDraggingNode(false);
       updateNodePositionFromOffset(id, info.offset);
       delete dragOriginRef.current[id];
@@ -436,10 +444,11 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       motionPositions[id]?.y.set(0);
       dragSuppressRef.current = true;
       clearTimer(dragSuppressTimeoutRef);
-      dragSuppressTimeoutRef.current = window.setTimeout(
-        () => (dragSuppressRef.current = false),
-        120
-      );
+      dragSuppressTimeoutRef.current = window.setTimeout(() => {
+        if (mountedRef.current) {
+          dragSuppressRef.current = false;
+        }
+      }, 120);
     },
     [motionPositions, updateNodePositionFromOffset]
   );
@@ -458,10 +467,11 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
     modalSuppressRef.current = true;
     setActiveNodeId(null);
     clearTimer(modalSuppressTimeoutRef);
-    modalSuppressTimeoutRef.current = window.setTimeout(
-      () => (modalSuppressRef.current = false),
-      150
-    );
+    modalSuppressTimeoutRef.current = window.setTimeout(() => {
+      if (mountedRef.current) {
+        modalSuppressRef.current = false;
+      }
+    }, 150);
   }, []);
 
   // ─────────────────────────────────────────────
@@ -473,7 +483,11 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
     setScale(1);
     setPan({ x: 0, y: 0 });
     clearTimer(resetTimeoutRef);
-    resetTimeoutRef.current = window.setTimeout(() => setIsResetting(false), 400);
+    resetTimeoutRef.current = window.setTimeout(() => {
+      if (mountedRef.current) {
+        setIsResetting(false);
+      }
+    }, 400);
   }, [isResetting]);
 
   // ─────────────────────────────────────────────
@@ -501,11 +515,9 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       const width = element.scrollWidth;
       const height = element.scrollHeight;
 
-      // Target 4K width
       const TARGET_WIDTH = 3840;
       let exportScale = TARGET_WIDTH / width;
-      // Guard against excessively large canvas sizes that can crash browsers (especially Safari)
-      const MAX_CANVAS_PIXELS = 4096 * 4096; // 16.7M pixels, a safe limit
+      const MAX_CANVAS_PIXELS = 4096 * 4096;
       let canvasWidth = TARGET_WIDTH;
       let canvasHeight = Math.round(height * exportScale);
 
@@ -526,7 +538,6 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         canvasWidth,
         canvasHeight,
         backgroundColor: '#090d16',
-
         style: {
           width: `${width}px`,
           height: `${height}px`,
@@ -534,22 +545,19 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
           transform: 'none',
           transformOrigin: 'top left',
         },
-
         filter: (node: Node) =>
           !(node instanceof HTMLElement && node.dataset.exportIgnore === 'true'),
       };
 
       let href = '';
 
-      // SecurityError can be thrown by toBlob if the canvas is "tainted" by cross-origin images.
-      // This is a browser security feature. We can't fix it, but we can detect it and inform the user.
       if (useBlob) {
         try {
           const blob = await toBlob(element, exportOptions);
           if (blob) href = URL.createObjectURL(blob);
         } catch (err) {
           if (securityErrorHandler(err)) return;
-          throw err; // re-throw other errors
+          throw err;
         }
       }
       if (!href) {
@@ -559,7 +567,6 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
       const link = document.createElement('a');
-
       link.download = `vault-ecosystem-4k-${timestamp}.png`;
       link.href = href;
       link.rel = 'noopener';
@@ -572,7 +579,6 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         if (typeof requestIdleCallback !== 'undefined') {
           window.requestIdleCallback?.(() => URL.revokeObjectURL(href), { timeout: 2000 });
         } else {
-          // Fallback for older browsers
           setTimeout(() => URL.revokeObjectURL(href), 2000);
         }
       }
@@ -586,7 +592,9 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       toast.error('Failed to export diagram.');
     } finally {
       element.classList.remove('is-exporting-png');
-      setIsExporting(false);
+      if (mountedRef.current) {
+        setIsExporting(false);
+      }
     }
   }, [isExporting]);
 
@@ -602,7 +610,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         setIsResetting(false);
       }
     }, 400);
-  }, []); // No dependencies, safe
+  }, []);
 
   const flushWheelZoom = useCallback(() => {
     wheelFrameRef.current = null;
@@ -637,17 +645,29 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
     };
   }, [handleWheel]);
 
+  // Multi-pointer gesture & pan handling
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (e.target !== graphRef.current) return;
       e.currentTarget.setPointerCapture(e.pointerId);
-      isPanning.current = true;
-      panStart.current = {
-        x: e.clientX - pan.x,
-        y: e.clientY - pan.y,
-      };
+
+      activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (activePointersRef.current.size === 1) {
+        isPanning.current = true;
+        panStart.current = {
+          x: e.clientX - pan.x,
+          y: e.clientY - pan.y,
+        };
+      } else if (activePointersRef.current.size === 2) {
+        isPanning.current = false;
+        const pointers = Array.from(activePointersRef.current.values());
+        const dist = Math.hypot(pointers[0].x - pointers[1].x, pointers[0].y - pointers[1].y);
+        initialPinchDistRef.current = dist > 0 ? dist : 1;
+        initialPinchScaleRef.current = scale;
+      }
     },
-    [pan.x, pan.y]
+    [pan.x, pan.y, scale]
   );
 
   const flushPanFrame = useCallback(() => {
@@ -658,50 +678,82 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
     if (mountedRef.current) {
       setPan(nextPan);
     }
-  }, []); // setPan is stable
+  }, []);
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!isPanning.current || e.target !== graphRef.current) return;
+      if (!activePointersRef.current.has(e.pointerId)) return;
+      activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-      const rawX = e.clientX - panStart.current.x;
-      const rawY = e.clientY - panStart.current.y;
+      if (activePointersRef.current.size === 1 && isPanning.current) {
+        const rawX = e.clientX - panStart.current.x;
+        const rawY = e.clientY - panStart.current.y;
 
-      const limitX = gsW * scale * PAN_LIMIT;
-      const limitY = gsH * scale * PAN_LIMIT;
+        const limitX = gsW * scale * PAN_LIMIT;
+        const limitY = gsH * scale * PAN_LIMIT;
 
-      const clampedX = clamp(rawX, -limitX, limitX);
-      const clampedY = clamp(rawY, -limitY, limitY);
+        const clampedX = clamp(rawX, -limitX, limitX);
+        const clampedY = clamp(rawY, -limitY, limitY);
 
-      // Prevent cursor slip when hitting the boundary wall
-      if (rawX !== clampedX) panStart.current.x = e.clientX - clampedX;
-      if (rawY !== clampedY) panStart.current.y = e.clientY - clampedY;
+        if (rawX !== clampedX) panStart.current.x = e.clientX - clampedX;
+        if (rawY !== clampedY) panStart.current.y = e.clientY - clampedY;
 
-      panPendingRef.current = {
-        x: clampedX,
-        y: clampedY,
-      };
-      if (panFrameRef.current === null) {
-        panFrameRef.current = requestAnimationFrame(flushPanFrame);
+        panPendingRef.current = {
+          x: clampedX,
+          y: clampedY,
+        };
+        if (panFrameRef.current === null) {
+          panFrameRef.current = requestAnimationFrame(flushPanFrame);
+        }
+      } else if (activePointersRef.current.size === 2 && initialPinchDistRef.current) {
+        const pointers = Array.from(activePointersRef.current.values());
+        const currentDist = Math.hypot(
+          pointers[0].x - pointers[1].x,
+          pointers[0].y - pointers[1].y
+        );
+        const newScale = clamp(
+          initialPinchScaleRef.current * (currentDist / initialPinchDistRef.current),
+          0.25,
+          4
+        );
+        setScale(newScale);
       }
     },
     [flushPanFrame, gsH, gsW, scale]
   );
 
-  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isPanning.current) return;
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    }
-    isPanning.current = false;
-    const pendingPan = panPendingRef.current;
-    if (pendingPan) {
-      if (mountedRef.current) {
-        setPan(pendingPan);
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      activePointersRef.current.delete(e.pointerId);
+
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
       }
-      panPendingRef.current = null;
-    }
-  }, []);
+
+      if (activePointersRef.current.size < 2) {
+        initialPinchDistRef.current = null;
+      }
+
+      if (activePointersRef.current.size === 1) {
+        const remaining = Array.from(activePointersRef.current.values())[0];
+        isPanning.current = true;
+        panStart.current = {
+          x: remaining.x - pan.x,
+          y: remaining.y - pan.y,
+        };
+      } else if (activePointersRef.current.size === 0) {
+        isPanning.current = false;
+        const pendingPan = panPendingRef.current;
+        if (pendingPan) {
+          if (mountedRef.current) {
+            setPan(pendingPan);
+          }
+          panPendingRef.current = null;
+        }
+      }
+    },
+    [pan.x, pan.y]
+  );
 
   // ─────────────────────────────────────────────
   // Minimap logic
@@ -741,6 +793,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
     },
     [handleUpdatePanFromMinimap]
   );
+
   const handleMinimapPointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!isMinimapPanning.current) return;
@@ -749,6 +802,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
     },
     [handleUpdatePanFromMinimap]
   );
+
   const handleMinimapPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.stopPropagation();
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
@@ -807,12 +861,11 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         ...edge,
         anchors: getNodeEdgeAnchors(from, to, graphSize, nodeDimensions, canvasPadding),
       };
-    });
-  }, [nodeMap, graphSize, nodeDimensions, canvasPadding]).filter(
-    (edge): edge is NonNullable<typeof edge> => edge !== null
-  );
+    }).filter((edge): edge is NonNullable<typeof edge> => edge !== null);
+  }, [nodeMap, graphSize, nodeDimensions, canvasPadding]);
 
-  const graphMinHeight = gsW < 480 ? 320 : gsW < 640 ? 360 : 420;
+  const graphMinHeight = gsW < 380 ? 270 : gsW < 520 ? 310 : gsW < 768 ? 370 : 420;
+
   const graphTransformTransition = useMemo(() => {
     if (shouldReduceMotion) return { duration: 0 };
     if (isResetting) {
@@ -827,6 +880,10 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
     return { type: 'spring' as const, stiffness: 210, damping: 30, mass: 0.38 };
   }, [shouldReduceMotion, isResetting]);
 
+  // Dynamic Bezier Control Limits based on current graph width
+  const minCurveControl = Math.min(32, Math.max(16, gsW * 0.05));
+  const maxCurveControl = Math.min(96, Math.max(48, gsW * 0.14));
+
   // ─────────────────────────────────────────────
   // Render
   // ─────────────────────────────────────────────
@@ -835,16 +892,16 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
     <>
       <Card className="overflow-hidden border-card-border bg-card-bg shadow-[0_24px_60px_-38px_rgba(15,23,42,0.24)] dark:border-white/10 dark:bg-black">
         {/* ── Header ── */}
-        <CardHeader className="border-b border-card-border bg-text/[0.02] px-4 py-5 sm:px-6 dark:border-white/10 dark:bg-black/40">
-          <div className="flex items-start justify-between gap-4">
-            {/* Left */}
-            <div className="min-w-0 flex-1">
-              <div className="overflow-x-auto custom-scrollbar-thin pb-2 -mb-2">
+        <CardHeader className="border-b border-card-border bg-text/[0.02] px-3 py-4 sm:px-6 sm:py-5 dark:border-white/10 dark:bg-black/40">
+          <div className="flex items-center justify-between gap-3 sm:gap-4">
+            {/* Left pills bar */}
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="no-scrollbar overflow-x-auto pb-1 -mb-1">
                 <div className="flex w-max items-center gap-1.5 sm:gap-2 pr-2">
                   {/* Items */}
                   <span
                     aria-live="polite"
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold tracking-tight text-text/70"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold tracking-tight text-text/70 sm:text-xs"
                   >
                     <Activity className="h-3 w-3 text-sky-400" />
                     {itemCount} Items
@@ -853,7 +910,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                   {/* Health */}
                   <div
                     className={cn(
-                      'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold tracking-tight transition-colors',
+                      'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold tracking-tight transition-colors sm:text-xs',
                       healthStatus.className
                     )}
                     title={`Performance Score: ${performanceScore}/100`}
@@ -865,9 +922,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                   {/* CPU */}
                   <div
                     aria-live="polite"
-                    className={cn(
-                      'inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold text-text/70 transition-colors'
-                    )}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold text-text/70 transition-colors sm:text-xs"
                     title={`${performance.cpuCores} CPU Cores`}
                   >
                     <Cpu className="h-3 w-3 text-sky-400" />
@@ -877,9 +932,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                   {/* Memory */}
                   <div
                     aria-live="polite"
-                    className={cn(
-                      'inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold text-text/70 transition-colors'
-                    )}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold text-text/70 transition-colors sm:text-xs"
                     title={`Memory: ${performance.memoryUsed != null ? `${performance.memoryUsed}MB used` : `${performance.deviceMemory ?? 'N/A'}GB available`}`}
                   >
                     <Server className="h-3 w-3 text-violet-400" />
@@ -891,13 +944,11 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                   {/* GPU */}
                   <div
                     aria-live="polite"
-                    className={cn(
-                      'hidden md:inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold text-text/70 transition-colors'
-                    )}
+                    className="hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold text-text/70 transition-colors sm:text-xs"
                     title={`GPU: ${performance.gpuRenderer}`}
                   >
                     <Monitor className="h-3 w-3 text-amber-400" />
-                    <span className="max-w-[90px] truncate">
+                    <span className="max-w-[90px] truncate sm:max-w-[120px]">
                       {performance.gpuRenderer ?? 'N/A'}
                     </span>
                   </div>
@@ -905,9 +956,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                   {/* FPS */}
                   <div
                     aria-live="polite"
-                    className={cn(
-                      'inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold text-text/70 transition-colors'
-                    )}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold text-text/70 transition-colors sm:text-xs"
                     title="Frames Per Second"
                   >
                     <Gauge
@@ -927,9 +976,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                   {performance.ping !== undefined && (
                     <div
                       aria-live="polite"
-                      className={cn(
-                        'inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold text-text/70 transition-colors'
-                      )}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold text-text/70 transition-colors sm:text-xs"
                       title="Network Latency"
                     >
                       <div
@@ -945,7 +992,9 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                       {performance.ping} ms
                     </div>
                   )}
-                  <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold text-text/70">
+
+                  {/* Shortcut */}
+                  <div className="hidden md:inline-flex shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-text/5 px-2.5 py-1 text-[10px] font-semibold text-text/70 sm:text-xs">
                     <Home className="h-3 w-3 text-indigo-400" />
                     Ctrl+Home to Reset
                   </div>
@@ -953,15 +1002,15 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
               </div>
             </div>
 
-            {/* Right */}
-            <div className="flex shrink-0 items-center gap-2">
+            {/* Right Action Buttons */}
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <button
                 type="button"
                 onClick={handleExportImage}
                 disabled={isExporting || isGraphInteracting || isResetting}
-                aria-label="Export diagram"
-                title="Export diagram"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-card-border bg-text/5 text-text/70 transition hover:bg-text/10 hover:text-text disabled:opacity-50"
+                aria-label="Export diagram in 4K"
+                title="Export diagram in 4K"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-card-border bg-text/5 text-text/70 transition hover:bg-text/10 hover:text-text disabled:opacity-50 sm:h-9 sm:w-9"
               >
                 {isExporting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -973,10 +1022,10 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
               <button
                 type="button"
                 onClick={handleResetLayout}
-                aria-label="Reset layout"
+                aria-label="Reset diagram layout"
                 aria-pressed={isResetting}
                 title="Reset layout"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-card-border bg-text/5 text-text/70 transition hover:bg-text/10 hover:text-text"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-card-border bg-text/5 text-text/70 transition hover:bg-text/10 hover:text-text sm:h-9 sm:w-9"
               >
                 <RefreshCw className="h-4 w-4" />
               </button>
@@ -985,20 +1034,19 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         </CardHeader>
 
         {/* ── Body ── */}
-        <CardContent className="space-y-3 p-3 sm:p-4 xl:p-5">
-          <div className="overflow-auto rounded-[1.5rem] border border-card-border bg-text/[0.02] custom-scrollbar dark:border-white/10 dark:bg-black/30">
+        <CardContent className="space-y-3 p-2.5 sm:p-4 xl:p-5">
+          <div className="relative w-full overflow-hidden rounded-[1.35rem] border border-card-border bg-text/[0.02] sm:rounded-[1.5rem] dark:border-white/10 dark:bg-black/30">
             {/* Graph container */}
             <div
               ref={graphRef}
               role="region"
               aria-label="Vault ecosystem diagram"
-              className="relative min-w-[680px] overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.1),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(34,197,94,0.08),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))] lg:min-w-0"
+              className="relative w-full overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(34,197,94,0.1),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))]"
               style={{
                 aspectRatio: `${GRAPH_WIDTH} / ${GRAPH_HEIGHT}`,
                 minHeight: graphMinHeight,
                 touchAction: 'none',
               }}
-              // onWheel={handleWheel}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
@@ -1008,7 +1056,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
             >
               <motion.div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(14,165,233,0.12),transparent_30%),radial-gradient(circle_at_80%_80%,rgba(34,197,94,0.1),transparent_34%)]"
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(14,165,233,0.14),transparent_30%),radial-gradient(circle_at_80%_80%,rgba(34,197,94,0.12),transparent_34%)]"
                 initial={false}
                 animate={
                   shouldReduceMotion
@@ -1049,7 +1097,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                       <path
                         d="M 28 0 L 0 0 0 28"
                         fill="none"
-                        stroke="rgba(255, 255, 255, 0.1)"
+                        stroke="rgba(255, 255, 255, 0.08)"
                         strokeWidth="1"
                       />
                     </pattern>
@@ -1089,9 +1137,9 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                       y: end.y - end.normalY * joinOffset,
                     };
                     const controlDistance = Math.max(
-                      EDGE_CURVE_MIN_CONTROL,
+                      minCurveControl,
                       Math.min(
-                        EDGE_CURVE_MAX_CONTROL,
+                        maxCurveControl,
                         Math.hypot(endJoin.x - startJoin.x, endJoin.y - startJoin.y) *
                           EDGE_CURVE_CONTROL_DISTANCE
                       )
@@ -1225,26 +1273,12 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                     >
                       <div
                         className={cn(
-                          'group/node relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-card-border bg-card-bg/90 p-3 shadow-[0_24px_60px_-32px_rgba(15,23,42,0.34)] backdrop-blur-2xl transition-all duration-300 hover:border-text/15 hover:shadow-[0_28px_70px_-34px_rgba(15,23,42,0.4)] ring-1 transform-gpu sm:rounded-[1.55rem] sm:p-4 dark:border-white/10 dark:bg-black/50',
+                          'group/node relative flex h-full flex-col overflow-hidden rounded-[1.1rem] border border-card-border bg-card-bg/90 p-2 sm:rounded-[1.4rem] sm:p-3 md:rounded-[1.55rem] md:p-4 shadow-[0_24px_60px_-32px_rgba(15,23,42,0.34)] backdrop-blur-2xl transition-all duration-300 hover:border-text/15 hover:shadow-[0_28px_70px_-34px_rgba(15,23,42,0.4)] ring-1 transform-gpu dark:border-white/10 dark:bg-black/50',
                           node.tone.ring,
                           isHighlighted &&
                             'border-text/25 shadow-[0_30px_80px_-34px_rgba(15,23,42,0.52)] ring-2 ring-white/10'
                         )}
                       >
-                        {/* {isHighlighted && !shouldReduceMotion && (
-                            <motion.div
-                              aria-hidden="true"
-                              className="pointer-events-none absolute -inset-[2px] rounded-[1.45rem] border border-white/20"
-                              initial={{ opacity: 0.35 }}
-                              animate={{ opacity: [0.35, 0.7, 0.35] }}
-                              transition={{
-                                duration: 1.8,
-                                repeat: Infinity,
-                                ease: 'easeInOut',
-                              }}
-                            />
-                          )} */}
-
                         {/* Colour glow */}
                         <div
                           aria-hidden="true"
@@ -1257,20 +1291,28 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                         />
 
                         <div className="relative flex h-full flex-col justify-between">
-                          <div className="space-y-2.5">
-                            <div className="flex items-start gap-2.5">
+                          <div className="space-y-1 sm:space-y-2">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
                               {/* Icon badge */}
                               <div
-                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border bg-card-bg/85 sm:h-9 sm:w-9 ${node.tone.softBg} ${node.tone.ring}`}
+                                className={cn(
+                                  'flex shrink-0 items-center justify-center rounded-lg border bg-card-bg/85 transition-all sm:rounded-xl',
+                                  node.tone.softBg,
+                                  node.tone.ring,
+                                  'h-6 w-6 sm:h-8 sm:w-8 md:h-9 md:w-9'
+                                )}
                               >
                                 <Icon
-                                  className={`h-4 w-4 sm:h-[18px] sm:w-[18px] ${node.tone.icon}`}
+                                  className={cn(
+                                    'h-3 w-3 sm:h-4 sm:w-4 md:h-[18px] md:w-[18px]',
+                                    node.tone.icon
+                                  )}
                                   aria-hidden="true"
                                 />
                               </div>
 
                               <div className="min-w-0 flex-1">
-                                <p className="mt-0.5 text-xs font-semibold tracking-tight text-text sm:text-sm leading-snug break-words">
+                                <p className="text-[10px] font-semibold tracking-tight text-text sm:text-xs md:text-sm leading-tight truncate">
                                   {node.title}
                                 </p>
                               </div>
@@ -1278,30 +1320,11 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
 
                             <p
                               id={subtitleId}
-                              className="line-clamp-2 text-[10px] leading-relaxed text-text/65 sm:text-[11px]"
+                              className="line-clamp-2 text-[8.5px] leading-tight text-text/65 sm:text-[10px] md:text-[11px] sm:leading-relaxed"
                             >
                               {node.subtitle}
                             </p>
                           </div>
-
-                          {/* <div className="mt-2 flex items-center justify-between text-[9px] font-semibold uppercase tracking-[0.14em] text-text/45">
-                              <span className={cn(
-                                'inline-flex items-center gap-1',
-                                isHighlighted && 'text-text/70',
-                              )}>
-                                <span className={cn(
-                                  'h-1.5 w-1.5 rounded-full bg-emerald-400/70',
-                                  isHighlighted && 'bg-emerald-400',
-                                )} />
-                                Active
-                              </span>
-                              <span className={cn(
-                                'rounded-full border border-card-border bg-text/[0.04] px-1.5 py-0.5',
-                                isHighlighted && 'border-text/20 bg-text/[0.08] text-text/70',
-                              )}>
-                                Details
-                              </span>
-                            </div> */}
                         </div>
                       </div>
                     </motion.button>
@@ -1312,7 +1335,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
               {/* Mobile Floating Zoom Controls (< sm screens) */}
               <div
                 data-export-ignore="true"
-                className="absolute bottom-3 left-3 z-40 flex sm:hidden items-center gap-1.5 rounded-xl border border-card-border bg-card-bg/95 p-1 shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-black/90"
+                className="absolute bottom-2.5 left-2.5 z-40 flex sm:hidden items-center gap-1 rounded-xl border border-card-border bg-card-bg/95 p-1 shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-black/90"
                 aria-label="Mobile diagram controls"
               >
                 <button
@@ -1322,10 +1345,10 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                     e.stopPropagation();
                     handleZoomStep(0.25);
                   }}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-card-border bg-text/10 text-text/80 transition-colors active:bg-text/20"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-card-border bg-text/10 text-text/80 transition-colors active:bg-text/20"
                   aria-label="Zoom in"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                 </button>
                 <span className="px-1 text-[10px] font-bold text-text/60">
                   {Math.round(scale * 100)}%
@@ -1337,10 +1360,10 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                     e.stopPropagation();
                     handleZoomStep(-0.25);
                   }}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-card-border bg-text/10 text-text/80 transition-colors active:bg-text/20"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-card-border bg-text/10 text-text/80 transition-colors active:bg-text/20"
                   aria-label="Zoom out"
                 >
-                  <Minus className="h-4 w-4" />
+                  <Minus className="h-3.5 w-3.5" />
                 </button>
                 <button
                   type="button"
@@ -1349,7 +1372,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                     e.stopPropagation();
                     handleResetLayout();
                   }}
-                  className="flex h-8 px-2 text-[10px] font-bold items-center justify-center rounded-lg border border-card-border bg-text/10 text-text/80 transition-colors active:bg-text/20"
+                  className="flex h-7 px-2 text-[10px] font-bold items-center justify-center rounded-lg border border-card-border bg-text/10 text-text/80 transition-colors active:bg-text/20"
                   aria-label="Reset layout"
                 >
                   Reset
@@ -1441,9 +1464,9 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
             </div>
           </div>
 
-          <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-text/40">
-            Drag nodes to reorganize, tap any node for details, and scroll on smaller screens to
-            explore the full graph.
+          <p className="mt-2.5 text-[10px] uppercase tracking-[0.16em] text-text/40 sm:text-[11px] sm:tracking-[0.18em]">
+            Drag nodes to reorganize, tap any node for details, or pinch to zoom & pan across all
+            device viewports.
           </p>
         </CardContent>
       </Card>

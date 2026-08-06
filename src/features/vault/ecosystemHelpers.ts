@@ -159,16 +159,29 @@ export const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
 export const getCanvasPadding = (containerWidth: number) => {
-  if (containerWidth < 420) return 10;
-  if (containerWidth < 520) return 12;
+  if (containerWidth < 380) return 8;
+  if (containerWidth < 520) return 10;
   if (containerWidth < 768) return 16;
   return 24;
 };
 
 export const getNodeDimensions = (containerWidth: number): NodeDimensions => {
-  if (containerWidth < 420) return { width: 88, height: 88 };
-  if (containerWidth < 520) return { width: 104, height: 92 };
-  if (containerWidth < 768) return { width: 128, height: 98 };
+  if (containerWidth < 380) {
+    const width = Math.max(68, Math.floor((containerWidth - 16) * 0.22));
+    return { width, height: 74 };
+  }
+  if (containerWidth < 480) {
+    const width = Math.max(82, Math.floor((containerWidth - 20) * 0.225));
+    return { width, height: 82 };
+  }
+  if (containerWidth < 640) {
+    const width = Math.max(104, Math.floor((containerWidth - 32) * 0.23));
+    return { width, height: 90 };
+  }
+  if (containerWidth < 768) {
+    const width = Math.max(124, Math.floor((containerWidth - 40) * 0.235));
+    return { width, height: 98 };
+  }
   return { width: 160, height: 112 };
 };
 
@@ -300,7 +313,7 @@ export const createNodes = (
       ],
       icon: ShieldCheck,
       tone: tones.cyan,
-      x: 8,
+      x: 0,
       y: 12,
     },
     {
@@ -316,7 +329,7 @@ export const createNodes = (
       ],
       icon: Fingerprint,
       tone: tones.violet,
-      x: 35,
+      x: 33.33,
       y: 12,
     },
     {
@@ -332,7 +345,7 @@ export const createNodes = (
       ],
       icon: Lock,
       tone: tones.emerald,
-      x: 62,
+      x: 66.66,
       y: 12,
     },
     {
@@ -348,7 +361,7 @@ export const createNodes = (
       ],
       icon: LayoutGrid,
       tone: tones.amber,
-      x: 89,
+      x: 100,
       y: 12,
     },
     {
@@ -364,7 +377,7 @@ export const createNodes = (
       ],
       icon: Smartphone,
       tone: tones.sky,
-      x: 89,
+      x: 100,
       y: 68,
     },
     {
@@ -380,7 +393,7 @@ export const createNodes = (
       ],
       icon: RefreshCw,
       tone: tones.indigo,
-      x: 62,
+      x: 66.66,
       y: 68,
     },
     {
@@ -396,7 +409,7 @@ export const createNodes = (
       ],
       icon: Network,
       tone: tones.rose,
-      x: 35,
+      x: 33.33,
       y: 68,
     },
     {
@@ -412,7 +425,7 @@ export const createNodes = (
       ],
       icon: Database,
       tone: tones.emerald,
-      x: 8,
+      x: 0,
       y: 68,
     },
   ] as const;

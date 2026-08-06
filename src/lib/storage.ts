@@ -308,4 +308,3 @@ export const clearVault = async (): Promise<void> => {
   sessionVaultItems.clear();
   await clearLocalDb();
 };
-
