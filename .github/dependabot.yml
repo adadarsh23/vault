@@ -1,6 +1,5 @@
 version: 2
 updates:
-  # Maintain dependencies for npm
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
@@ -24,14 +23,3 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-
-  # Maintain dependencies for GitHub Actions
-  - package-ecosystem: 'github-actions'
-    directory: '/'
-    schedule:
-      interval: 'weekly'
-      day: 'monday'
-      time: '06:00'
-    labels:
-      - 'github-actions'
-      - 'automated-pr'
