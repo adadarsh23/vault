@@ -67,6 +67,7 @@ export const SyncStorageCard: React.FC<SyncStorageCardProps> = memo(
     cancelActivityLogSync,
   }) => {
     const [showMore, setShowMore] = useState(false);
+    const isExpanded = showMore || isMigrating || isSyncingLogs;
 
     return (
       <SectionCard
@@ -180,12 +181,12 @@ export const SyncStorageCard: React.FC<SyncStorageCardProps> = memo(
               size="sm"
               onClick={() => setShowMore((prev) => !prev)}
               className="gap-2"
-              aria-expanded={showMore}
+              aria-expanded={isExpanded}
               aria-label="Toggle more sync options"
             >
               <Sliders className="h-3.5 w-3.5 text-text/50" />
-              <span>{showMore ? 'Show Less' : 'More'}</span>
-              {showMore ? (
+              <span>{isExpanded ? 'Show Less' : 'More'}</span>
+              {isExpanded ? (
                 <ChevronUp className="h-3.5 w-3.5" />
               ) : (
                 <ChevronDown className="h-3.5 w-3.5" />
@@ -194,7 +195,7 @@ export const SyncStorageCard: React.FC<SyncStorageCardProps> = memo(
           </div>
 
           {/* EXPANDED SECONDARY ACTIONS */}
-          {showMore && (
+          {isExpanded && (
             <div className="flex flex-wrap gap-3 rounded-xl border border-card-border/80 bg-black/20 p-3.5 transition-all">
               <ActionButton
                 icon={Cloud}

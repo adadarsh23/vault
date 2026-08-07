@@ -667,7 +667,7 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
         } catch {
           rawBuffer = Buffer.from(rawPayload);
         }
-      } else if (item.encoding === 'utf-8' || item.encoding === 'modern') {
+      } else if (item.encoding === 'utf-8' || (item.encoding as string) === 'modern') {
         rawBuffer = Buffer.from(rawPayload, 'utf8');
       } else {
         try {

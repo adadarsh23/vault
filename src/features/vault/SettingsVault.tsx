@@ -1,15 +1,5 @@
 import React, { memo } from 'react';
-import {
-  Network,
-  ClipboardList,
-  MonitorSmartphone,
-  ShieldCheck,
-  ChevronDown,
-  ChevronUp,
-  Sliders,
-  Keyboard,
-  Activity,
-} from 'lucide-react';
+import { Network, ClipboardList, MonitorSmartphone, ShieldCheck } from 'lucide-react';
 import { useVaultStore } from '../../store/vaultStore';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { PWAInstallModal } from '../../components/vault/PWAInstallModal';
@@ -81,7 +71,6 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
     const [isDestroyingVault, setIsDestroyingVault] = React.useState(false);
     const [isSavingProfile, setIsSavingProfile] = React.useState(false);
     const [isMigrating, setIsMigrating] = React.useState(false);
-    const [showMoreNav, setShowMoreNav] = React.useState(false);
     const [destructionStage, setDestructionStage] = React.useState<'idle' | 'confirm' | 'final'>(
       'idle'
     );

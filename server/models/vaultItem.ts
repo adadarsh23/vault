@@ -57,7 +57,7 @@ const vaultItemSchema = new mongoose.Schema(
     encoding: {
       type: String,
       default: 'utf-8',
-      enum: ['utf-8', 'base64', 'binary-base64', 'gridfs-binary', 'file-reference'],
+      enum: ['utf-8', 'base64', 'binary-base64', 'gridfs-binary', 'file-reference', 'modern'],
     },
     gridFsId: { type: String, default: null },
 

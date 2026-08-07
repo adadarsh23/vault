@@ -1,7 +1,7 @@
 {
   "requestedUrl": "http://127.0.0.1:4173/",
   "finalUrl": "http://127.0.0.1:4173/",
-  "fetchTime": "2026-08-03T10:59:26.010Z",
+  "fetchTime": "2026-08-07T11:25:11.812Z",
   "category": {
     "title": "Best Practices",
     "supportedModes": [
@@ -608,7 +608,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-EeCQ33TH.js",
+              "url": "http://127.0.0.1:4173/assets/index-Cvdx2Gig.js",
               "urlProvider": "network",
               "line": 1,
               "column": 5264
@@ -1142,7 +1142,7 @@
               "type": "source-location",
               "url": "http://127.0.0.1:4173/",
               "urlProvider": "network",
-              "line": 237,
+              "line": 232,
               "column": 0
             }
           },
@@ -1216,7 +1216,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/motion-BHcRPNbT.js",
+              "url": "http://127.0.0.1:4173/assets/motion-SOK3ApGv.js",
               "urlProvider": "network",
               "line": 0,
               "column": 3064
@@ -1425,7 +1425,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/motion-BHcRPNbT.js",
+              "url": "http://127.0.0.1:4173/assets/motion-SOK3ApGv.js",
               "urlProvider": "network",
               "line": 8,
               "column": 29192
@@ -1444,10 +1444,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/Background-Dnu9gCo4.js",
+              "url": "http://127.0.0.1:4173/",
               "urlProvider": "network",
-              "line": 0,
-              "column": 952
+              "line": -2,
+              "column": -2
             }
           },
           {
@@ -1463,7 +1463,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/motion-BHcRPNbT.js",
+              "url": "http://127.0.0.1:4173/assets/motion-SOK3ApGv.js",
               "urlProvider": "network",
               "line": 0,
               "column": 24403
@@ -1638,8 +1638,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/vaultStore-JjENyXKM.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultStore-JjENyXKM.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/vaultStore-Do_mvtNS.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultStore-Do_mvtNS.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1702,16 +1702,16 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/sentry-D-_lWFY-.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/sentry-D-_lWFY-.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/sentry-BZyRakuo.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/sentry-BZyRakuo.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/sentry-BZyRakuo.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/sentry-BZyRakuo.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/sentry-BhCRgYUr.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/sentry-BhCRgYUr.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1742,8 +1742,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/motion-BHcRPNbT.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/motion-BHcRPNbT.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/motion-SOK3ApGv.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/motion-SOK3ApGv.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1766,24 +1766,24 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-BClWM02T.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-BClWM02T.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-F37rzm-Y.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-F37rzm-Y.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LoadingScreen-Cb0LXZJX.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LoadingScreen-Cb0LXZJX.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/LoadingScreen-DOxPSaMJ.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LoadingScreen-DOxPSaMJ.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LandingPage-K5eFR-ZZ.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LandingPage-K5eFR-ZZ.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/LandingPage-BS5S8sdC.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LandingPage-BS5S8sdC.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1798,16 +1798,16 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/index-EeCQ33TH.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-EeCQ33TH.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/index-Cvdx2Gig.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-Cvdx2Gig.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/icons-BcapvwfL.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/icons-BcapvwfL.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/icons-DgcM_GLM.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/icons-DgcM_GLM.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1830,8 +1830,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/Footer-BROwMDBc.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/Footer-BROwMDBc.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/Footer-CP7j-q2X.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/Footer-CP7j-q2X.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1870,6 +1870,14 @@
             }
           },
           {
+            "scriptUrl": "http://127.0.0.1:4173/assets/core-D7EzSV_A.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/core-D7EzSV_A.js.map",
+            "subItems": {
+              "type": "subitems",
+              "items": []
+            }
+          },
+          {
             "scriptUrl": "http://127.0.0.1:4173/assets/Button-AJ4Jl1Zf.js",
             "sourceMapUrl": "http://127.0.0.1:4173/assets/Button-AJ4Jl1Zf.js.map",
             "subItems": {
@@ -1878,8 +1886,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/Background-Dnu9gCo4.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/Background-Dnu9gCo4.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/Background-BjKg9ZTJ.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/Background-BjKg9ZTJ.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1894,8 +1902,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/apiClient-BeuY8qKp.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/apiClient-BeuY8qKp.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/apiClient-DzefM8t7.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/apiClient-DzefM8t7.js.map",
             "subItems": {
               "type": "subitems",
               "items": []

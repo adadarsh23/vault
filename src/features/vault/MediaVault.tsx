@@ -601,7 +601,9 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
               masterKey,
               onProgress: (uploadedBytes, totalBytes) => {
                 const pct = Math.round((uploadedBytes / totalBytes) * 100);
-                toast.loading(`Uploading via TUS ${index + 1}/${total}: ${pct}%...`, { id: toastId });
+                toast.loading(`Uploading via TUS ${index + 1}/${total}: ${pct}%...`, {
+                  id: toastId,
+                });
               },
             });
             tusUploadId = tusResult?.uploadId;

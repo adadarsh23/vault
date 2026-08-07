@@ -11,7 +11,9 @@ const looksLikeServerPath = (value: string): boolean =>
   value.startsWith('/uploads/') ||
   value.startsWith('uploads/') ||
   value.startsWith('/api/') ||
-  value.startsWith('api/');
+  value.startsWith('api/') ||
+  value.startsWith('cloud://') ||
+  value.startsWith('gridfs://');
 
 const isLikelyEncryptedString = (value: string): boolean => {
   let normalized = value.trim();
@@ -246,6 +248,10 @@ export const inferMimeTypeFromItem = (item: VaultItem): string | undefined => {
 const resolveServerFileUrl = (value: string): string => {
   if (isAbsoluteUrl(value) || isBlobOrDataUrl(value)) {
     return value;
+  }
+  if (value.startsWith('cloud://') || value.startsWith('gridfs://')) {
+    const rawId = value.replace(/^(cloud|gridfs):\/\//, '');
+    return `${API_BASE_URL}/api/vault/files/access/${encodeURIComponent(rawId)}`;
   }
 
   return `${API_BASE_URL}${value.startsWith('/') ? value : `/${value}`}`;

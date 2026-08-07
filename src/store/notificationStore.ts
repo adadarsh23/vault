@@ -19,6 +19,8 @@ interface NotificationState {
   markAsRead: (id?: string) => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
   clearNotifications: () => Promise<void>;
+  addNotification: (notification: Notification) => void;
+  resetStore: () => void;
 }
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
@@ -96,5 +98,18 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     } catch (error) {
       console.error('Failed to clear notifications:', error);
     }
+  },
+
+  addNotification: (newNotif) => {
+    const currentList = get().notifications;
+    // Avoid duplicate insertions
+    if (currentList.some((n) => n._id === newNotif._id)) return;
+    const notifications = [newNotif, ...currentList];
+    const unreadCount = notifications.filter((n) => !n.isRead).length;
+    set({ notifications, unreadCount });
+  },
+
+  resetStore: () => {
+    set({ notifications: [], unreadCount: 0, loading: false });
   },
 }));

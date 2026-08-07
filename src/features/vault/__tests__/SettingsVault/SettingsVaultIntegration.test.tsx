@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { SettingsVault } from '../../SettingsVault';
@@ -99,12 +99,14 @@ describe('SettingsVault Integrated Page Test Suite', () => {
     }
   });
 
-  it('renders Settings Vault page title and main sections', () => {
+  it('renders Settings Vault page title and main sections', async () => {
     render(
       <MemoryRouter>
         <SettingsVault onOpenMaintenance={onOpenMaintenanceMock} onNavigate={onNavigateMock} />
       </MemoryRouter>
     );
+
+    await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));
 
     expect(screen.getByRole('heading', { name: /^settings$/i })).toBeTruthy();
     expect(screen.getByText('Vault Navigation')).toBeTruthy();
@@ -113,12 +115,14 @@ describe('SettingsVault Integrated Page Test Suite', () => {
     expect(screen.getByText('Emergency Destruction')).toBeTruthy();
   });
 
-  it('navigates to ecosystem when "Open Ecosystem" button is clicked', () => {
+  it('navigates to ecosystem when "Open Ecosystem" button is clicked', async () => {
     render(
       <MemoryRouter>
         <SettingsVault onOpenMaintenance={onOpenMaintenanceMock} onNavigate={onNavigateMock} />
       </MemoryRouter>
     );
+
+    await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));
 
     const openEcosystemButton = screen.getByRole('button', { name: /open ecosystem/i });
     fireEvent.click(openEcosystemButton);
@@ -126,12 +130,14 @@ describe('SettingsVault Integrated Page Test Suite', () => {
     expect(onNavigateMock).toHaveBeenCalledWith('ecosystem');
   });
 
-  it('navigates to devicesessions when "Open Sessions" button is clicked', () => {
+  it('navigates to devicesessions when "Open Sessions" button is clicked', async () => {
     render(
       <MemoryRouter>
         <SettingsVault onOpenMaintenance={onOpenMaintenanceMock} onNavigate={onNavigateMock} />
       </MemoryRouter>
     );
+
+    await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));
 
     const openSessionsButton = screen.getByRole('button', { name: /open sessions/i });
     fireEvent.click(openSessionsButton);
@@ -139,12 +145,14 @@ describe('SettingsVault Integrated Page Test Suite', () => {
     expect(onNavigateMock).toHaveBeenCalledWith('devicesessions');
   });
 
-  it('navigates to systemlogs when "Open Logs" button is clicked', () => {
+  it('navigates to systemlogs when "Open Logs" button is clicked', async () => {
     render(
       <MemoryRouter>
         <SettingsVault onOpenMaintenance={onOpenMaintenanceMock} onNavigate={onNavigateMock} />
       </MemoryRouter>
     );
+
+    await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));
 
     const openLogsButton = screen.getByRole('button', { name: /open logs/i });
     fireEvent.click(openLogsButton);
@@ -171,7 +179,9 @@ describe('SettingsVault Integrated Page Test Suite', () => {
     fireEvent.change(displayNameInput, { target: { value: 'Johnny Doe' } });
 
     const saveButton = screen.getByRole('button', { name: /save profile/i });
-    fireEvent.click(saveButton);
+    await act(async () => {
+      fireEvent.click(saveButton);
+    });
 
     expect(authApi.updateAuthenticatedProfile).toHaveBeenCalledWith({
       profileName: 'Johnny Doe',
@@ -203,7 +213,9 @@ describe('SettingsVault Integrated Page Test Suite', () => {
     fireEvent.click(profileCardButton);
 
     const saveButton = screen.getByRole('button', { name: /save profile/i });
-    fireEvent.click(saveButton);
+    await act(async () => {
+      fireEvent.click(saveButton);
+    });
 
     await waitFor(() => {
       expect(screen.queryByText('Edit Profile')).toBeNull();
@@ -216,6 +228,8 @@ describe('SettingsVault Integrated Page Test Suite', () => {
         <SettingsVault onOpenMaintenance={onOpenMaintenanceMock} onNavigate={onNavigateMock} />
       </MemoryRouter>
     );
+
+    await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));
 
     // Stage 1
     const stage1Button = screen.getByRole('button', { name: /destroy vault data/i });
@@ -233,7 +247,9 @@ describe('SettingsVault Integrated Page Test Suite', () => {
     await waitFor(() =>
       expect(screen.getByText('Phase 2: Final destruction override.')).toBeTruthy()
     );
-    fireEvent.click(stage3Button);
+    await act(async () => {
+      fireEvent.click(stage3Button);
+    });
 
     await waitFor(() => {
       expect(mockVaultStoreState.destroyAllData).toHaveBeenCalled();
@@ -253,7 +269,9 @@ describe('SettingsVault Integrated Page Test Suite', () => {
     await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));
 
     const lockSessionsButton = screen.getByRole('button', { name: /lock sessions/i });
-    fireEvent.click(lockSessionsButton);
+    await act(async () => {
+      fireEvent.click(lockSessionsButton);
+    });
 
     await waitFor(() => {
       expect(authApi.revokeVaultDeviceSession).toHaveBeenCalledWith({

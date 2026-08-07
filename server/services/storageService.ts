@@ -47,7 +47,14 @@ export const storageService = {
     const payload = `${userId}:${itemId}:${action}:${expiry}:${sid}:${device}`;
     const signature = crypto.createHmac('sha256', SIGNED_URL_SECRET).update(payload).digest('hex');
 
-    const baseUrl = process.env.PUBLIC_URL || 'http://localhost:5173';
+    const resolvePublicBaseUrl = (): string => {
+      if (process.env.PUBLIC_URL && process.env.PUBLIC_URL.trim()) {
+        return process.env.PUBLIC_URL.trim().replace(/\/+$/, '');
+      }
+      const port = process.env.PORT || '4000';
+      return `http://localhost:${port}`;
+    };
+    const baseUrl = resolvePublicBaseUrl();
     return `${baseUrl}/api/vault/files/access/${itemId}?token=${signature}&expires=${expiry}&action=${action}&sid=${sid}&dev=${device}&uid=${userId}${options.ipAddress ? `&ip=${ip}` : ''}`;
   },
 

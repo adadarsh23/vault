@@ -535,6 +535,7 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
 
   const result = await saveFileToVault({
     userId,
+    username: getUsername(req),
     category: session.category,
     folder: session.folder || undefined,
     file: {
@@ -613,6 +614,7 @@ export const uploadVaultFile = async (req: AuthenticatedRequest, res: express.Re
 
   const result = await saveFileToVault({
     userId: getUserId(req),
+    username: getUsername(req),
     category,
     folder:
       typeof req.body.folder === 'string'

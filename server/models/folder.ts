@@ -29,7 +29,15 @@ folderSchema.index(
 );
 
 export const getFolderModel = (username: string): Model<FolderType> => {
-  const collectionName = `${username}.${username}_folders`;
+  if (!username || !username.trim()) {
+    throw new Error('Username is required for isolated folders');
+  }
+
+  const normalized = username
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '_');
+  const collectionName = `${normalized}.${normalized}_folders`;
   if (mongoose.models[collectionName]) {
     return mongoose.models[collectionName] as Model<FolderType>;
   }

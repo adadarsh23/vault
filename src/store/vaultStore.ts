@@ -36,6 +36,7 @@ import {
 import { fetchVaultSalt, logoutVaultSession, revokeVaultDeviceSession } from '../lib/auth-api';
 import { reencryptVaultItemContent } from '../lib/vaultKeyRotation';
 import { normalizeGeneratedCredentialLength, validatePassword } from '../lib/utils';
+import { useNotificationStore } from './notificationStore';
 
 export interface SecurityPreferences {
   isAutoLockEnabled: boolean;
@@ -92,7 +93,6 @@ const EXPORT_YIELD_THRESHOLD = 10;
 const IMPORT_YIELD_THRESHOLD = 50;
 const RELOAD_AFTER_PURGE_DELAY_MS = 2_000;
 const CLOUD_SOURCE = 'cloud';
-const LOCAL_SOURCE = 'local';
 const IMPORTED_ITEM_TITLE_PREFIX = 'Imported item';
 const MAX_IMPORTED_ITEM_TITLE_LENGTH = 200;
 const VALID_ITEM_TYPES: ReadonlySet<VaultItem['type']> = new Set([
@@ -757,6 +757,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     clearAuthToken();
     clearCloudSessionHint();
     clearRememberedVaultAccess();
+    useNotificationStore.getState().resetStore();
     get().lock();
   },
 
@@ -1239,7 +1240,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         try {
           await uploadItemToCloud(updatedItem, masterKey);
         } catch (uploadErr) {
-          console.warn('Cloud upload failed during update, retained locally in IndexedDB:', uploadErr);
+          console.warn(
+            'Cloud upload failed during update, retained locally in IndexedDB:',
+            uploadErr
+          );
         }
       }
       set((state) => ({

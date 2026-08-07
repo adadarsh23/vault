@@ -48,23 +48,26 @@ const CATEGORY_ALIAS_MAP: Record<string, string> = {
 };
 
 const ALLOWED_SCOPED_CATEGORIES = new Set([
-  'photo',
-  'video',
   'audio',
-  'document',
-  'note',
+  'card',
   'chat',
-  'todo',
-  'password',
-  'secret',
   'contact',
-  'location',
+  'document',
   'file',
-  'other-files',
+  'identity',
+  'location',
+  'note',
   'other',
+  'other-files',
+  'password',
+  'photo',
+  'secret',
   'settings',
   'system',
+  'todo',
   'users',
+  'video',
+  'wifi',
 ]);
 
 const normalizeCategory = (rawCategory: string): string => {

@@ -221,7 +221,13 @@ export const downloadAllFromResponseItems = async (
 
     try {
       const payload = doc?.payload;
-      if (typeof payload !== 'string' || payload.length === 0) {
+      const isFileRef =
+        doc?.encoding === 'file-reference' ||
+        doc?.encoding === 'gridfs-binary' ||
+        Boolean(doc?.gridFsId) ||
+        Boolean(doc?.file?.filePath);
+
+      if (!isFileRef && (typeof payload !== 'string' || payload.length === 0)) {
         throw new VaultItemDecodeError(itemId, 'Vault item payload is missing.');
       }
 
@@ -251,8 +257,9 @@ export const downloadAllFromResponseItems = async (
 
       const isBinaryOrRef =
         doc?.encoding === 'gridfs-binary' ||
-        doc?.gridFsId ||
-        (doc?.encoding === 'file-reference' && typeof payload === 'string') ||
+        doc?.encoding === 'file-reference' ||
+        Boolean(doc?.gridFsId) ||
+        Boolean(doc?.file?.filePath) ||
         doc?.encoding === 'binary-base64';
 
       let payloadPromise = Promise.resolve<string | null>(null);
@@ -260,7 +267,7 @@ export const downloadAllFromResponseItems = async (
       let modernEncryptedMeta = '';
       let modernContent = '';
 
-      if (!isBinaryOrRef) {
+      if (!isBinaryOrRef && typeof payload === 'string') {
         if (payload.startsWith('V2_MODERN:')) {
           isModern = true;
           const payloadBody = payload.substring(10);
@@ -332,12 +339,23 @@ export const downloadAllFromResponseItems = async (
         doc?.username ||
         (typeof metadataRecord.username === 'string' ? metadataRecord.username : undefined);
 
-      if (doc?.encoding === 'gridfs-binary' || doc?.gridFsId) {
+      const fileRefPath =
+        (typeof payload === 'string' && payload.trim().length > 0 ? payload.trim() : null) ||
+        (typeof doc?.file?.filePath === 'string' && doc.file.filePath.trim()
+          ? doc.file.filePath.trim()
+          : null) ||
+        (doc?.gridFsId ? `cloud://${doc.gridFsId}` : null);
+
+      if (
+        doc?.encoding === 'file-reference' ||
+        (doc?.encoding === 'gridfs-binary' &&
+          (fileRefPath?.startsWith('cloud://') || fileRefPath?.startsWith('gridfs://')))
+      ) {
         return {
           id: itemId,
           type,
           title,
-          content: decodeBase64Payload(payload, itemId, 'binary'),
+          content: fileRefPath || `cloud://${itemId}`,
           metadata,
           folder,
           createdAt,
@@ -347,12 +365,27 @@ export const downloadAllFromResponseItems = async (
         } as VaultItem;
       }
 
-      if (doc?.encoding === 'file-reference' && typeof payload === 'string') {
+      if (doc?.encoding === 'gridfs-binary' || doc?.gridFsId) {
+        if (typeof payload === 'string' && isLikelyBase64(payload)) {
+          return {
+            id: itemId,
+            type,
+            title,
+            content: decodeBase64Payload(payload, itemId, 'binary'),
+            metadata,
+            folder,
+            createdAt,
+            updatedAt,
+            isPinned,
+            pinnedAt,
+          } as VaultItem;
+        }
+
         return {
           id: itemId,
           type,
           title,
-          content: payload,
+          content: fileRefPath || `cloud://${itemId}`,
           metadata,
           folder,
           createdAt,
