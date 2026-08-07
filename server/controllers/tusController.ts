@@ -155,3 +155,23 @@ export const uploadTusChunkController = async (
   res.setHeader('Upload-Offset', session.offset.toString());
   return res.status(204).end();
 };
+
+export const getTusSessionBuffer = async (uploadId: string): Promise<Buffer | null> => {
+  const session = tusSessions.get(uploadId);
+  if (session) {
+    if (session.chunks.length > 0) {
+      return Buffer.concat(session.chunks);
+    }
+    try {
+      return await fs.readFile(session.filePath);
+    } catch {
+      return null;
+    }
+  }
+  try {
+    const fallbackPath = path.join(TUS_TMP_ROOT, uploadId, 'chunk_data.bin');
+    return await fs.readFile(fallbackPath);
+  } catch {
+    return null;
+  }
+};

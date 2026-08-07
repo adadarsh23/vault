@@ -750,11 +750,11 @@ export const SystemLogsCard: React.FC = () => {
                 disabled={page <= 1 || loading}
                 className="h-8 px-3 rounded-lg text-xs flex items-center gap-1"
               >
-                <ChevronLeft size={14} /> Previous
+                <ChevronLeft size={14} />
               </Button>
 
               <span className="text-xs font-semibold text-text/80 font-mono">
-                Page {page} {hasMore && '• More available'}
+                Page {page} {hasMore && '• More'}
               </span>
 
               <Button
@@ -764,7 +764,7 @@ export const SystemLogsCard: React.FC = () => {
                 disabled={!hasMore || loading || isRefreshing}
                 className="h-8 px-3 rounded-lg text-xs flex items-center gap-1"
               >
-                Next <ChevronRight size={14} />
+                <ChevronRight size={14} />
               </Button>
             </div>
           ) : (
@@ -793,7 +793,7 @@ export const SystemLogsCard: React.FC = () => {
             disabled={loading}
             className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 transition-colors font-medium self-end sm:self-auto"
           >
-            <Trash2 size={13} /> Clear Logs
+            <Trash2 size={13} /> Clear
           </button>
         </div>
       </div>

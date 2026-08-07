@@ -276,11 +276,10 @@ const mergeCloudWithLocalRuntimeItems = (
   additionalLocalItems: VaultItem[] = []
 ): VaultItem[] => {
   const localMap = new Map<string, VaultItem>();
-  for (const item of [
-    ...localItems.filter((i) => i.source === LOCAL_SOURCE),
-    ...additionalLocalItems.filter((i) => i.source === LOCAL_SOURCE),
-  ]) {
-    localMap.set(item.id, item);
+  for (const item of [...localItems, ...additionalLocalItems]) {
+    if (item && item.id) {
+      localMap.set(item.id, item);
+    }
   }
   const cloudIdSet = new Set(cloudItems.map((c) => c.id));
   const remainingLocals = Array.from(localMap.values()).filter((l) => !cloudIdSet.has(l.id));
@@ -1151,21 +1150,25 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      if (newItem.source === 'local') {
-        await saveItem(newItem);
-      } else {
+      // Always persist to local IndexedDB to guarantee persistence across page refreshes
+      await saveItem(newItem);
+
+      if (newItem.source === 'cloud') {
         try {
           await uploadItemToCloud(newItem, masterKey, onProgress);
         } catch (uploadErr) {
           console.warn(
-            'Cloud upload failed, saving item locally to IndexedDB as fallback:',
+            'Cloud upload failed, retaining item locally in IndexedDB as fallback:',
             uploadErr
           );
           newItem.source = 'local';
           await saveItem(newItem);
         }
       }
-      set((state) => ({ items: [newItem, ...state.items], isLoading: false }));
+      set((state) => ({
+        items: [newItem, ...state.items.filter((i) => i.id !== newItem.id)],
+        isLoading: false,
+      }));
       toast.success(
         `${newItem.title} saved ${newItem.source === 'local' ? 'locally' : 'to cloud'}`
       );
@@ -1230,10 +1233,14 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      if (updatedItem.source === 'local') {
-        await saveItem(updatedItem);
-      } else {
-        await uploadItemToCloud(updatedItem, masterKey);
+      await saveItem(updatedItem);
+
+      if (updatedItem.source === 'cloud') {
+        try {
+          await uploadItemToCloud(updatedItem, masterKey);
+        } catch (uploadErr) {
+          console.warn('Cloud upload failed during update, retained locally in IndexedDB:', uploadErr);
+        }
       }
       set((state) => ({
         items: state.items.map((i) => (i.id === id ? updatedItem : i)),

@@ -153,7 +153,7 @@ export const Footer: React.FC<FooterProps> = memo(() => {
             <div className="lg:col-span-7 flex flex-col items-center sm:items-end">
               <div className="w-full max-w-xs sm:max-w-none flex flex-col items-center sm:items-end">
                 <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40 mb-4">
-                  Platform & Legal
+                  Links
                 </h2>
 
                 <nav className="flex flex-col gap-2 w-full items-center sm:items-end">
@@ -173,21 +173,6 @@ export const Footer: React.FC<FooterProps> = memo(() => {
                     Contact Us
                   </Link>
                   <Link
-                    to="/legal#license"
-                    className="
-                      w-full sm:w-auto
-                      px-4 py-2 sm:px-0 sm:py-0
-                      text-center sm:text-right
-                      text-white/70 text-sm
-                      rounded-lg
-                      transition-all duration-200
-                      hover:text-white
-                      focus:outline-none focus:ring-2 focus:ring-white/20
-                    "
-                  >
-                    License
-                  </Link>
-                  <Link
                     to="/legal#privacy"
                     className="
                       w-full sm:w-auto
@@ -201,6 +186,21 @@ export const Footer: React.FC<FooterProps> = memo(() => {
                     "
                   >
                     Privacy Policy
+                  </Link>
+                  <Link
+                    to="/legal#license"
+                    className="
+                      w-full sm:w-auto
+                      px-4 py-2 sm:px-0 sm:py-0
+                      text-center sm:text-right
+                      text-white/70 text-sm
+                      rounded-lg
+                      transition-all duration-200
+                      hover:text-white
+                      focus:outline-none focus:ring-2 focus:ring-white/20
+                    "
+                  >
+                    License
                   </Link>
                 </nav>
               </div>

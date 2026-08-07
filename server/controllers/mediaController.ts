@@ -15,6 +15,7 @@ import { decryptBuffer, EncryptedPayload } from '../utils/crypto.ts';
 import mongoose from 'mongoose';
 import { anomalyDetectionService } from '../services/anomalyDetectionService.ts';
 import { isAllowedCorsOrigin } from '../utils/cors.ts';
+import { getTusSessionBuffer } from './tusController.ts';
 
 const STORAGE_ROOT = path.join(process.cwd(), 'vault-storage');
 
@@ -808,6 +809,34 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
         res.setHeader('Accept-Ranges', 'bytes');
       }
       return res.send(decrypted);
+    }
+  }
+
+  // 4. Fallback: TUS Upload Session Chunks
+  const tusUploadId = (item.metadata as any)?.tusUploadId;
+  if (tusUploadId) {
+    const tusBuffer = await getTusSessionBuffer(tusUploadId);
+    if (tusBuffer && tusBuffer.length > 0) {
+      const size = tusBuffer.length;
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Content-Type', mimeType);
+
+      if (isStreamableMedia && requestedRange) {
+        const parsedRange = parseSingleByteRange(requestedRange, size);
+        if (!parsedRange) {
+          res.setHeader('Content-Range', `bytes */${size}`);
+          return res.status(416).end();
+        }
+        const chunk = tusBuffer.subarray(parsedRange.start, parsedRange.end + 1);
+        res.status(206);
+        res.setHeader('Content-Range', `bytes ${parsedRange.start}-${parsedRange.end}/${size}`);
+        res.setHeader('Content-Length', String(chunk.length));
+        return res.send(chunk);
+      }
+
+      res.status(200);
+      res.setHeader('Content-Length', size.toString());
+      return res.send(tusBuffer);
     }
   }
 
