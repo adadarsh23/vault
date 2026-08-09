@@ -128,7 +128,8 @@ const requestSessionRefresh = async (): Promise<RefreshSessionResult | null> => 
       }
 
       return null;
-    } catch {
+    } catch (refreshErr) {
+      logger.warn('Session refresh request failed', { error: refreshErr });
       return null;
     } finally {
       pendingRefreshRequest = null;

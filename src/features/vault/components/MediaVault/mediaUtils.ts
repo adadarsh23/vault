@@ -37,6 +37,11 @@ export const getMediaDimensions = async (
         video.src = objectUrl;
       });
 
+      // Explicitly cleanup the video element to prevent memory leak of the hardware decoder
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+
       return {
         ...dimensions,
         aspectRatio: dimensions.width / dimensions.height,

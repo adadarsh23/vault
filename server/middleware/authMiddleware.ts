@@ -30,12 +30,62 @@ const decodeQueryParamSafely = (value: string): string | null => {
   }
 };
 
+interface CachedSession {
+  userWithSession: any;
+  cachedAt: number;
+}
+
+const SESSION_CACHE_TTL_MS = 60 * 1000; // 1-minute in-memory cache TTL for session verification
+const MAX_SESSION_CACHE_ENTRIES = 5000;
+const sessionCache = new Map<string, CachedSession>();
+
+const setBoundedSessionCache = (key: string, value: CachedSession) => {
+  if (sessionCache.size >= MAX_SESSION_CACHE_ENTRIES && !sessionCache.has(key)) {
+    const oldestKey = sessionCache.keys().next().value;
+    if (oldestKey) {
+      sessionCache.delete(oldestKey);
+    }
+  }
+  sessionCache.set(key, value);
+};
+
+/**
+ * Invalidate session cache for a user when sessions are revoked or changed
+ */
+export const clearSessionCacheForUser = (userId?: string) => {
+  if (!userId) {
+    sessionCache.clear();
+    return;
+  }
+  for (const key of sessionCache.keys()) {
+    if (key.startsWith(`${userId}:`)) {
+      sessionCache.delete(key);
+    }
+  }
+};
+
 const extractQueryAuthToken = (req: express.Request): string | undefined => {
+  // Security Hardening: Only allow query auth tokens for dedicated media/stream routes
+  const path = req.path || req.originalUrl || '';
+  const isMediaStreamRoute =
+    path.includes('/media/') ||
+    path.includes('/stream/') ||
+    path.includes('/hls/') ||
+    path.includes('/files/access/') ||
+    path.includes('/files/signed-url/') ||
+    path.includes('/files/') ||
+    path.includes('/avatar/');
+  const allowQueryTokens = process.env.ALLOW_QUERY_AUTH_TOKENS === 'true' || isMediaStreamRoute;
+
+  if (!allowQueryTokens) {
+    return undefined;
+  }
+
   if (typeof req.query.auth_token === 'string') {
     return req.query.auth_token.trim();
   }
 
-  // Manual URL parsing fallback for strict environments
+  // Manual URL parsing fallback for strict media environments
   const match = req.url.match(/[?&]auth_token=([^&]+)/);
   if (!match) {
     return undefined;
@@ -65,9 +115,8 @@ export const resolveIdentity = (
   _res: express.Response,
   next: express.NextFunction
 ) => {
-  const q = req.query as any;
   const authHeader = req.get('Authorization')?.split(' ')[1];
-  const token = q.auth_token || authHeader;
+  const token = authHeader || extractQueryAuthToken(req);
 
   if (token && typeof token === 'string' && token.includes('.')) {
     try {
@@ -127,18 +176,31 @@ export const requireAuth = async (
     // Security Intelligence: Track IP drift for this user
     anomalyDetectionService.trackIpDrift(payload.sub, clientIp);
 
-    const userWithSession = await User.findById(payload.sub, {
-      _id: 1,
-      username: 1,
-      lastActiveAt: 1,
-      sessions: {
-        $elemMatch: {
-          sessionId: payload.sessionId,
-          revokedAt: null,
-          expiresAt: { $gt: new Date() },
+    const cacheKey = `${payload.sub}:${payload.sessionId}`;
+    const nowTs = Date.now();
+    let userWithSession: any;
+
+    const cached = sessionCache.get(cacheKey);
+    if (cached && nowTs - cached.cachedAt < SESSION_CACHE_TTL_MS) {
+      userWithSession = cached.userWithSession;
+    } else {
+      userWithSession = await User.findById(payload.sub, {
+        _id: 1,
+        username: 1,
+        lastActiveAt: 1,
+        sessions: {
+          $elemMatch: {
+            sessionId: payload.sessionId,
+            revokedAt: null,
+            expiresAt: { $gt: new Date() },
+          },
         },
-      },
-    }).exec();
+      }).exec();
+
+      if (userWithSession) {
+        setBoundedSessionCache(cacheKey, { userWithSession, cachedAt: nowTs });
+      }
+    }
 
     if (!userWithSession) {
       logger.warn('[Auth] User not found during session check', { userId: payload.sub });

@@ -20,6 +20,7 @@ import {
   Pin,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -511,7 +512,8 @@ export const ContactsVault: React.FC = () => {
         description: 'Contact created',
         status: 'success',
       });
-    } catch {
+    } catch (saveErr) {
+      logger.error('Failed to save contact', { error: saveErr });
       toast.error('Failed to save contact');
     } finally {
       setIsSaving(false);
@@ -565,7 +567,8 @@ export const ContactsVault: React.FC = () => {
         description: 'Contact updated',
         status: 'success',
       });
-    } catch {
+    } catch (updateErr) {
+      logger.error('Failed to update contact', { error: updateErr, id });
       toast.error('Failed to update contact');
     }
   };

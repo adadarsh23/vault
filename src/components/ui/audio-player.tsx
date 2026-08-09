@@ -283,13 +283,23 @@ export const AudioPlayer = ({
   useEffect(() => {
     return () => {
       if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
+        try {
+          audioRef.current.pause();
+        } catch {
+          /* ignore */
+        }
+        try {
+          audioRef.current.removeAttribute('src');
+          audioRef.current.load();
+        } catch {
+          /* ignore */
+        }
       }
     };
   }, []);
 
   useEffect(() => {
+    let isCancelled = false;
     setHasError(false);
     setIsPlaying(false);
     setCurrentTime(0);
@@ -298,10 +308,10 @@ export const AudioPlayer = ({
     setWaveformPeaks([]);
 
     if (audioRef.current && src) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current.playbackRate = 1;
       try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.playbackRate = 1;
         audioRef.current.load();
       } catch {
         /* ignore */
@@ -311,11 +321,15 @@ export const AudioPlayer = ({
     }
 
     if (shouldShowWaveform && src) {
-      generateWaveform(src);
+      generateWaveform(src, () => isCancelled);
     }
+
+    return () => {
+      isCancelled = true;
+    };
   }, [src, shouldShowWaveform]);
 
-  const generateWaveform = async (audioUrl: string) => {
+  const generateWaveform = async (audioUrl: string, isCancelled: () => boolean) => {
     if (!audioUrl) return;
     setIsGeneratingWaveform(true);
     try {
@@ -333,33 +347,44 @@ export const AudioPlayer = ({
       }
 
       const arrayBuffer = await response.arrayBuffer();
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (isCancelled()) return;
+
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtxClass) return;
+
+      const audioCtx = new AudioCtxClass();
       try {
         const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        if (isCancelled()) return;
 
         const channelData = audioBuffer.getChannelData(0);
         const samples = 100;
         const blockSize = Math.floor(channelData.length / samples);
         const peaks = [];
 
+        const step = Math.max(1, Math.floor(blockSize / 20));
         for (let i = 0; i < samples; i++) {
           let max = 0;
           const start = i * blockSize;
-          for (let j = 0; j < blockSize; j += 10) {
+          for (let j = 0; j < blockSize; j += step) {
             const val = Math.abs(channelData[start + j]);
             if (val > max) max = val;
           }
           peaks.push(max);
         }
 
-        setWaveformPeaks(peaks);
+        if (!isCancelled()) {
+          setWaveformPeaks(peaks);
+        }
       } finally {
         audioCtx.close().catch(() => {});
       }
     } catch (err) {
       console.warn('Waveform generation failed:', err);
     } finally {
-      setIsGeneratingWaveform(false);
+      if (!isCancelled()) {
+        setIsGeneratingWaveform(false);
+      }
     }
   };
 
@@ -563,7 +588,7 @@ export const AudioPlayer = ({
             aria-live={hasError ? 'assertive' : 'polite'}
           >
             {hasError
-              ? 'Unable to load audio (Click play to retry)'
+              ? 'Unable to load audio'
               : isWaiting
                 ? 'Buffering...'
                 : isLoading

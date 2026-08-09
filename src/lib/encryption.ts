@@ -22,35 +22,32 @@ const toArrayBuffer = (value: Uint8Array): ArrayBuffer => new Uint8Array(value).
 const decryptAesGcmWithFallback = async (
   cryptoKey: CryptoKey,
   iv: Uint8Array,
-  ciphertext: Uint8Array
+  ciphertext: Uint8Array,
+  useAad = true
 ): Promise<ArrayBuffer> => {
-  try {
-    return await crypto.subtle.decrypt(
-      {
-        name: 'AES-GCM',
-        iv: toArrayBuffer(iv),
-        additionalData: toArrayBuffer(AES_GCM_AAD),
-      },
-      cryptoKey,
-      toArrayBuffer(ciphertext)
-    );
-  } catch {
-    return await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: toArrayBuffer(iv) },
-      cryptoKey,
-      toArrayBuffer(ciphertext)
-    );
+  const algorithm: AesGcmParams = {
+    name: 'AES-GCM',
+    iv: toArrayBuffer(iv),
+  };
+  if (useAad) {
+    algorithm.additionalData = toArrayBuffer(AES_GCM_AAD);
   }
+  return await crypto.subtle.decrypt(algorithm, cryptoKey, toArrayBuffer(ciphertext));
 };
 
 /**
- * Robust Base64 encoding for Uint8Array
+ * Robust Base64 encoding for Uint8Array without stack argument spreading
  */
 export const uint8ArrayToBase64 = (array: Uint8Array): string => {
-  const CHUNK_SIZE = 0x8000; // 32KB
+  const CHUNK_SIZE = 0x2000; // 8KB chunks
   let binaryString = '';
   for (let i = 0; i < array.length; i += CHUNK_SIZE) {
-    binaryString += String.fromCharCode(...(array.subarray(i, i + CHUNK_SIZE) as any));
+    const chunk = array.subarray(i, i + CHUNK_SIZE);
+    let chunkString = '';
+    for (let j = 0; j < chunk.length; j++) {
+      chunkString += String.fromCharCode(chunk[j]);
+    }
+    binaryString += chunkString;
   }
   return btoa(binaryString);
 };
@@ -565,12 +562,12 @@ export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {
   if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
     if (
       bytes.length >= 12 &&
-      bytes[8] === 0x57 &&
-      bytes[9] === 0x41 &&
-      bytes[10] === 0x56 &&
-      bytes[11] === 0x45
+      bytes[8] === 0x41 &&
+      bytes[9] === 0x56 &&
+      bytes[10] === 0x49 &&
+      bytes[11] === 0x20
     ) {
-      return 'audio/wav';
+      return 'video/x-msvideo';
     }
     return 'audio/wav';
   }
@@ -585,7 +582,7 @@ export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {
     return 'audio/flac';
   }
 
-  // ISO Media / MP4 / M4A: "ftyp" at index 4
+  // ISO Media / MP4 / M4A / QuickTime: "ftyp" at index 4
   if (
     bytes.length >= 12 &&
     bytes[4] === 0x66 &&
@@ -593,12 +590,19 @@ export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {
     bytes[6] === 0x79 &&
     bytes[7] === 0x70
   ) {
-    return 'audio/mp4';
+    const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]).toLowerCase();
+    if (brand.includes('m4a') || brand.includes('m4b')) {
+      return 'audio/mp4';
+    }
+    if (brand.includes('qt')) {
+      return 'video/quicktime';
+    }
+    return 'video/mp4';
   }
 
   // WebM / MKV (Matroska): 1A 45 DF A3
   if (bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) {
-    return 'audio/webm';
+    return 'video/webm';
   }
 
   return 'application/octet-stream';

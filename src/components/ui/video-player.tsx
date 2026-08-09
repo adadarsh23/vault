@@ -16,6 +16,14 @@ import {
   PictureInPicture2,
   FlipHorizontal2,
   ChevronDown,
+  ExternalLink,
+  ShieldCheck,
+  Sidebar,
+  X,
+  Copy,
+  Check,
+  FileVideo,
+  Info,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -35,6 +43,31 @@ const formatTime = (seconds: number) => {
 };
 
 const finiteOrZero = (value: number) => (Number.isFinite(value) ? value : 0);
+
+export const getMimeTypeFromUrl = (url: string): string | undefined => {
+  if (!url) return undefined;
+  const cleanUrl = url.split('?')[0].split('#')[0];
+  const ext = cleanUrl.split('.').pop()?.toLowerCase();
+  if (!ext) return undefined;
+
+  const map: Record<string, string> = {
+    mp4: 'video/mp4',
+    m4v: 'video/mp4',
+    webm: 'video/webm',
+    ogv: 'video/ogg',
+    ogg: 'video/ogg',
+    mov: 'video/quicktime',
+    qt: 'video/quicktime',
+    mkv: 'video/x-matroska',
+    avi: 'video/x-msvideo',
+    wmv: 'video/x-ms-wmv',
+    flv: 'video/x-flv',
+    '3gp': 'video/3gpp',
+    '3g2': 'video/3gpp2',
+    m3u8: 'application/x-mpegURL',
+  };
+  return map[ext];
+};
 
 const isSafeDownloadUrl = (url: string) => {
   if (!url) return false;
@@ -617,6 +650,26 @@ const VideoPlayer = ({
       disposed = true;
       hlsRef.current?.destroy();
       hlsRef.current = null;
+      try {
+        video.pause();
+      } catch {
+        /* ignore */
+      }
+      try {
+        video.srcObject = null;
+      } catch {
+        /* ignore */
+      }
+      try {
+        video.removeAttribute('src');
+      } catch {
+        /* ignore */
+      }
+      try {
+        video.load();
+      } catch {
+        /* ignore */
+      }
     };
   }, [src, autoPlay, itemId, logEvent, lowDataMode, networkAwareAutoplay, isSourceAllowed]);
 
@@ -1091,7 +1144,11 @@ const VideoPlayer = ({
         onCanPlay={handlePlaying}
         onEnded={handleEnded}
         onError={handleError}
-      />
+      >
+        {!src.includes('.m3u8') && getMimeTypeFromUrl(src) ? (
+          <source src={src} type={getMimeTypeFromUrl(src)} />
+        ) : null}
+      </video>
 
       <AnimatePresence>
         {!isVideoReady && !error && (
@@ -1150,20 +1207,24 @@ const VideoPlayer = ({
 
       {/* ERROR */}
       {error && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0a]/90 backdrop-blur-md text-center p-6">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0a]/90 backdrop-blur-md text-center p-6 z-[35]">
           <div className="bg-red-500/10 p-4 rounded-full mb-4">
             <Loader2 className="text-red-400 w-8 h-8 opacity-50" />
           </div>
-          <p className="text-red-400/90 mb-5 text-sm font-medium max-w-[250px]">{error}</p>
-          <Button
-            onClick={() => {
-              videoRef.current?.load();
-              setError(null);
-            }}
-            className="bg-white/10 hover:bg-white/20 border-white/10 text-white"
-          >
-            Retry
-          </Button>
+          <p className="text-red-400/90 mb-3 text-sm font-medium max-w-[280px]">{error}</p>
+          <div className="flex flex-wrap gap-2 justify-center mt-2">
+            <Button
+              onClick={() => {
+                videoRef.current?.load();
+                setError(null);
+              }}
+              aria-label="Retry video playback"
+              className="bg-white/10 hover:bg-white/20 border-white/10 text-white text-xs px-4 py-2 font-medium"
+            >
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5 inline" />
+              Retry Playback
+            </Button>
+          </div>
         </div>
       )}
 

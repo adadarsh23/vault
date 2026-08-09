@@ -17,6 +17,7 @@ import {
   HardDrive,
   Pin,
 } from 'lucide-react';
+import { logger } from '../../lib/logger';
 import { toast } from 'sonner';
 import { Button } from '../../components/ui/Button';
 import { AudioPlayer } from '../../components/ui/audio-player';
@@ -477,7 +478,8 @@ export const AudioVault: React.FC = () => {
       }
 
       toast.success(`Downloading ${item.title}`);
-    } catch {
+    } catch (downloadErr) {
+      logger.error('Audio download failed', { error: downloadErr, itemId: item.id });
       toast.error('Audio download failed');
     }
   };

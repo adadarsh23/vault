@@ -187,6 +187,7 @@ async function generateThumbnailMainThread(
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         reject(new Error('Canvas 2d context unavailable'));
+        img.src = '';
         return;
       }
 
@@ -195,6 +196,7 @@ async function generateThumbnailMainThread(
         (blob) => {
           if (blob) resolve(blob);
           else reject(new Error('Thumbnail blob creation failed'));
+          img.src = '';
         },
         'image/jpeg',
         0.8
@@ -203,6 +205,7 @@ async function generateThumbnailMainThread(
 
     img.onerror = () => {
       URL.revokeObjectURL(url);
+      img.src = '';
       reject(new Error('Image loading failed'));
     };
 

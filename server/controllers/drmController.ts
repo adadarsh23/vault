@@ -5,6 +5,7 @@ import { mediaService } from '../services/mediaService.ts';
 import { getClientIp } from '../utils/requestIp.ts';
 import { anomalyDetectionService } from '../services/anomalyDetectionService.ts';
 import { getVaultItemModel } from '../models/vaultItem.ts';
+import { findVaultItemFlexible } from './mediaController.ts';
 import { User } from '../models/user.ts';
 
 /**
@@ -26,7 +27,7 @@ const validateLicensePolicy = async (
 ) => {
   // 1. Ownership & Existence Check
   const DynamicVaultModel = getVaultItemModel(username);
-  const item = await DynamicVaultModel.findOne({ userId, itemId }).lean();
+  const item = await findVaultItemFlexible(DynamicVaultModel, userId, itemId);
   if (!item) {
     logger.warn('License Policy Failure: Item not found or unauthorized', { userId, itemId });
     throw AppError.notFound('Media content not found in vault');

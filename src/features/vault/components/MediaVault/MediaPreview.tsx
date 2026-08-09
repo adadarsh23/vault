@@ -106,6 +106,16 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
     });
   }, [onClose, stopActiveMediaImmediately]);
 
+  const handlePrevious = useCallback(() => {
+    stopActiveMediaImmediately();
+    onPrevious();
+  }, [stopActiveMediaImmediately, onPrevious]);
+
+  const handleNext = useCallback(() => {
+    stopActiveMediaImmediately();
+    onNext();
+  }, [stopActiveMediaImmediately, onNext]);
+
   return (
     <AnimatePresence>
       {previewItem && (
@@ -120,6 +130,13 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
           transition={{ duration: 0.12 }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-bg/95 backdrop-blur-2xl p-4 transition-colors duration-300"
           ref={modalRef}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              e.preventDefault();
+              e.stopPropagation();
+              handleImmediateClose();
+            }
+          }}
         >
           <div className="absolute right-4 top-4 z-50 flex gap-2">
             <Button
@@ -146,8 +163,8 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
           <GlobalNavigator
             canPrevious={canPrevious}
             canNext={canNext}
-            onPrevious={onPrevious}
-            onNext={onNext}
+            onPrevious={handlePrevious}
+            onNext={handleNext}
             layout="overlay"
             className="rounded-full bg-white/5 hover:bg-white/10"
           />

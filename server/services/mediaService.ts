@@ -41,7 +41,7 @@ export const mediaService = {
    * Generates a Master Playlist for Adaptive Bitrate (ABR)
    */
   async generateMasterPlaylist(itemId: string, queryString: string): Promise<string> {
-    const baseUrl = process.env.PUBLIC_URL || '';
+    const baseUrl = (process.env.PUBLIC_URL || '').replace(/\/+$/, '');
     const query = queryString ? `?${queryString}` : '';
 
     return [

@@ -1,3 +1,5 @@
+import { logger } from './logger';
+
 export type VaultItemType =
   // Personal Information
   | 'identity'
@@ -80,8 +82,12 @@ const openLocalDB = (): Promise<IDBDatabase | null> => {
         }
       };
       request.onsuccess = () => resolve(request.result);
-      request.onerror = () => resolve(null);
-    } catch {
+      request.onerror = (err) => {
+        logger.warn('Failed to open IndexedDB storage', { error: err });
+        resolve(null);
+      };
+    } catch (e) {
+      logger.warn('Exception while opening IndexedDB storage', { error: e });
       resolve(null);
     }
   });
@@ -96,8 +102,12 @@ export const saveItemToLocalDb = async (item: VaultItem): Promise<void> => {
       const store = tx.objectStore(LOCAL_STORE_NAME);
       store.put(item);
       tx.oncomplete = () => resolve();
-      tx.onerror = () => resolve();
-    } catch {
+      tx.onerror = (event) => {
+        logger.warn('IndexedDB put error while saving item', { id: item.id, error: event });
+        resolve();
+      };
+    } catch (e) {
+      logger.warn('Exception saving item to IndexedDB', { id: item.id, error: e });
       resolve();
     }
   });
@@ -120,8 +130,12 @@ export const loadLocalItemsFromDb = async (): Promise<VaultItem[]> => {
         });
         resolve(items);
       };
-      request.onerror = () => resolve([]);
-    } catch {
+      request.onerror = (event) => {
+        logger.warn('IndexedDB getAll error while loading local items', { error: event });
+        resolve([]);
+      };
+    } catch (e) {
+      logger.warn('Exception loading local items from IndexedDB', { error: e });
       resolve([]);
     }
   });
@@ -136,8 +150,12 @@ export const deleteItemFromLocalDb = async (id: string): Promise<void> => {
       const store = tx.objectStore(LOCAL_STORE_NAME);
       store.delete(id);
       tx.oncomplete = () => resolve();
-      tx.onerror = () => resolve();
-    } catch {
+      tx.onerror = (event) => {
+        logger.warn('IndexedDB delete error', { id, error: event });
+        resolve();
+      };
+    } catch (e) {
+      logger.warn('Exception deleting item from IndexedDB', { id, error: e });
       resolve();
     }
   });
@@ -152,8 +170,12 @@ export const clearLocalDb = async (): Promise<void> => {
       const store = tx.objectStore(LOCAL_STORE_NAME);
       store.clear();
       tx.oncomplete = () => resolve();
-      tx.onerror = () => resolve();
-    } catch {
+      tx.onerror = (event) => {
+        logger.warn('IndexedDB clear error', { error: event });
+        resolve();
+      };
+    } catch (e) {
+      logger.warn('Exception clearing IndexedDB', { error: e });
       resolve();
     }
   });

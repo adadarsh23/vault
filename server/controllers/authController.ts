@@ -37,6 +37,10 @@ const isTestRuntime = (): boolean => {
 };
 
 const isMongoOptionalMode = (): boolean => {
+  if (process.env.NODE_ENV === 'production') {
+    return false;
+  }
+
   const raw = process.env.SKIP_MONGO_CONNECT?.trim().toLowerCase();
   const skipMongo = raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
   return skipMongo && !isTestRuntime();
@@ -169,10 +173,13 @@ export const register = async (req: express.Request, res: express.Response) => {
     });
   }
 
-  const masterKey =
-    typeof req.body?.masterKey === 'string' && req.body.masterKey.trim()
-      ? req.body.masterKey.trim()
-      : 'default-vault-master-key-2026';
+  if (typeof req.body?.masterKey !== 'string' || !req.body.masterKey.trim()) {
+    throw AppError.badRequest(
+      'Master key is required for registration.',
+      'AUTH_MISSING_MASTER_KEY'
+    );
+  }
+  const masterKey = req.body.masterKey.trim();
 
   if (req.body.password && masterKey && req.body.password === masterKey) {
     throw AppError.badRequest(

@@ -371,6 +371,14 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
   };
 
   const stopCamera = () => {
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+        videoRef.current.srcObject = null;
+      } catch {
+        /* ignore */
+      }
+    }
     if (stream) {
       stream.getTracks().forEach((track) => {
         try {

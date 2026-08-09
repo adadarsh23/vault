@@ -5,7 +5,7 @@ import { ZodError } from 'zod';
 import { AppError } from '../utils/appError.ts';
 import { logger } from '../utils/logger.ts';
 import { getClientIp } from '../utils/requestIp.ts';
-import { addBreadcrumb, captureException } from '../lib/sentry.js';
+import { isAllowedCorsOrigin } from '../utils/cors.ts';
 
 export const errorHandler = (
   err: any,
@@ -15,8 +15,25 @@ export const errorHandler = (
 ) => {
   const requestId = (req as express.Request & { requestId?: string }).requestId;
 
-  // Ensure cross-origin resources can see the error response (Avoid COEP/CORP blocks)
+  // Ensure cross-origin resources can see the error response
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
+  const rawOrigin = req.get('origin') || req.get('referer');
+  if (rawOrigin) {
+    try {
+      const candidate = new URL(rawOrigin).origin;
+      if (isAllowedCorsOrigin(candidate)) {
+        res.setHeader('Access-Control-Allow-Origin', candidate);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+      } else {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+      }
+    } catch {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
 
   // Default values
   let statusCode = err.statusCode || err.status || 500;
@@ -37,11 +54,27 @@ export const errorHandler = (
       path: e.path.join('.'),
       message: e.message,
     }));
+  } else if (err instanceof mongoose.Error.CastError) {
+    statusCode = 400;
+    code = 'INVALID_ID';
+    message = `Invalid format for field '${err.path}'.`;
   } else if (err instanceof mongoose.Error.ValidationError) {
     statusCode = 400;
     code = 'VALIDATION_ERROR';
     const firstIssue = Object.values(err.errors)[0];
     message = firstIssue?.message || 'Validation failed.';
+  } else if (err.name === 'TokenExpiredError') {
+    statusCode = 401;
+    code = 'TOKEN_EXPIRED';
+    message = 'Authentication token has expired.';
+  } else if (err.name === 'JsonWebTokenError') {
+    statusCode = 401;
+    code = 'INVALID_TOKEN';
+    message = 'Authentication token is invalid.';
+  } else if (err.type === 'entity.too.large' || err.status === 413) {
+    statusCode = 413;
+    code = 'PAYLOAD_TOO_LARGE';
+    message = 'Request payload exceeds maximum size limit.';
   } else if (err.code === 11000) {
     statusCode = 409;
     code = 'DUPLICATE_RESOURCE';

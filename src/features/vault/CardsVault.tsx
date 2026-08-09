@@ -23,6 +23,7 @@ import {
   Banknote,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { useVaultStore } from '../../store/vaultStore';
 import { VaultItem } from '../../lib/storage';
 import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
@@ -372,7 +373,8 @@ const DecryptedCardItem: React.FC<{
         metadata: { ...(item.metadata || {}), tags: updated },
       });
       toast.success(`Tag #${cleaned} added`);
-    } catch {
+    } catch (err) {
+      logger.error('Failed to add tag to card item', { error: err, itemId: item.id });
       toast.error('Failed to add tag');
     } finally {
       setIsAddingTag(false);
@@ -387,7 +389,8 @@ const DecryptedCardItem: React.FC<{
         metadata: { ...(item.metadata || {}), tags: updated },
       });
       toast.success(`Tag #${tagToRemove} removed`);
-    } catch {
+    } catch (err) {
+      logger.error('Failed to remove tag from card item', { error: err, itemId: item.id });
       toast.error('Failed to remove tag');
     }
   };

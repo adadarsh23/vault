@@ -76,16 +76,16 @@ const CHUNK_COMPLETION_MARKER_PREFIX = 'completed-';
 const safeRm = async (targetPath: string) => {
   try {
     await fs.rm(targetPath, { recursive: true, force: true });
-  } catch {
-    // Best effort cleanup; ignore failures.
+  } catch (err) {
+    logger.debug('safeRm failed to remove target path', { targetPath, error: err });
   }
 };
 
 const safeUnlink = async (targetPath: string) => {
   try {
     await fs.unlink(targetPath);
-  } catch {
-    // Best effort cleanup; ignore failures.
+  } catch (err) {
+    logger.debug('safeUnlink failed to unlink file', { targetPath, error: err });
   }
 };
 
@@ -93,8 +93,11 @@ const tryAcquireChunkAssemblyLock = async (lockPath: string) => {
   try {
     await fs.writeFile(lockPath, String(Date.now()), { flag: 'wx' });
     return true;
-  } catch {
-    // Handle orphaned locks from interrupted requests.
+  } catch (err) {
+    logger.debug('Initial chunk assembly lock acquisition failed, checking staleness', {
+      lockPath,
+      error: err,
+    });
   }
 
   try {
@@ -104,13 +107,13 @@ const tryAcquireChunkAssemblyLock = async (lockPath: string) => {
       await fs.writeFile(lockPath, String(Date.now()), { flag: 'wx' });
       return true;
     }
-  } catch {
-    // Lock was removed by another request while checking staleness.
+  } catch (err) {
+    logger.debug('Lock staleness check/retry failed', { lockPath, error: err });
     try {
       await fs.writeFile(lockPath, String(Date.now()), { flag: 'wx' });
       return true;
-    } catch {
-      // Another request acquired lock first.
+    } catch (lockAcquireErr) {
+      logger.debug('Secondary lock acquisition failed', { lockPath, error: lockAcquireErr });
     }
   }
 
@@ -121,7 +124,10 @@ const cleanupExpiredChunkUploads = async (userChunkRoot: string) => {
   let entries: Array<{ name: string; isDirectory: () => boolean }> = [];
   try {
     entries = await fs.readdir(userChunkRoot, { withFileTypes: true });
-  } catch {
+  } catch (err) {
+    if ((err as { code?: string })?.code !== 'ENOENT') {
+      logger.warn('Failed to readdir during expired chunk cleanup', { userChunkRoot, error: err });
+    }
     return;
   }
 
@@ -143,8 +149,8 @@ const cleanupExpiredChunkUploads = async (userChunkRoot: string) => {
         ) {
           await safeUnlink(fullPath);
         }
-      } catch {
-        // Ignore per-entry stat/remove failures.
+      } catch (entryErr) {
+        logger.debug('Per-entry error during chunk upload cleanup', { fullPath, error: entryErr });
       }
     })
   );
@@ -172,7 +178,13 @@ const wasChunkUploadCompleted = async (
       return false;
     }
     return true;
-  } catch {
+  } catch (statErr) {
+    if ((statErr as { code?: string })?.code !== 'ENOENT') {
+      logger.debug('Checking chunk upload completion marker failed', {
+        markerPath,
+        error: statErr,
+      });
+    }
     return false;
   }
 };

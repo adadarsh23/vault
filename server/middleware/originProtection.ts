@@ -3,6 +3,8 @@ import ipRangeCheck from 'ip-range-check';
 import { AppError } from '../utils/appError.ts';
 import { logger } from '../utils/logger.ts';
 
+import { isAllowedCorsOrigin } from '../utils/cors.ts';
+
 /**
  * Origin Protection Middleware
  *
@@ -21,15 +23,45 @@ export const originProtection = (
   next: express.NextFunction
 ) => {
   const isProduction = process.env.NODE_ENV === 'production';
+  const disableOriginProtection =
+    process.env.DISABLE_ORIGIN_PROTECTION === '1' ||
+    process.env.DISABLE_ORIGIN_PROTECTION?.toLowerCase() === 'true';
+
+  if (disableOriginProtection) {
+    return next();
+  }
 
   // Extract the actual connecting IP (not the X-Forwarded-For)
-  // We want the IP that is DIRECTLY hitting the server.
   const connectingIp = req.socket.remoteAddress || 'unknown';
   const normalizedIp = connectingIp.replace(/^::ffff:/, '');
 
-  // 1. Always allow localhost for internal health checks or local dev
-  // Also allow the /health path to be accessed directly for provider health checks
-  if (LOCALHOST_IPS.includes(normalizedIp) || !isProduction || req.path === '/health') {
+  const rawOrigin = req.get('origin') || req.get('referer');
+  let isAllowedOrigin = false;
+  if (rawOrigin) {
+    try {
+      const candidate = new URL(rawOrigin).origin;
+      if (isAllowedCorsOrigin(candidate)) {
+        isAllowedOrigin = true;
+      }
+    } catch {
+      // Ignored
+    }
+  }
+
+  // 1. Always allow localhost, health checks, media streaming routes, or requests from allowed CORS origins
+  const isMediaRoute =
+    req.path.startsWith('/api/vault/files/access/') ||
+    req.path.startsWith('/api/vault/files/') ||
+    req.path.startsWith('/api/vault/media/') ||
+    req.path.startsWith('/api/vault/avatar/');
+
+  if (
+    LOCALHOST_IPS.includes(normalizedIp) ||
+    !isProduction ||
+    req.path === '/health' ||
+    isMediaRoute ||
+    isAllowedOrigin
+  ) {
     return next();
   }
 

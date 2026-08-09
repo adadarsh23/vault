@@ -48,7 +48,8 @@ export const storageService = {
     const signature = crypto.createHmac('sha256', SIGNED_URL_SECRET).update(payload).digest('hex');
 
     const resolvePublicBaseUrl = (): string => {
-      if (process.env.PUBLIC_URL && process.env.PUBLIC_URL.trim()) {
+      const isProduction = process.env.NODE_ENV === 'production';
+      if (isProduction && process.env.PUBLIC_URL && process.env.PUBLIC_URL.trim()) {
         return process.env.PUBLIC_URL.trim().replace(/\/+$/, '');
       }
       const port = process.env.PORT || '4000';

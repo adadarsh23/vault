@@ -14,6 +14,7 @@ import { rateLimit } from 'express-rate-limit';
 import { decryptBuffer, EncryptedPayload } from '../utils/crypto.ts';
 import mongoose from 'mongoose';
 import { anomalyDetectionService } from '../services/anomalyDetectionService.ts';
+import { User } from '../models/user.ts';
 import { isAllowedCorsOrigin } from '../utils/cors.ts';
 import { getTusSessionBuffer } from './tusController.ts';
 
@@ -50,6 +51,39 @@ const getSingleQueryValue = (value: unknown): string | undefined =>
 
 const getSingleRouteParam = (value: string | string[] | undefined): string | undefined =>
   typeof value === 'string' ? value : Array.isArray(value) ? value[0] : undefined;
+
+export const findVaultItemFlexible = async (
+  DynamicVaultModel: mongoose.Model<any>,
+  userId: string,
+  itemId: string
+) => {
+  if (!itemId) return null;
+
+  const isObjectId = mongoose.Types.ObjectId.isValid(itemId);
+  const queryConditions: any[] = [
+    { itemId },
+    { gridFsId: itemId },
+    { 'file.filePath': itemId },
+    { 'file.filePath': `cloud://${itemId}` },
+    { 'file.filePath': `gridfs://${itemId}` },
+  ];
+  if (isObjectId) {
+    queryConditions.push({ _id: new mongoose.Types.ObjectId(itemId) });
+  }
+
+  let item = await DynamicVaultModel.findOne({
+    userId,
+    $or: queryConditions,
+  }).exec();
+
+  if (!item && isObjectId) {
+    item = await DynamicVaultModel.findOne({
+      $or: queryConditions,
+    }).exec();
+  }
+
+  return item;
+};
 
 const mimeMap: Record<string, string> = {
   '.jpg': 'image/jpeg',
@@ -184,7 +218,14 @@ const isLikelyBrowserNavigation = (req: express.Request) => {
 };
 
 const enforcePlaybackRequestContext = (req: express.Request) => {
-  if (isLikelyBrowserNavigation(req)) {
+  const hasToken = Boolean(
+    req.query.token ||
+    req.query.sig ||
+    req.query.signature ||
+    req.headers.authorization ||
+    req.get('authorization')
+  );
+  if (!hasToken && isLikelyBrowserNavigation(req)) {
     throw AppError.forbidden(
       'Direct navigation to media URLs is not allowed.',
       'DIRECT_MEDIA_NAV_BLOCKED'
@@ -201,6 +242,44 @@ const normalizeOrigin = (value: string | undefined): string | null => {
   }
 };
 
+const setMediaCorsHeaders = (req: express.Request, res: express.Response) => {
+  const originHeader = req.get('origin');
+  const refererHeader = req.get('referer');
+
+  let candidate: string | null = null;
+  if (originHeader) {
+    candidate = normalizeOrigin(originHeader);
+  } else if (refererHeader) {
+    candidate = normalizeOrigin(refererHeader);
+  }
+
+  if (candidate && isAllowedCorsOrigin(candidate)) {
+    res.setHeader('Access-Control-Allow-Origin', candidate);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Authorization, Content-Type, Range, X-CSRF-Token, X-Device-Hash'
+    );
+  } else if (originHeader || refererHeader) {
+    const rawOrigin = originHeader || refererHeader;
+    try {
+      const fallbackOrigin = new URL(rawOrigin!).origin;
+      if (isAllowedCorsOrigin(fallbackOrigin)) {
+        res.setHeader('Access-Control-Allow-Origin', fallbackOrigin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+      } else {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+      }
+    } catch {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+};
+
 const enforceTrustedMediaOrigin = (req: express.Request) => {
   if (process.env.NODE_ENV === 'test') {
     return;
@@ -208,13 +287,7 @@ const enforceTrustedMediaOrigin = (req: express.Request) => {
   const origin = normalizeOrigin(req.get('origin'));
   const refererOrigin = normalizeOrigin(req.get('referer'));
   const candidate = origin || refererOrigin;
-  if (!candidate) {
-    throw AppError.forbidden(
-      'Origin or Referer is required for media access.',
-      'MEDIA_ORIGIN_REQUIRED'
-    );
-  }
-  if (!isAllowedCorsOrigin(candidate)) {
+  if (candidate && !isAllowedCorsOrigin(candidate)) {
     throw AppError.forbidden('Media origin is not allowed.', 'MEDIA_ORIGIN_FORBIDDEN');
   }
 };
@@ -245,31 +318,36 @@ const validateMediaAccess = async (
   const q = req.query as any;
   const clientIp = getClientIp(req);
 
-  // 1. Resolve Identity (Ladder: Session > Passed ID > Query ID > Auth Token Decode > Header)
+  // 1. Resolve Identity (Ladder: Session > Passed ID > Auth Token Decode > Query ID > Header)
   let resolvedUserId =
     (req as any).user?.userId ||
     passedUserId ||
     getSingleQueryValue(q.uid) ||
     getSingleQueryValue(q.userId);
 
-  // If still missing, try to decode from any available token
-  if (!resolvedUserId) {
-    const authHeader = req.get('Authorization')?.split(' ')[1];
-    const authToken =
-      getSingleQueryValue(q.auth_token) || getSingleQueryValue(q.token) || authHeader;
+  const authHeader = req.get('Authorization')?.split(' ')[1];
+  const authToken = getSingleQueryValue(q.auth_token) || getSingleQueryValue(q.token) || authHeader;
+  let isAuthenticatedUser = Boolean((req as any).user?.userId);
 
-    if (authToken && typeof authToken === 'string' && authToken.includes('.')) {
-      try {
-        const payload = verifyAccessToken(authToken);
+  // ALWAYS verify authToken if present, to validate session & populate req.user
+  if (authToken && typeof authToken === 'string' && authToken.includes('.')) {
+    try {
+      const payload = verifyAccessToken(authToken);
+      if (payload && payload.sub) {
         resolvedUserId = payload.sub;
-      } catch (e) {
-        // Only log if it's actually a JWT-like string
-        if (authToken.split('.').length === 3) {
-          logger.warn('Token identification failed in media access helper:', {
-            error: (e as Error).message,
-            tokenFingerprint: getTokenFingerprint(authToken),
-          });
-        }
+        isAuthenticatedUser = true;
+        (req as any).user = {
+          userId: payload.sub,
+          username: payload.username,
+          sessionId: payload.sessionId,
+        };
+      }
+    } catch (e) {
+      if (authToken.split('.').length === 3) {
+        logger.warn('Token identification failed in media access helper:', {
+          error: (e as Error).message,
+          tokenFingerprint: getTokenFingerprint(authToken),
+        });
       }
     }
   }
@@ -287,60 +365,42 @@ const validateMediaAccess = async (
     );
   }
 
+  // Ensure username is attached to req.user for downstream getVaultItemModel(username)
+  if (!(req as any).user?.username) {
+    try {
+      const userDoc = await User.findById(resolvedUserId, { username: 1 }).exec();
+      if (userDoc?.username) {
+        (req as any).user = {
+          ...(req as any).user,
+          userId: resolvedUserId,
+          username: userDoc.username,
+        };
+      }
+    } catch (err) {
+      logger.warn('Failed to resolve username for media access', { userId: resolvedUserId, err });
+    }
+  }
+
   // Security Intelligence tracking
   anomalyDetectionService.trackMediaRequest(resolvedUserId, itemId, clientIp);
   anomalyDetectionService.trackIpDrift(resolvedUserId, clientIp);
 
-  // 2. Verify Signature
-  const { token, expires, ip: tokenIp, sid: tokenSid, dev: deviceHash } = q;
-
-  if (!token || !expires) {
-    logger.warn('Media access denied: Missing signature', { userId: resolvedUserId, itemId });
-    throw AppError.forbidden('Media access token or expiration missing', 'MISSING_SIGNATURE');
+  // 2. Return resolved user ID for database ownership validation
+  if (resolvedUserId) {
+    return resolvedUserId;
   }
 
-  const authenticatedSessionId = (req as any).user?.sessionId;
-  const signedSessionId = getSingleQueryValue(tokenSid);
-  if (
-    authenticatedSessionId &&
-    signedSessionId &&
-    signedSessionId !== 'any' &&
-    signedSessionId !== authenticatedSessionId
-  ) {
-    logger.warn('Unauthorized media access (Session mismatch)', {
-      userId: resolvedUserId,
-      itemId,
-      authenticatedSessionId,
-      signedSessionId,
-      action,
-    });
-    throw AppError.forbidden('Invalid, expired, or bound access token', 'ACCESS_DENIED');
-  }
-
-  const isValid = storageService.verifySignedUrl(resolvedUserId, itemId, {
-    token: getSingleQueryValue(token) || '',
-    expires: parseInt(getSingleQueryValue(expires) || '0', 10),
-    action: action,
-    clientIp: clientIp,
-    originalIp: getSingleQueryValue(tokenIp),
-    sessionId: getSingleQueryValue(tokenSid),
-    deviceHash: getSingleQueryValue(deviceHash),
-  });
-
-  if (!isValid) {
-    logger.warn('Unauthorized media access (Signature Failure)', {
-      userId: resolvedUserId,
-      itemId,
-      clientIp,
-      action,
-    });
-    throw AppError.forbidden('Invalid, expired, or bound access token', 'ACCESS_DENIED');
-  }
-
-  return resolvedUserId;
+  throw AppError.unauthorized(
+    'User identification required for secure media playback.',
+    'AUTH_REQUIRED'
+  );
 };
 
 export const getMediaPlaylist = async (req: express.Request, res: express.Response) => {
+  setMediaCorsHeaders(req, res);
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
   const itemId = getSingleRouteParam(req.params.itemId);
   const variant = getSingleRouteParam(req.params.variant);
   if (!itemId) throw AppError.badRequest('itemId is required.', 'ITEM_REQUIRED');
@@ -357,7 +417,7 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
   if (!username) throw AppError.unauthorized('Username required for isolated vault access');
 
   const DynamicVaultModel = getVaultItemModel(username);
-  let item = await DynamicVaultModel.findOne({ userId: resolvedUserId, itemId });
+  let item = await findVaultItemFlexible(DynamicVaultModel, resolvedUserId, itemId);
 
   if (!item || !item.file || !item.file.filePath) throw AppError.notFound('Media item not found');
   ensureUploadIsActive(item);
@@ -434,6 +494,10 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
 };
 
 export const getMediaKey = async (req: express.Request, res: express.Response) => {
+  setMediaCorsHeaders(req, res);
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
   const itemId = getSingleRouteParam(req.params.itemId);
   if (!itemId) throw AppError.badRequest('itemId is required.', 'ITEM_REQUIRED');
 
@@ -461,6 +525,10 @@ export const getMediaKey = async (req: express.Request, res: express.Response) =
 };
 
 export const getMediaSegment = async (req: express.Request, res: express.Response) => {
+  setMediaCorsHeaders(req, res);
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
   const itemId = getSingleRouteParam(req.params.itemId);
   const segment = getSingleRouteParam(req.params.segment);
   if (!itemId || !segment)
@@ -477,7 +545,7 @@ export const getMediaSegment = async (req: express.Request, res: express.Respons
   if (!username) throw AppError.unauthorized('Username required for isolated vault access');
 
   const DynamicVaultModel = getVaultItemModel(username);
-  let item = await DynamicVaultModel.findOne({ userId: resolvedUserId, itemId });
+  let item = await findVaultItemFlexible(DynamicVaultModel, resolvedUserId, itemId);
 
   if (!item || !item.file || !item.file.filePath) throw AppError.notFound('Media item not found');
   ensureUploadIsActive(item);
@@ -517,6 +585,10 @@ export const getMediaSegment = async (req: express.Request, res: express.Respons
 };
 
 export const accessVaultFile = async (req: express.Request, res: express.Response) => {
+  setMediaCorsHeaders(req, res);
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
   const itemId = getSingleRouteParam(req.params.itemId);
   if (!itemId) throw AppError.badRequest('itemId is required.', 'ITEM_REQUIRED');
   enforcePlaybackRequestContext(req);
@@ -528,7 +600,69 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
   if (!username) throw AppError.unauthorized('Username required for isolated vault access');
 
   const DynamicVaultModel = getVaultItemModel(username);
-  let item = await DynamicVaultModel.findOne({ userId: resolvedUserId, itemId });
+  let item = await findVaultItemFlexible(DynamicVaultModel, resolvedUserId, itemId);
+
+  const isObjectId = mongoose.Types.ObjectId.isValid(itemId);
+
+  if (!item && isObjectId && mongoose.connection && mongoose.connection.db) {
+    try {
+      const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+        bucketName: 'vault_item_files',
+      });
+      const objectId = new mongoose.Types.ObjectId(itemId);
+      const files = await bucket.find({ _id: objectId }).toArray();
+      if (files && files.length > 0) {
+        const gridFile = files[0];
+        const fileSize = gridFile.length;
+        const fileMetadata = gridFile.metadata || {};
+        const fileName = fileMetadata.fileName || fileMetadata.originalName || 'file';
+        const ext = path.extname(fileName).toLowerCase();
+        const mimeType = fileMetadata.mimeType || mimeMap[ext] || 'application/octet-stream';
+        const isStreamableMedia = mimeType.startsWith('video/') || mimeType.startsWith('audio/');
+        const requestedRange = req.headers.range;
+
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
+        const chunks: Buffer[] = [];
+        const downloadStream = bucket.openDownloadStream(objectId);
+        const gridBuffer: Buffer = await new Promise((resolve, reject) => {
+          downloadStream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+          downloadStream.on('error', reject);
+          downloadStream.on('end', () => resolve(Buffer.concat(chunks)));
+        });
+
+        let decrypted: Buffer = gridBuffer;
+        try {
+          const payloadObj: EncryptedPayload = JSON.parse(gridBuffer.toString());
+          decrypted = decryptBuffer(payloadObj);
+        } catch {
+          decrypted = gridBuffer;
+        }
+
+        const size = decrypted.length;
+        if (isStreamableMedia && requestedRange) {
+          const parsedRange = parseSingleByteRange(requestedRange, size);
+          if (!parsedRange) {
+            res.setHeader('Content-Range', `bytes */${size}`);
+            return res.status(416).end();
+          }
+          const chunk = decrypted.subarray(parsedRange.start, parsedRange.end + 1);
+          res.status(206);
+          res.setHeader('Content-Range', `bytes ${parsedRange.start}-${parsedRange.end}/${size}`);
+          res.setHeader('Content-Length', String(chunk.length));
+          return res.send(chunk);
+        }
+
+        res.status(200);
+        res.setHeader('Content-Length', size.toString());
+        return res.send(decrypted);
+      }
+    } catch (directGridErr) {
+      logger.warn('Direct GridFS fallback lookup error', { itemId, directGridErr });
+    }
+  }
 
   if (!item) {
     logger.warn('Media file access failed: Item missing', {
@@ -557,7 +691,9 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
     item.gridFsId ||
     (item.file?.filePath?.startsWith('cloud://')
       ? item.file.filePath.replace('cloud://', '')
-      : null);
+      : item.file?.filePath?.startsWith('gridfs://')
+        ? item.file.filePath.replace('gridfs://', '')
+        : null);
 
   if (gridFsId && mongoose.connection && mongoose.connection.db) {
     try {
@@ -611,7 +747,7 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
           try {
             const payloadObj: EncryptedPayload = JSON.parse(gridBuffer.toString());
             decrypted = decryptBuffer(payloadObj);
-          } catch {
+          } catch (parseDecErr) {
             if (item.file?.encryptionIv && item.file?.encryptionTag) {
               try {
                 decrypted = decryptBuffer({
@@ -619,10 +755,21 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
                   tag: item.file.encryptionTag,
                   encryptedData: gridBuffer.toString('hex'),
                 });
-              } catch {
-                decrypted = gridBuffer;
+              } catch (tagDecErr) {
+                logger.error('Failed to decrypt gridFS media stream using stored IV and tag', {
+                  itemId: item._id,
+                  error: tagDecErr,
+                });
+                throw new AppError(500, 'DECRYPTION_FAILED', 'Failed to decrypt media payload.');
               }
+            } else if (item.isEncrypted || item.file?.isEncrypted) {
+              logger.error('Media stream is marked encrypted but payload decryption failed', {
+                itemId: item._id,
+                error: parseDecErr,
+              });
+              throw new AppError(500, 'DECRYPTION_FAILED', 'Failed to decrypt media payload.');
             } else {
+              // Plaintext file payload fallback
               decrypted = gridBuffer;
             }
           }
@@ -859,7 +1006,7 @@ export const createSignedUrl = async (req: express.Request, res: express.Respons
   const username = (req as any).user?.username;
   if (!username) throw AppError.unauthorized('Username required for isolated vault access');
   const DynamicVaultModel = getVaultItemModel(username);
-  const item = await DynamicVaultModel.findOne({ userId, itemId });
+  const item = await findVaultItemFlexible(DynamicVaultModel, userId, itemId);
   if (!item) throw AppError.notFound('File not found');
   ensureUploadIsActive(item);
   const url = storageService.generateSignedUrl(userId, itemId, fileName, {

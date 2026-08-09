@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import VideoPlayer, {
   getHlsRecoveryAction,
+  getMimeTypeFromUrl,
   getPlayerErrorMessage,
   mapMediaErrorCodeToPlayerError,
   sanitizeTelemetryMetadata,
@@ -217,5 +218,16 @@ describe('hls recovery ladder', () => {
       currentLevel: 3,
     });
     expect(action).toMatchObject({ action: 'downgrade_level', level: 2 });
+  });
+});
+
+describe('getMimeTypeFromUrl', () => {
+  it('resolves correct MIME types for video extensions', () => {
+    expect(getMimeTypeFromUrl('https://example.com/file.mp4')).toBe('video/mp4');
+    expect(getMimeTypeFromUrl('https://example.com/file.mkv')).toBe('video/x-matroska');
+    expect(getMimeTypeFromUrl('https://example.com/file.webm')).toBe('video/webm');
+    expect(getMimeTypeFromUrl('https://example.com/file.mov')).toBe('video/quicktime');
+    expect(getMimeTypeFromUrl('https://example.com/file.avi')).toBe('video/x-msvideo');
+    expect(getMimeTypeFromUrl('https://example.com/file.unknown')).toBeUndefined();
   });
 });

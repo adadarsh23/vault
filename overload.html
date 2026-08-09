@@ -1,149 +1,139 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vault | Service Busy</title>
-    <style>
+  <meta charset="UTF-8" /><meta
+    content="width=device-width,initial-scale=1"
+    name="viewport"
+  /><title>Vault | Service Busy</title
+  ><style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff;
+      --text: #1a1a1a;
+      --muted: rgba(26, 26, 26, 0.68);
+      --card: #ffffff;
+      --card-border: rgba(0, 0, 0, 0.1);
+      --code-bg: rgba(0, 0, 0, 0.06);
+      --button-bg: #1a1a1a;
+      --button-text: #ffffff;
+      --radius: 0.625rem;
+    }
+    @media (prefers-color-scheme: dark) {
       :root {
-        color-scheme: light dark;
-        --bg: #ffffff;
-        --text: #1a1a1a;
-        --muted: rgba(26, 26, 26, 0.68);
-        --card: rgba(0, 0, 0, 0.03);
-        --card-border: rgba(0, 0, 0, 0.1);
-        --chip-bg: rgba(0, 0, 0, 0.03);
-        --chip-border: rgba(0, 0, 0, 0.14);
-        --code-bg: rgba(0, 0, 0, 0.06);
-        --button-bg: #1a1a1a;
-        --button-text: #ffffff;
+        --bg: #0b0b0b;
+        --text: rgba(255, 255, 255, 0.75);
+        --muted: rgba(255, 255, 255, 0.5);
+        --card: #0b0b0b;
+        --card-border: rgba(255, 255, 255, 0.1);
+        --code-bg: rgba(255, 255, 255, 0.08);
+        --button-bg: #ffffff;
+        --button-text: #111111;
       }
-
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg: #0a0a0a;
-          --text: #ffffff;
-          --muted: rgba(255, 255, 255, 0.74);
-          --card: rgba(255, 255, 255, 0.05);
-          --card-border: rgba(255, 255, 255, 0.1);
-          --chip-bg: rgba(255, 255, 255, 0.06);
-          --chip-border: rgba(255, 255, 255, 0.14);
-          --code-bg: rgba(255, 255, 255, 0.08);
-          --button-bg: #ffffff;
-          --button-text: #111111;
-        }
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family:
-          'Geist Variable',
-          'Inter',
-          'Segoe UI',
-          system-ui,
-          -apple-system,
-          sans-serif;
-        background:
-          radial-gradient(circle at 20% 10%, rgba(127, 127, 127, 0.18), transparent 45%),
-          radial-gradient(circle at 80% 0%, rgba(127, 127, 127, 0.12), transparent 40%), var(--bg);
-        color: var(--text);
-        padding: 16px;
-      }
-
-      main {
-        width: min(760px, 100%);
-        background: var(--card);
-        border: 1px solid var(--card-border);
-        border-radius: 20px;
-        padding: 22px;
-        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.12);
-        backdrop-filter: blur(10px);
-      }
-
-      h1 {
-        margin: 14px 0 8px 0;
-        font-size: clamp(1.55rem, 7vw, 2.6rem);
-        line-height: 1.05;
-        letter-spacing: -0.02em;
-      }
-
-      p {
-        margin: 0.45rem 0;
-        line-height: 1.5;
-        color: var(--muted);
-        font-size: clamp(0.95rem, 2.8vw, 1.05rem);
-      }
-
-      code {
-        background: var(--code-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 8px;
-        padding: 0.15rem 0.45rem;
-        color: var(--text);
-        font-weight: 600;
-      }
-
-      .actions {
-        margin-top: 18px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-
-      .btn {
-        appearance: none;
-        border: 1px solid var(--card-border);
-        background: var(--button-bg);
-        color: var(--button-text);
-        border-radius: 999px;
-        padding: 10px 16px;
-        font-size: 0.92rem;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      .btn.secondary {
-        background: transparent;
-        color: var(--text);
-      }
-
-      @media (max-width: 640px) {
-        main {
-          padding: 18px;
-          border-radius: 16px;
-        }
-
-        .actions {
-          flex-direction: column;
-        }
-
-        .btn {
-          width: 100%;
-        }
-      }
-    </style>
-  </head>
-
-  <body>
-    <main>
-      <h1>Service temporarily busy</h1>
-      <p>The server is under heavy load and cannot process this request right now.</p>
-      <p>Please wait a few seconds, then refresh.</p>
-      <p>If this keeps happening, check <code>/health</code> and your runtime logs.</p>
-      <div class="actions">
-        <button class="btn" type="button" onclick="window.location.reload()">Refresh</button>
-        <button class="btn secondary" type="button" onclick="window.location.href = '/health'">
-          Open /health
-        </button>
-      </div>
-    </main>
-  </body>
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family:
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        Roboto,
+        sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      text-align: center;
+    }
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      max-width: 400px;
+      width: 100%;
+    }
+    svg {
+      width: 40px;
+      height: 40px;
+      opacity: 0.55;
+      margin-bottom: 8px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    p {
+      margin: 0;
+      line-height: 1.5;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .actions {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      gap: 8px;
+    }
+    .btn {
+      appearance: none;
+      border: 1px solid transparent;
+      background: var(--button-bg);
+      color: var(--button-text);
+      border-radius: var(--radius);
+      padding: 10px 16px;
+      font-size: 0.92rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      width: 100%;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+    .btn.secondary {
+      background: 0 0;
+      color: var(--text);
+      border-color: var(--card-border);
+    }
+    .btn.secondary:hover {
+      background: var(--code-bg);
+    }
+  </style>
+  <main>
+    <svg
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.5"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
+    </svg>
+    <h1>Service temporarily busy</h1>
+    <p>
+      The server is under heavy load and cannot process this request right now. Please wait a few
+      seconds, then refresh.
+    </p>
+    <div class="actions">
+      <button class="btn" onclick="window.location.reload()" type="button">Refresh</button>
+      <button class="btn secondary" onclick="window.location.href = '/health'" type="button">
+        Check Status (/health)
+      </button>
+    </div>
+  </main>
 </html>

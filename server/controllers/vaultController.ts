@@ -139,7 +139,8 @@ const safeRm = async (target: string): Promise<{ filesDeleted: number; bytesDele
       let stats;
       try {
         stats = await fs.stat(current);
-      } catch {
+      } catch (statError) {
+        logger.debug('Failed to stat target during safeRm walk', { current, error: statError });
         return;
       }
       if (stats.isDirectory()) {
@@ -156,8 +157,11 @@ const safeRm = async (target: string): Promise<{ filesDeleted: number; bytesDele
   }
   try {
     await fs.rm(absoluteTarget, { recursive: true, force: true });
-  } catch {
-    // Best effort.
+  } catch (rmErr) {
+    logger.warn('Failed to remove path during safeRm cleanup', {
+      target: absoluteTarget,
+      error: rmErr,
+    });
   }
   return { filesDeleted, bytesDeleted };
 };
@@ -167,7 +171,10 @@ const cleanupExpiredMultipartSessions = async (userId: string) => {
   let entries: Array<{ name: string; isDirectory: () => boolean }> = [];
   try {
     entries = await fs.readdir(userDir, { withFileTypes: true });
-  } catch {
+  } catch (dirErr) {
+    if ((dirErr as { code?: string })?.code !== 'ENOENT') {
+      logger.warn('Failed to readdir for user multipart cleanup', { userDir, error: dirErr });
+    }
     return;
   }
   const now = Date.now();
@@ -189,7 +196,14 @@ const cleanupExpiredMultipartSessions = async (userId: string) => {
               });
             }
           }
-        } catch {
+        } catch (sessErr) {
+          logger.warn(
+            'Corrupted or unreadable multipart session during cleanup; removing session folder',
+            {
+              sessionFile,
+              error: sessErr,
+            }
+          );
           await safeRm(path.join(userDir, entry.name));
         }
       })
@@ -207,7 +221,14 @@ const loadMultipartSession = async (
   try {
     const raw = await fs.readFile(multipartSessionPath(userId, uploadId), 'utf8');
     return JSON.parse(raw) as MultipartSessionRecord;
-  } catch {
+  } catch (loadErr) {
+    if ((loadErr as { code?: string })?.code !== 'ENOENT') {
+      logger.warn('Failed to read or parse multipart session', {
+        userId,
+        uploadId,
+        error: loadErr,
+      });
+    }
     return null;
   }
 };

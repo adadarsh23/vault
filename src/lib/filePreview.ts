@@ -2,6 +2,8 @@ import { decryptToFile, detectMimeTypeFromBytes, base64ToUint8Array } from './en
 import { VaultItem } from './storage';
 import { resolveApiBaseUrl } from './apiBaseUrl';
 import { getDecryptStreamResponseUrl } from './streamDecryption';
+import { getAuthToken } from './auth-session';
+import { resolveRuntimeOrigin } from './sync/core';
 
 const API_BASE_URL = resolveApiBaseUrl();
 
@@ -229,7 +231,23 @@ export const inferMimeTypeFromItem = (item: VaultItem): string | undefined => {
     case 'opus':
       return 'audio/opus';
     case 'mp4':
+    case 'm4v':
       return item.type === 'audio' ? 'audio/mp4' : 'video/mp4';
+    case 'mov':
+    case 'qt':
+      return 'video/quicktime';
+    case 'mkv':
+      return 'video/x-matroska';
+    case 'avi':
+      return 'video/x-msvideo';
+    case 'wmv':
+      return 'video/x-ms-wmv';
+    case 'flv':
+      return 'video/x-flv';
+    case '3gp':
+      return 'video/3gpp';
+    case 'ogv':
+      return 'video/ogg';
     case 'png':
       return 'image/png';
     case 'jpg':
@@ -241,20 +259,54 @@ export const inferMimeTypeFromItem = (item: VaultItem): string | undefined => {
       return 'image/webp';
     default:
       if (item.type === 'audio') return 'audio/mpeg';
+      if (item.type === 'video') return 'video/mp4';
       return undefined;
   }
 };
 
 const resolveServerFileUrl = (value: string): string => {
-  if (isAbsoluteUrl(value) || isBlobOrDataUrl(value)) {
+  if (isBlobOrDataUrl(value)) {
     return value;
   }
-  if (value.startsWith('cloud://') || value.startsWith('gridfs://')) {
+  let targetUrl: string;
+  if (isAbsoluteUrl(value)) {
+    try {
+      const u = new URL(value);
+      if (
+        u.pathname.includes('/api/vault/files/access/') ||
+        u.pathname.includes('/api/vault/media/')
+      ) {
+        const apiBase = new URL(API_BASE_URL, resolveRuntimeOrigin());
+        u.protocol = apiBase.protocol;
+        u.host = apiBase.host;
+        targetUrl = u.toString();
+      } else {
+        targetUrl = value;
+      }
+    } catch {
+      targetUrl = value;
+    }
+  } else if (value.startsWith('cloud://') || value.startsWith('gridfs://')) {
     const rawId = value.replace(/^(cloud|gridfs):\/\//, '');
-    return `${API_BASE_URL}/api/vault/files/access/${encodeURIComponent(rawId)}`;
+    targetUrl = `${API_BASE_URL}/api/vault/files/access/${encodeURIComponent(rawId)}`;
+  } else {
+    targetUrl = `${API_BASE_URL}${value.startsWith('/') ? value : `/${value}`}`;
   }
 
-  return `${API_BASE_URL}${value.startsWith('/') ? value : `/${value}`}`;
+  const jwt = getAuthToken();
+  if (jwt && targetUrl.includes('/api/vault/files/access/')) {
+    try {
+      const parsed = new URL(targetUrl, resolveRuntimeOrigin());
+      if (!parsed.searchParams.has('auth_token')) {
+        parsed.searchParams.set('auth_token', jwt);
+      }
+      return parsed.toString();
+    } catch {
+      // Fallback to targetUrl
+    }
+  }
+
+  return targetUrl;
 };
 
 export const getVaultItemFileUrl = (item: VaultItem): string | null => {
@@ -401,7 +453,7 @@ export const getVaultItemPreviewUrl = async (
       }
     }
     const blob = new Blob([new Uint8Array(item.content)], {
-      type: effectiveMimeType || 'application/octet-stream',
+      type: effectiveMimeType || (item.type === 'video' ? 'video/mp4' : 'application/octet-stream'),
     });
     return URL.createObjectURL(blob);
   }

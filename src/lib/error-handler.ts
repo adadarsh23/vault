@@ -18,6 +18,9 @@ export enum ErrorCode {
   DOWNLOAD_FAILED = 'download-failed',
   DECRYPTION_FAILED = 'decryption-failed',
   ENCRYPTION_FAILED = 'encryption-failed',
+  CSRF_TOKEN_INVALID = 'CSRF_TOKEN_INVALID',
+  PAYLOAD_TOO_LARGE = 'PAYLOAD_TOO_LARGE',
+  INVALID_ID = 'INVALID_ID',
   NETWORK_ERROR = 'network-error',
   UNKNOWN = 'unknown',
 }
@@ -77,6 +80,9 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.DOWNLOAD_FAILED]: 'Failed to sync data from cloud.',
   [ErrorCode.DECRYPTION_FAILED]: 'Master key is incorrect or vault data could not be decrypted.',
   [ErrorCode.ENCRYPTION_FAILED]: 'Failed to encrypt data.',
+  [ErrorCode.CSRF_TOKEN_INVALID]: 'Security token expired or invalid. Please refresh the page.',
+  [ErrorCode.PAYLOAD_TOO_LARGE]: 'Uploaded file or payload exceeds the allowed size limit.',
+  [ErrorCode.INVALID_ID]: 'Invalid resource identifier specified.',
   [ErrorCode.NETWORK_ERROR]: 'Network error occurred. Please try again.',
   [ErrorCode.UNKNOWN]: 'An unexpected error occurred.',
 };
@@ -118,6 +124,12 @@ export const handleError = (error: any, context?: string): AppError => {
     code = ErrorCode.TOO_MANY_AUTH_ATTEMPTS;
   } else if (/captcha/i.test(rawCode) || /captcha/i.test(rawMsg)) {
     code = ErrorCode.CAPTCHA_FAILED;
+  } else if (rawCode === 'CSRF_TOKEN_INVALID' || /csrf/i.test(rawMsg)) {
+    code = ErrorCode.CSRF_TOKEN_INVALID;
+  } else if (rawCode === 'PAYLOAD_TOO_LARGE' || rawCode === 413 || /too large/i.test(rawMsg)) {
+    code = ErrorCode.PAYLOAD_TOO_LARGE;
+  } else if (rawCode === 'INVALID_ID' || /invalid format/i.test(rawMsg)) {
+    code = ErrorCode.INVALID_ID;
   } else if (
     /master key is incorrect/i.test(rawMsg) ||
     /candidate salts exhausted/i.test(rawMsg) ||

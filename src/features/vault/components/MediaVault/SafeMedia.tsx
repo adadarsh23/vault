@@ -274,23 +274,33 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
               setUrl(hlsUrl);
               return;
             }
-            const signedUrl = await withTimeout(
+            const result = await withTimeout(
               getSignedUrl(current.id, 'view'),
               PREVIEW_REQUEST_TIMEOUT_MS,
               'SIGNED_URL_TIMEOUT'
             );
-            if (cancelled) return;
-            const displayUrl = await normalizePhotoPreviewUrl(
-              signedUrl,
+            if (!result) {
+              throw new Error('Preview unavailable for this file type');
+            }
+
+            const finalResultUrl = await normalizePhotoPreviewUrl(
+              result,
               isHeicMime,
               abortController.signal
             );
+
+            // If normalizePhotoPreviewUrl created a new URL, we must revoke the original result to prevent a leak
+            if (finalResultUrl !== result && result.startsWith('blob:')) {
+              safeRevoke(result);
+            }
+
             if (cancelled) {
-              safeRevoke(displayUrl.startsWith('blob:') ? displayUrl : null);
+              safeRevoke(finalResultUrl.startsWith('blob:') ? finalResultUrl : null);
               return;
             }
-            setManagedBlob(displayUrl);
-            setUrl(displayUrl);
+
+            setManagedBlob(finalResultUrl);
+            setUrl(finalResultUrl);
             return;
           }
 
@@ -312,6 +322,10 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
             type === 'photo'
               ? await normalizePhotoPreviewUrl(result, isHeicMime, abortController.signal)
               : result;
+
+          if (displayUrl !== result && result.startsWith('blob:')) {
+            safeRevoke(result);
+          }
 
           if (cancelled) {
             safeRevoke(displayUrl.startsWith('blob:') ? displayUrl : null);

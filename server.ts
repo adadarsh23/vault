@@ -427,7 +427,6 @@ async function startServer() {
       }
       app.set('trust proxy', trustProxy);
       app.use(helmet(buildHelmetConfig()));
-      app.use(originProtection); // Enforce CDN-only access in production
       app.use(
         cors({
           origin: (origin, callback) => {
@@ -454,6 +453,7 @@ async function startServer() {
           exposedHeaders: ['Location', 'Tus-Resumable', 'Upload-Offset', 'Upload-Length'],
         })
       );
+      app.use(originProtection); // Enforce CDN-only access in production
       if (resolveCompressionEnabled()) {
         app.use(compression(deepCompressionOptions));
       }
