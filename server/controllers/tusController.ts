@@ -8,6 +8,7 @@ import { AppError } from '../utils/appError.ts';
 const TUS_TMP_ROOT = path.join(process.cwd(), 'vault-tmp', 'tus-uploads');
 const MEMORY_ONLY_TUS_UPLOADS =
   (process.env.MEMORY_ONLY_TUS_UPLOADS ?? 'true').trim().toLowerCase() !== 'false';
+const MAX_TUS_FILE_SIZE = Math.max(1, Number(process.env.MAX_FILE_SIZE_MB || 500) * 1024 * 1024);
 
 interface TusSession {
   uploadId: string;
@@ -40,6 +41,12 @@ export const createTusUploadController = async (
   );
   if (isNaN(fileSize) || fileSize <= 0) {
     throw AppError.badRequest('Missing or invalid Upload-Length header.', 'INVALID_TUS_LENGTH');
+  }
+  if (fileSize > MAX_TUS_FILE_SIZE) {
+    throw AppError.badRequest(
+      'TUS upload exceeds the configured file size limit.',
+      'FILE_TOO_LARGE'
+    );
   }
 
   const metadata: Record<string, string> = {};
@@ -100,6 +107,10 @@ export const getTusOffsetController = async (req: AuthenticatedRequest, res: exp
     res.setHeader('Tus-Resumable', '1.0.0');
     return res.status(404).end();
   }
+  if (session.userId !== req.user.userId) {
+    res.setHeader('Tus-Resumable', '1.0.0');
+    return res.status(404).end();
+  }
 
   res.setHeader('Tus-Resumable', '1.0.0');
   res.setHeader('Upload-Offset', session.offset.toString());
@@ -118,6 +129,9 @@ export const uploadTusChunkController = async (
   const session = tusSessions.get(uploadId);
 
   if (!session) {
+    throw AppError.notFound('TUS upload session not found.', 'TUS_SESSION_NOT_FOUND');
+  }
+  if (session.userId !== req.user.userId) {
     throw AppError.notFound('TUS upload session not found.', 'TUS_SESSION_NOT_FOUND');
   }
 
@@ -141,6 +155,10 @@ export const uploadTusChunkController = async (
       ? Buffer.from(req.body)
       : Buffer.from(req.body || []);
 
+  if (session.offset + chunkBuffer.length > session.fileSize) {
+    throw AppError.badRequest('TUS chunk exceeds the declared upload size.', 'TUS_SIZE_MISMATCH');
+  }
+
   if (chunkBuffer.length > 0) {
     if (MEMORY_ONLY_TUS_UPLOADS) {
       session.chunks.push(Buffer.from(chunkBuffer));
@@ -156,9 +174,13 @@ export const uploadTusChunkController = async (
   return res.status(204).end();
 };
 
-export const getTusSessionBuffer = async (uploadId: string): Promise<Buffer | null> => {
+export const getTusSessionBuffer = async (
+  uploadId: string,
+  userId?: string
+): Promise<Buffer | null> => {
   const session = tusSessions.get(uploadId);
   if (session) {
+    if (userId && session.userId !== userId) return null;
     if (session.chunks.length > 0) {
       return Buffer.concat(session.chunks);
     }
@@ -168,10 +190,7 @@ export const getTusSessionBuffer = async (uploadId: string): Promise<Buffer | nu
       return null;
     }
   }
-  try {
-    const fallbackPath = path.join(TUS_TMP_ROOT, uploadId, 'chunk_data.bin');
-    return await fs.readFile(fallbackPath);
-  } catch {
-    return null;
-  }
+  // Never serve a temporary upload from disk after its authenticated session
+  // is gone. Temporary files are not durable cloud storage.
+  return null;
 };

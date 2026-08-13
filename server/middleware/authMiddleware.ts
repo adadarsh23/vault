@@ -30,6 +30,11 @@ const decodeQueryParamSafely = (value: string): string | null => {
   }
 };
 
+const hasMalformedAuthTokenQuery = (req: express.Request): boolean => {
+  const match = req.url.match(/[?&]auth_token=([^&]*)/);
+  return Boolean(match && decodeQueryParamSafely(match[1]) === null);
+};
+
 interface CachedSession {
   userWithSession: any;
   cachedAt: number;
@@ -163,6 +168,11 @@ export const requireAuth = async (
   }
 
   if (!token) {
+    // Express may omit a malformed query value while parsing the URL.  Preserve
+    // the distinction between no credentials and an invalid credential.
+    if (hasMalformedAuthTokenQuery(req)) {
+      throw AppError.unauthorized('Authentication token is invalid.', 'INVALID_TOKEN');
+    }
     throw AppError.unauthorized('Authentication token is required.', 'AUTH_REQUIRED');
   }
   if (!looksLikeJwt(token)) {

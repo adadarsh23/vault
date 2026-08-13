@@ -21,7 +21,6 @@ import { VaultItem } from '../../lib/storage';
 import { LiveCaptureModal } from './components/LiveCaptureModal';
 import { vaultApi } from '../../api/vaultApi';
 import { compressFileInWorker, generateBlurhashInWorker } from '../../lib/mediaWorker';
-import { uploadFileTus } from '../../lib/sync/tusUpload';
 
 // New extracted components and utilities
 import {
@@ -592,25 +591,6 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
             blurhash = await generateBlurhashInWorker(uploadFileObj);
           }
 
-          // Use TUS protocol for resilient, chunked encrypted uploads over unstable networks
-          let tusUploadId: string | undefined = undefined;
-          try {
-            toast.loading(`Uploading via TUS protocol ${index + 1}/${total}...`, { id: toastId });
-            const tusResult = await uploadFileTus({
-              file: uploadFileObj,
-              masterKey,
-              onProgress: (uploadedBytes, totalBytes) => {
-                const pct = Math.round((uploadedBytes / totalBytes) * 100);
-                toast.loading(`Uploading via TUS ${index + 1}/${total}: ${pct}%...`, {
-                  id: toastId,
-                });
-              },
-            });
-            tusUploadId = tusResult?.uploadId;
-          } catch (tusErr) {
-            console.warn('TUS upload failed or skipped, proceeding with vault item save:', tusErr);
-          }
-
           const encryptedData = isAlreadyEncrypted
             ? new Uint8Array(await file.arrayBuffer())
             : await encryptFileInWorker(uploadFileObj, masterKey);
@@ -632,7 +612,6 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
                 height: dimensions?.height,
                 aspectRatio: dimensions?.aspectRatio,
                 blurhash: blurhash || undefined,
-                tusUploadId,
                 isE2EE: isAlreadyEncrypted,
                 isLiveCapture,
               },

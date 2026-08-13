@@ -545,7 +545,11 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
   if (finalBuffer.length > MULTIPART_MAX_FILE_SIZE_BYTES) {
     throw AppError.badRequest('File exceeds configured max upload size.', 'FILE_TOO_LARGE');
   }
-  if (session.category === 'photo' || session.category === 'video') {
+  if (
+    session.category === 'photo' ||
+    session.category === 'video' ||
+    session.category === 'audio'
+  ) {
     assertFileContentMatchesCategory(
       session.category,
       session.fileName,
@@ -620,7 +624,7 @@ export const uploadVaultFile = async (req: AuthenticatedRequest, res: express.Re
   if (!category) {
     throw AppError.badRequest('Vault category is required.', 'CATEGORY_REQUIRED');
   }
-  if (category === 'photo' || category === 'video') {
+  if (category === 'photo' || category === 'video' || category === 'audio') {
     try {
       assertFileContentMatchesCategory(category, file.originalname, file.mimetype, file.buffer);
     } catch (error) {

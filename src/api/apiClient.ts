@@ -10,6 +10,7 @@ import {
 } from '../lib/auth-session';
 
 import { resolveApiBaseUrl } from '../lib/apiBaseUrl.ts';
+import { logger } from '../lib/logger';
 
 const API_BASE_URL = `${resolveApiBaseUrl()}/api`;
 const API_TIMEOUT_MS = 30_000;

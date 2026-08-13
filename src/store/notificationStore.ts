@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import apiClient from '../api/apiClient';
 
+let pendingNotificationFetch: Promise<void> | null = null;
+
 export interface Notification {
   _id: string;
   type: 'device_login' | 'sync_conflict' | 'security_alert' | 'vault_backup' | 'system' | string;
@@ -28,33 +30,41 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   unreadCount: 0,
   loading: false,
 
-  fetchNotifications: async () => {
-    set({ loading: true });
-    try {
-      const { data } = await apiClient.get<any>('/notifications', { timeout: 8000 });
-      if (data && data.success) {
-        const notifications = data.data || [];
-        const unreadCount = notifications.filter((n: any) => !n.isRead).length;
-        set({ notifications, unreadCount, loading: false });
-      } else {
+  fetchNotifications: () => {
+    if (pendingNotificationFetch) return pendingNotificationFetch;
+
+    pendingNotificationFetch = (async () => {
+      set({ loading: true });
+      try {
+        const { data } = await apiClient.get<any>('/notifications', { timeout: 15000 });
+        if (data && data.success) {
+          const notifications = data.data || [];
+          const unreadCount = notifications.filter((n: any) => !n.isRead).length;
+          set({ notifications, unreadCount, loading: false });
+        } else {
+          set({ loading: false });
+        }
+      } catch (error: any) {
+        const isTimeoutOrNetwork =
+          error?.code === 'NETWORK_ERROR' ||
+          error?.code === 'ECONNABORTED' ||
+          error?.status === undefined ||
+          (typeof error?.message === 'string' && error.message.toLowerCase().includes('timeout')) ||
+          error?.response?.status === 503 ||
+          error?.response?.data?.error?.code === 'SERVER_OVERLOADED';
+
+        if (isTimeoutOrNetwork) {
+          console.warn('Notification fetch deferred (timeout or network unreachable).');
+        } else {
+          console.error('Failed to fetch notifications:', error);
+        }
         set({ loading: false });
       }
-    } catch (error: any) {
-      const isTimeoutOrNetwork =
-        error?.code === 'NETWORK_ERROR' ||
-        error?.code === 'ECONNABORTED' ||
-        error?.status === undefined ||
-        (typeof error?.message === 'string' && error.message.toLowerCase().includes('timeout')) ||
-        error?.response?.status === 503 ||
-        error?.response?.data?.error?.code === 'SERVER_OVERLOADED';
+    })().finally(() => {
+      pendingNotificationFetch = null;
+    });
 
-      if (isTimeoutOrNetwork) {
-        console.warn('Notification fetch deferred (timeout or network unreachable).');
-      } else {
-        console.error('Failed to fetch notifications:', error);
-      }
-      set({ loading: false });
-    }
+    return pendingNotificationFetch;
   },
 
   markAsRead: async (id) => {

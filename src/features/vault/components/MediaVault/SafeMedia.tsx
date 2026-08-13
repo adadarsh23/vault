@@ -11,7 +11,7 @@ import {
   vaultItemHasServerFileReference,
 } from '../../../../lib/filePreview';
 import { VaultItem } from '../../../../lib/storage';
-import { getHlsPlaylistUrl, getSignedUrl } from '../../../../lib/sync';
+import { getSignedUrl } from '../../../../lib/sync';
 
 interface SafeMediaProps {
   item: VaultItem;
@@ -60,9 +60,10 @@ type WindowWithIdle = Window & {
   cancelIdleCallback?: (id: number) => void;
 };
 
-const HLS_WARM_CACHE_MAX = 3;
-const hlsWarmCache = new Map<string, string>();
-const PREVIEW_REQUEST_TIMEOUT_MS = 10000;
+// Atlas GridFS envelope decryption reads large encrypted videos before the
+// browser can decrypt them. Do not classify a healthy large-file response as
+// a format error after the old 10-second timeout.
+const PREVIEW_REQUEST_TIMEOUT_MS = 60000;
 
 const withTimeout = async <T,>(
   promise: Promise<T>,
@@ -75,24 +76,6 @@ const withTimeout = async <T,>(
       setTimeout(() => reject(new Error(timeoutErrorMessage)), timeoutMs)
     ),
   ]);
-};
-
-const touchWarmCache = (key: string, url: string) => {
-  if (hlsWarmCache.has(key)) {
-    hlsWarmCache.delete(key);
-  }
-  hlsWarmCache.set(key, url);
-  if (hlsWarmCache.size > HLS_WARM_CACHE_MAX) {
-    const oldest = hlsWarmCache.keys().next().value;
-    if (oldest) hlsWarmCache.delete(oldest);
-  }
-};
-
-const getWarmHlsUrl = (itemId: string): string | null => {
-  const cached = hlsWarmCache.get(itemId);
-  if (!cached) return null;
-  touchWarmCache(itemId, cached);
-  return cached;
 };
 
 const normalizePhotoPreviewUrl = async (
@@ -179,7 +162,14 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
       ]
     );
 
-    const hasServerFile = vaultItemHasServerFileReference(itemRef.current);
+    const isClientEncrypted =
+      typeof item.metadata === 'object' && item.metadata !== null
+        ? Boolean(
+            (item.metadata as Record<string, unknown>).isE2EE === true ||
+            (item.metadata as Record<string, unknown>).clientEncrypted === true
+          )
+        : false;
+    const hasServerFile = !isClientEncrypted && vaultItemHasServerFileReference(itemRef.current);
 
     const handleRefresh = () => {
       safeRevoke(managedBlobRef.current);
@@ -223,12 +213,15 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
 
       let cancelled = false;
       const abortController = new AbortController();
+      let effectBlobUrl: string | null = null;
+      let effectSourceUrl: string | null = null;
 
       const setManagedBlob = (next: string | null) => {
         const resolved = next?.startsWith('blob:') ? next : null;
-        if (managedBlobRef.current && managedBlobRef.current !== resolved) {
-          safeRevoke(managedBlobRef.current);
+        if (effectBlobUrl && effectBlobUrl !== resolved) {
+          safeRevoke(effectBlobUrl);
         }
+        effectBlobUrl = resolved;
         managedBlobRef.current = resolved;
       };
 
@@ -241,37 +234,18 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
 
           if (hasServerFile) {
             if (type === 'video') {
-              const cached = getWarmHlsUrl(current.id);
-              if (cached) {
-                if (cancelled) return;
-                setManagedBlob(null);
-                setUrl(cached);
-                setIsLoading(false);
-                return;
-              }
-
-              let hlsUrl: string | null = null;
-              try {
-                hlsUrl = await withTimeout(getHlsPlaylistUrl(current.id), 1500, 'HLS_TIMEOUT');
-              } catch {
-                hlsUrl = null;
-              }
-
-              if (!hlsUrl) {
-                // If HLS is not immediately available, fallback to direct signed playback URL.
-                hlsUrl = await withTimeout(
-                  getSignedUrl(current.id, 'view'),
-                  PREVIEW_REQUEST_TIMEOUT_MS,
-                  'SIGNED_URL_TIMEOUT'
-                );
-              }
+              // MongoDB/GridFS cloud media is served directly. HLS is only
+              // valid when transcoded variant files are actually available.
+              const directUrl = await withTimeout(
+                getSignedUrl(current.id, 'view'),
+                PREVIEW_REQUEST_TIMEOUT_MS,
+                'SIGNED_URL_TIMEOUT'
+              );
 
               if (cancelled) return;
-              if (hlsUrl.includes('.m3u8')) {
-                touchWarmCache(current.id, hlsUrl);
-              }
               setManagedBlob(null);
-              setUrl(hlsUrl);
+              effectSourceUrl = directUrl;
+              setUrl(directUrl);
               return;
             }
             const result = await withTimeout(
@@ -300,6 +274,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
             }
 
             setManagedBlob(finalResultUrl);
+            effectSourceUrl = finalResultUrl;
             setUrl(finalResultUrl);
             return;
           }
@@ -333,6 +308,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
           }
 
           setManagedBlob(displayUrl);
+          effectSourceUrl = displayUrl;
           setUrl(displayUrl);
         } catch (e: any) {
           const isAlreadyReadableError =
@@ -348,6 +324,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
             );
             if (!cancelled) {
               setManagedBlob(fallbackUrl);
+              effectSourceUrl = fallbackUrl;
               setUrl(fallbackUrl);
               setErrorMessage(null);
               return;
@@ -381,8 +358,9 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
         return () => {
           cancelled = true;
           clearTimeout(timeoutId);
-          safeRevoke(managedBlobRef.current);
-          managedBlobRef.current = null;
+          if (effectBlobUrl) safeRevoke(effectBlobUrl);
+          setUrl((currentUrl) => (currentUrl === effectSourceUrl ? null : currentUrl));
+          if (managedBlobRef.current === effectBlobUrl) managedBlobRef.current = null;
         };
       } else {
         void run();
@@ -394,8 +372,10 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
         if (idleId !== null && win.cancelIdleCallback) {
           win.cancelIdleCallback(idleId);
         }
-        safeRevoke(managedBlobRef.current);
-        managedBlobRef.current = null;
+        // Do not revoke a URL created by a newer preview effect.
+        if (effectBlobUrl) safeRevoke(effectBlobUrl);
+        setUrl((currentUrl) => (currentUrl === effectSourceUrl ? null : currentUrl));
+        if (managedBlobRef.current === effectBlobUrl) managedBlobRef.current = null;
       };
     }, [
       hasServerFile,
@@ -468,7 +448,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
         <img
           ref={mediaElementRef as React.RefObject<HTMLImageElement>}
           src={url}
-          loading="lazy"
+          loading={isThumbnail ? 'lazy' : 'eager'}
           decoding="async"
           fetchPriority={isThumbnail ? 'low' : 'high'}
           className={cn(className, isThumbnail ? 'pointer-events-none' : '')}
@@ -510,6 +490,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
         >
           <VideoPlayer
             src={url}
+            mimeType={mimeType || undefined}
             itemId={item.id}
             title={item.title}
             aspectRatio={item.metadata?.aspectRatio}

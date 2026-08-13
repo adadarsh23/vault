@@ -473,14 +473,17 @@ export const decryptFileE2EE = async (
 
     let finalMimeType = mimeType;
     const detected = detectMimeTypeFromBytes(new Uint8Array(decrypted));
-    if (detected !== 'application/octet-stream') {
-      if (
-        !finalMimeType ||
+    const detectedIsMedia = detected.startsWith('audio/') || detected.startsWith('video/');
+    if (
+      detected !== 'application/octet-stream' &&
+      (!finalMimeType ||
         finalMimeType === 'application/octet-stream' ||
-        (finalMimeType === 'audio/mpeg' && detected !== 'audio/mpeg')
-      ) {
-        finalMimeType = detected;
-      }
+        (detectedIsMedia &&
+          (finalMimeType.startsWith('audio/') || finalMimeType.startsWith('video/')) &&
+          finalMimeType !== detected) ||
+        (finalMimeType === 'audio/mpeg' && detected !== 'audio/mpeg'))
+    ) {
+      finalMimeType = detected;
     }
 
     const blob = new Blob([decrypted], { type: finalMimeType || 'application/octet-stream' });
@@ -664,14 +667,17 @@ export const decryptToFile = async (
 
     let finalMimeType = mimeType;
     const detected = detectMimeTypeFromBytes(new Uint8Array(decrypted));
-    if (detected !== 'application/octet-stream') {
-      if (
-        !finalMimeType ||
+    const detectedIsMedia = detected.startsWith('audio/') || detected.startsWith('video/');
+    if (
+      detected !== 'application/octet-stream' &&
+      (!finalMimeType ||
         finalMimeType === 'application/octet-stream' ||
-        (finalMimeType === 'audio/mpeg' && detected !== 'audio/mpeg')
-      ) {
-        finalMimeType = detected;
-      }
+        (detectedIsMedia &&
+          (finalMimeType.startsWith('audio/') || finalMimeType.startsWith('video/')) &&
+          finalMimeType !== detected) ||
+        (finalMimeType === 'audio/mpeg' && detected !== 'audio/mpeg'))
+    ) {
+      finalMimeType = detected;
     }
 
     const blob = new Blob([decrypted], { type: finalMimeType || 'application/octet-stream' });

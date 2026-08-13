@@ -13,6 +13,7 @@ import {
   setScopedVaultItemPinByUsername,
 } from '../services/legacyVaultService.ts';
 import { AppError } from '../utils/appError.ts';
+import { logger } from '../utils/logger.ts';
 import { AuthenticatedRequest } from '../utils/requestTypes.ts';
 import {
   parseCategory,

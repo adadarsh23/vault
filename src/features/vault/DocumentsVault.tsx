@@ -323,7 +323,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
         <img
           src={url}
           alt={item.title || 'Document preview'}
-          loading="lazy"
+          loading="eager"
           decoding="async"
           className="max-h-full max-w-full object-contain"
           onError={() => setErrorMessage('Image preview failed to render.')}

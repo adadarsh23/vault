@@ -23,7 +23,6 @@ import { Button } from '../../components/ui/Button';
 import { AudioPlayer } from '../../components/ui/audio-player';
 import { useVaultStore } from '../../store/vaultStore';
 import { encryptFileInWorker } from '../../lib/cryptoPrimitives';
-import { uploadFileTus } from '../../lib/sync/tusUpload';
 import {
   getVaultItemFileUrl,
   getVaultItemPreviewUrl,
@@ -360,23 +359,6 @@ export const AudioVault: React.FC = () => {
 
           const fileTargetFolder = folderFromPath || targetFolder;
 
-          let tusUploadId: string | undefined = undefined;
-          try {
-            const tusResult = await uploadFileTus({
-              file,
-              masterKey,
-              onProgress: (uploadedBytes, totalBytes) => {
-                const pct = Math.round((uploadedBytes / totalBytes) * 100);
-                toast.loading(`Uploading audio via TUS ${index + 1}/${total}: ${pct}%...`, {
-                  id: toastId,
-                });
-              },
-            });
-            tusUploadId = tusResult?.uploadId;
-          } catch (tusErr) {
-            console.warn('TUS upload failed or skipped, proceeding with vault item save:', tusErr);
-          }
-
           const encryptedData = isAlreadyEncrypted
             ? new Uint8Array(await file.arrayBuffer())
             : await encryptFileInWorker(file, masterKey);
@@ -420,7 +402,6 @@ export const AudioVault: React.FC = () => {
                 })(),
                 size: file.size,
                 extension: file.name.split('.').pop()?.toUpperCase() || 'AUDIO',
-                tusUploadId,
                 isE2EE: isAlreadyEncrypted,
                 isLiveCapture,
               },

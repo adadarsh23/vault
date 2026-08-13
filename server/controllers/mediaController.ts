@@ -11,12 +11,18 @@ import { getClientIp } from '../utils/requestIp.ts';
 import fs from 'fs';
 import path from 'path';
 import { rateLimit } from 'express-rate-limit';
-import { decryptBuffer, EncryptedPayload } from '../utils/crypto.ts';
+import {
+  decryptBuffer,
+  decryptBufferEnvelope,
+  EncryptedEnvelopePayload,
+  EncryptedPayload,
+} from '../utils/crypto.ts';
 import mongoose from 'mongoose';
 import { anomalyDetectionService } from '../services/anomalyDetectionService.ts';
 import { User } from '../models/user.ts';
 import { isAllowedCorsOrigin } from '../utils/cors.ts';
 import { getTusSessionBuffer } from './tusController.ts';
+import { ensureMongoReady } from '../mongo.ts';
 
 const STORAGE_ROOT = path.join(process.cwd(), 'vault-storage');
 
@@ -71,15 +77,20 @@ export const findVaultItemFlexible = async (
     queryConditions.push({ _id: new mongoose.Types.ObjectId(itemId) });
   }
 
-  let item = await DynamicVaultModel.findOne({
+  const executeFindOne = async (conditions: Record<string, unknown>) => {
+    const query = DynamicVaultModel.findOne(conditions);
+    return typeof query?.exec === 'function' ? query.exec() : query;
+  };
+
+  let item = await executeFindOne({
     userId,
     $or: queryConditions,
-  }).exec();
+  });
 
   if (!item && isObjectId) {
-    item = await DynamicVaultModel.findOne({
+    item = await executeFindOne({
       $or: queryConditions,
-    }).exec();
+    });
   }
 
   return item;
@@ -99,6 +110,50 @@ const mimeMap: Record<string, string> = {
   '.mp3': 'audio/mpeg',
   '.wav': 'audio/wav',
   '.ogg': 'audio/ogg',
+};
+
+/**
+ * GridFS stores client-encrypted media inside a server-side envelope. Remove
+ * only that server envelope here; the browser still performs the final
+ * client-side AES/RSA decryption before playback.
+ */
+const decryptGridFsPayload = (
+  rawBuffer: Buffer,
+  fileMetadata: Record<string, any> | undefined,
+  itemFile?: Record<string, any>
+): Buffer => {
+  const envelope = fileMetadata?.encryption;
+  if (
+    envelope &&
+    typeof envelope.wrappedDek === 'string' &&
+    typeof envelope.wrapIv === 'string' &&
+    typeof envelope.wrapTag === 'string'
+  ) {
+    return decryptBufferEnvelope({
+      algorithm: envelope.algorithm || 'aes-256-gcm',
+      iv: envelope.iv,
+      authTag: envelope.authTag,
+      wrappedDek: envelope.wrappedDek,
+      wrapIv: envelope.wrapIv,
+      wrapTag: envelope.wrapTag,
+      keyVersion: envelope.keyVersion || 'v1',
+      keyId: envelope.keyId || 'vault-file-v1',
+      cipherText: rawBuffer.toString('base64'),
+    } as EncryptedEnvelopePayload);
+  }
+
+  try {
+    return decryptBuffer(JSON.parse(rawBuffer.toString()) as EncryptedPayload);
+  } catch {
+    if (itemFile?.encryptionIv && itemFile?.encryptionTag) {
+      return decryptBuffer({
+        iv: itemFile.encryptionIv,
+        tag: itemFile.encryptionTag,
+        encryptedData: rawBuffer.toString('hex'),
+      });
+    }
+    return rawBuffer;
+  }
 };
 
 const SIGNED_URL_WINDOW_MS = 60_000;
@@ -297,7 +352,14 @@ const ensureUploadIsActive = (item: any) => {
     return;
   }
   const scanStatus = item?.metadata?.uploadSecurity?.scanStatus;
-  if (scanStatus === 'quarantined' || scanStatus === 'infected' || scanStatus === 'blocked') {
+  if (
+    scanStatus === 'pending' ||
+    scanStatus === 'scanning' ||
+    scanStatus === 'error' ||
+    scanStatus === 'quarantined' ||
+    scanStatus === 'infected' ||
+    scanStatus === 'blocked'
+  ) {
     throw AppError.forbidden(
       'File is quarantined or pending security scan.',
       'FILE_QUARANTINED_OR_PENDING_SCAN'
@@ -363,6 +425,43 @@ const validateMediaAccess = async (
       'User identification required for secure media playback.',
       'AUTH_REQUIRED'
     );
+  }
+
+  const signature = getSingleQueryValue(q.token);
+  const expiresRaw = getSingleQueryValue(q.expires);
+  if (!signature || !expiresRaw) {
+    throw AppError.forbidden('Signed media token or expiration missing.', 'MISSING_SIGNATURE');
+  }
+
+  const expires = Number.parseInt(expiresRaw, 10);
+  if (!Number.isSafeInteger(expires) || String(expires) !== expiresRaw) {
+    throw AppError.forbidden('Signed media token is invalid.', 'INVALID_SIGNATURE');
+  }
+
+  const signedSessionId = getSingleQueryValue(q.sid) || 'any';
+  const authenticatedSessionId = (req as any).user?.sessionId;
+  if (
+    authenticatedSessionId &&
+    signedSessionId !== 'any' &&
+    signedSessionId !== authenticatedSessionId
+  ) {
+    throw AppError.forbidden(
+      'Signed media token is not valid for this session.',
+      'SESSION_MISMATCH'
+    );
+  }
+
+  const isValidSignature = storageService.verifySignedUrl(resolvedUserId, itemId, {
+    token: signature,
+    expires,
+    action,
+    clientIp,
+    sessionId: signedSessionId,
+    deviceHash: getSingleQueryValue(q.dev),
+    originalIp: getSingleQueryValue(q.ip),
+  });
+  if (!isValidSignature) {
+    throw AppError.forbidden('Signed media token is invalid or expired.', 'INVALID_SIGNATURE');
   }
 
   // Ensure username is attached to req.user for downstream getVaultItemModel(username)
@@ -453,6 +552,11 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
   if (!variant) {
+    // MongoDB/GridFS cloud items do not have local HLS variant files.
+    // Return 404 so the client correctly falls back to direct cloud playback.
+    if (typeof item.file.filePath === 'string' && item.file.filePath.startsWith('cloud://')) {
+      throw AppError.notFound('HLS is not generated for this cloud media item.', 'HLS_UNAVAILABLE');
+    }
     const playlist = await mediaService.generateMasterPlaylist(
       itemId,
       req.originalUrl.split('?')[1]
@@ -594,6 +698,14 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
   enforcePlaybackRequestContext(req);
   enforceTrustedMediaOrigin(req);
 
+  if (!(await ensureMongoReady())) {
+    throw new AppError(
+      503,
+      'DB_UNAVAILABLE',
+      'Cloud media storage is temporarily unavailable. Please retry playback.'
+    );
+  }
+
   const resolvedUserId = await validateMediaAccess(req, undefined, itemId, 'view');
 
   const username = (req as any).user?.username;
@@ -633,13 +745,7 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
           downloadStream.on('end', () => resolve(Buffer.concat(chunks)));
         });
 
-        let decrypted: Buffer = gridBuffer;
-        try {
-          const payloadObj: EncryptedPayload = JSON.parse(gridBuffer.toString());
-          decrypted = decryptBuffer(payloadObj);
-        } catch {
-          decrypted = gridBuffer;
-        }
+        const decrypted = decryptGridFsPayload(gridBuffer, fileMetadata);
 
         const size = decrypted.length;
         if (isStreamableMedia && requestedRange) {
@@ -745,33 +851,13 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
 
           let decrypted: Buffer;
           try {
-            const payloadObj: EncryptedPayload = JSON.parse(gridBuffer.toString());
-            decrypted = decryptBuffer(payloadObj);
-          } catch (parseDecErr) {
-            if (item.file?.encryptionIv && item.file?.encryptionTag) {
-              try {
-                decrypted = decryptBuffer({
-                  iv: item.file.encryptionIv,
-                  tag: item.file.encryptionTag,
-                  encryptedData: gridBuffer.toString('hex'),
-                });
-              } catch (tagDecErr) {
-                logger.error('Failed to decrypt gridFS media stream using stored IV and tag', {
-                  itemId: item._id,
-                  error: tagDecErr,
-                });
-                throw new AppError(500, 'DECRYPTION_FAILED', 'Failed to decrypt media payload.');
-              }
-            } else if (item.isEncrypted || item.file?.isEncrypted) {
-              logger.error('Media stream is marked encrypted but payload decryption failed', {
-                itemId: item._id,
-                error: parseDecErr,
-              });
-              throw new AppError(500, 'DECRYPTION_FAILED', 'Failed to decrypt media payload.');
-            } else {
-              // Plaintext file payload fallback
-              decrypted = gridBuffer;
-            }
+            decrypted = decryptGridFsPayload(gridBuffer, fileMetadata, item.file);
+          } catch (decryptionError) {
+            logger.error('Failed to decrypt GridFS media envelope', {
+              itemId: item._id,
+              error: decryptionError,
+            });
+            throw new AppError(500, 'DECRYPTION_FAILED', 'Failed to decrypt media payload.');
           }
 
           const size = decrypted.length;
@@ -962,7 +1048,7 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
   // 4. Fallback: TUS Upload Session Chunks
   const tusUploadId = (item.metadata as any)?.tusUploadId;
   if (tusUploadId) {
-    const tusBuffer = await getTusSessionBuffer(tusUploadId);
+    const tusBuffer = await getTusSessionBuffer(tusUploadId, resolvedUserId);
     if (tusBuffer && tusBuffer.length > 0) {
       const size = tusBuffer.length;
       res.setHeader('Accept-Ranges', 'bytes');
@@ -1027,15 +1113,30 @@ export const logPlaybackEvent = async (req: express.Request, res: express.Respon
   const username = (req as any).user?.username;
   if (!username) throw AppError.unauthorized('Username required for isolated telemetry');
 
-  const DynamicTelemetryModel = getTelemetryModel(username);
-  await DynamicTelemetryModel.create({
-    userId,
-    itemId,
-    event,
-    metadata,
-    userAgent: req.get('user-agent'),
-    ip: getClientIp(req),
-  });
+  try {
+    const DynamicTelemetryModel = getTelemetryModel(username);
+    await DynamicTelemetryModel.create({
+      userId,
+      itemId,
+      event,
+      metadata,
+      userAgent: req.get('user-agent'),
+      ip: getClientIp(req),
+    });
+  } catch (error) {
+    // Playback telemetry is non-critical. Atlas interruptions must never
+    // terminate the request or interfere with the media element.
+    logger.warn('Playback telemetry was not recorded', {
+      itemId,
+      event,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(202).json({
+      success: true,
+      data: { accepted: false },
+      message: 'Playback telemetry deferred',
+    });
+  }
 
   return sendSuccess(res, null, 'Telemetry recorded');
 };

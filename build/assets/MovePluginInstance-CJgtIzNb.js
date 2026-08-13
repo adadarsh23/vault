@@ -1,0 +1,1 @@
+import{a as e}from"./particles-BZVteZRp.js";export{e as MovePluginInstance};

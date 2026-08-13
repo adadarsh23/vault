@@ -16,19 +16,10 @@ import {
   PictureInPicture2,
   FlipHorizontal2,
   ChevronDown,
-  ExternalLink,
-  ShieldCheck,
-  Sidebar,
-  X,
-  Copy,
-  Check,
-  FileVideo,
-  Info,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
-import { getAuthHeaders } from '../../lib/sync';
-import { resolveApiBaseUrl } from '../../lib/apiBaseUrl';
+import apiClient from '../../api/apiClient';
 import { logger } from '../../lib/logger';
 import { toast } from 'sonner';
 import Hls from 'hls.js';
@@ -309,6 +300,7 @@ const CustomSlider = ({
 
 const VideoPlayer = ({
   src,
+  mimeType,
   itemId,
   title,
   className,
@@ -325,6 +317,7 @@ const VideoPlayer = ({
   allowedMediaDomains = [],
 }: {
   src: string;
+  mimeType?: string;
   itemId?: string;
   title?: string;
   className?: string;
@@ -377,6 +370,7 @@ const VideoPlayer = ({
     droppedFrames: number;
   }>({ level: -1, bufferAhead: 0, droppedFrames: 0 });
   const lastResumeSaveAt = useRef(0);
+  const lastBufferStartAt = useRef(0);
   const resumeKey = useMemo(() => `vault:video:resume:${itemId ?? src}`, [itemId, src]);
   const isSourceAllowed = useMemo(
     () => isAllowedMediaUrl(src, allowedMediaDomains),
@@ -415,20 +409,14 @@ const VideoPlayer = ({
     async (event: string, metadata: any = {}) => {
       if (!itemId) return;
       try {
-        const apiBase = resolveApiBaseUrl();
         const safeMetadata = sanitizeTelemetryMetadata(metadata);
-        fetch(`${apiBase}/api/vault/media/events`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders(),
-          },
-          body: JSON.stringify({ itemId, event, metadata: safeMetadata }),
-        }).catch((error) => {
-          logger.warn('Telemetry delivery failed', { event, itemId, error });
+        await apiClient.post('/vault/media/events', {
+          itemId,
+          event,
+          metadata: safeMetadata,
         });
       } catch (error) {
-        logger.warn('Failed to schedule telemetry delivery', {
+        logger.warn('Telemetry delivery failed', {
           event,
           itemId,
           error: sanitizeTelemetryMetadata(error),
@@ -757,29 +745,15 @@ const VideoPlayer = ({
 
   const handleWaiting = () => {
     setIsBuffering(true);
-    logEvent('buffer_start', { time: videoRef.current?.currentTime });
-    //   const now = Date.now()
-    //   if (
-    //     lastBufferEventRef.current.type !== 'start' ||
-    //     now - lastBufferEventRef.current.at > 1200
-    //   ) {
-    //     lastBufferEventRef.current = { type: 'start', at: now }
-    //     logEvent('buffer_start', { time: videoRef.current?.currentTime })
-    //   }
-    // }
+    const now = Date.now();
+    if (now - lastBufferStartAt.current < 1200) return;
+    lastBufferStartAt.current = now;
+    void logEvent('buffer_start', { time: videoRef.current?.currentTime });
   };
   const handlePlaying = () => {
     setIsBuffering(false);
     setIsVideoReady(true);
-    logEvent('buffer_end', { time: videoRef.current?.currentTime });
-    // const now = Date.now()
-    // if (
-    //   lastBufferEventRef.current.type !== 'end' ||
-    //   now - lastBufferEventRef.current.at > 1200
-    // ) {
-    //   lastBufferEventRef.current = { type: 'end', at: now }
-    //   logEvent('buffer_end', { time: videoRef.current?.currentTime })
-    // }
+    void logEvent('buffer_end', { time: videoRef.current?.currentTime });
     // Also show badge when resuming from buffering
     setShowPlayingBadge(true);
     if (badgeTimer.current) clearTimeout(badgeTimer.current);
@@ -1145,8 +1119,8 @@ const VideoPlayer = ({
         onEnded={handleEnded}
         onError={handleError}
       >
-        {!src.includes('.m3u8') && getMimeTypeFromUrl(src) ? (
-          <source src={src} type={getMimeTypeFromUrl(src)} />
+        {!src.includes('.m3u8') && (mimeType || getMimeTypeFromUrl(src)) ? (
+          <source src={src} type={mimeType || getMimeTypeFromUrl(src)} />
         ) : null}
       </video>
 

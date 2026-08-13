@@ -1,7 +1,6 @@
 import { decryptToFile, detectMimeTypeFromBytes, base64ToUint8Array } from './encryption';
 import { VaultItem } from './storage';
 import { resolveApiBaseUrl } from './apiBaseUrl';
-import { getDecryptStreamResponseUrl } from './streamDecryption';
 import { getAuthToken } from './auth-session';
 import { resolveRuntimeOrigin } from './sync/core';
 
@@ -337,12 +336,21 @@ export const getVaultItemPreviewUrl = async (
   mimeType?: string,
   rsaPrivateKey?: CryptoKeyPair['privateKey'] | null
 ): Promise<string | null> => {
-  const directUrl = getVaultItemFileUrl(item);
+  const metadata = normalizeMetadata(item.metadata);
+  // Cloud snapshots replace large E2EE payloads with a cloud:// reference.
+  // That object is encrypted in GridFS and cannot be played by the browser
+  // until it is fetched and decrypted locally.
+  const isClientEncrypted = metadata?.isE2EE === true || metadata?.clientEncrypted === true;
+  const directUrl = isClientEncrypted ? null : getVaultItemFileUrl(item);
   if (directUrl) {
     return directUrl;
   }
 
-  if (typeof item.content === 'string' && !isLikelyEncryptedString(item.content)) {
+  if (
+    !isClientEncrypted &&
+    typeof item.content === 'string' &&
+    !isLikelyEncryptedString(item.content)
+  ) {
     return looksLikeServerPath(item.content) ||
       isAbsoluteUrl(item.content) ||
       isBlobOrDataUrl(item.content)
@@ -370,32 +378,6 @@ export const getVaultItemPreviewUrl = async (
       item.content instanceof Uint8Array ? item.content : base64ToUint8Array(item.content);
 
     if (rawBytes.length > 0) {
-      // Check if payload is an E2EE bundle (starts with a 2-byte length for RSA encrypted key)
-      const isE2EEBundle =
-        rawBytes.length > 2 &&
-        Boolean(rsaPrivateKey) &&
-        (() => {
-          const view = new DataView(rawBytes.buffer, rawBytes.byteOffset, rawBytes.byteLength);
-          const encKeyLen = view.getUint16(0);
-          return (
-            encKeyLen > 0 && encKeyLen < rawBytes.length && (encKeyLen === 256 || encKeyLen === 512)
-          );
-        })();
-
-      if (!isE2EEBundle) {
-        try {
-          const blobInput = new Blob([rawBytes as unknown as BlobPart]);
-          const streamedUrl = await getDecryptStreamResponseUrl(
-            blobInput,
-            masterKey,
-            effectiveMimeType || 'application/octet-stream'
-          );
-          if (streamedUrl) return streamedUrl;
-        } catch {
-          // Fallback to standard decryptToFile if streaming decryption fails
-        }
-      }
-
       try {
         const decryptedUrl = await decryptToFile(
           rawBytes,
@@ -418,20 +400,12 @@ export const getVaultItemPreviewUrl = async (
     if (response.ok) {
       const encryptedBlob = await response.blob();
       if (encryptedBlob.size > 0) {
-        try {
-          return await getDecryptStreamResponseUrl(
-            encryptedBlob,
-            masterKey,
-            effectiveMimeType || 'application/octet-stream'
-          );
-        } catch {
-          return await decryptToFile(
-            new Uint8Array(await encryptedBlob.arrayBuffer()),
-            masterKey,
-            effectiveMimeType,
-            rsaPrivateKey
-          );
-        }
+        return await decryptToFile(
+          new Uint8Array(await encryptedBlob.arrayBuffer()),
+          masterKey,
+          effectiveMimeType,
+          rsaPrivateKey
+        );
       }
     }
   } catch {
@@ -463,6 +437,8 @@ export const getVaultItemPreviewUrl = async (
 
 /** True when the item points at a server-side file (disk / signed URL pipeline). E2EE-only items return false. */
 export const vaultItemHasServerFileReference = (item: VaultItem): boolean =>
+  normalizeMetadata(item.metadata)?.isE2EE !== true &&
+  normalizeMetadata(item.metadata)?.clientEncrypted !== true &&
   getVaultItemFileUrl(item) !== null;
 
 /**

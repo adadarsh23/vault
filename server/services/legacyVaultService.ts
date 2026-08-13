@@ -734,6 +734,21 @@ export const listScopedVaultItemsByUsername = async (userId: string, username: s
       encoding = 'file-reference';
     }
 
+    const storedMetadata =
+      item.metadata && typeof item.metadata === 'object'
+        ? { ...(item.metadata as Record<string, unknown>) }
+        : {};
+    // Binary upserts from the browser contain client-side encrypted bytes.
+    // Server-side multipart uploads have encryptionIv/encryptionTag on the
+    // file record and are decrypted by the access endpoint instead.
+    if (
+      item.encoding === 'gridfs-binary' &&
+      !item.file?.encryptionIv &&
+      !item.file?.encryptionTag
+    ) {
+      storedMetadata.clientEncrypted = true;
+    }
+
     return {
       itemId: item.itemId,
       payload,
@@ -742,7 +757,7 @@ export const listScopedVaultItemsByUsername = async (userId: string, username: s
       category: item.category,
       folder: item.folder ?? null,
       title: item.title,
-      metadata: item.metadata,
+      metadata: storedMetadata,
       updatedAt: item.updatedAt,
       isPinned: item.isPinned ?? false,
       pinnedAt: item.pinnedAt ?? null,

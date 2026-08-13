@@ -6,6 +6,7 @@ import { AppError } from '../utils/appError.ts';
 import { logger } from '../utils/logger.ts';
 import { getClientIp } from '../utils/requestIp.ts';
 import { isAllowedCorsOrigin } from '../utils/cors.ts';
+import { addBreadcrumb, captureException } from '../lib/sentry.js';
 
 export const errorHandler = (
   err: any,

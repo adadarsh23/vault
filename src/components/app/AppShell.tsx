@@ -814,7 +814,7 @@ export function AppShell({
             <img
               src={headerProfilePreview.src}
               alt={headerProfilePreview.alt}
-              loading="lazy"
+              loading="eager"
               decoding="async"
               className="max-h-[85vh] w-full rounded-2xl object-contain"
             />

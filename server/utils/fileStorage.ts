@@ -360,6 +360,17 @@ const isLikelyVideoBinary = (buffer: Buffer): boolean => {
   return false;
 };
 
+const isLikelyAudioBinary = (buffer: Buffer): boolean => {
+  if (!buffer.length) return false;
+  if (containsAsciiAt(buffer, 0, 'ID3')) return true;
+  if (buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0) return true;
+  if (containsAsciiAt(buffer, 0, 'RIFF') && containsAsciiAt(buffer, 8, 'WAVE')) return true;
+  if (containsAsciiAt(buffer, 0, 'OggS')) return true;
+  if (containsAsciiAt(buffer, 0, 'fLaC')) return true;
+  if (containsAsciiAt(buffer, 4, 'ftyp')) return true;
+  return false;
+};
+
 export const assertFileContentMatchesCategory = (
   category: string,
   fileName: string,
@@ -383,6 +394,15 @@ export const assertFileContentMatchesCategory = (
     const contentAllowed = isLikelyVideoBinary(buffer);
     if (!contentAllowed || (!extensionAllowed && !mimeAllowed)) {
       throw new AppError(400, 'INVALID_FILE_CONTENT', 'Video file content validation failed.');
+    }
+    return;
+  }
+  if (category === 'audio') {
+    const extensionAllowed = audioExtensions.has(extension);
+    const mimeAllowed = normalizedMime.startsWith('audio/') || normalizedMime === 'application/ogg';
+    const contentAllowed = isLikelyAudioBinary(buffer);
+    if (!contentAllowed || (!extensionAllowed && !mimeAllowed)) {
+      throw new AppError(400, 'INVALID_FILE_CONTENT', 'Audio file content validation failed.');
     }
   }
 };

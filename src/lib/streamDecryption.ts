@@ -110,12 +110,6 @@ export function createChunkedDecryptTransformStream(
       accumulatedBuffer = new Uint8Array(0);
       iv = null;
     },
-
-    cancel() {
-      accumulatedBuffer.fill(0);
-      accumulatedBuffer = new Uint8Array(0);
-      iv = null;
-    },
   });
 }
 

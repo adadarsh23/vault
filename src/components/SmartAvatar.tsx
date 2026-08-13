@@ -216,7 +216,7 @@ export const SmartAvatar: React.FC<SmartAvatarProps> = React.memo(
             src={cleanSrc}
             alt={alt}
             decoding="async"
-            loading="lazy"
+            loading={fetchPriority === 'high' ? 'eager' : 'lazy'}
             fetchPriority={fetchPriority}
             draggable={false}
             referrerPolicy="no-referrer"

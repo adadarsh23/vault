@@ -18,7 +18,14 @@ const getEnvValue = (...keys: string[]): string | undefined => {
 };
 
 const primaryUri = getEnvValue('MONGODB_URI', 'MONGODB_URL');
-const fallbackUri = getEnvValue('MONGODB_URI_FALLBACK', 'MONGODB_URL_FALLBACK');
+// A direct Atlas URI must use mongodb:// with the three replica-set hosts.
+// mongodb+srv:// is not a fallback when SRV DNS is unavailable.
+const directFallbackUri = getEnvValue(
+  'MONGODB_URI_DIRECT',
+  'MONGODB_URI_FALLBACK',
+  'MONGODB_URL_FALLBACK'
+);
+const fallbackUri = directFallbackUri?.startsWith('mongodb://') ? directFallbackUri : undefined;
 const retryDnsServers = process.env.MONGODB_DNS_SERVERS?.split(',')
   .map((value) => value.trim())
   .filter(Boolean) || ['1.1.1.1', '8.8.8.8'];
@@ -103,13 +110,20 @@ const buildUriCandidates = (): string[] => {
     .filter((value): value is string => Boolean(value))
     .map((value) => value.trim());
 
-  // Add local development fallback if not in production
-  if (process.env.NODE_ENV !== 'production') {
+  // Do not silently downgrade cloud vault storage to a local database.
+  // Local fallback is explicitly opt-in for development only.
+  if (process.env.MONGODB_ALLOW_LOCAL_FALLBACK === 'true') {
     candidates.push(`mongodb://127.0.0.1:27017/${MONGODB_DB_NAME}`);
   }
 
   return [...new Set(candidates)];
 };
+
+if (directFallbackUri?.startsWith('mongodb+srv://')) {
+  console.warn(
+    'Ignoring MONGODB_URI_FALLBACK because it is mongodb+srv://. Configure MONGODB_URI_DIRECT with a direct Atlas replica-set URI.'
+  );
+}
 
 export const isStorageFullError = (error: unknown): boolean => {
   const candidate = error as {
@@ -181,7 +195,14 @@ if (!mongoose.connection.listeners('error').length) {
 
 export const connectToMongo = async (): Promise<typeof mongoose> => {
   if (mongoose.connection.readyState === 1) {
-    return mongoose;
+    try {
+      await mongoose.connection.db?.admin().ping();
+      return mongoose;
+    } catch {
+      // A stale Atlas monitor can leave Mongoose in readyState=1 while the
+      // socket is already closed. Force the normal candidate/retry flow.
+      await mongoose.disconnect().catch(() => undefined);
+    }
   }
 
   if (!connectionPromise) {
@@ -217,13 +238,13 @@ export const connectToMongo = async (): Promise<typeof mongoose> => {
 
       if (isSrvResolutionError(lastError)) {
         throw new Error(
-          `MongoDB SRV lookup failed (querySrv/ECONNREFUSED). This usually means your DNS is blocking Atlas lookups. Configure MONGODB_URI_FALLBACK with a direct connection string or use a local instance: mongodb://127.0.0.1:27017/${MONGODB_DB_NAME}.`
+          `MongoDB Atlas SRV lookup failed. Configure MONGODB_URI_DIRECT with a direct Atlas replica-set URI using mongodb://, or repair DNS access to MongoDB Atlas. Local MongoDB fallback is disabled.`
         );
       }
 
       if (isServerSelectionError(lastError)) {
         throw new Error(
-          `Failed to connect to MongoDB Atlas. This is most likely because your current IP address is not whitelisted in your Atlas cluster configuration. Please visit https://www.mongodb.com/docs/atlas/security-whitelist/ to allow access from your current location, or ensure a local MongoDB instance is running at mongodb://127.0.0.1:27017/${MONGODB_DB_NAME}.`
+          `Failed to connect to MongoDB Atlas. Check Atlas Network Access/IP allowlisting and the configured direct or SRV Atlas URI. Local MongoDB fallback is disabled.`
         );
       }
 
