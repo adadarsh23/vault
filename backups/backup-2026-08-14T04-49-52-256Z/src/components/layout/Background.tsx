@@ -1,0 +1,258 @@
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
+import Particles, { ParticlesProvider } from '@tsparticles/react';
+import { loadSlim } from '@tsparticles/slim';
+import type { Engine, ISourceOptions } from '@tsparticles/engine';
+import { memo, useEffect, useMemo, useState } from 'react';
+
+const loadBackgroundParticles = async (engine: Engine) => {
+  await loadSlim(engine);
+};
+
+const getViewportCenter = () => {
+  if (typeof window === 'undefined') {
+    return {
+      x: 0,
+      y: 0,
+    };
+  }
+
+  return {
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2,
+  };
+};
+
+function BackgroundComponent() {
+  const shouldReduceMotion = useReducedMotion();
+
+  const [particlesReady, setParticlesReady] = useState(false);
+  const [enableFX, setEnableFX] = useState(true);
+  const [viewportCenter, setViewportCenter] = useState(getViewportCenter);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const enableParticles = () => {
+      if (cancelled) return;
+
+      const isAutomatedTest =
+        typeof navigator !== 'undefined' &&
+        (navigator.webdriver ||
+          /Playwright|HeadlessChrome|PhantomJS|jsdom/i.test(navigator.userAgent));
+
+      if (!isAutomatedTest) {
+        setParticlesReady(true);
+      }
+    };
+
+    if (typeof window === 'undefined') return;
+
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    if (idleWindow.requestIdleCallback) {
+      const id = idleWindow.requestIdleCallback(() => {
+        enableParticles();
+      });
+
+      return () => {
+        cancelled = true;
+
+        if (idleWindow.cancelIdleCallback) {
+          idleWindow.cancelIdleCallback(id);
+        }
+      };
+    }
+
+    const timer = window.setTimeout(() => {
+      enableParticles();
+    }, 1200);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const lowPower = window.innerWidth < 640 || navigator.hardwareConcurrency <= 2;
+
+    setEnableFX(!shouldReduceMotion && !lowPower);
+  }, [shouldReduceMotion]);
+
+  const mouseX = useMotionValue(viewportCenter.x);
+  const mouseY = useMotionValue(viewportCenter.y);
+
+  const smoothX = useSpring(mouseX, {
+    stiffness: 80,
+    damping: 20,
+  });
+
+  const smoothY = useSpring(mouseY, {
+    stiffness: 80,
+    damping: 20,
+  });
+
+  const parallaxX = useTransform(smoothX, (x) => (x - viewportCenter.x) * 0.02);
+
+  const parallaxY = useTransform(smoothY, (y) => (y - viewportCenter.y) * 0.02);
+
+  useEffect(() => {
+    if (!enableFX || shouldReduceMotion || typeof window === 'undefined') {
+      return;
+    }
+
+    const syncViewport = () => {
+      const center = getViewportCenter();
+
+      setViewportCenter(center);
+      mouseX.set(center.x);
+      mouseY.set(center.y);
+    };
+
+    const handleMouseMove = (event: MouseEvent) => {
+      mouseX.set(event.clientX);
+      mouseY.set(event.clientY);
+    };
+
+    syncViewport();
+    window.addEventListener('resize', syncViewport);
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('resize', syncViewport);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [enableFX, mouseX, mouseY, shouldReduceMotion]);
+
+  const particleOptions = useMemo<ISourceOptions>(
+    () => ({
+      fullScreen: {
+        enable: false,
+      },
+
+      background: {
+        color: 'transparent',
+      },
+
+      fpsLimit: 60,
+
+      detectRetina: true,
+
+      particles: {
+        number: {
+          value: enableFX ? 40 : 15,
+        },
+
+        color: {
+          value: '#ffffff',
+        },
+
+        opacity: {
+          value: enableFX ? 0.2 : 0.1,
+        },
+
+        size: {
+          value: {
+            min: 1,
+            max: 3,
+          },
+        },
+
+        links: {
+          enable: false,
+        },
+
+        move: {
+          enable: true,
+          speed: enableFX ? 0.4 : 0.2,
+          outModes: {
+            default: 'out',
+          },
+        },
+      },
+    }),
+    [enableFX]
+  );
+
+  return (
+    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+      <motion.div
+        className="absolute inset-0 opacity-70 blur-[100px]"
+        animate={{
+          background: [
+            'radial-gradient(circle at 10% 15%, rgba(99,102,241,0.35), transparent 55%)',
+            'radial-gradient(circle at 85% 20%, rgba(236,72,153,0.35), transparent 60%)',
+            'radial-gradient(circle at 20% 80%, rgba(34,197,94,0.30), transparent 60%)',
+            'radial-gradient(circle at 80% 75%, rgba(249,115,22,0.30), transparent 60%)',
+            'radial-gradient(circle at 50% 20%, rgba(59,130,246,0.30), transparent 55%)',
+            'radial-gradient(circle at 40% 60%, rgba(168,85,247,0.30), transparent 60%)',
+            'radial-gradient(circle at 65% 45%, rgba(6,182,212,0.30), transparent 60%)',
+            'radial-gradient(circle at 30% 40%, rgba(250,204,21,0.28), transparent 55%)',
+            'radial-gradient(circle at 70% 10%, rgba(244,63,94,0.28), transparent 60%)',
+            'radial-gradient(circle at 5% 60%, rgba(20,184,166,0.28), transparent 55%)',
+            'radial-gradient(circle at 95% 50%, rgba(251,146,60,0.28), transparent 60%)',
+            'radial-gradient(circle at 50% 95%, rgba(129,140,248,0.25), transparent 65%)',
+          ],
+        }}
+        transition={{
+          duration: shouldReduceMotion ? 0 : 18,
+          repeat: Infinity,
+          ease: 'linear',
+        }}
+      />
+
+      <motion.div
+        style={{
+          x: parallaxX,
+          y: parallaxY,
+        }}
+        className="absolute -top-[20%] -left-[20%] h-[60%] w-[60%] rounded-full bg-white/10 blur-[120px]"
+      />
+
+      {enableFX && (
+        <motion.div
+          className="absolute bottom-[10%] right-[10%] h-[300px] w-[300px] bg-white/10 blur-[100px]"
+          animate={{
+            borderRadius: ['40% 60%', '60% 40%', '50% 50%', '40% 60%'],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+      )}
+
+      {particlesReady && (
+        <ParticlesProvider init={loadBackgroundParticles}>
+          <Particles
+            id="background-particles"
+            className="absolute inset-0"
+            options={particleOptions}
+          />
+        </ParticlesProvider>
+      )}
+
+      {!shouldReduceMotion && (
+        <motion.div
+          className="absolute h-[800px] w-[800px] rounded-full opacity-30"
+          style={{
+            x: smoothX,
+            y: smoothY,
+            translateX: '-50%',
+            translateY: '-50%',
+          }}
+        >
+          <div className="h-full w-full bg-[radial-gradient(circle,rgba(255,255,255,0.15),transparent_70%)]" />
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+export const Background = memo(BackgroundComponent);

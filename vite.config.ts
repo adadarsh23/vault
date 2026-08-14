@@ -33,6 +33,53 @@ const toNumber = (value: string | undefined, fallback: number): number => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const parseSourcemap = (
+  value: string | undefined,
+  fallback: boolean | 'inline' | 'hidden'
+): boolean | 'inline' | 'hidden' => {
+  if (value == null || value.trim() === '') {
+    return fallback;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (['true', '1', 'yes', 'on'].includes(normalized)) {
+    return true;
+  }
+  if (['false', '0', 'no', 'off'].includes(normalized)) {
+    return false;
+  }
+  if (normalized === 'inline' || normalized === 'hidden') {
+    return normalized;
+  }
+
+  return fallback;
+};
+
+const parseMinify = (
+  value: string | undefined,
+  fallback: boolean | 'terser' | 'esbuild' | 'oxc'
+): boolean | 'terser' | 'esbuild' | 'oxc' => {
+  if (value == null || value.trim() === '') {
+    return fallback;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (['false', '0', 'no', 'off'].includes(normalized)) {
+    return false;
+  }
+  if (['true', '1', 'yes', 'on'].includes(normalized)) {
+    return true;
+  }
+  if (normalized === 'terser') {
+    return hasTerser ? 'terser' : 'oxc';
+  }
+  if (normalized === 'esbuild' || normalized === 'oxc') {
+    return normalized;
+  }
+
+  return fallback;
+};
+
 const resolveManualChunk = (id: string): string | undefined => {
   if (!id.includes('node_modules')) {
     return undefined;
@@ -231,19 +278,11 @@ export default defineConfig(({ mode, command }) => {
   const strictPort = toBoolean(env.VITE_STRICT_PORT, true);
   const shouldOpen = toBoolean(env.VITE_OPEN, false);
   const devApiTarget = env.VITE_DEV_API_BASE_URL?.trim() || 'http://127.0.0.1:4000';
-  const sourcemap =
-    env.VITE_BUILD_SOURCEMAP?.trim() ||
-    (() => {
-      if (!isProduction) {
-        return 'inline';
-      }
-
-      // In production, publish maps when Sentry/source-map diagnostics are enabled
-      // so first-party bundles remain debuggable in audits.
-      return toBoolean(env.VITE_SENTRY_SOURCEMAPS, false) ? true : false;
-    })();
+  const defaultSourcemap = !isProduction ? 'inline' : toBoolean(env.VITE_SENTRY_SOURCEMAPS, false);
+  const sourcemap = parseSourcemap(env.VITE_BUILD_SOURCEMAP, defaultSourcemap);
   const chunkSizeWarningLimit = toNumber(env.VITE_CHUNK_SIZE_WARNING_LIMIT, 3000);
-  const minify = env.VITE_BUILD_MINIFY?.trim() || (isProduction && hasTerser ? 'terser' : 'oxc');
+  const defaultMinify = isProduction && hasTerser ? 'terser' : 'oxc';
+  const minify = parseMinify(env.VITE_BUILD_MINIFY, defaultMinify);
   const fallbackPublicUrl = 'https://localhost';
 
   const normalizedPublicUrl = (() => {

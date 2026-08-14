@@ -132,6 +132,7 @@ export const installCsrfProtection = (app: express.Express): void => {
       (csrfError as any).status = 403;
       (csrfError as any).statusCode = 403;
       (csrfError as any).code = 'CSRF_TOKEN_INVALID';
+      (csrfError as any).isOperational = true;
       return next(csrfError);
     }
 

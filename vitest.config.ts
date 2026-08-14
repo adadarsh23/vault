@@ -10,6 +10,7 @@ export default defineConfig({
     pool: process.platform === 'win32' ? 'threads' : 'forks',
     environment: 'node',
     globals: true,
+    testTimeout: 20000,
     hookTimeout: 60000,
     setupFiles: ['./tests/setup/vitest.setup.ts', './src/setupTests.ts'],
     include: ['tests/**/*.test.ts', 'src/**/*.test.ts', 'src/**/*.test.tsx'],

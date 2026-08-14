@@ -14,7 +14,6 @@ const EXCLUDED_PREFIXES = [
   'coverage/',
   'lighthouse/',
   'logs/',
-  'playwright-report/',
   'test-results/',
   'node_modules/',
 ];

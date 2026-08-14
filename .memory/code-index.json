@@ -1,8 +1,8 @@
 {
   "version": 5,
   "schema": "code-memory-index/v5",
-  "generatedAt": "2026-08-13T13:51:59.823Z",
-  "startedAt": "2026-08-13T13:51:59.494Z",
+  "generatedAt": "2026-08-14T06:53:37.042Z",
+  "startedAt": "2026-08-14T06:53:36.598Z",
   "root": "C:\\Code\\vault",
   "options": {
     "maxFileSizeBytes": 1048576,
@@ -15,71 +15,71 @@
     "excludeDirectories": []
   },
   "totals": {
-    "filesScanned": 467,
-    "filesIndexed": 467,
+    "filesScanned": 463,
+    "filesIndexed": 463,
     "filesSkipped": 0,
-    "bytesIndexed": 6145521,
-    "linesIndexed": 153763,
-    "codeLines": 137705,
-    "commentLines": 3889,
-    "blankLines": 12169,
-    "symbolCount": 2692,
-    "importCount": 1812,
-    "exportCount": 1143,
-    "tagCount": 91
+    "bytesIndexed": 6193479,
+    "linesIndexed": 153940,
+    "codeLines": 137718,
+    "commentLines": 3869,
+    "blankLines": 12353,
+    "symbolCount": 2690,
+    "importCount": 1805,
+    "exportCount": 1136,
+    "tagCount": 97
   },
   "quality": {
     "commentDensity": 0.028,
-    "blankLineRatio": 0.079,
-    "todoFilesRatio": 0.126,
-    "avgSymbolsPerFile": 5.76,
-    "avgImportsPerFile": 3.88,
-    "avgRiskPerFile": 20.85
+    "blankLineRatio": 0.08,
+    "todoFilesRatio": 0.132,
+    "avgSymbolsPerFile": 5.81,
+    "avgImportsPerFile": 3.9,
+    "avgRiskPerFile": 21.07
   },
   "riskSummary": {
-    "critical": 10,
-    "high": 42,
+    "critical": 11,
+    "high": 43,
     "medium": 63,
-    "low": 352
+    "low": 346
   },
   "extensionStats": [
     {
       "extension": ".ts",
-      "files": 260,
-      "lines": 52033,
-      "bytes": 1548434,
-      "symbols": 1632,
-      "riskScore": 5092
+      "files": 248,
+      "lines": 51550,
+      "bytes": 1531830,
+      "symbols": 1625,
+      "riskScore": 4954
     },
     {
       "extension": ".tsx",
       "files": 145,
-      "lines": 54056,
-      "bytes": 2003142,
+      "lines": 54055,
+      "bytes": 2003141,
       "symbols": 858,
       "riskScore": 3433
     },
     {
-      "extension": ".md",
-      "files": 14,
-      "lines": 3100,
-      "bytes": 99708,
-      "symbols": 6,
-      "riskScore": 240
+      "extension": ".mjs",
+      "files": 20,
+      "lines": 2603,
+      "bytes": 87830,
+      "symbols": 87,
+      "riskScore": 364
     },
     {
-      "extension": ".mjs",
-      "files": 14,
-      "lines": 2189,
-      "bytes": 76325,
-      "symbols": 83,
-      "riskScore": 292
+      "extension": ".md",
+      "files": 16,
+      "lines": 4026,
+      "bytes": 140311,
+      "symbols": 7,
+      "riskScore": 324
     },
     {
       "extension": ".json",
       "files": 10,
-      "lines": 35931,
-      "bytes": 1571022,
+      "lines": 35284,
+      "bytes": 1573224,
       "symbols": 2,
       "riskScore": 235
     },
@@ -94,8 +94,8 @@
     {
       "extension": ".html",
       "files": 6,
-      "lines": 4974,
-      "bytes": 775365,
+      "lines": 4942,
+      "bytes": 785618,
       "symbols": 60,
       "riskScore": 185
     },
@@ -143,18 +143,22 @@
   "tagStats": [
     {
       "tag": "NOTE",
-      "count": 43
+      "count": 45
     },
     {
       "tag": "TODO",
-      "count": 34
+      "count": 36
     },
     {
       "tag": "OPTIMIZE",
-      "count": 7
+      "count": 8
     },
     {
       "tag": "HACK",
+      "count": 2
+    },
+    {
+      "tag": "REFACTOR",
       "count": 2
     },
     {
@@ -164,24 +168,20 @@
     {
       "tag": "BUG",
       "count": 2
-    },
-    {
-      "tag": "REFACTOR",
-      "count": 1
     }
   ],
   "importTypeStats": [
     {
       "kind": "relative",
-      "count": 1091
+      "count": 1081
     },
     {
       "kind": "package",
-      "count": 687
+      "count": 680
     },
     {
       "kind": "node_builtin",
-      "count": 34
+      "count": 44
     }
   ],
   "hotspots": {
@@ -190,11 +190,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 853331,
-        "hash": "694a0bec51b6c99e97623bd205eeadd809b8d3f07102ca2fb174412a5fe19950",
+        "bytes": 853520,
+        "hash": "726a9720920e539d523b913f1e6fd9aa2053e1c715485d5aa43d7d3f76bf7b9d",
         "lines": {
-          "total": 20006,
-          "code": 20006,
+          "total": 19674,
+          "code": 19674,
           "comments": 0,
           "blanks": 0
         },
@@ -220,19 +220,19 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 20036,
-        "updatedAt": "2026-08-07T11:25:28.068Z",
+        "complexityScore": 19704,
+        "updatedAt": "2026-08-14T06:51:42.660Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 579356,
-        "hash": "a40e4022101d966465feeafbfa2493a6e2dfaf64d15701cc02695004de095b3b",
+        "bytes": 579344,
+        "hash": "88484700231dd5e8c0ba9b9745e93b22787bd14236c4bc898c46ad444e60e6ab",
         "lines": {
-          "total": 12143,
-          "code": 12142,
+          "total": 11796,
+          "code": 11795,
           "comments": 0,
           "blanks": 1
         },
@@ -256,16 +256,16 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 12166,
-        "updatedAt": "2026-08-07T11:25:28.242Z",
+        "complexityScore": 11819,
+        "updatedAt": "2026-08-14T06:51:44.641Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 689842,
-        "hash": "2a09d86d32ff940fcc2863d09b361515afaa58dea509bfe5391f25e642018ccf",
+        "bytes": 701743,
+        "hash": "ac8373f426daa0b00f2fccb14e390805bcda4a5d63131648f109df10b0832c6b",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -354,15 +354,15 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-07T11:25:28.062Z",
+        "updatedAt": "2026-08-14T06:51:42.654Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/best-practices.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 64973,
-        "hash": "ee915cde67d6994aad3f033a7bae3fa4877005e532f1a18b9458ac85b4065c96",
+        "bytes": 65000,
+        "hash": "8aa7a1cffa4bebaa4ab5ffce510e4ef5d68feae680da67f55f5882f907b3d5b8",
         "lines": {
           "total": 1963,
           "code": 1962,
@@ -387,7 +387,7 @@
           "switchCount": 0
         },
         "complexityScore": 1962,
-        "updatedAt": "2026-08-07T11:25:28.242Z",
+        "updatedAt": "2026-08-14T06:51:44.646Z",
         "riskScore": 30
       },
       {
@@ -1909,7 +1909,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "be6ee41892756e80fddb9dd086b5ce8ee073ad77e2f941e3f0227389c089d38f",
+        "hash": "8a5a239073c30399342e663f94ef1c2831aa1ebadead210b3431d41326e025f8",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -1936,7 +1936,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-07T11:25:28.242Z",
+        "updatedAt": "2026-08-14T06:51:44.644Z",
         "riskScore": 30
       },
       {
@@ -4495,11 +4495,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 853331,
-        "hash": "694a0bec51b6c99e97623bd205eeadd809b8d3f07102ca2fb174412a5fe19950",
+        "bytes": 853520,
+        "hash": "726a9720920e539d523b913f1e6fd9aa2053e1c715485d5aa43d7d3f76bf7b9d",
         "lines": {
-          "total": 20006,
-          "code": 20006,
+          "total": 19674,
+          "code": 19674,
           "comments": 0,
           "blanks": 0
         },
@@ -4525,16 +4525,16 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 20036,
-        "updatedAt": "2026-08-07T11:25:28.068Z",
+        "complexityScore": 19704,
+        "updatedAt": "2026-08-14T06:51:42.660Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 689842,
-        "hash": "2a09d86d32ff940fcc2863d09b361515afaa58dea509bfe5391f25e642018ccf",
+        "bytes": 701743,
+        "hash": "ac8373f426daa0b00f2fccb14e390805bcda4a5d63131648f109df10b0832c6b",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -4623,18 +4623,18 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-07T11:25:28.062Z",
+        "updatedAt": "2026-08-14T06:51:42.654Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 579356,
-        "hash": "a40e4022101d966465feeafbfa2493a6e2dfaf64d15701cc02695004de095b3b",
+        "bytes": 579344,
+        "hash": "88484700231dd5e8c0ba9b9745e93b22787bd14236c4bc898c46ad444e60e6ab",
         "lines": {
-          "total": 12143,
-          "code": 12142,
+          "total": 11796,
+          "code": 11795,
           "comments": 0,
           "blanks": 1
         },
@@ -4658,16 +4658,16 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 12166,
-        "updatedAt": "2026-08-07T11:25:28.242Z",
+        "complexityScore": 11819,
+        "updatedAt": "2026-08-14T06:51:44.641Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/best-practices.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 64973,
-        "hash": "ee915cde67d6994aad3f033a7bae3fa4877005e532f1a18b9458ac85b4065c96",
+        "bytes": 65000,
+        "hash": "8aa7a1cffa4bebaa4ab5ffce510e4ef5d68feae680da67f55f5882f907b3d5b8",
         "lines": {
           "total": 1963,
           "code": 1962,
@@ -4692,7 +4692,7 @@
           "switchCount": 0
         },
         "complexityScore": 1962,
-        "updatedAt": "2026-08-07T11:25:28.242Z",
+        "updatedAt": "2026-08-14T06:51:44.646Z",
         "riskScore": 30
       },
       {
@@ -5298,7 +5298,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "be6ee41892756e80fddb9dd086b5ce8ee073ad77e2f941e3f0227389c089d38f",
+        "hash": "8a5a239073c30399342e663f94ef1c2831aa1ebadead210b3431d41326e025f8",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -5325,7 +5325,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-07T11:25:28.242Z",
+        "updatedAt": "2026-08-14T06:51:44.644Z",
         "riskScore": 30
       },
       {
@@ -7854,7 +7854,7 @@
           "switchCount": 0
         },
         "complexityScore": 755,
-        "updatedAt": "2026-08-07T11:25:28.242Z",
+        "updatedAt": "2026-08-14T06:51:44.644Z",
         "riskScore": 30
       },
       {
@@ -8130,6 +8130,46 @@
         "riskScore": 46
       },
       {
+        "path": "md/PRODUCTION_READY.md",
+        "extension": ".md",
+        "directory": "md",
+        "bytes": 33851,
+        "hash": "8e554419f25f700e79431a236dad4247f554fe8024d03b811c0860b58ac20681",
+        "lines": {
+          "total": 832,
+          "code": 667,
+          "comments": 0,
+          "blanks": 165
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "using"
+        ],
+        "symbolCount": 1,
+        "tags": [
+          "REFACTOR",
+          "OPTIMIZE",
+          "TODO",
+          "NOTE"
+        ],
+        "tagCount": 4,
+        "keywordCounts": {
+          "asyncCount": 1,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 15,
+          "switchCount": 0
+        },
+        "complexityScore": 721,
+        "updatedAt": "2026-08-14T04:51:25.636Z",
+        "riskScore": 58
+      },
+      {
         "path": "src/lib/auth-api.ts",
         "extension": ".ts",
         "directory": "src/lib",
@@ -8372,198 +8412,6 @@
         "complexityScore": 780,
         "updatedAt": "2026-08-03T02:58:00.897Z",
         "riskScore": 35
-      },
-      {
-        "path": "src/features/vault/MediaVault.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 31865,
-        "hash": "c15a6156f51a8337965cc220b837e8cfe33638722a05b77bc9d0f5dc37da5315",
-        "lines": {
-          "total": 920,
-          "code": 809,
-          "comments": 19,
-          "blanks": 92
-        },
-        "imports": [
-          "import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';",
-          "import { Video, Image as ImageIcon } from 'lucide-react';",
-          "import { toast } from 'sonner';",
-          "import { createSHA256 } from 'hash-wasm';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { encryptFileInWorker } from '../../lib/cryptoPrimitives';",
-          "import { useGlobalNavigationStore } from '../../store/globalNavigationStore';",
-          "import { logActivity } from '../../lib/activity';",
-          "import {",
-          "import { getVaultItemPreviewUrl } from '../../lib/filePreview';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
-          "import { useVaultItems } from '../../hooks/useVaultItems';",
-          "import { VaultLayout } from '../../components/layout/VaultLayout';",
-          "import { VaultItem } from '../../lib/storage';",
-          "import { LiveCaptureModal } from './components/LiveCaptureModal';",
-          "import { vaultApi } from '../../api/vaultApi';",
-          "import { compressFileInWorker, generateBlurhashInWorker } from '../../lib/mediaWorker';",
-          "import {",
-          "import { MediaCard } from './components/MediaVault/MediaCard';",
-          "import { MediaPagination } from './components/MediaVault/MediaPagination';",
-          "import { MediaPreview } from './components/MediaVault/MediaPreview';"
-        ],
-        "exports": [
-          "export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "lucide-react",
-          "sonner",
-          "hash-wasm",
-          "../../store/vaultStore",
-          "../../lib/cryptoPrimitives",
-          "../../store/globalNavigationStore",
-          "../../lib/activity",
-          "../../lib/filePreview",
-          "../../hooks/useVaultFolders",
-          "../../hooks/useVaultItems",
-          "../../components/layout/VaultLayout",
-          "../../lib/storage",
-          "./components/LiveCaptureModal",
-          "../../api/vaultApi",
-          "../../lib/mediaWorker",
-          "./components/MediaVault/MediaCard",
-          "./components/MediaVault/MediaPagination",
-          "./components/MediaVault/MediaPreview"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "lucide-react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "hash-wasm",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../store/globalNavigationStore",
-            "kind": "relative",
-            "target": "src/store/globalNavigationStore"
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/filePreview",
-            "kind": "relative",
-            "target": "src/lib/filePreview"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          },
-          {
-            "specifier": "../../hooks/useVaultItems",
-            "kind": "relative",
-            "target": "src/hooks/useVaultItems"
-          },
-          {
-            "specifier": "../../components/layout/VaultLayout",
-            "kind": "relative",
-            "target": "src/components/layout/VaultLayout"
-          },
-          {
-            "specifier": "../../lib/storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "./components/LiveCaptureModal",
-            "kind": "relative",
-            "target": "src/features/vault/components/LiveCaptureModal"
-          },
-          {
-            "specifier": "../../api/vaultApi",
-            "kind": "relative",
-            "target": "src/api/vaultApi"
-          },
-          {
-            "specifier": "../../lib/mediaWorker",
-            "kind": "relative",
-            "target": "src/lib/mediaWorker"
-          },
-          {
-            "specifier": "./components/MediaVault/MediaCard",
-            "kind": "relative",
-            "target": "src/features/vault/components/MediaVault/MediaCard"
-          },
-          {
-            "specifier": "./components/MediaVault/MediaPagination",
-            "kind": "relative",
-            "target": "src/features/vault/components/MediaVault/MediaPagination"
-          },
-          {
-            "specifier": "./components/MediaVault/MediaPreview",
-            "kind": "relative",
-            "target": "src/features/vault/components/MediaVault/MediaPreview"
-          }
-        ],
-        "symbols": [
-          "FileWithWebkitPath",
-          "readTopLevelFolderFromWebkitPath",
-          "webkitPath",
-          "toPositiveIntOrFallback",
-          "MediaVault",
-          "chunkArrayBuffer",
-          "timeout",
-          "isSupportedMediaFile",
-          "onTouchStart",
-          "onTouchMove",
-          "onTouchEnd",
-          "handleKeyDown",
-          "handleUpload",
-          "handleUploadFiles",
-          "multipartData",
-          "updateProgress",
-          "partWorker",
-          "handleDownload"
-        ],
-        "symbolCount": 18,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 7,
-          "awaitCount": 26,
-          "tryCount": 12,
-          "catchCount": 8,
-          "throwCount": 7,
-          "ifCount": 60,
-          "switchCount": 0
-        },
-        "complexityScore": 974,
-        "updatedAt": "2026-08-13T10:37:52.136Z",
-        "riskScore": 52
       }
     ],
     "mostSymbols": [
@@ -8845,8 +8693,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 689842,
-        "hash": "2a09d86d32ff940fcc2863d09b361515afaa58dea509bfe5391f25e642018ccf",
+        "bytes": 701743,
+        "hash": "ac8373f426daa0b00f2fccb14e390805bcda4a5d63131648f109df10b0832c6b",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -8935,7 +8783,7 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-07T11:25:28.062Z",
+        "updatedAt": "2026-08-14T06:51:42.654Z",
         "riskScore": 68
       },
       {
@@ -12328,7 +12176,7 @@
           "switchCount": 0
         },
         "complexityScore": 393,
-        "updatedAt": "2026-08-01T12:44:30.975Z",
+        "updatedAt": "2026-08-14T05:46:16.136Z",
         "riskScore": 33
       },
       {
@@ -12614,11 +12462,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 853331,
-        "hash": "694a0bec51b6c99e97623bd205eeadd809b8d3f07102ca2fb174412a5fe19950",
+        "bytes": 853520,
+        "hash": "726a9720920e539d523b913f1e6fd9aa2053e1c715485d5aa43d7d3f76bf7b9d",
         "lines": {
-          "total": 20006,
-          "code": 20006,
+          "total": 19674,
+          "code": 19674,
           "comments": 0,
           "blanks": 0
         },
@@ -12644,19 +12492,19 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 20036,
-        "updatedAt": "2026-08-07T11:25:28.068Z",
+        "complexityScore": 19704,
+        "updatedAt": "2026-08-14T06:51:42.660Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 579356,
-        "hash": "a40e4022101d966465feeafbfa2493a6e2dfaf64d15701cc02695004de095b3b",
+        "bytes": 579344,
+        "hash": "88484700231dd5e8c0ba9b9745e93b22787bd14236c4bc898c46ad444e60e6ab",
         "lines": {
-          "total": 12143,
-          "code": 12142,
+          "total": 11796,
+          "code": 11795,
           "comments": 0,
           "blanks": 1
         },
@@ -12680,16 +12528,16 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 12166,
-        "updatedAt": "2026-08-07T11:25:28.242Z",
+        "complexityScore": 11819,
+        "updatedAt": "2026-08-14T06:51:44.641Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 689842,
-        "hash": "2a09d86d32ff940fcc2863d09b361515afaa58dea509bfe5391f25e642018ccf",
+        "bytes": 701743,
+        "hash": "ac8373f426daa0b00f2fccb14e390805bcda4a5d63131648f109df10b0832c6b",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -12778,15 +12626,15 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-07T11:25:28.062Z",
+        "updatedAt": "2026-08-14T06:51:42.654Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/best-practices.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 64973,
-        "hash": "ee915cde67d6994aad3f033a7bae3fa4877005e532f1a18b9458ac85b4065c96",
+        "bytes": 65000,
+        "hash": "8aa7a1cffa4bebaa4ab5ffce510e4ef5d68feae680da67f55f5882f907b3d5b8",
         "lines": {
           "total": 1963,
           "code": 1962,
@@ -12811,7 +12659,7 @@
           "switchCount": 0
         },
         "complexityScore": 1962,
-        "updatedAt": "2026-08-07T11:25:28.242Z",
+        "updatedAt": "2026-08-14T06:51:44.646Z",
         "riskScore": 30
       },
       {
@@ -14545,7 +14393,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "be6ee41892756e80fddb9dd086b5ce8ee073ad77e2f941e3f0227389c089d38f",
+        "hash": "8a5a239073c30399342e663f94ef1c2831aa1ebadead210b3431d41326e025f8",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -14572,7 +14420,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-07T11:25:28.242Z",
+        "updatedAt": "2026-08-14T06:51:44.644Z",
         "riskScore": 30
       },
       {
@@ -22310,11 +22158,11 @@
         "path": "scripts/code-memory-index/constants.mjs",
         "extension": ".mjs",
         "directory": "scripts/code-memory-index",
-        "bytes": 1734,
-        "hash": "a780d57b80003250f7cdf2c04debec34f387b563526b2f5bf1c887e839fca70c",
+        "bytes": 1711,
+        "hash": "37bc1ef0c3726e5a59e344c379ef24cacef6f718f7317361ca0a69f10008b8bf",
         "lines": {
-          "total": 77,
-          "code": 73,
+          "total": 76,
+          "code": 72,
           "comments": 0,
           "blanks": 4
         },
@@ -22356,16 +22204,56 @@
           "ifCount": 0,
           "switchCount": 0
         },
-        "complexityScore": 157,
-        "updatedAt": "2026-08-01T12:44:25.040Z",
+        "complexityScore": 156,
+        "updatedAt": "2026-08-14T04:58:26.967Z",
         "riskScore": 67
+      },
+      {
+        "path": "md/PRODUCTION_READY.md",
+        "extension": ".md",
+        "directory": "md",
+        "bytes": 33851,
+        "hash": "8e554419f25f700e79431a236dad4247f554fe8024d03b811c0860b58ac20681",
+        "lines": {
+          "total": 832,
+          "code": 667,
+          "comments": 0,
+          "blanks": 165
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "using"
+        ],
+        "symbolCount": 1,
+        "tags": [
+          "REFACTOR",
+          "OPTIMIZE",
+          "TODO",
+          "NOTE"
+        ],
+        "tagCount": 4,
+        "keywordCounts": {
+          "asyncCount": 1,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 15,
+          "switchCount": 0
+        },
+        "complexityScore": 721,
+        "updatedAt": "2026-08-14T04:51:25.636Z",
+        "riskScore": 58
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 689842,
-        "hash": "2a09d86d32ff940fcc2863d09b361515afaa58dea509bfe5391f25e642018ccf",
+        "bytes": 701743,
+        "hash": "ac8373f426daa0b00f2fccb14e390805bcda4a5d63131648f109df10b0832c6b",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -22454,18 +22342,18 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-07T11:25:28.062Z",
+        "updatedAt": "2026-08-14T06:51:42.654Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 579356,
-        "hash": "a40e4022101d966465feeafbfa2493a6e2dfaf64d15701cc02695004de095b3b",
+        "bytes": 579344,
+        "hash": "88484700231dd5e8c0ba9b9745e93b22787bd14236c4bc898c46ad444e60e6ab",
         "lines": {
-          "total": 12143,
-          "code": 12142,
+          "total": 11796,
+          "code": 11795,
           "comments": 0,
           "blanks": 1
         },
@@ -22489,19 +22377,19 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 12166,
-        "updatedAt": "2026-08-07T11:25:28.242Z",
+        "complexityScore": 11819,
+        "updatedAt": "2026-08-14T06:51:44.641Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 853331,
-        "hash": "694a0bec51b6c99e97623bd205eeadd809b8d3f07102ca2fb174412a5fe19950",
+        "bytes": 853520,
+        "hash": "726a9720920e539d523b913f1e6fd9aa2053e1c715485d5aa43d7d3f76bf7b9d",
         "lines": {
-          "total": 20006,
-          "code": 20006,
+          "total": 19674,
+          "code": 19674,
           "comments": 0,
           "blanks": 0
         },
@@ -22527,9 +22415,45 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 20036,
-        "updatedAt": "2026-08-07T11:25:28.068Z",
+        "complexityScore": 19704,
+        "updatedAt": "2026-08-14T06:51:42.660Z",
         "riskScore": 44
+      },
+      {
+        "path": "md/FIXED_IT.md",
+        "extension": ".md",
+        "directory": "md",
+        "bytes": 6809,
+        "hash": "58da3ad2766fd53069b33eb73df3b416e487cd8f18a668e37725f35c89525371",
+        "lines": {
+          "total": 97,
+          "code": 64,
+          "comments": 0,
+          "blanks": 33
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [],
+        "symbolCount": 0,
+        "tags": [
+          "TODO",
+          "NOTE"
+        ],
+        "tagCount": 2,
+        "keywordCounts": {
+          "asyncCount": 0,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 88,
+        "updatedAt": "2026-08-14T04:51:25.253Z",
+        "riskScore": 26
       },
       {
         "path": "scripts/code-memory-visual.mjs",
@@ -24843,11 +24767,11 @@
         "path": "lighthouse/report-split/performance.html",
         "extension": ".html",
         "directory": "lighthouse/report-split",
-        "bytes": 26255,
-        "hash": "1f82816b3ecd04e5ffd5deb5753626b1d896fa0a8b90c24c160d7f82ffea31db",
+        "bytes": 24607,
+        "hash": "f6d2d9a19f8283b5e0564cc83f46180e4b644e91da3001f92109058dc5569860",
         "lines": {
-          "total": 647,
-          "code": 645,
+          "total": 615,
+          "code": 613,
           "comments": 1,
           "blanks": 1
         },
@@ -24870,8 +24794,8 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 657,
-        "updatedAt": "2026-08-07T11:25:28.242Z",
+        "complexityScore": 625,
+        "updatedAt": "2026-08-14T06:51:44.643Z",
         "riskScore": 37
       },
       {
@@ -24908,79 +24832,6 @@
         "complexityScore": 94,
         "updatedAt": "2026-08-01T12:44:24.738Z",
         "riskScore": 19
-      },
-      {
-        "path": "package.json",
-        "extension": ".json",
-        "directory": ".",
-        "bytes": 11717,
-        "hash": "91fc3c07615e5ce42dbfdc423c73c5e562dc71c29ccb0034ef776fb8521eecca",
-        "lines": {
-          "total": 242,
-          "code": 241,
-          "comments": 0,
-          "blanks": 1
-        },
-        "imports": [],
-        "exports": [],
-        "importSpecifiers": [],
-        "importsDetailed": [],
-        "symbols": [],
-        "symbolCount": 0,
-        "tags": [
-          "TODO"
-        ],
-        "tagCount": 1,
-        "keywordCounts": {
-          "asyncCount": 0,
-          "awaitCount": 0,
-          "tryCount": 0,
-          "catchCount": 0,
-          "throwCount": 0,
-          "ifCount": 1,
-          "switchCount": 0
-        },
-        "complexityScore": 253,
-        "updatedAt": "2026-08-13T13:30:56.507Z",
-        "riskScore": 23
-      },
-      {
-        "path": "README.md",
-        "extension": ".md",
-        "directory": ".",
-        "bytes": 18879,
-        "hash": "a7b8fca70f6211feb1f383b8d55b22280eecdd2d7ce4c067542766cbed7b452c",
-        "lines": {
-          "total": 357,
-          "code": 281,
-          "comments": 1,
-          "blanks": 75
-        },
-        "imports": [],
-        "exports": [],
-        "importSpecifiers": [],
-        "importsDetailed": [],
-        "symbols": [
-          "verification",
-          "configuration"
-        ],
-        "symbolCount": 2,
-        "tags": [
-          "NOTE"
-        ],
-        "tagCount": 1,
-        "keywordCounts": {
-          "asyncCount": 0,
-          "awaitCount": 0,
-          "tryCount": 0,
-          "catchCount": 0,
-          "throwCount": 0,
-          "ifCount": 1,
-          "switchCount": 0
-        },
-        "complexityScore": 305,
-        "updatedAt": "2026-08-02T10:39:15.918Z",
-        "riskScore": 29
       }
     ],
     "highestRisk": [
@@ -24988,8 +24839,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 689842,
-        "hash": "2a09d86d32ff940fcc2863d09b361515afaa58dea509bfe5391f25e642018ccf",
+        "bytes": 701743,
+        "hash": "ac8373f426daa0b00f2fccb14e390805bcda4a5d63131648f109df10b0832c6b",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -25078,18 +24929,18 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-07T11:25:28.062Z",
+        "updatedAt": "2026-08-14T06:51:42.654Z",
         "riskScore": 68
       },
       {
         "path": "scripts/code-memory-index/constants.mjs",
         "extension": ".mjs",
         "directory": "scripts/code-memory-index",
-        "bytes": 1734,
-        "hash": "a780d57b80003250f7cdf2c04debec34f387b563526b2f5bf1c887e839fca70c",
+        "bytes": 1711,
+        "hash": "37bc1ef0c3726e5a59e344c379ef24cacef6f718f7317361ca0a69f10008b8bf",
         "lines": {
-          "total": 77,
-          "code": 73,
+          "total": 76,
+          "code": 72,
           "comments": 0,
           "blanks": 4
         },
@@ -25131,8 +24982,8 @@
           "ifCount": 0,
           "switchCount": 0
         },
-        "complexityScore": 157,
-        "updatedAt": "2026-08-01T12:44:25.040Z",
+        "complexityScore": 156,
+        "updatedAt": "2026-08-14T04:58:26.967Z",
         "riskScore": 67
       },
       {
@@ -26145,6 +25996,46 @@
         "complexityScore": 1550,
         "updatedAt": "2026-08-01T12:44:28.531Z",
         "riskScore": 61
+      },
+      {
+        "path": "md/PRODUCTION_READY.md",
+        "extension": ".md",
+        "directory": "md",
+        "bytes": 33851,
+        "hash": "8e554419f25f700e79431a236dad4247f554fe8024d03b811c0860b58ac20681",
+        "lines": {
+          "total": 832,
+          "code": 667,
+          "comments": 0,
+          "blanks": 165
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "using"
+        ],
+        "symbolCount": 1,
+        "tags": [
+          "REFACTOR",
+          "OPTIMIZE",
+          "TODO",
+          "NOTE"
+        ],
+        "tagCount": 4,
+        "keywordCounts": {
+          "asyncCount": 1,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 15,
+          "switchCount": 0
+        },
+        "complexityScore": 721,
+        "updatedAt": "2026-08-14T04:51:25.636Z",
+        "riskScore": 58
       },
       {
         "path": "server/controllers/mediaController.ts",
@@ -29535,189 +29426,6 @@
         "complexityScore": 870,
         "updatedAt": "2026-08-01T14:27:22.577Z",
         "riskScore": 46
-      },
-      {
-        "path": "src/features/vault/PasswordManager_new.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 56175,
-        "hash": "f2cc0cdd4f47053ad3bd9553ae61d5321513ebc2262d1d2c277587c6d998f8ec",
-        "lines": {
-          "total": 1447,
-          "code": 1361,
-          "comments": 10,
-          "blanks": 76
-        },
-        "imports": [
-          "import React, { useState, useEffect, useMemo } from 'react';",
-          "import * as OTPAuth from 'otpauth';",
-          "import { Button } from '../../components/ui/Button';",
-          "import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';",
-          "import { Input } from '../../components/ui/Input';",
-          "import {",
-          "import { useGlobalNavigationStore } from '../../store/globalNavigationStore';",
-          "import { toast } from 'sonner';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { encryptData, decryptData } from '../../lib/cryptoPrimitives';",
-          "import { useClipboard } from '../../hooks/useClipboard';",
-          "import { motion, AnimatePresence } from 'framer-motion';",
-          "import { logActivity } from '../../lib/activity';",
-          "import { setDraggedVaultItem } from '../../lib/vaultDragDrop';",
-          "import { sortPinnedFirst } from '../../lib/pinning';",
-          "import { FolderSidebar } from '../../components/vault/FolderSidebar';",
-          "import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
-          "import {"
-        ],
-        "exports": [
-          "export const PasswordManager: React.FC = () => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "otpauth",
-          "../../lib/utils",
-          "../../components/ui/Button",
-          "../../components/ui/Card",
-          "../../components/ui/Input",
-          "../../store/globalNavigationStore",
-          "sonner",
-          "../../store/vaultStore",
-          "../../lib/cryptoPrimitives",
-          "../../hooks/useClipboard",
-          "framer-motion",
-          "../../lib/activity",
-          "../../lib/vaultDragDrop",
-          "../../lib/pinning",
-          "../../components/vault/FolderSidebar",
-          "../../components/vault/MobileFolderMenu",
-          "../../hooks/useVaultFolders"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "otpauth",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/utils",
-            "kind": "relative",
-            "target": "src/lib/utils"
-          },
-          {
-            "specifier": "../../components/ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "../../components/ui/Card",
-            "kind": "relative",
-            "target": "src/components/ui/Card"
-          },
-          {
-            "specifier": "../../components/ui/Input",
-            "kind": "relative",
-            "target": "src/components/ui/Input"
-          },
-          {
-            "specifier": "../../store/globalNavigationStore",
-            "kind": "relative",
-            "target": "src/store/globalNavigationStore"
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../hooks/useClipboard",
-            "kind": "relative",
-            "target": "src/hooks/useClipboard"
-          },
-          {
-            "specifier": "framer-motion",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/vaultDragDrop",
-            "kind": "relative",
-            "target": "src/lib/vaultDragDrop"
-          },
-          {
-            "specifier": "../../lib/pinning",
-            "kind": "relative",
-            "target": "src/lib/pinning"
-          },
-          {
-            "specifier": "../../components/vault/FolderSidebar",
-            "kind": "relative",
-            "target": "src/components/vault/FolderSidebar"
-          },
-          {
-            "specifier": "../../components/vault/MobileFolderMenu",
-            "kind": "relative",
-            "target": "src/components/vault/MobileFolderMenu"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          }
-        ],
-        "symbols": [
-          "PasswordStrengthMeter",
-          "handleGenerate",
-          "generateSuggestion",
-          "handleStartEdit",
-          "handleSaveCredential",
-          "intervalId",
-          "checkBreach",
-          "handleSave2FA",
-          "handleDelete2FA",
-          "handleAddTag",
-          "handleRemoveTag",
-          "decrypt",
-          "handleCopy",
-          "PasswordManager",
-          "getFolderCount",
-          "handleAdd",
-          "generatePassword"
-        ],
-        "symbolCount": 17,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 8,
-          "awaitCount": 14,
-          "tryCount": 9,
-          "catchCount": 9,
-          "throwCount": 1,
-          "ifCount": 28,
-          "switchCount": 0
-        },
-        "complexityScore": 1517,
-        "updatedAt": "2026-08-01T13:44:40.268Z",
-        "riskScore": 46
       }
     ],
     "highestAsyncDensity": [
@@ -30897,7 +30605,7 @@
           "switchCount": 0
         },
         "complexityScore": 334,
-        "updatedAt": "2026-08-01T12:44:32.004Z",
+        "updatedAt": "2026-08-14T05:45:43.038Z",
         "riskScore": 22
       },
       {
@@ -31029,49 +30737,6 @@
         "complexityScore": 731,
         "updatedAt": "2026-08-03T10:46:01.367Z",
         "riskScore": 52
-      },
-      {
-        "path": "tests/e2e/auth-session.spec.ts",
-        "extension": ".ts",
-        "directory": "tests/e2e",
-        "bytes": 3971,
-        "hash": "617bb4fdb9bf557f8fe7a1957dd6bc2904de83129fef9baa5b129da661687759",
-        "lines": {
-          "total": 123,
-          "code": 93,
-          "comments": 13,
-          "blanks": 17
-        },
-        "imports": [
-          "import { test, expect } from '@playwright/test';"
-        ],
-        "exports": [],
-        "importSpecifiers": [
-          "@playwright/test"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "@playwright/test",
-            "kind": "package",
-            "target": null
-          }
-        ],
-        "symbols": [],
-        "symbolCount": 0,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 8,
-          "awaitCount": 28,
-          "tryCount": 0,
-          "catchCount": 3,
-          "throwCount": 0,
-          "ifCount": 4,
-          "switchCount": 0
-        },
-        "complexityScore": 96,
-        "updatedAt": "2026-08-03T02:58:04.126Z",
-        "riskScore": 12
       },
       {
         "path": "server/controllers/mediaController.ts",
@@ -31869,8 +31534,8 @@
         "path": "src/features/vault/__tests__/SettingsVault/SettingsVaultIntegration.test.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault/__tests__/SettingsVault",
-        "bytes": 9318,
-        "hash": "2dbf9f41d1e10ca93af78b72d7e700ea7115e72c092796dcc6402aaed532447f",
+        "bytes": 9338,
+        "hash": "d1f7ca8a5b31c379b9732d49242be9568e146dc222dcd36bd358aff9d5fc079f",
         "lines": {
           "total": 285,
           "code": 229,
@@ -31935,54 +31600,8 @@
           "switchCount": 0
         },
         "complexityScore": 250,
-        "updatedAt": "2026-08-07T11:02:36.653Z",
+        "updatedAt": "2026-08-14T06:50:39.149Z",
         "riskScore": 16
-      },
-      {
-        "path": "tests/e2e/privacy_interface_deep_audit.spec.ts",
-        "extension": ".ts",
-        "directory": "tests/e2e",
-        "bytes": 2719,
-        "hash": "5194accdadc64a6a783ec4db67532d325d701f316bb22233af0f4e5c04805f49",
-        "lines": {
-          "total": 71,
-          "code": 52,
-          "comments": 3,
-          "blanks": 16
-        },
-        "imports": [
-          "import { test, expect } from '@playwright/test';"
-        ],
-        "exports": [],
-        "importSpecifiers": [
-          "@playwright/test"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "@playwright/test",
-            "kind": "package",
-            "target": null
-          }
-        ],
-        "symbols": [
-          "isChecked",
-          "isAutoClearChecked"
-        ],
-        "symbolCount": 2,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 5,
-          "awaitCount": 27,
-          "tryCount": 0,
-          "catchCount": 0,
-          "throwCount": 0,
-          "ifCount": 2,
-          "switchCount": 3
-        },
-        "complexityScore": 67,
-        "updatedAt": "2026-08-03T02:58:04.173Z",
-        "riskScore": 12
       },
       {
         "path": "server.ts",
@@ -33145,6 +32764,302 @@
         "complexityScore": 602,
         "updatedAt": "2026-08-07T16:25:43.394Z",
         "riskScore": 32
+      },
+      {
+        "path": "server/routes/securityRoutes.ts",
+        "extension": ".ts",
+        "directory": "server/routes",
+        "bytes": 9711,
+        "hash": "3e6d1bcf46f79e74e2c78956912ef93b6b504f6e707bdb83e6098005ed170caa",
+        "lines": {
+          "total": 414,
+          "code": 254,
+          "comments": 97,
+          "blanks": 63
+        },
+        "imports": [
+          "import { Router, Request as ExpressRequest, Response } from 'express';",
+          "import { requireAuth } from '../middleware/authMiddleware.ts';",
+          "import { asyncHandler } from '../utils/asyncHandler.ts';",
+          "import { aiAnomalyDetectionService } from '../services/aiAnomalyDetectionService.ts';",
+          "import { requestFingerprintService } from '../services/requestFingerprintService.ts';",
+          "import { securityDashboardService } from '../services/securityDashboardService.ts';",
+          "import { AppError } from '../utils/appError.ts';",
+          "import { AuthenticatedRequest } from '../utils/requestTypes.ts';",
+          "import { User } from '../models/user.ts';",
+          "import { getVaultSnapshot } from '../services/vaultItemService.ts';"
+        ],
+        "exports": [
+          "export { securityRouter };"
+        ],
+        "importSpecifiers": [
+          "express",
+          "../middleware/authMiddleware.ts",
+          "../utils/asyncHandler.ts",
+          "../services/aiAnomalyDetectionService.ts",
+          "../services/requestFingerprintService.ts",
+          "../services/securityDashboardService.ts",
+          "../utils/appError.ts",
+          "../utils/requestTypes.ts",
+          "../models/user.ts",
+          "../services/vaultItemService.ts"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "express",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "../middleware/authMiddleware.ts",
+            "kind": "relative",
+            "target": "server/middleware/authMiddleware.ts"
+          },
+          {
+            "specifier": "../utils/asyncHandler.ts",
+            "kind": "relative",
+            "target": "server/utils/asyncHandler.ts"
+          },
+          {
+            "specifier": "../services/aiAnomalyDetectionService.ts",
+            "kind": "relative",
+            "target": "server/services/aiAnomalyDetectionService.ts"
+          },
+          {
+            "specifier": "../services/requestFingerprintService.ts",
+            "kind": "relative",
+            "target": "server/services/requestFingerprintService.ts"
+          },
+          {
+            "specifier": "../services/securityDashboardService.ts",
+            "kind": "relative",
+            "target": "server/services/securityDashboardService.ts"
+          },
+          {
+            "specifier": "../utils/appError.ts",
+            "kind": "relative",
+            "target": "server/utils/appError.ts"
+          },
+          {
+            "specifier": "../utils/requestTypes.ts",
+            "kind": "relative",
+            "target": "server/utils/requestTypes.ts"
+          },
+          {
+            "specifier": "../models/user.ts",
+            "kind": "relative",
+            "target": "server/models/user.ts"
+          },
+          {
+            "specifier": "../services/vaultItemService.ts",
+            "kind": "relative",
+            "target": "server/services/vaultItemService.ts"
+          }
+        ],
+        "symbols": [
+          "Request",
+          "getRouteParam"
+        ],
+        "symbolCount": 2,
+        "tags": [
+          "TODO"
+        ],
+        "tagCount": 1,
+        "keywordCounts": {
+          "asyncCount": 17,
+          "awaitCount": 5,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 2,
+          "ifCount": 4,
+          "switchCount": 0
+        },
+        "complexityScore": 308,
+        "updatedAt": "2026-08-01T12:44:26.321Z",
+        "riskScore": 34
+      },
+      {
+        "path": "src/features/vault/PasswordManager_new.tsx",
+        "extension": ".tsx",
+        "directory": "src/features/vault",
+        "bytes": 56175,
+        "hash": "f2cc0cdd4f47053ad3bd9553ae61d5321513ebc2262d1d2c277587c6d998f8ec",
+        "lines": {
+          "total": 1447,
+          "code": 1361,
+          "comments": 10,
+          "blanks": 76
+        },
+        "imports": [
+          "import React, { useState, useEffect, useMemo } from 'react';",
+          "import * as OTPAuth from 'otpauth';",
+          "import { Button } from '../../components/ui/Button';",
+          "import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';",
+          "import { Input } from '../../components/ui/Input';",
+          "import {",
+          "import { useGlobalNavigationStore } from '../../store/globalNavigationStore';",
+          "import { toast } from 'sonner';",
+          "import { useVaultStore } from '../../store/vaultStore';",
+          "import { encryptData, decryptData } from '../../lib/cryptoPrimitives';",
+          "import { useClipboard } from '../../hooks/useClipboard';",
+          "import { motion, AnimatePresence } from 'framer-motion';",
+          "import { logActivity } from '../../lib/activity';",
+          "import { setDraggedVaultItem } from '../../lib/vaultDragDrop';",
+          "import { sortPinnedFirst } from '../../lib/pinning';",
+          "import { FolderSidebar } from '../../components/vault/FolderSidebar';",
+          "import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';",
+          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
+          "import {"
+        ],
+        "exports": [
+          "export const PasswordManager: React.FC = () => {"
+        ],
+        "importSpecifiers": [
+          "react",
+          "otpauth",
+          "../../lib/utils",
+          "../../components/ui/Button",
+          "../../components/ui/Card",
+          "../../components/ui/Input",
+          "../../store/globalNavigationStore",
+          "sonner",
+          "../../store/vaultStore",
+          "../../lib/cryptoPrimitives",
+          "../../hooks/useClipboard",
+          "framer-motion",
+          "../../lib/activity",
+          "../../lib/vaultDragDrop",
+          "../../lib/pinning",
+          "../../components/vault/FolderSidebar",
+          "../../components/vault/MobileFolderMenu",
+          "../../hooks/useVaultFolders"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "react",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "otpauth",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "../../lib/utils",
+            "kind": "relative",
+            "target": "src/lib/utils"
+          },
+          {
+            "specifier": "../../components/ui/Button",
+            "kind": "relative",
+            "target": "src/components/ui/Button"
+          },
+          {
+            "specifier": "../../components/ui/Card",
+            "kind": "relative",
+            "target": "src/components/ui/Card"
+          },
+          {
+            "specifier": "../../components/ui/Input",
+            "kind": "relative",
+            "target": "src/components/ui/Input"
+          },
+          {
+            "specifier": "../../store/globalNavigationStore",
+            "kind": "relative",
+            "target": "src/store/globalNavigationStore"
+          },
+          {
+            "specifier": "sonner",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "../../store/vaultStore",
+            "kind": "relative",
+            "target": "src/store/vaultStore"
+          },
+          {
+            "specifier": "../../lib/cryptoPrimitives",
+            "kind": "relative",
+            "target": "src/lib/cryptoPrimitives"
+          },
+          {
+            "specifier": "../../hooks/useClipboard",
+            "kind": "relative",
+            "target": "src/hooks/useClipboard"
+          },
+          {
+            "specifier": "framer-motion",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "../../lib/activity",
+            "kind": "relative",
+            "target": "src/lib/activity"
+          },
+          {
+            "specifier": "../../lib/vaultDragDrop",
+            "kind": "relative",
+            "target": "src/lib/vaultDragDrop"
+          },
+          {
+            "specifier": "../../lib/pinning",
+            "kind": "relative",
+            "target": "src/lib/pinning"
+          },
+          {
+            "specifier": "../../components/vault/FolderSidebar",
+            "kind": "relative",
+            "target": "src/components/vault/FolderSidebar"
+          },
+          {
+            "specifier": "../../components/vault/MobileFolderMenu",
+            "kind": "relative",
+            "target": "src/components/vault/MobileFolderMenu"
+          },
+          {
+            "specifier": "../../hooks/useVaultFolders",
+            "kind": "relative",
+            "target": "src/hooks/useVaultFolders"
+          }
+        ],
+        "symbols": [
+          "PasswordStrengthMeter",
+          "handleGenerate",
+          "generateSuggestion",
+          "handleStartEdit",
+          "handleSaveCredential",
+          "intervalId",
+          "checkBreach",
+          "handleSave2FA",
+          "handleDelete2FA",
+          "handleAddTag",
+          "handleRemoveTag",
+          "decrypt",
+          "handleCopy",
+          "PasswordManager",
+          "getFolderCount",
+          "handleAdd",
+          "generatePassword"
+        ],
+        "symbolCount": 17,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 8,
+          "awaitCount": 14,
+          "tryCount": 9,
+          "catchCount": 9,
+          "throwCount": 1,
+          "ifCount": 28,
+          "switchCount": 0
+        },
+        "complexityScore": 1517,
+        "updatedAt": "2026-08-01T13:44:40.268Z",
+        "riskScore": 46
       }
     ]
   },
@@ -36416,403 +36331,70 @@
     "totals": {
       "filesWithInboundLinks": 30,
       "filesWithOutboundLinks": 30,
-      "missingRelativeTargets": 730
+      "missingRelativeTargets": 720
     }
   },
   "changes": {
     "hasPreviousIndex": true,
-    "previousGeneratedAt": "2026-08-07T11:24:27.921Z",
+    "previousGeneratedAt": "2026-08-14T06:50:37.403Z",
     "counts": {
       "added": 0,
       "removed": 0,
-      "changed": 49,
-      "unchanged": 418
+      "changed": 8,
+      "unchanged": 455
     },
     "added": [],
     "removed": [],
     "changed": [
       {
-        "path": "lighthouse/report.report.json",
-        "previousHash": "41add9f78ef31da673320ffe996afca811d538ef0586bd859f21876f20a6ea0b",
-        "currentHash": "694a0bec51b6c99e97623bd205eeadd809b8d3f07102ca2fb174412a5fe19950",
-        "previousLines": 19597,
-        "currentLines": 20006,
-        "deltaLines": 409,
+        "path": "lighthouse/report-split/performance.html",
+        "previousHash": "141d3cd08dbcd3149b1a77baebcc6858fef40b3d00b36cb86c2058b7bc438c4a",
+        "currentHash": "f6d2d9a19f8283b5e0564cc83f46180e4b644e91da3001f92109058dc5569860",
+        "previousLines": 639,
+        "currentLines": 615,
+        "deltaLines": -24,
         "deltaSymbols": 0
       },
       {
         "path": "lighthouse/report-split/performance.json",
-        "previousHash": "fbe52ebfbc257b4485dd191d60b05757307d7707a7c6273a6ea6fbd2a3cb6e82",
-        "currentHash": "a40e4022101d966465feeafbfa2493a6e2dfaf64d15701cc02695004de095b3b",
-        "previousLines": 11751,
-        "currentLines": 12143,
-        "deltaLines": 392,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/controllers/mediaController.ts",
-        "previousHash": "6d7be30b7e7428c173da78265e94d7dd7692cc093bd08b260485cc1ccb14619a",
-        "currentHash": "0637cc63a52484f8ec170fbb6104ce394fad48c067f6dd1342d752ee4f88ba0e",
-        "previousLines": 938,
-        "currentLines": 1186,
-        "deltaLines": 248,
-        "deltaSymbols": 4
-      },
-      {
-        "path": "src/components/ui/ErrorBoundary.tsx",
-        "previousHash": "bd54b4231f458fad204a0f84d6b98786bf70058bb3135591f775fff5ece8c99a",
-        "currentHash": "62e61884fe36aff4c252cf3b3bd8d3eec4b8299987a4e16d9c20e62bf9a3b482",
-        "previousLines": 40,
-        "currentLines": 128,
-        "deltaLines": 88,
-        "deltaSymbols": 1
-      },
-      {
-        "path": "server/middleware/authMiddleware.ts",
-        "previousHash": "ee91207f4ecd120d509c9b1c8c623eb33bdcc6f764c9700a6d747099ccb26466",
-        "currentHash": "f30d9e9fdf804bedeba96904e196eb86bd59dd3a89773a0680263bd40c2061cf",
-        "previousLines": 214,
-        "currentLines": 286,
-        "deltaLines": 72,
-        "deltaSymbols": 4
-      },
-      {
-        "path": "src/components/ui/video-player.tsx",
-        "previousHash": "c9ce4c1aaa68fd1563ef1d67f819fd8b8409ff7f2cb745f4cc97b1e16e4ed7ae",
-        "currentHash": "d8a627c2f9d1a09f6f2e9a99aaec61c017456e974a4d158d477744c3f11460f1",
-        "previousLines": 1382,
-        "currentLines": 1417,
-        "deltaLines": 35,
-        "deltaSymbols": 1
-      },
-      {
-        "path": "server/middleware/errorHandler.ts",
-        "previousHash": "493f9cc604bdca0decc7242058991d0a41d097a0f9a2afdfd6f729c805f73b4f",
-        "currentHash": "fdadcb6125f3ecc5843185644cd2d1ec3e03ee4efd992424ca5576240c176bc0",
-        "previousLines": 144,
-        "currentLines": 178,
-        "deltaLines": 34,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/middleware/originProtection.ts",
-        "previousHash": "f3d0405300fd6f1fa9bdc6fd4a6b0e2f0384b0ed7b3820b1e53178c87d4bb682",
-        "currentHash": "04bf8d852f3ea0ff36a553e9ef00a4cf559060f03a7ff3db2948489d977140b8",
-        "previousLines": 57,
-        "currentLines": 89,
-        "deltaLines": 32,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/lib/filePreview.ts",
-        "previousHash": "e844b5215f434e9f0fa3668132558aa56da8fb69b802949d22182769d6f24407",
-        "currentHash": "4ae143bc4c496486abb1a6b98d41da94a161ff4fdb5bdcaccd61d9f2f4320009",
-        "previousLines": 484,
-        "currentLines": 512,
-        "deltaLines": 28,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/controllers/vaultController.ts",
-        "previousHash": "7c26b241bc9c14ca837d56429a5f139fb4e0a371557a4ebd7b5dea5506e28885",
-        "currentHash": "fc8a5a1a3202e5ddbd110672d23f2f973ba79f5f7fb5852c7f9970369f8c28c7",
-        "previousLines": 741,
-        "currentLines": 766,
-        "deltaLines": 25,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/components/ui/audio-player.tsx",
-        "previousHash": "4dd5fcb988b9fae10803d45c6138d6bdf25f07213ad5fb582c0ebb525f1f1553",
-        "currentHash": "f03028013b8ababf3793da7c21f87ee4a68544c7d0116b68911c360ab3bdbbc5",
-        "previousLines": 738,
-        "currentLines": 763,
-        "deltaLines": 25,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/lib/storage.ts",
-        "previousHash": "ba705b6eea80e0c921f76bece8f670930b32e56726653db91a02212ce47dd2b0",
-        "currentHash": "d33cbdfcb5c78a023d20c0e64a769a24607d69c9d90a00fb8be806dad13af60c",
-        "previousLines": 311,
-        "currentLines": 333,
-        "deltaLines": 22,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/mongo.ts",
-        "previousHash": "b58bccebd5b04e06391d712d59c3031bef7555830281a2a185b948d0fc4398ca",
-        "currentHash": "4731694e41b60a523bcab6bff9b00cfe4a8759af8df7bdec39e4730d793c3b58",
-        "previousLines": 258,
-        "currentLines": 279,
-        "deltaLines": 21,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/features/vault/MediaVault.tsx",
-        "previousHash": "f1ff3162e45e5dc9e2c8c2862d1fd096f416771d30fba5534f28a5215226ffe2",
-        "currentHash": "c15a6156f51a8337965cc220b837e8cfe33638722a05b77bc9d0f5dc37da5315",
-        "previousLines": 941,
-        "currentLines": 920,
+        "previousHash": "028644602cfc574461dbcabf297c607443130908ea4de254d6d5844a7e8f045b",
+        "currentHash": "88484700231dd5e8c0ba9b9745e93b22787bd14236c4bc898c46ad444e60e6ab",
+        "previousLines": 11817,
+        "currentLines": 11796,
         "deltaLines": -21,
         "deltaSymbols": 0
       },
       {
-        "path": "server/utils/fileStorage.ts",
-        "previousHash": "5ba51092cd7fb38d30da3d239d1f4c24b618ae3b2fc8960266460cf263b02626",
-        "currentHash": "90bc23f96055541d110c2bb5effd08cf92fd78c577e2759f311c408952c159d8",
-        "previousLines": 495,
-        "currentLines": 515,
-        "deltaLines": 20,
-        "deltaSymbols": 1
-      },
-      {
-        "path": "server/controllers/tusController.ts",
-        "previousHash": "c9523b8ccc9c2ccfbbc051557a83f8cf6ae460460a9ca5c874689d1e092e69d6",
-        "currentHash": "d2a99be120f8eb69682c6c7ae084ed48811be899cca3c523474a0610ca6365ff",
-        "previousLines": 178,
-        "currentLines": 197,
-        "deltaLines": 19,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/features/vault/AudioVault.tsx",
-        "previousHash": "352198ebb51634a8b88bb3de7b712a92400132432ca34f2bc19b080bb3ea5f52",
-        "currentHash": "ee29a7267233c7e10f2ad8f992c26a293863856db0bdfe11a1facabcc6ee1ea0",
-        "previousLines": 927,
-        "currentLines": 910,
-        "deltaLines": -17,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/features/vault/components/MediaVault/MediaPreview.tsx",
-        "previousHash": "7291505c3fc903dcee7b40e19154d35ec4a2706016b8f9336c9baa2ca1db3cf2",
-        "currentHash": "b8be04046334ed562f8924dcf82c05a26ef4779f4618f3d087fcaa1011d5cde3",
-        "previousLines": 218,
-        "currentLines": 235,
-        "deltaLines": 17,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "lighthouse/report-split/performance.html",
-        "previousHash": "62d0c29e1c6ab9a3ccdfc378708dcbc1d36406c562f47a8ad13108e3ba23982e",
-        "currentHash": "1f82816b3ecd04e5ffd5deb5753626b1d896fa0a8b90c24c160d7f82ffea31db",
-        "previousLines": 631,
-        "currentLines": 647,
-        "deltaLines": 16,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/services/legacyVaultService.ts",
-        "previousHash": "e43e9ea729d6a410aa7cdb2293398a97318e068bf33e487561c0629695eef3c2",
-        "currentHash": "cb01141af41eea2eb9711d12ca9289f870905c75a2eeda202c0cf72b1a3c8e6a",
-        "previousLines": 849,
-        "currentLines": 864,
-        "deltaLines": 15,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/controllers/legacyVaultController.ts",
-        "previousHash": "2e5d1b2d3c56b3e6ab1ef1f8c362a5699f1416af379b4c81a04b6883e4152f58",
-        "currentHash": "d9e868db22b3df858142e222a485966df6209045271e717d339d375168e24d8e",
-        "previousLines": 717,
-        "currentLines": 730,
-        "deltaLines": 13,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/components/ui/video-player.test.tsx",
-        "previousHash": "15c158f9647662f7cf8d905a626a530496cd1e775593f18fef993ef82fed5193",
-        "currentHash": "dde42d32e3b5c35b7da2c6066749f0ed2b0054a0cb9c32016a5a7e2d9919e47c",
-        "previousLines": 222,
-        "currentLines": 234,
-        "deltaLines": 12,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/lib/error-handler.ts",
-        "previousHash": "e4be6d8a448e03d1fe0b3afec40004ce39e567877eecc278c626cb2696df7dd6",
-        "currentHash": "80b44c28c0d1ade17ead8de881b2dcbc1ee647622df8e74addd176bee589bb15",
-        "previousLines": 183,
-        "currentLines": 195,
-        "deltaLines": 12,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "overload.html",
-        "previousHash": "b14f480b5bf7676b14a266fa4357f44d32f9f7da15f04045ff8578df26f1dc17",
-        "currentHash": "c5ac07af95f0c92f24392b9635fffea3cc80e4d7db3a84de9e125f9cb9061860",
-        "previousLines": 150,
-        "currentLines": 140,
-        "deltaLines": -10,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/utils/cors.ts",
-        "previousHash": "75c0943b2eb0948e0b52a0ba5a6cbe57c4ce73e65f0894d9c7cc38d17f1acca4",
-        "currentHash": "e618067db43dbac7f8d3113a97a214275c85eceb3bc41e218b2000970b806ff6",
-        "previousLines": 59,
-        "currentLines": 69,
-        "deltaLines": 10,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/lib/encryption.ts",
-        "previousHash": "dc0f7053846de3b2eefc34df8f2113aaed222e5f8f14d97a75dedfc0d7268d0e",
-        "currentHash": "0c0f1cf12166e9e1701b065d47c403a60581a9dd1320ba8f2ceeed97e0e4f48d",
-        "previousLines": 680,
-        "currentLines": 690,
-        "deltaLines": 10,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/store/notificationStore.ts",
-        "previousHash": "2cc5c28aa4fa479f5b3d0e89d309bffca813acedbe03949a4107662313c3ca56",
-        "currentHash": "2df287c10811f9bf4895d39dfd963a37c6ca5efb2865ec4b052dbb04c91ade4f",
-        "previousLines": 116,
-        "currentLines": 126,
-        "deltaLines": 10,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "lighthouse/report-split/best-practices.json",
-        "previousHash": "47a68499b19f2dcbf3110d1bf8eae170dc20cc0b1118bc605c4b7ac40ff24cd9",
-        "currentHash": "ee915cde67d6994aad3f033a7bae3fa4877005e532f1a18b9458ac85b4065c96",
-        "previousLines": 1955,
-        "currentLines": 1963,
-        "deltaLines": 8,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/features/vault/components/LiveCaptureModal/LiveCaptureModal.tsx",
-        "previousHash": "f9f70ebdb082bec6b84cf8ccfbfc5ed4e19c9c7245c8bd670311caf388eafcbb",
-        "currentHash": "bcb7fa2beb71e1cc610f7ef6393ab2821043e2fd38a274165f6cbf1c823a7b87",
-        "previousLines": 850,
-        "currentLines": 858,
-        "deltaLines": 8,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/controllers/authController.ts",
-        "previousHash": "cd285e14cebc596feba3748ca98d61263f7d2e019210e38445a16cb8bbd4f226",
-        "currentHash": "33a4e03e950ecb383a439a9a5853e37594f814cb63eb95e8519714b94481fb5d",
-        "previousLines": 506,
-        "currentLines": 513,
-        "deltaLines": 7,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/features/vault/components/MediaVault/mediaUtils.ts",
-        "previousHash": "127b7759e091557d66bdbb20c9e64bc1c15c8010ba0f511359057a31aa5df60a",
-        "currentHash": "58e657801ef19d63874c1a40a0a020f2a413a84aba64a54380f7ea4f53060ffb",
-        "previousLines": 137,
-        "currentLines": 142,
-        "deltaLines": 5,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/features/vault/components/MediaVault/SafeMedia.tsx",
-        "previousHash": "e4bf2a17089967e86cf5365d671b01d01ca75404e0088bdee47e9d9f909bd213",
-        "currentHash": "2a15cee61b23059a0c6897a900c890f87eec22cf4dd06abea6a0826e09ff4a79",
-        "previousLines": 514,
-        "currentLines": 509,
-        "deltaLines": -5,
-        "deltaSymbols": -2
-      },
-      {
-        "path": "src/features/vault/CardsVault.tsx",
-        "previousHash": "5b7775e97a1e6a33d7b5eb1aad76e3c02691df60af271ed3e9640497071ac3ef",
-        "currentHash": "9865924ecd1ad547387d949555ed405a5db0ba799688398073e29cd7a4ccf20b",
-        "previousLines": 1371,
-        "currentLines": 1374,
-        "deltaLines": 3,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/features/vault/ContactsVault.tsx",
-        "previousHash": "021f5fdb9c3019475b4c17df2e0cbda43e54dea267d32a94adaee5ab2ae669c9",
-        "currentHash": "40346effd61b2d57f723eba808a06f8e4b08a8ade69e8d90fe540b13cf05c4e5",
-        "previousLines": 804,
-        "currentLines": 807,
-        "deltaLines": 3,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/lib/mediaWorker.ts",
-        "previousHash": "6930e879f12d3efc5e5d90f6afa3937b5f52840943f7bc680ac2e3c9d7b61aa0",
-        "currentHash": "ccff7972888d0b207908c44b5c0f34b794cd5ecc059559773231d558801c448e",
-        "previousLines": 212,
-        "currentLines": 215,
-        "deltaLines": 3,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/api/apiClient.ts",
-        "previousHash": "db2ea41c32023f62af6a38c95be0bec2a8ecaae830d89db4a8461989c5dc124d",
-        "currentHash": "5a32cba37bdb40d8e2238a765433db10cecda2e372fe0393496ab444295ee05f",
-        "previousLines": 265,
-        "currentLines": 267,
-        "deltaLines": 2,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/lib/streamDecryption.ts",
-        "previousHash": "f7a9039a927dbe1c72dcf22015e0b34aad36340b61c7ea8a9879be8c5a686746",
-        "currentHash": "3775a5a298542e5d5b9fef1e624a2ec7ffa5481af7a79b1996f49c196df4425e",
-        "previousLines": 175,
-        "currentLines": 177,
-        "deltaLines": 2,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "package.json",
-        "previousHash": "695fff5c4fa92eaa8900cd8896629754e9307f08843ddfad5b8ff60df18b0491",
-        "currentHash": "91fc3c07615e5ce42dbfdc423c73c5e562dc71c29ccb0034ef776fb8521eecca",
-        "previousLines": 243,
-        "currentLines": 242,
-        "deltaLines": -1,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/controllers/drmController.ts",
-        "previousHash": "9dac2c32a1f73690ba944677c0ae135bf2cd2bed6b56d231e6b58de3e7b74bd3",
-        "currentHash": "cf7ace1abebd0e8d2abbb1c734889d6140aa7411afde432ceabdca9b177f9b5a",
-        "previousLines": 154,
-        "currentLines": 155,
-        "deltaLines": 1,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/services/storageService.ts",
-        "previousHash": "7ddceb2af16c3d5b446453e5060a38e532b3eebdeab56d0fea5fadc0ccb448c5",
-        "currentHash": "6462329ab174bee8fc93603c73ed7a23220c36d10dd3ad4c4cad6dc87a20c48a",
-        "previousLines": 132,
-        "currentLines": 133,
-        "deltaLines": 1,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "docker-compose.yml",
-        "previousHash": "919a8f04403df4258f75da7fc5bd275938bc9b030292899e8e051ba9499f1df8",
-        "currentHash": "c2d6c74b98497dd44f18c6efb2cd4eefb9f3118559c2170411fe27b9c9be096e",
-        "previousLines": 36,
-        "currentLines": 36,
-        "deltaLines": 0,
+        "path": "lighthouse/report.report.json",
+        "previousHash": "9322fb750067590589f3b6595ea8c0265f4d65972caabeac9caca181a5231f2d",
+        "currentHash": "726a9720920e539d523b913f1e6fd9aa2053e1c715485d5aa43d7d3f76bf7b9d",
+        "previousLines": 19695,
+        "currentLines": 19674,
+        "deltaLines": -21,
         "deltaSymbols": 0
       },
       {
         "path": "lighthouse/report-split/accessibility.json",
-        "previousHash": "f51d4894ed264fd3e1b93f524faedc2bbfe9b4a2812965c66d5b4aa172ab3217",
-        "currentHash": "be6ee41892756e80fddb9dd086b5ce8ee073ad77e2f941e3f0227389c089d38f",
+        "previousHash": "962ad4bcb5d90ac8a75b4781675c48d6c0546367062864de8912e1b7148cd91b",
+        "currentHash": "8a5a239073c30399342e663f94ef1c2831aa1ebadead210b3431d41326e025f8",
         "previousLines": 1193,
         "currentLines": 1193,
         "deltaLines": 0,
         "deltaSymbols": 0
       },
       {
+        "path": "lighthouse/report-split/best-practices.json",
+        "previousHash": "809419dae37d58981623e6d157e03e4825c50de74725421fa1b4833793b06f22",
+        "currentHash": "8aa7a1cffa4bebaa4ab5ffce510e4ef5d68feae680da67f55f5882f907b3d5b8",
+        "previousLines": 1963,
+        "currentLines": 1963,
+        "deltaLines": 0,
+        "deltaSymbols": 0
+      },
+      {
         "path": "lighthouse/report-split/seo.json",
-        "previousHash": "2cc8d14022cf86a7ce67d2f2ff65f08c4a981aed74b353fb5233b7c5447c5aed",
-        "currentHash": "21b5cd266f7b74d43d3689864e6c19707303d327c15ae08de067580383143445",
+        "previousHash": "0020befc11cb3a7f0193fd59435ef87f018affab7e2f6256e6fe1b6739e03ac7",
+        "currentHash": "c5889dc16e1d25767af29bbc0e602dd32124dd8f17df050398eebe3153238871",
         "previousLines": 242,
         "currentLines": 242,
         "deltaLines": 0,
@@ -36820,55 +36402,19 @@
       },
       {
         "path": "lighthouse/report.report.html",
-        "previousHash": "64e8f2e31628f6c359b3bb6a42f4ac84ffa16e70d6a4dbf57edc6868735ab267",
-        "currentHash": "2a09d86d32ff940fcc2863d09b361515afaa58dea509bfe5391f25e642018ccf",
+        "previousHash": "c0e1f20cbad536169bb97aeabab9c216b2e6c65255696342f9b6f926a00505e0",
+        "currentHash": "ac8373f426daa0b00f2fccb14e390805bcda4a5d63131648f109df10b0832c6b",
         "previousLines": 2894,
         "currentLines": 2894,
         "deltaLines": 0,
         "deltaSymbols": 0
       },
       {
-        "path": "server.ts",
-        "previousHash": "3cfbcd71f203120c59cd7f46470730baa827174b25b19838b54d3c8f52410d0c",
-        "currentHash": "fa7e9164bf2c6a9c7043c8ef26d9493559b0b6484b77fb1a9883235f0ed78b4c",
-        "previousLines": 749,
-        "currentLines": 749,
-        "deltaLines": 0,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/services/mediaService.ts",
-        "previousHash": "55c92f852f60536b0c7033712ea7a89df5c264a48add80485e36415b8ebfb006",
-        "currentHash": "38f5709efe01295720c79ea2989d7c9c415497fcc212b731227d5701c425398e",
-        "previousLines": 96,
-        "currentLines": 96,
-        "deltaLines": 0,
-        "deltaSymbols": 1
-      },
-      {
-        "path": "src/components/app/AppShell.tsx",
-        "previousHash": "16e5a70b4fdcee50d2f1f2748892faa58888a601dc4591b580804bf0c3e08be2",
-        "currentHash": "448cfdf214d0246b7e8a354cd624e71ebae126a6e727157085ebb848f17083ba",
-        "previousLines": 827,
-        "currentLines": 827,
-        "deltaLines": 0,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/components/SmartAvatar.tsx",
-        "previousHash": "7b2cbc75312a004c11d7485464277979d914e48198f5e88d30dd9f6aebeddec3",
-        "currentHash": "99f07a261909f843ce06fc9185125944e4112fa0638ac5f8291b83549d1d41ad",
-        "previousLines": 326,
-        "currentLines": 326,
-        "deltaLines": 0,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/features/vault/DocumentsVault.tsx",
-        "previousHash": "36b1ef5e7751585e6826f627fd3d2dce48ea0e5f36e84b354a62f6fbb615ebaf",
-        "currentHash": "f34554cf92501b3bf38332713685f7bee6bb3386ee360c480943ca638ae52d65",
-        "previousLines": 1066,
-        "currentLines": 1066,
+        "path": "src/features/vault/__tests__/SettingsVault/SettingsVaultIntegration.test.tsx",
+        "previousHash": "2dbf9f41d1e10ca93af78b72d7e700ea7115e72c092796dcc6402aaed532447f",
+        "currentHash": "d1f7ca8a5b31c379b9732d49242be9568e146dc222dcd36bd358aff9d5fc079f",
+        "previousLines": 285,
+        "currentLines": 285,
         "deltaLines": 0,
         "deltaSymbols": 0
       }
@@ -36879,21 +36425,25 @@
       "CODE_OF_CONDUCT.md",
       "components.json",
       "CONTRIBUTING.md",
+      "docker-compose.yml",
       "fix.cjs",
       "fix.js",
       "lighthouse/report-split/accessibility.html",
       "lighthouse/report-split/best-practices.html",
       "lighthouse/report-split/seo.html",
       "md/DEPLOYMENT_SECURITY_GUIDE.md",
+      "md/FIXED_IT.md",
       "md/IMPLEMENTATION_CHECKLIST.md",
       "md/JWT_FIX_SUMMARY.md",
+      "md/PRODUCTION_READY.md",
       "md/QUICK_FIX_GUIDE.md",
       "md/SECURITY_ARCHITECTURE.md",
       "md/SECURITY_SETUP_GUIDE.md",
       "md/SECURITY_SYSTEM_COMPLETE_REFERENCE.md",
       "md/SENTRY_INTEGRATION.md",
       "metadata.json",
-      "playwright.config.ts",
+      "overload.html",
+      "package.json",
       "public/dashboard.svg",
       "public/favicon-dark.svg",
       "public/favicon.svg",
@@ -36904,6 +36454,8 @@
       "public/vite-preload-shim.js",
       "README.md",
       "scripts/atlas-keepalive.mjs",
+      "scripts/build-env.mjs",
+      "scripts/clean.mjs",
       "scripts/code-memory-index.mjs",
       "scripts/code-memory-index/args.mjs",
       "scripts/code-memory-index/build-index.mjs",
@@ -36914,32 +36466,46 @@
       "scripts/code-memory-index/path-utils.mjs",
       "scripts/code-memory-index/stats.mjs",
       "scripts/code-memory-visual.mjs",
+      "scripts/db-ping.mjs",
+      "scripts/doctor.mjs",
+      "scripts/env-check.mjs",
       "scripts/lighthouse-runner.mjs",
+      "scripts/open-report.mjs",
       "scripts/run-push-gitbash.cjs",
       "scripts/vitest-related.mjs",
       "scripts/zip-prod.mjs",
       "SECURITY.md",
+      "server.ts",
       "server/boot/logger/colors.ts",
       "server/boot/logger/console.ts",
       "server/boot/logger/health.ts",
       "server/boot/logger/metrics.ts",
       "server/boot/logger/runtime.ts",
       "server/boot/startup.ts",
+      "server/controllers/authController.ts",
       "server/controllers/captchaController.ts",
       "server/controllers/contactController.ts",
+      "server/controllers/drmController.ts",
       "server/controllers/folderController.ts",
       "server/controllers/healthController.ts",
+      "server/controllers/legacyVaultController.ts",
       "server/controllers/masterKeyController.ts",
+      "server/controllers/mediaController.ts",
+      "server/controllers/tusController.ts",
       "server/controllers/twoFactorController.ts",
+      "server/controllers/vaultController.ts",
       "server/keep-alive.ts",
       "server/lib/logrocket.ts",
       "server/lib/sentry.d.ts",
       "server/lib/sentry.js",
+      "server/middleware/authMiddleware.ts",
       "server/middleware/bodyParsers.ts",
       "server/middleware/csrfOriginMiddleware.ts",
       "server/middleware/csrfProtection.ts",
+      "server/middleware/errorHandler.ts",
       "server/middleware/expressValidate.ts",
       "server/middleware/mongoSanitize.ts",
+      "server/middleware/originProtection.ts",
       "server/middleware/recaptchaMiddleware.ts",
       "server/middleware/requestValidation.ts",
       "server/middleware/securityMiddleware.ts",
@@ -36954,6 +36520,7 @@
       "server/models/totalUser.ts",
       "server/models/user.ts",
       "server/models/vaultItem.ts",
+      "server/mongo.ts",
       "server/network.ts",
       "server/responses.ts",
       "server/routes/authRoutes.ts",
@@ -36977,11 +36544,14 @@
       "server/services/folderCryptoService.ts",
       "server/services/folderService.ts",
       "server/services/improvedLogging.ts",
+      "server/services/legacyVaultService.ts",
       "server/services/masterKeyService.ts",
+      "server/services/mediaService.ts",
       "server/services/notificationService.ts",
       "server/services/recaptchaService.ts",
       "server/services/requestFingerprintService.ts",
       "server/services/securityDashboardService.ts",
+      "server/services/storageService.ts",
       "server/services/threatResponseService.ts",
       "server/services/totalUserMirrorService.ts",
       "server/services/transcodingService.ts",
@@ -37000,8 +36570,10 @@
       "server/utils/asyncHandler.ts",
       "server/utils/auth.ts",
       "server/utils/compression.ts",
+      "server/utils/cors.ts",
       "server/utils/crypto.ts",
       "server/utils/env.ts",
+      "server/utils/fileStorage.ts",
       "server/utils/imagePipeline.ts",
       "server/utils/jwtDiagnostics.ts",
       "server/utils/logger.ts",
@@ -37013,12 +36585,14 @@
       "server/validators/requestChainValidator.ts",
       "server/validators/twoFactorValidator.ts",
       "server/vite.ts",
+      "src/api/apiClient.ts",
       "src/api/authApi.ts",
       "src/api/securityApi.ts",
       "src/api/systemApi.ts",
       "src/api/vaultApi.ts",
       "src/App.tsx",
       "src/components/app/AppHeader.tsx",
+      "src/components/app/AppShell.tsx",
       "src/components/app/AuthManager.tsx",
       "src/components/app/CookieConsentBanner.tsx",
       "src/components/app/EmergencyClaimPage.tsx",
@@ -37035,14 +36609,19 @@
       "src/components/layout/Sidebar.tsx",
       "src/components/layout/VaultLayout.tsx",
       "src/components/security/RecaptchaField.tsx",
+      "src/components/SmartAvatar.tsx",
       "src/components/ThemeProvider.tsx",
+      "src/components/ui/audio-player.tsx",
       "src/components/ui/Button.tsx",
       "src/components/ui/Card.tsx",
+      "src/components/ui/ErrorBoundary.tsx",
       "src/components/ui/ErrorFallback.tsx",
       "src/components/ui/globe.tsx",
       "src/components/ui/Input.tsx",
       "src/components/ui/SearchInput.tsx",
       "src/components/ui/Toaster.tsx",
+      "src/components/ui/video-player.test.tsx",
+      "src/components/ui/video-player.tsx",
       "src/components/ui/VoiceInput.tsx",
       "src/components/vault/AutoLockCountdownOverlay.tsx",
       "src/components/vault/CloudHealthIndicator.tsx",
@@ -37081,11 +36660,12 @@
       "src/features/vault/__tests__/SettingsVault/MaintenanceCard.test.tsx",
       "src/features/vault/__tests__/SettingsVault/MobileExperienceCard.test.tsx",
       "src/features/vault/__tests__/SettingsVault/ProfileCard.test.tsx",
-      "src/features/vault/__tests__/SettingsVault/SettingsVaultIntegration.test.tsx",
       "src/features/vault/__tests__/SettingsVault/ShareVaultCard.test.tsx",
       "src/features/vault/__tests__/SettingsVault/SyncStorageCard.test.tsx",
       "src/features/vault/__tests__/SettingsVault/TwoFactorSettingsCard.test.tsx",
       "src/features/vault/__tests__/ShortcutsCard.test.tsx",
+      "src/features/vault/AudioVault.tsx",
+      "src/features/vault/CardsVault.tsx",
       "src/features/vault/ChatVault.tsx",
       "src/features/vault/components/ChatVault/ChatConversationPanel.tsx",
       "src/features/vault/components/ChatVault/ChatListPanel.tsx",
@@ -37102,6 +36682,7 @@
       "src/features/vault/components/LiveCaptureModal/Header.tsx",
       "src/features/vault/components/LiveCaptureModal/index.ts",
       "src/features/vault/components/LiveCaptureModal/InfoOverlays.tsx",
+      "src/features/vault/components/LiveCaptureModal/LiveCaptureModal.tsx",
       "src/features/vault/components/LiveCaptureModal/PreviewContent.tsx",
       "src/features/vault/components/LiveCaptureModal/RecordingStatus.tsx",
       "src/features/vault/components/LiveCaptureModal/types.ts",
@@ -37110,6 +36691,9 @@
       "src/features/vault/components/MediaVault/ErrorBoundary.tsx",
       "src/features/vault/components/MediaVault/MediaCard.tsx",
       "src/features/vault/components/MediaVault/MediaPagination.tsx",
+      "src/features/vault/components/MediaVault/MediaPreview.tsx",
+      "src/features/vault/components/MediaVault/mediaUtils.ts",
+      "src/features/vault/components/MediaVault/SafeMedia.tsx",
       "src/features/vault/components/NotesVault/FolderSidebar.tsx",
       "src/features/vault/components/NotesVault/NotesList.tsx",
       "src/features/vault/components/NotesVault/NoteViewer.tsx",
@@ -37140,11 +36724,14 @@
       "src/features/vault/components/SettingsVault/Utils.ts",
       "src/features/vault/components/SettingsVault/VaultDetailsPanel.tsx",
       "src/features/vault/components/SettingsVault/VaultEcosystemGraph.tsx",
+      "src/features/vault/ContactsVault.tsx",
       "src/features/vault/Dashboard.tsx",
       "src/features/vault/DeviceSessionsPage.tsx",
+      "src/features/vault/DocumentsVault.tsx",
       "src/features/vault/ecosystemHelpers.ts",
       "src/features/vault/IdentitiesVault.tsx",
       "src/features/vault/LocationVault.tsx",
+      "src/features/vault/MediaVault.tsx",
       "src/features/vault/NodeDetailsModal.tsx",
       "src/features/vault/NotesVault.tsx",
       "src/features/vault/OtherFilesVault.tsx",
@@ -37193,17 +36780,23 @@
       "src/lib/cryptoPrimitives.ts",
       "src/lib/csrf.ts",
       "src/lib/deviceFingerprint.ts",
+      "src/lib/encryption.ts",
+      "src/lib/error-handler.ts",
       "src/lib/fileHandling.ts",
+      "src/lib/filePreview.ts",
       "src/lib/folderGuards.ts",
       "src/lib/fuzzy.ts",
       "src/lib/global-navigation.ts",
       "src/lib/logger.ts",
       "src/lib/logrocket.ts",
+      "src/lib/mediaWorker.ts",
       "src/lib/passwordGenerator.ts",
       "src/lib/pinning.ts",
       "src/lib/platform.ts",
       "src/lib/sentry.d.ts",
       "src/lib/sentry.js",
+      "src/lib/storage.ts",
+      "src/lib/streamDecryption.ts",
       "src/lib/sync.ts",
       "src/lib/sync/activitySync.ts",
       "src/lib/sync/chunkUpload.ts",
@@ -37229,6 +36822,7 @@
       "src/setupTests.ts",
       "src/store/activityStore.ts",
       "src/store/globalNavigationStore.ts",
+      "src/store/notificationStore.ts",
       "src/store/themeStore.ts",
       "src/store/vaultStore.ts",
       "src/vite-env.d.ts",
@@ -37236,17 +36830,6 @@
       "src/workers/encrypt-file.worker.ts",
       "src/workers/ImageProcessorWorker.ts",
       "src/workers/media-processor.worker.ts",
-      "tests/e2e/auth-session.spec.ts",
-      "tests/e2e/global-setup.ts",
-      "tests/e2e/helpers/auth.ts",
-      "tests/e2e/helpers/page-ready.ts",
-      "tests/e2e/helpers/selectors.ts",
-      "tests/e2e/privacy_interface_deep_audit.spec.ts",
-      "tests/e2e/specs/api-response.spec.ts",
-      "tests/e2e/specs/home.spec.ts",
-      "tests/e2e/specs/login-form.spec.ts",
-      "tests/e2e/specs/navigation.spec.ts",
-      "tests/e2e/specs/protected-route.spec.ts",
       "tests/helpers/createAuthTestApp.ts",
       "tests/integration/auth-security.test.ts",
       "tests/integration/auth.integration.test.ts",
@@ -37295,12 +36878,11 @@
     ]
   },
   "recommendations": [
-    "Large change volume detected: prioritize regression and smoke testing.",
     "Relative imports with missing targets detected. Verify file extension resolution and alias settings.",
     "Critical-risk files found. Split large modules and reduce dependency concentration."
   ],
   "diagnostics": {
-    "generatedInMs": 329,
+    "generatedInMs": 444,
     "skippedByReason": {},
     "topRiskPaths": [
       "lighthouse/report.report.html",
@@ -37311,8 +36893,8 @@
       "server/controllers/legacyVaultController.ts",
       "server/services/legacyVaultService.ts",
       "src/components/vault/NoteEditor/NoteEditorToolbar.tsx",
-      "server/controllers/mediaController.ts",
-      "src/features/vault/components/LiveCaptureModal/LiveCaptureModal.tsx"
+      "md/PRODUCTION_READY.md",
+      "server/controllers/mediaController.ts"
     ],
     "topComplexityPaths": [
       "lighthouse/report.report.json",
@@ -37364,16 +36946,6 @@
       "kind": "relative"
     },
     {
-      "from": "playwright.config.ts",
-      "to": "node:fs",
-      "kind": "node_builtin"
-    },
-    {
-      "from": "playwright.config.ts",
-      "to": "@playwright/test",
-      "kind": "package"
-    },
-    {
       "from": "scripts/atlas-keepalive.mjs",
       "to": "mongodb",
       "kind": "package"
@@ -37382,6 +36954,26 @@
       "from": "scripts/atlas-keepalive.mjs",
       "to": "dotenv/config",
       "kind": "package"
+    },
+    {
+      "from": "scripts/build-env.mjs",
+      "to": "node:child_process",
+      "kind": "node_builtin"
+    },
+    {
+      "from": "scripts/build-env.mjs",
+      "to": "node:path",
+      "kind": "node_builtin"
+    },
+    {
+      "from": "scripts/clean.mjs",
+      "to": "node:fs",
+      "kind": "node_builtin"
+    },
+    {
+      "from": "scripts/clean.mjs",
+      "to": "node:path",
+      "kind": "node_builtin"
     },
     {
       "from": "scripts/code-memory-index.mjs",
@@ -37489,6 +37081,46 @@
       "kind": "node_builtin"
     },
     {
+      "from": "scripts/db-ping.mjs",
+      "to": "mongodb",
+      "kind": "package"
+    },
+    {
+      "from": "scripts/db-ping.mjs",
+      "to": "dotenv/config",
+      "kind": "package"
+    },
+    {
+      "from": "scripts/doctor.mjs",
+      "to": "node:fs",
+      "kind": "node_builtin"
+    },
+    {
+      "from": "scripts/doctor.mjs",
+      "to": "node:path",
+      "kind": "node_builtin"
+    },
+    {
+      "from": "scripts/doctor.mjs",
+      "to": "dotenv/config",
+      "kind": "package"
+    },
+    {
+      "from": "scripts/env-check.mjs",
+      "to": "node:fs",
+      "kind": "node_builtin"
+    },
+    {
+      "from": "scripts/env-check.mjs",
+      "to": "node:path",
+      "kind": "node_builtin"
+    },
+    {
+      "from": "scripts/env-check.mjs",
+      "to": "dotenv/config",
+      "kind": "package"
+    },
+    {
       "from": "scripts/lighthouse-runner.mjs",
       "to": "node:fs",
       "kind": "node_builtin"
@@ -37516,6 +37148,21 @@
     {
       "from": "scripts/lighthouse-runner.mjs",
       "to": "node:net",
+      "kind": "node_builtin"
+    },
+    {
+      "from": "scripts/open-report.mjs",
+      "to": "node:fs",
+      "kind": "node_builtin"
+    },
+    {
+      "from": "scripts/open-report.mjs",
+      "to": "node:path",
+      "kind": "node_builtin"
+    },
+    {
+      "from": "scripts/open-report.mjs",
+      "to": "node:child_process",
       "kind": "node_builtin"
     },
     {
@@ -45669,106 +45316,6 @@
       "kind": "package"
     },
     {
-      "from": "tests/e2e/auth-session.spec.ts",
-      "to": "@playwright/test",
-      "kind": "package"
-    },
-    {
-      "from": "tests/e2e/global-setup.ts",
-      "to": "@playwright/test",
-      "kind": "package"
-    },
-    {
-      "from": "tests/e2e/helpers/auth.ts",
-      "to": "@playwright/test",
-      "kind": "package"
-    },
-    {
-      "from": "tests/e2e/helpers/auth.ts",
-      "to": "tests/e2e/helpers/selectors",
-      "kind": "relative"
-    },
-    {
-      "from": "tests/e2e/helpers/auth.ts",
-      "to": "tests/e2e/helpers/page-ready",
-      "kind": "relative"
-    },
-    {
-      "from": "tests/e2e/helpers/page-ready.ts",
-      "to": "@playwright/test",
-      "kind": "package"
-    },
-    {
-      "from": "tests/e2e/privacy_interface_deep_audit.spec.ts",
-      "to": "@playwright/test",
-      "kind": "package"
-    },
-    {
-      "from": "tests/e2e/specs/api-response.spec.ts",
-      "to": "@playwright/test",
-      "kind": "package"
-    },
-    {
-      "from": "tests/e2e/specs/home.spec.ts",
-      "to": "@playwright/test",
-      "kind": "package"
-    },
-    {
-      "from": "tests/e2e/specs/home.spec.ts",
-      "to": "tests/e2e/helpers/page-ready",
-      "kind": "relative"
-    },
-    {
-      "from": "tests/e2e/specs/home.spec.ts",
-      "to": "tests/e2e/helpers/selectors",
-      "kind": "relative"
-    },
-    {
-      "from": "tests/e2e/specs/login-form.spec.ts",
-      "to": "@playwright/test",
-      "kind": "package"
-    },
-    {
-      "from": "tests/e2e/specs/login-form.spec.ts",
-      "to": "tests/e2e/helpers/auth",
-      "kind": "relative"
-    },
-    {
-      "from": "tests/e2e/specs/login-form.spec.ts",
-      "to": "tests/e2e/helpers/selectors",
-      "kind": "relative"
-    },
-    {
-      "from": "tests/e2e/specs/navigation.spec.ts",
-      "to": "@playwright/test",
-      "kind": "package"
-    },
-    {
-      "from": "tests/e2e/specs/navigation.spec.ts",
-      "to": "tests/e2e/helpers/page-ready",
-      "kind": "relative"
-    },
-    {
-      "from": "tests/e2e/specs/protected-route.spec.ts",
-      "to": "@playwright/test",
-      "kind": "package"
-    },
-    {
-      "from": "tests/e2e/specs/protected-route.spec.ts",
-      "to": "tests/e2e/helpers/auth",
-      "kind": "relative"
-    },
-    {
-      "from": "tests/e2e/specs/protected-route.spec.ts",
-      "to": "tests/e2e/helpers/page-ready",
-      "kind": "relative"
-    },
-    {
-      "from": "tests/e2e/specs/protected-route.spec.ts",
-      "to": "tests/e2e/helpers/selectors",
-      "kind": "relative"
-    },
-    {
       "from": "tests/helpers/createAuthTestApp.ts",
       "to": "express",
       "kind": "package"
@@ -46711,7 +46258,7 @@
         "switchCount": 0
       },
       "complexityScore": 755,
-      "updatedAt": "2026-08-07T11:25:28.242Z",
+      "updatedAt": "2026-08-14T06:51:44.644Z",
       "riskScore": 30
     },
     {
@@ -46719,7 +46266,7 @@
       "extension": ".json",
       "directory": "lighthouse/report-split",
       "bytes": 50030,
-      "hash": "be6ee41892756e80fddb9dd086b5ce8ee073ad77e2f941e3f0227389c089d38f",
+      "hash": "8a5a239073c30399342e663f94ef1c2831aa1ebadead210b3431d41326e025f8",
       "lines": {
         "total": 1193,
         "code": 1192,
@@ -46746,7 +46293,7 @@
         "switchCount": 0
       },
       "complexityScore": 1198,
-      "updatedAt": "2026-08-07T11:25:28.242Z",
+      "updatedAt": "2026-08-14T06:51:44.644Z",
       "riskScore": 30
     },
     {
@@ -46779,15 +46326,15 @@
         "switchCount": 0
       },
       "complexityScore": 309,
-      "updatedAt": "2026-08-07T11:25:28.242Z",
+      "updatedAt": "2026-08-14T06:51:44.647Z",
       "riskScore": 22
     },
     {
       "path": "lighthouse/report-split/best-practices.json",
       "extension": ".json",
       "directory": "lighthouse/report-split",
-      "bytes": 64973,
-      "hash": "ee915cde67d6994aad3f033a7bae3fa4877005e532f1a18b9458ac85b4065c96",
+      "bytes": 65000,
+      "hash": "8aa7a1cffa4bebaa4ab5ffce510e4ef5d68feae680da67f55f5882f907b3d5b8",
       "lines": {
         "total": 1963,
         "code": 1962,
@@ -46812,18 +46359,18 @@
         "switchCount": 0
       },
       "complexityScore": 1962,
-      "updatedAt": "2026-08-07T11:25:28.242Z",
+      "updatedAt": "2026-08-14T06:51:44.646Z",
       "riskScore": 30
     },
     {
       "path": "lighthouse/report-split/performance.html",
       "extension": ".html",
       "directory": "lighthouse/report-split",
-      "bytes": 26255,
-      "hash": "1f82816b3ecd04e5ffd5deb5753626b1d896fa0a8b90c24c160d7f82ffea31db",
+      "bytes": 24607,
+      "hash": "f6d2d9a19f8283b5e0564cc83f46180e4b644e91da3001f92109058dc5569860",
       "lines": {
-        "total": 647,
-        "code": 645,
+        "total": 615,
+        "code": 613,
         "comments": 1,
         "blanks": 1
       },
@@ -46846,19 +46393,19 @@
         "ifCount": 1,
         "switchCount": 0
       },
-      "complexityScore": 657,
-      "updatedAt": "2026-08-07T11:25:28.242Z",
+      "complexityScore": 625,
+      "updatedAt": "2026-08-14T06:51:44.643Z",
       "riskScore": 37
     },
     {
       "path": "lighthouse/report-split/performance.json",
       "extension": ".json",
       "directory": "lighthouse/report-split",
-      "bytes": 579356,
-      "hash": "a40e4022101d966465feeafbfa2493a6e2dfaf64d15701cc02695004de095b3b",
+      "bytes": 579344,
+      "hash": "88484700231dd5e8c0ba9b9745e93b22787bd14236c4bc898c46ad444e60e6ab",
       "lines": {
-        "total": 12143,
-        "code": 12142,
+        "total": 11796,
+        "code": 11795,
         "comments": 0,
         "blanks": 1
       },
@@ -46882,8 +46429,8 @@
         "ifCount": 1,
         "switchCount": 0
       },
-      "complexityScore": 12166,
-      "updatedAt": "2026-08-07T11:25:28.242Z",
+      "complexityScore": 11819,
+      "updatedAt": "2026-08-14T06:51:44.641Z",
       "riskScore": 44
     },
     {
@@ -46916,7 +46463,7 @@
         "switchCount": 0
       },
       "complexityScore": 229,
-      "updatedAt": "2026-08-07T11:25:28.258Z",
+      "updatedAt": "2026-08-14T06:51:44.649Z",
       "riskScore": 16
     },
     {
@@ -46924,7 +46471,7 @@
       "extension": ".json",
       "directory": "lighthouse/report-split",
       "bytes": 8261,
-      "hash": "21b5cd266f7b74d43d3689864e6c19707303d327c15ae08de067580383143445",
+      "hash": "c5889dc16e1d25767af29bbc0e602dd32124dd8f17df050398eebe3153238871",
       "lines": {
         "total": 242,
         "code": 241,
@@ -46949,15 +46496,15 @@
         "switchCount": 0
       },
       "complexityScore": 241,
-      "updatedAt": "2026-08-07T11:25:28.257Z",
+      "updatedAt": "2026-08-14T06:51:44.648Z",
       "riskScore": 16
     },
     {
       "path": "lighthouse/report.report.html",
       "extension": ".html",
       "directory": "lighthouse",
-      "bytes": 689842,
-      "hash": "2a09d86d32ff940fcc2863d09b361515afaa58dea509bfe5391f25e642018ccf",
+      "bytes": 701743,
+      "hash": "ac8373f426daa0b00f2fccb14e390805bcda4a5d63131648f109df10b0832c6b",
       "lines": {
         "total": 2894,
         "code": 2382,
@@ -47046,18 +46593,18 @@
         "switchCount": 13
       },
       "complexityScore": 2772,
-      "updatedAt": "2026-08-07T11:25:28.062Z",
+      "updatedAt": "2026-08-14T06:51:42.654Z",
       "riskScore": 68
     },
     {
       "path": "lighthouse/report.report.json",
       "extension": ".json",
       "directory": "lighthouse",
-      "bytes": 853331,
-      "hash": "694a0bec51b6c99e97623bd205eeadd809b8d3f07102ca2fb174412a5fe19950",
+      "bytes": 853520,
+      "hash": "726a9720920e539d523b913f1e6fd9aa2053e1c715485d5aa43d7d3f76bf7b9d",
       "lines": {
-        "total": 20006,
-        "code": 20006,
+        "total": 19674,
+        "code": 19674,
         "comments": 0,
         "blanks": 0
       },
@@ -47083,8 +46630,8 @@
         "ifCount": 4,
         "switchCount": 0
       },
-      "complexityScore": 20036,
-      "updatedAt": "2026-08-07T11:25:28.068Z",
+      "complexityScore": 19704,
+      "updatedAt": "2026-08-14T06:51:42.660Z",
       "riskScore": 44
     },
     {
@@ -47121,6 +46668,42 @@
       "complexityScore": 354,
       "updatedAt": "2026-08-01T12:44:24.631Z",
       "riskScore": 22
+    },
+    {
+      "path": "md/FIXED_IT.md",
+      "extension": ".md",
+      "directory": "md",
+      "bytes": 6809,
+      "hash": "58da3ad2766fd53069b33eb73df3b416e487cd8f18a668e37725f35c89525371",
+      "lines": {
+        "total": 97,
+        "code": 64,
+        "comments": 0,
+        "blanks": 33
+      },
+      "imports": [],
+      "exports": [],
+      "importSpecifiers": [],
+      "importsDetailed": [],
+      "symbols": [],
+      "symbolCount": 0,
+      "tags": [
+        "TODO",
+        "NOTE"
+      ],
+      "tagCount": 2,
+      "keywordCounts": {
+        "asyncCount": 0,
+        "awaitCount": 0,
+        "tryCount": 0,
+        "catchCount": 0,
+        "throwCount": 0,
+        "ifCount": 1,
+        "switchCount": 0
+      },
+      "complexityScore": 88,
+      "updatedAt": "2026-08-14T04:51:25.253Z",
+      "riskScore": 26
     },
     {
       "path": "md/IMPLEMENTATION_CHECKLIST.md",
@@ -47191,6 +46774,46 @@
       "complexityScore": 103,
       "updatedAt": "2026-06-21T10:34:53.377Z",
       "riskScore": 12
+    },
+    {
+      "path": "md/PRODUCTION_READY.md",
+      "extension": ".md",
+      "directory": "md",
+      "bytes": 33851,
+      "hash": "8e554419f25f700e79431a236dad4247f554fe8024d03b811c0860b58ac20681",
+      "lines": {
+        "total": 832,
+        "code": 667,
+        "comments": 0,
+        "blanks": 165
+      },
+      "imports": [],
+      "exports": [],
+      "importSpecifiers": [],
+      "importsDetailed": [],
+      "symbols": [
+        "using"
+      ],
+      "symbolCount": 1,
+      "tags": [
+        "REFACTOR",
+        "OPTIMIZE",
+        "TODO",
+        "NOTE"
+      ],
+      "tagCount": 4,
+      "keywordCounts": {
+        "asyncCount": 1,
+        "awaitCount": 0,
+        "tryCount": 0,
+        "catchCount": 0,
+        "throwCount": 0,
+        "ifCount": 15,
+        "switchCount": 0
+      },
+      "complexityScore": 721,
+      "updatedAt": "2026-08-14T04:51:25.636Z",
+      "riskScore": 58
     },
     {
       "path": "md/QUICK_FIX_GUIDE.md",
@@ -47494,11 +47117,11 @@
       "path": "package.json",
       "extension": ".json",
       "directory": ".",
-      "bytes": 11717,
-      "hash": "91fc3c07615e5ce42dbfdc423c73c5e562dc71c29ccb0034ef776fb8521eecca",
+      "bytes": 13715,
+      "hash": "a7715f80008e3d8bd469940419060fbfefee86f31dfbc2a60452c7c225712ddf",
       "lines": {
-        "total": 242,
-        "code": 241,
+        "total": 274,
+        "code": 273,
         "comments": 0,
         "blanks": 1
       },
@@ -47521,61 +47144,9 @@
         "ifCount": 1,
         "switchCount": 0
       },
-      "complexityScore": 253,
-      "updatedAt": "2026-08-13T13:30:56.507Z",
+      "complexityScore": 285,
+      "updatedAt": "2026-08-14T06:43:08.385Z",
       "riskScore": 23
-    },
-    {
-      "path": "playwright.config.ts",
-      "extension": ".ts",
-      "directory": ".",
-      "bytes": 3454,
-      "hash": "645e62bfd60abf4c2d35965299fb5715ab1ee3325755233e234b9a5f17e2e4f8",
-      "lines": {
-        "total": 105,
-        "code": 94,
-        "comments": 2,
-        "blanks": 9
-      },
-      "imports": [
-        "import { existsSync } from 'node:fs';",
-        "import { chromium, defineConfig, devices, firefox, webkit } from '@playwright/test';"
-      ],
-      "exports": [
-        "export default defineConfig({"
-      ],
-      "importSpecifiers": [
-        "node:fs",
-        "@playwright/test"
-      ],
-      "importsDetailed": [
-        {
-          "specifier": "node:fs",
-          "kind": "node_builtin",
-          "target": null
-        },
-        {
-          "specifier": "@playwright/test",
-          "kind": "package",
-          "target": null
-        }
-      ],
-      "symbols": [],
-      "symbolCount": 0,
-      "tags": [],
-      "tagCount": 0,
-      "keywordCounts": {
-        "asyncCount": 0,
-        "awaitCount": 0,
-        "tryCount": 0,
-        "catchCount": 0,
-        "throwCount": 0,
-        "ifCount": 1,
-        "switchCount": 0
-      },
-      "complexityScore": 100,
-      "updatedAt": "2026-08-03T04:52:38.356Z",
-      "riskScore": 12
     },
     {
       "path": "public/dashboard.svg",
@@ -47845,13 +47416,13 @@
       "path": "README.md",
       "extension": ".md",
       "directory": ".",
-      "bytes": 18879,
-      "hash": "a7b8fca70f6211feb1f383b8d55b22280eecdd2d7ce4c067542766cbed7b452c",
+      "bytes": 18822,
+      "hash": "23018d66145133efd005575739b0a6c2b8d29f886dd49357cbbd788a81e2c208",
       "lines": {
-        "total": 357,
-        "code": 281,
+        "total": 354,
+        "code": 279,
         "comments": 1,
-        "blanks": 75
+        "blanks": 74
       },
       "imports": [],
       "exports": [],
@@ -47875,8 +47446,8 @@
         "ifCount": 1,
         "switchCount": 0
       },
-      "complexityScore": 305,
-      "updatedAt": "2026-08-02T10:39:15.918Z",
+      "complexityScore": 303,
+      "updatedAt": "2026-08-14T04:58:15.946Z",
       "riskScore": 29
     },
     {
@@ -47932,6 +47503,106 @@
       },
       "complexityScore": 133,
       "updatedAt": "2026-08-01T12:44:24.993Z",
+      "riskScore": 12
+    },
+    {
+      "path": "scripts/build-env.mjs",
+      "extension": ".mjs",
+      "directory": "scripts",
+      "bytes": 926,
+      "hash": "2b435973637de18241da5a0f0c2a1801ad8dca28bc8039a3b54424356331158a",
+      "lines": {
+        "total": 39,
+        "code": 32,
+        "comments": 0,
+        "blanks": 7
+      },
+      "imports": [
+        "import { spawnSync } from 'node:child_process';",
+        "import path from 'node:path';"
+      ],
+      "exports": [],
+      "importSpecifiers": [
+        "node:child_process",
+        "node:path"
+      ],
+      "importsDetailed": [
+        {
+          "specifier": "node:child_process",
+          "kind": "node_builtin",
+          "target": null
+        },
+        {
+          "specifier": "node:path",
+          "kind": "node_builtin",
+          "target": null
+        }
+      ],
+      "symbols": [],
+      "symbolCount": 0,
+      "tags": [],
+      "tagCount": 0,
+      "keywordCounts": {
+        "asyncCount": 0,
+        "awaitCount": 0,
+        "tryCount": 0,
+        "catchCount": 0,
+        "throwCount": 0,
+        "ifCount": 5,
+        "switchCount": 0
+      },
+      "complexityScore": 38,
+      "updatedAt": "2026-08-14T05:54:54.630Z",
+      "riskScore": 12
+    },
+    {
+      "path": "scripts/clean.mjs",
+      "extension": ".mjs",
+      "directory": "scripts",
+      "bytes": 2877,
+      "hash": "bc10013f7a1a89e102c0e5b3ca4841ddf79996fa950b9b1db53cf0ac85d0c3da",
+      "lines": {
+        "total": 105,
+        "code": 87,
+        "comments": 0,
+        "blanks": 18
+      },
+      "imports": [
+        "import fs from 'node:fs';",
+        "import path from 'node:path';"
+      ],
+      "exports": [],
+      "importSpecifiers": [
+        "node:fs",
+        "node:path"
+      ],
+      "importsDetailed": [
+        {
+          "specifier": "node:fs",
+          "kind": "node_builtin",
+          "target": null
+        },
+        {
+          "specifier": "node:path",
+          "kind": "node_builtin",
+          "target": null
+        }
+      ],
+      "symbols": [],
+      "symbolCount": 0,
+      "tags": [],
+      "tagCount": 0,
+      "keywordCounts": {
+        "asyncCount": 0,
+        "awaitCount": 0,
+        "tryCount": 1,
+        "catchCount": 1,
+        "throwCount": 0,
+        "ifCount": 12,
+        "switchCount": 0
+      },
+      "complexityScore": 93,
+      "updatedAt": "2026-08-14T06:08:13.788Z",
       "riskScore": 12
     },
     {
@@ -48128,11 +47799,11 @@
       "path": "scripts/code-memory-index/constants.mjs",
       "extension": ".mjs",
       "directory": "scripts/code-memory-index",
-      "bytes": 1734,
-      "hash": "a780d57b80003250f7cdf2c04debec34f387b563526b2f5bf1c887e839fca70c",
+      "bytes": 1711,
+      "hash": "37bc1ef0c3726e5a59e344c379ef24cacef6f718f7317361ca0a69f10008b8bf",
       "lines": {
-        "total": 77,
-        "code": 73,
+        "total": 76,
+        "code": 72,
         "comments": 0,
         "blanks": 4
       },
@@ -48174,8 +47845,8 @@
         "ifCount": 0,
         "switchCount": 0
       },
-      "complexityScore": 157,
-      "updatedAt": "2026-08-01T12:44:25.040Z",
+      "complexityScore": 156,
+      "updatedAt": "2026-08-14T04:58:26.967Z",
       "riskScore": 67
     },
     {
@@ -48546,6 +48217,176 @@
       "riskScore": 35
     },
     {
+      "path": "scripts/db-ping.mjs",
+      "extension": ".mjs",
+      "directory": "scripts",
+      "bytes": 1518,
+      "hash": "10ebd5f0c8867c0e9ec68c1967248baced397beefc25c158cdd5fed48d1763ba",
+      "lines": {
+        "total": 50,
+        "code": 40,
+        "comments": 0,
+        "blanks": 10
+      },
+      "imports": [
+        "import 'dotenv/config';",
+        "import { MongoClient } from 'mongodb';"
+      ],
+      "exports": [],
+      "importSpecifiers": [
+        "mongodb",
+        "dotenv/config"
+      ],
+      "importsDetailed": [
+        {
+          "specifier": "mongodb",
+          "kind": "package",
+          "target": null
+        },
+        {
+          "specifier": "dotenv/config",
+          "kind": "package",
+          "target": null
+        }
+      ],
+      "symbols": [
+        "ping"
+      ],
+      "symbolCount": 1,
+      "tags": [],
+      "tagCount": 0,
+      "keywordCounts": {
+        "asyncCount": 1,
+        "awaitCount": 4,
+        "tryCount": 1,
+        "catchCount": 2,
+        "throwCount": 0,
+        "ifCount": 2,
+        "switchCount": 0
+      },
+      "complexityScore": 52,
+      "updatedAt": "2026-08-14T05:55:08.718Z",
+      "riskScore": 12
+    },
+    {
+      "path": "scripts/doctor.mjs",
+      "extension": ".mjs",
+      "directory": "scripts",
+      "bytes": 3438,
+      "hash": "a37712d7cdb31d039c60362925b6a3f8be0a7c32fe140d9d5f576e849d8c230e",
+      "lines": {
+        "total": 120,
+        "code": 99,
+        "comments": 5,
+        "blanks": 16
+      },
+      "imports": [
+        "import fs from 'node:fs';",
+        "import path from 'node:path';",
+        "import 'dotenv/config';"
+      ],
+      "exports": [],
+      "importSpecifiers": [
+        "node:fs",
+        "node:path",
+        "dotenv/config"
+      ],
+      "importsDetailed": [
+        {
+          "specifier": "node:fs",
+          "kind": "node_builtin",
+          "target": null
+        },
+        {
+          "specifier": "node:path",
+          "kind": "node_builtin",
+          "target": null
+        },
+        {
+          "specifier": "dotenv/config",
+          "kind": "package",
+          "target": null
+        }
+      ],
+      "symbols": [
+        "addCheck"
+      ],
+      "symbolCount": 1,
+      "tags": [],
+      "tagCount": 0,
+      "keywordCounts": {
+        "asyncCount": 0,
+        "awaitCount": 0,
+        "tryCount": 0,
+        "catchCount": 0,
+        "throwCount": 0,
+        "ifCount": 11,
+        "switchCount": 0
+      },
+      "complexityScore": 114,
+      "updatedAt": "2026-08-14T06:08:13.909Z",
+      "riskScore": 12
+    },
+    {
+      "path": "scripts/env-check.mjs",
+      "extension": ".mjs",
+      "directory": "scripts",
+      "bytes": 1480,
+      "hash": "3659268a0db8911434873ba45054ec90ed2838c6c7a073056576d59380c50a3b",
+      "lines": {
+        "total": 49,
+        "code": 41,
+        "comments": 0,
+        "blanks": 8
+      },
+      "imports": [
+        "import fs from 'node:fs';",
+        "import path from 'node:path';",
+        "import 'dotenv/config';"
+      ],
+      "exports": [],
+      "importSpecifiers": [
+        "node:fs",
+        "node:path",
+        "dotenv/config"
+      ],
+      "importsDetailed": [
+        {
+          "specifier": "node:fs",
+          "kind": "node_builtin",
+          "target": null
+        },
+        {
+          "specifier": "node:path",
+          "kind": "node_builtin",
+          "target": null
+        },
+        {
+          "specifier": "dotenv/config",
+          "kind": "package",
+          "target": null
+        }
+      ],
+      "symbols": [
+        "parseEnvKeys"
+      ],
+      "symbolCount": 1,
+      "tags": [],
+      "tagCount": 0,
+      "keywordCounts": {
+        "asyncCount": 0,
+        "awaitCount": 0,
+        "tryCount": 0,
+        "catchCount": 0,
+        "throwCount": 0,
+        "ifCount": 6,
+        "switchCount": 0
+      },
+      "complexityScore": 56,
+      "updatedAt": "2026-08-14T05:55:11.977Z",
+      "riskScore": 12
+    },
+    {
       "path": "scripts/lighthouse-runner.mjs",
       "extension": ".mjs",
       "directory": "scripts",
@@ -48653,6 +48494,65 @@
       "riskScore": 47
     },
     {
+      "path": "scripts/open-report.mjs",
+      "extension": ".mjs",
+      "directory": "scripts",
+      "bytes": 1313,
+      "hash": "1ced60a860ac02b0f2589fdfbd3ff5086e002e5dd702080a9def515c114dba9d",
+      "lines": {
+        "total": 53,
+        "code": 43,
+        "comments": 1,
+        "blanks": 9
+      },
+      "imports": [
+        "import fs from 'node:fs';",
+        "import path from 'node:path';",
+        "import { exec } from 'node:child_process';"
+      ],
+      "exports": [],
+      "importSpecifiers": [
+        "node:fs",
+        "node:path",
+        "node:child_process"
+      ],
+      "importsDetailed": [
+        {
+          "specifier": "node:fs",
+          "kind": "node_builtin",
+          "target": null
+        },
+        {
+          "specifier": "node:path",
+          "kind": "node_builtin",
+          "target": null
+        },
+        {
+          "specifier": "node:child_process",
+          "kind": "node_builtin",
+          "target": null
+        }
+      ],
+      "symbols": [
+        "getOpenCommand"
+      ],
+      "symbolCount": 1,
+      "tags": [],
+      "tagCount": 0,
+      "keywordCounts": {
+        "asyncCount": 0,
+        "awaitCount": 0,
+        "tryCount": 0,
+        "catchCount": 0,
+        "throwCount": 0,
+        "ifCount": 4,
+        "switchCount": 1
+      },
+      "complexityScore": 58,
+      "updatedAt": "2026-08-14T06:08:13.966Z",
+      "riskScore": 12
+    },
+    {
       "path": "scripts/run-push-gitbash.cjs",
       "extension": ".cjs",
       "directory": "scripts",
@@ -48689,11 +48589,11 @@
       "path": "scripts/vitest-related.mjs",
       "extension": ".mjs",
       "directory": "scripts",
-      "bytes": 2332,
-      "hash": "9d9ac32e6694b7066233e0419da4f7a99467020f5521629f38745aacaa112afd",
+      "bytes": 2308,
+      "hash": "d5fc05eb0519bdd949e3161f8e3d526a91d1b395fe9aa84eec3b8b40d80b008d",
       "lines": {
-        "total": 104,
-        "code": 83,
+        "total": 103,
+        "code": 82,
         "comments": 0,
         "blanks": 21
       },
@@ -48742,8 +48642,8 @@
         "ifCount": 5,
         "switchCount": 0
       },
-      "complexityScore": 110,
-      "updatedAt": "2026-08-01T12:44:25.145Z",
+      "complexityScore": 109,
+      "updatedAt": "2026-08-14T04:58:29.115Z",
       "riskScore": 12
     },
     {
@@ -51490,11 +51390,11 @@
       "path": "server/middleware/csrfProtection.ts",
       "extension": ".ts",
       "directory": "server/middleware",
-      "bytes": 4292,
-      "hash": "b8ef0ff46c8b233bab57256e00262b1a7cb6ee3153e7d3940c58fea0f5a3b09a",
+      "bytes": 4339,
+      "hash": "9859a74f064951e66594b93da908f654a7fa8540a1321a0df5b1cc7b57151131",
       "lines": {
-        "total": 141,
-        "code": 115,
+        "total": 142,
+        "code": 116,
         "comments": 4,
         "blanks": 22
       },
@@ -51553,19 +51453,19 @@
         "ifCount": 12,
         "switchCount": 0
       },
-      "complexityScore": 190,
-      "updatedAt": "2026-08-03T10:41:06.634Z",
+      "complexityScore": 191,
+      "updatedAt": "2026-08-14T06:29:22.025Z",
       "riskScore": 17
     },
     {
       "path": "server/middleware/errorHandler.ts",
       "extension": ".ts",
       "directory": "server/middleware",
-      "bytes": 5542,
-      "hash": "fdadcb6125f3ecc5843185644cd2d1ec3e03ee4efd992424ca5576240c176bc0",
+      "bytes": 5624,
+      "hash": "82f3ec0dbd8c9d3c6333fd9aff56dbbc5ed7905b10d52d647f9cf78793db8643",
       "lines": {
-        "total": 178,
-        "code": 162,
+        "total": 179,
+        "code": 163,
         "comments": 6,
         "blanks": 10
       },
@@ -51657,8 +51557,8 @@
         "ifCount": 17,
         "switchCount": 0
       },
-      "complexityScore": 201,
-      "updatedAt": "2026-08-13T11:35:03.341Z",
+      "complexityScore": 202,
+      "updatedAt": "2026-08-14T06:29:26.143Z",
       "riskScore": 27
     },
     {
@@ -59143,11 +59043,11 @@
       "path": "src/components/layout/Background.tsx",
       "extension": ".tsx",
       "directory": "src/components/layout",
-      "bytes": 7039,
-      "hash": "40e149a9c16681e551fc1fd4198b0fe8910da21b7c5da6d117e01a6e009626d7",
+      "bytes": 7018,
+      "hash": "2bb32c276fcd86213ac91f09e0d9848daf1b709e90a8096b128d4534250f86ec",
       "lines": {
-        "total": 259,
-        "code": 212,
+        "total": 258,
+        "code": 211,
         "comments": 0,
         "blanks": 47
       },
@@ -59215,8 +59115,8 @@
         "ifCount": 8,
         "switchCount": 0
       },
-      "complexityScore": 263,
-      "updatedAt": "2026-08-01T12:44:27.703Z",
+      "complexityScore": 262,
+      "updatedAt": "2026-08-14T06:08:16.140Z",
       "riskScore": 16
     },
     {
@@ -63569,8 +63469,8 @@
       "path": "src/features/vault/__tests__/SettingsVault/SettingsVaultIntegration.test.tsx",
       "extension": ".tsx",
       "directory": "src/features/vault/__tests__/SettingsVault",
-      "bytes": 9318,
-      "hash": "2dbf9f41d1e10ca93af78b72d7e700ea7115e72c092796dcc6402aaed532447f",
+      "bytes": 9338,
+      "hash": "d1f7ca8a5b31c379b9732d49242be9568e146dc222dcd36bd358aff9d5fc079f",
       "lines": {
         "total": 285,
         "code": 229,
@@ -63635,7 +63535,7 @@
         "switchCount": 0
       },
       "complexityScore": 250,
-      "updatedAt": "2026-08-07T11:02:36.653Z",
+      "updatedAt": "2026-08-14T06:50:39.149Z",
       "riskScore": 16
     },
     {
@@ -73554,7 +73454,7 @@
         "switchCount": 0
       },
       "complexityScore": 393,
-      "updatedAt": "2026-08-01T12:44:30.975Z",
+      "updatedAt": "2026-08-14T05:46:16.136Z",
       "riskScore": 33
     },
     {
@@ -74558,7 +74458,7 @@
         "switchCount": 0
       },
       "complexityScore": 131,
-      "updatedAt": "2026-08-01T12:44:31.162Z",
+      "updatedAt": "2026-08-14T05:46:16.137Z",
       "riskScore": 18
     },
     {
@@ -74923,7 +74823,7 @@
         "switchCount": 0
       },
       "complexityScore": 198,
-      "updatedAt": "2026-08-01T12:44:31.214Z",
+      "updatedAt": "2026-08-14T05:46:43.105Z",
       "riskScore": 17
     },
     {
@@ -75905,7 +75805,7 @@
         "switchCount": 0
       },
       "complexityScore": 143,
-      "updatedAt": "2026-08-02T04:20:51.563Z",
+      "updatedAt": "2026-08-14T05:46:43.104Z",
       "riskScore": 12
     },
     {
@@ -77349,562 +77249,6 @@
       "riskScore": 16
     },
     {
-      "path": "tests/e2e/auth-session.spec.ts",
-      "extension": ".ts",
-      "directory": "tests/e2e",
-      "bytes": 3971,
-      "hash": "617bb4fdb9bf557f8fe7a1957dd6bc2904de83129fef9baa5b129da661687759",
-      "lines": {
-        "total": 123,
-        "code": 93,
-        "comments": 13,
-        "blanks": 17
-      },
-      "imports": [
-        "import { test, expect } from '@playwright/test';"
-      ],
-      "exports": [],
-      "importSpecifiers": [
-        "@playwright/test"
-      ],
-      "importsDetailed": [
-        {
-          "specifier": "@playwright/test",
-          "kind": "package",
-          "target": null
-        }
-      ],
-      "symbols": [],
-      "symbolCount": 0,
-      "tags": [],
-      "tagCount": 0,
-      "keywordCounts": {
-        "asyncCount": 8,
-        "awaitCount": 28,
-        "tryCount": 0,
-        "catchCount": 3,
-        "throwCount": 0,
-        "ifCount": 4,
-        "switchCount": 0
-      },
-      "complexityScore": 96,
-      "updatedAt": "2026-08-03T02:58:04.126Z",
-      "riskScore": 12
-    },
-    {
-      "path": "tests/e2e/global-setup.ts",
-      "extension": ".ts",
-      "directory": "tests/e2e",
-      "bytes": 191,
-      "hash": "b29eb21d5b7474855642749dfac42d51cb927cdc05d382263354b5cba4ec8665",
-      "lines": {
-        "total": 8,
-        "code": 5,
-        "comments": 0,
-        "blanks": 3
-      },
-      "imports": [
-        "import type { FullConfig } from '@playwright/test';"
-      ],
-      "exports": [
-        "export default globalSetup;"
-      ],
-      "importSpecifiers": [
-        "@playwright/test"
-      ],
-      "importsDetailed": [
-        {
-          "specifier": "@playwright/test",
-          "kind": "package",
-          "target": null
-        }
-      ],
-      "symbols": [
-        "globalSetup"
-      ],
-      "symbolCount": 1,
-      "tags": [],
-      "tagCount": 0,
-      "keywordCounts": {
-        "asyncCount": 1,
-        "awaitCount": 0,
-        "tryCount": 0,
-        "catchCount": 0,
-        "throwCount": 0,
-        "ifCount": 0,
-        "switchCount": 0
-      },
-      "complexityScore": 14,
-      "updatedAt": "2026-08-01T12:44:31.768Z",
-      "riskScore": 12
-    },
-    {
-      "path": "tests/e2e/helpers/auth.ts",
-      "extension": ".ts",
-      "directory": "tests/e2e/helpers",
-      "bytes": 1994,
-      "hash": "f67e6dd9abd6d99cd454918dbb60f0dadd2ce53723f0d14e97de919e6f181626",
-      "lines": {
-        "total": 49,
-        "code": 34,
-        "comments": 6,
-        "blanks": 9
-      },
-      "imports": [
-        "import { expect, type Page } from '@playwright/test';",
-        "import { testIds } from './selectors';",
-        "import { ensureVisibleWithRecovery } from './page-ready';"
-      ],
-      "exports": [
-        "export const hasE2ECredentials = process.env.E2E_CREDENTIALS_CONFIGURED === '1';",
-        "export async function openLoginForm(page: Page) {",
-        "export async function loginWithEnvCredentials(page: Page) {"
-      ],
-      "importSpecifiers": [
-        "@playwright/test",
-        "./selectors",
-        "./page-ready"
-      ],
-      "importsDetailed": [
-        {
-          "specifier": "@playwright/test",
-          "kind": "package",
-          "target": null
-        },
-        {
-          "specifier": "./selectors",
-          "kind": "relative",
-          "target": "tests/e2e/helpers/selectors"
-        },
-        {
-          "specifier": "./page-ready",
-          "kind": "relative",
-          "target": "tests/e2e/helpers/page-ready"
-        }
-      ],
-      "symbols": [
-        "Page",
-        "openLoginForm",
-        "loginWithEnvCredentials"
-      ],
-      "symbolCount": 3,
-      "tags": [],
-      "tagCount": 0,
-      "keywordCounts": {
-        "asyncCount": 2,
-        "awaitCount": 12,
-        "tryCount": 0,
-        "catchCount": 0,
-        "throwCount": 0,
-        "ifCount": 2,
-        "switchCount": 0
-      },
-      "complexityScore": 61,
-      "updatedAt": "2026-08-03T04:55:11.983Z",
-      "riskScore": 12
-    },
-    {
-      "path": "tests/e2e/helpers/page-ready.ts",
-      "extension": ".ts",
-      "directory": "tests/e2e/helpers",
-      "bytes": 1243,
-      "hash": "79d3ddbb0bc687548a67cd4eed7a99d8e8d23b3ce91be071089bc4850c82195b",
-      "lines": {
-        "total": 43,
-        "code": 36,
-        "comments": 0,
-        "blanks": 7
-      },
-      "imports": [
-        "import { expect, type Locator, type Page } from '@playwright/test';"
-      ],
-      "exports": [
-        "export async function ensureVisibleWithRecovery("
-      ],
-      "importSpecifiers": [
-        "@playwright/test"
-      ],
-      "importsDetailed": [
-        {
-          "specifier": "@playwright/test",
-          "kind": "package",
-          "target": null
-        }
-      ],
-      "symbols": [
-        "Locator",
-        "Page",
-        "ensureVisibleWithRecovery"
-      ],
-      "symbolCount": 3,
-      "tags": [],
-      "tagCount": 0,
-      "keywordCounts": {
-        "asyncCount": 1,
-        "awaitCount": 7,
-        "tryCount": 1,
-        "catchCount": 7,
-        "throwCount": 1,
-        "ifCount": 4,
-        "switchCount": 0
-      },
-      "complexityScore": 57,
-      "updatedAt": "2026-08-03T04:55:24.988Z",
-      "riskScore": 12
-    },
-    {
-      "path": "tests/e2e/helpers/selectors.ts",
-      "extension": ".ts",
-      "directory": "tests/e2e/helpers",
-      "bytes": 297,
-      "hash": "e2d56f1bdc8938d3311c948f932c38dd535deee82ffdb290c3a78e5abfd6b909",
-      "lines": {
-        "total": 9,
-        "code": 8,
-        "comments": 0,
-        "blanks": 1
-      },
-      "imports": [],
-      "exports": [
-        "export const testIds = {"
-      ],
-      "importSpecifiers": [],
-      "importsDetailed": [],
-      "symbols": [],
-      "symbolCount": 0,
-      "tags": [],
-      "tagCount": 0,
-      "keywordCounts": {
-        "asyncCount": 0,
-        "awaitCount": 0,
-        "tryCount": 0,
-        "catchCount": 0,
-        "throwCount": 0,
-        "ifCount": 0,
-        "switchCount": 0
-      },
-      "complexityScore": 8,
-      "updatedAt": "2026-08-01T12:44:31.795Z",
-      "riskScore": 12
-    },
-    {
-      "path": "tests/e2e/privacy_interface_deep_audit.spec.ts",
-      "extension": ".ts",
-      "directory": "tests/e2e",
-      "bytes": 2719,
-      "hash": "5194accdadc64a6a783ec4db67532d325d701f316bb22233af0f4e5c04805f49",
-      "lines": {
-        "total": 71,
-        "code": 52,
-        "comments": 3,
-        "blanks": 16
-      },
-      "imports": [
-        "import { test, expect } from '@playwright/test';"
-      ],
-      "exports": [],
-      "importSpecifiers": [
-        "@playwright/test"
-      ],
-      "importsDetailed": [
-        {
-          "specifier": "@playwright/test",
-          "kind": "package",
-          "target": null
-        }
-      ],
-      "symbols": [
-        "isChecked",
-        "isAutoClearChecked"
-      ],
-      "symbolCount": 2,
-      "tags": [],
-      "tagCount": 0,
-      "keywordCounts": {
-        "asyncCount": 5,
-        "awaitCount": 27,
-        "tryCount": 0,
-        "catchCount": 0,
-        "throwCount": 0,
-        "ifCount": 2,
-        "switchCount": 3
-      },
-      "complexityScore": 67,
-      "updatedAt": "2026-08-03T02:58:04.173Z",
-      "riskScore": 12
-    },
-    {
-      "path": "tests/e2e/specs/api-response.spec.ts",
-      "extension": ".ts",
-      "directory": "tests/e2e/specs",
-      "bytes": 308,
-      "hash": "edd2f5a2f15cc488f4ada1036304a64a5a482690e6be3517692658918ebb94ad",
-      "lines": {
-        "total": 12,
-        "code": 9,
-        "comments": 0,
-        "blanks": 3
-      },
-      "imports": [
-        "import { expect, test } from '@playwright/test';"
-      ],
-      "exports": [],
-      "importSpecifiers": [
-        "@playwright/test"
-      ],
-      "importsDetailed": [
-        {
-          "specifier": "@playwright/test",
-          "kind": "package",
-          "target": null
-        }
-      ],
-      "symbols": [],
-      "symbolCount": 0,
-      "tags": [],
-      "tagCount": 0,
-      "keywordCounts": {
-        "asyncCount": 1,
-        "awaitCount": 2,
-        "tryCount": 0,
-        "catchCount": 0,
-        "throwCount": 0,
-        "ifCount": 0,
-        "switchCount": 0
-      },
-      "complexityScore": 12,
-      "updatedAt": "2026-08-01T12:44:31.802Z",
-      "riskScore": 12
-    },
-    {
-      "path": "tests/e2e/specs/home.spec.ts",
-      "extension": ".ts",
-      "directory": "tests/e2e/specs",
-      "bytes": 886,
-      "hash": "633832b3ae62e1781f16fec5f8880bbede5e82d31380fd428d44e4094f65e89c",
-      "lines": {
-        "total": 27,
-        "code": 21,
-        "comments": 0,
-        "blanks": 6
-      },
-      "imports": [
-        "import { expect, test } from '@playwright/test';",
-        "import { ensureVisibleWithRecovery } from '../helpers/page-ready';",
-        "import { testIds } from '../helpers/selectors';"
-      ],
-      "exports": [],
-      "importSpecifiers": [
-        "@playwright/test",
-        "../helpers/page-ready",
-        "../helpers/selectors"
-      ],
-      "importsDetailed": [
-        {
-          "specifier": "@playwright/test",
-          "kind": "package",
-          "target": null
-        },
-        {
-          "specifier": "../helpers/page-ready",
-          "kind": "relative",
-          "target": "tests/e2e/helpers/page-ready"
-        },
-        {
-          "specifier": "../helpers/selectors",
-          "kind": "relative",
-          "target": "tests/e2e/helpers/selectors"
-        }
-      ],
-      "symbols": [],
-      "symbolCount": 0,
-      "tags": [],
-      "tagCount": 0,
-      "keywordCounts": {
-        "asyncCount": 1,
-        "awaitCount": 5,
-        "tryCount": 0,
-        "catchCount": 0,
-        "throwCount": 0,
-        "ifCount": 1,
-        "switchCount": 0
-      },
-      "complexityScore": 30,
-      "updatedAt": "2026-08-03T04:55:43.423Z",
-      "riskScore": 12
-    },
-    {
-      "path": "tests/e2e/specs/login-form.spec.ts",
-      "extension": ".ts",
-      "directory": "tests/e2e/specs",
-      "bytes": 730,
-      "hash": "d412baa0c1d3bdab13dc0eebd32c2e5daafcc929923be3f03e581c88f1b60319",
-      "lines": {
-        "total": 20,
-        "code": 16,
-        "comments": 0,
-        "blanks": 4
-      },
-      "imports": [
-        "import { expect, test } from '@playwright/test';",
-        "import { openLoginForm } from '../helpers/auth';",
-        "import { testIds } from '../helpers/selectors';"
-      ],
-      "exports": [],
-      "importSpecifiers": [
-        "@playwright/test",
-        "../helpers/auth",
-        "../helpers/selectors"
-      ],
-      "importsDetailed": [
-        {
-          "specifier": "@playwright/test",
-          "kind": "package",
-          "target": null
-        },
-        {
-          "specifier": "../helpers/auth",
-          "kind": "relative",
-          "target": "tests/e2e/helpers/auth"
-        },
-        {
-          "specifier": "../helpers/selectors",
-          "kind": "relative",
-          "target": "tests/e2e/helpers/selectors"
-        }
-      ],
-      "symbols": [],
-      "symbolCount": 0,
-      "tags": [],
-      "tagCount": 0,
-      "keywordCounts": {
-        "asyncCount": 1,
-        "awaitCount": 5,
-        "tryCount": 0,
-        "catchCount": 0,
-        "throwCount": 0,
-        "ifCount": 0,
-        "switchCount": 0
-      },
-      "complexityScore": 25,
-      "updatedAt": "2026-08-01T12:44:31.816Z",
-      "riskScore": 12
-    },
-    {
-      "path": "tests/e2e/specs/navigation.spec.ts",
-      "extension": ".ts",
-      "directory": "tests/e2e/specs",
-      "bytes": 707,
-      "hash": "be5f02cd3415733771c119aca5c194a415670fc4fabdccaf3d6ce0a004aff81f",
-      "lines": {
-        "total": 22,
-        "code": 18,
-        "comments": 0,
-        "blanks": 4
-      },
-      "imports": [
-        "import { test } from '@playwright/test';",
-        "import { ensureVisibleWithRecovery } from '../helpers/page-ready';"
-      ],
-      "exports": [],
-      "importSpecifiers": [
-        "@playwright/test",
-        "../helpers/page-ready"
-      ],
-      "importsDetailed": [
-        {
-          "specifier": "@playwright/test",
-          "kind": "package",
-          "target": null
-        },
-        {
-          "specifier": "../helpers/page-ready",
-          "kind": "relative",
-          "target": "tests/e2e/helpers/page-ready"
-        }
-      ],
-      "symbols": [],
-      "symbolCount": 0,
-      "tags": [],
-      "tagCount": 0,
-      "keywordCounts": {
-        "asyncCount": 1,
-        "awaitCount": 4,
-        "tryCount": 0,
-        "catchCount": 0,
-        "throwCount": 0,
-        "ifCount": 0,
-        "switchCount": 0
-      },
-      "complexityScore": 24,
-      "updatedAt": "2026-08-01T12:44:31.823Z",
-      "riskScore": 12
-    },
-    {
-      "path": "tests/e2e/specs/protected-route.spec.ts",
-      "extension": ".ts",
-      "directory": "tests/e2e/specs",
-      "bytes": 1253,
-      "hash": "c65720edeaaeb4b70d47392524247b47057f7cd8442a9c7ddfb00b771dcf7784",
-      "lines": {
-        "total": 36,
-        "code": 29,
-        "comments": 0,
-        "blanks": 7
-      },
-      "imports": [
-        "import { expect, test } from '@playwright/test';",
-        "import { hasE2ECredentials, loginWithEnvCredentials } from '../helpers/auth';",
-        "import { ensureVisibleWithRecovery } from '../helpers/page-ready';",
-        "import { testIds } from '../helpers/selectors';"
-      ],
-      "exports": [],
-      "importSpecifiers": [
-        "@playwright/test",
-        "../helpers/auth",
-        "../helpers/page-ready",
-        "../helpers/selectors"
-      ],
-      "importsDetailed": [
-        {
-          "specifier": "@playwright/test",
-          "kind": "package",
-          "target": null
-        },
-        {
-          "specifier": "../helpers/auth",
-          "kind": "relative",
-          "target": "tests/e2e/helpers/auth"
-        },
-        {
-          "specifier": "../helpers/page-ready",
-          "kind": "relative",
-          "target": "tests/e2e/helpers/page-ready"
-        },
-        {
-          "specifier": "../helpers/selectors",
-          "kind": "relative",
-          "target": "tests/e2e/helpers/selectors"
-        }
-      ],
-      "symbols": [],
-      "symbolCount": 0,
-      "tags": [],
-      "tagCount": 0,
-      "keywordCounts": {
-        "asyncCount": 2,
-        "awaitCount": 5,
-        "tryCount": 0,
-        "catchCount": 0,
-        "throwCount": 0,
-        "ifCount": 0,
-        "switchCount": 0
-      },
-      "complexityScore": 41,
-      "updatedAt": "2026-08-01T12:44:31.829Z",
-      "riskScore": 12
-    },
-    {
       "path": "tests/helpers/createAuthTestApp.ts",
       "extension": ".ts",
       "directory": "tests/helpers",
@@ -78428,7 +77772,7 @@
         "switchCount": 0
       },
       "complexityScore": 20,
-      "updatedAt": "2026-08-01T12:44:31.948Z",
+      "updatedAt": "2026-08-14T05:45:35.359Z",
       "riskScore": 12
     },
     {
@@ -78474,7 +77818,7 @@
         "switchCount": 0
       },
       "complexityScore": 95,
-      "updatedAt": "2026-08-01T12:44:31.961Z",
+      "updatedAt": "2026-08-14T05:45:43.044Z",
       "riskScore": 12
     },
     {
@@ -78640,7 +77984,7 @@
         "switchCount": 0
       },
       "complexityScore": 334,
-      "updatedAt": "2026-08-01T12:44:32.004Z",
+      "updatedAt": "2026-08-14T05:45:43.038Z",
       "riskScore": 22
     },
     {
@@ -78738,7 +78082,7 @@
         "switchCount": 0
       },
       "complexityScore": 155,
-      "updatedAt": "2026-08-01T12:44:32.043Z",
+      "updatedAt": "2026-08-14T05:46:03.056Z",
       "riskScore": 16
     },
     {
@@ -79033,7 +78377,7 @@
         "switchCount": 0
       },
       "complexityScore": 180,
-      "updatedAt": "2026-08-01T12:44:32.090Z",
+      "updatedAt": "2026-08-14T05:45:43.038Z",
       "riskScore": 16
     },
     {
@@ -79189,7 +78533,7 @@
         "switchCount": 0
       },
       "complexityScore": 98,
-      "updatedAt": "2026-08-01T12:44:32.148Z",
+      "updatedAt": "2026-08-14T05:45:43.038Z",
       "riskScore": 12
     },
     {
@@ -79232,7 +78576,7 @@
         "switchCount": 0
       },
       "complexityScore": 27,
-      "updatedAt": "2026-08-01T12:44:32.161Z",
+      "updatedAt": "2026-08-14T05:45:43.038Z",
       "riskScore": 12
     },
     {
@@ -79562,7 +78906,7 @@
         "switchCount": 0
       },
       "complexityScore": 121,
-      "updatedAt": "2026-08-01T12:44:32.210Z",
+      "updatedAt": "2026-08-14T05:45:43.036Z",
       "riskScore": 12
     },
     {
@@ -79728,7 +79072,7 @@
         "switchCount": 0
       },
       "complexityScore": 121,
-      "updatedAt": "2026-08-01T12:44:32.242Z",
+      "updatedAt": "2026-08-14T05:45:43.036Z",
       "riskScore": 12
     },
     {
@@ -79985,7 +79329,7 @@
         "switchCount": 0
       },
       "complexityScore": 50,
-      "updatedAt": "2026-08-01T12:44:32.314Z",
+      "updatedAt": "2026-08-14T05:46:03.055Z",
       "riskScore": 12
     },
     {
@@ -80317,13 +79661,13 @@
       "path": "vite.config.ts",
       "extension": ".ts",
       "directory": ".",
-      "bytes": 13260,
-      "hash": "e1761b08ae56c86cbdbbc5c9209676d730f64d9cfe88bcdc33ee9f13bed17b15",
+      "bytes": 14256,
+      "hash": "39a2da82fe8c8db5d88e1170cb70eb99583762655c37db076d45acaf75923b47",
       "lines": {
-        "total": 483,
-        "code": 417,
-        "comments": 11,
-        "blanks": 55
+        "total": 522,
+        "code": 453,
+        "comments": 9,
+        "blanks": 60
       },
       "imports": [
         "import react from '@vitejs/plugin-react';",
@@ -80401,13 +79745,15 @@
         "hasTerser",
         "toBoolean",
         "toNumber",
+        "parseSourcemap",
+        "parseMinify",
         "resolveManualChunk",
         "createCompressedAssetsPlugin",
         "createSafePreloadDepsPlugin",
         "normalizedPublicUrl",
         "normalizedDnsPrefetchHost"
       ],
-      "symbolCount": 8,
+      "symbolCount": 10,
       "tags": [
         "OPTIMIZE"
       ],
@@ -80418,22 +79764,22 @@
         "tryCount": 3,
         "catchCount": 3,
         "throwCount": 0,
-        "ifCount": 37,
+        "ifCount": 45,
         "switchCount": 0
       },
-      "complexityScore": 504,
-      "updatedAt": "2026-08-03T04:53:36.791Z",
-      "riskScore": 34
+      "complexityScore": 552,
+      "updatedAt": "2026-08-14T06:08:20.089Z",
+      "riskScore": 40
     },
     {
       "path": "vitest.config.ts",
       "extension": ".ts",
       "directory": ".",
-      "bytes": 883,
-      "hash": "d4f2f8861346decfc37d3e6ef948a61f2a0cad1aabe275490da76e69bac20faf",
+      "bytes": 907,
+      "hash": "eb280e272057664df4273d122dc0cddd4a743cbffd34c0fc29183aaa4b2e0e06",
       "lines": {
-        "total": 29,
-        "code": 25,
+        "total": 30,
+        "code": 26,
         "comments": 1,
         "blanks": 3
       },
@@ -80480,20 +79826,20 @@
         "ifCount": 0,
         "switchCount": 0
       },
-      "complexityScore": 34,
-      "updatedAt": "2026-08-01T12:44:32.528Z",
+      "complexityScore": 35,
+      "updatedAt": "2026-08-14T06:50:35.524Z",
       "riskScore": 12
     }
   ],
   "trend": {
     "filesIndexedDelta": 0,
-    "linesIndexedDelta": 1574,
-    "symbolCountDelta": 10,
-    "importCountDelta": 10,
-    "avgRiskPerFileDelta": 0.03
+    "linesIndexedDelta": -66,
+    "symbolCountDelta": 0,
+    "importCountDelta": 0,
+    "avgRiskPerFileDelta": 0
   },
   "history": {
-    "historyPath": "C:\\Code\\vault\\.memory\\history\\code-index-2026-08-13T13-51-59-823Z.json",
+    "historyPath": "C:\\Code\\vault\\.memory\\history\\code-index-2026-08-14T06-53-37-042Z.json",
     "historyCount": 20
   }
 }

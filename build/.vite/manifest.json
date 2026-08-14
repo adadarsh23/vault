@@ -532,7 +532,7 @@
     "name": "video-players"
   },
   "index.html": {
-    "file": "assets/index-CITqjIpn.js",
+    "file": "assets/index-DmXGvzb4.js",
     "name": "index",
     "src": "index.html",
     "isEntry": true,
@@ -561,7 +561,7 @@
       "src/lib/sentry.js"
     ],
     "css": [
-      "assets/index-reEk6izW.css"
+      "assets/index-C5ugbw-1.css"
     ]
   },
   "node_modules/@emoji-mart/data/sets/15/native.json": {
@@ -706,7 +706,7 @@
     "src": "node_modules/pqc-kyber/pqc_kyber_bg.wasm"
   },
   "src/components/app/LockedVaultHost.tsx": {
-    "file": "assets/LockedVaultHost-ukFLX5MH.js",
+    "file": "assets/LockedVaultHost-BM8Vpmi0.js",
     "name": "LockedVaultHost",
     "src": "src/components/app/LockedVaultHost.tsx",
     "isDynamicEntry": true,
@@ -789,7 +789,7 @@
     ]
   },
   "src/components/layout/Background.tsx": {
-    "file": "assets/Background-D6J6Feyz.js",
+    "file": "assets/Background-DFcUeypn.js",
     "name": "Background",
     "src": "src/components/layout/Background.tsx",
     "isDynamicEntry": true,
@@ -874,7 +874,7 @@
     ]
   },
   "src/features/LandingPage.tsx": {
-    "file": "assets/LandingPage-Bfoud-Zg.js",
+    "file": "assets/LandingPage-DxvZzarg.js",
     "name": "LandingPage",
     "src": "src/features/LandingPage.tsx",
     "isDynamicEntry": true,

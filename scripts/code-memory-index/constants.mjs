@@ -46,7 +46,6 @@ export const EXCLUDED_DIRECTORIES = new Set([
   'dist',
   'out',
   'coverage',
-  'playwright-report',
   'test-results',
   'backups',
   'logs',

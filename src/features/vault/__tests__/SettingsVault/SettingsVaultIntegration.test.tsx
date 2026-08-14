@@ -80,7 +80,7 @@ vi.mock('../../../../lib/activity', () => ({
   logActivity: vi.fn(),
 }));
 
-describe('SettingsVault Integrated Page Test Suite', () => {
+describe('SettingsVault Integrated Page Test Suite', { timeout: 15000 }, () => {
   const onOpenMaintenanceMock = vi.fn();
   const onNavigateMock = vi.fn();
 

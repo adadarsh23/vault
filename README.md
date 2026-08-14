@@ -125,7 +125,7 @@ Built on a **Zero-Knowledge Architecture**, all sensitive client payload data (n
 | **Backend Framework**       | **Express 5**, **Node.js 22 (LTS)**, Socket.IO 4, Helmet 8, Express Rate Limit, Multer, Cookie Parser                   |
 | **Database & Cache**        | **MongoDB 7**, Mongoose 9, Node Cache                                                                                   |
 | **Asset Optimization**      | **Brotli & Gzip Pre-compression**, Module Preload Polyfills, Aggressive Asset Caching                                   |
-| **Testing & Quality**       | **Vitest 4**, **Playwright E2E**, Lighthouse Runner, Sentry Error Tracking & Node Profiling                             |
+| **Testing & Quality**       | **Vitest 4**, Lighthouse Runner, Sentry Error Tracking & Node Profiling                                                 |
 
 ---
 
@@ -337,9 +337,6 @@ npm run test:unit
 
 # Run full Vitest test suite
 npm run test
-
-# Run End-to-End Playwright test suite
-npm run test:e2e
 
 # Run security & cryptographic verification tests
 npm run test:crypto

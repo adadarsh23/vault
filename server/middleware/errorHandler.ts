@@ -142,7 +142,8 @@ export const errorHandler = (
   });
 
   // Log error (only critical/unexpected or detailed for debugging)
-  if (statusCode === 500 || !err.isOperational) {
+  const isClientError = statusCode >= 400 && statusCode < 500;
+  if (statusCode >= 500 || (!err.isOperational && !isClientError)) {
     logger.error('Unhandled or non-operational server error.', {
       requestId,
       method: req.method,

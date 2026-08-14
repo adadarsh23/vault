@@ -37,8 +37,7 @@ function BackgroundComponent() {
 
       const isAutomatedTest =
         typeof navigator !== 'undefined' &&
-        (navigator.webdriver ||
-          /Playwright|HeadlessChrome|PhantomJS|jsdom/i.test(navigator.userAgent));
+        (navigator.webdriver || /HeadlessChrome|PhantomJS|jsdom/i.test(navigator.userAgent));
 
       if (!isAutomatedTest) {
         setParticlesReady(true);
