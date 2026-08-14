@@ -283,3 +283,45 @@ export const requireAuth = async (
     throw AppError.unauthorized(message, code);
   }
 };
+
+/**
+ * Enforces server-verified administrator privileges for protected admin operations.
+ * Never trusts client headers or client state for authorization.
+ */
+export const requireAdmin = async (
+  req: express.Request,
+  _res: express.Response,
+  next: express.NextFunction
+) => {
+  try {
+    const authUser = (req as AuthenticatedRequest).user;
+    if (!authUser?.userId) {
+      throw AppError.unauthorized('Authentication required.', 'UNAUTHORIZED');
+    }
+
+    const user = await User.findById(authUser.userId).select('+role username').lean().exec();
+    const adminUsernames = (process.env.ADMIN_USERNAMES || '')
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+    const adminUserIds = (process.env.ADMIN_USER_IDS || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const isRoleAdmin = (user as any)?.role === 'admin';
+    const isUsernameAdmin = user?.username && adminUsernames.includes(user.username.toLowerCase());
+    const isIdAdmin = adminUserIds.includes(authUser.userId);
+
+    if (!isRoleAdmin && !isUsernameAdmin && !isIdAdmin) {
+      throw new AppError(403, 'FORBIDDEN_ADMIN_ONLY', 'Administrator privileges required.');
+    }
+
+    return next();
+  } catch (error) {
+    if (error instanceof AppError) {
+      return next(error);
+    }
+    return next(new AppError(403, 'FORBIDDEN_ADMIN_ONLY', 'Administrator privileges required.'));
+  }
+};

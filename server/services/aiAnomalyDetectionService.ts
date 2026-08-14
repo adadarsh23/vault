@@ -9,9 +9,6 @@
  * - Data exfiltration patterns
  */
 
-import { logger } from '../utils/logger.ts';
-import mongoose from 'mongoose';
-
 // Lightweight anomaly detection using statistical methods
 interface UserProfile {
   userId: string;
@@ -42,10 +39,6 @@ class AIAnomalyDetectionService {
   private readonly HIGH_RISK_THRESHOLD = 70;
   private readonly MEDIUM_RISK_THRESHOLD = 40;
 
-  // Isolation Forest parameters
-  private readonly CONTAMINATION = 0.1; // Expected % of anomalies
-  private readonly BASELINE_SAMPLES = 100;
-
   /**
    * Track user login attempt for behavioral analysis
    */
@@ -59,7 +52,7 @@ class AIAnomalyDetectionService {
       lon: number;
     } | null,
     fingerprint: string,
-    userAgent: string
+    _userAgent: string
   ): Promise<AnomalyScore> {
     const profile = this.getOrCreateProfile(userId);
     const factors: string[] = [];
@@ -294,12 +287,12 @@ class AIAnomalyDetectionService {
     return this.userProfiles.get(userId)!;
   }
 
-  private getLastKnownLocation(userId: string) {
+  private getLastKnownLocation(_userId: string) {
     // In production, fetch from database
     return null;
   }
 
-  private getLastLoginTime(userId: string): number {
+  private getLastLoginTime(_userId: string): number {
     // In production, fetch from database
     return Date.now();
   }

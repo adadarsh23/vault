@@ -317,8 +317,32 @@ export const authenticateUser = async (input: {
     throw AppError.unauthorized('Invalid username or password.', 'INVALID_CREDENTIALS');
   }
 
-  const storedHash = decryptText(user.password as any);
-  const isValid = await comparePassword(input.password, storedHash);
+  let isLegacyEncrypted = false;
+  let storedHash = '';
+  if (typeof user.password === 'string') {
+    storedHash = user.password;
+  } else if (
+    user.password &&
+    typeof user.password === 'object' &&
+    'cipherText' in (user.password as any) &&
+    'iv' in (user.password as any)
+  ) {
+    try {
+      storedHash = decryptText(user.password as any);
+      isLegacyEncrypted = true;
+    } catch (decryptErr) {
+      logger.warn('Failed to decrypt legacy password hash during authentication', {
+        error: decryptErr,
+      });
+    }
+  }
+
+  const isValid = storedHash ? await comparePassword(input.password, storedHash) : false;
+
+  if (isValid && isLegacyEncrypted && storedHash) {
+    // Seamless migration: upgrade stored password to direct KDF hash string
+    user.password = storedHash as any;
+  }
 
   if (!isValid) {
     if (!user.loginHistory) user.loginHistory = [] as any;
@@ -479,7 +503,6 @@ export const registerUser = async (input: {
   }
 
   const hashedPassword = await hashPassword(input.password);
-  const encryptedPassword = encryptText(hashedPassword);
   const encryptedMasterKey = encryptText(masterKey);
 
   const user = new User({
@@ -487,7 +510,7 @@ export const registerUser = async (input: {
     email,
     pqcSalt,
     profileName: input.fullName || input.profileName || 'none',
-    password: encryptedPassword,
+    password: hashedPassword,
     masterKey: encryptedMasterKey,
     meta: {
       registeredAt: new Date(),

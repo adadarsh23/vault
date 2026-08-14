@@ -58,7 +58,7 @@ const USER_VAULT_COLLECTION_CATEGORIES = [
 ] as const;
 const SAFE_COLLECTION_SEGMENT_PATTERN = /[^a-z0-9_-]/g;
 
-const ensureLegacyIndexes = async () => {
+export const ensureLegacyIndexes = async () => {
   if (!legacyIndexesPromise) {
     legacyIndexesPromise = (async () => {
       const collection = await getLegacyCollection();
@@ -183,7 +183,7 @@ const normalizeScopedCategory = (category: string) => {
   return normalized;
 };
 
-const resolveScopedCategoryGroup = (category: string) => {
+export const resolveScopedCategoryGroup = (category: string) => {
   switch (normalizeScopedCategory(category)) {
     case 'notes':
     case 'todos':
@@ -211,7 +211,7 @@ const buildUserScopedCollectionName = (username: string, category: string) => {
   return `${normalized}.${normalized}_${normalizeScopedCategory(category)}`;
 };
 
-const buildScopedSelector = (userId: string, itemId: string) => ({
+export const buildScopedSelector = (userId: string, itemId: string) => ({
   ownerType: 'user',
   ownerId: userId,
   itemId,
@@ -240,7 +240,7 @@ const ensureScopedCollectionIndexes = async (username: string, category: string)
   }
 };
 
-const getUserVaultCollectionCategories = () => [...USER_VAULT_COLLECTION_CATEGORIES];
+export const getUserVaultCollectionCategories = () => [...USER_VAULT_COLLECTION_CATEGORIES];
 
 export const ensureUserVaultCollections = async (username: string) => {
   try {

@@ -7,7 +7,18 @@ type SameSitePolicy = 'strict' | 'lax' | 'none';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const CSRF_COOKIE_NAME = process.env.CSRF_COOKIE_NAME?.trim() || 'vault_csrf_secret';
 const CSRF_COOKIE_PATH = process.env.CSRF_COOKIE_PATH?.trim() || '/';
-const CSRF_SECRET = process.env.CSRF_SECRET || 'vault_super_secret_csrf_key_2026';
+const resolveCsrfSecret = (): string => {
+  const secret = process.env.CSRF_SECRET?.trim();
+  if (secret) {
+    return secret;
+  }
+  if (IS_PRODUCTION) {
+    throw new Error('CSRF_SECRET environment variable must be configured in production.');
+  }
+  return 'vault_super_secret_csrf_key_2026';
+};
+
+const CSRF_SECRET = resolveCsrfSecret();
 
 const resolveCsrfCookieSameSite = (): SameSitePolicy => {
   const raw = process.env.CSRF_COOKIE_SAME_SITE?.trim().toLowerCase();
@@ -98,7 +109,7 @@ export const installCsrfProtection = (app: express.Express): void => {
     return;
   }
 
-  app.get('/api/auth/csrf-token', (req, res) => {
+  app.get('/api/auth/csrf-token', (_req, res) => {
     writeCsrfTokenResponseHeaders(res);
     const { secret, token } = generateTokenAndSecret();
 
@@ -115,7 +126,7 @@ export const installCsrfProtection = (app: express.Express): void => {
     });
   });
 
-  app.use('/api', (req, res, next) => {
+  app.use('/api', (req, _res, next) => {
     const method = req.method.toUpperCase();
     if (['GET', 'HEAD', 'OPTIONS'].includes(method)) {
       return next();

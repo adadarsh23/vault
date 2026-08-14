@@ -78,12 +78,12 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
 
       <div className="flex items-center gap-3">
         <div className="group relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/20 transition-colors group-focus-within:text-fuchsia-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/20 transition-colors group-focus-within:text-purple-400" />
           <Input
             value={searchQuery}
             onChange={(event) => onSearchQueryChange(event.target.value)}
             placeholder="Search chats"
-            className="h-10 w-full rounded-xl border-white/5 bg-white/5 pl-10 pr-10 text-sm focus:border-emerald-500/30"
+            className="h-10 w-full rounded-xl border-white/5 bg-white/5 pl-10 pr-10 text-sm focus:border-purple-500/30"
           />
           {searchQuery && (
             <button
@@ -186,14 +186,14 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
                 className={cn(
                   'flex w-full cursor-pointer items-start gap-3 rounded-2xl border p-3 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-text/20 xl:gap-4 xl:p-4',
                   isActive
-                    ? 'border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_20px_rgba(16,185,129,0.05)]'
+                    ? 'border-purple-500/20 bg-purple-500/5 shadow-[0_0_20px_rgba(168,85,247,0.05)]'
                     : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10'
                 )}
               >
                 <div
                   className={cn(
                     'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-semibold transition-colors',
-                    isActive ? 'bg-emerald-500/20 text-fuchsia-400' : 'bg-white/5 text-text/20'
+                    isActive ? 'bg-purple-500/20 text-purple-400' : 'bg-white/5 text-text/20'
                   )}
                 >
                   {getAvatarLabel(displayTitle)}
@@ -232,7 +232,7 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
                     className={cn(
                       'h-8 w-8 rounded-full transition-all',
                       chatItem.isPinned
-                        ? 'text-fuchsia-400 bg-emerald-400/10 hover:bg-emerald-400/20'
+                        ? 'text-purple-400 bg-purple-400/10 hover:bg-purple-400/20'
                         : 'text-text/30 hover:text-text/80 hover:bg-white/10'
                     )}
                   >

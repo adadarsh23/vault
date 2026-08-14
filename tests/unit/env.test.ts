@@ -32,6 +32,14 @@ const stubProdMinimums = () => {
   vi.stubEnv('PUBLIC_URL', 'http://localhost:4000');
   vi.stubEnv('VITE_APP_PUBLIC_URL', 'http://localhost:4000');
   vi.stubEnv('RECAPTCHA_SECRET_KEY', 'recaptcha-secret');
+  vi.stubEnv('REFRESH_TOKEN_SECRET', 'refresh-token-secret-32-chars-minimum-prod');
+  vi.stubEnv(
+    'VAULT_ENCRYPTION_KEY',
+    '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+  );
+  vi.stubEnv('AUTH_PEPPER', 'test-auth-pepper');
+  vi.stubEnv('CSRF_SECRET', 'test-csrf-secret');
+  vi.stubEnv('SIGNED_URL_SECRET', 'test-signed-url-secret');
   vi.stubEnv('SKIP_MONGO_CONNECT', '');
 };
 
@@ -123,38 +131,28 @@ describe('server environment validation', () => {
     expect(() => validateRuntimeEnv()).not.toThrow();
   });
 
-  // ---- Optional secrets / warnings -----------------------------------------
+  // ---- Mandatory production security secrets -------------------------------
 
-  it('warns about missing optional secrets in production', () => {
+  it('throws when mandatory security secrets are missing in production', () => {
     stubProdMinimums();
-
     vi.stubEnv('REFRESH_TOKEN_SECRET', '');
     vi.stubEnv('VAULT_ENCRYPTION_KEY', '');
-    vi.stubEnv('TRUST_PROXY', '');
+    vi.stubEnv('AUTH_PEPPER', '');
 
-    validateRuntimeEnv();
-
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining('REFRESH_TOKEN_SECRET is not configured')
-    );
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining('VAULT_ENCRYPTION_KEY is not configured')
-    );
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining('TRUST_PROXY is not configured')
+    expect(() => validateRuntimeEnv()).toThrow(
+      /Missing required environment configuration: REFRESH_TOKEN_SECRET, VAULT_ENCRYPTION_KEY, AUTH_PEPPER/
     );
   });
 
-  it('does not warn about REFRESH_TOKEN_SECRET when it is configured', () => {
+  it('warns about TRUST_PROXY in production when unset', () => {
     stubProdMinimums();
-    vi.stubEnv('REFRESH_TOKEN_SECRET', 'some-secret');
-    vi.stubEnv('VAULT_ENCRYPTION_KEY', '');
     vi.stubEnv('TRUST_PROXY', '');
 
     validateRuntimeEnv();
 
-    const calls: string[] = (logger.warn as ReturnType<typeof vi.fn>).mock.calls.flat();
-    expect(calls.some((c) => c.includes('REFRESH_TOKEN_SECRET'))).toBe(false);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('TRUST_PROXY is not configured')
+    );
   });
 
   // ---- REGISTRATION_PROFILE_CAPTURE_ENABLED --------------------------------

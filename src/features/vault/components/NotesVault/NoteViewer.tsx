@@ -96,7 +96,7 @@ const AttachmentCard: React.FC<{
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold text-text truncate group-hover:text-emerald-400 transition-colors">
+          <p className="text-xs font-semibold text-text truncate group-hover:text-yellow-400 transition-colors">
             {item.title}
           </p>
           <p className="text-[9px] text-text/40 capitalize">{item.type}</p>
@@ -445,12 +445,12 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                         {noteTags.map((tag) => (
                           <span
                             key={tag}
-                            className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium"
+                            className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 font-medium"
                           >
                             #{tag}
                             <button
                               onClick={() => handleRemoveTag(tag)}
-                              className="text-emerald-400 hover:text-emerald-300 ml-0.5 focus:outline-none"
+                              className="text-yellow-400 hover:text-yellow-300 ml-0.5 focus:outline-none"
                             >
                               <X className="h-3 w-3" />
                             </button>
@@ -536,7 +536,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
                           title="Date Created"
                         >
-                          <Calendar className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <Calendar className="h-3.5 w-3.5 text-yellow-400/50 shrink-0" />
                           <span>
                             <span className="text-text/60">
                               {new Date(selectedNote.createdAt).toLocaleDateString()}
@@ -547,7 +547,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
                           title="Last Updated"
                         >
-                          <Clock className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <Clock className="h-3.5 w-3.5 text-yellow-400/50 shrink-0" />
                           <span>
                             <span className="text-text/60">
                               {new Date(selectedNote.updatedAt).toLocaleString(undefined, {
@@ -561,7 +561,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
                           title="Word & character count"
                         >
-                          <AlignLeft className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <AlignLeft className="h-3.5 w-3.5 text-yellow-400/50 shrink-0" />
                           <span>
                             <span className="text-text/60">{contentStats.words}</span> words (
                             {contentStats.charCount} chars)
@@ -571,7 +571,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
                           title="Line count"
                         >
-                          <List className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <List className="h-3.5 w-3.5 text-yellow-400/50 shrink-0" />
                           <span>
                             <span className="text-text/60">{contentStats.lines}</span> lines
                           </span>
@@ -580,7 +580,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
                           title="Estimated reading time"
                         >
-                          <BookOpen className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <BookOpen className="h-3.5 w-3.5 text-yellow-400/50 shrink-0" />
                           <span>
                             <span className="text-text/60">
                               ~{contentStats.readTimeMinutes} min
@@ -592,7 +592,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           className="flex items-center gap-2 text-[11px] text-text/40 font-medium shrink-0"
                           title="Unencrypted text size"
                         >
-                          <HardDrive className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                          <HardDrive className="h-3.5 w-3.5 text-yellow-400/50 shrink-0" />
                           <span>
                             <span className="text-text/60">{contentStats.formattedSize}</span>
                           </span>
@@ -602,7 +602,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                             className="flex items-center gap-1.5 text-[11px] text-text/40 font-medium shrink-0"
                             title="Checklist progress"
                           >
-                            <CheckSquare className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <CheckSquare className="h-3.5 w-3.5 text-yellow-400/50 shrink-0" />
                             <span>
                               <span className="text-text/60">
                                 {contentStats.completedCheckboxes}/{contentStats.totalCheckboxes}
@@ -621,7 +621,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                             className="flex items-center gap-1.5 text-[11px] text-text/40 font-medium shrink-0"
                             title="Code blocks"
                           >
-                            <Code className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <Code className="h-3.5 w-3.5 text-yellow-400/50 shrink-0" />
                             <span>
                               <span className="text-text/60">{contentStats.codeBlockCount}</span>{' '}
                               code block{contentStats.codeBlockCount > 1 ? 's' : ''}
@@ -633,7 +633,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                             className="flex items-center gap-1.5 text-[11px] text-text/40 font-medium shrink-0"
                             title="Embedded links"
                           >
-                            <Link className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <Link className="h-3.5 w-3.5 text-yellow-400/50 shrink-0" />
                             <span>
                               <span className="text-text/60">{contentStats.linkCount}</span> link
                               {contentStats.linkCount > 1 ? 's' : ''}
@@ -645,8 +645,8 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                             className="flex items-center gap-1.5 text-[11px] text-text/40 font-medium shrink-0"
                             title="Folder"
                           >
-                            <Folder className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
-                            <span className="text-emerald-400/70 font-semibold uppercase tracking-wider text-[10px]">
+                            <Folder className="h-3.5 w-3.5 text-yellow-400/50 shrink-0" />
+                            <span className="text-yellow-400/80 font-semibold uppercase tracking-wider text-[10px]">
                               {selectedNote.folder}
                             </span>
                           </div>
@@ -656,7 +656,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                             className="flex items-center gap-1.5 text-[11px] text-text/40 font-medium shrink-0"
                             title="Tags count"
                           >
-                            <Tag className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <Tag className="h-3.5 w-3.5 text-yellow-400/50 shrink-0" />
                             <span>
                               <span className="text-text/60">{noteTags.length}</span> tag
                               {noteTags.length > 1 ? 's' : ''}
@@ -668,7 +668,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                             className="flex items-center gap-1.5 text-[11px] text-text/40 font-medium shrink-0"
                             title="Attachments count"
                           >
-                            <Paperclip className="h-3.5 w-3.5 text-emerald-400/40 shrink-0" />
+                            <Paperclip className="h-3.5 w-3.5 text-yellow-400/50 shrink-0" />
                             <span>
                               <span className="text-text/60">{attachedItems.length}</span>{' '}
                               attachment
@@ -690,10 +690,10 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                           </div>
                         )}
                         <div
-                          className="group flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/5 border border-emerald-500/10 shadow-inner max-w-[200px] shrink-0"
+                          className="group flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/5 border border-yellow-500/10 shadow-inner max-w-[200px] shrink-0"
                           title={selectedNote.id}
                         >
-                          <span className="text-[10px] text-emerald-400/60 font-bold uppercase tracking-[0.2em] block max-w-[120px] truncate">
+                          <span className="text-[10px] text-yellow-400/70 font-bold uppercase tracking-[0.2em] block max-w-[120px] truncate">
                             ID: {selectedNote.id}
                           </span>
                           <button
@@ -703,7 +703,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                               toast.success('Note ID copied to clipboard');
                               setTimeout(() => setIsIdCopied(false), 2000);
                             }}
-                            className="shrink-0 opacity-100 group-hover:opacity-100 transition-opacity text-emerald-400/60 hover:text-emerald-400 focus:outline-none focus:opacity-100"
+                            className="shrink-0 opacity-100 group-hover:opacity-100 transition-opacity text-yellow-400/70 hover:text-yellow-400 focus:outline-none focus:opacity-100"
                             title="Copy Note ID"
                           >
                             {isIdCopied ? (
@@ -722,7 +722,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                             repeatType: 'reverse',
                           }}
                           title="End-to-end encrypted with AES-256-GCM"
-                          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold cursor-help shadow-lg shadow-emerald-500/10 shrink-0"
+                          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 font-bold cursor-help shadow-lg shadow-yellow-500/10 shrink-0"
                         >
                           <ShieldCheck className="h-3 w-3" />
                           <span className="leading-none text-[9px] uppercase tracking-wider">
@@ -749,7 +749,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
               <div className="text-center group">
                 <div className="mb-6 relative">
                   <FileText className="mx-auto h-16 w-16 text-text/5 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" />
-                  <div className="absolute inset-0 bg-emerald-400/5 blur-3xl rounded-full" />
+                  <div className="absolute inset-0 bg-yellow-400/5 blur-3xl rounded-full" />
                 </div>
                 <p className="text-text/30 font-medium transition-colors">
                   Select a note to view or edit

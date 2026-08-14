@@ -1,6 +1,4 @@
 import crypto from 'crypto';
-import path from 'path';
-import fs from 'fs/promises';
 import { logger } from '../utils/logger.ts';
 
 const SIGNED_URL_SECRET = process.env.SIGNED_URL_SECRET || 'vault-secret-for-signed-urls';
@@ -30,7 +28,7 @@ export const storageService = {
   generateSignedUrl(
     userId: string,
     itemId: string,
-    fileName: string,
+    _fileName: string,
     options: SignedUrlOptions = {}
   ): string {
     const action = options.action || 'view';

@@ -41,4 +41,17 @@ describe('Server-Side Cryptography (AES-256-GCM)', () => {
     expect(enc1.iv).not.toEqual(enc2.iv);
     expect(enc1.encryptedData).not.toEqual(enc2.encryptedData);
   });
+
+  it('securely hashes and verifies passwords using one-way scrypt KDF', async () => {
+    const { hashPassword, comparePassword } = await import('../../server/utils/crypto.ts');
+    const password = 'SuperSecretPassword123!#$';
+    const hash = await hashPassword(password);
+
+    expect(hash).toMatch(/^s2\$/);
+    const isValid = await comparePassword(password, hash);
+    expect(isValid).toBe(true);
+
+    const isInvalid = await comparePassword('WrongPassword123!', hash);
+    expect(isInvalid).toBe(false);
+  });
 });

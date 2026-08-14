@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import { getNotificationModel } from '../models/notification.ts';
 import { migrateLegacyNotifications } from '../services/notificationService.ts';
 import { requireAuth } from '../middleware/authMiddleware.ts';
@@ -39,8 +40,11 @@ router.post('/read', requireAuth, async (req, res) => {
   const { id } = req.body;
 
   if (id) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw AppError.badRequest('Invalid notification ID format');
+    }
     const updated = await Notification.findOneAndUpdate(
-      { _id: id, userId },
+      { _id: new mongoose.Types.ObjectId(id), userId },
       { isRead: true },
       { new: true }
     );
@@ -74,9 +78,17 @@ router.post('/clear', requireAuth, async (req, res) => {
 router.delete('/:id', requireAuth, async (req, res) => {
   const { userId, username } = (req as AuthenticatedRequest).user;
   const Notification = getNotificationModel(username);
-  const { id } = req.params;
+  const rawId = req.params.id;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
-  const deleted = await Notification.findOneAndDelete({ _id: id, userId });
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    throw AppError.badRequest('Invalid notification ID format');
+  }
+
+  const deleted = await Notification.findOneAndDelete({
+    _id: new mongoose.Types.ObjectId(id),
+    userId,
+  });
   if (!deleted) {
     throw AppError.notFound('Notification not found or access denied');
   }
@@ -92,13 +104,17 @@ router.delete('/:id', requireAuth, async (req, res) => {
 router.post('/delete', requireAuth, async (req, res) => {
   const { userId, username } = (req as AuthenticatedRequest).user;
   const Notification = getNotificationModel(username);
-  const { id } = req.body;
+  const rawId = req.body?.id;
+  const id = typeof rawId === 'string' ? rawId : undefined;
 
-  if (!id) {
-    throw AppError.badRequest('Notification ID is required');
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    throw AppError.badRequest('Valid notification ID is required');
   }
 
-  const deleted = await Notification.findOneAndDelete({ _id: id, userId });
+  const deleted = await Notification.findOneAndDelete({
+    _id: new mongoose.Types.ObjectId(id),
+    userId,
+  });
   if (!deleted) {
     throw AppError.notFound('Notification not found or access denied');
   }

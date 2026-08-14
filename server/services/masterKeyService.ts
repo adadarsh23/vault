@@ -52,17 +52,12 @@ const formatEncryptedMasterKeyForDisplay = (
       algorithm: encryptedKey.algorithm || 'aes-256-gcm',
       keyVersion: encryptedKey.keyVersion || 'v1',
       components: {
-        cipherTextLength: encryptedKey.cipherText.length,
-        ivLength: encryptedKey.iv.length,
-        authTagLength: encryptedKey.authTag.length,
-        saltLength: encryptedKey.salt ? encryptedKey.salt.length : 0,
+        hasCipherText: Boolean(encryptedKey.cipherText),
+        cipherTextLength: encryptedKey.cipherText ? encryptedKey.cipherText.length : 0,
+        ivLength: encryptedKey.iv ? encryptedKey.iv.length : 0,
+        authTagLength: encryptedKey.authTag ? encryptedKey.authTag.length : 0,
+        hasSalt: Boolean(encryptedKey.salt),
       },
-    },
-    security: {
-      cipherTextPreview: `${encryptedKey.cipherText.substring(0, 20)}...${encryptedKey.cipherText.substring(encryptedKey.cipherText.length - 20)}`,
-      ivPreview: `${encryptedKey.iv.substring(0, 12)}...`,
-      authTagPreview: `${encryptedKey.authTag.substring(0, 12)}...`,
-      saltPreview: encryptedKey.salt ? `${encryptedKey.salt.substring(0, 12)}...` : null,
     },
   };
 };

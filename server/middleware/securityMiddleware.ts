@@ -12,9 +12,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
 import { logger } from '../utils/logger.ts';
-import { aiAnomalyDetectionService } from './aiAnomalyDetectionService.ts';
-import { requestFingerprintService } from './requestFingerprintService.ts';
-import { threatResponseService } from './threatResponseService.ts';
+import { aiAnomalyDetectionService } from '../services/aiAnomalyDetectionService.ts';
+import { requestFingerprintService } from '../services/requestFingerprintService.ts';
+import { threatResponseService } from '../services/threatResponseService.ts';
+import { AuthenticatedUser } from '../utils/requestTypes.ts';
 
 interface SecurityContext {
   requestId: string;
@@ -27,6 +28,8 @@ interface SecurityContext {
 
 interface RequestWithSecurity extends Request {
   security?: SecurityContext;
+  user?: AuthenticatedUser;
+  files?: any;
 }
 
 /**
@@ -39,15 +42,15 @@ export const securityMiddleware = async (
 ) => {
   try {
     const requestId = `req_${randomUUID()}`;
-    const ip = (req.ip || req.connection.remoteAddress || 'unknown').replace(/^::ffff:/, '');
+    const ip = (req.ip || req.socket.remoteAddress || 'unknown').replace(/^::ffff:/, '');
 
     // Extract client data from headers + body
     const clientData = extractClientData(req);
 
     // Step 1: Generate/validate device fingerprint
     let fingerprintId = req.get('x-fingerprint-id');
-    let fingerprint = fingerprintId
-      ? requestFingerprintService.validateFingerprint(
+    let fingerprintResult = fingerprintId
+      ? await requestFingerprintService.validateFingerprint(
           req,
           req.user?.userId,
           clientData,
@@ -61,8 +64,8 @@ export const securityMiddleware = async (
         };
 
     // Step 2: Perform anomaly detection if authenticated
-    let anomalies: string[] = [];
-    let riskScore = 0;
+    let anomalies: string[] = [...fingerprintResult.anomalies];
+    let riskScore = Math.max(0, 100 - fingerprintResult.trustScore);
 
     if (req.user?.userId) {
       // Check if IP is blacklisted
@@ -167,11 +170,17 @@ export const fileUploadSecurityMiddleware = async (
   next: NextFunction
 ) => {
   try {
-    if (!req.files) {
+    const rawFiles = req.files;
+    if (!rawFiles) {
       return next();
     }
 
-    const files = Array.isArray(req.files) ? req.files : [req.files];
+    const files: any[] = Array.isArray(rawFiles)
+      ? rawFiles
+      : typeof rawFiles === 'object'
+        ? Object.values(rawFiles).flat()
+        : [rawFiles];
+
     const dangerousExtensions = [
       '.exe',
       '.dll',
@@ -189,16 +198,19 @@ export const fileUploadSecurityMiddleware = async (
     ];
 
     for (const file of files) {
+      const fileName: string = file.name || file.originalname || '';
       // Check file extension
-      const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      const ext = fileName.includes('.')
+        ? fileName.substring(fileName.lastIndexOf('.')).toLowerCase()
+        : '';
       if (dangerousExtensions.includes(ext)) {
-        const ip = (req.ip || req.connection.remoteAddress || 'unknown').replace(/^::ffff:/, '');
+        const ip = (req.ip || req.socket.remoteAddress || 'unknown').replace(/^::ffff:/, '');
 
         if (req.user?.userId) {
           await threatResponseService.handleMaliciousUpload(
             req.user.userId,
             ip,
-            file.name,
+            fileName,
             'Dangerous file extension'
           );
         }
@@ -211,16 +223,37 @@ export const fileUploadSecurityMiddleware = async (
 
       // Check file size
       const maxSize = 500 * 1024 * 1024; // 500 MB
-      if (file.size > maxSize) {
+      const fileSize = typeof file.size === 'number' ? file.size : 0;
+      if (fileSize > maxSize) {
         return res.status(400).json({
           error: 'File Too Large',
           message: 'Maximum file size is 500 MB',
         });
       }
 
-      // TODO: In production, scan with ClamAV/YARA
-      // const isMalicious = await scanFileForMalware(file.data)
-      // if (isMalicious) { ... }
+      // Scan buffer for malware patterns and test signatures if buffer is loaded
+      const buffer = file.data || file.buffer;
+      if (Buffer.isBuffer(buffer)) {
+        const ascii = buffer.toString('latin1');
+        const isEicar = ascii.includes(
+          'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'
+        );
+        if (isEicar) {
+          const ip = (req.ip || req.socket.remoteAddress || 'unknown').replace(/^::ffff:/, '');
+          if (req.user?.userId) {
+            await threatResponseService.handleMaliciousUpload(
+              req.user.userId,
+              ip,
+              fileName,
+              'Malware signature detected (EICAR)'
+            );
+          }
+          return res.status(400).json({
+            error: 'File Upload Rejected',
+            message: 'Malware signature detected in uploaded file.',
+          });
+        }
+      }
     }
 
     next();
@@ -282,9 +315,9 @@ function extractClientData(req: Request): Record<string, string> {
 /**
  * Check if IP is blacklisted
  */
-async function checkIpBlacklist(ip: string): Promise<boolean> {
+async function checkIpBlacklist(_ip: string): Promise<boolean> {
   // In production, check Redis cache
-  // const blacklisted = await redisClient.exists(`blacklist:${ip}`)
+  // const blacklisted = await redisClient.exists(`blacklist:${_ip}`)
   // return blacklisted === 1
   return false;
 }

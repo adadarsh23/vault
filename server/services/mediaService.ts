@@ -1,8 +1,4 @@
 import crypto from 'crypto';
-import fs from 'fs/promises';
-import path from 'path';
-import { logger } from '../utils/logger.ts';
-import { AppError } from '../utils/appError.ts';
 
 /**
  * Service to handle media processing (HLS streaming, encryption, chunking)

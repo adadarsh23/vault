@@ -119,7 +119,7 @@
             <h1>Performance</h1>
             <p class="muted">http://127.0.0.1:4173/</p>
           </div>
-          <span class="score warn">71</span>
+          <span class="score fail">47</span>
         </header>
         <div class="links">
           <a href="./performance.json">Category JSON</a>
@@ -138,6 +138,14 @@
     <tbody><tr>
       <td><span class="score fail">0</span></td>
       <td>
+        <div class="audit-title">Forced reflow</div>
+        <div class="audit-description">A forced reflow occurs when JavaScript queries geometric properties (such as offsetWidth) after styles have been invalidated by a change to the DOM state. This can result in poor performance. Learn more about forced reflows and possible mitigations.</div>
+      </td>
+      <td></td>
+    </tr>
+<tr>
+      <td><span class="score fail">0</span></td>
+      <td>
         <div class="audit-title">Network dependency tree</div>
         <div class="audit-description">Avoid chaining critical requests by reducing the length of chains, reducing the download size of resources, or deferring the download of unnecessary resources to improve page load.</div>
       </td>
@@ -154,18 +162,18 @@
 <tr>
       <td><span class="score fail">0</span></td>
       <td>
-        <div class="audit-title">Reduce unused JavaScript</div>
-        <div class="audit-description">Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. Learn how to reduce unused JavaScript.</div>
+        <div class="audit-title">Max Potential First Input Delay</div>
+        <div class="audit-description">The maximum potential First Input Delay that your users could experience is the duration of the longest task. Learn more about the Maximum Potential First Input Delay metric.</div>
       </td>
-      <td>Est savings of 221 KiB</td>
+      <td>1,570 ms</td>
     </tr>
 <tr>
       <td><span class="score fail">0</span></td>
       <td>
-        <div class="audit-title">Reduce JavaScript execution time</div>
-        <div class="audit-description">Consider reducing the time spent parsing, compiling, and executing JS. You may find delivering smaller JS payloads helps with this. Learn how to reduce Javascript execution time.</div>
+        <div class="audit-title">Reduce unused JavaScript</div>
+        <div class="audit-description">Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. Learn how to reduce unused JavaScript.</div>
       </td>
-      <td>1.6 s</td>
+      <td>Est savings of 223 KiB</td>
     </tr>
 <tr>
       <td><span class="score fail">0</span></td>
@@ -173,15 +181,23 @@
         <div class="audit-title">Minimize main-thread work</div>
         <div class="audit-description">Consider reducing the time spent parsing, compiling and executing JS. You may find delivering smaller JS payloads helps with this. Learn how to minimize main-thread work</div>
       </td>
-      <td>4.3 s</td>
+      <td>6.4 s</td>
     </tr>
 <tr>
-      <td><span class="score fail">21</span></td>
+      <td><span class="score fail">8</span></td>
+      <td>
+        <div class="audit-title">Total Blocking Time</div>
+        <div class="audit-description">Sum of all time periods between FCP and Time to Interactive, when task length exceeded 50ms, expressed in milliseconds. Learn more about the Total Blocking Time metric.</div>
+      </td>
+      <td>1,990 ms</td>
+    </tr>
+<tr>
+      <td><span class="score fail">16</span></td>
       <td>
         <div class="audit-title">Largest Contentful Paint</div>
         <div class="audit-description">Largest Contentful Paint marks the time at which the largest text or image is painted. Learn more about the Largest Contentful Paint metric</div>
       </td>
-      <td>5.3 s</td>
+      <td>5.7 s</td>
     </tr>
 <tr>
       <td><span class="score warn">50</span></td>
@@ -192,36 +208,28 @@
       <td>Est savings of 11 KiB</td>
     </tr>
 <tr>
-      <td><span class="score warn">72</span></td>
+      <td><span class="score warn">59</span></td>
       <td>
         <div class="audit-title">Time to Interactive</div>
         <div class="audit-description">Time to Interactive is the amount of time it takes for the page to become fully interactive. Learn more about the Time to Interactive metric.</div>
       </td>
-      <td>5.3 s</td>
+      <td>6.4 s</td>
     </tr>
 <tr>
-      <td><span class="score warn">72</span></td>
-      <td>
-        <div class="audit-title">Max Potential First Input Delay</div>
-        <div class="audit-description">The maximum potential First Input Delay that your users could experience is the duration of the longest task. Learn more about the Maximum Potential First Input Delay metric.</div>
-      </td>
-      <td>180 ms</td>
-    </tr>
-<tr>
-      <td><span class="score warn">77</span></td>
-      <td>
-        <div class="audit-title">Total Blocking Time</div>
-        <div class="audit-description">Sum of all time periods between FCP and Time to Interactive, when task length exceeded 50ms, expressed in milliseconds. Learn more about the Total Blocking Time metric.</div>
-      </td>
-      <td>320 ms</td>
-    </tr>
-<tr>
-      <td><span class="score warn">81</span></td>
+      <td><span class="score warn">70</span></td>
       <td>
         <div class="audit-title">Speed Index</div>
         <div class="audit-description">Speed Index shows how quickly the contents of a page are visibly populated. Learn more about the Speed Index metric.</div>
       </td>
-      <td>4.0 s</td>
+      <td>4.6 s</td>
+    </tr>
+<tr>
+      <td><span class="score warn">82</span></td>
+      <td>
+        <div class="audit-title">First Contentful Paint</div>
+        <div class="audit-description">First Contentful Paint marks the time at which the first text or image is painted. Learn more about the First Contentful Paint metric.</div>
+      </td>
+      <td>2.1 s</td>
     </tr></tbody>
   </table>
         <h2>All Audits</h2>
@@ -234,28 +242,28 @@
       </tr>
     </thead>
     <tbody><tr>
-      <td><span class="score pass">96</span></td>
+      <td><span class="score warn">82</span></td>
       <td>
         <div class="audit-title">First Contentful Paint</div>
         <div class="audit-description">First Contentful Paint marks the time at which the first text or image is painted. Learn more about the First Contentful Paint metric.</div>
       </td>
-      <td>1.5 s</td>
+      <td>2.1 s</td>
     </tr>
 <tr>
-      <td><span class="score fail">21</span></td>
+      <td><span class="score fail">16</span></td>
       <td>
         <div class="audit-title">Largest Contentful Paint</div>
         <div class="audit-description">Largest Contentful Paint marks the time at which the largest text or image is painted. Learn more about the Largest Contentful Paint metric</div>
       </td>
-      <td>5.3 s</td>
+      <td>5.7 s</td>
     </tr>
 <tr>
-      <td><span class="score warn">77</span></td>
+      <td><span class="score fail">8</span></td>
       <td>
         <div class="audit-title">Total Blocking Time</div>
         <div class="audit-description">Sum of all time periods between FCP and Time to Interactive, when task length exceeded 50ms, expressed in milliseconds. Learn more about the Total Blocking Time metric.</div>
       </td>
-      <td>320 ms</td>
+      <td>1,990 ms</td>
     </tr>
 <tr>
       <td><span class="score pass">100</span></td>
@@ -266,12 +274,12 @@
       <td>0</td>
     </tr>
 <tr>
-      <td><span class="score warn">81</span></td>
+      <td><span class="score warn">70</span></td>
       <td>
         <div class="audit-title">Speed Index</div>
         <div class="audit-description">Speed Index shows how quickly the contents of a page are visibly populated. Learn more about the Speed Index metric.</div>
       </td>
-      <td>4.0 s</td>
+      <td>4.6 s</td>
     </tr>
 <tr>
       <td><span class="score pass">100</span></td>
@@ -322,7 +330,7 @@
       <td></td>
     </tr>
 <tr>
-      <td><span class="score pass">100</span></td>
+      <td><span class="score fail">0</span></td>
       <td>
         <div class="audit-title">Forced reflow</div>
         <div class="audit-description">A forced reflow occurs when JavaScript queries geometric properties (such as offsetWidth) after styles have been invalidated by a change to the DOM state. This can result in poor performance. Learn more about forced reflows and possible mitigations.</div>
@@ -410,20 +418,20 @@
       <td></td>
     </tr>
 <tr>
-      <td><span class="score warn">72</span></td>
+      <td><span class="score warn">59</span></td>
       <td>
         <div class="audit-title">Time to Interactive</div>
         <div class="audit-description">Time to Interactive is the amount of time it takes for the page to become fully interactive. Learn more about the Time to Interactive metric.</div>
       </td>
-      <td>5.3 s</td>
+      <td>6.4 s</td>
     </tr>
 <tr>
-      <td><span class="score warn">72</span></td>
+      <td><span class="score fail">0</span></td>
       <td>
         <div class="audit-title">Max Potential First Input Delay</div>
         <div class="audit-description">The maximum potential First Input Delay that your users could experience is the duration of the longest task. Learn more about the Maximum Potential First Input Delay metric.</div>
       </td>
-      <td>180 ms</td>
+      <td>1,570 ms</td>
     </tr>
 <tr>
       <td><span class="score pass">100</span></td>
@@ -455,7 +463,7 @@
         <div class="audit-title">Reduce unused JavaScript</div>
         <div class="audit-description">Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. Learn how to reduce unused JavaScript.</div>
       </td>
-      <td>Est savings of 221 KiB</td>
+      <td>Est savings of 223 KiB</td>
     </tr>
 <tr>
       <td><span class="score pass">100</span></td>
@@ -463,7 +471,7 @@
         <div class="audit-title">Avoids enormous network payloads</div>
         <div class="audit-description">Large network payloads cost users real money and are highly correlated with long load times. Learn how to reduce payload sizes.</div>
       </td>
-      <td>Total size was 609 KiB</td>
+      <td>Total size was 606 KiB</td>
     </tr>
 <tr>
       <td><span class="score na">N/A</span></td>
@@ -474,12 +482,12 @@
       <td></td>
     </tr>
 <tr>
-      <td><span class="score fail">0</span></td>
+      <td><span class="score pass">100</span></td>
       <td>
-        <div class="audit-title">Reduce JavaScript execution time</div>
+        <div class="audit-title">JavaScript execution time</div>
         <div class="audit-description">Consider reducing the time spent parsing, compiling, and executing JS. You may find delivering smaller JS payloads helps with this. Learn how to reduce Javascript execution time.</div>
       </td>
-      <td>1.6 s</td>
+      <td>1.2 s</td>
     </tr>
 <tr>
       <td><span class="score fail">0</span></td>
@@ -487,7 +495,7 @@
         <div class="audit-title">Minimize main-thread work</div>
         <div class="audit-description">Consider reducing the time spent parsing, compiling and executing JS. You may find delivering smaller JS payloads helps with this. Learn how to minimize main-thread work</div>
       </td>
-      <td>4.3 s</td>
+      <td>6.4 s</td>
     </tr>
 <tr>
       <td><span class="score pass">Info</span></td>
@@ -495,7 +503,7 @@
         <div class="audit-title">Avoid long main-thread tasks</div>
         <div class="audit-description">Lists the longest tasks on the main thread, useful for identifying worst contributors to input delay. Learn how to avoid long main-thread tasks</div>
       </td>
-      <td>11 long tasks found</td>
+      <td>10 long tasks found</td>
     </tr>
 <tr>
       <td><span class="score na">N/A</span></td>

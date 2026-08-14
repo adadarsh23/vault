@@ -34,13 +34,16 @@ describe('ShareVaultCard Component Test Suite', () => {
     ).toBeTruthy();
   });
 
-  it('copies share URL to clipboard on clicking copy link button and displays success toast', () => {
+  it('copies share URL to clipboard on clicking copy link button and displays success toast', async () => {
     render(<ShareVaultCard />);
 
     const copyButton = screen.getByRole('button', { name: /copy direct link to clipboard/i });
     fireEvent.click(copyButton);
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(window.location.origin);
+    await waitFor(() => {
+      expect(copyButton).toBeTruthy();
+    });
   });
 
   it('opens full size QR code preview modal on clicking QR code container', () => {

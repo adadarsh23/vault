@@ -1,4 +1,5 @@
 import mongoose, { HydratedDocument, InferSchemaType, Model } from 'mongoose';
+import { logger } from '../utils/logger.ts';
 
 /* ------------------ COMMON HELPERS ------------------ */
 
@@ -147,7 +148,7 @@ const activityLogSchema = new mongoose.Schema(
 
 const passwordHistorySchema = new mongoose.Schema(
   {
-    hash: { type: encryptedFieldSchema, required: true },
+    hash: { type: mongoose.Schema.Types.Mixed, required: true },
     changedAt: { type: Date, default: Date.now },
   },
   baseSchemaOptions
@@ -334,6 +335,11 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       index: true,
     },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
     profileName: {
       type: String,
       trim: true,
@@ -358,7 +364,7 @@ const userSchema = new mongoose.Schema(
     },
 
     password: {
-      type: encryptedFieldSchema,
+      type: mongoose.Schema.Types.Mixed,
       required: true,
       select: false,
     },
@@ -580,7 +586,7 @@ userSchema.pre('save', async function () {
         });
       }
     } catch (err) {
-      console.error('[UserModel] Failed to archive old password', err);
+      logger.warn('[UserModel] Failed to archive old password', { error: err });
     }
   }
 
@@ -601,7 +607,7 @@ userSchema.pre('save', async function () {
         });
       }
     } catch (err) {
-      console.error('[UserModel] Failed to archive old master key', err);
+      logger.warn('[UserModel] Failed to archive old master key', { error: err });
     }
   }
 });

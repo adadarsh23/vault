@@ -185,12 +185,12 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
     return (
       <motion.div whileHover={{ y: -5 }} className="h-full">
         <Card className="group relative h-full overflow-hidden border-white/5 bg-gradient-to-br from-white/[0.08] to-transparent backdrop-blur-md transition-all hover:border-white/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)]">
-          <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-sky-500/10 blur-3xl transition-opacity group-hover:opacity-30" />
+          <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-teal-500/10 blur-3xl transition-opacity group-hover:opacity-30" />
 
           <CardHeader className="relative z-10 flex flex-row items-center justify-between space-y-0 border-b border-white/5 pb-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/10 transition-transform group-hover:scale-110 group-hover:rotate-3">
-                <Users className="h-5 w-5 text-sky-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-500/10 transition-transform group-hover:scale-110 group-hover:rotate-3">
+                <Users className="h-5 w-5 text-teal-400" />
               </div>
               {isEditing ? (
                 <Input
@@ -208,7 +208,7 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
                   <CardTitle className="max-w-[160px] truncate text-base font-bold text-text transition-colors">
                     {item.title}
                   </CardTitle>
-                  <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-sky-400/60">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-teal-400/60">
                     Contact
                   </span>
                 </div>
@@ -273,8 +273,8 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
 
           <CardContent className="relative z-10 space-y-4 p-5 pt-4 sm:p-6">
             {item.folder && (
-              <div className="inline-flex max-w-full items-center rounded-full border border-sky-400/15 bg-sky-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-sky-300/80">
-                <Folder className="mr-1.5 h-3 w-3 text-sky-400/80" />
+              <div className="inline-flex max-w-full items-center rounded-full border border-teal-400/15 bg-teal-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-300/80">
+                <Folder className="mr-1.5 h-3 w-3 text-teal-400/80" />
                 <span className="truncate" title={item.folder}>
                   {item.folder}
                 </span>
@@ -309,7 +309,7 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
               <div className="space-y-3">
                 <div className="flex items-center justify-between rounded-xl border border-transparent bg-white/5 px-3 py-2.5 transition-all hover:bg-white/10 group-hover:border-white/5">
                   <div className="flex min-w-0 items-center gap-3">
-                    <Mail className="h-4 w-4 shrink-0 text-sky-400/70" />
+                    <Mail className="h-4 w-4 shrink-0 text-teal-400/70" />
                     <div className="min-w-0">
                       <p className="text-[9px] text-text/40">Email</p>
                       <p className="truncate text-sm font-medium text-text">
@@ -333,7 +333,7 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
 
                 <div className="flex items-center justify-between rounded-xl border border-transparent bg-white/5 px-3 py-2.5 transition-all hover:bg-white/10 group-hover:border-white/5">
                   <div className="flex min-w-0 items-center gap-3">
-                    <Phone className="h-4 w-4 shrink-0 text-sky-400/70" />
+                    <Phone className="h-4 w-4 shrink-0 text-teal-400/70" />
                     <div className="min-w-0">
                       <p className="text-[9px] text-text/40">Phone</p>
                       <p className="truncate text-sm font-medium text-text">
@@ -357,7 +357,7 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
 
                 <div className="rounded-xl border border-transparent bg-white/5 px-3 py-2.5 transition-all group-hover:border-white/5">
                   <div className="flex items-center gap-3">
-                    <Building2 className="h-4 w-4 shrink-0 text-sky-400/70" />
+                    <Building2 className="h-4 w-4 shrink-0 text-teal-400/70" />
                     <div className="min-w-0">
                       <p className="text-[9px] text-text/40">Company</p>
                       <p className="truncate text-sm font-medium text-text">
@@ -380,7 +380,7 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
 
             <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-3">
               <div className="flex items-center gap-1.5">
-                <div className="h-1 w-1 rounded-full bg-sky-500 animate-pulse" />
+                <div className="h-1 w-1 rounded-full bg-teal-500 animate-pulse" />
                 <span className="text-[9px] font-bold uppercase tracking-widest text-text/30">
                   AES-256
                 </span>
@@ -736,7 +736,7 @@ export const ContactsVault: React.FC = () => {
                       Cancel
                     </Button>
                     <Button
-                      className="bg-sky-500 text-white hover:bg-sky-600 min-w-[130px]"
+                      className="bg-teal-500 text-white hover:bg-teal-600 min-w-[130px]"
                       onClick={handleAdd}
                       disabled={isSaving}
                     >

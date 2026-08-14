@@ -343,10 +343,10 @@ export const NotesList: React.FC<NotesListProps> = ({
 
       <div className="flex items-center gap-3 w-full">
         <div className="relative group flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/20 group-focus-within:text-emerald-400 transition-colors z-10 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/20 group-focus-within:text-yellow-400 transition-colors z-10 pointer-events-none" />
           <SearchInput
             placeholder="Search notes by name or ID..."
-            className="pl-10 pr-10 h-10 text-sm bg-white/5 border-white/5 focus:border-emerald-500/30 rounded-xl w-full"
+            className="pl-10 pr-10 h-10 text-sm bg-white/5 border-white/5 focus:border-yellow-500/30 rounded-xl w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             suggestions={suggestions}
@@ -402,14 +402,14 @@ export const NotesList: React.FC<NotesListProps> = ({
               }}
               className={`w-full rounded-2xl border p-4 text-left transition-all ${
                 selectedNoteId === note.id
-                  ? 'border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_20px_rgba(16,185,129,0.05)]'
+                  ? 'border-yellow-500/20 bg-yellow-500/5 shadow-[0_0_20px_rgba(234,179,8,0.05)]'
                   : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10'
               }`}
               title="Drag to a folder to move this note"
             >
               <div className="flex items-center gap-4">
                 <div
-                  className={`p-2 rounded-xl transition-colors ${selectedNoteId === note.id ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-text/20'}`}
+                  className={`p-2 rounded-xl transition-colors ${selectedNoteId === note.id ? 'bg-yellow-500/20 text-yellow-400' : 'bg-white/5 text-text/20'}`}
                 >
                   <FilePlus className="h-4 w-4" />
                 </div>
@@ -427,7 +427,7 @@ export const NotesList: React.FC<NotesListProps> = ({
                       <>
                         <span className="text-[8px] text-text/10">•</span>
                         <span
-                          className="text-[10px] text-emerald-400/40 font-bold uppercase tracking-tighter max-w-[120px] truncate"
+                          className="text-[10px] text-yellow-400/50 font-bold uppercase tracking-tighter max-w-[120px] truncate"
                           title={note.folder}
                         >
                           {note.folder}
@@ -448,7 +448,7 @@ export const NotesList: React.FC<NotesListProps> = ({
                   className={cn(
                     'h-8 w-8 rounded-full transition-all',
                     note.isPinned
-                      ? 'text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20'
+                      ? 'text-yellow-400 bg-yellow-400/10 hover:bg-yellow-400/20'
                       : 'text-text/30 hover:text-text/80 hover:bg-white/10'
                   )}
                   title={note.isPinned ? 'Unpin note' : 'Pin note'}
@@ -460,7 +460,7 @@ export const NotesList: React.FC<NotesListProps> = ({
                   )}
                 </Button>
                 {selectedNoteId === note.id && (
-                  <ChevronRight className="h-4 w-4 text-emerald-500/40" />
+                  <ChevronRight className="h-4 w-4 text-yellow-500/40" />
                 )}
               </div>
             </motion.div>

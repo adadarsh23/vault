@@ -11,28 +11,14 @@ import { createHash, randomUUID } from 'crypto';
 import path from 'path';
 import { emitVaultEvent } from '../socket.ts';
 import { User, UserDocument } from '../models/user.ts';
-import { upsertTotalUserMirror } from './totalUserMirrorService.ts';
 import { getVaultItemModel } from '../models/vaultItem.ts';
-import { getActivityLogModel } from '../models/activityLog.ts';
 import { isStorageFullError, switchToNextMongoUri } from '../mongo.ts';
-import {
-  deleteScopedVaultItemByUsername,
-  ensureUserVaultCollections,
-  saveScopedVaultItem,
-} from './legacyVaultService.ts';
 import { saveActivityLog } from './activityLogService.ts';
 
-import {
-  createAccessToken,
-  createRefreshToken,
-  getRefreshCookieMaxAgeMs,
-  verifyRefreshToken,
-} from '../utils/auth.ts';
-import { comparePassword, decryptText, encryptText, hashPassword } from '../utils/crypto.ts';
+import { createAccessToken, createRefreshToken, getRefreshCookieMaxAgeMs } from '../utils/auth.ts';
+import { encryptText } from '../utils/crypto.ts';
 import { AppError } from '../utils/appError.ts';
 import { logger } from '../utils/logger.ts';
-import { processPhotoUpload } from '../utils/imagePipeline.ts';
-import { enqueueUploadSecurityScan } from './uploadSecurityService.ts';
 
 // ============================================================================
 // CONFIGURATION CONSTANTS

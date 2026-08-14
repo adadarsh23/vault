@@ -25,11 +25,24 @@ let initialized = false;
 let initializing = false;
 let logRocketClient: LogRocketClient | null = null;
 
+export const hasTelemetryConsent = (): boolean => {
+  if (!isBrowser) return false;
+  try {
+    const consent = localStorage.getItem('vault_telemetry_consent');
+    if (consent === 'false') return false;
+    if (consent === 'true') return true;
+  } catch {
+    // ignore
+  }
+  return import.meta.env.VITE_TELEMETRY_CONSENT !== 'false';
+};
+
 const isEnabled = () =>
   isBrowser &&
   isProd &&
   Boolean(appId) &&
   import.meta.env.VITE_LOGROCKET_ENABLED !== 'false' &&
+  hasTelemetryConsent() &&
   (allowLocalhost || !isLocalHost());
 
 export const initLogRocket = (): boolean => {
@@ -45,8 +58,44 @@ export const initLogRocket = (): boolean => {
         (module as { default?: LogRocketClient }).default ?? (module as unknown as LogRocketClient);
 
       logRocketClient = LogRocket;
-      logRocketClient.init(appId, {
+      (logRocketClient as any).init(appId, {
         release: import.meta.env.VITE_APP_RELEASE || import.meta.env.VITE_SENTRY_RELEASE,
+        dom: {
+          inputSanitizer: true,
+          textSanitizer: true,
+        },
+        network: {
+          requestSanitizer: (request: any) => {
+            if (request.headers) {
+              delete request.headers['authorization'];
+              delete request.headers['x-csrf-token'];
+              delete request.headers['csrf-token'];
+              delete request.headers['cookie'];
+            }
+            if (request.body && typeof request.body === 'string') {
+              try {
+                const parsed = JSON.parse(request.body);
+                if (parsed.password) parsed.password = '[REDACTED]';
+                if (parsed.newPassword) parsed.newPassword = '[REDACTED]';
+                if (parsed.currentPassword) parsed.currentPassword = '[REDACTED]';
+                if (parsed.masterKey) parsed.masterKey = '[REDACTED]';
+                request.body = JSON.stringify(parsed);
+              } catch {
+                // If not JSON, avoid capturing raw body if sensitive
+                if (request.url?.includes('/auth/') || request.url?.includes('/vault/')) {
+                  request.body = '[REDACTED]';
+                }
+              }
+            }
+            return request;
+          },
+          responseSanitizer: (response: any) => {
+            if (response.headers) {
+              delete response.headers['set-cookie'];
+            }
+            return response;
+          },
+        },
       });
       initialized = true;
     })
@@ -69,16 +118,15 @@ export const identifyLogRocketUser = (
     name?: string;
   }
 ) => {
-  if (!isEnabled() || !initialized || !userId) {
+  if (!isEnabled() || !initialized || !userId || !hasTelemetryConsent()) {
     return;
   }
   if (!logRocketClient) {
     return;
   }
 
+  // Only forward non-sensitive, scrubbed traits
   const safeTraits: Record<string, string> = {};
-  if (traits?.name) safeTraits.name = traits.name;
-  if (traits?.email) safeTraits.email = traits.email;
   if (traits?.username) safeTraits.username = traits.username;
 
   logRocketClient.identify(userId, {

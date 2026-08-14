@@ -5,9 +5,7 @@
     "types": ["node"],
     "jsx": "react-jsx",
     "skipLibCheck": true,
-    "strict": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false
+    "strict": true
   },
-  "include": ["server.ts"]
+  "include": ["server.ts", "server/**/*.ts"]
 }

@@ -194,7 +194,6 @@ class ThreatResponseService {
   ): Promise<void> {
     const baselineRequestsPerMinute = 10;
     const ratio = requestsPerMinute / baselineRequestsPerMinute;
-    const riskScore = Math.min(100, ratio * 20);
 
     if (ratio > 20) {
       // Critical

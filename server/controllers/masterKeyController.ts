@@ -205,7 +205,10 @@ export const handleSaveMasterKey = async (
     const userDoc = await User.findById(userId).select('+password').lean().exec();
     if (userDoc?.password) {
       try {
-        const passwordHash = decryptText(userDoc.password as any);
+        const passwordHash =
+          typeof userDoc.password === 'string'
+            ? userDoc.password
+            : decryptText(userDoc.password as any);
 
         const currentAccountPassword =
           typeof (req.body as any).password === 'string' && (req.body as any).password.trim()

@@ -102,11 +102,12 @@ router.get('/logs', requireAuth, async (req, res) => {
 
         const metaUser = parsed.meta?.userId || parsed.meta?.user || parsed.meta?.username;
 
-        // Strict User Isolation: Exclude logs belonging to other users
-        if (metaUser) {
-          if (String(metaUser) !== String(userId) && String(metaUser) !== String(username)) {
-            continue;
-          }
+        // Strict User Isolation: Exclude logs that do not belong to this user
+        if (
+          !metaUser ||
+          (String(metaUser) !== String(userId) && String(metaUser) !== String(username))
+        ) {
+          continue;
         }
 
         parsed.id = parsed.id || `sys-${parsed.timestamp}-${i}`;

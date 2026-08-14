@@ -8,17 +8,102 @@
  * - Implement graduated response (warn > throttle > block)
  */
 
-import redis from 'redis';
 import { logger } from '../utils/logger.ts';
 
-interface RateLimitConfig {
-  windowMs: number; // Time window in ms
-  maxRequests: number; // Max requests per window
-  key: string; // Redis key prefix
-  message?: string;
+export interface RedisLikeClient {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string, mode?: string, duration?: number): Promise<unknown>;
+  incr(key: string): Promise<number>;
+  ttl(key: string): Promise<number>;
+  expire(key: string, seconds: number): Promise<unknown>;
+  hset(key: string, ...args: any[]): Promise<unknown>;
+  exists(key: string): Promise<number | boolean>;
+  del(key: string): Promise<unknown>;
 }
 
-interface UserRiskProfile {
+class InMemoryRedisClient implements RedisLikeClient {
+  private store = new Map<string, { value: string; expiresAt?: number }>();
+  private hashStore = new Map<string, { data: Record<string, string>; expiresAt?: number }>();
+
+  async get(key: string): Promise<string | null> {
+    const entry = this.store.get(key);
+    if (!entry) return null;
+    if (entry.expiresAt && Date.now() > entry.expiresAt) {
+      this.store.delete(key);
+      return null;
+    }
+    return entry.value;
+  }
+
+  async set(key: string, value: string, _mode?: string, duration?: number): Promise<unknown> {
+    const expiresAt = duration ? Date.now() + duration * 1000 : undefined;
+    this.store.set(key, { value, expiresAt });
+    return 'OK';
+  }
+
+  async incr(key: string): Promise<number> {
+    const current = await this.get(key);
+    const count = (parseInt(current || '0', 10) || 0) + 1;
+    const existing = this.store.get(key);
+    this.store.set(key, { value: count.toString(), expiresAt: existing?.expiresAt });
+    return count;
+  }
+
+  async ttl(key: string): Promise<number> {
+    const entry = this.store.get(key);
+    if (!entry || !entry.expiresAt) return -1;
+    const remainingMs = entry.expiresAt - Date.now();
+    return remainingMs > 0 ? Math.ceil(remainingMs / 1000) : -2;
+  }
+
+  async expire(key: string, seconds: number): Promise<unknown> {
+    const entry = this.store.get(key);
+    if (entry) {
+      entry.expiresAt = Date.now() + seconds * 1000;
+    }
+    const hashEntry = this.hashStore.get(key);
+    if (hashEntry) {
+      hashEntry.expiresAt = Date.now() + seconds * 1000;
+    }
+    return 1;
+  }
+
+  async hset(key: string, ...args: any[]): Promise<unknown> {
+    let hashEntry = this.hashStore.get(key);
+    if (!hashEntry) {
+      hashEntry = { data: {} };
+      this.hashStore.set(key, hashEntry);
+    }
+    for (let i = 0; i < args.length; i += 2) {
+      if (args[i] !== undefined && args[i + 1] !== undefined) {
+        hashEntry.data[String(args[i])] = String(args[i + 1]);
+      }
+    }
+    return 1;
+  }
+
+  async exists(key: string): Promise<number | boolean> {
+    const val = await this.get(key);
+    if (val !== null) return 1;
+    const hash = this.hashStore.get(key);
+    if (hash) {
+      if (hash.expiresAt && Date.now() > hash.expiresAt) {
+        this.hashStore.delete(key);
+        return 0;
+      }
+      return 1;
+    }
+    return 0;
+  }
+
+  async del(key: string): Promise<unknown> {
+    this.store.delete(key);
+    this.hashStore.delete(key);
+    return 1;
+  }
+}
+
+export interface UserRiskProfile {
   userId: string;
   riskScore: number; // 0-100
   requestsLastHour: number;
@@ -26,15 +111,15 @@ interface UserRiskProfile {
   reputation: 'trusted' | 'normal' | 'suspicious' | 'blocked';
 }
 
-interface AdaptiveLimit {
+export interface AdaptiveLimit {
   maxRequests: number;
   windowMs: number;
   cooldownMs: number;
   action: 'allow' | 'throttle' | 'block';
 }
 
-class AdaptiveRateLimitService {
-  private redisClient: redis.RedisClient;
+export class AdaptiveRateLimitService {
+  private redisClient: RedisLikeClient;
   private userProfiles: Map<string, UserRiskProfile> = new Map();
 
   // Base rate limits
@@ -58,8 +143,8 @@ class AdaptiveRateLimitService {
     block: 3600000, // 1 hour
   };
 
-  constructor(redisClient: redis.RedisClient) {
-    this.redisClient = redisClient;
+  constructor(redisClient?: RedisLikeClient) {
+    this.redisClient = redisClient || new InMemoryRedisClient();
   }
 
   /**
@@ -85,14 +170,14 @@ class AdaptiveRateLimitService {
       return {
         allowed: false,
         remaining: 0,
-        resetTime: parseInt(inCooldown),
+        resetTime: parseInt(inCooldown, 10),
         riskLevel: 'blocked',
         action: 'block',
       };
     }
 
     // Get adaptive limits
-    const profile = userId ? this.userProfiles.get(userId) : null;
+    const profile = userId ? this.userProfiles.get(userId) || null : null;
     const limits = this.getAdaptiveLimits(category, profile);
 
     // Get current request count
@@ -291,6 +376,6 @@ class AdaptiveRateLimitService {
   }
 }
 
-export const createAdaptiveRateLimitService = (redisClient: redis.RedisClient) => {
+export const createAdaptiveRateLimitService = (redisClient?: RedisLikeClient) => {
   return new AdaptiveRateLimitService(redisClient);
 };

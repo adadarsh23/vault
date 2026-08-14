@@ -7,7 +7,6 @@ import { getClientIp } from '../utils/requestIp.ts';
 import { requireTrustedBrowserOrigin } from '../middleware/csrfOriginMiddleware.ts';
 import { validate } from '../middleware/validate.ts';
 import { login2FASchema, twoFactorTokenSchema } from '../validators/twoFactorValidator.ts';
-import { requireRecaptcha } from '../middleware/recaptchaMiddleware.ts';
 
 const router = Router();
 

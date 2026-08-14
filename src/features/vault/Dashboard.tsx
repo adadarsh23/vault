@@ -163,7 +163,7 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
           id: ITEM_TYPES.IDENTITY,
           label: 'Identities',
           icon: Fingerprint,
-          color: 'text-cyan-400',
+          color: 'text-indigo-400',
           count: itemCounts[ITEM_TYPES.IDENTITY],
         },
         {
@@ -191,7 +191,7 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
           id: ITEM_TYPES.WIFI,
           label: 'Wi-Fi',
           icon: Wifi,
-          color: 'text-amber-400',
+          color: 'text-sky-400',
           count: itemCounts[ITEM_TYPES.WIFI],
         },
         {
@@ -207,7 +207,7 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
           id: ITEM_TYPES.NOTE,
           label: 'Notes',
           icon: FileText,
-          color: 'text-emerald-400',
+          color: 'text-yellow-400',
           count: itemCounts[ITEM_TYPES.NOTE],
         },
         {
@@ -244,7 +244,7 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
           id: ITEM_TYPES.VIDEO,
           label: 'Videos',
           icon: Video,
-          color: 'text-purple-400',
+          color: 'text-fuchsia-400',
           count: itemCounts[ITEM_TYPES.VIDEO],
         },
         {
@@ -260,14 +260,14 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
           id: ITEM_TYPES.DOCUMENT,
           label: 'Documents',
           icon: FilePlus,
-          color: 'text-indigo-400',
+          color: 'text-violet-400',
           count: itemCounts[ITEM_TYPES.DOCUMENT],
         },
         {
           id: ITEM_TYPES.FILE,
           label: 'Other Files',
           icon: Box,
-          color: 'text-slate-300',
+          color: 'text-slate-400',
           count: itemCounts[ITEM_TYPES.FILE],
         },
       ] as Array<{

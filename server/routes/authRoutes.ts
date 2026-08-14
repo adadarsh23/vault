@@ -166,7 +166,14 @@ const cloudUnlockCaptchaLimiter = rateLimit({
 });
 
 // Routes
-authRouter.post('/signup', asyncHandler(register));
+authRouter.post(
+  '/signup',
+  requireTrustedBrowserOrigin,
+  authLimiter,
+  validate(registerSchema),
+  requireRecaptcha({ action: 'auth_register' }),
+  asyncHandler(register)
+);
 authRouter.post(
   '/register',
   requireTrustedBrowserOrigin,

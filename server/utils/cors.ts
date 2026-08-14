@@ -1,3 +1,4 @@
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 
 const isPrivateNetworkHost = (hostname: string): boolean => {
@@ -27,14 +28,16 @@ export const getAllowedCorsOrigins = (): string[] => {
     .map((value) => value.trim().replace(/\/+$/, ''))
     .filter(Boolean);
 
-  origins.push(
-    'http://localhost:4000',
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:4000',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:3000'
-  );
+  if (!IS_PRODUCTION) {
+    origins.push(
+      'http://localhost:4000',
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:4000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:3000'
+    );
+  }
 
   return [...new Set(origins)];
 };
@@ -47,21 +50,24 @@ export const isAllowedCorsOrigin = (origin: string | undefined): boolean => {
   const normalizedOrigin = origin.trim().replace(/\/+$/, '');
   const configuredOrigins = getAllowedCorsOrigins();
 
-  if (
-    configuredOrigins.includes(normalizedOrigin) ||
-    configuredOrigins.includes('*') ||
-    process.env.ALLOW_ALL_CORS === 'true'
-  ) {
+  if (configuredOrigins.includes(normalizedOrigin)) {
     return true;
   }
 
-  try {
-    const { hostname } = new URL(normalizedOrigin);
-    if (isPrivateNetworkHost(hostname)) {
+  // Non-production convenience overrides
+  if (!IS_PRODUCTION) {
+    if (configuredOrigins.includes('*') || process.env.ALLOW_ALL_CORS === 'true') {
       return true;
     }
-  } catch {
-    // Treat invalid URLs as non-allowed
+
+    try {
+      const { hostname } = new URL(normalizedOrigin);
+      if (isPrivateNetworkHost(hostname)) {
+        return true;
+      }
+    } catch {
+      // Treat invalid URLs as non-allowed
+    }
   }
 
   return false;

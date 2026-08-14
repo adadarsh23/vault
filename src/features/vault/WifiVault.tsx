@@ -263,12 +263,12 @@ const DecryptedWifiItem: React.FC<{
   return (
     <motion.div whileHover={{ y: -5 }} className="h-full">
       <Card className="group relative h-full overflow-hidden border-white/5 bg-gradient-to-br from-white/[0.08] to-transparent backdrop-blur-md transition-all hover:border-white/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)]">
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-500/10 blur-3xl transition-opacity group-hover:opacity-30" />
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-sky-500/10 blur-3xl transition-opacity group-hover:opacity-30" />
 
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 transition-transform group-hover:scale-110 group-hover:rotate-3">
-              <Wifi className="h-5 w-5 text-amber-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/10 transition-transform group-hover:scale-110 group-hover:rotate-3">
+              <Wifi className="h-5 w-5 text-sky-400" />
             </div>
             {isEditing ? (
               <Input
@@ -282,7 +282,7 @@ const DecryptedWifiItem: React.FC<{
                 <CardTitle className="text-base font-bold text-text truncate max-w-[150px]">
                   {item.title}
                 </CardTitle>
-                <span className="text-[9px] font-bold text-amber-400/60 uppercase tracking-wider">
+                <span className="text-[9px] font-bold text-sky-400/60 uppercase tracking-wider">
                   {data.security} Protocol
                 </span>
               </div>
@@ -303,7 +303,7 @@ const DecryptedWifiItem: React.FC<{
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-full hover:bg-amber-400/20 text-amber-400"
+                  className="h-8 w-8 rounded-full hover:bg-sky-400/20 text-sky-400"
                   onClick={handleSave}
                 >
                   <Save className="h-4 w-4" />
@@ -326,7 +326,7 @@ const DecryptedWifiItem: React.FC<{
                   variant="ghost"
                   size="icon"
                   disabled={isPinning}
-                  className={`h-8 w-8 rounded-full ${item.isPinned ? 'text-amber-400 hover:bg-amber-400/20' : 'text-text/20 hover:text-text/60 hover:bg-white/10'} transition-colors`}
+                  className={`h-8 w-8 rounded-full ${item.isPinned ? 'text-sky-400 hover:bg-sky-400/20' : 'text-text/20 hover:text-text/60 hover:bg-white/10'} transition-colors`}
                   onClick={() => onTogglePin(item.id)}
                 >
                   {isPinning ? (
@@ -350,8 +350,8 @@ const DecryptedWifiItem: React.FC<{
 
         <CardContent className="p-5 sm:p-6 space-y-4 pt-4 relative z-10">
           {item.folder && (
-            <div className="inline-flex max-w-full items-center rounded-full border border-amber-400/15 bg-amber-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300/80">
-              <Folder className="h-3 w-3 mr-1.5 text-amber-400/80" />
+            <div className="inline-flex max-w-full items-center rounded-full border border-sky-400/15 bg-sky-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-sky-300/80">
+              <Folder className="h-3 w-3 mr-1.5 text-sky-400/80" />
               <span className="truncate">{item.folder}</span>
             </div>
           )}
@@ -887,7 +887,7 @@ export const WifiVault: React.FC = () => {
                       Cancel
                     </Button>
                     <Button
-                      className="bg-amber-500 hover:bg-amber-600 text-white min-w-[130px]"
+                      className="bg-sky-500 hover:bg-sky-600 text-white min-w-[130px]"
                       onClick={handleCreateWifi}
                       disabled={isSaving}
                     >

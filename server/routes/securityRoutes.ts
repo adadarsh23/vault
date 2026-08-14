@@ -9,16 +9,14 @@
  * - Admin dashboard
  */
 
-import { Router, Request as ExpressRequest, Response } from 'express';
-import { requireAuth } from '../middleware/authMiddleware.ts';
+import { Router, Response } from 'express';
+import { requireAuth, requireAdmin } from '../middleware/authMiddleware.ts';
 import { asyncHandler } from '../utils/asyncHandler.ts';
 import { aiAnomalyDetectionService } from '../services/aiAnomalyDetectionService.ts';
 import { requestFingerprintService } from '../services/requestFingerprintService.ts';
 import { securityDashboardService } from '../services/securityDashboardService.ts';
 import { AppError } from '../utils/appError.ts';
 import { AuthenticatedRequest } from '../utils/requestTypes.ts';
-import { User } from '../models/user.ts';
-import { getVaultSnapshot } from '../services/vaultItemService.ts';
 
 type Request = AuthenticatedRequest;
 
@@ -39,9 +37,7 @@ const getRouteParam = (value: string | string[] | undefined): string => {
 securityRouter.post(
   '/login-verify',
   requireAuth,
-  asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId;
-
+  asyncHandler(async (_req: Request, res: Response) => {
     // Verify password
     // TODO: Implement password verification
 
@@ -64,7 +60,7 @@ securityRouter.get(
   '/devices',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId;
+    const userId = req.user.userId;
     const devices = requestFingerprintService.getUserDevices(userId);
 
     res.json({
@@ -90,7 +86,7 @@ securityRouter.post(
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    const userId = req.user!.userId;
+    const userId = req.user.userId;
 
     // Verify MFA code
     // TODO: Implement MFA verification
@@ -114,7 +110,7 @@ securityRouter.delete(
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    const userId = req.user!.userId;
+    const userId = req.user.userId;
 
     const success = requestFingerprintService.forgetDevice(getRouteParam(id), userId);
 
@@ -137,7 +133,7 @@ securityRouter.post(
   '/devices/forget-all',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId;
+    const userId = req.user.userId;
     const currentFingerprintId = req.get('x-fingerprint-id') || 'unknown';
 
     const count = requestFingerprintService.forgetAllOtherDevices(currentFingerprintId, userId);
@@ -157,8 +153,7 @@ securityRouter.get(
   '/activity',
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId;
-    const hours = Math.min(parseInt(req.query.hours as string) || 24, 720); // Max 30 days
+    const userId = req.user.userId;
 
     const behavior = aiAnomalyDetectionService.getTypicalBehavior(userId);
 
@@ -180,9 +175,7 @@ securityRouter.get(
 securityRouter.get(
   '/settings',
   requireAuth,
-  asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId;
-
+  asyncHandler(async (_req: Request, res: Response) => {
     res.json({
       mfaEnabled: true, // Would fetch from DB
       mfaMethods: ['totp', 'email'], // Alternative: fido2
@@ -201,11 +194,8 @@ securityRouter.get(
 securityRouter.post(
   '/settings',
   requireAuth,
-  asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId;
-    const { loginAlerts, suspiciousActivityAlerts, sessionTimeout } = req.body;
-
-    // TODO: Persist to database
+  asyncHandler(async (_req: Request, res: Response) => {
+    // TODO: Persist settings to database
 
     res.json({
       success: true,
@@ -221,9 +211,8 @@ securityRouter.post(
 securityRouter.post(
   '/mfa/enable',
   requireAuth,
-  asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user!.userId;
-    const { method } = req.body; // 'totp', 'fido2', 'email'
+  asyncHandler(async (_req: Request, res: Response) => {
+    const { method } = _req.body || {}; // 'totp', 'fido2', 'email'
 
     if (!['totp', 'fido2', 'email'].includes(method)) {
       throw AppError.badRequest('Invalid MFA method', 'INVALID_MFA_METHOD');
@@ -257,9 +246,7 @@ securityRouter.post(
 securityRouter.post(
   '/mfa/verify',
   requireAuth,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { code, method } = req.body;
-
+  asyncHandler(async (_req: Request, res: Response) => {
     // TODO: Verify TOTP code or FIDO2 challenge
 
     res.json({
@@ -276,9 +263,7 @@ securityRouter.post(
 securityRouter.post(
   '/mfa/disable',
   requireAuth,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { password } = req.body;
-
+  asyncHandler(async (_req: Request, res: Response) => {
     // TODO: Verify password first
 
     res.json({
@@ -295,9 +280,8 @@ securityRouter.post(
 securityRouter.get(
   '/admin/dashboard',
   requireAuth,
-  asyncHandler(async (req: Request, res: Response) => {
-    // TODO: Verify admin role
-
+  requireAdmin,
+  asyncHandler(async (_req: Request, res: Response) => {
     const metrics = await securityDashboardService.getCurrentMetrics();
     res.json(metrics);
   })
@@ -310,13 +294,9 @@ securityRouter.get(
 securityRouter.get(
   '/admin/incidents',
   requireAuth,
+  requireAdmin,
   asyncHandler(async (req: Request, res: Response) => {
-    // TODO: Verify admin role
-
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 500);
-    const severity = req.query.severity as string;
-
-    // TODO: Fetch from database with filters
 
     res.json({
       incidents: [],
@@ -333,9 +313,8 @@ securityRouter.get(
 securityRouter.get(
   '/admin/incidents/:id',
   requireAuth,
+  requireAdmin,
   asyncHandler(async (req: Request, res: Response) => {
-    // TODO: Verify admin role
-
     const incident = await securityDashboardService.getIncidentDetails(
       getRouteParam(req.params.id)
     );
@@ -350,9 +329,8 @@ securityRouter.get(
 securityRouter.patch(
   '/admin/incidents/:id',
   requireAuth,
+  requireAdmin,
   asyncHandler(async (req: Request, res: Response) => {
-    // TODO: Verify admin role
-
     const { status, notes } = req.body;
 
     await securityDashboardService.updateIncidentStatus(
@@ -375,9 +353,8 @@ securityRouter.patch(
 securityRouter.post(
   '/admin/actions',
   requireAuth,
+  requireAdmin,
   asyncHandler(async (req: Request, res: Response) => {
-    // TODO: Verify admin role
-
     const { action, target, duration } = req.body;
 
     await securityDashboardService.applyManualAction(action, target, duration);
@@ -396,9 +373,8 @@ securityRouter.post(
 securityRouter.get(
   '/admin/report',
   requireAuth,
+  requireAdmin,
   asyncHandler(async (req: Request, res: Response) => {
-    // TODO: Verify admin role
-
     const startDate = new Date(req.query.startDate as string);
     const endDate = new Date(req.query.endDate as string);
 

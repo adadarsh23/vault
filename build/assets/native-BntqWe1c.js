@@ -1,1 +1,0 @@
-import{a as e,i as t,n,r,t as i}from"./emoji-I0RTUNWE.js";export{i as aliases,n as categories,t as default,r as emojis,e as sheet};

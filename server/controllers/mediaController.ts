@@ -63,7 +63,7 @@ export const findVaultItemFlexible = async (
   userId: string,
   itemId: string
 ) => {
-  if (!itemId) return null;
+  if (!itemId || !userId) return null;
 
   const isObjectId = mongoose.Types.ObjectId.isValid(itemId);
   const queryConditions: any[] = [
@@ -82,16 +82,11 @@ export const findVaultItemFlexible = async (
     return typeof query?.exec === 'function' ? query.exec() : query;
   };
 
-  let item = await executeFindOne({
+  // Strictly enforce userId scoping on all queries to prevent IDOR / BOLA vulnerabilities
+  const item = await executeFindOne({
     userId,
     $or: queryConditions,
   });
-
-  if (!item && isObjectId) {
-    item = await executeFindOne({
-      $or: queryConditions,
-    });
-  }
 
   return item;
 };
@@ -369,7 +364,8 @@ const ensureUploadIsActive = (item: any) => {
 
 /**
  * Universal Resilient Media Access Validation
- * Resolves User ID from any available sink and verifies HMAC signature
+ * Resolves user identity ONLY from verified JWT/session or validated cryptographic signed URL token.
+ * Never trusts unverified query user IDs.
  */
 const validateMediaAccess = async (
   req: express.Request,
@@ -380,24 +376,17 @@ const validateMediaAccess = async (
   const q = req.query as any;
   const clientIp = getClientIp(req);
 
-  // 1. Resolve Identity (Ladder: Session > Passed ID > Auth Token Decode > Query ID > Header)
-  let resolvedUserId =
-    (req as any).user?.userId ||
-    passedUserId ||
-    getSingleQueryValue(q.uid) ||
-    getSingleQueryValue(q.userId);
+  // 1. Resolve Identity strictly from Authenticated Session or Verified JWT
+  let resolvedUserId: string | undefined = (req as any).user?.userId;
 
   const authHeader = req.get('Authorization')?.split(' ')[1];
-  const authToken = getSingleQueryValue(q.auth_token) || getSingleQueryValue(q.token) || authHeader;
-  let isAuthenticatedUser = Boolean((req as any).user?.userId);
+  const authToken = getSingleQueryValue(q.auth_token) || authHeader;
 
-  // ALWAYS verify authToken if present, to validate session & populate req.user
   if (authToken && typeof authToken === 'string' && authToken.includes('.')) {
     try {
       const payload = verifyAccessToken(authToken);
       if (payload && payload.sub) {
         resolvedUserId = payload.sub;
-        isAuthenticatedUser = true;
         (req as any).user = {
           userId: payload.sub,
           username: payload.username,
@@ -414,19 +403,7 @@ const validateMediaAccess = async (
     }
   }
 
-  if (!resolvedUserId) {
-    logger.warn('Media access denied: Identification missing', {
-      itemId,
-      queryKeys: Object.keys(q),
-      uidValue: q.uid,
-      hasAuthHeader: !!req.get('Authorization'),
-    });
-    throw AppError.unauthorized(
-      'User identification required for secure media playback.',
-      'AUTH_REQUIRED'
-    );
-  }
-
+  // 2. Validate Signed Capability / URL Token
   const signature = getSingleQueryValue(q.token);
   const expiresRaw = getSingleQueryValue(q.expires);
   if (!signature || !expiresRaw) {
@@ -436,6 +413,27 @@ const validateMediaAccess = async (
   const expires = Number.parseInt(expiresRaw, 10);
   if (!Number.isSafeInteger(expires) || String(expires) !== expiresRaw) {
     throw AppError.forbidden('Signed media token is invalid.', 'INVALID_SIGNATURE');
+  }
+
+  // For signed URL access where no session/JWT was provided, use the token claims target ID
+  const candidateUserId =
+    resolvedUserId || passedUserId || getSingleQueryValue(q.uid) || getSingleQueryValue(q.userId);
+  if (!candidateUserId) {
+    logger.warn('Media access denied: Identification missing', {
+      itemId,
+    });
+    throw AppError.unauthorized(
+      'User identification required for secure media playback.',
+      'AUTH_REQUIRED'
+    );
+  }
+
+  // If both a verified session and a signed claim target exist, ensure they match
+  if (resolvedUserId && candidateUserId !== resolvedUserId) {
+    throw AppError.forbidden(
+      'Signed media token does not match authenticated user.',
+      'USER_MISMATCH'
+    );
   }
 
   const signedSessionId = getSingleQueryValue(q.sid) || 'any';
@@ -451,7 +449,8 @@ const validateMediaAccess = async (
     );
   }
 
-  const isValidSignature = storageService.verifySignedUrl(resolvedUserId, itemId, {
+  // Cryptographically verify the signed capability token against the candidate userId
+  const isValidSignature = storageService.verifySignedUrl(candidateUserId, itemId, {
     token: signature,
     expires,
     action,
@@ -460,9 +459,13 @@ const validateMediaAccess = async (
     deviceHash: getSingleQueryValue(q.dev),
     originalIp: getSingleQueryValue(q.ip),
   });
+
   if (!isValidSignature) {
     throw AppError.forbidden('Signed media token is invalid or expired.', 'INVALID_SIGNATURE');
   }
+
+  // Now and only now is candidateUserId established as verified
+  resolvedUserId = candidateUserId;
 
   // Ensure username is attached to req.user for downstream getVaultItemModel(username)
   if (!(req as any).user?.username) {
@@ -484,15 +487,7 @@ const validateMediaAccess = async (
   anomalyDetectionService.trackMediaRequest(resolvedUserId, itemId, clientIp);
   anomalyDetectionService.trackIpDrift(resolvedUserId, clientIp);
 
-  // 2. Return resolved user ID for database ownership validation
-  if (resolvedUserId) {
-    return resolvedUserId;
-  }
-
-  throw AppError.unauthorized(
-    'User identification required for secure media playback.',
-    'AUTH_REQUIRED'
-  );
+  return resolvedUserId;
 };
 
 export const getMediaPlaylist = async (req: express.Request, res: express.Response) => {
@@ -682,7 +677,7 @@ export const getMediaSegment = async (req: express.Request, res: express.Respons
   }
 
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  res.setHeader('Cache-Control', 'public, max-age=31536000');
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   res.setHeader('Content-Type', 'video/MP2T');
 
   return fs.createReadStream(segmentPath).pipe(res);
@@ -725,7 +720,6 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
       const files = await bucket.find({ _id: objectId }).toArray();
       if (files && files.length > 0) {
         const gridFile = files[0];
-        const fileSize = gridFile.length;
         const fileMetadata = gridFile.metadata || {};
         const fileName = fileMetadata.fileName || fileMetadata.originalName || 'file';
         const ext = path.extname(fileName).toLowerCase();

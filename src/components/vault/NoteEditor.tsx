@@ -22,6 +22,30 @@ import { NoteEditorTiptap } from './NoteEditor/NoteEditorTiptap';
 import { normalizeExternalUrl } from './NoteEditor/editorUtils';
 import type { NoteEditorProps, SaveStatus, TextAlign as AlignType } from './NoteEditor/types';
 
+const NoteEditorFallback: React.FC<{ label: string; onRetry?: () => void }> = ({
+  label,
+  onRetry,
+}) => (
+  <div
+    role="alert"
+    aria-live="assertive"
+    className="m-3 flex items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs text-red-200 shadow-sm backdrop-blur-sm"
+  >
+    <div className="flex items-center gap-2">
+      <span className="font-medium">{label} encountered an issue and failed to render.</span>
+    </div>
+    {onRetry && (
+      <button
+        type="button"
+        onClick={onRetry}
+        className="rounded-lg bg-red-500/20 px-2.5 py-1 text-xs font-semibold text-red-100 transition-colors hover:bg-red-500/30 focus:outline-none focus:ring-2 focus:ring-red-400"
+      >
+        Retry
+      </button>
+    )}
+  </div>
+);
+
 export const NoteEditor: React.FC<NoteEditorProps> = ({
   noteId,
   initialTitle,
@@ -417,7 +441,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
       )}
     >
       <ErrorBoundary
-        fallback={<div className="m-2 text-xs text-red-200">Toolbar failed to render.</div>}
+        fallback={(_err, reset) => <NoteEditorFallback label="Toolbar" onRetry={reset} />}
       >
         <NoteEditorToolbar
           handleUndo={handleUndo}
@@ -539,14 +563,14 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
             )}
           >
             <ErrorBoundary
-              fallback={<div className="m-3 text-xs text-red-200">Editor failed to render.</div>}
+              fallback={(_err, reset) => <NoteEditorFallback label="Editor" onRetry={reset} />}
             >
               <NoteEditorTiptap editor={editor} lineWrap={lineWrap} textAlign={textAlign} />
             </ErrorBoundary>
           </div>
 
           <ErrorBoundary
-            fallback={<div className="m-3 text-xs text-red-200">Preview failed to render.</div>}
+            fallback={(_err, reset) => <NoteEditorFallback label="Preview" onRetry={reset} />}
           >
             <NoteEditorPreview
               noteId={noteId}

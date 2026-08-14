@@ -59,32 +59,9 @@ const validateLicensePolicy = async (
 export const handleLicenseRequest = async (req: express.Request, res: express.Response) => {
   const itemId = typeof req.params.itemId === 'string' ? req.params.itemId : undefined;
   const { drmType, deviceId } = req.body; // Client specifies DRM type
-  const q = req.query as any;
-  const authTokenFromQuery = Array.isArray(q.auth_token) ? q.auth_token[0] : q.auth_token;
-  const uidFromQuery = Array.isArray(q.uid) ? q.uid[0] : q.uid;
-  const userIdFromQuery = Array.isArray(q.userId) ? q.userId[0] : q.userId;
-  const usernameFromQuery = Array.isArray(q.username) ? q.username[0] : q.username;
-
-  // 1. Resolve Identity (Session > Query > Auth Header)
-  let userId = (req as any).user?.userId || uidFromQuery || userIdFromQuery;
-  let username = (req as any).user?.username || usernameFromQuery;
-
-  if (!userId) {
-    const authHeader = req.get('Authorization')?.split(' ')[1];
-    const authToken = authTokenFromQuery || authHeader;
-
-    if (authToken && typeof authToken === 'string' && authToken.split('.').length === 3) {
-      try {
-        const { verifyAccessToken } = await import('../utils/auth.ts');
-        const payload = verifyAccessToken(authToken);
-        userId = payload.sub;
-        username = payload.username;
-      } catch (e) {
-        logger.warn('License request token check failed', { error: (e as Error).message });
-      }
-    }
-  }
-
+  // 1. Resolve Identity Strictly from Authenticated Session
+  const userId = (req as any).user?.userId;
+  const username = (req as any).user?.username;
   const clientIp = getClientIp(req);
 
   if (!itemId) {
@@ -94,11 +71,8 @@ export const handleLicenseRequest = async (req: express.Request, res: express.Re
   if (!userId || !username) {
     logger.warn('License access denied: Identification missing', {
       itemId,
-      queryKeys: Object.keys(q),
     });
-    throw AppError.unauthorized(
-      'License delivery requires valid user identification (userId and username)'
-    );
+    throw AppError.unauthorized('License delivery requires a verified authenticated session.');
   }
 
   // Security Intelligence: IP Drift & Anomaly Tracking

@@ -4,21 +4,26 @@
  * How to integrate all security modules into your Express app
  */
 
-import express, { Express } from 'express';
+import type { Express } from 'express';
 import { Server as HTTPServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
-import redis from 'redis';
 
 import {
   securityMiddleware,
   fileUploadSecurityMiddleware,
   performanceSecurityMiddleware,
   auditLogMiddleware,
-} from './middleware/securityMiddleware.ts';
-import { securityRouter } from './routes/securityRoutes.ts';
-import { securityDashboardService } from './services/securityDashboardService.ts';
-import { createAdaptiveRateLimitService } from './services/adaptiveRateLimitService.ts';
-import { logger } from './utils/logger.ts';
+} from '../middleware/securityMiddleware.ts';
+import { securityRouter } from '../routes/securityRoutes.ts';
+import { securityDashboardService } from '../services/securityDashboardService.ts';
+import {
+  createAdaptiveRateLimitService,
+  AdaptiveRateLimitService,
+  type RedisLikeClient,
+} from '../services/adaptiveRateLimitService.ts';
+import { logger } from '../utils/logger.ts';
+
+let adaptiveRateLimiter: AdaptiveRateLimitService | null = null;
 
 /**
  * Initialize and register all security middleware/services
@@ -26,7 +31,7 @@ import { logger } from './utils/logger.ts';
 export async function initializeSecuritySystem(
   app: Express,
   server: HTTPServer,
-  redisClient: redis.RedisClient
+  redisClient?: RedisLikeClient
 ): Promise<void> {
   logger.info('🔒 Initializing AI-powered security system...');
 
@@ -42,7 +47,7 @@ export async function initializeSecuritySystem(
   logger.info('✓ Real-time dashboard initialized');
 
   // 2. Initialize adaptive rate limiting
-  const adaptiveRateLimiter = createAdaptiveRateLimitService(redisClient);
+  adaptiveRateLimiter = createAdaptiveRateLimitService(redisClient);
   logger.info('✓ Adaptive rate limiting initialized');
 
   // 3. MIDDLEWARE CHAIN (order matters!)
@@ -53,13 +58,13 @@ export async function initializeSecuritySystem(
 
   // Second: Rate limiting (before auth)
   app.use(async (req, res, next) => {
-    const identifier = req.ip || req.connection.remoteAddress || 'unknown';
+    const identifier = req.ip || req.socket.remoteAddress || 'unknown';
     const category = req.path.includes('/auth') ? 'auth' : 'api';
 
-    const rateLimitResult = await adaptiveRateLimiter.checkRateLimit(
+    const rateLimitResult = await adaptiveRateLimiter!.checkRateLimit(
       identifier,
       category,
-      req.user?.userId
+      (req as any).user?.userId
     );
 
     res.set('RateLimit-Limit', rateLimitResult.action === 'block' ? '0' : '100');
@@ -98,7 +103,10 @@ export async function initializeSecuritySystem(
 /**
  * Background monitoring and cleanup tasks
  */
-function startSecurityMonitoringTasks(redisClient: redis.RedisClient, io: SocketServer): void {
+function startSecurityMonitoringTasks(
+  _redisClient: RedisLikeClient | undefined,
+  io: SocketServer
+): void {
   // Refresh dashboard metrics every 30 seconds
   setInterval(async () => {
     try {

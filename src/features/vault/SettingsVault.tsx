@@ -11,10 +11,7 @@ import {
   updateAuthenticatedProfile,
   type AuthenticatedProfile,
 } from '../../lib/auth-api';
-import {} from // clearAuthToken,
-// clearCloudSessionHint,
-// clearRememberedVaultAccess,
-'../../lib/auth-session';
+
 import { toast } from 'sonner';
 import {
   getErrorMessage,

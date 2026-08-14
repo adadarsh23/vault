@@ -109,10 +109,10 @@ export const LocationList: React.FC<LocationListProps> = ({
 
       <div className="flex items-center gap-3 w-full">
         <div className="relative group flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/20 group-focus-within:text-emerald-400 transition-colors z-10 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/20 group-focus-within:text-lime-400 transition-colors z-10 pointer-events-none" />
           <SearchInput
-            placeholder="Search locations by name or ID..."
-            className="pl-10 pr-10 h-10 text-sm bg-white/5 border-white/5 focus:border-emerald-500/30 rounded-xl w-full"
+            placeholder="Search locations by title or address..."
+            className="pl-10 pr-10 h-10 text-sm bg-white/5 border-white/5 focus:border-lime-500/30 rounded-xl w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             suggestions={suggestions}
@@ -183,7 +183,7 @@ export const LocationList: React.FC<LocationListProps> = ({
               className={cn(
                 'w-full rounded-2xl border p-4 text-left transition-all',
                 selectedId === item.id
-                  ? 'border-emerald-500/20 bg-emerald-500/5 shadow-[0_0_20px_rgba(16,185,129,0.05)]'
+                  ? 'border-lime-500/20 bg-lime-500/5 shadow-[0_0_20px_rgba(132,204,22,0.05)]'
                   : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10'
               )}
               title="Drag to a folder to move this location"
@@ -191,9 +191,9 @@ export const LocationList: React.FC<LocationListProps> = ({
               <div className="flex items-center gap-4">
                 <div
                   className={cn(
-                    'rounded-xl p-2 transition-colors',
+                    'p-2 rounded-xl transition-colors',
                     selectedId === item.id
-                      ? 'bg-emerald-500/20 text-emerald-400'
+                      ? 'bg-lime-500/20 text-lime-400'
                       : 'bg-white/5 text-text/20'
                   )}
                 >
@@ -215,7 +215,7 @@ export const LocationList: React.FC<LocationListProps> = ({
                     {item.folder && (
                       <>
                         <span className="text-[8px] text-text/10">•</span>
-                        <span className="text-[10px] text-emerald-400/40 font-bold uppercase tracking-tighter truncate max-w-[100px]">
+                        <span className="text-[10px] text-lime-400/50 font-bold uppercase tracking-tighter truncate max-w-[100px]">
                           {item.folder}
                         </span>
                       </>
@@ -234,7 +234,7 @@ export const LocationList: React.FC<LocationListProps> = ({
                   className={cn(
                     'h-8 w-8 rounded-full transition-all',
                     item.isPinned
-                      ? 'text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20'
+                      ? 'text-lime-400 bg-lime-400/10 hover:bg-lime-400/20'
                       : 'text-text/30 hover:text-text/80 hover:bg-white/10'
                   )}
                   title={item.isPinned ? 'Unpin location' : 'Pin location'}
@@ -245,7 +245,7 @@ export const LocationList: React.FC<LocationListProps> = ({
                     <Pin className={cn('h-4 w-4', item.isPinned && 'fill-current')} />
                   )}
                 </Button>
-                {selectedId === item.id && <ChevronRight className="h-4 w-4 text-emerald-500/40" />}
+                {selectedId === item.id && <ChevronRight className="h-4 w-4 text-lime-500/40" />}
               </div>
             </motion.div>
           ))}

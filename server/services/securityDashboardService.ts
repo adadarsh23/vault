@@ -43,7 +43,6 @@ interface DashboardMetrics {
 
 class SecurityDashboardService {
   private io: SocketServer | null = null;
-  private metrics: Map<string, DashboardMetrics> = new Map();
   private readonly METRICS_RETENTION_MS = 86400000; // 24 hours
 
   /**
@@ -279,12 +278,12 @@ class SecurityDashboardService {
     target: string,
     durationHours?: number
   ): Promise<void> {
-    const duration = (durationHours || 24) * 3600000;
+    const hours = durationHours || 24;
 
     switch (action) {
       case 'block_ip':
         // Would set in Redis blacklist
-        logger.warn(`[ADMIN] Manually blocked IP: ${target} for ${durationHours}h`);
+        logger.warn(`[ADMIN] Manually blocked IP: ${target} for ${hours}h`);
         break;
 
       case 'whitelist_ip':

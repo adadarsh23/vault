@@ -11,6 +11,11 @@ const requiredInProduction = [
   'PUBLIC_URL',
   'VITE_APP_PUBLIC_URL',
   'RECAPTCHA_SECRET_KEY',
+  'REFRESH_TOKEN_SECRET',
+  'VAULT_ENCRYPTION_KEY',
+  'AUTH_PEPPER',
+  'CSRF_SECRET',
+  'SIGNED_URL_SECRET',
 ];
 const mongoKeys = ['MONGODB_URI', 'MONGODB_URL'];
 const registrationLookupTemplateKeys = [
@@ -45,24 +50,6 @@ export const validateRuntimeEnv = (): void => {
       if (!trimEnv(process.env[key])) {
         missingKeys.push(key);
       }
-    }
-
-    if (!trimEnv(process.env.REFRESH_TOKEN_SECRET)) {
-      logger.warn(
-        'REFRESH_TOKEN_SECRET is not configured; falling back to JWT_SECRET reduces isolation between access and refresh tokens.'
-      );
-    }
-
-    if (!trimEnv(process.env.VAULT_ENCRYPTION_KEY)) {
-      logger.warn(
-        'VAULT_ENCRYPTION_KEY is not configured. Server-side encrypted metadata will use the built-in fallback behavior.'
-      );
-    }
-
-    if (!trimEnv(process.env.AUTH_PEPPER)) {
-      logger.warn(
-        'AUTH_PEPPER is not configured. Production should define a unique pepper for password hashing isolation.'
-      );
     }
 
     if (!trimEnv(process.env.TRUST_PROXY)) {

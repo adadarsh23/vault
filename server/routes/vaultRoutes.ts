@@ -201,12 +201,13 @@ vaultRouter.get(
 );
 vaultRouter.post(
   '/license/:itemId',
-  resolveIdentity,
+  requireAuth,
   validateRequest(vaultItemRouteParamsValidation),
   asyncHandler(handleLicenseRequest)
 ); // NEW Secure License Server
 vaultRouter.get(
   '/media/key/:itemId',
+  requireAuth,
   keyRateLimit,
   validateRequest(vaultItemRouteParamsValidation),
   asyncHandler(handleLicenseRequest)
@@ -215,16 +216,19 @@ vaultRouter.post('/media/events', requireAuth, asyncHandler(logPlaybackEvent));
 vaultRouter.get('/media/insights', requireAuth, asyncHandler(getPlaybackInsights));
 vaultRouter.post(
   '/media/drm/widevine/:itemId',
+  requireAuth,
   validateRequest(vaultItemRouteParamsValidation),
   asyncHandler(handleWidevineLicense)
 );
 vaultRouter.post(
   '/media/drm/fairplay/:itemId',
+  requireAuth,
   validateRequest(vaultItemRouteParamsValidation),
   asyncHandler(handleFairPlayLicense)
 );
 vaultRouter.get(
   '/media/drm/cenc/:itemId/:kid',
+  requireAuth,
   validateRequest(vaultItemRouteParamsValidation),
   asyncHandler(getCencKey)
 );

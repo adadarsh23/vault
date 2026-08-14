@@ -71,14 +71,12 @@ export const registerUser = async (input: AuthInput) => {
     }
 
     const hashedPassword = await hashPassword(password);
-    const encryptedPassword = encryptText(hashedPassword);
     const userDeviceId = asDeviceId(input.deviceId);
     const rawMasterKey = typeof input.masterKey === 'string' ? input.masterKey : null;
     if (!rawMasterKey) {
       throw new AppError(400, 'INVALID_MASTER_KEY', 'Master Key is required.');
     }
     const encryptedMasterKey = encryptText(rawMasterKey);
-    const masterKeyHash = encryptText(await hashPassword(rawMasterKey));
 
     // Retrieve or generate cryptographically secure random salt
     let pqcSalt =
@@ -124,7 +122,7 @@ export const registerUser = async (input: AuthInput) => {
     const now = new Date();
     const user = new User({
       username,
-      password: encryptedPassword,
+      password: hashedPassword,
       masterKey: encryptedMasterKey,
       pqcSalt,
       registrationProfile: buildStoredRegistrationProfile(registrationProfile),
@@ -265,8 +263,27 @@ export const authenticateUser = async (input: AuthInput) => {
     },
     operation: async (user) => {
       pruneExpiredSessions(user);
-      const storedHash = decryptText(user.password as any);
-      const isValidPassword = await comparePassword(password, storedHash);
+      let isLegacyEncrypted = false;
+      let storedHash = '';
+      if (typeof user.password === 'string') {
+        storedHash = user.password;
+      } else if (
+        user.password &&
+        typeof user.password === 'object' &&
+        'cipherText' in (user.password as any) &&
+        'iv' in (user.password as any)
+      ) {
+        try {
+          storedHash = decryptText(user.password as any);
+          isLegacyEncrypted = true;
+        } catch {
+          // ignore
+        }
+      }
+      const isValidPassword = storedHash ? await comparePassword(password, storedHash) : false;
+      if (isValidPassword && isLegacyEncrypted && storedHash) {
+        user.password = storedHash as any;
+      }
       const loginEntry = {
         loggedInAt: new Date(),
         ipAddress: input.ipAddress ?? 'unknown',
@@ -543,8 +560,24 @@ export const changeAuthenticatedPassword = async (
     mutationName: 'changeAuthenticatedPassword',
     loadUser: () => getUserOrThrow(input.userId, true),
     operation: async (user) => {
-      const storedHash = decryptText(user.password as any);
-      const isCurrentPasswordValid = await comparePassword(currentPassword, storedHash);
+      let storedHash = '';
+      if (typeof user.password === 'string') {
+        storedHash = user.password;
+      } else if (
+        user.password &&
+        typeof user.password === 'object' &&
+        'cipherText' in (user.password as any) &&
+        'iv' in (user.password as any)
+      ) {
+        try {
+          storedHash = decryptText(user.password as any);
+        } catch {
+          // ignore
+        }
+      }
+      const isCurrentPasswordValid = storedHash
+        ? await comparePassword(currentPassword, storedHash)
+        : false;
       if (!isCurrentPasswordValid) {
         throw new AppError(401, 'INVALID_CREDENTIALS', ERROR_MESSAGES.INVALID_CREDENTIALS);
       }
@@ -559,7 +592,7 @@ export const changeAuthenticatedPassword = async (
       }
 
       const hashedPassword = await hashPassword(password);
-      user.password = encryptText(hashedPassword) as any;
+      user.password = hashedPassword as any;
       logAndEmit(user, 'CHANGE_PASSWORD', 'auth', null, {
         ipAddress: input.ipAddress ?? 'unknown',
       });

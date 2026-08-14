@@ -305,7 +305,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
       <div className="flex h-full flex-col items-center justify-center gap-4 p-12">
         <AlertTriangle className="h-12 w-12 text-red-400" />
         <p className="text-center text-sm text-text/60">{errorMessage || 'Preview unavailable.'}</p>
-        <Button onClick={onDownload} className="bg-blue-500 hover:bg-blue-600 text-white">
+        <Button onClick={onDownload} className="bg-violet-500 hover:bg-violet-600 text-white">
           <Download className="mr-2 h-4 w-4" />
           Download File
         </Button>
@@ -387,7 +387,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
           Live office preview needs a public file URL. This file can still be downloaded and opened
           safely.
         </p>
-        <Button onClick={onDownload} className="bg-blue-500 hover:bg-blue-600 text-white">
+        <Button onClick={onDownload} className="bg-violet-500 hover:bg-violet-600 text-white">
           <Download className="mr-2 h-4 w-4" />
           Download File
         </Button>
@@ -404,7 +404,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
           No direct preview available for this file type.
         </p>
       </div>
-      <Button onClick={onDownload} className="bg-blue-500 hover:bg-blue-600 text-white">
+      <Button onClick={onDownload} className="bg-violet-500 hover:bg-violet-600 text-white">
         <Download className="mr-2 h-4 w-4" />
         Download to View
       </Button>
@@ -784,16 +784,16 @@ export const DocumentsVault: React.FC = () => {
                   )}
                 >
                   <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
-                    <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-blue-500/10 blur-3xl transition-opacity group-hover:opacity-30" />
+                    <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-500/10 blur-3xl transition-opacity group-hover:opacity-30" />
                   </div>
 
                   <CardContent className="p-5 sm:p-6 relative z-10">
                     <div className="flex flex-col items-center text-center">
                       <div className="mb-4 relative">
                         <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/5 transition-transform group-hover:scale-110 group-hover:rotate-3 shadow-inner">
-                          <FilePlus className="h-10 w-10 text-blue-400/80 shadow-blue-400/20" />
+                          <FilePlus className="h-10 w-10 text-violet-400/80 shadow-violet-400/20" />
                         </div>
-                        <div className="absolute -bottom-1 -right-1 rounded-lg bg-blue-500 px-1.5 py-0.5 text-[8px] font-bold text-white uppercase tracking-tighter shadow-lg">
+                        <div className="absolute -bottom-1 -right-1 rounded-lg bg-violet-500 px-1.5 py-0.5 text-[8px] font-bold text-white uppercase tracking-tighter shadow-lg">
                           {item.metadata?.extension}
                         </div>
                       </div>
@@ -807,7 +807,7 @@ export const DocumentsVault: React.FC = () => {
                             {(item.metadata?.size / 1024).toFixed(1)} KB
                           </p>
                           {item.folder && (
-                            <span className="flex max-w-full items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[8px] font-medium text-blue-400/60 uppercase">
+                            <span className="flex max-w-full items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[8px] font-medium text-violet-400/60 uppercase">
                               <Folder className="h-2 w-2 shrink-0" />
                               <span className="truncate" title={item.folder}>
                                 {item.folder}
@@ -833,7 +833,7 @@ export const DocumentsVault: React.FC = () => {
                           });
                         }}
                       >
-                        <Eye className="h-3.5 w-3.5 text-blue-400" />
+                        <Eye className="h-3.5 w-3.5 text-violet-400" />
                         Preview
                       </Button>
 
@@ -875,7 +875,7 @@ export const DocumentsVault: React.FC = () => {
                                   </p>
 
                                   <div className="px-3 py-2 border-b border-white/5 flex items-center gap-2.5 mb-1 bg-white/[0.02] rounded-xl">
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.15)]">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400 border border-violet-500/20 shadow-[0_0_10px_rgba(139,92,246,0.15)]">
                                       <FilePlus className="h-4 w-4" />
                                     </div>
                                     <div className="flex flex-col min-w-0">
@@ -888,7 +888,7 @@ export const DocumentsVault: React.FC = () => {
                                       <span className="flex items-center gap-1 text-[9px] text-white/45">
                                         <span>Folder:</span>
                                         <span
-                                          className="truncate max-w-[100px] font-medium text-blue-400"
+                                          className="truncate max-w-[100px] font-medium text-violet-400"
                                           title={item.folder || 'All Documents'}
                                         >
                                           {item.folder || 'All Documents'}
@@ -905,7 +905,7 @@ export const DocumentsVault: React.FC = () => {
                                         setMoveMenuOpenId(null);
                                       }}
                                     >
-                                      <FilePlus className="h-3 w-3 opacity-40 text-blue-400" />
+                                      <FilePlus className="h-3 w-3 opacity-40 text-violet-400" />
                                       All Documents
                                     </button>
                                     {folders.map((f) => (
@@ -918,7 +918,7 @@ export const DocumentsVault: React.FC = () => {
                                           setMoveMenuOpenId(null);
                                         }}
                                       >
-                                        <Folder className="h-3 w-3 opacity-40 text-blue-400" />
+                                        <Folder className="h-3 w-3 opacity-40 text-violet-400" />
                                         {f.length > 8 ? `${f.slice(0, 8)}...` : f}
                                       </button>
                                     ))}

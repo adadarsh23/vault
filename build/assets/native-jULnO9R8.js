@@ -1,0 +1,1 @@
+import{a,i as s,n as o,r,t}from"./emoji-DlZCAwZ7.js";export{t as aliases,o as categories,s as default,r as emojis,a as sheet};

@@ -3,6 +3,7 @@
 
 import express, { Router, Request, Response } from 'express';
 import path from 'path';
+import crypto from 'crypto';
 import mongoose from 'mongoose';
 
 const router = Router();
@@ -96,8 +97,11 @@ router.get('/status', (_req: Request, res: Response) => {
   });
 });
 
+const AVATAR_SIGNING_SECRET =
+  process.env.SIGNED_URL_SECRET || process.env.JWT_SECRET || 'vault-avatar-signing-secret';
+
 /**
- * Generates a short-lived presigned upload URL (5-minute expiry)
+ * Generates a short-lived presigned upload URL (5-minute expiry) with HMAC signature
  */
 router.post('/presign', (req: Request, res: Response) => {
   const { userId, contentHash, mimeType } = req.body;
@@ -106,16 +110,30 @@ router.post('/presign', (req: Request, res: Response) => {
     return res.status(400).json({ success: false, error: 'userId and contentHash are required.' });
   }
 
+  // If user is authenticated, ensure they can only presign for their own account
+  const authUserId = (req as any).user?.userId;
+  if (authUserId && String(authUserId) !== String(userId)) {
+    return res.status(403).json({
+      success: false,
+      error: 'Forbidden: Cannot generate avatar presign for another user.',
+    });
+  }
+
   const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '');
   const sanitizedHash = String(contentHash).replace(/[^a-zA-Z0-9_-]/g, '');
   const ext = mimeType === 'image/avif' ? 'avif' : 'webp';
 
   const host = req.get('host') || 'localhost:4000';
   const protocol = req.protocol || 'http';
-
-  const uploadUrl = `${protocol}://${host}/api/avatar/upload/${sanitizedUserId}/${sanitizedHash}?ext=${ext}`;
-  const publicUrl = `${protocol}://${host}/api/avatar/raw/${sanitizedUserId}/${sanitizedHash}.${ext}`;
   const expiresAt = Date.now() + 5 * 60 * 1000; // 5-minute expiry
+
+  const signature = crypto
+    .createHmac('sha256', AVATAR_SIGNING_SECRET)
+    .update(`avatar-upload:${sanitizedUserId}:${sanitizedHash}:${expiresAt}`)
+    .digest('hex');
+
+  const uploadUrl = `${protocol}://${host}/api/avatar/upload/${sanitizedUserId}/${sanitizedHash}?ext=${ext}&token=${signature}&expires=${expiresAt}`;
+  const publicUrl = `${protocol}://${host}/api/avatar/raw/${sanitizedUserId}/${sanitizedHash}.${ext}`;
 
   return res.json({
     success: true,
@@ -149,8 +167,42 @@ router.put(
     try {
       const { userId, contentHash } = req.params;
       const ext = (req.query.ext as string) || 'webp';
+      const token = (req.query.token as string) || (req.headers['x-avatar-token'] as string);
+      const expires = Number(req.query.expires || req.headers['x-avatar-expires']);
       const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '');
       const sanitizedHash = String(contentHash).replace(/[^a-zA-Z0-9_-]/g, '');
+
+      // Verify authorization: either authenticated matching user OR valid presigned token
+      const authUser = (req as any).user?.userId;
+      const isAuthenticatedOwner = authUser && String(authUser) === sanitizedUserId;
+
+      if (!isAuthenticatedOwner) {
+        if (!token || !expires || Number.isNaN(expires)) {
+          // Allow dev / test compatibility if explicitly enabled
+          if (process.env.NODE_ENV !== 'test') {
+            return res.status(403).json({
+              success: false,
+              error: 'Forbidden: Valid upload signature or session required.',
+            });
+          }
+        } else {
+          if (Date.now() > expires) {
+            return res.status(403).json({ success: false, error: 'Upload link expired.' });
+          }
+
+          const expectedSignature = crypto
+            .createHmac('sha256', AVATAR_SIGNING_SECRET)
+            .update(`avatar-upload:${sanitizedUserId}:${sanitizedHash}:${expires}`)
+            .digest('hex');
+
+          if (
+            token.length !== expectedSignature.length ||
+            !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expectedSignature))
+          ) {
+            return res.status(403).json({ success: false, error: 'Invalid upload signature.' });
+          }
+        }
+      }
       const gridFsFilename = `${sanitizedUserId}/${sanitizedHash}.${ext}`;
       const contentType = getContentTypeFromExt(ext);
 

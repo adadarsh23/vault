@@ -20,17 +20,22 @@ interface DashboardStatsProps {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const STAT_COLOR_MAP: Record<string, string> = {
-  'text-blue-400': 'bg-blue-400',
-  'text-purple-400': 'bg-purple-400',
-  'text-emerald-400': 'bg-emerald-400',
-  'text-cyan-400': 'bg-cyan-400',
   'text-indigo-400': 'bg-indigo-400',
   'text-teal-400': 'bg-teal-400',
-  'text-slate-300': 'bg-slate-400',
   'text-amber-400': 'bg-amber-400',
-  'text-lime-400': 'bg-lime-400',
+  'text-emerald-400': 'bg-emerald-400',
+  'text-sky-400': 'bg-sky-400',
   'text-rose-400': 'bg-rose-400',
+  'text-yellow-400': 'bg-yellow-400',
   'text-orange-400': 'bg-orange-400',
+  'text-purple-400': 'bg-purple-400',
+  'text-lime-400': 'bg-lime-400',
+  'text-blue-400': 'bg-blue-400',
+  'text-fuchsia-400': 'bg-fuchsia-400',
+  'text-cyan-400': 'bg-cyan-400',
+  'text-violet-400': 'bg-violet-400',
+  'text-slate-400': 'bg-slate-400',
+  'text-slate-300': 'bg-slate-400',
 };
 
 // ─── Animation Variants ───────────────────────────────────────────────────────

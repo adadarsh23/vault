@@ -89,6 +89,7 @@ class RequestFingerprintService {
         this.userDevices.set(userId, new Set());
       }
       this.userDevices.get(userId)!.add(fingerprintHash);
+      this.pruneUserDevices(userId);
     }
 
     return fingerprint;
@@ -99,7 +100,7 @@ class RequestFingerprintService {
    */
   async validateFingerprint(
     req: Request,
-    userId: string,
+    _userId?: string,
     clientData?: Record<string, string>,
     expectedFingerprintId?: string
   ): Promise<FingerprintValidation> {

@@ -483,8 +483,24 @@ export const changeAuthenticatedPassword = async (input: {
   }
 
   const user = await getUserOrThrow(input.userId, '+password +masterKey +meta.masterKey');
-  const currentHash = decryptText(user.password as any);
-  const isValid = await comparePassword(currentPassword, currentHash);
+  let currentHash = '';
+  if (typeof user.password === 'string') {
+    currentHash = user.password;
+  } else if (
+    user.password &&
+    typeof user.password === 'object' &&
+    'cipherText' in (user.password as any) &&
+    'iv' in (user.password as any)
+  ) {
+    try {
+      currentHash = decryptText(user.password as any);
+    } catch (decryptErr) {
+      logger.warn('Failed to decrypt legacy password hash in change password', {
+        error: decryptErr,
+      });
+    }
+  }
+  const isValid = currentHash ? await comparePassword(currentPassword, currentHash) : false;
   if (!isValid) {
     throw AppError.unauthorized('Current password is incorrect.', 'INVALID_CREDENTIALS');
   }
@@ -514,7 +530,10 @@ export const changeAuthenticatedPassword = async (input: {
       .lean()
       .exec();
     if (cloudMasterKeyDoc?.masterKeyHash) {
-      const decryptedHash = decryptText(cloudMasterKeyDoc.masterKeyHash as any);
+      const decryptedHash =
+        typeof cloudMasterKeyDoc.masterKeyHash === 'string'
+          ? cloudMasterKeyDoc.masterKeyHash
+          : decryptText(cloudMasterKeyDoc.masterKeyHash as any);
       const matchesMasterKey = await comparePassword(nextPassword, decryptedHash);
       if (matchesMasterKey) {
         throw AppError.badRequest(
@@ -528,7 +547,7 @@ export const changeAuthenticatedPassword = async (input: {
   }
 
   const nextHash = await hashPassword(nextPassword);
-  user.password = encryptText(nextHash) as any;
+  user.password = nextHash as any;
   const now = new Date();
   for (const session of user.sessions || []) {
     if (!session.revokedAt) {

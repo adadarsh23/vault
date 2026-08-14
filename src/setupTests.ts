@@ -1,6 +1,9 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
+import { MotionGlobalConfig } from 'framer-motion';
+
+MotionGlobalConfig.skipAnimations = true;
 
 const isBrowserTestEnv = typeof window !== 'undefined' && typeof document !== 'undefined';
 
