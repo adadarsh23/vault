@@ -114,15 +114,18 @@ export const handleLicenseRequest = async (req: express.Request, res: express.Re
 /* ---------------- LEGACY ADAPTERS (Delegating to Unified Handler) ---------------- */
 
 export const handleWidevineLicense = async (req: express.Request, res: express.Response) => {
+  req.body = req.body || {};
   req.body.drmType = 'widevine';
   return handleLicenseRequest(req, res);
 };
 
 export const handleFairPlayLicense = async (req: express.Request, res: express.Response) => {
+  req.body = req.body || {};
   req.body.drmType = 'fairplay';
   return handleLicenseRequest(req, res);
 };
 
 export const getCencKey = async (req: express.Request, res: express.Response) => {
+  req.body = req.body || {};
   return handleLicenseRequest(req, res);
 };

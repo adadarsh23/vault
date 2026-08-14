@@ -752,7 +752,14 @@ export const getMediaSegment = async (req: express.Request, res: express.Respons
   res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   res.setHeader('Content-Type', 'video/MP2T');
 
-  return fs.createReadStream(segmentPath).pipe(res);
+  const stream = fs.createReadStream(segmentPath);
+  stream.on('error', (err) => {
+    logger.warn('Media segment stream error', { segmentPath, err });
+    if (!res.headersSent) {
+      res.status(500).end();
+    }
+  });
+  return stream.pipe(res);
 };
 
 export const accessVaultFile = async (req: express.Request, res: express.Response) => {
@@ -898,14 +905,25 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
               `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`
             );
             res.setHeader('Content-Length', chunkSize.toString());
-            return bucket
-              .openDownloadStream(objectId, { start: parsedRange.start, end: parsedRange.end + 1 })
-              .pipe(res);
+            const downloadStream = bucket.openDownloadStream(objectId, {
+              start: parsedRange.start,
+              end: parsedRange.end + 1,
+            });
+            downloadStream.on('error', (err) => {
+              logger.warn('GridFS range stream error', { objectId, err });
+              if (!res.headersSent) res.status(500).end();
+            });
+            return downloadStream.pipe(res);
           }
 
           res.status(200);
           res.setHeader('Content-Length', fileSize.toString());
-          return bucket.openDownloadStream(objectId).pipe(res);
+          const downloadStream = bucket.openDownloadStream(objectId);
+          downloadStream.on('error', (err) => {
+            logger.warn('GridFS full stream error', { objectId, err });
+            if (!res.headersSent) res.status(500).end();
+          });
+          return downloadStream.pipe(res);
         } else {
           const chunks: Buffer[] = [];
           const downloadStream = bucket.openDownloadStream(objectId);
@@ -1063,17 +1081,25 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
             `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`
           );
           res.setHeader('Content-Length', chunkSize.toString());
-          return fs
-            .createReadStream(resolvedFilePath, {
-              start: parsedRange.start,
-              end: parsedRange.end,
-            })
-            .pipe(res);
+          const rangeStream = fs.createReadStream(resolvedFilePath, {
+            start: parsedRange.start,
+            end: parsedRange.end,
+          });
+          rangeStream.on('error', (err) => {
+            logger.warn('Disk range stream error', { resolvedFilePath, err });
+            if (!res.headersSent) res.status(500).end();
+          });
+          return rangeStream.pipe(res);
         }
 
         res.status(200);
         res.setHeader('Content-Length', fileSize.toString());
-        return fs.createReadStream(resolvedFilePath).pipe(res);
+        const fullStream = fs.createReadStream(resolvedFilePath);
+        fullStream.on('error', (err) => {
+          logger.warn('Disk full stream error', { resolvedFilePath, err });
+          if (!res.headersSent) res.status(500).end();
+        });
+        return fullStream.pipe(res);
       }
 
       const encryptedContent = await fs.promises.readFile(resolvedFilePath);

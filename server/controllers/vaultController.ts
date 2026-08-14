@@ -42,8 +42,18 @@ const MULTIPART_MAX_PARTS = Math.max(1, Number(process.env.MULTIPART_MAX_PARTS |
 const FILE_CATEGORY_SET = new Set(['photo', 'video', 'audio', 'document', 'other-files']);
 const MULTIPART_SECURE_CLEANUP =
   (process.env.MULTIPART_SECURE_CLEANUP?.trim().toLowerCase() || 'true') === 'true';
-const MEMORY_ONLY_MULTIPART_UPLOADS =
-  (process.env.MEMORY_ONLY_MULTIPART_UPLOADS ?? 'true').trim().toLowerCase() !== 'false';
+const resolveMemoryOnlyMultipartUploads = (): boolean => {
+  const explicit = process.env.MEMORY_ONLY_MULTIPART_UPLOADS?.trim().toLowerCase();
+  if (explicit === 'true' || explicit === '1' || explicit === 'yes') {
+    return true;
+  }
+  if (explicit === 'false' || explicit === '0' || explicit === 'no') {
+    return false;
+  }
+  return process.env.NODE_ENV === 'test';
+};
+
+const MEMORY_ONLY_MULTIPART_UPLOADS = resolveMemoryOnlyMultipartUploads();
 
 const getRouteParam = (value: string | string[] | undefined): string | undefined =>
   typeof value === 'string' ? value : undefined;
@@ -167,6 +177,21 @@ const safeRm = async (target: string): Promise<{ filesDeleted: number; bytesDele
 };
 
 const cleanupExpiredMultipartSessions = async (userId: string) => {
+  const now = Date.now();
+  if (MEMORY_ONLY_MULTIPART_UPLOADS) {
+    for (const [key, session] of multipartMemorySessions.entries()) {
+      if (session.userId === userId && now - session.updatedAt > MULTIPART_SESSION_TTL_MS) {
+        multipartMemorySessions.delete(key);
+        for (const partKey of Array.from(multipartMemoryParts.keys())) {
+          if (partKey.startsWith(`${key}:`)) {
+            multipartMemoryParts.delete(partKey);
+          }
+        }
+      }
+    }
+    return;
+  }
+
   const userDir = path.join(MULTIPART_ROOT, userId);
   let entries: Array<{ name: string; isDirectory: () => boolean }> = [];
   try {
@@ -177,7 +202,6 @@ const cleanupExpiredMultipartSessions = async (userId: string) => {
     }
     return;
   }
-  const now = Date.now();
   await Promise.all(
     entries
       .filter((entry) => entry.isDirectory())

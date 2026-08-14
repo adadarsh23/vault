@@ -14,6 +14,10 @@ export const errorHandler = (
   res: express.Response,
   _next: express.NextFunction
 ) => {
+  if (res.headersSent) {
+    return _next(err);
+  }
+
   const requestId = (req as express.Request & { requestId?: string }).requestId;
 
   // Ensure cross-origin resources can see the error response
@@ -100,9 +104,15 @@ export const errorHandler = (
     code = 'CORS_FORBIDDEN';
     message = 'Request origin is not allowed.';
   } else if (err instanceof multer.MulterError) {
-    statusCode = 400;
-    code = err.code;
-    message = err.message;
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      statusCode = 413;
+      code = 'PAYLOAD_TOO_LARGE';
+      message = 'Uploaded file exceeds the maximum allowed size limit.';
+    } else {
+      statusCode = 400;
+      code = err.code;
+      message = err.message;
+    }
   } else if (err instanceof AppError) {
     statusCode = err.statusCode;
     code = err.code;

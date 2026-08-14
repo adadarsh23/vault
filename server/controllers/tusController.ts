@@ -6,9 +6,23 @@ import { AuthenticatedRequest } from '../utils/requestTypes.ts';
 import { AppError } from '../utils/appError.ts';
 
 const TUS_TMP_ROOT = path.join(process.cwd(), 'vault-tmp', 'tus-uploads');
-const MEMORY_ONLY_TUS_UPLOADS =
-  (process.env.MEMORY_ONLY_TUS_UPLOADS ?? 'true').trim().toLowerCase() !== 'false';
+const resolveMemoryOnlyTusUploads = (): boolean => {
+  const explicit = process.env.MEMORY_ONLY_TUS_UPLOADS?.trim().toLowerCase();
+  if (explicit === 'true' || explicit === '1' || explicit === 'yes') {
+    return true;
+  }
+  if (explicit === 'false' || explicit === '0' || explicit === 'no') {
+    return false;
+  }
+  return process.env.NODE_ENV === 'test';
+};
+
+const MEMORY_ONLY_TUS_UPLOADS = resolveMemoryOnlyTusUploads();
 const MAX_TUS_FILE_SIZE = Math.max(1, Number(process.env.MAX_FILE_SIZE_MB || 500) * 1024 * 1024);
+const TUS_SESSION_TTL_MS = Math.max(
+  5 * 60 * 1000,
+  Number(process.env.TUS_SESSION_TTL_MS || 2 * 60 * 60 * 1000)
+);
 
 interface TusSession {
   uploadId: string;
@@ -24,6 +38,28 @@ interface TusSession {
 }
 
 const tusSessions = new Map<string, TusSession>();
+
+const cleanupExpiredTusSessions = async () => {
+  const now = Date.now();
+  for (const [uploadId, session] of tusSessions.entries()) {
+    if (now - session.updatedAt > TUS_SESSION_TTL_MS) {
+      tusSessions.delete(uploadId);
+      if (!MEMORY_ONLY_TUS_UPLOADS && session.filePath) {
+        try {
+          const uploadDir = path.dirname(session.filePath);
+          await fs.rm(uploadDir, { recursive: true, force: true });
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+    }
+  }
+};
+
+const tusCleanupInterval = setInterval(() => {
+  void cleanupExpiredTusSessions();
+}, 10 * 60 * 1000);
+tusCleanupInterval.unref();
 
 export const createTusUploadController = async (
   req: AuthenticatedRequest,

@@ -129,7 +129,11 @@ export async function uploadFileTus(
       ...metadata,
     };
 
-    const created = await vaultApi.createTusUpload(file.size, fileMetadata);
+    const chunkOverhead = AES_GCM_IV_LENGTH + 16; // 12-byte IV + 16-byte AES-GCM Tag
+    const totalChunks = Math.max(1, Math.ceil(file.size / chunkSize));
+    const totalEncryptedSize = file.size + totalChunks * chunkOverhead;
+
+    const created = await vaultApi.createTusUpload(totalEncryptedSize, fileMetadata);
     uploadId = created.uploadId;
     location = created.location;
 
@@ -138,7 +142,7 @@ export async function uploadFileTus(
     session = {
       uploadId,
       location,
-      fileSize: file.size,
+      fileSize: totalEncryptedSize,
       fileName: file.name,
       mimeType: file.type || 'application/octet-stream',
       createdAt: Date.now(),

@@ -11,11 +11,50 @@ import { logger } from '../utils/logger.ts';
 import { getClientIp } from '../utils/requestIp.ts';
 import { User } from '../models/user.ts';
 import { comparePassword, decryptText } from '../utils/crypto.ts';
+import { AppError } from '../utils/appError.ts';
 
 /**
  * Master Key Controller
  * Handles API endpoints for cloud master key storage and retrieval
  */
+
+const handleControllerError = (
+  res: express.Response,
+  error: unknown,
+  defaultCode: string,
+  defaultMessage: string,
+  logContext: string
+) => {
+  logger.error(`[MasterKeyController] Error in ${logContext}`, error);
+
+  if (error instanceof AppError) {
+    return res.status(error.statusCode).json({
+      success: false,
+      error: {
+        code: error.code,
+        message: error.message,
+      },
+    });
+  }
+
+  const statusCode =
+    typeof (error as any)?.statusCode === 'number'
+      ? (error as any).statusCode
+      : typeof (error as any)?.status === 'number'
+        ? (error as any).status
+        : 500;
+
+  const code = typeof (error as any)?.code === 'string' ? (error as any).code : defaultCode;
+  const message = error instanceof Error ? error.message : defaultMessage;
+
+  return res.status(statusCode).json({
+    success: false,
+    error: {
+      code,
+      message,
+    },
+  });
+};
 
 interface SaveMasterKeyRequest {
   encryptedMasterKey: {
@@ -271,15 +310,13 @@ export const handleSaveMasterKey = async (
       },
     });
   } catch (error) {
-    logger.error('[MasterKeyController] Error in handleSaveMasterKey', error);
-
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'SAVE_FAILED',
-        message: error instanceof Error ? error.message : 'Failed to save master key',
-      },
-    });
+    return handleControllerError(
+      res,
+      error,
+      'SAVE_FAILED',
+      'Failed to save master key',
+      'handleSaveMasterKey'
+    );
   }
 };
 
@@ -345,15 +382,13 @@ export const handleRetrieveMasterKey = async (req: express.Request, res: express
       },
     });
   } catch (error) {
-    logger.error('[MasterKeyController] Error in handleRetrieveMasterKey', error);
-
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'RETRIEVE_FAILED',
-        message: error instanceof Error ? error.message : 'Failed to retrieve master key',
-      },
-    });
+    return handleControllerError(
+      res,
+      error,
+      'RETRIEVE_FAILED',
+      'Failed to retrieve master key',
+      'handleRetrieveMasterKey'
+    );
   }
 };
 
@@ -412,15 +447,13 @@ export const handleVerifyMasterKey = async (
       },
     });
   } catch (error) {
-    logger.error('[MasterKeyController] Error in handleVerifyMasterKey', error);
-
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'VERIFY_FAILED',
-        message: error instanceof Error ? error.message : 'Failed to verify master key',
-      },
-    });
+    return handleControllerError(
+      res,
+      error,
+      'VERIFY_FAILED',
+      'Failed to verify master key',
+      'handleVerifyMasterKey'
+    );
   }
 };
 
@@ -465,15 +498,13 @@ export const handleDeleteMasterKey = async (req: express.Request, res: express.R
       },
     });
   } catch (error) {
-    logger.error('[MasterKeyController] Error in handleDeleteMasterKey', error);
-
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'DELETE_FAILED',
-        message: error instanceof Error ? error.message : 'Failed to delete master key',
-      },
-    });
+    return handleControllerError(
+      res,
+      error,
+      'DELETE_FAILED',
+      'Failed to delete master key',
+      'handleDeleteMasterKey'
+    );
   }
 };
 
@@ -518,15 +549,13 @@ export const handleGetMasterKeyMetadata = async (req: express.Request, res: expr
       },
     });
   } catch (error) {
-    logger.error('[MasterKeyController] Error in handleGetMasterKeyMetadata', error);
-
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'GET_METADATA_FAILED',
-        message: error instanceof Error ? error.message : 'Failed to get metadata',
-      },
-    });
+    return handleControllerError(
+      res,
+      error,
+      'GET_METADATA_FAILED',
+      'Failed to get metadata',
+      'handleGetMasterKeyMetadata'
+    );
   }
 };
 
@@ -572,15 +601,13 @@ export const handleGetMasterKeyFullData = async (req: express.Request, res: expr
       },
     });
   } catch (error) {
-    logger.error('[MasterKeyController] Error in handleGetMasterKeyFullData', error);
-
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'GET_FULLDATA_FAILED',
-        message: error instanceof Error ? error.message : 'Failed to get full data',
-      },
-    });
+    return handleControllerError(
+      res,
+      error,
+      'GET_FULLDATA_FAILED',
+      'Failed to get full data',
+      'handleGetMasterKeyFullData'
+    );
   }
 };
 

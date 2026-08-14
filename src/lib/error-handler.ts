@@ -21,6 +21,8 @@ export enum ErrorCode {
   CSRF_TOKEN_INVALID = 'CSRF_TOKEN_INVALID',
   PAYLOAD_TOO_LARGE = 'PAYLOAD_TOO_LARGE',
   INVALID_ID = 'INVALID_ID',
+  SERVER_OVERLOADED = 'SERVER_OVERLOADED',
+  DB_UNAVAILABLE = 'DB_UNAVAILABLE',
   NETWORK_ERROR = 'network-error',
   UNKNOWN = 'unknown',
 }
@@ -83,6 +85,8 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.CSRF_TOKEN_INVALID]: 'Security token expired or invalid. Please refresh the page.',
   [ErrorCode.PAYLOAD_TOO_LARGE]: 'Uploaded file or payload exceeds the allowed size limit.',
   [ErrorCode.INVALID_ID]: 'Invalid resource identifier specified.',
+  [ErrorCode.SERVER_OVERLOADED]: 'Server is currently experiencing high load. Please try again shortly.',
+  [ErrorCode.DB_UNAVAILABLE]: 'Vault cloud storage is temporarily unavailable. Please retry shortly.',
   [ErrorCode.NETWORK_ERROR]: 'Network error occurred. Please try again.',
   [ErrorCode.UNKNOWN]: 'An unexpected error occurred.',
 };
@@ -126,10 +130,19 @@ export const handleError = (error: any, context?: string): AppError => {
     code = ErrorCode.CAPTCHA_FAILED;
   } else if (rawCode === 'CSRF_TOKEN_INVALID' || /csrf/i.test(rawMsg)) {
     code = ErrorCode.CSRF_TOKEN_INVALID;
-  } else if (rawCode === 'PAYLOAD_TOO_LARGE' || rawCode === 413 || /too large/i.test(rawMsg)) {
+  } else if (
+    rawCode === 'PAYLOAD_TOO_LARGE' ||
+    rawCode === 'FILE_TOO_LARGE' ||
+    rawCode === 413 ||
+    /too large/i.test(rawMsg)
+  ) {
     code = ErrorCode.PAYLOAD_TOO_LARGE;
   } else if (rawCode === 'INVALID_ID' || /invalid format/i.test(rawMsg)) {
     code = ErrorCode.INVALID_ID;
+  } else if (rawCode === 'SERVER_OVERLOADED' || /server overloaded/i.test(rawMsg)) {
+    code = ErrorCode.SERVER_OVERLOADED;
+  } else if (rawCode === 'DB_UNAVAILABLE' || /storage is temporarily unavailable/i.test(rawMsg)) {
+    code = ErrorCode.DB_UNAVAILABLE;
   } else if (
     /master key is incorrect/i.test(rawMsg) ||
     /candidate salts exhausted/i.test(rawMsg) ||
