@@ -262,6 +262,11 @@ const createSafePreloadDepsPlugin = () => ({
         '__vite__mapDeps=($1$2)=>(Array.isArray($1)?$1:[]).map('
       );
 
+      output.code = output.code.replace(
+        /([\w$]+)\.map\(\s*([\w$]+)\s*=>\s*([\w$]+)\[\2\]\)/g,
+        '(Array.isArray($1)?$1:[]).map($2=>$3[$2])'
+      );
+
       // 2. Coerce any preload helper deps checks: if(i&&i.length>0) or if(t&&t.length>0) or if(deps&&deps.length>0)
       output.code = output.code.replace(
         /if\s*\(\s*([a-zA-Z0-9_$]+)\s*&&\s*\1\.length(?:\s*>\s*0)?\s*\)\s*\{/g,
@@ -274,7 +279,13 @@ const createSafePreloadDepsPlugin = () => ({
         '$1=(Array.isArray($2)?$2:[]).map($3=>{'
       );
 
-      // 4. Coerce any r=o(t.map( or similar calls
+      // 4. Coerce Promise.all mapping inside preload helper
+      output.code = output.code.replace(
+        /Promise\.all\(\s*([a-zA-Z0-9_$]+)\.map\(/g,
+        'Promise.all((Array.isArray($1)?$1:[]).map('
+      );
+
+      // 5. Coerce any r=o(t.map( or similar calls
       output.code = output.code.replace(
         /([a-zA-Z0-9_$]+)\s*=\s*([a-zA-Z0-9_$]+)\(\s*([a-zA-Z0-9_$]+)\.map\(/g,
         '$1=$2((Array.isArray($3)?$3:[]).map('
