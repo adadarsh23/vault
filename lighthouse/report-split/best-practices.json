@@ -1,7 +1,7 @@
 {
   "requestedUrl": "http://127.0.0.1:4173/",
   "finalUrl": "http://127.0.0.1:4173/",
-  "fetchTime": "2026-08-14T08:54:49.910Z",
+  "fetchTime": "2026-08-14T09:27:51.499Z",
   "category": {
     "title": "Best Practices",
     "supportedModes": [
@@ -608,7 +608,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-KpLEzSjB.js",
+              "url": "http://127.0.0.1:4173/assets/index-BqMoRyg6.js",
               "urlProvider": "network",
               "line": 1,
               "column": 5265
@@ -802,6 +802,25 @@
               "urlProvider": "network",
               "line": 0,
               "column": 144740
+            }
+          },
+          {
+            "featureId": {
+              "type": "link",
+              "text": "masks",
+              "url": "https://webstatus.dev/features/masks"
+            },
+            "displayStatus": {
+              "type": "baseline-status",
+              "status": "low",
+              "displayString": "Newly Available (2023-12-07)"
+            },
+            "source": {
+              "type": "source-location",
+              "url": "http://127.0.0.1:4173/",
+              "urlProvider": "network",
+              "line": -2,
+              "column": -2
             }
           },
           {
@@ -1123,7 +1142,7 @@
               "type": "source-location",
               "url": "http://127.0.0.1:4173/",
               "urlProvider": "network",
-              "line": 232,
+              "line": 0,
               "column": 0
             }
           },
@@ -1409,7 +1428,7 @@
               "url": "http://127.0.0.1:4173/assets/motion-B-FeaURr.js",
               "urlProvider": "network",
               "line": 0,
-              "column": 124085
+              "column": 124107
             }
           },
           {
@@ -1466,7 +1485,7 @@
               "url": "http://127.0.0.1:4173/assets/particles-C6iQTPHy.js",
               "urlProvider": "network",
               "line": 0,
-              "column": 72917
+              "column": 72954
             }
           },
           {
@@ -1485,7 +1504,7 @@
               "url": "http://127.0.0.1:4173/assets/particles-C6iQTPHy.js",
               "urlProvider": "network",
               "line": 0,
-              "column": 22856
+              "column": 22893
             }
           },
           {
@@ -1504,7 +1523,7 @@
               "url": "http://127.0.0.1:4173/assets/particles-C6iQTPHy.js",
               "urlProvider": "network",
               "line": 0,
-              "column": 23015
+              "column": 23052
             }
           }
         ]
@@ -1779,8 +1798,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/index-KpLEzSjB.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-KpLEzSjB.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/index-BqMoRyg6.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-BqMoRyg6.js.map",
             "subItems": {
               "type": "subitems",
               "items": []

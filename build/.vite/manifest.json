@@ -532,7 +532,7 @@
     "name": "video-players"
   },
   "index.html": {
-    "file": "assets/index-KpLEzSjB.js",
+    "file": "assets/index-BqMoRyg6.js",
     "name": "index",
     "src": "index.html",
     "isEntry": true,
@@ -561,7 +561,7 @@
       "src/lib/sentry.js"
     ],
     "css": [
-      "assets/index-BP508Lj4.css"
+      "assets/index-BASxXl22.css"
     ]
   },
   "node_modules/@emoji-mart/data/sets/15/native.json": {

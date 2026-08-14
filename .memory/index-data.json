@@ -1,45 +1,51 @@
 {
-  "generatedAt": "2026-08-14T08:54:26.124Z",
+  "generatedAt": "2026-08-14T09:27:28.238Z",
   "schema": "code-memory-index/v5",
   "totals": {
-    "filesScanned": 454,
-    "filesIndexed": 454,
+    "filesScanned": 464,
+    "filesIndexed": 464,
     "filesSkipped": 0,
-    "bytesIndexed": 3868668,
-    "linesIndexed": 114684,
-    "codeLines": 98951,
-    "commentLines": 3676,
-    "blankLines": 12057,
-    "symbolCount": 2639,
+    "bytesIndexed": 6028138,
+    "linesIndexed": 154450,
+    "codeLines": 138190,
+    "commentLines": 3874,
+    "blankLines": 12386,
+    "symbolCount": 2704,
     "importCount": 1797,
     "exportCount": 1146,
-    "tagCount": 88
+    "tagCount": 96
   },
   "quality": {
-    "commentDensity": 0.037,
-    "blankLineRatio": 0.105,
-    "todoFilesRatio": 0.123,
-    "avgSymbolsPerFile": 5.81,
-    "avgImportsPerFile": 3.96,
-    "avgRiskPerFile": 20.82
+    "commentDensity": 0.028,
+    "blankLineRatio": 0.08,
+    "todoFilesRatio": 0.129,
+    "avgSymbolsPerFile": 5.83,
+    "avgImportsPerFile": 3.87,
+    "avgRiskPerFile": 21.09
   },
-  "trend": null,
+  "trend": {
+    "filesIndexedDelta": 10,
+    "linesIndexedDelta": 39766,
+    "symbolCountDelta": 65,
+    "importCountDelta": 0,
+    "avgRiskPerFileDelta": 0.27
+  },
   "history": {
-    "historyPath": "C:\\Code\\vault\\.memory\\history\\code-index-2026-08-14T08-54-26-124Z.json",
-    "historyCount": 2
+    "historyPath": "C:\\Code\\vault\\.memory\\history\\code-index-2026-08-14T09-27-28-238Z.json",
+    "historyCount": 3
   },
   "riskSummary": {
-    "critical": 10,
-    "high": 41,
-    "medium": 61,
-    "low": 342
+    "critical": 11,
+    "high": 43,
+    "medium": 65,
+    "low": 345
   },
   "extensionStats": [
     {
       "extension": ".ts",
       "files": 249,
-      "lines": 51938,
-      "bytes": 1544659,
+      "lines": 51954,
+      "bytes": 1545238,
       "symbols": 1636,
       "riskScore": 4987
     },
@@ -68,20 +74,28 @@
       "riskScore": 324
     },
     {
+      "extension": ".json",
+      "files": 10,
+      "lines": 35339,
+      "bytes": 1452561,
+      "symbols": 4,
+      "riskScore": 235
+    },
+    {
       "extension": ".js",
       "files": 8,
-      "lines": 644,
-      "bytes": 33192,
+      "lines": 642,
+      "bytes": 33198,
       "symbols": 42,
       "riskScore": 120
     },
     {
-      "extension": ".json",
-      "files": 5,
-      "lines": 413,
-      "bytes": 16933,
-      "symbols": 0,
-      "riskScore": 71
+      "extension": ".html",
+      "files": 6,
+      "lines": 4966,
+      "bytes": 726641,
+      "symbols": 61,
+      "riskScore": 185
     },
     {
       "extension": ".svg",
@@ -108,14 +122,6 @@
       "riskScore": 12
     },
     {
-      "extension": ".html",
-      "files": 1,
-      "lines": 140,
-      "bytes": 3384,
-      "symbols": 0,
-      "riskScore": 12
-    },
-    {
       "extension": ".jsx",
       "files": 1,
       "lines": 27,
@@ -134,6 +140,214 @@
   ],
   "hotspots": {
     "largestByLines": [
+      {
+        "path": "lighthouse/report.report.json",
+        "extension": ".json",
+        "directory": "lighthouse",
+        "bytes": 793219,
+        "hash": "54f287d23748213ed62f212201cee51a969ba5529997a4a5c219ecd3e72ed5bb",
+        "lines": {
+          "total": 19696,
+          "code": 19696,
+          "comments": 0,
+          "blanks": 0
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly",
+          "call"
+        ],
+        "symbolCount": 2,
+        "tags": [
+          "OPTIMIZE",
+          "TODO"
+        ],
+        "tagCount": 2,
+        "keywordCounts": {
+          "asyncCount": 2,
+          "awaitCount": 0,
+          "tryCount": 1,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 4,
+          "switchCount": 0
+        },
+        "complexityScore": 19732,
+        "updatedAt": "2026-08-14T08:55:00.020Z",
+        "riskScore": 44
+      },
+      {
+        "path": "lighthouse/report-split/performance.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 519700,
+        "hash": "15e5f1a0317a1e6615f6d1bbb6ae93bab73c500ba5ba47e756cc119e878c100d",
+        "lines": {
+          "total": 11851,
+          "code": 11850,
+          "comments": 0,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "call"
+        ],
+        "symbolCount": 1,
+        "tags": [
+          "OPTIMIZE",
+          "TODO"
+        ],
+        "tagCount": 2,
+        "keywordCounts": {
+          "asyncCount": 2,
+          "awaitCount": 0,
+          "tryCount": 1,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 11880,
+        "updatedAt": "2026-08-14T08:55:03.361Z",
+        "riskScore": 44
+      },
+      {
+        "path": "lighthouse/report.report.html",
+        "extension": ".html",
+        "directory": "lighthouse",
+        "bytes": 641526,
+        "hash": "dc8a6da0629ed33e6fa27488be678b5ccb89729037fea277784832ffa6043f69",
+        "lines": {
+          "total": 2894,
+          "code": 2382,
+          "comments": 192,
+          "blanks": 320
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly",
+          "call",
+          "He",
+          "fe",
+          "o",
+          "Ge",
+          "Be",
+          "qe",
+          "je",
+          "We",
+          "Ke",
+          "Ze",
+          "Je",
+          "Qe",
+          "Ye",
+          "Xe",
+          "et",
+          "tt",
+          "nt",
+          "rt",
+          "ot",
+          "it",
+          "at",
+          "lt",
+          "st",
+          "ct",
+          "dt",
+          "ht",
+          "be",
+          "xe",
+          "pt",
+          "ke",
+          "ut",
+          "Ee",
+          "Le",
+          "ft",
+          "vt",
+          "De",
+          "B",
+          "q",
+          "extends",
+          "a",
+          "p",
+          "s",
+          "W",
+          "wt",
+          "yt",
+          "se",
+          "ce",
+          "xt",
+          "i",
+          "Ce",
+          "Ae",
+          "ze",
+          "Me",
+          "kt",
+          "Te",
+          "Et",
+          "Fe",
+          "Lt"
+        ],
+        "symbolCount": 60,
+        "tags": [
+          "OPTIMIZE",
+          "TODO",
+          "HACK"
+        ],
+        "tagCount": 3,
+        "keywordCounts": {
+          "asyncCount": 7,
+          "awaitCount": 4,
+          "tryCount": 8,
+          "catchCount": 7,
+          "throwCount": 15,
+          "ifCount": 168,
+          "switchCount": 13
+        },
+        "complexityScore": 2778,
+        "updatedAt": "2026-08-14T08:55:00.013Z",
+        "riskScore": 68
+      },
+      {
+        "path": "lighthouse/report-split/best-practices.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 64418,
+        "hash": "a605426df02d07b4682b2890d5add2153449de2f600f0aff3564595b34789b18",
+        "lines": {
+          "total": 1944,
+          "code": 1943,
+          "comments": 0,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [],
+        "symbolCount": 0,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 0,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 1943,
+        "updatedAt": "2026-08-14T08:55:03.366Z",
+        "riskScore": 30
+      },
       {
         "path": "server/services/vaultService.internal.ts",
         "extension": ".ts",
@@ -1624,6 +1838,41 @@
         "complexityScore": 1438,
         "updatedAt": "2026-08-03T04:31:13.668Z",
         "riskScore": 47
+      },
+      {
+        "path": "lighthouse/report-split/accessibility.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 50030,
+        "hash": "00cb1084b6856824f8e81df27512a2d5870c85fbfc895d584ba4cbef016aeb2b",
+        "lines": {
+          "total": 1193,
+          "code": 1192,
+          "comments": 0,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly"
+        ],
+        "symbolCount": 1,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 0,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 1198,
+        "updatedAt": "2026-08-14T08:55:03.364Z",
+        "riskScore": 30
       },
       {
         "path": "server/controllers/mediaController.ts",
@@ -4178,614 +4427,217 @@
         "complexityScore": 991,
         "updatedAt": "2026-08-13T12:22:14.067Z",
         "riskScore": 58
-      },
+      }
+    ],
+    "largestByBytes": [
       {
-        "path": "src/features/auth/useVaultAuth.ts",
-        "extension": ".ts",
-        "directory": "src/features/auth",
-        "bytes": 29822,
-        "hash": "f068bf60721cbb9654f0d4fb63dfa4dc6cbfe5e440fe19fbbbd19fe9a4c32163",
+        "path": "lighthouse/report.report.json",
+        "extension": ".json",
+        "directory": "lighthouse",
+        "bytes": 793219,
+        "hash": "54f287d23748213ed62f212201cee51a969ba5529997a4a5c219ecd3e72ed5bb",
         "lines": {
-          "total": 840,
-          "code": 700,
-          "comments": 70,
-          "blanks": 70
-        },
-        "imports": [
-          "import { useState, useMemo, useRef, useCallback, useEffect } from 'react';",
-          "import { toast } from 'sonner';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { base64ToUint8Array, deriveKey } from '../../lib/cryptoPrimitives';",
-          "import { performHybridKeyExchange } from '../../lib/encryption';",
-          "import { handleError } from '../../lib/error-handler';",
-          "import {",
-          "import { uploadKeyCheckToCloud } from '../../lib/sync';",
-          "import { logActivity } from '../../lib/activity';",
-          "import { validatePassword } from '../../lib/utils';",
-          "import { identifyLogRocketUser } from '../../lib/logrocket';"
-        ],
-        "exports": [
-          "export const useVaultAuth = (options?: {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "sonner",
-          "../../store/vaultStore",
-          "../../lib/cryptoPrimitives",
-          "../../lib/encryption",
-          "../../lib/error-handler",
-          "../../lib/sync",
-          "../../lib/activity",
-          "../../lib/utils",
-          "../../lib/logrocket"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../lib/encryption",
-            "kind": "relative",
-            "target": "src/lib/encryption"
-          },
-          {
-            "specifier": "../../lib/error-handler",
-            "kind": "relative",
-            "target": "src/lib/error-handler"
-          },
-          {
-            "specifier": "../../lib/sync",
-            "kind": "relative",
-            "target": "src/lib/sync"
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/utils",
-            "kind": "relative",
-            "target": "src/lib/utils"
-          },
-          {
-            "specifier": "../../lib/logrocket",
-            "kind": "relative",
-            "target": "src/lib/logrocket"
-          }
-        ],
-        "symbols": [
-          "AuthStatus",
-          "normalizeVaultUsername",
-          "useVaultAuth",
-          "sleep",
-          "runSecurityVerification"
-        ],
-        "symbolCount": 5,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 3,
-          "awaitCount": 30,
-          "tryCount": 12,
-          "catchCount": 14,
-          "throwCount": 11,
-          "ifCount": 57,
-          "switchCount": 0
-        },
-        "complexityScore": 760,
-        "updatedAt": "2026-08-03T08:23:41.790Z",
-        "riskScore": 41
-      },
-      {
-        "path": "md/PRODUCTION_READY.md",
-        "extension": ".md",
-        "directory": "md",
-        "bytes": 33851,
-        "hash": "8e554419f25f700e79431a236dad4247f554fe8024d03b811c0860b58ac20681",
-        "lines": {
-          "total": 832,
-          "code": 667,
+          "total": 19696,
+          "code": 19696,
           "comments": 0,
-          "blanks": 165
+          "blanks": 0
         },
         "imports": [],
         "exports": [],
         "importSpecifiers": [],
         "importsDetailed": [],
         "symbols": [
-          "using"
+          "correctly",
+          "call"
+        ],
+        "symbolCount": 2,
+        "tags": [
+          "OPTIMIZE",
+          "TODO"
+        ],
+        "tagCount": 2,
+        "keywordCounts": {
+          "asyncCount": 2,
+          "awaitCount": 0,
+          "tryCount": 1,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 4,
+          "switchCount": 0
+        },
+        "complexityScore": 19732,
+        "updatedAt": "2026-08-14T08:55:00.020Z",
+        "riskScore": 44
+      },
+      {
+        "path": "lighthouse/report.report.html",
+        "extension": ".html",
+        "directory": "lighthouse",
+        "bytes": 641526,
+        "hash": "dc8a6da0629ed33e6fa27488be678b5ccb89729037fea277784832ffa6043f69",
+        "lines": {
+          "total": 2894,
+          "code": 2382,
+          "comments": 192,
+          "blanks": 320
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly",
+          "call",
+          "He",
+          "fe",
+          "o",
+          "Ge",
+          "Be",
+          "qe",
+          "je",
+          "We",
+          "Ke",
+          "Ze",
+          "Je",
+          "Qe",
+          "Ye",
+          "Xe",
+          "et",
+          "tt",
+          "nt",
+          "rt",
+          "ot",
+          "it",
+          "at",
+          "lt",
+          "st",
+          "ct",
+          "dt",
+          "ht",
+          "be",
+          "xe",
+          "pt",
+          "ke",
+          "ut",
+          "Ee",
+          "Le",
+          "ft",
+          "vt",
+          "De",
+          "B",
+          "q",
+          "extends",
+          "a",
+          "p",
+          "s",
+          "W",
+          "wt",
+          "yt",
+          "se",
+          "ce",
+          "xt",
+          "i",
+          "Ce",
+          "Ae",
+          "ze",
+          "Me",
+          "kt",
+          "Te",
+          "Et",
+          "Fe",
+          "Lt"
+        ],
+        "symbolCount": 60,
+        "tags": [
+          "OPTIMIZE",
+          "TODO",
+          "HACK"
+        ],
+        "tagCount": 3,
+        "keywordCounts": {
+          "asyncCount": 7,
+          "awaitCount": 4,
+          "tryCount": 8,
+          "catchCount": 7,
+          "throwCount": 15,
+          "ifCount": 168,
+          "switchCount": 13
+        },
+        "complexityScore": 2778,
+        "updatedAt": "2026-08-14T08:55:00.013Z",
+        "riskScore": 68
+      },
+      {
+        "path": "lighthouse/report-split/performance.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 519700,
+        "hash": "15e5f1a0317a1e6615f6d1bbb6ae93bab73c500ba5ba47e756cc119e878c100d",
+        "lines": {
+          "total": 11851,
+          "code": 11850,
+          "comments": 0,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "call"
         ],
         "symbolCount": 1,
         "tags": [
-          "REFACTOR",
           "OPTIMIZE",
-          "TODO",
-          "NOTE"
+          "TODO"
         ],
-        "tagCount": 4,
+        "tagCount": 2,
         "keywordCounts": {
-          "asyncCount": 1,
+          "asyncCount": 2,
+          "awaitCount": 0,
+          "tryCount": 1,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 11880,
+        "updatedAt": "2026-08-14T08:55:03.361Z",
+        "riskScore": 44
+      },
+      {
+        "path": "lighthouse/report-split/best-practices.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 64418,
+        "hash": "a605426df02d07b4682b2890d5add2153449de2f600f0aff3564595b34789b18",
+        "lines": {
+          "total": 1944,
+          "code": 1943,
+          "comments": 0,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [],
+        "symbolCount": 0,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 0,
           "awaitCount": 0,
           "tryCount": 0,
           "catchCount": 0,
           "throwCount": 0,
-          "ifCount": 15,
+          "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 721,
-        "updatedAt": "2026-08-14T04:51:25.636Z",
-        "riskScore": 58
+        "complexityScore": 1943,
+        "updatedAt": "2026-08-14T08:55:03.366Z",
+        "riskScore": 30
       },
-      {
-        "path": "src/components/app/AppShell.tsx",
-        "extension": ".tsx",
-        "directory": "src/components/app",
-        "bytes": 28554,
-        "hash": "448cfdf214d0246b7e8a354cd624e71ebae126a6e727157085ebb848f17083ba",
-        "lines": {
-          "total": 827,
-          "code": 730,
-          "comments": 16,
-          "blanks": 81
-        },
-        "imports": [
-          "import React, { lazy, Suspense } from 'react';",
-          "import { motion, AnimatePresence } from 'framer-motion';",
-          "import { Route, Routes } from 'react-router-dom';",
-          "import { Sidebar } from '../layout/Sidebar';",
-          "import { ErrorBoundary } from '../ui/ErrorBoundary';",
-          "import { ErrorFallback } from '../ui/ErrorFallback';",
-          "import type { TabId } from './NavigationHandler';",
-          "import { cn } from '../../lib/utils';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { getAuthenticatedProfile } from '../../lib/auth-api';",
-          "import { useNotificationStore } from '../../store/notificationStore';",
-          "import { Lock, X } from 'lucide-react';",
-          "import { AppHeader } from './AppHeader';",
-          "import { LoadingScreen } from './LoadingScreen';",
-          "import { useScrollRestoration } from '../../hooks/useScrollRestoration';"
-        ],
-        "exports": [
-          "export function AppShell({"
-        ],
-        "importSpecifiers": [
-          "react",
-          "framer-motion",
-          "react-router-dom",
-          "../layout/Sidebar",
-          "../ui/ErrorBoundary",
-          "../ui/ErrorFallback",
-          "./NavigationHandler",
-          "../../lib/utils",
-          "../../store/vaultStore",
-          "../../lib/auth-api",
-          "../../store/notificationStore",
-          "lucide-react",
-          "./AppHeader",
-          "./LoadingScreen",
-          "../../hooks/useScrollRestoration"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "framer-motion",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "react-router-dom",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../layout/Sidebar",
-            "kind": "relative",
-            "target": "src/components/layout/Sidebar"
-          },
-          {
-            "specifier": "../ui/ErrorBoundary",
-            "kind": "relative",
-            "target": "src/components/ui/ErrorBoundary"
-          },
-          {
-            "specifier": "../ui/ErrorFallback",
-            "kind": "relative",
-            "target": "src/components/ui/ErrorFallback"
-          },
-          {
-            "specifier": "./NavigationHandler",
-            "kind": "relative",
-            "target": "src/components/app/NavigationHandler"
-          },
-          {
-            "specifier": "../../lib/utils",
-            "kind": "relative",
-            "target": "src/lib/utils"
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/auth-api",
-            "kind": "relative",
-            "target": "src/lib/auth-api"
-          },
-          {
-            "specifier": "../../store/notificationStore",
-            "kind": "relative",
-            "target": "src/store/notificationStore"
-          },
-          {
-            "specifier": "lucide-react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "./AppHeader",
-            "kind": "relative",
-            "target": "src/components/app/AppHeader"
-          },
-          {
-            "specifier": "./LoadingScreen",
-            "kind": "relative",
-            "target": "src/components/app/LoadingScreen"
-          },
-          {
-            "specifier": "../../hooks/useScrollRestoration",
-            "kind": "relative",
-            "target": "src/hooks/useScrollRestoration"
-          }
-        ],
-        "symbols": [
-          "MaintenanceType",
-          "MaintenanceState",
-          "formatTabLabel",
-          "getAdjacentTab",
-          "nextIndex",
-          "normalizeProfilePhotoUrl",
-          "normalized",
-          "normalizeDisplayName",
-          "resolveMonogramLetter",
-          "AppShell",
-          "pollNotifications",
-          "handleVisibilityChange",
-          "handlePopState",
-          "preloadPriorityRoutes",
-          "handleProfileUpdated"
-        ],
-        "symbolCount": 15,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 3,
-          "awaitCount": 2,
-          "tryCount": 4,
-          "catchCount": 2,
-          "throwCount": 0,
-          "ifCount": 23,
-          "switchCount": 0
-        },
-        "complexityScore": 865,
-        "updatedAt": "2026-08-13T11:25:59.234Z",
-        "riskScore": 40
-      },
-      {
-        "path": "scripts/lighthouse-runner.mjs",
-        "extension": ".mjs",
-        "directory": "scripts",
-        "bytes": 23081,
-        "hash": "9d3baf6807101f910ef88813c103d6d684dbac0306b7313b2c643d79aefe5543",
-        "lines": {
-          "total": 825,
-          "code": 734,
-          "comments": 9,
-          "blanks": 82
-        },
-        "imports": [
-          "import fs from 'node:fs';",
-          "import path from 'node:path';",
-          "import { execSync, spawn } from 'node:child_process';",
-          "import http from 'node:http';",
-          "import os from 'node:os';",
-          "import net from 'node:net';"
-        ],
-        "exports": [],
-        "importSpecifiers": [
-          "node:fs",
-          "node:path",
-          "node:child_process",
-          "node:http",
-          "node:os",
-          "node:net"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "node:fs",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:path",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:child_process",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:http",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:os",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:net",
-            "kind": "node_builtin",
-            "target": null
-          }
-        ],
-        "symbols": [
-          "ensureWindowsSystem32OnPath",
-          "removeTempDirectorySafely",
-          "cleanupStaleLighthouseTempDirectories",
-          "getAvailablePort",
-          "splitChromeFlags",
-          "resolveChromeExecutablePath",
-          "launchManagedChrome",
-          "stop",
-          "parseArgs",
-          "isSafeWorkspaceChild",
-          "waitForServer",
-          "tryRequest",
-          "retry",
-          "shellQuote",
-          "escapeHtml",
-          "stripMarkdownLinks",
-          "slugify",
-          "scorePercent",
-          "scoreClass",
-          "scoreLabel",
-          "getAuditRows",
-          "renderPage",
-          "renderAuditTable",
-          "writeSplitReports",
-          "printScoreSummary",
-          "score",
-          "run",
-          "runLighthouseOnce"
-        ],
-        "symbolCount": 28,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 4,
-          "awaitCount": 8,
-          "tryCount": 11,
-          "catchCount": 11,
-          "throwCount": 2,
-          "ifCount": 49,
-          "switchCount": 0
-        },
-        "complexityScore": 920,
-        "updatedAt": "2026-08-01T12:44:25.131Z",
-        "riskScore": 47
-      },
-      {
-        "path": "src/features/vault/ContactsVault.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 29819,
-        "hash": "933a78348d07e00fcbdcbae1b860910332806708c76784a748e487a1ef614f0a",
-        "lines": {
-          "total": 807,
-          "code": 753,
-          "comments": 3,
-          "blanks": 51
-        },
-        "imports": [
-          "import React, { useEffect, useMemo, useState } from 'react';",
-          "import { motion, AnimatePresence } from 'framer-motion';",
-          "import {",
-          "import { toast } from 'sonner';",
-          "import { logger } from '../../lib/logger';",
-          "import { Button } from '../../components/ui/Button';",
-          "import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';",
-          "import { Input } from '../../components/ui/Input';",
-          "import { SearchInput } from '../../components/ui/SearchInput';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { VaultItem } from '../../lib/storage';",
-          "import { encryptData, decryptData } from '../../lib/cryptoPrimitives';",
-          "import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';",
-          "import { useClipboard } from '../../hooks/useClipboard';",
-          "import { logActivity } from '../../lib/activity';",
-          "import { setDraggedVaultItem } from '../../lib/vaultDragDrop';",
-          "import { FolderSidebar } from '../../components/vault/FolderSidebar';",
-          "import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
-          "import { sortPinnedFirst } from '../../lib/pinning';"
-        ],
-        "exports": [
-          "export const ContactsVault: React.FC = () => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "framer-motion",
-          "sonner",
-          "../../lib/logger",
-          "../../components/ui/Button",
-          "../../components/ui/Card",
-          "../../components/ui/Input",
-          "../../components/ui/SearchInput",
-          "../../store/vaultStore",
-          "../../lib/storage",
-          "../../lib/cryptoPrimitives",
-          "../../lib/vaultItemContent",
-          "../../hooks/useClipboard",
-          "../../lib/activity",
-          "../../lib/vaultDragDrop",
-          "../../components/vault/FolderSidebar",
-          "../../components/vault/MobileFolderMenu",
-          "../../hooks/useVaultFolders",
-          "../../lib/pinning"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "framer-motion",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/logger",
-            "kind": "relative",
-            "target": "src/lib/logger"
-          },
-          {
-            "specifier": "../../components/ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "../../components/ui/Card",
-            "kind": "relative",
-            "target": "src/components/ui/Card"
-          },
-          {
-            "specifier": "../../components/ui/Input",
-            "kind": "relative",
-            "target": "src/components/ui/Input"
-          },
-          {
-            "specifier": "../../components/ui/SearchInput",
-            "kind": "relative",
-            "target": "src/components/ui/SearchInput"
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../lib/vaultItemContent",
-            "kind": "relative",
-            "target": "src/lib/vaultItemContent"
-          },
-          {
-            "specifier": "../../hooks/useClipboard",
-            "kind": "relative",
-            "target": "src/hooks/useClipboard"
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/vaultDragDrop",
-            "kind": "relative",
-            "target": "src/lib/vaultDragDrop"
-          },
-          {
-            "specifier": "../../components/vault/FolderSidebar",
-            "kind": "relative",
-            "target": "src/components/vault/FolderSidebar"
-          },
-          {
-            "specifier": "../../components/vault/MobileFolderMenu",
-            "kind": "relative",
-            "target": "src/components/vault/MobileFolderMenu"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          },
-          {
-            "specifier": "../../lib/pinning",
-            "kind": "relative",
-            "target": "src/lib/pinning"
-          }
-        ],
-        "symbols": [
-          "ContactPayload",
-          "ContactCardProps",
-          "DecryptedContactCard",
-          "decrypt",
-          "handleCopy",
-          "handleSave",
-          "ContactsVault",
-          "getFolderCount",
-          "resetForm",
-          "handleAdd",
-          "handleUpdateItem"
-        ],
-        "symbolCount": 11,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 4,
-          "awaitCount": 6,
-          "tryCount": 3,
-          "catchCount": 3,
-          "throwCount": 0,
-          "ifCount": 24,
-          "switchCount": 0
-        },
-        "complexityScore": 876,
-        "updatedAt": "2026-08-14T07:49:44.931Z",
-        "riskScore": 46
-      }
-    ],
-    "largestByBytes": [
       {
         "path": "src/features/vault/RealVaultEcosystemCard.tsx",
         "extension": ".tsx",
@@ -5383,6 +5235,41 @@
         "complexityScore": 1550,
         "updatedAt": "2026-08-01T12:44:28.531Z",
         "riskScore": 61
+      },
+      {
+        "path": "lighthouse/report-split/accessibility.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 50030,
+        "hash": "00cb1084b6856824f8e81df27512a2d5870c85fbfc895d584ba4cbef016aeb2b",
+        "lines": {
+          "total": 1193,
+          "code": 1192,
+          "comments": 0,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly"
+        ],
+        "symbolCount": 1,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 0,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 1198,
+        "updatedAt": "2026-08-14T08:55:03.364Z",
+        "riskScore": 30
       },
       {
         "path": "src/components/ui/video-player.tsx",
@@ -7856,6 +7743,41 @@
         "riskScore": 46
       },
       {
+        "path": "lighthouse/report-split/accessibility.html",
+        "extension": ".html",
+        "directory": "lighthouse/report-split",
+        "bytes": 35903,
+        "hash": "5e1872dd6d2487f0c6669f5b6d1d7fa3eddd4d02c989dbf36ec01f9d8c0406cb",
+        "lines": {
+          "total": 751,
+          "code": 749,
+          "comments": 1,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly"
+        ],
+        "symbolCount": 1,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 0,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 755,
+        "updatedAt": "2026-08-14T08:55:03.365Z",
+        "riskScore": 30
+      },
+      {
         "path": "src/features/vault/components/ChatVault/ChatConversationPanel.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault/components/ChatVault",
@@ -8410,930 +8332,6 @@
         "complexityScore": 780,
         "updatedAt": "2026-08-03T02:58:00.897Z",
         "riskScore": 35
-      },
-      {
-        "path": "src/features/vault/MediaVault.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 31865,
-        "hash": "c15a6156f51a8337965cc220b837e8cfe33638722a05b77bc9d0f5dc37da5315",
-        "lines": {
-          "total": 920,
-          "code": 809,
-          "comments": 19,
-          "blanks": 92
-        },
-        "imports": [
-          "import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';",
-          "import { Video, Image as ImageIcon } from 'lucide-react';",
-          "import { toast } from 'sonner';",
-          "import { createSHA256 } from 'hash-wasm';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { encryptFileInWorker } from '../../lib/cryptoPrimitives';",
-          "import { useGlobalNavigationStore } from '../../store/globalNavigationStore';",
-          "import { logActivity } from '../../lib/activity';",
-          "import {",
-          "import { getVaultItemPreviewUrl } from '../../lib/filePreview';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
-          "import { useVaultItems } from '../../hooks/useVaultItems';",
-          "import { VaultLayout } from '../../components/layout/VaultLayout';",
-          "import { VaultItem } from '../../lib/storage';",
-          "import { LiveCaptureModal } from './components/LiveCaptureModal';",
-          "import { vaultApi } from '../../api/vaultApi';",
-          "import { compressFileInWorker, generateBlurhashInWorker } from '../../lib/mediaWorker';",
-          "import {",
-          "import { MediaCard } from './components/MediaVault/MediaCard';",
-          "import { MediaPagination } from './components/MediaVault/MediaPagination';",
-          "import { MediaPreview } from './components/MediaVault/MediaPreview';"
-        ],
-        "exports": [
-          "export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "lucide-react",
-          "sonner",
-          "hash-wasm",
-          "../../store/vaultStore",
-          "../../lib/cryptoPrimitives",
-          "../../store/globalNavigationStore",
-          "../../lib/activity",
-          "../../lib/filePreview",
-          "../../hooks/useVaultFolders",
-          "../../hooks/useVaultItems",
-          "../../components/layout/VaultLayout",
-          "../../lib/storage",
-          "./components/LiveCaptureModal",
-          "../../api/vaultApi",
-          "../../lib/mediaWorker",
-          "./components/MediaVault/MediaCard",
-          "./components/MediaVault/MediaPagination",
-          "./components/MediaVault/MediaPreview"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "lucide-react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "hash-wasm",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../store/globalNavigationStore",
-            "kind": "relative",
-            "target": "src/store/globalNavigationStore"
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/filePreview",
-            "kind": "relative",
-            "target": "src/lib/filePreview"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          },
-          {
-            "specifier": "../../hooks/useVaultItems",
-            "kind": "relative",
-            "target": "src/hooks/useVaultItems"
-          },
-          {
-            "specifier": "../../components/layout/VaultLayout",
-            "kind": "relative",
-            "target": "src/components/layout/VaultLayout"
-          },
-          {
-            "specifier": "../../lib/storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "./components/LiveCaptureModal",
-            "kind": "relative",
-            "target": "src/features/vault/components/LiveCaptureModal"
-          },
-          {
-            "specifier": "../../api/vaultApi",
-            "kind": "relative",
-            "target": "src/api/vaultApi"
-          },
-          {
-            "specifier": "../../lib/mediaWorker",
-            "kind": "relative",
-            "target": "src/lib/mediaWorker"
-          },
-          {
-            "specifier": "./components/MediaVault/MediaCard",
-            "kind": "relative",
-            "target": "src/features/vault/components/MediaVault/MediaCard"
-          },
-          {
-            "specifier": "./components/MediaVault/MediaPagination",
-            "kind": "relative",
-            "target": "src/features/vault/components/MediaVault/MediaPagination"
-          },
-          {
-            "specifier": "./components/MediaVault/MediaPreview",
-            "kind": "relative",
-            "target": "src/features/vault/components/MediaVault/MediaPreview"
-          }
-        ],
-        "symbols": [
-          "FileWithWebkitPath",
-          "readTopLevelFolderFromWebkitPath",
-          "webkitPath",
-          "toPositiveIntOrFallback",
-          "MediaVault",
-          "chunkArrayBuffer",
-          "timeout",
-          "isSupportedMediaFile",
-          "onTouchStart",
-          "onTouchMove",
-          "onTouchEnd",
-          "handleKeyDown",
-          "handleUpload",
-          "handleUploadFiles",
-          "multipartData",
-          "updateProgress",
-          "partWorker",
-          "handleDownload"
-        ],
-        "symbolCount": 18,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 7,
-          "awaitCount": 26,
-          "tryCount": 12,
-          "catchCount": 8,
-          "throwCount": 7,
-          "ifCount": 60,
-          "switchCount": 0
-        },
-        "complexityScore": 974,
-        "updatedAt": "2026-08-13T10:37:52.136Z",
-        "riskScore": 52
-      },
-      {
-        "path": "src/features/vault/OtherFilesVault.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 31202,
-        "hash": "6cd5a31c8603c62329ab674e8c6456bb6c271367217e216d6ca835f9f652bcae",
-        "lines": {
-          "total": 807,
-          "code": 747,
-          "comments": 2,
-          "blanks": 58
-        },
-        "imports": [
-          "import React, { useState, useRef, useEffect, useMemo } from 'react';",
-          "import { Button } from '../../components/ui/Button';",
-          "import { Card, CardContent } from '../../components/ui/Card';",
-          "import {",
-          "import { toast } from 'sonner';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { VaultItem } from '../../lib/storage';",
-          "import { encryptFile } from '../../lib/cryptoPrimitives';",
-          "import { motion, AnimatePresence } from 'framer-motion';",
-          "import { GlobalNavigator } from '../../components/vault/GlobalNavigator';",
-          "import { useGlobalNavigationStore } from '../../store/globalNavigationStore';",
-          "import { logActivity } from '../../lib/activity';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
-          "import { useVaultItems } from '../../hooks/useVaultItems';",
-          "import { VaultLayout } from '../../components/layout/VaultLayout';",
-          "import { cn } from '../../lib/utils';",
-          "import { getVaultItemFileUrl, getVaultItemPreviewUrl } from '../../lib/filePreview';",
-          "import { setDraggedVaultItem } from '../../lib/vaultDragDrop';",
-          "import { exceedsUploadSizeLimit, getUploadSizeErrorMessage } from '../../lib/fileHandling';"
-        ],
-        "exports": [
-          "export const OtherFilesVault: React.FC = () => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "../../components/ui/Button",
-          "../../components/ui/Card",
-          "sonner",
-          "../../store/vaultStore",
-          "../../lib/storage",
-          "../../lib/cryptoPrimitives",
-          "framer-motion",
-          "../../components/ui/Input",
-          "../../components/vault/GlobalNavigator",
-          "../../store/globalNavigationStore",
-          "../../lib/activity",
-          "../../hooks/useVaultFolders",
-          "../../hooks/useVaultItems",
-          "../../components/layout/VaultLayout",
-          "../../lib/utils",
-          "../../lib/filePreview",
-          "../../lib/vaultDragDrop",
-          "../../lib/fileHandling"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../components/ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "../../components/ui/Card",
-            "kind": "relative",
-            "target": "src/components/ui/Card"
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "framer-motion",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../components/ui/Input",
-            "kind": "relative",
-            "target": "src/components/ui/Input"
-          },
-          {
-            "specifier": "../../components/vault/GlobalNavigator",
-            "kind": "relative",
-            "target": "src/components/vault/GlobalNavigator"
-          },
-          {
-            "specifier": "../../store/globalNavigationStore",
-            "kind": "relative",
-            "target": "src/store/globalNavigationStore"
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          },
-          {
-            "specifier": "../../hooks/useVaultItems",
-            "kind": "relative",
-            "target": "src/hooks/useVaultItems"
-          },
-          {
-            "specifier": "../../components/layout/VaultLayout",
-            "kind": "relative",
-            "target": "src/components/layout/VaultLayout"
-          },
-          {
-            "specifier": "../../lib/utils",
-            "kind": "relative",
-            "target": "src/lib/utils"
-          },
-          {
-            "specifier": "../../lib/filePreview",
-            "kind": "relative",
-            "target": "src/lib/filePreview"
-          },
-          {
-            "specifier": "../../lib/vaultDragDrop",
-            "kind": "relative",
-            "target": "src/lib/vaultDragDrop"
-          },
-          {
-            "specifier": "../../lib/fileHandling",
-            "kind": "relative",
-            "target": "src/lib/fileHandling"
-          }
-        ],
-        "symbols": [
-          "decrypt",
-          "getFileIcon",
-          "OtherFilesVault",
-          "showPreviousFile",
-          "showNextFile",
-          "handleKeyDown",
-          "handleUpload",
-          "handleUploadFiles",
-          "detected",
-          "handleDelete",
-          "downloadFile"
-        ],
-        "symbolCount": 11,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 4,
-          "awaitCount": 5,
-          "tryCount": 4,
-          "catchCount": 3,
-          "throwCount": 1,
-          "ifCount": 30,
-          "switchCount": 2
-        },
-        "complexityScore": 870,
-        "updatedAt": "2026-08-01T14:27:22.577Z",
-        "riskScore": 46
-      },
-      {
-        "path": "src/features/vault/components/SettingsVault/SystemLogsCard.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault/components/SettingsVault",
-        "bytes": 30607,
-        "hash": "e86cc1ed0697ec01de16a56c96e10429e0c4600ada19db857f84e95fb01ad393",
-        "lines": {
-          "total": 803,
-          "code": 712,
-          "comments": 12,
-          "blanks": 79
-        },
-        "imports": [
-          "import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';",
-          "import { SectionCard } from './SharedComponents';",
-          "import { Button } from '../../../../components/ui/Button';",
-          "import { systemApi, LogEntry } from '../../../../api/systemApi';",
-          "import { SETTINGS_PANEL } from './Utils';",
-          "import {",
-          "import { toast } from 'sonner';"
-        ],
-        "exports": [
-          "export const SystemLogsCard: React.FC = () => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "./SharedComponents",
-          "../../../../components/ui/Button",
-          "../../../../api/systemApi",
-          "./Utils",
-          "sonner"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "./SharedComponents",
-            "kind": "relative",
-            "target": "src/features/vault/components/SettingsVault/SharedComponents"
-          },
-          {
-            "specifier": "../../../../components/ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "../../../../api/systemApi",
-            "kind": "relative",
-            "target": "src/api/systemApi"
-          },
-          {
-            "specifier": "./Utils",
-            "kind": "relative",
-            "target": "src/features/vault/components/SettingsVault/Utils"
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          }
-        ],
-        "symbols": [
-          "ViewMode",
-          "LogLevelFilter",
-          "formatLogTime",
-          "formatRelativeTime",
-          "SystemLogsCard",
-          "offset",
-          "handlePreviousPage",
-          "handleNextPage",
-          "handleLoadMoreStream",
-          "handleModeSwitch",
-          "handleLimitChange",
-          "msg",
-          "ts",
-          "lvl",
-          "toggleExpand",
-          "handleCopyLog",
-          "handleClearLogs",
-          "handleExportLogs",
-          "getIcon",
-          "getBadgeClass"
-        ],
-        "symbolCount": 20,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 2,
-          "awaitCount": 2,
-          "tryCount": 6,
-          "catchCount": 6,
-          "throwCount": 1,
-          "ifCount": 52,
-          "switchCount": 0
-        },
-        "complexityScore": 850,
-        "updatedAt": "2026-08-06T12:04:43.794Z",
-        "riskScore": 41
-      },
-      {
-        "path": "src/features/vault/ChatVault.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 30532,
-        "hash": "5e20d4752fc262411899bd27212d129320c102e9fb8b900347ce3a10f576f6af",
-        "lines": {
-          "total": 947,
-          "code": 849,
-          "comments": 0,
-          "blanks": 98
-        },
-        "imports": [
-          "import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';",
-          "import { MessageSquareText } from 'lucide-react';",
-          "import { toast } from 'sonner';",
-          "import { encryptData, decryptData } from '../../lib/cryptoPrimitives';",
-          "import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';",
-          "import { VaultItem } from '../../lib/storage';",
-          "import { sortPinnedFirst } from '../../lib/pinning';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { useShallow } from 'zustand/react/shallow';",
-          "import { logActivity } from '../../lib/activity';",
-          "import { logger } from '../../lib/logger';",
-          "import { setDraggedVaultItem } from '../../lib/vaultDragDrop';",
-          "import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';",
-          "import { FolderSidebar } from '../../components/vault/FolderSidebar';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
-          "import {"
-        ],
-        "exports": [
-          "export const ChatVault: React.FC = () => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "lucide-react",
-          "sonner",
-          "../../lib/cryptoPrimitives",
-          "../../lib/vaultItemContent",
-          "../../lib/storage",
-          "../../lib/pinning",
-          "../../store/vaultStore",
-          "zustand/react/shallow",
-          "../../lib/activity",
-          "../../lib/logger",
-          "../../lib/vaultDragDrop",
-          "../../components/vault/MobileFolderMenu",
-          "../../components/vault/FolderSidebar",
-          "../../hooks/useVaultFolders"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "lucide-react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../lib/vaultItemContent",
-            "kind": "relative",
-            "target": "src/lib/vaultItemContent"
-          },
-          {
-            "specifier": "../../lib/storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "../../lib/pinning",
-            "kind": "relative",
-            "target": "src/lib/pinning"
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "zustand/react/shallow",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/logger",
-            "kind": "relative",
-            "target": "src/lib/logger"
-          },
-          {
-            "specifier": "../../lib/vaultDragDrop",
-            "kind": "relative",
-            "target": "src/lib/vaultDragDrop"
-          },
-          {
-            "specifier": "../../components/vault/MobileFolderMenu",
-            "kind": "relative",
-            "target": "src/components/vault/MobileFolderMenu"
-          },
-          {
-            "specifier": "../../components/vault/FolderSidebar",
-            "kind": "relative",
-            "target": "src/components/vault/FolderSidebar"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          }
-        ],
-        "symbols": [
-          "getErrorMessage",
-          "createChatError",
-          "ChatVault"
-        ],
-        "symbolCount": 3,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 11,
-          "awaitCount": 13,
-          "tryCount": 11,
-          "catchCount": 11,
-          "throwCount": 7,
-          "ifCount": 55,
-          "switchCount": 0
-        },
-        "complexityScore": 912,
-        "updatedAt": "2026-08-06T06:06:23.587Z",
-        "riskScore": 41
-      },
-      {
-        "path": "src/features/auth/useVaultAuth.ts",
-        "extension": ".ts",
-        "directory": "src/features/auth",
-        "bytes": 29822,
-        "hash": "f068bf60721cbb9654f0d4fb63dfa4dc6cbfe5e440fe19fbbbd19fe9a4c32163",
-        "lines": {
-          "total": 840,
-          "code": 700,
-          "comments": 70,
-          "blanks": 70
-        },
-        "imports": [
-          "import { useState, useMemo, useRef, useCallback, useEffect } from 'react';",
-          "import { toast } from 'sonner';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { base64ToUint8Array, deriveKey } from '../../lib/cryptoPrimitives';",
-          "import { performHybridKeyExchange } from '../../lib/encryption';",
-          "import { handleError } from '../../lib/error-handler';",
-          "import {",
-          "import { uploadKeyCheckToCloud } from '../../lib/sync';",
-          "import { logActivity } from '../../lib/activity';",
-          "import { validatePassword } from '../../lib/utils';",
-          "import { identifyLogRocketUser } from '../../lib/logrocket';"
-        ],
-        "exports": [
-          "export const useVaultAuth = (options?: {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "sonner",
-          "../../store/vaultStore",
-          "../../lib/cryptoPrimitives",
-          "../../lib/encryption",
-          "../../lib/error-handler",
-          "../../lib/sync",
-          "../../lib/activity",
-          "../../lib/utils",
-          "../../lib/logrocket"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../lib/encryption",
-            "kind": "relative",
-            "target": "src/lib/encryption"
-          },
-          {
-            "specifier": "../../lib/error-handler",
-            "kind": "relative",
-            "target": "src/lib/error-handler"
-          },
-          {
-            "specifier": "../../lib/sync",
-            "kind": "relative",
-            "target": "src/lib/sync"
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/utils",
-            "kind": "relative",
-            "target": "src/lib/utils"
-          },
-          {
-            "specifier": "../../lib/logrocket",
-            "kind": "relative",
-            "target": "src/lib/logrocket"
-          }
-        ],
-        "symbols": [
-          "AuthStatus",
-          "normalizeVaultUsername",
-          "useVaultAuth",
-          "sleep",
-          "runSecurityVerification"
-        ],
-        "symbolCount": 5,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 3,
-          "awaitCount": 30,
-          "tryCount": 12,
-          "catchCount": 14,
-          "throwCount": 11,
-          "ifCount": 57,
-          "switchCount": 0
-        },
-        "complexityScore": 760,
-        "updatedAt": "2026-08-03T08:23:41.790Z",
-        "riskScore": 41
-      },
-      {
-        "path": "src/features/vault/ContactsVault.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 29819,
-        "hash": "933a78348d07e00fcbdcbae1b860910332806708c76784a748e487a1ef614f0a",
-        "lines": {
-          "total": 807,
-          "code": 753,
-          "comments": 3,
-          "blanks": 51
-        },
-        "imports": [
-          "import React, { useEffect, useMemo, useState } from 'react';",
-          "import { motion, AnimatePresence } from 'framer-motion';",
-          "import {",
-          "import { toast } from 'sonner';",
-          "import { logger } from '../../lib/logger';",
-          "import { Button } from '../../components/ui/Button';",
-          "import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';",
-          "import { Input } from '../../components/ui/Input';",
-          "import { SearchInput } from '../../components/ui/SearchInput';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { VaultItem } from '../../lib/storage';",
-          "import { encryptData, decryptData } from '../../lib/cryptoPrimitives';",
-          "import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';",
-          "import { useClipboard } from '../../hooks/useClipboard';",
-          "import { logActivity } from '../../lib/activity';",
-          "import { setDraggedVaultItem } from '../../lib/vaultDragDrop';",
-          "import { FolderSidebar } from '../../components/vault/FolderSidebar';",
-          "import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
-          "import { sortPinnedFirst } from '../../lib/pinning';"
-        ],
-        "exports": [
-          "export const ContactsVault: React.FC = () => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "framer-motion",
-          "sonner",
-          "../../lib/logger",
-          "../../components/ui/Button",
-          "../../components/ui/Card",
-          "../../components/ui/Input",
-          "../../components/ui/SearchInput",
-          "../../store/vaultStore",
-          "../../lib/storage",
-          "../../lib/cryptoPrimitives",
-          "../../lib/vaultItemContent",
-          "../../hooks/useClipboard",
-          "../../lib/activity",
-          "../../lib/vaultDragDrop",
-          "../../components/vault/FolderSidebar",
-          "../../components/vault/MobileFolderMenu",
-          "../../hooks/useVaultFolders",
-          "../../lib/pinning"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "framer-motion",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/logger",
-            "kind": "relative",
-            "target": "src/lib/logger"
-          },
-          {
-            "specifier": "../../components/ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "../../components/ui/Card",
-            "kind": "relative",
-            "target": "src/components/ui/Card"
-          },
-          {
-            "specifier": "../../components/ui/Input",
-            "kind": "relative",
-            "target": "src/components/ui/Input"
-          },
-          {
-            "specifier": "../../components/ui/SearchInput",
-            "kind": "relative",
-            "target": "src/components/ui/SearchInput"
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../lib/vaultItemContent",
-            "kind": "relative",
-            "target": "src/lib/vaultItemContent"
-          },
-          {
-            "specifier": "../../hooks/useClipboard",
-            "kind": "relative",
-            "target": "src/hooks/useClipboard"
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/vaultDragDrop",
-            "kind": "relative",
-            "target": "src/lib/vaultDragDrop"
-          },
-          {
-            "specifier": "../../components/vault/FolderSidebar",
-            "kind": "relative",
-            "target": "src/components/vault/FolderSidebar"
-          },
-          {
-            "specifier": "../../components/vault/MobileFolderMenu",
-            "kind": "relative",
-            "target": "src/components/vault/MobileFolderMenu"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          },
-          {
-            "specifier": "../../lib/pinning",
-            "kind": "relative",
-            "target": "src/lib/pinning"
-          }
-        ],
-        "symbols": [
-          "ContactPayload",
-          "ContactCardProps",
-          "DecryptedContactCard",
-          "decrypt",
-          "handleCopy",
-          "handleSave",
-          "ContactsVault",
-          "getFolderCount",
-          "resetForm",
-          "handleAdd",
-          "handleUpdateItem"
-        ],
-        "symbolCount": 11,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 4,
-          "awaitCount": 6,
-          "tryCount": 3,
-          "catchCount": 3,
-          "throwCount": 0,
-          "ifCount": 24,
-          "switchCount": 0
-        },
-        "complexityScore": 876,
-        "updatedAt": "2026-08-14T07:49:44.931Z",
-        "riskScore": 46
       }
     ],
     "mostSymbols": [
@@ -9587,6 +8585,104 @@
         "complexityScore": 1653,
         "updatedAt": "2026-08-14T08:19:41.514Z",
         "riskScore": 66
+      },
+      {
+        "path": "lighthouse/report.report.html",
+        "extension": ".html",
+        "directory": "lighthouse",
+        "bytes": 641526,
+        "hash": "dc8a6da0629ed33e6fa27488be678b5ccb89729037fea277784832ffa6043f69",
+        "lines": {
+          "total": 2894,
+          "code": 2382,
+          "comments": 192,
+          "blanks": 320
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly",
+          "call",
+          "He",
+          "fe",
+          "o",
+          "Ge",
+          "Be",
+          "qe",
+          "je",
+          "We",
+          "Ke",
+          "Ze",
+          "Je",
+          "Qe",
+          "Ye",
+          "Xe",
+          "et",
+          "tt",
+          "nt",
+          "rt",
+          "ot",
+          "it",
+          "at",
+          "lt",
+          "st",
+          "ct",
+          "dt",
+          "ht",
+          "be",
+          "xe",
+          "pt",
+          "ke",
+          "ut",
+          "Ee",
+          "Le",
+          "ft",
+          "vt",
+          "De",
+          "B",
+          "q",
+          "extends",
+          "a",
+          "p",
+          "s",
+          "W",
+          "wt",
+          "yt",
+          "se",
+          "ce",
+          "xt",
+          "i",
+          "Ce",
+          "Ae",
+          "ze",
+          "Me",
+          "kt",
+          "Te",
+          "Et",
+          "Fe",
+          "Lt"
+        ],
+        "symbolCount": 60,
+        "tags": [
+          "OPTIMIZE",
+          "TODO",
+          "HACK"
+        ],
+        "tagCount": 3,
+        "keywordCounts": {
+          "asyncCount": 7,
+          "awaitCount": 4,
+          "tryCount": 8,
+          "catchCount": 7,
+          "throwCount": 15,
+          "ifCount": 168,
+          "switchCount": 13
+        },
+        "complexityScore": 2778,
+        "updatedAt": "2026-08-14T08:55:00.013Z",
+        "riskScore": 68
       },
       {
         "path": "src/lib/auth-api.ts",
@@ -13261,201 +12357,217 @@
         "complexityScore": 528,
         "updatedAt": "2026-08-06T10:04:27.267Z",
         "riskScore": 41
-      },
-      {
-        "path": "src/features/vault/MediaVault.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 31865,
-        "hash": "c15a6156f51a8337965cc220b837e8cfe33638722a05b77bc9d0f5dc37da5315",
-        "lines": {
-          "total": 920,
-          "code": 809,
-          "comments": 19,
-          "blanks": 92
-        },
-        "imports": [
-          "import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';",
-          "import { Video, Image as ImageIcon } from 'lucide-react';",
-          "import { toast } from 'sonner';",
-          "import { createSHA256 } from 'hash-wasm';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { encryptFileInWorker } from '../../lib/cryptoPrimitives';",
-          "import { useGlobalNavigationStore } from '../../store/globalNavigationStore';",
-          "import { logActivity } from '../../lib/activity';",
-          "import {",
-          "import { getVaultItemPreviewUrl } from '../../lib/filePreview';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
-          "import { useVaultItems } from '../../hooks/useVaultItems';",
-          "import { VaultLayout } from '../../components/layout/VaultLayout';",
-          "import { VaultItem } from '../../lib/storage';",
-          "import { LiveCaptureModal } from './components/LiveCaptureModal';",
-          "import { vaultApi } from '../../api/vaultApi';",
-          "import { compressFileInWorker, generateBlurhashInWorker } from '../../lib/mediaWorker';",
-          "import {",
-          "import { MediaCard } from './components/MediaVault/MediaCard';",
-          "import { MediaPagination } from './components/MediaVault/MediaPagination';",
-          "import { MediaPreview } from './components/MediaVault/MediaPreview';"
-        ],
-        "exports": [
-          "export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "lucide-react",
-          "sonner",
-          "hash-wasm",
-          "../../store/vaultStore",
-          "../../lib/cryptoPrimitives",
-          "../../store/globalNavigationStore",
-          "../../lib/activity",
-          "../../lib/filePreview",
-          "../../hooks/useVaultFolders",
-          "../../hooks/useVaultItems",
-          "../../components/layout/VaultLayout",
-          "../../lib/storage",
-          "./components/LiveCaptureModal",
-          "../../api/vaultApi",
-          "../../lib/mediaWorker",
-          "./components/MediaVault/MediaCard",
-          "./components/MediaVault/MediaPagination",
-          "./components/MediaVault/MediaPreview"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "lucide-react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "hash-wasm",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../store/globalNavigationStore",
-            "kind": "relative",
-            "target": "src/store/globalNavigationStore"
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/filePreview",
-            "kind": "relative",
-            "target": "src/lib/filePreview"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          },
-          {
-            "specifier": "../../hooks/useVaultItems",
-            "kind": "relative",
-            "target": "src/hooks/useVaultItems"
-          },
-          {
-            "specifier": "../../components/layout/VaultLayout",
-            "kind": "relative",
-            "target": "src/components/layout/VaultLayout"
-          },
-          {
-            "specifier": "../../lib/storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "./components/LiveCaptureModal",
-            "kind": "relative",
-            "target": "src/features/vault/components/LiveCaptureModal"
-          },
-          {
-            "specifier": "../../api/vaultApi",
-            "kind": "relative",
-            "target": "src/api/vaultApi"
-          },
-          {
-            "specifier": "../../lib/mediaWorker",
-            "kind": "relative",
-            "target": "src/lib/mediaWorker"
-          },
-          {
-            "specifier": "./components/MediaVault/MediaCard",
-            "kind": "relative",
-            "target": "src/features/vault/components/MediaVault/MediaCard"
-          },
-          {
-            "specifier": "./components/MediaVault/MediaPagination",
-            "kind": "relative",
-            "target": "src/features/vault/components/MediaVault/MediaPagination"
-          },
-          {
-            "specifier": "./components/MediaVault/MediaPreview",
-            "kind": "relative",
-            "target": "src/features/vault/components/MediaVault/MediaPreview"
-          }
-        ],
-        "symbols": [
-          "FileWithWebkitPath",
-          "readTopLevelFolderFromWebkitPath",
-          "webkitPath",
-          "toPositiveIntOrFallback",
-          "MediaVault",
-          "chunkArrayBuffer",
-          "timeout",
-          "isSupportedMediaFile",
-          "onTouchStart",
-          "onTouchMove",
-          "onTouchEnd",
-          "handleKeyDown",
-          "handleUpload",
-          "handleUploadFiles",
-          "multipartData",
-          "updateProgress",
-          "partWorker",
-          "handleDownload"
-        ],
-        "symbolCount": 18,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 7,
-          "awaitCount": 26,
-          "tryCount": 12,
-          "catchCount": 8,
-          "throwCount": 7,
-          "ifCount": 60,
-          "switchCount": 0
-        },
-        "complexityScore": 974,
-        "updatedAt": "2026-08-13T10:37:52.136Z",
-        "riskScore": 52
       }
     ],
     "highestComplexity": [
+      {
+        "path": "lighthouse/report.report.json",
+        "extension": ".json",
+        "directory": "lighthouse",
+        "bytes": 793219,
+        "hash": "54f287d23748213ed62f212201cee51a969ba5529997a4a5c219ecd3e72ed5bb",
+        "lines": {
+          "total": 19696,
+          "code": 19696,
+          "comments": 0,
+          "blanks": 0
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly",
+          "call"
+        ],
+        "symbolCount": 2,
+        "tags": [
+          "OPTIMIZE",
+          "TODO"
+        ],
+        "tagCount": 2,
+        "keywordCounts": {
+          "asyncCount": 2,
+          "awaitCount": 0,
+          "tryCount": 1,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 4,
+          "switchCount": 0
+        },
+        "complexityScore": 19732,
+        "updatedAt": "2026-08-14T08:55:00.020Z",
+        "riskScore": 44
+      },
+      {
+        "path": "lighthouse/report-split/performance.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 519700,
+        "hash": "15e5f1a0317a1e6615f6d1bbb6ae93bab73c500ba5ba47e756cc119e878c100d",
+        "lines": {
+          "total": 11851,
+          "code": 11850,
+          "comments": 0,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "call"
+        ],
+        "symbolCount": 1,
+        "tags": [
+          "OPTIMIZE",
+          "TODO"
+        ],
+        "tagCount": 2,
+        "keywordCounts": {
+          "asyncCount": 2,
+          "awaitCount": 0,
+          "tryCount": 1,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 11880,
+        "updatedAt": "2026-08-14T08:55:03.361Z",
+        "riskScore": 44
+      },
+      {
+        "path": "lighthouse/report.report.html",
+        "extension": ".html",
+        "directory": "lighthouse",
+        "bytes": 641526,
+        "hash": "dc8a6da0629ed33e6fa27488be678b5ccb89729037fea277784832ffa6043f69",
+        "lines": {
+          "total": 2894,
+          "code": 2382,
+          "comments": 192,
+          "blanks": 320
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly",
+          "call",
+          "He",
+          "fe",
+          "o",
+          "Ge",
+          "Be",
+          "qe",
+          "je",
+          "We",
+          "Ke",
+          "Ze",
+          "Je",
+          "Qe",
+          "Ye",
+          "Xe",
+          "et",
+          "tt",
+          "nt",
+          "rt",
+          "ot",
+          "it",
+          "at",
+          "lt",
+          "st",
+          "ct",
+          "dt",
+          "ht",
+          "be",
+          "xe",
+          "pt",
+          "ke",
+          "ut",
+          "Ee",
+          "Le",
+          "ft",
+          "vt",
+          "De",
+          "B",
+          "q",
+          "extends",
+          "a",
+          "p",
+          "s",
+          "W",
+          "wt",
+          "yt",
+          "se",
+          "ce",
+          "xt",
+          "i",
+          "Ce",
+          "Ae",
+          "ze",
+          "Me",
+          "kt",
+          "Te",
+          "Et",
+          "Fe",
+          "Lt"
+        ],
+        "symbolCount": 60,
+        "tags": [
+          "OPTIMIZE",
+          "TODO",
+          "HACK"
+        ],
+        "tagCount": 3,
+        "keywordCounts": {
+          "asyncCount": 7,
+          "awaitCount": 4,
+          "tryCount": 8,
+          "catchCount": 7,
+          "throwCount": 15,
+          "ifCount": 168,
+          "switchCount": 13
+        },
+        "complexityScore": 2778,
+        "updatedAt": "2026-08-14T08:55:00.013Z",
+        "riskScore": 68
+      },
+      {
+        "path": "lighthouse/report-split/best-practices.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 64418,
+        "hash": "a605426df02d07b4682b2890d5add2153449de2f600f0aff3564595b34789b18",
+        "lines": {
+          "total": 1944,
+          "code": 1943,
+          "comments": 0,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [],
+        "symbolCount": 0,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 0,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 1943,
+        "updatedAt": "2026-08-14T08:55:03.366Z",
+        "riskScore": 30
+      },
       {
         "path": "server/services/vaultService.internal.ts",
         "extension": ".ts",
@@ -15158,6 +14270,41 @@
         "complexityScore": 1243,
         "updatedAt": "2026-08-14T08:19:39.823Z",
         "riskScore": 58
+      },
+      {
+        "path": "lighthouse/report-split/accessibility.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 50030,
+        "hash": "00cb1084b6856824f8e81df27512a2d5870c85fbfc895d584ba4cbef016aeb2b",
+        "lines": {
+          "total": 1193,
+          "code": 1192,
+          "comments": 0,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly"
+        ],
+        "symbolCount": 1,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 0,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 1198,
+        "updatedAt": "2026-08-14T08:55:03.364Z",
+        "riskScore": 30
       },
       {
         "path": "src/features/vault/DocumentsVault.tsx",
@@ -17521,976 +16668,6 @@
         "complexityScore": 920,
         "updatedAt": "2026-08-01T12:44:25.131Z",
         "riskScore": 47
-      },
-      {
-        "path": "src/features/vault/ChatVault.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 30532,
-        "hash": "5e20d4752fc262411899bd27212d129320c102e9fb8b900347ce3a10f576f6af",
-        "lines": {
-          "total": 947,
-          "code": 849,
-          "comments": 0,
-          "blanks": 98
-        },
-        "imports": [
-          "import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';",
-          "import { MessageSquareText } from 'lucide-react';",
-          "import { toast } from 'sonner';",
-          "import { encryptData, decryptData } from '../../lib/cryptoPrimitives';",
-          "import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';",
-          "import { VaultItem } from '../../lib/storage';",
-          "import { sortPinnedFirst } from '../../lib/pinning';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { useShallow } from 'zustand/react/shallow';",
-          "import { logActivity } from '../../lib/activity';",
-          "import { logger } from '../../lib/logger';",
-          "import { setDraggedVaultItem } from '../../lib/vaultDragDrop';",
-          "import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';",
-          "import { FolderSidebar } from '../../components/vault/FolderSidebar';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
-          "import {"
-        ],
-        "exports": [
-          "export const ChatVault: React.FC = () => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "lucide-react",
-          "sonner",
-          "../../lib/cryptoPrimitives",
-          "../../lib/vaultItemContent",
-          "../../lib/storage",
-          "../../lib/pinning",
-          "../../store/vaultStore",
-          "zustand/react/shallow",
-          "../../lib/activity",
-          "../../lib/logger",
-          "../../lib/vaultDragDrop",
-          "../../components/vault/MobileFolderMenu",
-          "../../components/vault/FolderSidebar",
-          "../../hooks/useVaultFolders"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "lucide-react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../lib/vaultItemContent",
-            "kind": "relative",
-            "target": "src/lib/vaultItemContent"
-          },
-          {
-            "specifier": "../../lib/storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "../../lib/pinning",
-            "kind": "relative",
-            "target": "src/lib/pinning"
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "zustand/react/shallow",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/logger",
-            "kind": "relative",
-            "target": "src/lib/logger"
-          },
-          {
-            "specifier": "../../lib/vaultDragDrop",
-            "kind": "relative",
-            "target": "src/lib/vaultDragDrop"
-          },
-          {
-            "specifier": "../../components/vault/MobileFolderMenu",
-            "kind": "relative",
-            "target": "src/components/vault/MobileFolderMenu"
-          },
-          {
-            "specifier": "../../components/vault/FolderSidebar",
-            "kind": "relative",
-            "target": "src/components/vault/FolderSidebar"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          }
-        ],
-        "symbols": [
-          "getErrorMessage",
-          "createChatError",
-          "ChatVault"
-        ],
-        "symbolCount": 3,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 11,
-          "awaitCount": 13,
-          "tryCount": 11,
-          "catchCount": 11,
-          "throwCount": 7,
-          "ifCount": 55,
-          "switchCount": 0
-        },
-        "complexityScore": 912,
-        "updatedAt": "2026-08-06T06:06:23.587Z",
-        "riskScore": 41
-      },
-      {
-        "path": "server.ts",
-        "extension": ".ts",
-        "directory": ".",
-        "bytes": 25047,
-        "hash": "fa7e9164bf2c6a9c7043c8ef26d9493559b0b6484b77fb1a9883235f0ed78b4c",
-        "lines": {
-          "total": 749,
-          "code": 649,
-          "comments": 24,
-          "blanks": 76
-        },
-        "imports": [
-          "import 'dotenv/config';",
-          "import express from 'express';",
-          "import { createServer } from 'http';",
-          "import cors from 'cors';",
-          "import compression from 'compression';",
-          "import helmet from 'helmet';",
-          "import morgan from 'morgan';",
-          "import rateLimit from 'express-rate-limit';",
-          "import os from 'os';",
-          "import { monitorEventLoopDelay } from 'perf_hooks';",
-          "import fs from 'fs';",
-          "import path from 'path';",
-          "import { customMongoSanitize } from './server/middleware/mongoSanitize.ts';",
-          "import { randomUUID } from 'crypto';",
-          "import mongoose from 'mongoose';",
-          "import { connectToMongo } from './server/mongo.ts';",
-          "import { resolvePort, listenWithFallback } from './server/network.ts';",
-          "import { registerSocketHandlers } from './server/socket.ts';",
-          "import { registerVaultRoutes } from './server/routes/vaultRoutes.ts';",
-          "import { authRouter } from './server/routes/authRoutes.ts';",
-          "import masterKeyRouter from './server/routes/masterKeyRoutes.ts';",
-          "import { contactRouter } from './server/routes/contactRoutes.ts';",
-          "import { systemRouter } from './server/routes/systemRoutes.ts';",
-          "import { twoFactorRouter } from './server/routes/twoFactorRoutes.ts';",
-          "import { securityRouter } from './server/routes/securityRoutes.ts';",
-          "import { notificationRouter } from './server/routes/notificationRoutes.ts';",
-          "import { avatarRouter } from './server/routes/avatarRoutes.ts';",
-          "import { setupFrontendMiddleware } from './server/vite.ts';",
-          "import { installBodyParsers } from './server/middleware/bodyParsers.ts';",
-          "import { installCsrfProtection } from './server/middleware/csrfProtection.ts';",
-          "import { requireAuth } from './server/middleware/authMiddleware.ts';",
-          "import { errorHandler } from './server/middleware/errorHandler.ts';",
-          "import { getHealthStatus, getReadinessStatus } from './server/controllers/healthController.ts';",
-          "import { originProtection } from './server/middleware/originProtection.ts';",
-          "import { getAllowedCorsOrigins, isAllowedCorsOrigin } from './server/utils/cors.ts';",
-          "import { getUploadRoot } from './server/utils/fileStorage.ts';",
-          "import { startKeepAlive } from './server/keep-alive.ts';",
-          "import { logger } from './server/utils/logger.ts';",
-          "import { validateRuntimeEnv } from './server/utils/env.ts';",
-          "import { getClientIp } from './server/utils/requestIp.ts';",
-          "import { deepCompressionOptions } from './server/utils/compression.ts';",
-          "import {",
-          "import {",
-          "import {"
-        ],
-        "exports": [],
-        "importSpecifiers": [
-          "express",
-          "http",
-          "cors",
-          "compression",
-          "helmet",
-          "morgan",
-          "express-rate-limit",
-          "os",
-          "perf_hooks",
-          "fs",
-          "path",
-          "./server/middleware/mongoSanitize.ts",
-          "crypto",
-          "mongoose",
-          "./server/mongo.ts",
-          "./server/network.ts",
-          "./server/socket.ts",
-          "./server/routes/vaultRoutes.ts",
-          "./server/routes/authRoutes.ts",
-          "./server/routes/masterKeyRoutes.ts",
-          "./server/routes/contactRoutes.ts",
-          "./server/routes/systemRoutes.ts",
-          "./server/routes/twoFactorRoutes.ts",
-          "./server/routes/securityRoutes.ts",
-          "./server/routes/notificationRoutes.ts",
-          "./server/routes/avatarRoutes.ts",
-          "./server/vite.ts",
-          "./server/middleware/bodyParsers.ts",
-          "./server/middleware/csrfProtection.ts",
-          "./server/middleware/authMiddleware.ts",
-          "./server/middleware/errorHandler.ts",
-          "./server/controllers/healthController.ts",
-          "./server/middleware/originProtection.ts",
-          "./server/utils/cors.ts",
-          "./server/utils/fileStorage.ts",
-          "./server/keep-alive.ts",
-          "./server/utils/logger.ts",
-          "./server/utils/env.ts",
-          "./server/utils/requestIp.ts",
-          "./server/utils/compression.ts",
-          "dotenv/config"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "express",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "http",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "cors",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "compression",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "helmet",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "morgan",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "express-rate-limit",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "os",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "perf_hooks",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "fs",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "path",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "./server/middleware/mongoSanitize.ts",
-            "kind": "relative",
-            "target": "server/middleware/mongoSanitize.ts"
-          },
-          {
-            "specifier": "crypto",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "mongoose",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "./server/mongo.ts",
-            "kind": "relative",
-            "target": "server/mongo.ts"
-          },
-          {
-            "specifier": "./server/network.ts",
-            "kind": "relative",
-            "target": "server/network.ts"
-          },
-          {
-            "specifier": "./server/socket.ts",
-            "kind": "relative",
-            "target": "server/socket.ts"
-          },
-          {
-            "specifier": "./server/routes/vaultRoutes.ts",
-            "kind": "relative",
-            "target": "server/routes/vaultRoutes.ts"
-          },
-          {
-            "specifier": "./server/routes/authRoutes.ts",
-            "kind": "relative",
-            "target": "server/routes/authRoutes.ts"
-          },
-          {
-            "specifier": "./server/routes/masterKeyRoutes.ts",
-            "kind": "relative",
-            "target": "server/routes/masterKeyRoutes.ts"
-          },
-          {
-            "specifier": "./server/routes/contactRoutes.ts",
-            "kind": "relative",
-            "target": "server/routes/contactRoutes.ts"
-          },
-          {
-            "specifier": "./server/routes/systemRoutes.ts",
-            "kind": "relative",
-            "target": "server/routes/systemRoutes.ts"
-          },
-          {
-            "specifier": "./server/routes/twoFactorRoutes.ts",
-            "kind": "relative",
-            "target": "server/routes/twoFactorRoutes.ts"
-          },
-          {
-            "specifier": "./server/routes/securityRoutes.ts",
-            "kind": "relative",
-            "target": "server/routes/securityRoutes.ts"
-          },
-          {
-            "specifier": "./server/routes/notificationRoutes.ts",
-            "kind": "relative",
-            "target": "server/routes/notificationRoutes.ts"
-          },
-          {
-            "specifier": "./server/routes/avatarRoutes.ts",
-            "kind": "relative",
-            "target": "server/routes/avatarRoutes.ts"
-          },
-          {
-            "specifier": "./server/vite.ts",
-            "kind": "relative",
-            "target": "server/vite.ts"
-          },
-          {
-            "specifier": "./server/middleware/bodyParsers.ts",
-            "kind": "relative",
-            "target": "server/middleware/bodyParsers.ts"
-          },
-          {
-            "specifier": "./server/middleware/csrfProtection.ts",
-            "kind": "relative",
-            "target": "server/middleware/csrfProtection.ts"
-          },
-          {
-            "specifier": "./server/middleware/authMiddleware.ts",
-            "kind": "relative",
-            "target": "server/middleware/authMiddleware.ts"
-          },
-          {
-            "specifier": "./server/middleware/errorHandler.ts",
-            "kind": "relative",
-            "target": "server/middleware/errorHandler.ts"
-          },
-          {
-            "specifier": "./server/controllers/healthController.ts",
-            "kind": "relative",
-            "target": "server/controllers/healthController.ts"
-          },
-          {
-            "specifier": "./server/middleware/originProtection.ts",
-            "kind": "relative",
-            "target": "server/middleware/originProtection.ts"
-          },
-          {
-            "specifier": "./server/utils/cors.ts",
-            "kind": "relative",
-            "target": "server/utils/cors.ts"
-          },
-          {
-            "specifier": "./server/utils/fileStorage.ts",
-            "kind": "relative",
-            "target": "server/utils/fileStorage.ts"
-          },
-          {
-            "specifier": "./server/keep-alive.ts",
-            "kind": "relative",
-            "target": "server/keep-alive.ts"
-          },
-          {
-            "specifier": "./server/utils/logger.ts",
-            "kind": "relative",
-            "target": "server/utils/logger.ts"
-          },
-          {
-            "specifier": "./server/utils/env.ts",
-            "kind": "relative",
-            "target": "server/utils/env.ts"
-          },
-          {
-            "specifier": "./server/utils/requestIp.ts",
-            "kind": "relative",
-            "target": "server/utils/requestIp.ts"
-          },
-          {
-            "specifier": "./server/utils/compression.ts",
-            "kind": "relative",
-            "target": "server/utils/compression.ts"
-          },
-          {
-            "specifier": "dotenv/config",
-            "kind": "package",
-            "target": null
-          }
-        ],
-        "symbols": [
-          "StartupPhaseTiming",
-          "buildHelmetConfig",
-          "resolveTrustProxy",
-          "resolveKeepAliveEnabled",
-          "resolveCompressionEnabled",
-          "resolveEventLoopLagThresholdMs",
-          "resolveOverloadProtectionEnabled",
-          "resolveSkipMongoConnect",
-          "renderOverloadHtml",
-          "isStaticAssetRequestPath",
-          "setOverloadResponseHeaders",
-          "exitProcess",
-          "registerProcessErrorHandlers",
-          "startServer",
-          "runPhase",
-          "finalizeTracking",
-          "logAuthError",
-          "runShutdownPhase",
-          "shutdown"
-        ],
-        "symbolCount": 19,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 8,
-          "awaitCount": 21,
-          "tryCount": 5,
-          "catchCount": 4,
-          "throwCount": 1,
-          "ifCount": 36,
-          "switchCount": 0
-        },
-        "complexityScore": 886,
-        "updatedAt": "2026-08-07T13:33:26.102Z",
-        "riskScore": 46
-      },
-      {
-        "path": "src/features/vault/ContactsVault.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 29819,
-        "hash": "933a78348d07e00fcbdcbae1b860910332806708c76784a748e487a1ef614f0a",
-        "lines": {
-          "total": 807,
-          "code": 753,
-          "comments": 3,
-          "blanks": 51
-        },
-        "imports": [
-          "import React, { useEffect, useMemo, useState } from 'react';",
-          "import { motion, AnimatePresence } from 'framer-motion';",
-          "import {",
-          "import { toast } from 'sonner';",
-          "import { logger } from '../../lib/logger';",
-          "import { Button } from '../../components/ui/Button';",
-          "import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';",
-          "import { Input } from '../../components/ui/Input';",
-          "import { SearchInput } from '../../components/ui/SearchInput';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { VaultItem } from '../../lib/storage';",
-          "import { encryptData, decryptData } from '../../lib/cryptoPrimitives';",
-          "import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';",
-          "import { useClipboard } from '../../hooks/useClipboard';",
-          "import { logActivity } from '../../lib/activity';",
-          "import { setDraggedVaultItem } from '../../lib/vaultDragDrop';",
-          "import { FolderSidebar } from '../../components/vault/FolderSidebar';",
-          "import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
-          "import { sortPinnedFirst } from '../../lib/pinning';"
-        ],
-        "exports": [
-          "export const ContactsVault: React.FC = () => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "framer-motion",
-          "sonner",
-          "../../lib/logger",
-          "../../components/ui/Button",
-          "../../components/ui/Card",
-          "../../components/ui/Input",
-          "../../components/ui/SearchInput",
-          "../../store/vaultStore",
-          "../../lib/storage",
-          "../../lib/cryptoPrimitives",
-          "../../lib/vaultItemContent",
-          "../../hooks/useClipboard",
-          "../../lib/activity",
-          "../../lib/vaultDragDrop",
-          "../../components/vault/FolderSidebar",
-          "../../components/vault/MobileFolderMenu",
-          "../../hooks/useVaultFolders",
-          "../../lib/pinning"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "framer-motion",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/logger",
-            "kind": "relative",
-            "target": "src/lib/logger"
-          },
-          {
-            "specifier": "../../components/ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "../../components/ui/Card",
-            "kind": "relative",
-            "target": "src/components/ui/Card"
-          },
-          {
-            "specifier": "../../components/ui/Input",
-            "kind": "relative",
-            "target": "src/components/ui/Input"
-          },
-          {
-            "specifier": "../../components/ui/SearchInput",
-            "kind": "relative",
-            "target": "src/components/ui/SearchInput"
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../lib/vaultItemContent",
-            "kind": "relative",
-            "target": "src/lib/vaultItemContent"
-          },
-          {
-            "specifier": "../../hooks/useClipboard",
-            "kind": "relative",
-            "target": "src/hooks/useClipboard"
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/vaultDragDrop",
-            "kind": "relative",
-            "target": "src/lib/vaultDragDrop"
-          },
-          {
-            "specifier": "../../components/vault/FolderSidebar",
-            "kind": "relative",
-            "target": "src/components/vault/FolderSidebar"
-          },
-          {
-            "specifier": "../../components/vault/MobileFolderMenu",
-            "kind": "relative",
-            "target": "src/components/vault/MobileFolderMenu"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          },
-          {
-            "specifier": "../../lib/pinning",
-            "kind": "relative",
-            "target": "src/lib/pinning"
-          }
-        ],
-        "symbols": [
-          "ContactPayload",
-          "ContactCardProps",
-          "DecryptedContactCard",
-          "decrypt",
-          "handleCopy",
-          "handleSave",
-          "ContactsVault",
-          "getFolderCount",
-          "resetForm",
-          "handleAdd",
-          "handleUpdateItem"
-        ],
-        "symbolCount": 11,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 4,
-          "awaitCount": 6,
-          "tryCount": 3,
-          "catchCount": 3,
-          "throwCount": 0,
-          "ifCount": 24,
-          "switchCount": 0
-        },
-        "complexityScore": 876,
-        "updatedAt": "2026-08-14T07:49:44.931Z",
-        "riskScore": 46
-      },
-      {
-        "path": "src/features/vault/OtherFilesVault.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 31202,
-        "hash": "6cd5a31c8603c62329ab674e8c6456bb6c271367217e216d6ca835f9f652bcae",
-        "lines": {
-          "total": 807,
-          "code": 747,
-          "comments": 2,
-          "blanks": 58
-        },
-        "imports": [
-          "import React, { useState, useRef, useEffect, useMemo } from 'react';",
-          "import { Button } from '../../components/ui/Button';",
-          "import { Card, CardContent } from '../../components/ui/Card';",
-          "import {",
-          "import { toast } from 'sonner';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { VaultItem } from '../../lib/storage';",
-          "import { encryptFile } from '../../lib/cryptoPrimitives';",
-          "import { motion, AnimatePresence } from 'framer-motion';",
-          "import { GlobalNavigator } from '../../components/vault/GlobalNavigator';",
-          "import { useGlobalNavigationStore } from '../../store/globalNavigationStore';",
-          "import { logActivity } from '../../lib/activity';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
-          "import { useVaultItems } from '../../hooks/useVaultItems';",
-          "import { VaultLayout } from '../../components/layout/VaultLayout';",
-          "import { cn } from '../../lib/utils';",
-          "import { getVaultItemFileUrl, getVaultItemPreviewUrl } from '../../lib/filePreview';",
-          "import { setDraggedVaultItem } from '../../lib/vaultDragDrop';",
-          "import { exceedsUploadSizeLimit, getUploadSizeErrorMessage } from '../../lib/fileHandling';"
-        ],
-        "exports": [
-          "export const OtherFilesVault: React.FC = () => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "../../components/ui/Button",
-          "../../components/ui/Card",
-          "sonner",
-          "../../store/vaultStore",
-          "../../lib/storage",
-          "../../lib/cryptoPrimitives",
-          "framer-motion",
-          "../../components/ui/Input",
-          "../../components/vault/GlobalNavigator",
-          "../../store/globalNavigationStore",
-          "../../lib/activity",
-          "../../hooks/useVaultFolders",
-          "../../hooks/useVaultItems",
-          "../../components/layout/VaultLayout",
-          "../../lib/utils",
-          "../../lib/filePreview",
-          "../../lib/vaultDragDrop",
-          "../../lib/fileHandling"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../components/ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "../../components/ui/Card",
-            "kind": "relative",
-            "target": "src/components/ui/Card"
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "framer-motion",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../components/ui/Input",
-            "kind": "relative",
-            "target": "src/components/ui/Input"
-          },
-          {
-            "specifier": "../../components/vault/GlobalNavigator",
-            "kind": "relative",
-            "target": "src/components/vault/GlobalNavigator"
-          },
-          {
-            "specifier": "../../store/globalNavigationStore",
-            "kind": "relative",
-            "target": "src/store/globalNavigationStore"
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          },
-          {
-            "specifier": "../../hooks/useVaultItems",
-            "kind": "relative",
-            "target": "src/hooks/useVaultItems"
-          },
-          {
-            "specifier": "../../components/layout/VaultLayout",
-            "kind": "relative",
-            "target": "src/components/layout/VaultLayout"
-          },
-          {
-            "specifier": "../../lib/utils",
-            "kind": "relative",
-            "target": "src/lib/utils"
-          },
-          {
-            "specifier": "../../lib/filePreview",
-            "kind": "relative",
-            "target": "src/lib/filePreview"
-          },
-          {
-            "specifier": "../../lib/vaultDragDrop",
-            "kind": "relative",
-            "target": "src/lib/vaultDragDrop"
-          },
-          {
-            "specifier": "../../lib/fileHandling",
-            "kind": "relative",
-            "target": "src/lib/fileHandling"
-          }
-        ],
-        "symbols": [
-          "decrypt",
-          "getFileIcon",
-          "OtherFilesVault",
-          "showPreviousFile",
-          "showNextFile",
-          "handleKeyDown",
-          "handleUpload",
-          "handleUploadFiles",
-          "detected",
-          "handleDelete",
-          "downloadFile"
-        ],
-        "symbolCount": 11,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 4,
-          "awaitCount": 5,
-          "tryCount": 4,
-          "catchCount": 3,
-          "throwCount": 1,
-          "ifCount": 30,
-          "switchCount": 2
-        },
-        "complexityScore": 870,
-        "updatedAt": "2026-08-01T14:27:22.577Z",
-        "riskScore": 46
-      },
-      {
-        "path": "src/features/auth/VaultLoginForm.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/auth",
-        "bytes": 36601,
-        "hash": "cb98f93e71d01d9458556c738819610503392266a5cfb2cb9dd66632769fb8e2",
-        "lines": {
-          "total": 879,
-          "code": 818,
-          "comments": 5,
-          "blanks": 56
-        },
-        "imports": [
-          "import React, { memo, useCallback, useState, useRef, useEffect, useMemo } from 'react';",
-          "import { Button } from '../../components/ui/Button';",
-          "import {",
-          "import {",
-          "import { motion } from 'framer-motion';",
-          "import { toast } from 'sonner';",
-          "import { handleError } from '../../lib/error-handler';",
-          "import { RecaptchaField } from '../../components/security/RecaptchaField';",
-          "import {",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { checkExactUsername } from '../../lib/auth-api';",
-          "import { useRecaptchaChallenge } from '../../hooks/useRecaptchaChallenge';"
-        ],
-        "exports": [
-          "export const VaultLoginForm: React.FC<Props> = memo("
-        ],
-        "importSpecifiers": [
-          "react",
-          "../../components/ui/Button",
-          "framer-motion",
-          "sonner",
-          "../../lib/error-handler",
-          "../../components/security/RecaptchaField",
-          "../../store/vaultStore",
-          "../../lib/auth-api",
-          "../../hooks/useRecaptchaChallenge"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../components/ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "framer-motion",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/error-handler",
-            "kind": "relative",
-            "target": "src/lib/error-handler"
-          },
-          {
-            "specifier": "../../components/security/RecaptchaField",
-            "kind": "relative",
-            "target": "src/components/security/RecaptchaField"
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/auth-api",
-            "kind": "relative",
-            "target": "src/lib/auth-api"
-          },
-          {
-            "specifier": "../../hooks/useRecaptchaChallenge",
-            "kind": "relative",
-            "target": "src/hooks/useRecaptchaChallenge"
-          }
-        ],
-        "symbols": [
-          "Props",
-          "noop",
-          "isValidPassword",
-          "VaultLoginForm"
-        ],
-        "symbolCount": 4,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 3,
-          "awaitCount": 3,
-          "tryCount": 4,
-          "catchCount": 8,
-          "throwCount": 0,
-          "ifCount": 43,
-          "switchCount": 0
-        },
-        "complexityScore": 869,
-        "updatedAt": "2026-08-03T08:18:02.694Z",
-        "riskScore": 41
       }
     ],
     "mostImports": [
@@ -23935,6 +22112,181 @@
         "riskScore": 58
       },
       {
+        "path": "lighthouse/report.report.html",
+        "extension": ".html",
+        "directory": "lighthouse",
+        "bytes": 641526,
+        "hash": "dc8a6da0629ed33e6fa27488be678b5ccb89729037fea277784832ffa6043f69",
+        "lines": {
+          "total": 2894,
+          "code": 2382,
+          "comments": 192,
+          "blanks": 320
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly",
+          "call",
+          "He",
+          "fe",
+          "o",
+          "Ge",
+          "Be",
+          "qe",
+          "je",
+          "We",
+          "Ke",
+          "Ze",
+          "Je",
+          "Qe",
+          "Ye",
+          "Xe",
+          "et",
+          "tt",
+          "nt",
+          "rt",
+          "ot",
+          "it",
+          "at",
+          "lt",
+          "st",
+          "ct",
+          "dt",
+          "ht",
+          "be",
+          "xe",
+          "pt",
+          "ke",
+          "ut",
+          "Ee",
+          "Le",
+          "ft",
+          "vt",
+          "De",
+          "B",
+          "q",
+          "extends",
+          "a",
+          "p",
+          "s",
+          "W",
+          "wt",
+          "yt",
+          "se",
+          "ce",
+          "xt",
+          "i",
+          "Ce",
+          "Ae",
+          "ze",
+          "Me",
+          "kt",
+          "Te",
+          "Et",
+          "Fe",
+          "Lt"
+        ],
+        "symbolCount": 60,
+        "tags": [
+          "OPTIMIZE",
+          "TODO",
+          "HACK"
+        ],
+        "tagCount": 3,
+        "keywordCounts": {
+          "asyncCount": 7,
+          "awaitCount": 4,
+          "tryCount": 8,
+          "catchCount": 7,
+          "throwCount": 15,
+          "ifCount": 168,
+          "switchCount": 13
+        },
+        "complexityScore": 2778,
+        "updatedAt": "2026-08-14T08:55:00.013Z",
+        "riskScore": 68
+      },
+      {
+        "path": "lighthouse/report-split/performance.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 519700,
+        "hash": "15e5f1a0317a1e6615f6d1bbb6ae93bab73c500ba5ba47e756cc119e878c100d",
+        "lines": {
+          "total": 11851,
+          "code": 11850,
+          "comments": 0,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "call"
+        ],
+        "symbolCount": 1,
+        "tags": [
+          "OPTIMIZE",
+          "TODO"
+        ],
+        "tagCount": 2,
+        "keywordCounts": {
+          "asyncCount": 2,
+          "awaitCount": 0,
+          "tryCount": 1,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 11880,
+        "updatedAt": "2026-08-14T08:55:03.361Z",
+        "riskScore": 44
+      },
+      {
+        "path": "lighthouse/report.report.json",
+        "extension": ".json",
+        "directory": "lighthouse",
+        "bytes": 793219,
+        "hash": "54f287d23748213ed62f212201cee51a969ba5529997a4a5c219ecd3e72ed5bb",
+        "lines": {
+          "total": 19696,
+          "code": 19696,
+          "comments": 0,
+          "blanks": 0
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly",
+          "call"
+        ],
+        "symbolCount": 2,
+        "tags": [
+          "OPTIMIZE",
+          "TODO"
+        ],
+        "tagCount": 2,
+        "keywordCounts": {
+          "asyncCount": 2,
+          "awaitCount": 0,
+          "tryCount": 1,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 4,
+          "switchCount": 0
+        },
+        "complexityScore": 19732,
+        "updatedAt": "2026-08-14T08:55:00.020Z",
+        "riskScore": 44
+      },
+      {
         "path": "md/FIXED_IT.md",
         "extension": ".md",
         "directory": "md",
@@ -26260,6 +24612,41 @@
         "riskScore": 26
       },
       {
+        "path": "lighthouse/report-split/performance.html",
+        "extension": ".html",
+        "directory": "lighthouse/report-split",
+        "bytes": 25847,
+        "hash": "151f4279f5a843c71ec74e7e7c16d1881c3c70cb927e02ee184f44f311def61b",
+        "lines": {
+          "total": 639,
+          "code": 637,
+          "comments": 1,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [],
+        "symbolCount": 0,
+        "tags": [
+          "OPTIMIZE"
+        ],
+        "tagCount": 1,
+        "keywordCounts": {
+          "asyncCount": 0,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 649,
+        "updatedAt": "2026-08-14T08:55:03.362Z",
+        "riskScore": 37
+      },
+      {
         "path": "md/SECURITY_ARCHITECTURE.md",
         "extension": ".md",
         "directory": "md",
@@ -26293,264 +24680,107 @@
         "complexityScore": 94,
         "updatedAt": "2026-08-01T12:44:24.738Z",
         "riskScore": 19
-      },
-      {
-        "path": "package.json",
-        "extension": ".json",
-        "directory": ".",
-        "bytes": 13624,
-        "hash": "1e531034fa87ddc50e9528dc82148d8432083f67326b966342fcba3793f0dc46",
-        "lines": {
-          "total": 273,
-          "code": 272,
-          "comments": 0,
-          "blanks": 1
-        },
-        "imports": [],
-        "exports": [],
-        "importSpecifiers": [],
-        "importsDetailed": [],
-        "symbols": [],
-        "symbolCount": 0,
-        "tags": [
-          "TODO"
-        ],
-        "tagCount": 1,
-        "keywordCounts": {
-          "asyncCount": 0,
-          "awaitCount": 0,
-          "tryCount": 0,
-          "catchCount": 0,
-          "throwCount": 0,
-          "ifCount": 1,
-          "switchCount": 0
-        },
-        "complexityScore": 284,
-        "updatedAt": "2026-08-14T08:51:39.316Z",
-        "riskScore": 23
-      },
-      {
-        "path": "README.md",
-        "extension": ".md",
-        "directory": ".",
-        "bytes": 18822,
-        "hash": "23018d66145133efd005575739b0a6c2b8d29f886dd49357cbbd788a81e2c208",
-        "lines": {
-          "total": 354,
-          "code": 279,
-          "comments": 1,
-          "blanks": 74
-        },
-        "imports": [],
-        "exports": [],
-        "importSpecifiers": [],
-        "importsDetailed": [],
-        "symbols": [
-          "verification",
-          "configuration"
-        ],
-        "symbolCount": 2,
-        "tags": [
-          "NOTE"
-        ],
-        "tagCount": 1,
-        "keywordCounts": {
-          "asyncCount": 0,
-          "awaitCount": 0,
-          "tryCount": 0,
-          "catchCount": 0,
-          "throwCount": 0,
-          "ifCount": 1,
-          "switchCount": 0
-        },
-        "complexityScore": 303,
-        "updatedAt": "2026-08-14T04:58:15.946Z",
-        "riskScore": 29
-      },
-      {
-        "path": "scripts/code-memory-index/build-index.mjs",
-        "extension": ".mjs",
-        "directory": "scripts/code-memory-index",
-        "bytes": 9869,
-        "hash": "ebb4dcf1bc0e8debf98f37ec83dda09259eb0a9619d2641bbad6befd32c3a01a",
-        "lines": {
-          "total": 267,
-          "code": 243,
-          "comments": 0,
-          "blanks": 24
-        },
-        "imports": [
-          "import fs from 'node:fs';",
-          "import path from 'node:path';",
-          "import { EXPORT_LINE_RE, IMPORT_LINE_RE, TODO_RE, TOP_LIMIT } from './constants.mjs';",
-          "import {",
-          "import { safeReadJson, walkFiles } from './file-system.mjs';",
-          "import { writeSummaryMarkdown, updateHistory } from './output.mjs';",
-          "import { createPathHelpers } from './path-utils.mjs';",
-          "import {"
-        ],
-        "exports": [
-          "export const buildIndex = ({ root, options, outputDir }) => {"
-        ],
-        "importSpecifiers": [
-          "node:fs",
-          "node:path",
-          "./constants.mjs",
-          "./file-system.mjs",
-          "./output.mjs",
-          "./path-utils.mjs"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "node:fs",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:path",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "./constants.mjs",
-            "kind": "relative",
-            "target": "scripts/code-memory-index/constants.mjs"
-          },
-          {
-            "specifier": "./file-system.mjs",
-            "kind": "relative",
-            "target": "scripts/code-memory-index/file-system.mjs"
-          },
-          {
-            "specifier": "./output.mjs",
-            "kind": "relative",
-            "target": "scripts/code-memory-index/output.mjs"
-          },
-          {
-            "specifier": "./path-utils.mjs",
-            "kind": "relative",
-            "target": "scripts/code-memory-index/path-utils.mjs"
-          }
-        ],
-        "symbols": [
-          "buildIndex"
-        ],
-        "symbolCount": 1,
-        "tags": [
-          "TODO"
-        ],
-        "tagCount": 1,
-        "keywordCounts": {
-          "asyncCount": 0,
-          "awaitCount": 0,
-          "tryCount": 1,
-          "catchCount": 1,
-          "throwCount": 0,
-          "ifCount": 6,
-          "switchCount": 0
-        },
-        "complexityScore": 279,
-        "updatedAt": "2026-08-01T12:44:25.035Z",
-        "riskScore": 23
-      },
-      {
-        "path": "server/controllers/masterKeyController.ts",
-        "extension": ".ts",
-        "directory": "server/controllers",
-        "bytes": 15824,
-        "hash": "6ac66173941c136540fad20f8413b62b63d283cf0a8b48add2213b0a101fe954",
-        "lines": {
-          "total": 595,
-          "code": 500,
-          "comments": 31,
-          "blanks": 64
-        },
-        "imports": [
-          "import express from 'express';",
-          "import {",
-          "import { logger } from '../utils/logger.ts';",
-          "import { getClientIp } from '../utils/requestIp.ts';",
-          "import { User } from '../models/user.ts';",
-          "import { comparePassword, decryptText } from '../utils/crypto.ts';"
-        ],
-        "exports": [
-          "export const handleSaveMasterKey = async (",
-          "export const handleRetrieveMasterKey = async (req: express.Request, res: express.Response) => {",
-          "export const handleVerifyMasterKey = async (",
-          "export const handleDeleteMasterKey = async (req: express.Request, res: express.Response) => {",
-          "export const handleGetMasterKeyMetadata = async (req: express.Request, res: express.Response) => {",
-          "export const handleGetMasterKeyFullData = async (req: express.Request, res: express.Response) => {",
-          "export default {"
-        ],
-        "importSpecifiers": [
-          "express",
-          "../utils/logger.ts",
-          "../utils/requestIp.ts",
-          "../models/user.ts",
-          "../utils/crypto.ts"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "express",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../utils/logger.ts",
-            "kind": "relative",
-            "target": "server/utils/logger.ts"
-          },
-          {
-            "specifier": "../utils/requestIp.ts",
-            "kind": "relative",
-            "target": "server/utils/requestIp.ts"
-          },
-          {
-            "specifier": "../models/user.ts",
-            "kind": "relative",
-            "target": "server/models/user.ts"
-          },
-          {
-            "specifier": "../utils/crypto.ts",
-            "kind": "relative",
-            "target": "server/utils/crypto.ts"
-          }
-        ],
-        "symbols": [
-          "SaveMasterKeyRequest",
-          "VerifyMasterKeyRequest",
-          "isBase64WithinLimit",
-          "isValidDeviceId",
-          "hasValidDerivationParams",
-          "handleSaveMasterKey",
-          "userId",
-          "username",
-          "handleRetrieveMasterKey",
-          "handleVerifyMasterKey",
-          "handleDeleteMasterKey",
-          "handleGetMasterKeyMetadata",
-          "handleGetMasterKeyFullData"
-        ],
-        "symbolCount": 13,
-        "tags": [
-          "NOTE"
-        ],
-        "tagCount": 1,
-        "keywordCounts": {
-          "asyncCount": 6,
-          "awaitCount": 9,
-          "tryCount": 7,
-          "catchCount": 7,
-          "throwCount": 1,
-          "ifCount": 33,
-          "switchCount": 0
-        },
-        "complexityScore": 605,
-        "updatedAt": "2026-08-14T07:04:41.022Z",
-        "riskScore": 34
       }
     ],
     "highestRisk": [
+      {
+        "path": "lighthouse/report.report.html",
+        "extension": ".html",
+        "directory": "lighthouse",
+        "bytes": 641526,
+        "hash": "dc8a6da0629ed33e6fa27488be678b5ccb89729037fea277784832ffa6043f69",
+        "lines": {
+          "total": 2894,
+          "code": 2382,
+          "comments": 192,
+          "blanks": 320
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly",
+          "call",
+          "He",
+          "fe",
+          "o",
+          "Ge",
+          "Be",
+          "qe",
+          "je",
+          "We",
+          "Ke",
+          "Ze",
+          "Je",
+          "Qe",
+          "Ye",
+          "Xe",
+          "et",
+          "tt",
+          "nt",
+          "rt",
+          "ot",
+          "it",
+          "at",
+          "lt",
+          "st",
+          "ct",
+          "dt",
+          "ht",
+          "be",
+          "xe",
+          "pt",
+          "ke",
+          "ut",
+          "Ee",
+          "Le",
+          "ft",
+          "vt",
+          "De",
+          "B",
+          "q",
+          "extends",
+          "a",
+          "p",
+          "s",
+          "W",
+          "wt",
+          "yt",
+          "se",
+          "ce",
+          "xt",
+          "i",
+          "Ce",
+          "Ae",
+          "ze",
+          "Me",
+          "kt",
+          "Te",
+          "Et",
+          "Fe",
+          "Lt"
+        ],
+        "symbolCount": 60,
+        "tags": [
+          "OPTIMIZE",
+          "TODO",
+          "HACK"
+        ],
+        "tagCount": 3,
+        "keywordCounts": {
+          "asyncCount": 7,
+          "awaitCount": 4,
+          "tryCount": 8,
+          "catchCount": 7,
+          "throwCount": 15,
+          "ifCount": 168,
+          "switchCount": 13
+        },
+        "complexityScore": 2778,
+        "updatedAt": "2026-08-14T08:55:00.013Z",
+        "riskScore": 68
+      },
       {
         "path": "scripts/code-memory-index/constants.mjs",
         "extension": ".mjs",
@@ -31032,189 +29262,6 @@
         },
         "complexityScore": 870,
         "updatedAt": "2026-08-01T14:27:22.577Z",
-        "riskScore": 46
-      },
-      {
-        "path": "src/features/vault/PasswordManager_new.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 56175,
-        "hash": "f2cc0cdd4f47053ad3bd9553ae61d5321513ebc2262d1d2c277587c6d998f8ec",
-        "lines": {
-          "total": 1447,
-          "code": 1361,
-          "comments": 10,
-          "blanks": 76
-        },
-        "imports": [
-          "import React, { useState, useEffect, useMemo } from 'react';",
-          "import * as OTPAuth from 'otpauth';",
-          "import { Button } from '../../components/ui/Button';",
-          "import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';",
-          "import { Input } from '../../components/ui/Input';",
-          "import {",
-          "import { useGlobalNavigationStore } from '../../store/globalNavigationStore';",
-          "import { toast } from 'sonner';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { encryptData, decryptData } from '../../lib/cryptoPrimitives';",
-          "import { useClipboard } from '../../hooks/useClipboard';",
-          "import { motion, AnimatePresence } from 'framer-motion';",
-          "import { logActivity } from '../../lib/activity';",
-          "import { setDraggedVaultItem } from '../../lib/vaultDragDrop';",
-          "import { sortPinnedFirst } from '../../lib/pinning';",
-          "import { FolderSidebar } from '../../components/vault/FolderSidebar';",
-          "import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
-          "import {"
-        ],
-        "exports": [
-          "export const PasswordManager: React.FC = () => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "otpauth",
-          "../../lib/utils",
-          "../../components/ui/Button",
-          "../../components/ui/Card",
-          "../../components/ui/Input",
-          "../../store/globalNavigationStore",
-          "sonner",
-          "../../store/vaultStore",
-          "../../lib/cryptoPrimitives",
-          "../../hooks/useClipboard",
-          "framer-motion",
-          "../../lib/activity",
-          "../../lib/vaultDragDrop",
-          "../../lib/pinning",
-          "../../components/vault/FolderSidebar",
-          "../../components/vault/MobileFolderMenu",
-          "../../hooks/useVaultFolders"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "otpauth",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/utils",
-            "kind": "relative",
-            "target": "src/lib/utils"
-          },
-          {
-            "specifier": "../../components/ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "../../components/ui/Card",
-            "kind": "relative",
-            "target": "src/components/ui/Card"
-          },
-          {
-            "specifier": "../../components/ui/Input",
-            "kind": "relative",
-            "target": "src/components/ui/Input"
-          },
-          {
-            "specifier": "../../store/globalNavigationStore",
-            "kind": "relative",
-            "target": "src/store/globalNavigationStore"
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../hooks/useClipboard",
-            "kind": "relative",
-            "target": "src/hooks/useClipboard"
-          },
-          {
-            "specifier": "framer-motion",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/vaultDragDrop",
-            "kind": "relative",
-            "target": "src/lib/vaultDragDrop"
-          },
-          {
-            "specifier": "../../lib/pinning",
-            "kind": "relative",
-            "target": "src/lib/pinning"
-          },
-          {
-            "specifier": "../../components/vault/FolderSidebar",
-            "kind": "relative",
-            "target": "src/components/vault/FolderSidebar"
-          },
-          {
-            "specifier": "../../components/vault/MobileFolderMenu",
-            "kind": "relative",
-            "target": "src/components/vault/MobileFolderMenu"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          }
-        ],
-        "symbols": [
-          "PasswordStrengthMeter",
-          "handleGenerate",
-          "generateSuggestion",
-          "handleStartEdit",
-          "handleSaveCredential",
-          "intervalId",
-          "checkBreach",
-          "handleSave2FA",
-          "handleDelete2FA",
-          "handleAddTag",
-          "handleRemoveTag",
-          "decrypt",
-          "handleCopy",
-          "PasswordManager",
-          "getFolderCount",
-          "handleAdd",
-          "generatePassword"
-        ],
-        "symbolCount": 17,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 8,
-          "awaitCount": 14,
-          "tryCount": 9,
-          "catchCount": 9,
-          "throwCount": 1,
-          "ifCount": 28,
-          "switchCount": 0
-        },
-        "complexityScore": 1517,
-        "updatedAt": "2026-08-01T13:44:40.268Z",
         "riskScore": 46
       }
     ],
@@ -37972,15 +36019,48 @@
     }
   },
   "changes": {
-    "hasPreviousIndex": false,
-    "previousGeneratedAt": null,
+    "hasPreviousIndex": true,
+    "previousGeneratedAt": "2026-08-14T08:54:26.124Z",
     "counts": {
-      "added": 454,
+      "added": 10,
       "removed": 0,
-      "changed": 0,
-      "unchanged": 0
+      "changed": 2,
+      "unchanged": 452
     },
     "added": [
+      "lighthouse/report-split/accessibility.html",
+      "lighthouse/report-split/accessibility.json",
+      "lighthouse/report-split/best-practices.html",
+      "lighthouse/report-split/best-practices.json",
+      "lighthouse/report-split/performance.html",
+      "lighthouse/report-split/performance.json",
+      "lighthouse/report-split/seo.html",
+      "lighthouse/report-split/seo.json",
+      "lighthouse/report.report.html",
+      "lighthouse/report.report.json"
+    ],
+    "removed": [],
+    "changed": [
+      {
+        "path": "vite.config.ts",
+        "previousHash": "39a2da82fe8c8db5d88e1170cb70eb99583762655c37db076d45acaf75923b47",
+        "currentHash": "f946d53a67abc60732eea2c4157323223bdfb3eed2e3a34a501e2c57b812b0e2",
+        "previousLines": 522,
+        "currentLines": 538,
+        "deltaLines": 16,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "public/vite-preload-shim.js",
+        "previousHash": "24734e1737356d97732275bcdc0480f5e4f2f9167423a604f480fe6fa702b4f3",
+        "currentHash": "f2c605a8c17544f37ecf2605c1f13d3d44b00c62dfc1b4a2edb58db2b9c29923",
+        "previousLines": 15,
+        "currentLines": 13,
+        "deltaLines": -2,
+        "deltaSymbols": 0
+      }
+    ],
+    "unchanged": [
       "AUTHORS.md",
       "CHANGELOG.md",
       "CODE_OF_CONDUCT.md",
@@ -38009,7 +36089,6 @@
       "public/plus.svg",
       "public/sw-register.js",
       "public/sw.js",
-      "public/vite-preload-shim.js",
       "README.md",
       "scripts/atlas-keepalive.mjs",
       "scripts/build-env.mjs",
@@ -38433,12 +36512,8 @@
       "tests/unit/vault-key-rotation.test.ts",
       "tsconfig.json",
       "tsconfig.server.json",
-      "vite.config.ts",
       "vitest.config.ts"
-    ],
-    "removed": [],
-    "changed": [],
-    "unchanged": []
+    ]
   },
   "recommendations": [
     "Relative imports with missing targets detected. Verify file extension resolution and alias settings.",
@@ -38590,6 +36665,209 @@
         "replace",
         "status",
         "requestedAt"
+      ],
+      "importCount": 0
+    },
+    {
+      "path": "lighthouse/report-split/accessibility.html",
+      "extension": ".html",
+      "lines": {
+        "total": 751,
+        "code": 749,
+        "comments": 1,
+        "blanks": 1
+      },
+      "symbolCount": 1,
+      "complexityScore": 755,
+      "riskScore": 30,
+      "tagCount": 0,
+      "tags": [],
+      "topSignals": [
+        "correctly"
+      ],
+      "importCount": 0
+    },
+    {
+      "path": "lighthouse/report-split/accessibility.json",
+      "extension": ".json",
+      "lines": {
+        "total": 1193,
+        "code": 1192,
+        "comments": 0,
+        "blanks": 1
+      },
+      "symbolCount": 1,
+      "complexityScore": 1198,
+      "riskScore": 30,
+      "tagCount": 0,
+      "tags": [],
+      "topSignals": [
+        "correctly"
+      ],
+      "importCount": 0
+    },
+    {
+      "path": "lighthouse/report-split/best-practices.html",
+      "extension": ".html",
+      "lines": {
+        "total": 311,
+        "code": 309,
+        "comments": 1,
+        "blanks": 1
+      },
+      "symbolCount": 0,
+      "complexityScore": 309,
+      "riskScore": 22,
+      "tagCount": 0,
+      "tags": [],
+      "topSignals": [],
+      "importCount": 0
+    },
+    {
+      "path": "lighthouse/report-split/best-practices.json",
+      "extension": ".json",
+      "lines": {
+        "total": 1944,
+        "code": 1943,
+        "comments": 0,
+        "blanks": 1
+      },
+      "symbolCount": 0,
+      "complexityScore": 1943,
+      "riskScore": 30,
+      "tagCount": 0,
+      "tags": [],
+      "topSignals": [],
+      "importCount": 0
+    },
+    {
+      "path": "lighthouse/report-split/performance.html",
+      "extension": ".html",
+      "lines": {
+        "total": 639,
+        "code": 637,
+        "comments": 1,
+        "blanks": 1
+      },
+      "symbolCount": 0,
+      "complexityScore": 649,
+      "riskScore": 37,
+      "tagCount": 1,
+      "tags": [
+        "OPTIMIZE"
+      ],
+      "topSignals": [
+        "OPTIMIZE"
+      ],
+      "importCount": 0
+    },
+    {
+      "path": "lighthouse/report-split/performance.json",
+      "extension": ".json",
+      "lines": {
+        "total": 11851,
+        "code": 11850,
+        "comments": 0,
+        "blanks": 1
+      },
+      "symbolCount": 1,
+      "complexityScore": 11880,
+      "riskScore": 44,
+      "tagCount": 2,
+      "tags": [
+        "OPTIMIZE",
+        "TODO"
+      ],
+      "topSignals": [
+        "OPTIMIZE",
+        "TODO",
+        "call"
+      ],
+      "importCount": 0
+    },
+    {
+      "path": "lighthouse/report-split/seo.html",
+      "extension": ".html",
+      "lines": {
+        "total": 231,
+        "code": 229,
+        "comments": 1,
+        "blanks": 1
+      },
+      "symbolCount": 0,
+      "complexityScore": 229,
+      "riskScore": 16,
+      "tagCount": 0,
+      "tags": [],
+      "topSignals": [],
+      "importCount": 0
+    },
+    {
+      "path": "lighthouse/report-split/seo.json",
+      "extension": ".json",
+      "lines": {
+        "total": 242,
+        "code": 241,
+        "comments": 0,
+        "blanks": 1
+      },
+      "symbolCount": 0,
+      "complexityScore": 241,
+      "riskScore": 16,
+      "tagCount": 0,
+      "tags": [],
+      "topSignals": [],
+      "importCount": 0
+    },
+    {
+      "path": "lighthouse/report.report.html",
+      "extension": ".html",
+      "lines": {
+        "total": 2894,
+        "code": 2382,
+        "comments": 192,
+        "blanks": 320
+      },
+      "symbolCount": 60,
+      "complexityScore": 2778,
+      "riskScore": 68,
+      "tagCount": 3,
+      "tags": [
+        "OPTIMIZE",
+        "TODO",
+        "HACK"
+      ],
+      "topSignals": [
+        "OPTIMIZE",
+        "TODO",
+        "HACK",
+        "correctly",
+        "call"
+      ],
+      "importCount": 0
+    },
+    {
+      "path": "lighthouse/report.report.json",
+      "extension": ".json",
+      "lines": {
+        "total": 19696,
+        "code": 19696,
+        "comments": 0,
+        "blanks": 0
+      },
+      "symbolCount": 2,
+      "complexityScore": 19732,
+      "riskScore": 44,
+      "tagCount": 2,
+      "tags": [
+        "OPTIMIZE",
+        "TODO"
+      ],
+      "topSignals": [
+        "OPTIMIZE",
+        "TODO",
+        "correctly",
+        "call"
       ],
       "importCount": 0
     },
@@ -38970,13 +37248,13 @@
       "path": "public/vite-preload-shim.js",
       "extension": ".js",
       "lines": {
-        "total": 15,
-        "code": 12,
+        "total": 13,
+        "code": 11,
         "comments": 0,
-        "blanks": 3
+        "blanks": 2
       },
       "symbolCount": 0,
-      "complexityScore": 12,
+      "complexityScore": 11,
       "riskScore": 12,
       "tagCount": 0,
       "tags": [],
@@ -48531,13 +46809,13 @@
       "path": "vite.config.ts",
       "extension": ".ts",
       "lines": {
-        "total": 522,
-        "code": 453,
-        "comments": 9,
-        "blanks": 60
+        "total": 538,
+        "code": 465,
+        "comments": 11,
+        "blanks": 62
       },
       "symbolCount": 10,
-      "complexityScore": 552,
+      "complexityScore": 564,
       "riskScore": 40,
       "tagCount": 1,
       "tags": [

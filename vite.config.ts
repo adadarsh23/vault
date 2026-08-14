@@ -248,20 +248,36 @@ const createSafePreloadDepsPlugin = () => ({
         continue;
       }
 
-      if (!output.code.includes('modulepreload') || !output.code.includes('.map(')) {
+      if (
+        !output.code.includes('mapDeps') &&
+        !output.code.includes('modulepreload') &&
+        !output.code.includes('.map(')
+      ) {
         continue;
       }
 
-      // Some optimized builds emit preload dependency payloads that are not arrays.
-      // Coerce the payload defensively so preload never throws at runtime.
+      // 1. Guard __vite__mapDeps parameter from throwing on non-array input
       output.code = output.code.replace(
-        /if\((\w+)&&\1\.length>0\)\{let e=document\.getElementsByTagName\(`link`\)/g,
-        'if($1!=null&&($1=Array.isArray($1)?$1:[$1]).length>0){let e=document.getElementsByTagName(`link`)'
+        /__vite__mapDeps\s*=\s*\(([\w$]+)([^)]*)\)\s*=>\s*\1\.map\(/g,
+        '__vite__mapDeps=($1$2)=>(Array.isArray($1)?$1:[]).map('
       );
 
+      // 2. Coerce any preload helper deps checks: if(i&&i.length>0) or if(t&&t.length>0) or if(deps&&deps.length>0)
       output.code = output.code.replace(
-        /r=o\(t\.map\(/g,
-        't=Array.isArray(t)?t:t==null?[]:[t],r=o(t.map('
+        /if\s*\(\s*([a-zA-Z0-9_$]+)\s*&&\s*\1\.length(?:\s*>\s*0)?\s*\)\s*\{/g,
+        'if(Array.isArray($1)&&$1.length>0){'
+      );
+
+      // 3. Coerce any assignment like n = i.map(...) inside preload helper
+      output.code = output.code.replace(
+        /([a-zA-Z0-9_$]+)\s*=\s*([a-zA-Z0-9_$]+)\.map\(\s*([a-zA-Z0-9_$]+)\s*=>\s*\{/g,
+        '$1=(Array.isArray($2)?$2:[]).map($3=>{'
+      );
+
+      // 4. Coerce any r=o(t.map( or similar calls
+      output.code = output.code.replace(
+        /([a-zA-Z0-9_$]+)\s*=\s*([a-zA-Z0-9_$]+)\(\s*([a-zA-Z0-9_$]+)\.map\(/g,
+        '$1=$2((Array.isArray($3)?$3:[]).map('
       );
     }
   },
