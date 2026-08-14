@@ -18,7 +18,7 @@ const resolveMemoryOnlyTusUploads = (): boolean => {
 };
 
 const MEMORY_ONLY_TUS_UPLOADS = resolveMemoryOnlyTusUploads();
-const MAX_TUS_FILE_SIZE = Math.max(1, Number(process.env.MAX_FILE_SIZE_MB || 500) * 1024 * 1024);
+const MAX_TUS_FILE_SIZE = Math.max(1, Number(process.env.MAX_FILE_SIZE_MB || 4096) * 1024 * 1024);
 const TUS_SESSION_TTL_MS = Math.max(
   5 * 60 * 1000,
   Number(process.env.TUS_SESSION_TTL_MS || 2 * 60 * 60 * 1000)
@@ -56,9 +56,12 @@ const cleanupExpiredTusSessions = async () => {
   }
 };
 
-const tusCleanupInterval = setInterval(() => {
-  void cleanupExpiredTusSessions();
-}, 10 * 60 * 1000);
+const tusCleanupInterval = setInterval(
+  () => {
+    void cleanupExpiredTusSessions();
+  },
+  10 * 60 * 1000
+);
 tusCleanupInterval.unref();
 
 export const createTusUploadController = async (

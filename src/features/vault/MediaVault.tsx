@@ -135,7 +135,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
   const { searchQuery, setSearchQuery, filteredItems } = useVaultItems(type, currentFolder);
 
   const [itemsPerPage, setItemsPerPage] = useState(8);
-  const LARGE_MEDIA_DIRECT_UPLOAD_BYTES = 150 * 1024 * 1024;
+  const LARGE_MEDIA_DIRECT_UPLOAD_BYTES = 12 * 1024 * 1024;
   const MULTIPART_PARALLELISM = 3;
   const FILE_HASH_CHUNK_BYTES = 8 * 1024 * 1024;
 
@@ -176,9 +176,12 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
       data.byteOffset + data.byteLength
     ) as ArrayBuffer;
     const digest = await crypto.subtle.digest('SHA-256', digestInput);
-    return Array.from(new Uint8Array(digest))
-      .map((byte) => byte.toString(16).padStart(2, '0'))
-      .join('');
+    const uint8 = new Uint8Array(digest);
+    let hex = '';
+    for (let i = 0; i < uint8.length; i++) {
+      hex += uint8[i].toString(16).padStart(2, '0');
+    }
+    return hex;
   }, []);
 
   const sha256FileHexChunked = useCallback(async (file: File, chunkSize: number) => {
@@ -187,9 +190,12 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     }
     if (file.size === 0) {
       const emptyDigest = await crypto.subtle.digest('SHA-256', new Uint8Array(0));
-      return Array.from(new Uint8Array(emptyDigest))
-        .map((byte) => byte.toString(16).padStart(2, '0'))
-        .join('');
+      const uint8 = new Uint8Array(emptyDigest);
+      let hex = '';
+      for (let i = 0; i < uint8.length; i++) {
+        hex += uint8[i].toString(16).padStart(2, '0');
+      }
+      return hex;
     }
     const hasher = await createSHA256();
     hasher.init();
@@ -200,6 +206,10 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
       const chunkArrayBuffer = (await file.slice(start, end).arrayBuffer()) as ArrayBuffer;
       const chunkBuffer = new Uint8Array(chunkArrayBuffer);
       hasher.update(chunkBuffer);
+      // Yield to the browser event loop to prevent UI lag / freezing during large video hashing
+      if (i % 2 === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
     }
     return hasher.digest('hex');
   }, []);
@@ -530,6 +540,8 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
                   );
                   completedParts += 1;
                   updateProgress();
+                  // Yield to the event loop so progress toasts and animations update smoothly without jank
+                  await new Promise((resolve) => setTimeout(resolve, 0));
                 }
               };
 
@@ -600,8 +612,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
             ? new Uint8Array(await file.arrayBuffer())
             : await encryptFileInWorker(uploadFileObj, masterKey);
 
-          const dimensions =
-            type === 'photo' ? await getMediaDimensions(uploadFileObj, 'photo') : undefined;
+          const dimensions = await getMediaDimensions(uploadFileObj, type);
 
           await addItem(
             {

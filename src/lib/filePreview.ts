@@ -588,24 +588,43 @@ export const inferMimeTypeFromItem = (item: VaultItem): string | undefined => {
   }
 
   switch (ext) {
-    // Video
+    // Video (Full suite of 64 formats)
     case 'mp4':
     case 'm4v':
+    case 'f4p':
+    case 'f4a':
+    case 'f4b':
       return 'video/mp4';
     case 'mov':
     case 'qt':
       return 'video/quicktime';
+    case 'webm':
+      return 'video/webm';
     case 'mkv':
+    case 'mka':
+    case 'mks':
       return 'video/x-matroska';
     case 'avi':
     case 'divx':
+    case 'xvid':
       return 'video/x-msvideo';
     case 'wmv':
     case 'asf':
+    case 'asx':
       return 'video/x-ms-wmv';
+    case 'mpg':
+    case 'mpeg':
+    case 'mpe':
+    case 'mpv':
+    case 'm2v':
+    case 'm2p':
+    case 'dat':
+      return 'video/mpeg';
     case 'flv':
     case 'f4v':
       return 'video/x-flv';
+    case 'swf':
+      return 'application/x-shockwave-flash';
     case '3gp':
     case '3g2':
       return 'video/3gpp';
@@ -615,7 +634,54 @@ export const inferMimeTypeFromItem = (item: VaultItem): string | undefined => {
     case 'ts':
     case 'mts':
     case 'm2ts':
+    case 'lxf':
+    case 'evo':
+    case 'mod':
+    case 'tod':
       return 'video/mp2t';
+    case 'vob':
+      return 'video/dvd';
+    case 'rm':
+      return 'application/vnd.rn-realmedia';
+    case 'rmvb':
+      return 'application/vnd.rn-realmedia-vbr';
+    case 'rv':
+      return 'video/vnd.rn-realvideo';
+    case 'mxf':
+      return 'application/mxf';
+    case 'gxf':
+      return 'application/gxf';
+    case 'nut':
+      return 'video/x-nut';
+    case 'dv':
+    case 'dif':
+      return 'video/x-dv';
+    case 'y4m':
+      return 'video/x-yuv4mpeg';
+    case 'h264':
+    case '264':
+      return 'video/h264';
+    case 'h265':
+    case '265':
+    case 'hevc':
+      return 'video/h265';
+    case 'av1':
+      return 'video/av1';
+    case 'vp8':
+      return 'video/x-vnd.on2.vp8';
+    case 'vp9':
+      return 'video/x-vnd.on2.vp9';
+    case 'r3d':
+      return 'video/x-r3d';
+    case 'braw':
+      return 'video/x-braw';
+    case 'cine':
+    case 'ari':
+    case 'arx':
+      return 'application/octet-stream';
+    case 'mjp2':
+    case 'mj2':
+      return 'video/mj2';
 
     // Photo / Image
     case 'png':

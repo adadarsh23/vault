@@ -1394,7 +1394,7 @@ export const OtherFilesVault: React.FC = () => {
     await handleUploadFiles(files, uploadTargetFolder.current);
   };
 
-  // High-performance concurrent multi-file uploading with Web Worker E2EE and memory-adaptive concurrency
+  // High-performance concurrent multi-file uploading with Web Worker E2EE, throttled progress updates, and event-loop yielding
   const handleUploadFiles = async (files: File[], targetFolder: string | null) => {
     if (!files.length || !masterKey) return;
 
@@ -1412,14 +1412,14 @@ export const OtherFilesVault: React.FC = () => {
     setIsUploading(true);
     const total = validFiles.length;
 
-    // Adaptive concurrency to avoid memory exhaustion on large file uploads
-    const hasLargeFiles = validFiles.some((f) => f.file.size > 50 * 1024 * 1024);
-    const hasMediumFiles = validFiles.some((f) => f.file.size > 15 * 1024 * 1024);
+    // Adaptive concurrency to avoid memory exhaustion and main thread choking on large file uploads
+    const hasLargeFiles = validFiles.some((f) => f.file.size > 25 * 1024 * 1024);
+    const hasMediumFiles = validFiles.some((f) => f.file.size > 8 * 1024 * 1024);
     const CONCURRENCY = hasLargeFiles
       ? 1
       : hasMediumFiles
         ? Math.min(2, total)
-        : Math.min(4, total);
+        : Math.min(2, total);
 
     const batchToastId = toast.loading(
       total === 1
@@ -1430,18 +1430,41 @@ export const OtherFilesVault: React.FC = () => {
     let completedCount = 0;
     let successCount = 0;
     let failedCount = 0;
+    let lastToastUpdateTime = 0;
+    const THROTTLE_MS = 250;
+
+    const throttledToastUpdate = (msg: string, force = false) => {
+      const now = performance.now();
+      if (force || now - lastToastUpdateTime > THROTTLE_MS) {
+        lastToastUpdateTime = now;
+        toast.loading(msg, { id: batchToastId });
+      }
+    };
+
+    const yieldToMainThread = async () => {
+      await new Promise<void>((resolve) => {
+        if (typeof requestAnimationFrame !== 'undefined') {
+          requestAnimationFrame(() => resolve());
+        } else {
+          setTimeout(resolve, 0);
+        }
+      });
+    };
 
     const processFile = async (itemObj: { file: File; targetFolder: string | null }) => {
       const { file, targetFolder: itemFolder } = itemObj;
       try {
+        await yieldToMainThread();
         if (total === 1) {
-          toast.loading(`Encrypting "${file.name}" (${formatBytes(file.size)})...`, {
-            id: batchToastId,
-          });
+          throttledToastUpdate(`Encrypting "${file.name}" (${formatBytes(file.size)})...`, true);
+        } else {
+          throttledToastUpdate(`[${completedCount + 1}/${total}] Encrypting "${file.name}"...`);
         }
 
         const encryptedData = await encryptFileInWorker(file, masterKey);
         const fileExt = file.name.split('.').pop()?.toUpperCase() || 'FILE';
+
+        await yieldToMainThread();
 
         await addItem(
           {
@@ -1459,11 +1482,10 @@ export const OtherFilesVault: React.FC = () => {
           },
           (progress: number) => {
             if (total === 1) {
-              toast.loading(`Uploading "${file.name}" (${progress}%)...`, { id: batchToastId });
+              throttledToastUpdate(`Uploading "${file.name}" (${progress}%)...`);
             } else {
-              toast.loading(
-                `[${completedCount + 1}/${total}] Uploading "${file.name}" (${progress}%)...`,
-                { id: batchToastId }
+              throttledToastUpdate(
+                `[${completedCount + 1}/${total}] Uploading "${file.name}" (${progress}%)...`
               );
             }
           }
@@ -1487,10 +1509,9 @@ export const OtherFilesVault: React.FC = () => {
       } finally {
         completedCount++;
         if (total > 1 && completedCount < total) {
-          toast.loading(`Encrypting & uploading ${completedCount}/${total} files...`, {
-            id: batchToastId,
-          });
+          throttledToastUpdate(`Encrypting & uploading ${completedCount}/${total} files...`, true);
         }
+        await yieldToMainThread();
       }
     };
 

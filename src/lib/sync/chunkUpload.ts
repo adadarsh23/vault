@@ -197,9 +197,11 @@ const detectChunkSizeBytes = (totalSize: number) => {
 const calculateChunkHash = async (chunk: Uint8Array): Promise<string> => {
   const hashBuffer = await crypto.subtle.digest('SHA-256', new Uint8Array(chunk));
   const bytes = new Uint8Array(hashBuffer);
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  let hex = '';
+  for (let i = 0; i < bytes.length; i++) {
+    hex += bytes[i].toString(16).padStart(2, '0');
+  }
+  return hex;
 };
 
 export const uploadBinaryInChunks = async (
@@ -317,6 +319,7 @@ export const uploadBinaryInChunks = async (
       if (onProgress) {
         onProgress(Math.round((completedCount / chunkCount) * 100));
       }
+      await new Promise((resolve) => setTimeout(resolve, 0));
     }
   };
 

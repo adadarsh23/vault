@@ -1,7 +1,7 @@
 {
   "requestedUrl": "http://127.0.0.1:4173/",
   "finalUrl": "http://127.0.0.1:4173/",
-  "fetchTime": "2026-08-14T19:11:57.643Z",
+  "fetchTime": "2026-08-14T20:32:08.833Z",
   "category": {
     "title": "Best Practices",
     "supportedModes": [
@@ -608,7 +608,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-DVUn8Gi6.js",
+              "url": "http://127.0.0.1:4173/assets/index-DsUp9G6n.js",
               "urlProvider": "network",
               "line": 1,
               "column": 5309
@@ -1142,7 +1142,7 @@
               "type": "source-location",
               "url": "http://127.0.0.1:4173/",
               "urlProvider": "network",
-              "line": 232,
+              "line": 237,
               "column": 0
             }
           },
@@ -1638,8 +1638,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/vaultStore-D5MW9y18.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultStore-D5MW9y18.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/vaultStore-CRK_0EQ0.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultStore-CRK_0EQ0.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1766,8 +1766,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-CXNbCzax.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-CXNbCzax.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-CFlrospc.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-CFlrospc.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1798,8 +1798,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/index-DVUn8Gi6.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-DVUn8Gi6.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/index-DsUp9G6n.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-DsUp9G6n.js.map",
             "subItems": {
               "type": "subitems",
               "items": []

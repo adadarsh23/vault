@@ -1,7 +1,7 @@
 import multer from 'multer';
 import { AppError } from './appError.ts';
 const uploadRoot = 'cloud-only';
-const maxFileSize = Number(process.env.MAX_FILE_SIZE_MB || 500) * 1024 * 1024;
+const maxFileSize = Number(process.env.MAX_FILE_SIZE_MB || 4096) * 1024 * 1024;
 export const maxUploadFileSizeBytes = maxFileSize;
 
 const photoExtensions = new Set([

@@ -85,8 +85,10 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.CSRF_TOKEN_INVALID]: 'Security token expired or invalid. Please refresh the page.',
   [ErrorCode.PAYLOAD_TOO_LARGE]: 'Uploaded file or payload exceeds the allowed size limit.',
   [ErrorCode.INVALID_ID]: 'Invalid resource identifier specified.',
-  [ErrorCode.SERVER_OVERLOADED]: 'Server is currently experiencing high load. Please try again shortly.',
-  [ErrorCode.DB_UNAVAILABLE]: 'Vault cloud storage is temporarily unavailable. Please retry shortly.',
+  [ErrorCode.SERVER_OVERLOADED]:
+    'Server is currently experiencing high load. Please try again shortly.',
+  [ErrorCode.DB_UNAVAILABLE]:
+    'Vault cloud storage is temporarily unavailable. Please retry shortly.',
   [ErrorCode.NETWORK_ERROR]: 'Network error occurred. Please try again.',
   [ErrorCode.UNKNOWN]: 'An unexpected error occurred.',
 };
