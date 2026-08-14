@@ -176,7 +176,16 @@ const normalizeScopedCategory = (category: string) => {
     return 'locations';
   }
 
-  if (normalized === 'otherfile' || normalized === 'otherfiles') {
+  if (
+    normalized === 'file' ||
+    normalized === 'files' ||
+    normalized === 'other' ||
+    normalized === 'otherfile' ||
+    normalized === 'otherfiles' ||
+    normalized === 'other_file' ||
+    normalized === 'other_files' ||
+    normalized === 'other-files'
+  ) {
     return 'files';
   }
 

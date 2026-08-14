@@ -486,7 +486,12 @@ export const decryptFileE2EE = async (
       finalMimeType = detected;
     }
 
-    const blob = new Blob([decrypted], { type: finalMimeType || 'application/octet-stream' });
+    const normalizedBlobMime =
+      finalMimeType === 'video/quicktime'
+        ? 'video/mp4'
+        : finalMimeType || 'application/octet-stream';
+
+    const blob = new Blob([decrypted], { type: normalizedBlobMime });
     return URL.createObjectURL(blob);
   } catch (error) {
     handleError(error, 'E2EE File Decryption');
@@ -546,6 +551,308 @@ export const encryptFile = async (
 export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {
   if (!bytes || bytes.length < 4) return 'application/octet-stream';
 
+  // PDF: %PDF-
+  if (
+    bytes.length >= 5 &&
+    bytes[0] === 0x25 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x44 &&
+    bytes[3] === 0x46 &&
+    bytes[4] === 0x2d
+  ) {
+    return 'application/pdf';
+  }
+
+  // FDF: %FDF-
+  if (
+    bytes.length >= 5 &&
+    bytes[0] === 0x25 &&
+    bytes[1] === 0x46 &&
+    bytes[2] === 0x44 &&
+    bytes[3] === 0x46 &&
+    bytes[4] === 0x2d
+  ) {
+    return 'application/vnd.fdf';
+  }
+
+  // RTF: {\rtf
+  if (
+    bytes.length >= 5 &&
+    bytes[0] === 0x7b &&
+    bytes[1] === 0x5c &&
+    bytes[2] === 0x72 &&
+    bytes[3] === 0x74 &&
+    bytes[4] === 0x66
+  ) {
+    return 'application/rtf';
+  }
+
+  // 7-Zip: 7z\xBC\xAF\x27\x1C
+  if (
+    bytes.length >= 6 &&
+    bytes[0] === 0x37 &&
+    bytes[1] === 0x7a &&
+    bytes[2] === 0xbc &&
+    bytes[3] === 0xaf &&
+    bytes[4] === 0x27 &&
+    bytes[5] === 0x1c
+  ) {
+    return 'application/x-7z-compressed';
+  }
+
+  // RAR: Rar!\x1A\x07
+  if (
+    bytes.length >= 6 &&
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x61 &&
+    bytes[2] === 0x72 &&
+    bytes[3] === 0x21 &&
+    bytes[4] === 0x1a &&
+    bytes[5] === 0x07
+  ) {
+    return 'application/vnd.rar';
+  }
+
+  // GZIP: 0x1F 0x8B
+  if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
+    return 'application/gzip';
+  }
+
+  // BZIP2: BZh
+  if (bytes.length >= 3 && bytes[0] === 0x42 && bytes[1] === 0x5a && bytes[2] === 0x68) {
+    return 'application/x-bzip2';
+  }
+
+  // XZ: \xFD7zXZ\x00
+  if (
+    bytes.length >= 6 &&
+    bytes[0] === 0xfd &&
+    bytes[1] === 0x37 &&
+    bytes[2] === 0x7a &&
+    bytes[3] === 0x58 &&
+    bytes[4] === 0x5a &&
+    bytes[5] === 0x00
+  ) {
+    return 'application/x-xz';
+  }
+
+  // CHM (Microsoft Compiled HTML Help): ITSF
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x49 &&
+    bytes[1] === 0x54 &&
+    bytes[2] === 0x53 &&
+    bytes[3] === 0x46
+  ) {
+    return 'application/vnd.ms-htmlhelp';
+  }
+
+  // DjVu: AT&TFORM....DJVU
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x41 &&
+    bytes[1] === 0x54 &&
+    bytes[2] === 0x26 &&
+    bytes[3] === 0x54 &&
+    bytes[4] === 0x46 &&
+    bytes[5] === 0x4f &&
+    bytes[6] === 0x52 &&
+    bytes[7] === 0x4d &&
+    bytes[8] === 0x44 &&
+    bytes[9] === 0x4a &&
+    bytes[10] === 0x56 &&
+    bytes[11] === 0x55
+  ) {
+    return 'image/vnd.djvu';
+  }
+
+  // ZIP / OpenXML Office / EPUB: PK\x03\x04
+  if (
+    bytes[0] === 0x50 &&
+    bytes[1] === 0x4b &&
+    (bytes[2] === 0x03 || bytes[2] === 0x05) &&
+    (bytes[3] === 0x04 || bytes[3] === 0x06)
+  ) {
+    // Check if EPUB
+    if (bytes.length >= 58) {
+      const headerStr = String.fromCharCode(...bytes.slice(0, 60));
+      if (headerStr.includes('mimetypeapplication/epub+zip')) {
+        return 'application/epub+zip';
+      }
+    }
+    return 'application/zip';
+  }
+
+  // JPEG: 0xFF 0xD8 0xFF
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return 'image/jpeg';
+  }
+
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    bytes.length >= 8 &&
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47 &&
+    bytes[4] === 0x0d &&
+    bytes[5] === 0x0a &&
+    bytes[6] === 0x1a &&
+    bytes[7] === 0x0a
+  ) {
+    return 'image/png';
+  }
+
+  // GIF: GIF87a / GIF89a
+  if (
+    bytes.length >= 6 &&
+    bytes[0] === 0x47 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x38 &&
+    (bytes[4] === 0x37 || bytes[4] === 0x39) &&
+    bytes[5] === 0x61
+  ) {
+    return 'image/gif';
+  }
+
+  // BMP / DIB: BM
+  if (bytes[0] === 0x42 && bytes[1] === 0x4d) {
+    return 'image/bmp';
+  }
+
+  // WebP: RIFF....WEBP
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50
+  ) {
+    return 'image/webp';
+  }
+
+  // TIFF / RAW: II*\0 or MM\0*
+  if (
+    bytes.length >= 4 &&
+    ((bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 0x2a && bytes[3] === 0x00) ||
+      (bytes[0] === 0x4d && bytes[1] === 0x4d && bytes[2] === 0x00 && bytes[3] === 0x2a))
+  ) {
+    return 'image/tiff';
+  }
+
+  // Photoshop PSD: 8BPS
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x38 &&
+    bytes[1] === 0x42 &&
+    bytes[2] === 0x50 &&
+    bytes[3] === 0x53
+  ) {
+    return 'image/vnd.adobe.photoshop';
+  }
+
+  // ICO / CUR
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x00 &&
+    bytes[1] === 0x00 &&
+    (bytes[2] === 0x01 || bytes[2] === 0x02) &&
+    bytes[3] === 0x00
+  ) {
+    return 'image/x-icon';
+  }
+
+  // JPEG 2000 (JP2, J2K)
+  if (
+    (bytes.length >= 8 &&
+      bytes[0] === 0x00 &&
+      bytes[1] === 0x00 &&
+      bytes[2] === 0x00 &&
+      bytes[3] === 0x0c &&
+      bytes[4] === 0x6a &&
+      bytes[5] === 0x50) ||
+    (bytes.length >= 4 &&
+      bytes[0] === 0xff &&
+      bytes[1] === 0x4f &&
+      bytes[2] === 0xff &&
+      bytes[3] === 0x51)
+  ) {
+    return 'image/jp2';
+  }
+
+  // JPEG XR (JXR, HDP, WDP)
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x49 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0xbc &&
+    (bytes[3] === 0x01 || bytes[3] === 0x00)
+  ) {
+    return 'image/jxr';
+  }
+
+  // DirectDraw Surface (DDS)
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x44 &&
+    bytes[1] === 0x44 &&
+    bytes[2] === 0x53 &&
+    bytes[3] === 0x20
+  ) {
+    return 'image/vnd-ms.dds';
+  }
+
+  // OpenEXR
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x76 &&
+    bytes[1] === 0x2f &&
+    bytes[2] === 0x31 &&
+    bytes[3] === 0x01
+  ) {
+    return 'image/x-exr';
+  }
+
+  // Radiance HDR
+  if (
+    bytes.length >= 10 &&
+    bytes[0] === 0x23 &&
+    bytes[1] === 0x3f &&
+    (bytes[2] === 0x52 || bytes[2] === 0x72)
+  ) {
+    return 'image/vnd.radiance';
+  }
+
+  // Apple ICNS
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x69 &&
+    bytes[1] === 0x63 &&
+    bytes[2] === 0x6e &&
+    bytes[3] === 0x73
+  ) {
+    return 'image/x-icns';
+  }
+
+  // SVG: <svg or <?xml
+  if (bytes.length >= 5) {
+    const textStart = String.fromCharCode(...bytes.slice(0, Math.min(bytes.length, 100)))
+      .trim()
+      .toLowerCase();
+    if (
+      textStart.startsWith('<svg') ||
+      textStart.startsWith('<?xml') ||
+      textStart.includes('<svg')
+    ) {
+      return 'image/svg+xml';
+    }
+  }
+
   // ID3v2 for MP3: 0x49 0x44 0x33 ("ID3")
   if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
     return 'audio/mpeg';
@@ -585,7 +892,20 @@ export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {
     return 'audio/flac';
   }
 
-  // ISO Media / MP4 / M4A / QuickTime: "ftyp" at index 4
+  // AIFF container: "FORM....AIFF" or "FORM....AIFC"
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x46 &&
+    bytes[1] === 0x4f &&
+    bytes[2] === 0x52 &&
+    bytes[3] === 0x4d &&
+    ((bytes[8] === 0x41 && bytes[9] === 0x49 && bytes[10] === 0x46 && bytes[11] === 0x46) ||
+      (bytes[8] === 0x41 && bytes[9] === 0x49 && bytes[10] === 0x46 && bytes[11] === 0x43))
+  ) {
+    return 'audio/aiff';
+  }
+
+  // ISO Media / MP4 / M4A / QuickTime / AVIF / HEIC: "ftyp" at index 4
   if (
     bytes.length >= 12 &&
     bytes[4] === 0x66 &&
@@ -597,15 +917,218 @@ export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {
     if (brand.includes('m4a') || brand.includes('m4b')) {
       return 'audio/mp4';
     }
-    if (brand.includes('qt')) {
-      return 'video/quicktime';
+    if (brand.includes('avif') || brand.includes('avis')) {
+      return 'image/avif';
     }
+    if (
+      brand.includes('heic') ||
+      brand.includes('heix') ||
+      brand.includes('hevc') ||
+      brand.includes('hevx') ||
+      brand.includes('heif') ||
+      brand.includes('mif1')
+    ) {
+      return 'image/heic';
+    }
+    // QuickTime (MOV) is standard ISO media. Use video/mp4 for cross-browser HTML5 video support.
     return 'video/mp4';
   }
 
   // WebM / MKV (Matroska): 1A 45 DF A3
   if (bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) {
+    const headerStr = String.fromCharCode(
+      ...bytes.slice(0, Math.min(bytes.length, 80))
+    ).toLowerCase();
+    if (headerStr.includes('matroska')) {
+      return 'video/x-matroska';
+    }
     return 'video/webm';
+  }
+
+  // AMR: "#!AMR\n" or "#!AMR-WB\n"
+  if (
+    bytes.length >= 6 &&
+    bytes[0] === 0x23 &&
+    bytes[1] === 0x21 &&
+    bytes[2] === 0x41 &&
+    bytes[3] === 0x4d &&
+    bytes[4] === 0x52
+  ) {
+    if (bytes.length >= 9 && bytes[5] === 0x2d && bytes[6] === 0x57 && bytes[7] === 0x42) {
+      return 'audio/amr-wb';
+    }
+    return 'audio/amr';
+  }
+
+  // AU / SND: ".snd" (0x2E 0x73 0x6E 0x64)
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x2e &&
+    bytes[1] === 0x73 &&
+    bytes[2] === 0x6e &&
+    bytes[3] === 0x64
+  ) {
+    return 'audio/basic';
+  }
+
+  // Creative Voice (VOC): "Creative Voice File\x1A"
+  if (
+    bytes.length >= 19 &&
+    bytes[0] === 0x43 &&
+    bytes[1] === 0x72 &&
+    bytes[2] === 0x65 &&
+    bytes[3] === 0x61 &&
+    bytes[4] === 0x74 &&
+    bytes[5] === 0x69 &&
+    bytes[6] === 0x76 &&
+    bytes[7] === 0x65
+  ) {
+    return 'audio/x-voc';
+  }
+
+  // RealAudio: ".RMF" or ".ra\xFD"
+  if (
+    (bytes.length >= 4 &&
+      bytes[0] === 0x2e &&
+      bytes[1] === 0x52 &&
+      bytes[2] === 0x4d &&
+      bytes[3] === 0x46) ||
+    (bytes.length >= 4 &&
+      bytes[0] === 0x2e &&
+      bytes[1] === 0x72 &&
+      bytes[2] === 0x61 &&
+      bytes[3] === 0xfd)
+  ) {
+    return 'audio/x-pn-realaudio';
+  }
+
+  // AC3 / Dolby Digital: 0x0B 0x77
+  if (bytes.length >= 2 && bytes[0] === 0x0b && bytes[1] === 0x77) {
+    return 'audio/ac3';
+  }
+
+  // DTS: 0x7F 0xFE 0x80 0x01
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x7f &&
+    bytes[1] === 0xfe &&
+    bytes[2] === 0x80 &&
+    bytes[3] === 0x01
+  ) {
+    return 'audio/vnd.dts';
+  }
+
+  // DSD / DSF: "DSD " (0x44 0x53 0x44 0x20)
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x44 &&
+    bytes[1] === 0x53 &&
+    bytes[2] === 0x44 &&
+    bytes[3] === 0x20
+  ) {
+    return 'audio/x-dsd';
+  }
+
+  // WavPack (WV): "wvpk" (0x77 0x76 0x70 0x6B)
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x77 &&
+    bytes[1] === 0x76 &&
+    bytes[2] === 0x70 &&
+    bytes[3] === 0x6b
+  ) {
+    return 'audio/x-wavpack';
+  }
+
+  // Monkey's Audio (APE): "MAC " (0x4D 0x41 0x43 0x20)
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x4d &&
+    bytes[1] === 0x41 &&
+    bytes[2] === 0x43 &&
+    bytes[3] === 0x20
+  ) {
+    return 'audio/x-ape';
+  }
+
+  // TAK Audio: "tBaK" (0x74 0x42 0x61 0x4B)
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x74 &&
+    bytes[1] === 0x42 &&
+    bytes[2] === 0x61 &&
+    bytes[3] === 0x4b
+  ) {
+    return 'audio/x-tak';
+  }
+
+  // TTA Audio: "TTA1" (0x54 0x54 0x41 0x31)
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x54 &&
+    bytes[1] === 0x54 &&
+    bytes[2] === 0x41 &&
+    bytes[3] === 0x31
+  ) {
+    return 'audio/x-tta';
+  }
+
+  // Musepack (MPC): "MPCK" or "MP+"
+  if (
+    (bytes.length >= 4 &&
+      bytes[0] === 0x4d &&
+      bytes[1] === 0x50 &&
+      bytes[2] === 0x43 &&
+      bytes[3] === 0x4b) ||
+    (bytes.length >= 3 && bytes[0] === 0x4d && bytes[1] === 0x50 && bytes[2] === 0x2b)
+  ) {
+    return 'audio/x-musepack';
+  }
+
+  // Core Audio Format (CAF): "caff" (0x63 0x61 0x66 0x66)
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x63 &&
+    bytes[1] === 0x61 &&
+    bytes[2] === 0x66 &&
+    bytes[3] === 0x66
+  ) {
+    return 'audio/x-caf';
+  }
+
+  // MIDI: "MThd" (0x4D 0x54 0x68 0x64)
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x4d &&
+    bytes[1] === 0x54 &&
+    bytes[2] === 0x68 &&
+    bytes[3] === 0x64
+  ) {
+    return 'audio/midi';
+  }
+
+  // Tracker modules: FastTracker II (Extended Module:) or Impulse Tracker (IMPM) or Scream Tracker (SCRM)
+  if (
+    bytes.length >= 17 &&
+    bytes[0] === 0x45 &&
+    bytes[1] === 0x78 &&
+    bytes[2] === 0x74 &&
+    bytes[3] === 0x65 &&
+    bytes[4] === 0x6e &&
+    bytes[5] === 0x64 &&
+    bytes[6] === 0x65 &&
+    bytes[7] === 0x64
+  ) {
+    return 'audio/x-xm';
+  }
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x49 &&
+    bytes[1] === 0x4d &&
+    bytes[2] === 0x50 &&
+    bytes[3] === 0x4d
+  ) {
+    return 'audio/x-it';
   }
 
   return 'application/octet-stream';
@@ -667,20 +1190,34 @@ export const decryptToFile = async (
 
     let finalMimeType = mimeType;
     const detected = detectMimeTypeFromBytes(new Uint8Array(decrypted));
-    const detectedIsMedia = detected.startsWith('audio/') || detected.startsWith('video/');
+    const detectedIsMedia =
+      detected.startsWith('audio/') ||
+      detected.startsWith('video/') ||
+      detected.startsWith('image/');
     if (
       detected !== 'application/octet-stream' &&
       (!finalMimeType ||
         finalMimeType === 'application/octet-stream' ||
         (detectedIsMedia &&
-          (finalMimeType.startsWith('audio/') || finalMimeType.startsWith('video/')) &&
-          finalMimeType !== detected) ||
-        (finalMimeType === 'audio/mpeg' && detected !== 'audio/mpeg'))
+          (finalMimeType.startsWith('audio/') ||
+            finalMimeType.startsWith('video/') ||
+            finalMimeType.startsWith('image/')) &&
+          finalMimeType !== detected &&
+          !(finalMimeType.startsWith('audio/') && detected === 'video/webm')) ||
+        (finalMimeType === 'audio/mpeg' && detected !== 'audio/mpeg') ||
+        (finalMimeType === 'image/jpeg' &&
+          detected.startsWith('image/') &&
+          detected !== 'image/jpeg'))
     ) {
       finalMimeType = detected;
     }
 
-    const blob = new Blob([decrypted], { type: finalMimeType || 'application/octet-stream' });
+    const normalizedBlobMime =
+      finalMimeType === 'video/quicktime'
+        ? 'video/mp4'
+        : finalMimeType || 'application/octet-stream';
+
+    const blob = new Blob([decrypted], { type: normalizedBlobMime });
     return URL.createObjectURL(blob);
   } catch (error) {
     handleError(error, 'File Decryption Service');

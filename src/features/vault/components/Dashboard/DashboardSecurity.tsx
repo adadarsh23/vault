@@ -317,7 +317,7 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
             )}
           </div>
         </CardHeader>
-        <CardContent className="flex h-[360px] flex-col p-4 sm:h-[450px] sm:px-6">
+        <CardContent className="flex h-[380px] sm:h-[460px] flex-col min-h-0 p-3 sm:p-6 overflow-hidden">
           <RecentActivityPanel />
         </CardContent>
       </Card>

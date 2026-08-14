@@ -37,21 +37,9 @@ import {
   renderMessageText,
 } from './utils';
 
-const IMAGE_EXTENSIONS = new Set([
-  'png',
-  'jpg',
-  'jpeg',
-  'gif',
-  'webp',
-  'svg',
-  'avif',
-  'bmp',
-  'ico',
-  'heic',
-  'heif',
-  'tif',
-  'tiff',
-]);
+import { PHOTO_FILE_EXTENSIONS } from '../../../../lib/fileHandling';
+
+const IMAGE_EXTENSIONS = new Set<string>(PHOTO_FILE_EXTENSIONS.map((ext) => ext.toLowerCase()));
 
 const IMAGE_FORMAT_HINT_KEYS = ['format', 'fm', 'ext', 'mime', 'type'];
 

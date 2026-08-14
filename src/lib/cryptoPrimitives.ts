@@ -294,30 +294,40 @@ export const encryptFileInWorker = async (
     return encryptFile(file, secretKey);
   }
 
-  const fileBuffer = await file.arrayBuffer();
-  const worker = new Worker(new URL('../workers/encrypt-file.worker.ts', import.meta.url), {
-    type: 'module',
-  });
-
   try {
-    const encrypted = await new Promise<Uint8Array>((resolve, reject) => {
-      worker.onmessage = (event: MessageEvent) => {
-        const data = event.data as
-          { ok: true; encryptedBuffer: ArrayBuffer } | { ok: false; error?: string };
-        if (data?.ok) {
-          resolve(new Uint8Array(data.encryptedBuffer));
-        } else {
-          reject(new Error(data?.error || 'Worker encryption failed'));
-        }
-      };
-      worker.onerror = (event) => {
-        reject(new Error(event.message || 'Worker encryption failed'));
-      };
-      worker.postMessage({ fileBuffer, secretKey }, [fileBuffer]);
+    const fileBuffer = await file.arrayBuffer();
+    const worker = new Worker(new URL('../workers/encrypt-file.worker.ts', import.meta.url), {
+      type: 'module',
     });
-    return encrypted;
-  } finally {
-    worker.terminate();
+
+    try {
+      const encrypted = await new Promise<Uint8Array>((resolve, reject) => {
+        worker.onmessage = (event: MessageEvent) => {
+          const data = event.data as
+            { ok: true; encryptedBuffer: ArrayBuffer } | { ok: false; error?: string };
+          if (data?.ok) {
+            resolve(new Uint8Array(data.encryptedBuffer));
+          } else {
+            reject(new Error(data?.error || 'Worker encryption failed'));
+          }
+        };
+        worker.onerror = (event) => {
+          reject(new Error(event.message || 'Worker encryption failed'));
+        };
+        worker.postMessage({ fileBuffer, secretKey }, [fileBuffer]);
+      });
+      return encrypted;
+    } finally {
+      worker.terminate();
+    }
+  } catch (err) {
+    if (import.meta.env.DEV) {
+      console.warn(
+        '[encryptFileInWorker] Worker failed, falling back to main-thread encryption:',
+        err
+      );
+    }
+    return encryptFile(file, secretKey);
   }
 };
 

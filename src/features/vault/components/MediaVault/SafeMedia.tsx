@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import VideoPlayer from '../../../../components/ui/video-player';
 import { Button } from '../../../../components/ui/Button';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, Video } from 'lucide-react';
 import { useVaultStore } from '../../../../store/vaultStore';
 import { cn } from '../../../../lib/utils';
 import {
@@ -136,6 +136,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
     const [url, setUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [thumbnailError, setThumbnailError] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [isNearViewport, setIsNearViewport] = useState(!isThumbnail);
     const managedBlobRef = useRef<string | null>(null);
@@ -391,9 +392,62 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
     ]);
 
     const onImgError = () => {
+      const ext = (item.title?.split('.').pop() || '').toUpperCase();
       if (isHeicMime) {
         setErrorMessage(
           'HEIC preview is not supported in this browser. Use download to view or convert this file.'
+        );
+        return;
+      }
+      const rawOrSpecialized = [
+        'PSD',
+        'RAW',
+        'CR2',
+        'CR3',
+        'NEF',
+        'NRW',
+        'ARW',
+        'SR2',
+        'SRF',
+        'RAF',
+        'ORF',
+        'RW2',
+        'PEF',
+        'DNG',
+        'X3F',
+        '3FR',
+        'FFF',
+        'IIQ',
+        'ERF',
+        'KDC',
+        'MEF',
+        'MOS',
+        'MRW',
+        'RWL',
+        'DCR',
+        'BAY',
+        'GPR',
+        'JP2',
+        'J2K',
+        'JPF',
+        'JPM',
+        'JXR',
+        'HDP',
+        'WDP',
+        'DDS',
+        'EXR',
+        'HDR',
+        'PIC',
+        'PCT',
+        'PCX',
+        'TGA',
+        'ICNS',
+        'TIF',
+        'TIFF',
+      ];
+      if (rawOrSpecialized.includes(ext)) {
+        setErrorMessage(
+          `${ext} image is securely preserved. Download the file to view in full resolution.`
         );
         return;
       }
@@ -462,6 +516,18 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
 
     if (type === 'video') {
       if (isThumbnail) {
+        if (thumbnailError) {
+          return (
+            <div
+              className={cn(
+                'flex items-center justify-center bg-black/40 text-white/40',
+                className
+              )}
+            >
+              <Video className="w-8 h-8 opacity-60" />
+            </div>
+          );
+        }
         return (
           <video
             ref={mediaElementRef as React.RefObject<HTMLVideoElement>}
@@ -471,6 +537,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
             playsInline
             preload="metadata"
             aria-label="Video thumbnail"
+            onError={() => setThumbnailError(true)}
             onLoadedMetadata={(e) => {
               const v = e.currentTarget;
               if (v.videoWidth && v.videoHeight && onAspectRatioLoaded) {
@@ -484,7 +551,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
       return (
         <div
           className={cn(
-            'relative flex items-center justify-center max-w-full max-h-full',
+            'relative flex items-center justify-center w-full h-full max-w-full max-h-full',
             className
           )}
         >
@@ -498,6 +565,8 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
             lowDataMode={lowDataMode}
             networkAwareAutoplay={networkAwareAutoplay}
             showPerformanceHud={performanceHud}
+            allowDownload={true}
+            className="w-full h-full"
           />
         </div>
       );

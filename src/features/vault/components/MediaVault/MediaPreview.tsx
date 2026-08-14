@@ -54,6 +54,13 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   const closeRequestedRef = useRef(false);
 
   const stopActiveMediaImmediately = useCallback(() => {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } })
+      );
+    } catch {
+      // Ignore event dispatch failure
+    }
     const root = modalRef.current;
     if (!root) return;
 

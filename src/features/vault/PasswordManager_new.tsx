@@ -38,6 +38,7 @@ import { sortPinnedFirst } from '../../lib/pinning';
 
 import { FolderSidebar } from '../../components/vault/FolderSidebar';
 import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
+import { TagManager } from '../../components/vault/TagManager';
 import { useVaultFolders } from '../../hooks/useVaultFolders';
 import {
   generateSecurePassword,
@@ -371,8 +372,6 @@ const DecryptedPasswordCard: React.FC<{
   const { copy, copiedId } = useClipboard();
 
   const updateItem = useVaultStore((state) => state.updateItem);
-  const [isAddingTag, setIsAddingTag] = useState(false);
-  const [newTagInput, setNewTagInput] = useState('');
 
   // 2FA TOTP states
   const [totpCode, setTotpCode] = useState<string>('');
@@ -583,48 +582,6 @@ const DecryptedPasswordCard: React.FC<{
 
   const formattedCode =
     totpCode.length === 6 ? `${totpCode.slice(0, 3)} ${totpCode.slice(3)}` : totpCode;
-
-  const tags = useMemo<string[]>(() => {
-    return Array.isArray(item.metadata?.tags) ? item.metadata.tags : [];
-  }, [item]);
-
-  const handleAddTag = async () => {
-    const cleaned = newTagInput
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9-_]/g, '');
-    if (!cleaned) {
-      setIsAddingTag(false);
-      setNewTagInput('');
-      return;
-    }
-    if (tags.includes(cleaned)) {
-      toast.error('Tag already exists');
-      setIsAddingTag(false);
-      setNewTagInput('');
-      return;
-    }
-    const updated = [...tags, cleaned];
-    try {
-      await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } });
-      toast.success(`Tag #${cleaned} added`);
-    } catch {
-      toast.error('Failed to add tag');
-    } finally {
-      setIsAddingTag(false);
-      setNewTagInput('');
-    }
-  };
-
-  const handleRemoveTag = async (tagToRemove: string) => {
-    const updated = tags.filter((t) => t !== tagToRemove);
-    try {
-      await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } });
-      toast.success(`Tag #${tagToRemove} removed`);
-    } catch {
-      toast.error('Failed to remove tag');
-    }
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -1026,45 +983,8 @@ const DecryptedPasswordCard: React.FC<{
               </div>
 
               {/* Tags section */}
-              <div className="space-y-1 border-t border-white/5 pt-3 mt-4">
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  {tags.map((tag: string) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center gap-0.5 text-[9px] px-2 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium"
-                    >
-                      #{tag}
-                      <button
-                        onClick={() => handleRemoveTag(tag)}
-                        className="text-amber-400 hover:text-amber-300 ml-0.5 focus:outline-none"
-                      >
-                        <X className="h-2 w-2" />
-                      </button>
-                    </span>
-                  ))}
-                  {isAddingTag ? (
-                    <input
-                      type="text"
-                      placeholder="tag..."
-                      className="text-[9px] bg-white/5 border border-white/10 rounded px-1.5 py-0.2 text-text focus:outline-none w-14"
-                      value={newTagInput}
-                      onChange={(e) => setNewTagInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleAddTag();
-                        if (e.key === 'Escape') setIsAddingTag(false);
-                      }}
-                      onBlur={handleAddTag}
-                      autoFocus
-                    />
-                  ) : (
-                    <button
-                      onClick={() => setIsAddingTag(true)}
-                      className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.2 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-text/60 transition-colors"
-                    >
-                      <Plus className="h-2 w-2" /> Tag
-                    </button>
-                  )}
-                </div>
+              <div className="border-t border-white/5 pt-3 mt-4">
+                <TagManager item={item} size="sm" />
               </div>
             </>
           )}

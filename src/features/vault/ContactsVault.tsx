@@ -34,6 +34,7 @@ import { logActivity } from '../../lib/activity';
 import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
 import { FolderSidebar } from '../../components/vault/FolderSidebar';
 import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
+import { TagManager } from '../../components/vault/TagManager';
 import { useVaultFolders } from '../../hooks/useVaultFolders';
 import { sortPinnedFirst } from '../../lib/pinning';
 
@@ -377,6 +378,11 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
                 </div>
               </div>
             )}
+
+            {/* Tags */}
+            <div className="pt-3 border-t border-white/5">
+              <TagManager item={item} size="sm" />
+            </div>
 
             <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-3">
               <div className="flex items-center gap-1.5">

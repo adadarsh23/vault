@@ -12,27 +12,53 @@ export const getMediaDimensions = async (
         const image = new Image();
         const dimensions = await new Promise<{ width: number; height: number }>(
           (resolve, reject) => {
-            image.onload = () =>
+            const timer = setTimeout(() => {
+              image.onload = null;
+              image.onerror = null;
+              image.src = '';
+              reject(new Error('Image dimensions probe timeout'));
+            }, 3000);
+
+            image.onload = () => {
+              clearTimeout(timer);
               resolve({
                 width: image.naturalWidth,
                 height: image.naturalHeight,
               });
-            image.onerror = () => reject(new Error('Failed to read image dimensions.'));
+            };
+            image.onerror = () => {
+              clearTimeout(timer);
+              reject(new Error('Failed to read image dimensions.'));
+            };
             image.src = objectUrl;
           }
         );
 
         return {
           ...dimensions,
-          aspectRatio: dimensions.width / dimensions.height,
+          aspectRatio:
+            dimensions.width > 0 && dimensions.height > 0
+              ? dimensions.width / dimensions.height
+              : 1,
         };
       }
 
       const video = document.createElement('video');
       const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
-        video.onloadedmetadata = () =>
+        const timer = setTimeout(() => {
+          video.onloadedmetadata = null;
+          video.onerror = null;
+          reject(new Error('Video metadata probe timeout'));
+        }, 5000);
+
+        video.onloadedmetadata = () => {
+          clearTimeout(timer);
           resolve({ width: video.videoWidth, height: video.videoHeight });
-        video.onerror = () => reject(new Error('Failed to read video dimensions.'));
+        };
+        video.onerror = () => {
+          clearTimeout(timer);
+          reject(new Error('Failed to read video dimensions.'));
+        };
         video.preload = 'metadata';
         video.src = objectUrl;
       });
@@ -44,7 +70,10 @@ export const getMediaDimensions = async (
 
       return {
         ...dimensions,
-        aspectRatio: dimensions.width / dimensions.height,
+        aspectRatio:
+          dimensions.width > 0 && dimensions.height > 0
+            ? dimensions.width / dimensions.height
+            : 16 / 9,
       };
     } finally {
       URL.revokeObjectURL(objectUrl);
@@ -54,13 +83,82 @@ export const getMediaDimensions = async (
   }
 };
 
+const extensionToPhotoMime: Record<string, string> = {
+  JPG: 'image/jpeg',
+  JPEG: 'image/jpeg',
+  JPE: 'image/jpeg',
+  JFIF: 'image/jpeg',
+  PJPEG: 'image/jpeg',
+  PJP: 'image/jpeg',
+  PNG: 'image/png',
+  APNG: 'image/apng',
+  GIF: 'image/gif',
+  WEBP: 'image/webp',
+  AVIF: 'image/avif',
+  HEIC: 'image/heic',
+  HEIF: 'image/heif',
+  BMP: 'image/bmp',
+  DIB: 'image/bmp',
+  TIF: 'image/tiff',
+  TIFF: 'image/tiff',
+  ICO: 'image/x-icon',
+  CUR: 'image/x-icon',
+  SVG: 'image/svg+xml',
+  SVGZ: 'image/svg+xml',
+  PSD: 'image/vnd.adobe.photoshop',
+  RAW: 'image/x-dcraw',
+  CR2: 'image/x-canon-cr2',
+  CR3: 'image/x-canon-cr3',
+  NEF: 'image/x-nikon-nef',
+  NRW: 'image/x-nikon-nrw',
+  ARW: 'image/x-sony-arw',
+  SR2: 'image/x-sony-sr2',
+  SRF: 'image/x-sony-srf',
+  RAF: 'image/x-fuji-raf',
+  ORF: 'image/x-olympus-orf',
+  RW2: 'image/x-panasonic-rw2',
+  PEF: 'image/x-pentax-pef',
+  DNG: 'image/x-adobe-dng',
+  X3F: 'image/x-sigma-x3f',
+  '3FR': 'image/x-hasselblad-3fr',
+  FFF: 'image/x-hasselblad-fff',
+  IIQ: 'image/x-phaseone-iiq',
+  ERF: 'image/x-epson-erf',
+  KDC: 'image/x-kodak-kdc',
+  MEF: 'image/x-mamiya-mef',
+  MOS: 'image/x-leaf-mos',
+  MRW: 'image/x-minolta-mrw',
+  RWL: 'image/x-leica-rwl',
+  DCR: 'image/x-kodak-dcr',
+  BAY: 'image/x-casio-bay',
+  GPR: 'image/x-gopro-gpr',
+  JP2: 'image/jp2',
+  J2K: 'image/jp2',
+  JPF: 'image/jp2',
+  JPM: 'image/jp2',
+  JXR: 'image/jxr',
+  HDP: 'image/jxr',
+  WDP: 'image/jxr',
+  DDS: 'image/vnd-ms.dds',
+  EXR: 'image/x-exr',
+  HDR: 'image/vnd.radiance',
+  PIC: 'image/x-pict',
+  PCT: 'image/x-pict',
+  PCX: 'image/x-pcx',
+  TGA: 'image/x-tga',
+  ICNS: 'image/x-icns',
+};
+
 export const normalizeMediaMimeType = (file: File, type: 'photo' | 'video') => {
   const extension = getFileExtension(file.name);
 
   if (type === 'photo') {
-    if (extension === 'HEIC') return 'image/heic';
-    if (extension === 'HEIF') return 'image/heif';
-    if (extension === 'AVIF') return 'image/avif';
+    const photoMime = extensionToPhotoMime[extension];
+    if (photoMime) return photoMime;
+    if (file.type && file.type.startsWith('image/')) {
+      return file.type;
+    }
+    return 'image/jpeg';
   } else if (type === 'video') {
     const extensionToVideoMime: Record<string, string> = {
       MP4: 'video/mp4',
@@ -136,6 +234,5 @@ export const normalizeMediaMimeType = (file: File, type: 'photo' | 'video') => {
     return file.type;
   }
 
-  if (type === 'photo') return 'image/jpeg';
   return 'video/mp4';
 };

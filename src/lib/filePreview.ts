@@ -3,6 +3,12 @@ import { VaultItem } from './storage';
 import { resolveApiBaseUrl } from './apiBaseUrl';
 import { getAuthToken } from './auth-session';
 import { resolveRuntimeOrigin } from './sync/core';
+import {
+  getAudioMimeType,
+  AUDIO_MIME_MAP,
+  getDocumentMimeType,
+  DOCUMENT_MIME_MAP,
+} from './fileHandling';
 
 const API_BASE_URL = resolveApiBaseUrl();
 
@@ -34,6 +40,19 @@ const looksLikeReadableMediaBytes = (bytes: Uint8Array, mimeType?: string): bool
   const mt = (mimeType || '').toLowerCase();
   const isLikelyVideo = !mt || mt.startsWith('video/');
   const isLikelyAudio = !mt || mt.startsWith('audio/');
+
+  // PDF
+  if (
+    (mt.includes('application/pdf') || !mt) &&
+    bytes.length >= 5 &&
+    bytes[0] === 0x25 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x44 &&
+    bytes[3] === 0x46 &&
+    bytes[4] === 0x2d
+  ) {
+    return true;
+  }
 
   // PNG
   if (
@@ -180,6 +199,351 @@ const looksLikeReadableMediaBytes = (bytes: Uint8Array, mimeType?: string): bool
     return true;
   }
 
+  // BMP / DIB: BM
+  if (
+    (mt.includes('image/bmp') || !mt) &&
+    bytes.length >= 2 &&
+    bytes[0] === 0x42 &&
+    bytes[1] === 0x4d
+  ) {
+    return true;
+  }
+
+  // TIFF / TIF / DNG / CR2 / NEF / NRW / ARW / SR2 / SRF / PEF / 3FR / FFF / IIQ / ERF / KDC / MEF / MOS / RWL / DCR / BAY / GPR
+  if (
+    (mt.includes('image/tiff') || mt.includes('image/x-') || !mt) &&
+    bytes.length >= 4 &&
+    ((bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 0x2a && bytes[3] === 0x00) ||
+      (bytes[0] === 0x4d && bytes[1] === 0x4d && bytes[2] === 0x00 && bytes[3] === 0x2a))
+  ) {
+    return true;
+  }
+
+  // Fuji RAF
+  if (
+    bytes.length >= 15 &&
+    bytes[0] === 0x46 &&
+    bytes[1] === 0x55 &&
+    bytes[2] === 0x4a &&
+    bytes[3] === 0x49
+  ) {
+    return true;
+  }
+
+  // Olympus ORF
+  if (
+    bytes.length >= 4 &&
+    ((bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 0x52 && bytes[3] === 0x4f) ||
+      (bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 0x52 && bytes[3] === 0x53))
+  ) {
+    return true;
+  }
+
+  // Panasonic RW2
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x49 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x55 &&
+    bytes[3] === 0x00
+  ) {
+    return true;
+  }
+
+  // Sigma X3F
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x46 &&
+    bytes[1] === 0x4f &&
+    bytes[2] === 0x56 &&
+    bytes[3] === 0x62
+  ) {
+    return true;
+  }
+
+  // Photoshop PSD: 8BPS
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x38 &&
+    bytes[1] === 0x42 &&
+    bytes[2] === 0x50 &&
+    bytes[3] === 0x53
+  ) {
+    return true;
+  }
+
+  // ICO / CUR
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x00 &&
+    bytes[1] === 0x00 &&
+    (bytes[2] === 0x01 || bytes[2] === 0x02) &&
+    bytes[3] === 0x00
+  ) {
+    return true;
+  }
+
+  // JPEG 2000 (JP2, J2K, JPF, JPM)
+  if (
+    (bytes.length >= 8 &&
+      bytes[0] === 0x00 &&
+      bytes[1] === 0x00 &&
+      bytes[2] === 0x00 &&
+      bytes[3] === 0x0c &&
+      bytes[4] === 0x6a &&
+      bytes[5] === 0x50) ||
+    (bytes.length >= 4 &&
+      bytes[0] === 0xff &&
+      bytes[1] === 0x4f &&
+      bytes[2] === 0xff &&
+      bytes[3] === 0x51)
+  ) {
+    return true;
+  }
+
+  // JPEG XR (JXR, HDP, WDP)
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x49 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0xbc &&
+    (bytes[3] === 0x01 || bytes[3] === 0x00)
+  ) {
+    return true;
+  }
+
+  // DDS
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x44 &&
+    bytes[1] === 0x44 &&
+    bytes[2] === 0x53 &&
+    bytes[3] === 0x20
+  ) {
+    return true;
+  }
+
+  // OpenEXR
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x76 &&
+    bytes[1] === 0x2f &&
+    bytes[2] === 0x31 &&
+    bytes[3] === 0x01
+  ) {
+    return true;
+  }
+
+  // Radiance HDR
+  if (
+    bytes.length >= 10 &&
+    bytes[0] === 0x23 &&
+    bytes[1] === 0x3f &&
+    (bytes[2] === 0x52 || bytes[2] === 0x72)
+  ) {
+    return true;
+  }
+
+  // Apple ICNS
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x69 &&
+    bytes[1] === 0x63 &&
+    bytes[2] === 0x6e &&
+    bytes[3] === 0x73
+  ) {
+    return true;
+  }
+
+  // SVGZ
+  if (bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b) {
+    return true;
+  }
+
+  // AAC ADTS: 0xFF 0xF...
+  if (isLikelyAudio && bytes.length >= 2 && bytes[0] === 0xff && (bytes[1] & 0xf0) === 0xf0) {
+    return true;
+  }
+
+  // AIFF: FORM....AIFF or FORM....AIFC
+  if (
+    isLikelyAudio &&
+    bytes.length >= 12 &&
+    bytes[0] === 0x46 &&
+    bytes[1] === 0x4f &&
+    bytes[2] === 0x52 &&
+    bytes[3] === 0x4d &&
+    bytes[8] === 0x41 &&
+    bytes[9] === 0x49 &&
+    bytes[10] === 0x46 &&
+    (bytes[11] === 0x46 || bytes[11] === 0x43)
+  ) {
+    return true;
+  }
+
+  // AMR: #!AMR
+  if (
+    isLikelyAudio &&
+    bytes.length >= 6 &&
+    bytes[0] === 0x23 &&
+    bytes[1] === 0x21 &&
+    bytes[2] === 0x41 &&
+    bytes[3] === 0x4d &&
+    bytes[4] === 0x52
+  ) {
+    return true;
+  }
+
+  // AU / SND: .snd
+  if (
+    isLikelyAudio &&
+    bytes.length >= 4 &&
+    bytes[0] === 0x2e &&
+    bytes[1] === 0x73 &&
+    bytes[2] === 0x6e &&
+    bytes[3] === 0x64
+  ) {
+    return true;
+  }
+
+  // VOC: Creative Voice File
+  if (
+    isLikelyAudio &&
+    bytes.length >= 8 &&
+    bytes[0] === 0x43 &&
+    bytes[1] === 0x72 &&
+    bytes[2] === 0x65 &&
+    bytes[3] === 0x61
+  ) {
+    return true;
+  }
+
+  // RealAudio: .RMF or .ra
+  if (
+    isLikelyAudio &&
+    bytes.length >= 4 &&
+    bytes[0] === 0x2e &&
+    ((bytes[1] === 0x52 && bytes[2] === 0x4d && bytes[3] === 0x46) ||
+      (bytes[1] === 0x72 && bytes[2] === 0x61))
+  ) {
+    return true;
+  }
+
+  // AC3: 0x0B 0x77
+  if (isLikelyAudio && bytes.length >= 2 && bytes[0] === 0x0b && bytes[1] === 0x77) {
+    return true;
+  }
+
+  // DTS: 0x7F 0xFE 0x80 0x01
+  if (
+    isLikelyAudio &&
+    bytes.length >= 4 &&
+    bytes[0] === 0x7f &&
+    bytes[1] === 0xfe &&
+    bytes[2] === 0x80 &&
+    bytes[3] === 0x01
+  ) {
+    return true;
+  }
+
+  // DSD / DSF: "DSD "
+  if (
+    isLikelyAudio &&
+    bytes.length >= 4 &&
+    bytes[0] === 0x44 &&
+    bytes[1] === 0x53 &&
+    bytes[2] === 0x44 &&
+    bytes[3] === 0x20
+  ) {
+    return true;
+  }
+
+  // WavPack: "wvpk"
+  if (
+    isLikelyAudio &&
+    bytes.length >= 4 &&
+    bytes[0] === 0x77 &&
+    bytes[1] === 0x76 &&
+    bytes[2] === 0x70 &&
+    bytes[3] === 0x6b
+  ) {
+    return true;
+  }
+
+  // Monkey's Audio: "MAC "
+  if (
+    isLikelyAudio &&
+    bytes.length >= 4 &&
+    bytes[0] === 0x4d &&
+    bytes[1] === 0x41 &&
+    bytes[2] === 0x43 &&
+    bytes[3] === 0x20
+  ) {
+    return true;
+  }
+
+  // TAK: "tBaK"
+  if (
+    isLikelyAudio &&
+    bytes.length >= 4 &&
+    bytes[0] === 0x74 &&
+    bytes[1] === 0x42 &&
+    bytes[2] === 0x61 &&
+    bytes[3] === 0x4b
+  ) {
+    return true;
+  }
+
+  // TTA: "TTA1"
+  if (
+    isLikelyAudio &&
+    bytes.length >= 4 &&
+    bytes[0] === 0x54 &&
+    bytes[1] === 0x54 &&
+    bytes[2] === 0x41 &&
+    bytes[3] === 0x31
+  ) {
+    return true;
+  }
+
+  // CAF: "caff"
+  if (
+    isLikelyAudio &&
+    bytes.length >= 4 &&
+    bytes[0] === 0x63 &&
+    bytes[1] === 0x61 &&
+    bytes[2] === 0x66 &&
+    bytes[3] === 0x66
+  ) {
+    return true;
+  }
+
+  // MIDI: "MThd"
+  if (
+    isLikelyAudio &&
+    bytes.length >= 4 &&
+    bytes[0] === 0x4d &&
+    bytes[1] === 0x54 &&
+    bytes[2] === 0x68 &&
+    bytes[3] === 0x64
+  ) {
+    return true;
+  }
+
+  // SVG: <svg or <?xml
+  if ((mt.includes('image/svg') || !mt) && bytes.length >= 5) {
+    const textStart = String.fromCharCode(...bytes.slice(0, 100))
+      .trim()
+      .toLowerCase();
+    if (
+      textStart.startsWith('<svg') ||
+      textStart.startsWith('<?xml') ||
+      textStart.includes('<svg')
+    ) {
+      return true;
+    }
+  }
+
   return false;
 };
 
@@ -212,53 +576,163 @@ export const inferMimeTypeFromItem = (item: VaultItem): string | undefined => {
 
   const filename = item.title || (typeof metadata?.filename === 'string' ? metadata.filename : '');
   const ext = filename.split('.').pop()?.toLowerCase();
+
+  // If item is audio or has an audio extension, use comprehensive audio mime lookup
+  if (item.type === 'audio' || (ext && AUDIO_MIME_MAP[ext])) {
+    return getAudioMimeType(filename);
+  }
+
+  // If item is document or has a document extension, use comprehensive document mime lookup
+  if (item.type === 'document' || (ext && DOCUMENT_MIME_MAP[ext])) {
+    return getDocumentMimeType(filename);
+  }
+
   switch (ext) {
-    case 'mp3':
-      return 'audio/mpeg';
-    case 'wav':
-      return 'audio/wav';
-    case 'm4a':
-      return 'audio/mp4';
-    case 'aac':
-      return 'audio/aac';
-    case 'ogg':
-      return 'audio/ogg';
-    case 'flac':
-      return 'audio/flac';
-    case 'webm':
-      return item.type === 'audio' ? 'audio/webm' : 'video/webm';
-    case 'opus':
-      return 'audio/opus';
+    // Video
     case 'mp4':
     case 'm4v':
-      return item.type === 'audio' ? 'audio/mp4' : 'video/mp4';
+      return 'video/mp4';
     case 'mov':
     case 'qt':
       return 'video/quicktime';
     case 'mkv':
       return 'video/x-matroska';
     case 'avi':
+    case 'divx':
       return 'video/x-msvideo';
     case 'wmv':
+    case 'asf':
       return 'video/x-ms-wmv';
     case 'flv':
+    case 'f4v':
       return 'video/x-flv';
     case '3gp':
+    case '3g2':
       return 'video/3gpp';
     case 'ogv':
+    case 'ogm':
       return 'video/ogg';
+    case 'ts':
+    case 'mts':
+    case 'm2ts':
+      return 'video/mp2t';
+
+    // Photo / Image
     case 'png':
       return 'image/png';
+    case 'apng':
+      return 'image/apng';
     case 'jpg':
     case 'jpeg':
+    case 'jpe':
+    case 'jfif':
+    case 'pjpeg':
+    case 'pjp':
       return 'image/jpeg';
     case 'gif':
       return 'image/gif';
     case 'webp':
       return 'image/webp';
+    case 'avif':
+      return 'image/avif';
+    case 'svg':
+    case 'svgz':
+      return 'image/svg+xml';
+    case 'bmp':
+    case 'dib':
+      return 'image/bmp';
+    case 'tif':
+    case 'tiff':
+      return 'image/tiff';
+    case 'heic':
+      return 'image/heic';
+    case 'heif':
+      return 'image/heif';
+    case 'ico':
+    case 'cur':
+      return 'image/x-icon';
+    case 'psd':
+      return 'image/vnd.adobe.photoshop';
+    case 'raw':
+      return 'image/x-dcraw';
+    case 'cr2':
+      return 'image/x-canon-cr2';
+    case 'cr3':
+      return 'image/x-canon-cr3';
+    case 'nef':
+      return 'image/x-nikon-nef';
+    case 'nrw':
+      return 'image/x-nikon-nrw';
+    case 'arw':
+      return 'image/x-sony-arw';
+    case 'sr2':
+      return 'image/x-sony-sr2';
+    case 'srf':
+      return 'image/x-sony-srf';
+    case 'raf':
+      return 'image/x-fuji-raf';
+    case 'orf':
+      return 'image/x-olympus-orf';
+    case 'rw2':
+      return 'image/x-panasonic-rw2';
+    case 'pef':
+      return 'image/x-pentax-pef';
+    case 'dng':
+      return 'image/x-adobe-dng';
+    case 'x3f':
+      return 'image/x-sigma-x3f';
+    case '3fr':
+      return 'image/x-hasselblad-3fr';
+    case 'fff':
+      return 'image/x-hasselblad-fff';
+    case 'iiq':
+      return 'image/x-phaseone-iiq';
+    case 'erf':
+      return 'image/x-epson-erf';
+    case 'kdc':
+      return 'image/x-kodak-kdc';
+    case 'mef':
+      return 'image/x-mamiya-mef';
+    case 'mos':
+      return 'image/x-leaf-mos';
+    case 'mrw':
+      return 'image/x-minolta-mrw';
+    case 'rwl':
+      return 'image/x-leica-rwl';
+    case 'dcr':
+      return 'image/x-kodak-dcr';
+    case 'bay':
+      return 'image/x-casio-bay';
+    case 'gpr':
+      return 'image/x-gopro-gpr';
+    case 'jp2':
+    case 'j2k':
+    case 'jpf':
+    case 'jpm':
+      return 'image/jp2';
+    case 'jxr':
+    case 'hdp':
+    case 'wdp':
+      return 'image/jxr';
+    case 'dds':
+      return 'image/vnd-ms.dds';
+    case 'exr':
+      return 'image/x-exr';
+    case 'hdr':
+      return 'image/vnd.radiance';
+    case 'pic':
+    case 'pct':
+      return 'image/x-pict';
+    case 'pcx':
+      return 'image/x-pcx';
+    case 'tga':
+      return 'image/x-tga';
+    case 'icns':
+      return 'image/x-icns';
+
     default:
-      if (item.type === 'audio') return 'audio/mpeg';
       if (item.type === 'video') return 'video/mp4';
+      if (item.type === 'photo') return 'image/jpeg';
       return undefined;
   }
 };
@@ -336,47 +810,30 @@ export const getVaultItemPreviewUrl = async (
   mimeType?: string,
   rsaPrivateKey?: CryptoKeyPair['privateKey'] | null
 ): Promise<string | null> => {
-  const metadata = normalizeMetadata(item.metadata);
-  // Cloud snapshots replace large E2EE payloads with a cloud:// reference.
-  // That object is encrypted in GridFS and cannot be played by the browser
-  // until it is fetched and decrypted locally.
-  const isClientEncrypted = metadata?.isE2EE === true || metadata?.clientEncrypted === true;
-  const directUrl = isClientEncrypted ? null : getVaultItemFileUrl(item);
-  if (directUrl) {
-    return directUrl;
+  const effectiveMimeType = mimeType || inferMimeTypeFromItem(item);
+
+  // 1. Direct in-memory blob: or data: URL
+  if (typeof item.content === 'string' && isBlobOrDataUrl(item.content)) {
+    return item.content;
   }
 
-  if (
-    !isClientEncrypted &&
-    typeof item.content === 'string' &&
-    !isLikelyEncryptedString(item.content)
-  ) {
-    return looksLikeServerPath(item.content) ||
-      isAbsoluteUrl(item.content) ||
-      isBlobOrDataUrl(item.content)
-      ? resolveServerFileUrl(item.content)
-      : null;
+  // 2. Direct in-memory Uint8Array
+  if (item.content instanceof Uint8Array) {
+    if (looksLikeReadableMediaBytes(item.content, effectiveMimeType)) {
+      const detected = detectMimeTypeFromBytes(item.content);
+      const resolvedMime = detected !== 'application/octet-stream' ? detected : effectiveMimeType;
+      const normalizedMime = resolvedMime === 'video/quicktime' ? 'video/mp4' : resolvedMime;
+      const blob = new Blob([new Uint8Array(item.content)], {
+        type: normalizedMime || (item.type === 'video' ? 'video/mp4' : 'application/octet-stream'),
+      });
+      return URL.createObjectURL(blob);
+    }
+    return await decryptToFile(item.content, masterKey, effectiveMimeType, rsaPrivateKey);
   }
 
-  let effectiveMimeType = mimeType || inferMimeTypeFromItem(item);
-
-  // Decrypt audio/video items chunk-by-chunk using TransformStream to prevent high RAM usage
-  const isAudioOrVideo =
-    item.type === 'audio' ||
-    item.type === 'video' ||
-    Boolean(
-      effectiveMimeType &&
-      (effectiveMimeType.startsWith('audio/') || effectiveMimeType.startsWith('video/'))
-    );
-
-  if (
-    isAudioOrVideo &&
-    (item.content instanceof Uint8Array ||
-      (typeof item.content === 'string' && isLikelyEncryptedString(item.content)))
-  ) {
-    const rawBytes =
-      item.content instanceof Uint8Array ? item.content : base64ToUint8Array(item.content);
-
+  // 3. Direct in-memory Base64 encrypted string
+  if (typeof item.content === 'string' && isLikelyEncryptedString(item.content)) {
+    const rawBytes = base64ToUint8Array(item.content);
     if (rawBytes.length > 0) {
       try {
         const decryptedUrl = await decryptToFile(
@@ -392,7 +849,37 @@ export const getVaultItemPreviewUrl = async (
     }
   }
 
-  // Fallback: Try fetching server signed URL if content decryption didn't produce a URL
+  // 4. Server/Cloud file reference (cloud://, gridfs://, /api/vault/files/access/, /uploads/, etc.)
+  const candidateServerUrl = getVaultItemFileUrl(item);
+  if (candidateServerUrl) {
+    try {
+      const response = await fetch(candidateServerUrl);
+      if (response.ok) {
+        const arrayBuf = await response.arrayBuffer();
+        if (arrayBuf.byteLength > 0) {
+          const u8 = new Uint8Array(arrayBuf);
+          if (looksLikeReadableMediaBytes(u8, effectiveMimeType)) {
+            const detected = detectMimeTypeFromBytes(u8);
+            const resolvedMime =
+              detected !== 'application/octet-stream' ? detected : effectiveMimeType;
+            const normalizedMime = resolvedMime === 'video/quicktime' ? 'video/mp4' : resolvedMime;
+            const blob = new Blob([u8], {
+              type:
+                normalizedMime ||
+                (item.type === 'video' ? 'video/mp4' : 'application/octet-stream'),
+            });
+            return URL.createObjectURL(blob);
+          }
+          const decryptedUrl = await decryptToFile(u8, masterKey, effectiveMimeType, rsaPrivateKey);
+          if (decryptedUrl) return decryptedUrl;
+        }
+      }
+    } catch {
+      // Fallback to signed URL
+    }
+  }
+
+  // 5. Fallback: Fetch via server signed URL and decrypt
   try {
     const { getSignedUrl } = await import('./sync/media');
     const signedUrl = await getSignedUrl(item.id, 'view');
@@ -400,39 +887,31 @@ export const getVaultItemPreviewUrl = async (
     if (response.ok) {
       const encryptedBlob = await response.blob();
       if (encryptedBlob.size > 0) {
-        return await decryptToFile(
-          new Uint8Array(await encryptedBlob.arrayBuffer()),
-          masterKey,
-          effectiveMimeType,
-          rsaPrivateKey
-        );
+        const u8 = new Uint8Array(await encryptedBlob.arrayBuffer());
+        if (looksLikeReadableMediaBytes(u8, effectiveMimeType)) {
+          const detected = detectMimeTypeFromBytes(u8);
+          const resolvedMime =
+            detected !== 'application/octet-stream' ? detected : effectiveMimeType;
+          const normalizedMime = resolvedMime === 'video/quicktime' ? 'video/mp4' : resolvedMime;
+          const blob = new Blob([u8], {
+            type:
+              normalizedMime || (item.type === 'video' ? 'video/mp4' : 'application/octet-stream'),
+          });
+          return URL.createObjectURL(blob);
+        }
+        return await decryptToFile(u8, masterKey, effectiveMimeType, rsaPrivateKey);
       }
     }
   } catch {
     // Ignore server signed URL fallback error
   }
 
-  if (
-    item.content instanceof Uint8Array &&
-    looksLikeReadableMediaBytes(item.content, effectiveMimeType)
-  ) {
-    const detected = detectMimeTypeFromBytes(item.content);
-    if (detected !== 'application/octet-stream') {
-      if (
-        !effectiveMimeType ||
-        effectiveMimeType === 'application/octet-stream' ||
-        (effectiveMimeType === 'audio/mpeg' && detected !== 'audio/mpeg')
-      ) {
-        effectiveMimeType = detected;
-      }
-    }
-    const blob = new Blob([new Uint8Array(item.content)], {
-      type: effectiveMimeType || (item.type === 'video' ? 'video/mp4' : 'application/octet-stream'),
-    });
-    return URL.createObjectURL(blob);
+  // 6. Generic string decrypt fallback
+  if (typeof item.content === 'string') {
+    return decryptToFile(item.content, masterKey, effectiveMimeType, rsaPrivateKey);
   }
 
-  return decryptToFile(item.content, masterKey, effectiveMimeType, rsaPrivateKey);
+  return null;
 };
 
 /** True when the item points at a server-side file (disk / signed URL pipeline). E2EE-only items return false. */

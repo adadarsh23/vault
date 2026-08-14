@@ -49,6 +49,19 @@ const redactKeys = new Set([
   'ciphertext',
   'authtag',
   'iv',
+  'x-vault-title',
+  'x-vault-metadata',
+  'x-vault-folder',
+  'x-vault-key',
+  'payload',
+  'binarypayload',
+  'modernpayload',
+  'masterkey',
+  'secretkey',
+  'encryptionkey',
+  'encryptedmetadata',
+  'dek',
+  'kek',
 ]);
 
 // Ensure log directory exists once during startup

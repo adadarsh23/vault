@@ -78,8 +78,9 @@ const buildHelmetConfig = (): Parameters<typeof helmet>[0] => {
     'blob:',
     'wss:',
     ...(isProduction ? [] : ['ws:']),
-    // Maps / geocoding
+    // Maps / geocoding / elevation
     'https://nominatim.openstreetmap.org',
+    'https://api.open-meteo.com',
     // reCAPTCHA
     'https://www.google.com',
     'https://www.gstatic.com',
@@ -95,6 +96,9 @@ const buildHelmetConfig = (): Parameters<typeof helmet>[0] => {
     'https://*.ingest.us.sentry.io',
     'https://*.logrocket.com',
     'https://*.logr-in.com',
+    // WebAssembly & FFmpeg CDN
+    'https://unpkg.com',
+    'https://cdn.jsdelivr.net',
   ];
 
   return {
@@ -126,6 +130,9 @@ const buildHelmetConfig = (): Parameters<typeof helmet>[0] => {
           ? [
               "'self'",
               "'wasm-unsafe-eval'",
+              'blob:',
+              'https://unpkg.com',
+              'https://cdn.jsdelivr.net',
               'https://www.googletagmanager.com',
               'https://cdn.logr-in.com',
               'https://www.google.com',
@@ -137,6 +144,8 @@ const buildHelmetConfig = (): Parameters<typeof helmet>[0] => {
               "'unsafe-inline'",
               "'unsafe-eval'",
               'blob:',
+              'https://unpkg.com',
+              'https://cdn.jsdelivr.net',
               'https://www.googletagmanager.com',
               'https://cdn.logr-in.com',
               'https://www.google.com',
@@ -156,9 +165,9 @@ const buildHelmetConfig = (): Parameters<typeof helmet>[0] => {
           'https://www.recaptcha.net',
         ],
         manifestSrc: ["'self'"],
-        workerSrc: ["'self'", 'blob:'],
+        workerSrc: ["'self'", 'blob:', 'https://unpkg.com', 'https://cdn.jsdelivr.net'],
         childSrc: ["'self'", 'blob:'],
-        objectSrc: ["'none'"],
+        objectSrc: ["'self'", 'blob:'],
         ...(isProduction ? { upgradeInsecureRequests: [] as string[] } : {}),
       },
     },

@@ -301,7 +301,7 @@ export const ShareVaultCard: React.FC = memo(() => {
 
                 <div className="flex items-center justify-between">
                   <span className="text-text/45">Compatible</span>
-                  <span className="font-medium text-text">Android • iOS • Desktop</span>
+                  <span className="font-medium text-text">Android • iOS • PC</span>
                 </div>
               </div>
             </div>

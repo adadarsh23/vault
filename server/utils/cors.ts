@@ -19,6 +19,7 @@ export const getAllowedCorsOrigins = (): string[] => {
     process.env.PUBLIC_URL,
     process.env.VITE_APP_PUBLIC_URL,
     process.env.CORS_ALLOWED_ORIGINS,
+    process.env.RENDER_EXTERNAL_URL,
   ];
 
   const origins = sources

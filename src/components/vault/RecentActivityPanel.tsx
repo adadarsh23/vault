@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ChevronRight as ArrowRightIcon,
   Download,
   Eye,
   FileUp,
@@ -22,6 +23,7 @@ import {
 import { useActivityStore, ActivityEntry } from '../../store/activityStore';
 import { useVaultStore } from '../../store/vaultStore';
 import { Button } from '../ui/Button';
+import { ActivityDetailsModal } from './ActivityDetailsModal';
 
 const PAGE_SIZE = 12;
 const PAGE_TRANSITION_MS = 220;
@@ -103,6 +105,7 @@ export const RecentActivityPanel: React.FC = () => {
   const [page, setPage] = useState(0);
   const [isPageChanging, setIsPageChanging] = useState(false);
   const [pageChangeDirection, setPageChangeDirection] = useState<'next' | 'prev' | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<DisplayActivityEntry | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Force re-render every minute to update relative times
@@ -196,7 +199,7 @@ export const RecentActivityPanel: React.FC = () => {
   }, [sortedEntries.length, isPageChanging]);
 
   return (
-    <div className="flex flex-col h-full space-y-4" ref={containerRef}>
+    <div className="flex flex-col h-full min-h-0 space-y-3 sm:space-y-4" ref={containerRef}>
       <style>
         {`
           @keyframes fadeInUp {
@@ -209,7 +212,7 @@ export const RecentActivityPanel: React.FC = () => {
         `}
       </style>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-2">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 space-y-2">
         {isInitialLoading && (
           <div className="space-y-2 py-1">
             {Array.from({ length: 6 }).map((_, index) => (
@@ -246,7 +249,17 @@ export const RecentActivityPanel: React.FC = () => {
               return (
                 <div
                   key={entry.id}
-                  className="group flex flex-row items-center gap-2.5 rounded-2xl border border-card-border/50 bg-card-bg/30 p-2 sm:p-3 transition-all duration-300 hover:shadow-lg hover:border-text/20 animate-fade-in-up opacity-0 relative overflow-hidden"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedEntry(entry)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedEntry(entry);
+                    }
+                  }}
+                  aria-label={`View activity details for ${entry.itemName}`}
+                  className="group flex flex-row items-center gap-2.5 rounded-2xl border border-card-border/50 bg-card-bg/30 p-2 sm:p-3 transition-all duration-300 hover:shadow-lg hover:border-blue-500/30 hover:bg-card-bg/60 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/40 animate-fade-in-up opacity-0 relative overflow-hidden text-left"
                   style={{ animationDelay }}
                 >
                   <div
@@ -263,16 +276,21 @@ export const RecentActivityPanel: React.FC = () => {
 
                   <div className="flex flex-col min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs sm:text-sm font-bold text-text truncate tracking-tight">
+                      <p className="text-xs sm:text-sm font-bold text-text truncate tracking-tight group-hover:text-blue-400 transition-colors">
                         {entry.itemName}
                       </p>
 
-                      <div className="hidden sm:flex items-center justify-center shrink-0 p-1.5 rounded-full bg-text/5 opacity-50 group-hover:opacity-100 transition-opacity">
-                        {isFailure ? (
-                          <AlertTriangle className="h-3 w-3 text-red-400" />
-                        ) : (
-                          <CheckCircle2 className="h-3 w-3 text-green-400" />
-                        )}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="hidden sm:flex items-center justify-center shrink-0 p-1.5 rounded-full bg-text/5 opacity-50 group-hover:opacity-100 transition-opacity">
+                          {isFailure ? (
+                            <AlertTriangle className="h-3 w-3 text-red-400" />
+                          ) : (
+                            <CheckCircle2 className="h-3 w-3 text-green-400" />
+                          )}
+                        </div>
+                        <div className="hidden group-hover:flex items-center text-text/40 text-[10px] font-semibold transition-all">
+                          <ArrowRightIcon className="h-3 w-3" />
+                        </div>
                       </div>
                     </div>
 
@@ -326,7 +344,7 @@ export const RecentActivityPanel: React.FC = () => {
       </div>
 
       {sortedEntries.length > PAGE_SIZE && (
-        <div className="flex items-center justify-between pt-4 border-t border-card-border/30 px-1">
+        <div className="shrink-0 flex items-center justify-between pt-3 border-t border-card-border/30 px-1 mt-auto">
           <div className="flex flex-col">
             <p className="text-[10px] font-black uppercase tracking-widest text-text/30 flex items-center gap-1">
               <Loader2 className={`h-3 w-3 ${isPageChanging ? 'animate-spin' : 'hidden'}`} />
@@ -362,6 +380,9 @@ export const RecentActivityPanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Activity Details Popup Modal */}
+      <ActivityDetailsModal entry={selectedEntry} onClose={() => setSelectedEntry(null)} />
     </div>
   );
 };

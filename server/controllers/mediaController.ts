@@ -92,16 +92,76 @@ export const findVaultItemFlexible = async (
 };
 
 const mimeMap: Record<string, string> = {
+  // Photos
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
+  '.jpe': 'image/jpeg',
+  '.jfif': 'image/jpeg',
+  '.pjpeg': 'image/jpeg',
+  '.pjp': 'image/jpeg',
   '.png': 'image/png',
+  '.apng': 'image/apng',
   '.gif': 'image/gif',
-  '.svg': 'image/svg+xml',
   '.webp': 'image/webp',
+  '.avif': 'image/avif',
+  '.heic': 'image/heic',
+  '.heif': 'image/heif',
+  '.bmp': 'image/bmp',
+  '.dib': 'image/bmp',
+  '.tif': 'image/tiff',
+  '.tiff': 'image/tiff',
+  '.ico': 'image/x-icon',
+  '.cur': 'image/x-icon',
+  '.svg': 'image/svg+xml',
+  '.svgz': 'image/svg+xml',
+  '.psd': 'image/vnd.adobe.photoshop',
+  '.raw': 'image/x-dcraw',
+  '.cr2': 'image/x-canon-cr2',
+  '.cr3': 'image/x-canon-cr3',
+  '.nef': 'image/x-nikon-nef',
+  '.nrw': 'image/x-nikon-nrw',
+  '.arw': 'image/x-sony-arw',
+  '.sr2': 'image/x-sony-sr2',
+  '.srf': 'image/x-sony-srf',
+  '.raf': 'image/x-fuji-raf',
+  '.orf': 'image/x-olympus-orf',
+  '.rw2': 'image/x-panasonic-rw2',
+  '.pef': 'image/x-pentax-pef',
+  '.dng': 'image/x-adobe-dng',
+  '.x3f': 'image/x-sigma-x3f',
+  '.3fr': 'image/x-hasselblad-3fr',
+  '.fff': 'image/x-hasselblad-fff',
+  '.iiq': 'image/x-phaseone-iiq',
+  '.erf': 'image/x-epson-erf',
+  '.kdc': 'image/x-kodak-kdc',
+  '.mef': 'image/x-mamiya-mef',
+  '.mos': 'image/x-leaf-mos',
+  '.mrw': 'image/x-minolta-mrw',
+  '.rwl': 'image/x-leica-rwl',
+  '.dcr': 'image/x-kodak-dcr',
+  '.bay': 'image/x-casio-bay',
+  '.gpr': 'image/x-gopro-gpr',
+  '.jp2': 'image/jp2',
+  '.j2k': 'image/jp2',
+  '.jpf': 'image/jp2',
+  '.jpm': 'image/jp2',
+  '.jxr': 'image/jxr',
+  '.hdp': 'image/jxr',
+  '.wdp': 'image/jxr',
+  '.dds': 'image/vnd-ms.dds',
+  '.exr': 'image/x-exr',
+  '.hdr': 'image/vnd.radiance',
+  '.pic': 'image/x-pict',
+  '.pct': 'image/x-pict',
+  '.pcx': 'image/x-pcx',
+  '.tga': 'image/x-tga',
+  '.icns': 'image/x-icns',
+  // Videos
   '.mp4': 'video/mp4',
   '.webm': 'video/webm',
   '.mov': 'video/quicktime',
   '.m4v': 'video/x-m4v',
+  // Audios
   '.mp3': 'audio/mpeg',
   '.wav': 'audio/wav',
   '.ogg': 'audio/ogg',
@@ -154,7 +214,7 @@ const decryptGridFsPayload = (
 const SIGNED_URL_WINDOW_MS = 60_000;
 const SIGNED_URL_MAX_PER_WINDOW = Math.max(
   10,
-  toPositiveInt(process.env.SIGNED_URL_MAX_PER_MINUTE, 80)
+  toPositiveInt(process.env.SIGNED_URL_MAX_PER_MINUTE, 600)
 );
 const signedUrlCounters = new Map<string, { count: number; resetAt: number }>();
 const MAX_SIGNED_URL_COUNTER_ENTRIES = Math.max(
@@ -272,6 +332,7 @@ const enforcePlaybackRequestContext = (req: express.Request) => {
     req.query.token ||
     req.query.sig ||
     req.query.signature ||
+    req.query.auth_token ||
     req.headers.authorization ||
     req.get('authorization')
   );
@@ -406,8 +467,9 @@ const validateMediaAccess = async (
   // 2. Validate Signed Capability / URL Token
   const signature = getSingleQueryValue(q.token);
   const expiresRaw = getSingleQueryValue(q.expires);
+
   if (!signature || !expiresRaw) {
-    throw AppError.forbidden('Signed media token or expiration missing.', 'MISSING_SIGNATURE');
+    throw AppError.forbidden('Media access token or expiration missing.', 'MISSING_SIGNATURE');
   }
 
   const expires = Number.parseInt(expiresRaw, 10);
@@ -466,6 +528,16 @@ const validateMediaAccess = async (
 
   // Now and only now is candidateUserId established as verified
   resolvedUserId = candidateUserId;
+
+  if (!resolvedUserId) {
+    logger.warn('Media access denied: Identification missing', {
+      itemId,
+    });
+    throw AppError.unauthorized(
+      'User identification required for secure media playback.',
+      'AUTH_REQUIRED'
+    );
+  }
 
   // Ensure username is attached to req.user for downstream getVaultItemModel(username)
   if (!(req as any).user?.username) {
@@ -1092,7 +1164,7 @@ export const createSignedUrl = async (req: express.Request, res: express.Respons
   const url = storageService.generateSignedUrl(userId, itemId, fileName, {
     action: actionRaw as 'view' | 'download' | 'stream',
     sessionId: (req as any).user?.sessionId,
-    deviceHash: req.get('x-device-hash') || 'direct',
+    deviceHash: getSingleQueryValue(req.query.dev) || req.get('x-device-hash') || 'direct',
   });
 
   return sendSuccess(res, { url }, 'Signed URL generated successfully');

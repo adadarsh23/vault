@@ -42,8 +42,9 @@ import { LiveCaptureModal } from './components/LiveCaptureModal';
 import {
   exceedsUploadSizeLimit,
   getUploadSizeErrorMessage,
-  FILE_TYPE_SUPPORT,
   AUDIO_FILE_INPUT_ACCEPT,
+  getAudioMimeType,
+  isAudioExtension,
 } from '../../lib/fileHandling';
 
 const SafeAudioPreview: React.FC<{
@@ -54,11 +55,23 @@ const SafeAudioPreview: React.FC<{
   const [url, setUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [retryTrigger, setRetryTrigger] = useState(0);
   const rsaKeyPair = useVaultStore((state) => state.rsaKeyPair);
   const isAudioWaveformEnabled = useVaultStore((state) => state.preferences.isAudioWaveformEnabled);
   const currentBlobUrlRef = useRef<string | null>(null);
 
   const revisionKey = useMemo(() => getVaultItemPreviewRevision(item), [item]);
+
+  const handleRetry = () => {
+    if (currentBlobUrlRef.current && currentBlobUrlRef.current.startsWith('blob:')) {
+      URL.revokeObjectURL(currentBlobUrlRef.current);
+      currentBlobUrlRef.current = null;
+    }
+    setUrl(null);
+    setErrorMessage(null);
+    setIsLoading(true);
+    setRetryTrigger((prev) => prev + 1);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -77,7 +90,7 @@ const SafeAudioPreview: React.FC<{
                 }
               })()
             : item.metadata;
-        const mime = metadata?.mimeType;
+        const mime = metadata?.mimeType || getAudioMimeType(item.title);
 
         const result = await getVaultItemPreviewUrl(item, masterKey, mime, rsaKeyPair?.privateKey);
         if (!isMounted) {
@@ -120,8 +133,12 @@ const SafeAudioPreview: React.FC<{
 
     return () => {
       isMounted = false;
+      if (currentBlobUrlRef.current && currentBlobUrlRef.current.startsWith('blob:')) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = null;
+      }
     };
-  }, [revisionKey, masterKey, rsaKeyPair]);
+  }, [revisionKey, masterKey, rsaKeyPair, retryTrigger, item.id]);
 
   useEffect(() => {
     return () => {
@@ -134,7 +151,7 @@ const SafeAudioPreview: React.FC<{
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center p-6">
+      <div className="flex h-full items-center justify-center p-6 bg-white/5 animate-pulse rounded-2xl">
         <Loader2 className="h-6 w-6 animate-spin text-text/20" />
       </div>
     );
@@ -142,11 +159,18 @@ const SafeAudioPreview: React.FC<{
 
   if (errorMessage || !url) {
     return (
-      <div className="flex flex-col h-full items-center justify-center p-6 text-center">
-        <AlertTriangle className="h-5 w-5 text-red-400/50 mb-2" />
-        <span className="text-xs text-red-500/80 font-medium">
+      <div className="flex flex-col h-full items-center justify-center p-6 text-center bg-red-400/10 rounded-2xl border border-red-400/20 gap-2">
+        <AlertTriangle className="h-5 w-5 text-red-400/80 mb-1" />
+        <span className="text-xs text-red-400 font-medium leading-relaxed">
           {errorMessage || 'Audio preview unavailable'}
         </span>
+        <Button
+          onClick={handleRetry}
+          size="sm"
+          className="mt-2 bg-red-400/20 hover:bg-red-400/30 text-red-300 border border-red-400/30 text-xs px-3 py-1"
+        >
+          Try again
+        </Button>
       </div>
     );
   }
@@ -187,11 +211,10 @@ export const AudioVault: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetFolder = useRef<string | null>(null);
   const ITEMS_PER_PAGE = 8;
-  const supportedExtensions = Array.from(FILE_TYPE_SUPPORT.audio);
 
   const isSupportedAudioFile = (file: File) => {
-    const extension = file.name.split('.').pop()?.toUpperCase() || '';
-    return (file.type || '').startsWith('audio/') || supportedExtensions.includes(extension as any);
+    const extension = file.name.split('.').pop() || '';
+    return (file.type || '').startsWith('audio/') || isAudioExtension(extension);
   };
   const isLiveCaptureItem = (value: unknown) =>
     value === true || value === 'true' || value === 1 || value === '1';
@@ -256,11 +279,28 @@ export const AudioVault: React.FC = () => {
   const canPrevious = currentPreviewIndex > 0;
   const canNext = currentPreviewIndex >= 0 && currentPreviewIndex < filteredItems.length - 1;
 
+  const handleClosePreview = () => {
+    window.dispatchEvent(
+      new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } })
+    );
+    setPreviewItem(null);
+  };
+
   const showPreviousAudio = () => {
-    if (canPrevious) setPreviewItem(filteredItems[currentPreviewIndex - 1].id);
+    if (canPrevious) {
+      window.dispatchEvent(
+        new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } })
+      );
+      setPreviewItem(filteredItems[currentPreviewIndex - 1].id);
+    }
   };
   const showNextAudio = () => {
-    if (canNext) setPreviewItem(filteredItems[currentPreviewIndex + 1].id);
+    if (canNext) {
+      window.dispatchEvent(
+        new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } })
+      );
+      setPreviewItem(filteredItems[currentPreviewIndex + 1].id);
+    }
   };
 
   useEffect(() => {
@@ -300,7 +340,7 @@ export const AudioVault: React.FC = () => {
       }
 
       if (e.key === 'Escape') {
-        setPreviewItem(null);
+        handleClosePreview();
       }
     };
 
@@ -334,95 +374,113 @@ export const AudioVault: React.FC = () => {
     if (!files.length || !masterKey) return;
 
     setIsUploading(true);
-    const total = files.length;
+    const validFiles: { file: File; targetFolder: string | null }[] = [];
+
+    for (const file of files) {
+      if (!isSupportedAudioFile(file)) {
+        toast.error(`"${file.name}" is not a supported audio format and was skipped.`);
+        continue;
+      }
+      if (exceedsUploadSizeLimit(file)) {
+        toast.error(getUploadSizeErrorMessage(file));
+        continue;
+      }
+      const folderFromPath = (file as any).webkitRelativePath
+        ? (file as any).webkitRelativePath.split('/')[0]
+        : null;
+      validFiles.push({ file, targetFolder: folderFromPath || targetFolder });
+    }
+
+    const total = validFiles.length;
+    if (total === 0) {
+      setIsUploading(false);
+      uploadTargetFolder.current = null;
+      return;
+    }
+
+    const batchToastId = toast.loading(
+      total === 1 ? `Encrypting and uploading audio...` : `Uploading 0/${total} audio files...`
+    );
+
+    let completedCount = 0;
+    let successCount = 0;
+    let failedCount = 0;
+
+    const CONCURRENCY = Math.min(3, total);
+
+    const processFile = async (item: { file: File; targetFolder: string | null }) => {
+      const { file, targetFolder: itemFolder } = item;
+      try {
+        const encryptedData = isAlreadyEncrypted
+          ? new Uint8Array(await file.arrayBuffer())
+          : await encryptFileInWorker(file, masterKey);
+
+        const resolvedMimeType =
+          file.type && file.type !== 'application/octet-stream'
+            ? file.type
+            : getAudioMimeType(file.name);
+
+        await addItem({
+          type: 'audio',
+          title: file.name,
+          content: encryptedData,
+          folder: itemFolder || undefined,
+          metadata: {
+            mimeType: resolvedMimeType,
+            size: file.size,
+            extension: file.name.split('.').pop()?.toUpperCase() || 'AUDIO',
+            isE2EE: true,
+            clientEncrypted: true,
+            isLiveCapture,
+          },
+        });
+
+        successCount++;
+      } catch (error) {
+        failedCount++;
+        logActivity({
+          actionType: 'file_upload',
+          itemName: file.name,
+          description: 'audio upload failed',
+          status: 'failure',
+        });
+      } finally {
+        completedCount++;
+        if (total > 1) {
+          toast.loading(
+            `Uploading ${completedCount}/${total} audio files (${Math.round((completedCount / total) * 100)}%)...`,
+            { id: batchToastId }
+          );
+        }
+      }
+    };
 
     try {
-      for (let index = 0; index < total; index += 1) {
-        const file = files[index];
-        if (!isSupportedAudioFile(file)) {
-          toast.error(
-            `This audio vault does not support this file. "${file.name}" was not uploaded.`
-          );
-          continue;
+      const queue = [...validFiles];
+      const workers = Array.from({ length: CONCURRENCY }, async () => {
+        while (queue.length > 0) {
+          const item = queue.shift();
+          if (item) {
+            await processFile(item);
+          }
         }
-        if (exceedsUploadSizeLimit(file)) {
-          toast.error(getUploadSizeErrorMessage(file));
-          continue;
-        }
-        const toastId = toast.loading(`Encrypting audio ${index + 1} of ${total}...`);
+      });
 
-        try {
-          // Detect if file is coming from a folder upload
-          const folderFromPath = (file as any).webkitRelativePath
-            ? (file as any).webkitRelativePath.split('/')[0]
-            : null;
+      await Promise.all(workers);
 
-          const fileTargetFolder = folderFromPath || targetFolder;
-
-          const encryptedData = isAlreadyEncrypted
-            ? new Uint8Array(await file.arrayBuffer())
-            : await encryptFileInWorker(file, masterKey);
-
-          await addItem(
-            {
-              type: 'audio',
-              title: file.name,
-              content: encryptedData,
-              folder: fileTargetFolder || undefined,
-              metadata: {
-                mimeType: (() => {
-                  if (file.type && file.type !== 'application/octet-stream') return file.type;
-                  const ext = file.name.split('.').pop()?.toLowerCase();
-                  switch (ext) {
-                    case 'webm':
-                      return 'audio/webm';
-                    case 'mp3':
-                      return 'audio/mpeg';
-                    case 'm4a':
-                      return 'audio/mp4';
-                    case 'wav':
-                      return 'audio/wav';
-                    case 'ogg':
-                    case 'oga':
-                      return 'audio/ogg';
-                    case 'aac':
-                      return 'audio/aac';
-                    case 'flac':
-                      return 'audio/flac';
-                    case 'opus':
-                      return 'audio/opus';
-                    case 'aiff':
-                    case 'aif':
-                      return 'audio/aiff';
-                    case 'wma':
-                      return 'audio/x-ms-wma';
-                    default:
-                      return 'audio/mpeg';
-                  }
-                })(),
-                size: file.size,
-                extension: file.name.split('.').pop()?.toUpperCase() || 'AUDIO',
-                isE2EE: isAlreadyEncrypted,
-                isLiveCapture,
-              },
-            },
-            (progress) => {
-              toast.loading(`Uploading ${index + 1}/${total}: ${progress}%...`, {
-                id: toastId,
-              });
-            }
-          );
-
-          toast.success(`${file.name} uploaded successfully`, { id: toastId });
-        } catch (error) {
-          toast.error(`Failed to upload ${file.name}`, { id: toastId });
-          logActivity({
-            actionType: 'file_upload',
-            itemName: file.name,
-            description: 'audio upload failed',
-            status: 'failure',
-          });
-        }
+      if (failedCount === 0) {
+        toast.success(
+          total === 1
+            ? `${validFiles[0].file.name} uploaded successfully`
+            : `Successfully uploaded ${successCount} audio files`,
+          { id: batchToastId }
+        );
+      } else if (successCount > 0) {
+        toast.warning(`Uploaded ${successCount} files, ${failedCount} failed`, {
+          id: batchToastId,
+        });
+      } else {
+        toast.error(`Failed to upload audio files`, { id: batchToastId });
       }
     } finally {
       setIsUploading(false);
@@ -805,7 +863,7 @@ export const AudioVault: React.FC = () => {
               variant="ghost"
               size="icon"
               className="absolute right-6 top-6 z-50 h-12 w-12 rounded-full text-white hover:bg-white/10"
-              onClick={() => setPreviewItem(null)}
+              onClick={handleClosePreview}
               aria-label="Close preview"
             >
               <X className="h-7 w-7" />
@@ -890,7 +948,7 @@ export const AudioVault: React.FC = () => {
                     className="h-10 w-10 border border-red-500/10 bg-white/5 text-red-400/70 hover:bg-red-500/10 hover:text-red-400"
                     onClick={() => {
                       handleDelete(previewedAudio.id, previewedAudio.title);
-                      setPreviewItem(null);
+                      handleClosePreview();
                     }}
                     title="Delete"
                   >

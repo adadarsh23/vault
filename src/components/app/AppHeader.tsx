@@ -155,7 +155,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         >
           <button
             type="button"
-            className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-full border border-text/15 bg-text/5 text-text/70 transition-all hover:bg-text/10 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
+            className="flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full border border-text/15 bg-text/5 text-text/70 transition-all hover:bg-text/10 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
             onClick={handlePrevTab}
             aria-label="Go to previous tab"
             title="Previous tab"
@@ -167,7 +167,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
           <button
             type="button"
-            className="px-2 py-1 text-[11px] sm:text-xs font-medium capitalize truncate max-w-[80px] sm:max-w-[120px] text-center text-text transition-colors focus-visible:outline-none"
+            className="px-1 py-1 text-[11px] sm:text-xs font-medium capitalize truncate max-w-[80px] sm:max-w-[120px] text-center text-text transition-colors focus-visible:outline-none"
             onClick={toggleSidebar}
             aria-label="Toggle navigation sidebar"
             title="Switch section"
@@ -177,7 +177,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
           <button
             type="button"
-            className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-full border border-text/15 bg-text/5 text-text/70 transition-all hover:bg-text/10 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
+            className="flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full border border-text/15 bg-text/5 text-text/70 transition-all hover:bg-text/10 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
             onClick={handleNextTab}
             aria-label="Go to next tab"
             title="Next tab"

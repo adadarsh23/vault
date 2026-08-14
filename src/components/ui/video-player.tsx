@@ -14,8 +14,9 @@ import {
   Maximize2,
   Minimize2,
   PictureInPicture2,
-  FlipHorizontal2,
+  FlipHorizontal,
   ChevronDown,
+  VideoOff,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -23,6 +24,7 @@ import apiClient from '../../api/apiClient';
 import { logger } from '../../lib/logger';
 import { toast } from 'sonner';
 import Hls from 'hls.js';
+import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';
 
 /* ---------------- UTIL ---------------- */
 
@@ -300,7 +302,6 @@ const CustomSlider = ({
 
 const VideoPlayer = ({
   src,
-  mimeType,
   itemId,
   title,
   className,
@@ -338,6 +339,41 @@ const VideoPlayer = ({
   const hlsRef = useRef<Hls | null>(null);
   // const isInitialMount = useRef(true) // Removed unused variable
 
+  const [activeSrc, setActiveSrc] = useState(src);
+  const fallbackAttemptedRef = useRef(false);
+  const managedFallbackBlobRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (managedFallbackBlobRef.current) {
+      try {
+        URL.revokeObjectURL(managedFallbackBlobRef.current);
+      } catch {
+        /* ignore */
+      }
+      managedFallbackBlobRef.current = null;
+    }
+    setActiveSrc(src);
+    fallbackAttemptedRef.current = false;
+  }, [src]);
+
+  useEffect(() => {
+    return () => {
+      if (managedFallbackBlobRef.current) {
+        try {
+          URL.revokeObjectURL(managedFallbackBlobRef.current);
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+  }, []);
+
+  const [isTranscoding, setIsTranscoding] = useState(false);
+  const [transcodeProgress, setTranscodeProgress] = useState<{
+    progress: number;
+    message: string;
+  } | null>(null);
+
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
@@ -371,10 +407,10 @@ const VideoPlayer = ({
   }>({ level: -1, bufferAhead: 0, droppedFrames: 0 });
   const lastResumeSaveAt = useRef(0);
   const lastBufferStartAt = useRef(0);
-  const resumeKey = useMemo(() => `vault:video:resume:${itemId ?? src}`, [itemId, src]);
+  const resumeKey = useMemo(() => `vault:video:resume:${itemId ?? activeSrc}`, [itemId, activeSrc]);
   const isSourceAllowed = useMemo(
-    () => isAllowedMediaUrl(src, allowedMediaDomains),
-    [src, allowedMediaDomains]
+    () => isAllowedMediaUrl(activeSrc, allowedMediaDomains),
+    [activeSrc, allowedMediaDomains]
   );
 
   const effectiveAspectRatio = useMemo(() => {
@@ -479,7 +515,7 @@ const VideoPlayer = ({
     // Main loader: lightweight HLS/native playback for responsive previews
     const loadVideo = async () => {
       // Prefer HLS chunk-based loading first for fast start + background buffering
-      if (src.includes('.m3u8')) {
+      if (activeSrc.includes('.m3u8')) {
         if (Hls.isSupported()) {
           const hls = new Hls({
             enableWorker: true,
@@ -496,7 +532,7 @@ const VideoPlayer = ({
             testBandwidth: true,
           });
           hlsRef.current = hls;
-          hls.loadSource(src);
+          hls.loadSource(activeSrc);
           hls.attachMedia(video);
 
           hls.on(Hls.Events.MANIFEST_LOADING, () => {
@@ -621,14 +657,14 @@ const VideoPlayer = ({
           setQualityOptions([{ index: -1, label: 'Auto' }]);
           setSelectedQualityIndex(-1);
           setCurrentQualityLabel('Auto');
-          video.src = src;
+          video.src = activeSrc;
           video.load();
         }
       } else {
         setQualityOptions([{ index: -1, label: 'Auto' }]);
         setSelectedQualityIndex(-1);
         setCurrentQualityLabel('Auto');
-        video.src = src;
+        video.src = activeSrc;
         video.load();
       }
     };
@@ -659,7 +695,7 @@ const VideoPlayer = ({
         /* ignore */
       }
     };
-  }, [src, autoPlay, itemId, logEvent, lowDataMode, networkAwareAutoplay, isSourceAllowed]);
+  }, [activeSrc, autoPlay, itemId, logEvent, lowDataMode, networkAwareAutoplay, isSourceAllowed]);
 
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isDraggingSeek = useRef(false);
@@ -671,9 +707,52 @@ const VideoPlayer = ({
     [currentTime, duration]
   );
 
-  /* ---------------- CORE EVENTS ---------------- */
+  /* ---------------- CORE EVENTS & TRANSCODING ---------------- */
 
-  const handleError = useCallback(() => {
+  const handleTranscodeAndPlay = useCallback(async () => {
+    const targetSource = activeSrc || src;
+    if (!targetSource) return;
+
+    setIsTranscoding(true);
+    setError(null);
+    setTranscodeProgress({ progress: 5, message: 'Initializing in-browser video engine...' });
+
+    try {
+      const result = await transcodeVideoInBrowser(
+        targetSource,
+        title || 'video.mkv',
+        (ev) => {
+          setTranscodeProgress({ progress: ev.progress, message: ev.message });
+        },
+        itemId || targetSource
+      );
+
+      if (managedFallbackBlobRef.current) {
+        try {
+          URL.revokeObjectURL(managedFallbackBlobRef.current);
+        } catch {
+          /* ignore */
+        }
+      }
+
+      managedFallbackBlobRef.current = result.url;
+      setActiveSrc(result.url);
+      setIsVideoReady(false);
+      setIsBuffering(true);
+      setError(null);
+      setIsPlaying(true);
+      toast.success('Video converted successfully!');
+    } catch (err: any) {
+      console.error('WASM transcode error:', err);
+      toast.error('Automatic conversion failed. You can still download the video.');
+      setError(getPlayerErrorMessage('UNSUPPORTED_FORMAT'));
+    } finally {
+      setIsTranscoding(false);
+      setTranscodeProgress(null);
+    }
+  }, [activeSrc, src, title]);
+
+  const handleError = useCallback(async () => {
     const video = videoRef.current;
     const err = video?.error;
 
@@ -935,23 +1014,31 @@ const VideoPlayer = ({
   };
 
   const handleDownload = () => {
-    if (!src) return;
+    const targetUrl = activeSrc || src;
+    if (!targetUrl) return;
     if (!allowDownload) {
       toast.error('Download is disabled by policy');
       return;
     }
-    if (!isSafeDownloadUrl(src)) {
+    if (!isSafeDownloadUrl(targetUrl)) {
       toast.error('Download blocked: unsupported or unsafe URL');
-      logger.warn('Blocked unsafe download URL', { src });
+      logger.warn('Blocked unsafe download URL', { targetUrl });
       return;
     }
     try {
       const link = document.createElement('a');
-      link.href = src;
-      const fallbackName = title ? `${title}.mp4` : `video-${Date.now()}.mp4`;
-      const parsedName = src.split('/').pop()?.split('?')[0];
+      link.href = targetUrl;
+      const fallbackName = title
+        ? title.includes('.')
+          ? title
+          : `${title}.mp4`
+        : `video-${Date.now()}.mp4`;
+      const parsedName =
+        !targetUrl.startsWith('blob:') && !targetUrl.startsWith('data:')
+          ? targetUrl.split('/').pop()?.split('?')[0]
+          : null;
       link.download = parsedName || fallbackName;
-      if (!src.startsWith('blob:') && !src.startsWith('data:')) {
+      if (!targetUrl.startsWith('blob:') && !targetUrl.startsWith('data:')) {
         link.target = '_blank';
       }
       link.rel = 'noopener noreferrer'; // Security best practice
@@ -962,8 +1049,8 @@ const VideoPlayer = ({
     } catch (err) {
       console.error('Download failed:', err);
       // Fallback: just open in new tab
-      if (isSafeDownloadUrl(src)) {
-        window.open(src, '_blank', 'noopener,noreferrer');
+      if (isSafeDownloadUrl(targetUrl)) {
+        window.open(targetUrl, '_blank', 'noopener,noreferrer');
         toast.error('Direct download failed, opening in new tab');
       } else {
         toast.error('Download failed');
@@ -1077,11 +1164,13 @@ const VideoPlayer = ({
       ref={containerRef}
       className={cn(
         'group relative flex items-center justify-center bg-black overflow-hidden max-w-full max-h-full transition-all duration-300',
-        effectiveAspectRatio ? 'w-full h-auto' : 'w-full h-full min-h-[220px]',
+        effectiveAspectRatio && !error
+          ? 'w-full h-auto'
+          : 'w-full h-full min-h-[300px] sm:min-h-[380px]',
         className
       )}
       style={{
-        aspectRatio: effectiveAspectRatio ? String(effectiveAspectRatio) : undefined,
+        aspectRatio: effectiveAspectRatio && !error ? String(effectiveAspectRatio) : undefined,
         ...style,
       }}
       onMouseMove={resetHideTimer}
@@ -1094,7 +1183,7 @@ const VideoPlayer = ({
     >
       <video
         ref={videoRef}
-        src={src.includes('.m3u8') ? undefined : src}
+        src={activeSrc.includes('.m3u8') ? undefined : activeSrc}
         className={cn(
           'h-full w-full max-h-full object-contain transition-opacity duration-300',
           isMirrored ? 'scale-x-[-1]' : ''
@@ -1118,11 +1207,7 @@ const VideoPlayer = ({
         onCanPlay={handlePlaying}
         onEnded={handleEnded}
         onError={handleError}
-      >
-        {!src.includes('.m3u8') && (mimeType || getMimeTypeFromUrl(src)) ? (
-          <source src={src} type={mimeType || getMimeTypeFromUrl(src)} />
-        ) : null}
-      </video>
+      />
 
       <AnimatePresence>
         {!isVideoReady && !error && (
@@ -1179,25 +1264,90 @@ const VideoPlayer = ({
         )}
       </AnimatePresence>
 
+      {/* IN-BROWSER TRANSCODING OVERLAY */}
+      {isTranscoding && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0a]/95 backdrop-blur-md text-center p-6 z-[36]">
+          <div className="max-w-xs w-full flex flex-col items-center gap-4">
+            <div className="relative flex items-center justify-center">
+              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+              <Play className="w-4 h-4 text-white absolute fill-white" />
+            </div>
+            <div className="w-full">
+              <h4 className="text-white text-sm font-semibold mb-1">
+                Converting Video in Browser (WASM)
+              </h4>
+              <p className="text-white/60 text-xs mb-3">
+                {transcodeProgress?.message || 'Processing video streams...'}
+              </p>
+              <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-primary h-full rounded-full transition-all duration-300 ease-out shadow-[0_0_12px_rgba(0,242,254,0.5)]"
+                  style={{ width: `${transcodeProgress?.progress || 10}%` }}
+                />
+              </div>
+              <span className="text-[11px] font-mono text-white/50 mt-1.5 block">
+                {transcodeProgress?.progress || 0}%
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ERROR */}
       {error && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0a]/90 backdrop-blur-md text-center p-6 z-[35]">
-          <div className="bg-red-500/10 p-4 rounded-full mb-4">
-            <Loader2 className="text-red-400 w-8 h-8 opacity-50" />
-          </div>
-          <p className="text-red-400/90 mb-3 text-sm font-medium max-w-[280px]">{error}</p>
-          <div className="flex flex-wrap gap-2 justify-center mt-2">
-            <Button
-              onClick={() => {
-                videoRef.current?.load();
-                setError(null);
-              }}
-              aria-label="Retry video playback"
-              className="bg-white/10 hover:bg-white/20 border-white/10 text-white text-xs px-4 py-2 font-medium"
-            >
-              <RefreshCw className="w-3.5 h-3.5 mr-1.5 inline" />
-              Retry Playback
-            </Button>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0a]/95 backdrop-blur-md text-center p-4 sm:p-6 z-[35] overflow-y-auto">
+          <div className="my-auto flex flex-col items-center justify-center max-w-md w-full py-4">
+            <div className="bg-red-500/10 p-3 sm:p-4 rounded-2xl mb-3 ring-1 ring-red-500/20 shadow-lg shadow-red-500/5">
+              <VideoOff className="text-red-400 w-7 h-7 sm:w-8 sm:h-8" />
+            </div>
+            <h4 className="text-white text-base sm:text-lg font-semibold mb-1.5 px-2">
+              {error === PLAYER_ERROR_MESSAGES.UNSUPPORTED_FORMAT
+                ? 'Video Format Not Supported'
+                : 'Playback Error'}
+            </h4>
+            <p className="text-white/70 mb-5 text-xs sm:text-sm font-normal max-w-sm px-4 leading-relaxed">
+              {error === PLAYER_ERROR_MESSAGES.UNSUPPORTED_FORMAT
+                ? 'This device or browser cannot decode this video format natively (e.g. MKV, AVI, WMV, HEVC, or AC3 audio). You can convert it directly in your browser or download the original file.'
+                : error}
+            </p>
+            <div className="flex flex-wrap gap-3 justify-center items-center px-2">
+              {error === PLAYER_ERROR_MESSAGES.UNSUPPORTED_FORMAT && (
+                <Button
+                  onClick={handleTranscodeAndPlay}
+                  aria-label="Convert and play in browser"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm px-4 py-2 sm:py-2.5 font-medium rounded-xl shadow-lg shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95"
+                >
+                  <Play className="w-3.5 h-3.5 mr-1.5 inline fill-white" />
+                  Convert & Play (WASM)
+                </Button>
+              )}
+              {allowDownload && (
+                <Button
+                  onClick={handleDownload}
+                  aria-label="Download video"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs sm:text-sm px-4 py-2 sm:py-2.5 font-medium rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1.5 inline" />
+                  Download Video
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  setError(null);
+                  setIsBuffering(true);
+                  if (videoRef.current) {
+                    videoRef.current.currentTime = 0;
+                    videoRef.current.load();
+                  }
+                }}
+                aria-label="Retry playback"
+                variant="outline"
+                className="bg-white/10 hover:bg-white/20 border-white/15 text-white text-xs sm:text-sm px-4 py-2 sm:py-2.5 font-medium rounded-xl transition-all"
+              >
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5 inline" />
+                Retry Playback
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -1356,7 +1506,7 @@ const VideoPlayer = ({
                   size="icon"
                   className="h-4 w-4 sm:h-6 sm:w-6 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0"
                 >
-                  <FlipHorizontal2 className="w-2 h-2 sm:w-3 sm:h-3" />
+                  <FlipHorizontal className="w-2 h-2 sm:w-3 sm:h-3" />
                 </Button>
 
                 <Button

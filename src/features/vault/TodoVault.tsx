@@ -18,6 +18,9 @@ import {
   Pin,
   ChevronDown,
   ShieldCheck,
+  Folder,
+  Clock,
+  ShieldAlert,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../../components/ui/Button';
@@ -217,12 +220,55 @@ const normalizeTodoPayload = (value: unknown, fallbackTask: string): TodoPayload
   });
 };
 
-const priorityTone: Record<TodoPriority, string> = {
-  none: 'text-slate-300 bg-slate-300/10 border-slate-300/20',
-  low: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
-  medium: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
-  high: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
-  critical: 'text-rose-400 bg-rose-400/10 border-rose-400/20',
+const priorityConfig: Record<
+  TodoPriority,
+  { label: string; tone: string; glow: string; dot: string }
+> = {
+  none: {
+    label: 'None',
+    tone: 'text-slate-300 bg-slate-400/10 border-slate-400/20',
+    glow: 'bg-slate-500/10',
+    dot: 'bg-slate-400',
+  },
+  low: {
+    label: 'Low',
+    tone: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25',
+    glow: 'bg-emerald-500/15',
+    dot: 'bg-emerald-400',
+  },
+  medium: {
+    label: 'Medium',
+    tone: 'text-amber-300 bg-amber-500/10 border-amber-500/25',
+    glow: 'bg-amber-500/15',
+    dot: 'bg-amber-400',
+  },
+  high: {
+    label: 'High',
+    tone: 'text-orange-300 bg-orange-500/10 border-orange-500/25',
+    glow: 'bg-orange-500/15',
+    dot: 'bg-orange-400',
+  },
+  critical: {
+    label: 'Critical',
+    tone: 'text-rose-300 bg-rose-500/15 border-rose-500/30',
+    glow: 'bg-rose-500/20',
+    dot: 'bg-rose-400',
+  },
+};
+
+const isDueDateOverdue = (dueDate: string): boolean => {
+  const normalized = dueDate.trim();
+  if (!normalized) return false;
+  let parsed: Date | null = null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    parsed = parseDateInputValue(normalized);
+    if (!parsed) return false;
+    parsed.setHours(23, 59, 59, 999);
+  } else {
+    parsed = new Date(normalized);
+    if (Number.isNaN(parsed.getTime())) return false;
+  }
+  return parsed.getTime() < Date.now();
 };
 
 const padDateSegment = (value: number): string => String(value).padStart(2, '0');
@@ -1051,20 +1097,51 @@ export const TodoVault: React.FC = () => {
             const todo = isEditing ? editingTodo : payload;
             const isPinning = pinningItemIds.includes(item.id);
             const isTodoSaving = savingTodoIds.includes(item.id);
+            const isOverdue = todo?.dueDate
+              ? isDueDateOverdue(todo.dueDate) && !todo.completed
+              : false;
+            const priorityInfo =
+              priorityConfig[todo?.priority || 'medium'] || priorityConfig.medium;
 
             return (
-              <div
+              <motion.div
                 key={item.id}
+                layout
+                whileHover={{ y: -3, transition: { duration: 0.2 } }}
                 draggable
-                onDragStart={(event) => setDraggedVaultItem(event, item.id)}
+                onDragStartCapture={(event) => setDraggedVaultItem(event, item.id)}
                 onTouchStart={(event) => setDraggedVaultItem(event as any, item.id)}
                 title="Drag to a folder to move this todo"
+                className="h-full"
               >
-                <Card className="group relative h-full overflow-hidden border-white/5 bg-gradient-to-br from-white/[0.08] to-transparent backdrop-blur-md transition-all hover:border-white/20">
-                  <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-orange-500/10 blur-3xl transition-opacity group-hover:opacity-30" />
-                  <CardHeader className="relative z-10 border-b border-white/5 pb-4">
+                <Card
+                  className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 ${
+                    todo?.completed
+                      ? 'border-emerald-500/20 bg-gradient-to-br from-emerald-950/15 via-white/[0.04] to-transparent hover:border-emerald-500/35 hover:shadow-[0_16px_36px_rgba(16,185,129,0.12)]'
+                      : item.isPinned
+                        ? 'border-teal-500/30 bg-gradient-to-br from-teal-950/15 via-white/[0.06] to-transparent hover:border-teal-400/40 hover:shadow-[0_16px_36px_rgba(20,184,166,0.15)]'
+                        : 'border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.03] to-transparent hover:border-white/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.35)]'
+                  }`}
+                >
+                  {/* Subtle top edge light reflection */}
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
+                  {/* Dynamic Ambient Blur Orb */}
+                  <div
+                    className={`pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full blur-3xl transition-opacity duration-500 ${
+                      todo?.completed
+                        ? 'bg-emerald-500/15 group-hover:opacity-60'
+                        : isOverdue
+                          ? 'bg-rose-500/20 group-hover:opacity-60'
+                          : priorityInfo.glow + ' group-hover:opacity-50'
+                    }`}
+                  />
+
+                  {/* Header */}
+                  <CardHeader className="relative z-10 border-b border-white/5 pb-3.5 pt-4 px-5 sm:px-6">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 flex-1 items-start gap-3">
+                        {/* Interactive Checkbox Button */}
                         <button
                           type="button"
                           aria-label={
@@ -1072,16 +1149,23 @@ export const TodoVault: React.FC = () => {
                           }
                           onClick={() => void handleToggleCompleted(item)}
                           disabled={!payload || isTodoSaving}
-                          className="mt-0.5 text-text/60 transition-colors hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
+                          className={`group/btn mt-0.5 relative flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 disabled:cursor-not-allowed disabled:opacity-40 ${
+                            isTodoSaving
+                              ? 'border border-emerald-400/40 bg-emerald-500/10 text-emerald-300'
+                              : todo?.completed
+                                ? 'border border-emerald-400/40 bg-emerald-500/20 text-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.25)] hover:scale-105 hover:bg-emerald-500/30'
+                                : 'border border-white/20 bg-white/5 text-transparent hover:border-emerald-400/60 hover:bg-emerald-500/10 hover:text-emerald-400/60 hover:scale-105'
+                          }`}
                         >
                           {isTodoSaving ? (
-                            <Loader2 className="h-5 w-5 animate-spin text-emerald-300" />
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-300" />
                           ) : todo?.completed ? (
-                            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                           ) : (
-                            <Circle className="h-5 w-5" />
+                            <Circle className="h-4 w-4 group-hover/btn:text-emerald-400/70" />
                           )}
                         </button>
+
                         <div className="min-w-0 flex-1">
                           {isEditing ? (
                             <Input
@@ -1094,40 +1178,57 @@ export const TodoVault: React.FC = () => {
                                 }));
                               }}
                               autoFocus
+                              className="h-9 w-full rounded-xl border border-white/20 bg-white/10 px-3 text-sm font-medium text-text focus:border-orange-400/60 focus:ring-2 focus:ring-orange-400/20"
                             />
                           ) : (
-                            <CardTitle
-                              className={`truncate text-base ${todo?.completed ? 'line-through text-text/45' : 'text-text'}`}
-                            >
-                              {todo?.task || item.title}
-                            </CardTitle>
+                            <div className="space-y-1">
+                              <CardTitle
+                                className={`text-[15px] font-semibold tracking-tight transition-all duration-200 leading-snug break-words ${
+                                  todo?.completed
+                                    ? 'line-through text-text/40 decoration-emerald-400/60'
+                                    : 'text-text group-hover:text-white'
+                                }`}
+                              >
+                                {todo?.task || item.title}
+                              </CardTitle>
+                              {item.folder && (
+                                <div className="flex items-center gap-1 text-[10px] font-medium text-amber-300/80">
+                                  <Folder className="h-3 w-3 text-amber-400/70 shrink-0" />
+                                  <span className="truncate max-w-[200px]" title={item.folder}>
+                                    {item.folder}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
-                      <div className="relative z-20 flex gap-1">
+
+                      {/* Action buttons */}
+                      <div className="relative z-20 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
                         {isEditing ? (
                           <>
                             <Button
                               variant="ghost"
                               size="icon"
                               aria-label="Cancel edit"
-                              className="h-8 w-8 rounded-full hover:bg-white/10"
+                              className="h-7 w-7 rounded-lg text-text/40 hover:text-text hover:bg-white/10"
                               onClick={cancelEdit}
                             >
-                              <X className="h-4 w-4" />
+                              <X className="h-3.5 w-3.5" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               aria-label="Save todo changes"
-                              className="h-8 w-8 rounded-full text-green-400 hover:bg-green-400/20"
+                              className="h-7 w-7 rounded-lg text-emerald-400 hover:bg-emerald-400/20"
                               onClick={() => void handleSaveEdit(item)}
                               disabled={isTodoSaving}
                             >
                               {isTodoSaving ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               ) : (
-                                <Save className="h-4 w-4" />
+                                <Save className="h-3.5 w-3.5" />
                               )}
                             </Button>
                           </>
@@ -1137,7 +1238,7 @@ export const TodoVault: React.FC = () => {
                               variant="ghost"
                               size="icon"
                               aria-label="Edit todo"
-                              className="h-8 w-8 rounded-full text-text/25 transition-colors hover:bg-white/10 hover:text-text/70"
+                              className="h-7 w-7 rounded-lg text-text/40 hover:text-text hover:bg-white/10 transition-colors"
                               onClick={() => startEdit(item)}
                               disabled={!payload}
                             >
@@ -1148,11 +1249,15 @@ export const TodoVault: React.FC = () => {
                               size="icon"
                               aria-label={item.isPinned ? 'Unpin todo' : 'Pin todo'}
                               disabled={isPinning}
-                              className={`h-8 w-8 rounded-full ${item.isPinned ? 'text-teal-400 hover:bg-teal-400/20' : 'text-text/25 hover:bg-white/10 hover:text-text/70'} transition-colors`}
+                              className={`h-7 w-7 rounded-lg transition-colors ${
+                                item.isPinned
+                                  ? 'text-teal-300 bg-teal-400/15 hover:bg-teal-400/25'
+                                  : 'text-text/40 hover:text-teal-300 hover:bg-white/10'
+                              }`}
                               onClick={() => void togglePin(item.id)}
                             >
                               {isPinning ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               ) : (
                                 <Pin
                                   className={`h-3.5 w-3.5 ${item.isPinned ? 'fill-current' : ''}`}
@@ -1163,7 +1268,7 @@ export const TodoVault: React.FC = () => {
                               variant="ghost"
                               size="icon"
                               aria-label="Delete todo"
-                              className="h-8 w-8 rounded-full text-text/25 transition-colors hover:bg-red-400/20 hover:text-red-400"
+                              className="h-7 w-7 rounded-lg text-text/40 hover:bg-rose-500/15 hover:text-rose-400 transition-colors"
                               onClick={() => void handleDeleteTodo(item)}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -1173,27 +1278,30 @@ export const TodoVault: React.FC = () => {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="relative z-10 space-y-4 overflow-hidden p-5 sm:p-6">
+
+                  {/* Content */}
+                  <CardContent className="relative z-10 flex flex-col justify-between flex-1 space-y-4 p-5 sm:p-6 pt-4">
                     {isFailed && (
-                      <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-                        This todo could not be decrypted with the current key.
+                      <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+                        <ShieldAlert className="h-4 w-4 shrink-0" />
+                        <span>This todo could not be decrypted with the current key.</span>
                       </div>
                     )}
 
                     {todo && (
                       <>
                         {isEditing ? (
-                          <>
-                            <div className="grid gap-3 sm:grid-cols-2">
-                              <TodoDueDateField
-                                value={editingTodo.dueDate}
-                                onChange={(dueDate) =>
-                                  setEditingTodo((prev) => ({
-                                    ...prev,
-                                    dueDate,
-                                  }))
-                                }
-                              />
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <TodoDueDateField
+                              value={editingTodo.dueDate}
+                              onChange={(dueDate) =>
+                                setEditingTodo((prev) => ({
+                                  ...prev,
+                                  dueDate,
+                                }))
+                              }
+                            />
+                            <div className="relative">
                               <select
                                 value={editingTodo.priority}
                                 onChange={(event) => {
@@ -1203,124 +1311,109 @@ export const TodoVault: React.FC = () => {
                                     priority: normalizePriority(value),
                                   }));
                                 }}
-                                className="h-10 w-full rounded-xl border border-white/5 bg-white/5 px-3 text-sm text-text focus:border-white/20 focus:outline-none [&>option]:bg-white [&>option]:text-slate-900"
+                                className="h-12 sm:h-11 w-full appearance-none rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-xl px-4 pr-10 text-sm font-medium text-text shadow-lg shadow-black/20 transition-all hover:border-orange-400/30 focus:border-orange-400/60 focus:outline-none focus:ring-2 focus:ring-orange-400/20 [color-scheme:dark]"
                               >
                                 <option
                                   value="none"
                                   className="text-black"
                                   style={{ color: '#000000' }}
                                 >
-                                  None
+                                  ⚪ None
                                 </option>
                                 <option
                                   value="low"
                                   className="text-black"
                                   style={{ color: '#000000' }}
                                 >
-                                  Low
+                                  🟢 Low
                                 </option>
                                 <option
                                   value="medium"
                                   className="text-black"
                                   style={{ color: '#000000' }}
                                 >
-                                  Medium
+                                  🟡 Medium
                                 </option>
                                 <option
                                   value="high"
                                   className="text-black"
                                   style={{ color: '#000000' }}
                                 >
-                                  High
+                                  🟠 High
                                 </option>
                                 <option
                                   value="critical"
                                   className="text-black"
                                   style={{ color: '#000000' }}
                                 >
-                                  Critical
+                                  🔴 Critical
                                 </option>
                               </select>
+                              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 text-text/40">
+                                <ChevronDown className="h-4 w-4" />
+                              </div>
                             </div>
-                          </>
+                          </div>
                         ) : (
-                          <>
-                            <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {/* Priority Badge */}
+                            <span
+                              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] shadow-sm backdrop-blur-md ${priorityInfo.tone}`}
+                            >
                               <span
-                                className={`
-      inline-flex
-      shrink-0
-      items-center
-      gap-1
-      rounded-full
-      border
-      px-2.5
-      py-1
-      text-[10px]
-      font-bold
-      uppercase
-      tracking-[0.16em]
-      ${priorityTone[todo.priority]}
-    `}
+                                className={`h-1.5 w-1.5 rounded-full ${priorityInfo.dot} animate-pulse`}
+                              />
+                              <Flag className="h-3 w-3 shrink-0" />
+                              <span>{priorityInfo.label}</span>
+                            </span>
+
+                            {/* Due Date Badge */}
+                            {todo.dueDate && (
+                              <span
+                                className={`inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-xl border px-3 py-1 text-[11px] font-medium backdrop-blur-md shadow-sm transition-colors ${
+                                  isOverdue
+                                    ? 'border-rose-500/30 bg-rose-500/15 text-rose-300'
+                                    : 'border-sky-400/20 bg-sky-500/10 text-sky-300'
+                                }`}
                               >
-                                <Flag className="h-3 w-3 flex-shrink-0" />
-                                <span>{todo.priority}</span>
-                              </span>
-
-                              {todo.dueDate && (
-                                <span
-                                  className="
-        flex
-        min-w-0
-        flex-1
-        items-center
-        gap-1
-        rounded-xl
-        border
-        border-sky-400/20
-        bg-sky-400/10
-        px-3
-        py-1.5
-        text-[10px]
-        font-bold
-        text-sky-300
-      "
-                                >
-                                  <CalendarClock className="h-3 w-3 shrink-0" />
-
-                                  <span className="truncate">
-                                    {formatDueDateLabel(todo.dueDate)}
-                                  </span>
+                                <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                                <span className="truncate font-semibold">
+                                  {isOverdue && !todo.completed ? 'Overdue: ' : ''}
+                                  {formatDueDateLabel(todo.dueDate)}
                                 </span>
-                              )}
-                            </div>
-                          </>
+                              </span>
+                            )}
+
+                            {/* Completed Status Badge */}
+                            {todo.completed && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300 shadow-sm backdrop-blur-md">
+                                <CheckCircle2 className="h-3 w-3" />
+                                <span>Done</span>
+                              </span>
+                            )}
+                          </div>
                         )}
                       </>
                     )}
 
-                    <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-3">
-                      <span className="text-[9px] text-text/20 transition-colors">
-                        Updated {new Date(item.updatedAt).toLocaleDateString()}
-                      </span>
-                      <motion.div
-                        initial={{ opacity: 0.7 }}
-                        animate={{ opacity: 1 }}
-                        transition={{
-                          repeat: Infinity,
-                          duration: 2,
-                          repeatType: 'reverse',
-                        }}
+                    {/* Footer */}
+                    <div className="flex items-center justify-between border-t border-white/5 pt-3 mt-2">
+                      <div className="flex items-center gap-1.5 text-[10px] font-medium text-text/30">
+                        <Clock className="h-3 w-3" />
+                        <span>Updated {new Date(item.updatedAt).toLocaleDateString()}</span>
+                      </div>
+
+                      <div
                         title="End-to-end encrypted with AES-256-GCM"
-                        className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/5 border border-emerald-500/10 text-emerald-400/60 font-bold cursor-help"
+                        className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-bold tracking-wider cursor-help transition-colors hover:bg-emerald-500/15"
                       >
-                        <ShieldCheck className="h-2.5 w-2.5" />
-                        <span className="text-[8px] uppercase tracking-wider">Secure 256</span>
-                      </motion.div>
+                        <ShieldCheck className="h-3 w-3 text-emerald-400 shrink-0" />
+                        <span className="uppercase">AES-256</span>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-              </div>
+              </motion.div>
             );
           })}
         </div>

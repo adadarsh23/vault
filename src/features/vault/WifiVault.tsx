@@ -36,6 +36,7 @@ import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
 
 import { FolderSidebar } from '../../components/vault/FolderSidebar';
 import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
+import { TagManager } from '../../components/vault/TagManager';
 import { useVaultFolders } from '../../hooks/useVaultFolders';
 
 interface WifiPayload {
@@ -85,52 +86,6 @@ const DecryptedWifiItem: React.FC<{
   const [editPayload, setEditPayload] = useState<WifiPayload>(emptyPayload());
   const [showQr, setShowQr] = useState(false);
   const { copy, copiedId } = useClipboard();
-
-  const updateItem = useVaultStore((state) => state.updateItem);
-  const [isAddingTag, setIsAddingTag] = useState(false);
-  const [newTagInput, setNewTagInput] = useState('');
-
-  const tags = useMemo<string[]>(() => {
-    return Array.isArray(item.metadata?.tags) ? item.metadata.tags : [];
-  }, [item]);
-
-  const handleAddTag = async () => {
-    const cleaned = newTagInput
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9-_]/g, '');
-    if (!cleaned) {
-      setIsAddingTag(false);
-      setNewTagInput('');
-      return;
-    }
-    if (tags.includes(cleaned)) {
-      toast.error('Tag already exists');
-      setIsAddingTag(false);
-      setNewTagInput('');
-      return;
-    }
-    const updated = [...tags, cleaned];
-    try {
-      await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } });
-      toast.success(`Tag #${cleaned} added`);
-    } catch {
-      toast.error('Failed to add tag');
-    } finally {
-      setIsAddingTag(false);
-      setNewTagInput('');
-    }
-  };
-
-  const handleRemoveTag = async (tagToRemove: string) => {
-    const updated = tags.filter((t) => t !== tagToRemove);
-    try {
-      await updateItem(item.id, { metadata: { ...(item.metadata || {}), tags: updated } });
-      toast.success(`Tag #${tagToRemove} removed`);
-    } catch {
-      toast.error('Failed to remove tag');
-    }
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -538,42 +493,7 @@ const DecryptedWifiItem: React.FC<{
 
           {/* Tags */}
           <div className="pt-3 border-t border-white/5">
-            <div className="flex flex-wrap gap-1.5 items-center">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center rounded-full bg-white/5 border border-white/5 px-2 py-0.5 text-[10px] text-text/50"
-                >
-                  #{tag}
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    className="ml-1 text-text/30 hover:text-red-400 focus:outline-none"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-              {isAddingTag ? (
-                <Input
-                  value={newTagInput}
-                  onChange={(e) => setNewTagInput(e.target.value)}
-                  onBlur={handleAddTag}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                  placeholder="tag..."
-                  className="h-5 py-0 px-1 text-[10px] w-14 bg-white/5 border-white/10 inline-block"
-                  autoFocus
-                />
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsAddingTag(true)}
-                  className="h-5 px-2 rounded-full text-[9px] border border-dashed border-white/10 text-text/40 hover:text-text hover:bg-white/5"
-                >
-                  + Tag
-                </Button>
-              )}
-            </div>
+            <TagManager item={item} size="sm" />
           </div>
         </CardContent>
       </Card>

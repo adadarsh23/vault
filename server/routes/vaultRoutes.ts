@@ -80,7 +80,7 @@ const strictUserLimiter = (windowMs: number, max: number, message: string) =>
 
 const signedUrlLimiter = strictUserLimiter(
   60 * 1000,
-  Math.max(20, Number(process.env.SIGNED_URL_LIMIT_PER_MIN || 90)),
+  Math.max(20, Number(process.env.SIGNED_URL_LIMIT_PER_MIN || 600)),
   'Too many signed URL requests. Please retry shortly.'
 );
 const multipartStartLimiter = strictUserLimiter(

@@ -1,13 +1,13 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback, memo } from 'react';
+import { useRef, useState, useEffect, useCallback, memo, useId } from 'react';
 import { Button } from './Button';
 import { Play, Pause, Volume2, Volume1, VolumeX, RotateCcw, Download } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 /* ---------------- UTIL ---------------- */
 const formatTime = (seconds: number) => {
-  if (!isFinite(seconds)) return 'Live';
+  if (!isFinite(seconds) || isNaN(seconds) || seconds < 0) return '0:00';
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = Math.floor(seconds % 60);
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
@@ -68,7 +68,7 @@ const CustomSlider = memo(
         if (e.target instanceof Element && e.target.hasPointerCapture(e.pointerId)) {
           e.target.releasePointerCapture(e.pointerId);
         }
-      } catch (err) {
+      } catch {
         // Ignore capture errors
       }
 
@@ -93,7 +93,7 @@ const CustomSlider = memo(
       // Set pointer capture for robustness
       try {
         e.currentTarget.setPointerCapture(e.pointerId);
-      } catch (err) {
+      } catch {
         // Fallback to standard window listeners
       }
 
@@ -132,7 +132,6 @@ const CustomSlider = memo(
           window.removeEventListener('pointerup', handlersRef.current.up);
           window.removeEventListener('pointercancel', handlersRef.current.up);
         }
-        // Absolute fallback cleanup for extreme edge cases
         window.onpointermove = null;
         window.onpointerup = null;
       };
@@ -190,7 +189,9 @@ export const AudioPlayer = ({
   compact?: boolean;
   fileSize?: number;
 }) => {
+  const playerId = useId();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const playPromiseRef = useRef<Promise<void> | null>(null);
   const lastVolume = useRef(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -210,6 +211,28 @@ export const AudioPlayer = ({
   const MAX_WAVEFORM_SIZE = 8 * 1024 * 1024; // 8 MB
   const isTooLarge = fileSize !== undefined && fileSize > MAX_WAVEFORM_SIZE;
   const shouldShowWaveform = isWaveformEnabled && !isTooLarge;
+
+  // Coordinate playing instances across the app so only one track plays at a time
+  useEffect(() => {
+    const handleOtherAudioPlay = (e: Event) => {
+      const customEvent = e as CustomEvent<{ playerId: string }>;
+      if (customEvent.detail?.playerId !== playerId) {
+        if (audioRef.current && !audioRef.current.paused) {
+          try {
+            audioRef.current.pause();
+          } catch {
+            // ignore pause error
+          }
+          setIsPlaying(false);
+        }
+      }
+    };
+
+    window.addEventListener('vault-audio-play', handleOtherAudioPlay);
+    return () => {
+      window.removeEventListener('vault-audio-play', handleOtherAudioPlay);
+    };
+  }, [playerId]);
 
   // Sync state with audio element changes from external sources & media keys
   useEffect(() => {
@@ -269,7 +292,15 @@ export const AudioPlayer = ({
     if (typeof window !== 'undefined' && 'mediaSession' in navigator) {
       try {
         navigator.mediaSession.setActionHandler('play', () => {
-          audioRef.current?.play().catch(() => {});
+          const audio = audioRef.current;
+          if (audio) {
+            playPromiseRef.current = audio.play();
+            playPromiseRef.current
+              ?.then(() => {
+                window.dispatchEvent(new CustomEvent('vault-audio-play', { detail: { playerId } }));
+              })
+              .catch(() => {});
+          }
         });
         navigator.mediaSession.setActionHandler('pause', () => {
           audioRef.current?.pause();
@@ -278,19 +309,21 @@ export const AudioPlayer = ({
         /* Ignore unsupported media session actions */
       }
     }
-  }, []);
+  }, [playerId]);
 
+  // Clean unmount teardown
   useEffect(() => {
     return () => {
-      if (audioRef.current) {
+      const audio = audioRef.current;
+      if (audio) {
         try {
-          audioRef.current.pause();
+          audio.pause();
         } catch {
           /* ignore */
         }
         try {
-          audioRef.current.removeAttribute('src');
-          audioRef.current.load();
+          audio.removeAttribute('src');
+          audio.load();
         } catch {
           /* ignore */
         }
@@ -298,6 +331,7 @@ export const AudioPlayer = ({
     };
   }, []);
 
+  // Source change handling
   useEffect(() => {
     let isCancelled = false;
     setHasError(false);
@@ -332,16 +366,14 @@ export const AudioPlayer = ({
   const generateWaveform = async (audioUrl: string, isCancelled: () => boolean) => {
     if (!audioUrl) return;
     setIsGeneratingWaveform(true);
+    let audioCtx: AudioContext | null = null;
+
     try {
       const response = await fetch(audioUrl);
-
       const contentLength = response.headers.get('content-length');
       if (contentLength) {
         const size = parseInt(contentLength, 10);
-        if (size > 8 * 1024 * 1024) {
-          console.warn(
-            'Audio file size is too large for waveform generation. Skipping to prevent main thread blocking.'
-          );
+        if (size > MAX_WAVEFORM_SIZE) {
           return;
         }
       }
@@ -352,36 +384,36 @@ export const AudioPlayer = ({
       const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtxClass) return;
 
-      const audioCtx = new AudioCtxClass();
-      try {
-        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-        if (isCancelled()) return;
+      audioCtx = new AudioCtxClass();
+      // Decode audio data safely
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      if (isCancelled()) return;
 
-        const channelData = audioBuffer.getChannelData(0);
-        const samples = 100;
-        const blockSize = Math.floor(channelData.length / samples);
-        const peaks = [];
+      const channelData = audioBuffer.getChannelData(0);
+      const samples = 100;
+      const blockSize = Math.floor(channelData.length / samples);
+      const peaks: number[] = [];
 
-        const step = Math.max(1, Math.floor(blockSize / 20));
-        for (let i = 0; i < samples; i++) {
-          let max = 0;
-          const start = i * blockSize;
-          for (let j = 0; j < blockSize; j += step) {
-            const val = Math.abs(channelData[start + j]);
-            if (val > max) max = val;
-          }
-          peaks.push(max);
+      const step = Math.max(1, Math.floor(blockSize / 20));
+      for (let i = 0; i < samples; i++) {
+        let max = 0;
+        const start = i * blockSize;
+        for (let j = 0; j < blockSize; j += step) {
+          const val = Math.abs(channelData[start + j]);
+          if (val > max) max = val;
         }
+        peaks.push(max);
+      }
 
-        if (!isCancelled()) {
-          setWaveformPeaks(peaks);
-        }
-      } finally {
+      if (!isCancelled()) {
+        setWaveformPeaks(peaks);
+      }
+    } catch {
+      // Gracefully fall back to standard slider for unsupported waveform codecs
+    } finally {
+      if (audioCtx) {
         audioCtx.close().catch(() => {});
       }
-    } catch (err) {
-      console.warn('Waveform generation failed:', err);
-    } finally {
       if (!isCancelled()) {
         setIsGeneratingWaveform(false);
       }
@@ -397,34 +429,48 @@ export const AudioPlayer = ({
       setIsLoading(true);
       try {
         audio.load();
-        await audio.play();
+        playPromiseRef.current = audio.play();
+        await playPromiseRef.current;
         setIsPlaying(true);
-      } catch (e) {
-        console.error('Audio Playback Retry Error:', e);
-        if (e instanceof Error && e.name !== 'AbortError') {
+        window.dispatchEvent(new CustomEvent('vault-audio-play', { detail: { playerId } }));
+      } catch (e: any) {
+        if (e?.name !== 'AbortError' && e?.name !== 'NotAllowedError') {
           setHasError(true);
         }
         setIsLoading(false);
+      } finally {
+        playPromiseRef.current = null;
       }
       return;
     }
 
     if (audio.paused) {
       try {
-        await audio.play();
+        setIsWaiting(false);
+        playPromiseRef.current = audio.play();
+        await playPromiseRef.current;
         setIsPlaying(true);
         setHasError(false);
-      } catch (e) {
-        console.error('Audio Playback Error:', e);
-        if (e instanceof Error && e.name !== 'AbortError' && e.name !== 'NotAllowedError') {
+        window.dispatchEvent(new CustomEvent('vault-audio-play', { detail: { playerId } }));
+      } catch (e: any) {
+        if (e?.name !== 'AbortError' && e?.name !== 'NotAllowedError') {
           setHasError(true);
         }
+      } finally {
+        playPromiseRef.current = null;
       }
     } else {
+      if (playPromiseRef.current) {
+        try {
+          await playPromiseRef.current;
+        } catch {
+          // ignore play rejection
+        }
+      }
       audio.pause();
       setIsPlaying(false);
     }
-  }, [src, hasError]);
+  }, [src, hasError, playerId]);
 
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {
@@ -442,15 +488,9 @@ export const AudioPlayer = ({
 
   const handleError = useCallback(() => {
     if (!src) return;
-    const mediaErr = audioRef.current?.error;
     setIsPlaying(false);
     setIsLoading(false);
     setHasError(true);
-    console.error(
-      'Audio Load Error for src:',
-      src,
-      mediaErr ? `(MediaError code ${mediaErr.code}: ${mediaErr.message})` : ''
-    );
   }, [src]);
 
   const handleSeek = useCallback(
@@ -518,8 +558,7 @@ export const AudioPlayer = ({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } catch (err) {
-      console.warn('Download link failed, using fallback:', err);
+    } catch {
       const link = document.createElement('a');
       link.href = src;
       link.target = '_blank';
@@ -534,7 +573,6 @@ export const AudioPlayer = ({
       if (!audio) return;
 
       if (isLive) {
-        // Seekable check is ideal, but heuristic for live is just offset
         audio.currentTime = Math.max(0, audio.currentTime + seconds);
         return;
       }
@@ -550,10 +588,45 @@ export const AudioPlayer = ({
     [duration, isLive]
   );
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    if (e.target instanceof HTMLButtonElement && (e.key === ' ' || e.key === 'Enter')) return;
+
+    if (e.key === ' ' || e.key === 'k' || e.key === 'K') {
+      e.preventDefault();
+      void togglePlay();
+    } else if (e.key === 'ArrowLeft' || e.key === 'j' || e.key === 'J') {
+      e.preventDefault();
+      skip(e.shiftKey ? -10 : -5);
+    } else if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') {
+      e.preventDefault();
+      skip(e.shiftKey ? 10 : 5);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      handleVolumeChange(Math.min(100, (volume + 0.05) * 100));
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      handleVolumeChange(Math.max(0, (volume - 0.05) * 100));
+    } else if (e.key === 'm' || e.key === 'M') {
+      e.preventDefault();
+      toggleMute();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      handleSeek(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      handleSeek(100);
+    }
+  };
+
   return (
     <div
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      role="region"
+      aria-label="Audio player"
       className={cn(
-        'w-full max-w-md bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative',
+        'w-full max-w-md bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
         compact && 'p-4',
         className
       )}

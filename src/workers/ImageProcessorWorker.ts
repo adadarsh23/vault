@@ -141,7 +141,7 @@ function validateMagicBytes(
   buffer: ArrayBuffer,
   mimeType: string
 ): { valid: boolean; detectedFormat: string } {
-  const bytes = new Uint8Array(buffer.slice(0, 16));
+  const bytes = new Uint8Array(buffer.slice(0, 32));
 
   // JPEG: FF D8 FF
   if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
@@ -162,6 +162,23 @@ function validateMagicBytes(
     return { valid: true, detectedFormat: 'image/png' };
   }
 
+  // GIF: GIF87a or GIF89a
+  if (
+    bytes[0] === 0x47 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x38 &&
+    (bytes[4] === 0x37 || bytes[4] === 0x39) &&
+    bytes[5] === 0x61
+  ) {
+    return { valid: true, detectedFormat: 'image/gif' };
+  }
+
+  // BMP / DIB: BM
+  if (bytes[0] === 0x42 && bytes[1] === 0x4d) {
+    return { valid: true, detectedFormat: 'image/bmp' };
+  }
+
   // WebP: RIFF ... WEBP (bytes 0-3 = 'RIFF', bytes 8-11 = 'WEBP')
   if (
     bytes[0] === 0x52 &&
@@ -174,6 +191,89 @@ function validateMagicBytes(
     bytes[11] === 0x50
   ) {
     return { valid: true, detectedFormat: 'image/webp' };
+  }
+
+  // TIFF / RAW (CR2, NEF, ARW, DNG, PEF, ORF, RW2, etc.): II*\0 or MM\0*
+  if (
+    (bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 0x2a && bytes[3] === 0x00) ||
+    (bytes[0] === 0x4d && bytes[1] === 0x4d && bytes[2] === 0x00 && bytes[3] === 0x2a)
+  ) {
+    return { valid: true, detectedFormat: 'image/tiff' };
+  }
+
+  // Fuji RAF
+  if (bytes[0] === 0x46 && bytes[1] === 0x55 && bytes[2] === 0x4a && bytes[3] === 0x49) {
+    return { valid: true, detectedFormat: 'image/x-fuji-raf' };
+  }
+
+  // HEIC / HEIF / AVIF / CR3: ftyp box at offset 4
+  if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+    const brand = String.fromCharCode(...bytes.slice(8, 12)).toLowerCase();
+    if (['avif', 'avis'].some((b) => brand.startsWith(b))) {
+      return { valid: true, detectedFormat: 'image/avif' };
+    }
+    if (['heic', 'heix', 'hevc', 'hevx', 'heif', 'mif1', 'msf1'].some((b) => brand.startsWith(b))) {
+      return { valid: true, detectedFormat: 'image/heic' };
+    }
+    return { valid: true, detectedFormat: 'image/heif' };
+  }
+
+  // ICO / CUR
+  if (
+    bytes[0] === 0x00 &&
+    bytes[1] === 0x00 &&
+    (bytes[2] === 0x01 || bytes[2] === 0x02) &&
+    bytes[3] === 0x00
+  ) {
+    return { valid: true, detectedFormat: 'image/x-icon' };
+  }
+
+  // Photoshop PSD: 8BPS
+  if (bytes[0] === 0x38 && bytes[1] === 0x42 && bytes[2] === 0x50 && bytes[3] === 0x53) {
+    return { valid: true, detectedFormat: 'image/vnd.adobe.photoshop' };
+  }
+
+  // JPEG 2000 (JP2, J2K)
+  if (
+    (bytes[0] === 0x00 &&
+      bytes[1] === 0x00 &&
+      bytes[2] === 0x00 &&
+      bytes[3] === 0x0c &&
+      bytes[4] === 0x6a &&
+      bytes[5] === 0x50) ||
+    (bytes[0] === 0xff && bytes[1] === 0x4f && bytes[2] === 0xff && bytes[3] === 0x51)
+  ) {
+    return { valid: true, detectedFormat: 'image/jp2' };
+  }
+
+  // JPEG XR (JXR, HDP, WDP)
+  if (bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 0xbc) {
+    return { valid: true, detectedFormat: 'image/jxr' };
+  }
+
+  // DDS
+  if (bytes[0] === 0x44 && bytes[1] === 0x44 && bytes[2] === 0x53 && bytes[3] === 0x20) {
+    return { valid: true, detectedFormat: 'image/vnd-ms.dds' };
+  }
+
+  // OpenEXR
+  if (bytes[0] === 0x76 && bytes[1] === 0x2f && bytes[2] === 0x31 && bytes[3] === 0x01) {
+    return { valid: true, detectedFormat: 'image/x-exr' };
+  }
+
+  // Radiance HDR
+  if (bytes[0] === 0x23 && bytes[1] === 0x3f && (bytes[2] === 0x52 || bytes[2] === 0x72)) {
+    return { valid: true, detectedFormat: 'image/vnd.radiance' };
+  }
+
+  // Apple ICNS
+  if (bytes[0] === 0x69 && bytes[1] === 0x63 && bytes[2] === 0x6e && bytes[3] === 0x73) {
+    return { valid: true, detectedFormat: 'image/x-icns' };
+  }
+
+  // SVGZ (GZIP)
+  if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
+    return { valid: true, detectedFormat: 'image/svg+xml' };
   }
 
   // SVG: Inspect text content for <svg tag

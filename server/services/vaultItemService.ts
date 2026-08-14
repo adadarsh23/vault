@@ -122,16 +122,49 @@ export const saveEncryptedVaultItem = async (input: {
   const itemTitle = typeof payload?.title === 'string' ? payload.title.trim().slice(0, 512) : '';
   const itemMetadata = parseMetadataSafe(payload?.metadata);
 
+  let gridFsId: string | null = null;
+  let filePath = `cloud://${itemId || Date.now()}`;
+
   if (isBinary) {
-    // Binary uploads via express.raw() put the whole Buffer in 'payload'
-    // Metadata/Title are in headers (handled by controller and passed as input if possible)
-    // Here we check for GridFS need
-    if (payload.length > 12 * 1024 * 1024) {
-      // We need a way to upload to GridFS here too.
-      // For now, let's at least ensure we don't try to Base64 a 17MB buffer if we can avoid it,
-      // though ScopedVaultItem is better for this.
-      finalPayload = payload.toString('base64');
-      encoding = 'base64';
+    if (
+      payload.length > 8 * 1024 * 1024 &&
+      mongoose.connection &&
+      mongoose.connection.readyState === 1 &&
+      mongoose.connection.db
+    ) {
+      try {
+        const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+          bucketName: 'vault_item_files',
+        });
+        const filename = `${userId}/${normalizedCategory}/${itemId || Date.now()}`;
+        const uploadStream = bucket.openUploadStream(filename, {
+          metadata: {
+            userId,
+            itemId: itemId || Date.now().toString(),
+            category: normalizedCategory,
+            folder: folder || itemMetadata.folder || null,
+            size: payload.length,
+          },
+        });
+        await new Promise<void>((resolve, reject) => {
+          uploadStream.on('error', reject);
+          uploadStream.on('finish', resolve);
+          uploadStream.end(payload);
+        });
+        gridFsId = uploadStream.id?.toString?.() ?? itemId ?? null;
+        if (gridFsId) {
+          filePath = `cloud://${gridFsId}`;
+        }
+        encoding = 'gridfs-binary';
+        finalPayload = '';
+      } catch (gridErr) {
+        logger.warn('Failed to stream large binary to GridFS, falling back to base64', {
+          itemId,
+          error: gridErr,
+        });
+        finalPayload = payload.toString('base64');
+        encoding = 'base64';
+      }
     } else {
       finalPayload = payload.toString('base64');
       encoding = 'base64';
@@ -187,10 +220,11 @@ export const saveEncryptedVaultItem = async (input: {
               (itemMetadata as any)?.fileName ||
               (itemMetadata as any)?.originalName ||
               'file',
-            filePath: `cloud://${itemId}`,
+            filePath,
             mimeType: (itemMetadata as any)?.mimeType || 'application/octet-stream',
             size: (itemMetadata as any)?.size || (isBinary ? payload.length : 0),
           },
+          gridFsId: gridFsId || undefined,
           metadata: itemMetadata,
           isPinned,
           pinnedAt,

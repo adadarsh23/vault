@@ -114,7 +114,57 @@ export async function compressFileInWorker(
   maxWidth = 1920,
   maxHeight = 1080
 ): Promise<File> {
-  if (!file.type.startsWith('image/')) {
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  const nonCompressableExtensions = new Set([
+    'svg',
+    'svgz',
+    'gif',
+    'apng',
+    'ico',
+    'cur',
+    'psd',
+    'raw',
+    'cr2',
+    'cr3',
+    'nef',
+    'nrw',
+    'arw',
+    'sr2',
+    'srf',
+    'raf',
+    'orf',
+    'rw2',
+    'pef',
+    'dng',
+    'x3f',
+    '3fr',
+    'fff',
+    'iiq',
+    'erf',
+    'kdc',
+    'mef',
+    'mos',
+    'mrw',
+    'rwl',
+    'dcr',
+    'bay',
+    'gpr',
+    'exr',
+    'hdr',
+    'dds',
+    'tif',
+    'tiff',
+    'tga',
+    'pcx',
+    'icns',
+  ]);
+
+  if (
+    !file.type.startsWith('image/') ||
+    file.type === 'image/svg+xml' ||
+    file.type === 'image/gif' ||
+    nonCompressableExtensions.has(ext)
+  ) {
     return file;
   }
 

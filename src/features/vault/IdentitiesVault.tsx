@@ -34,6 +34,7 @@ import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
 
 import { FolderSidebar } from '../../components/vault/FolderSidebar';
 import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
+import { TagManager } from '../../components/vault/TagManager';
 import { useVaultFolders } from '../../hooks/useVaultFolders';
 
 interface IdentityPayload {
@@ -71,56 +72,6 @@ const DecryptedIdentityItem: React.FC<{
   const [editName, setEditName] = useState(item.title);
   const [editPayload, setEditPayload] = useState<IdentityPayload>(emptyPayload());
   const { copy, copiedId } = useClipboard();
-
-  const updateItem = useVaultStore((state) => state.updateItem);
-  const [isAddingTag, setIsAddingTag] = useState(false);
-  const [newTagInput, setNewTagInput] = useState('');
-
-  const tags = useMemo<string[]>(() => {
-    return Array.isArray(item.metadata?.tags) ? item.metadata.tags : [];
-  }, [item]);
-
-  const handleAddTag = async () => {
-    const cleaned = newTagInput
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9-_]/g, '');
-    if (!cleaned) {
-      setIsAddingTag(false);
-      setNewTagInput('');
-      return;
-    }
-    if (tags.includes(cleaned)) {
-      toast.error('Tag already exists');
-      setIsAddingTag(false);
-      setNewTagInput('');
-      return;
-    }
-    const updated = [...tags, cleaned];
-    try {
-      await updateItem(item.id, {
-        metadata: { ...(item.metadata || {}), tags: updated },
-      });
-      toast.success(`Tag #${cleaned} added`);
-    } catch {
-      toast.error('Failed to add tag');
-    } finally {
-      setIsAddingTag(false);
-      setNewTagInput('');
-    }
-  };
-
-  const handleRemoveTag = async (tagToRemove: string) => {
-    const updated = tags.filter((t) => t !== tagToRemove);
-    try {
-      await updateItem(item.id, {
-        metadata: { ...(item.metadata || {}), tags: updated },
-      });
-      toast.success(`Tag #${tagToRemove} removed`);
-    } catch {
-      toast.error('Failed to remove tag');
-    }
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -407,48 +358,57 @@ const DecryptedIdentityItem: React.FC<{
             <div className="space-y-4">
               {/* Document Banner Mock UI */}
               <div
-                className={`p-4 rounded-2xl bg-gradient-to-br ${getDocColor(data.documentType)} border flex flex-col justify-between h-[150px] shadow-lg text-white`}
+                className={`relative overflow-hidden p-4 rounded-2xl bg-gradient-to-br ${getDocColor(
+                  data.documentType
+                )} border shadow-lg text-white flex flex-col justify-between min-h-[165px] gap-3`}
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] tracking-wider text-white/70 font-semibold uppercase">
+                {/* Background decorative shine */}
+                <div className="pointer-events-none absolute -right-6 -bottom-6 h-28 w-28 rounded-full bg-white/10 blur-2xl" />
+
+                <div className="flex justify-between items-start gap-2 relative z-10">
+                  <div className="flex flex-col min-w-0 pr-2">
+                    <span className="text-[10px] tracking-wider text-white/80 font-semibold uppercase truncate">
                       {data.issuingCountry || 'ISSUING AUTHORITY'}
                     </span>
-                    <span className="text-[8px] text-white/50 font-bold uppercase">
+                    <span className="text-[8px] text-white/60 font-bold uppercase tracking-wider">
                       {data.documentType}
                     </span>
                   </div>
-                  <Fingerprint className="h-6 w-6 text-white/40" />
+                  <Fingerprint className="h-6 w-6 text-white/40 shrink-0" />
                 </div>
 
-                <div className="my-1.5 flex gap-3 items-center">
-                  <div className="w-9 h-11 bg-white/10 border border-white/10 rounded flex items-center justify-center text-white/25">
+                <div className="my-auto py-0.5 flex gap-3 items-center relative z-10">
+                  <div className="w-9 h-11 bg-white/15 border border-white/20 rounded-lg flex items-center justify-center text-white/40 shrink-0 font-bold text-xs shadow-inner">
                     ID
                   </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-[8px] text-white/40 uppercase font-bold tracking-widest leading-none">
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-[8px] text-white/50 uppercase font-bold tracking-widest leading-none">
                       Full Name
                     </span>
-                    <span className="text-xs font-semibold uppercase truncate tracking-wider leading-relaxed">
+                    <span className="text-xs sm:text-sm font-semibold uppercase truncate tracking-wider leading-snug text-white">
                       {data.fullName || 'FULL NAME'}
                     </span>
-                    <span className="text-[8px] text-white/40 uppercase font-bold tracking-widest leading-none mt-1">
+                    <span className="text-[8px] text-white/50 uppercase font-bold tracking-widest leading-none mt-1.5">
                       Number
                     </span>
-                    <span className="text-xs font-mono font-medium tracking-wide">
+                    <span className="text-xs font-mono font-medium tracking-wide text-white/90 truncate">
                       {isVisible ? data.number || 'NOT SPECIFIED' : '••••••••••••'}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-end text-[8px] text-white/50 font-bold tracking-wider">
-                  <div className="flex flex-col">
-                    <span>ISSUED</span>
-                    <span className="font-mono text-white/80">{data.issueDate || 'N/A'}</span>
+                <div className="flex justify-between items-end text-[8px] text-white/60 font-bold tracking-wider relative z-10 pt-1 border-t border-white/10">
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-white/50">ISSUED</span>
+                    <span className="font-mono text-white/90 truncate">
+                      {data.issueDate || 'N/A'}
+                    </span>
                   </div>
-                  <div className="flex flex-col items-end">
-                    <span>EXPIRES</span>
-                    <span className="font-mono text-white/80">{data.expiryDate || 'N/A'}</span>
+                  <div className="flex flex-col items-end min-w-0">
+                    <span className="text-white/50">EXPIRES</span>
+                    <span className="font-mono text-white/90 truncate">
+                      {data.expiryDate || 'N/A'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -460,7 +420,7 @@ const DecryptedIdentityItem: React.FC<{
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 px-3 rounded-lg hover:bg-white/5 text-text/60 flex items-center gap-1.5"
+                    className="h-7 px-3 rounded-lg hover:bg-white/5 text-text/60 flex items-center gap-1.5 text-xs"
                     onClick={() => setIsVisible(!isVisible)}
                   >
                     {isVisible ? (
@@ -468,23 +428,24 @@ const DecryptedIdentityItem: React.FC<{
                     ) : (
                       <Eye className="h-3.5 w-3.5" />
                     )}
-                    {isVisible ? 'Hide Number' : 'Show Number'}
+                    {isVisible ? 'Hide' : 'Show'}
                   </Button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                  <div className="bg-white/[0.02] p-2.5 rounded-xl border border-white/5 space-y-1 relative group/copy">
+                  <div className="bg-white/[0.02] p-2.5 rounded-xl border border-white/5 space-y-1 relative group/copy pr-9 min-w-0">
                     <span className="text-[9px] font-bold text-text/30 uppercase tracking-wider block">
                       ID Number
                     </span>
                     <span className="text-xs font-mono text-text/80 truncate block">
-                      {isVisible ? data.number : '••••••••••••'}
+                      {isVisible ? data.number || 'Not specified' : '••••••••••••'}
                     </span>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1 h-6 w-6 rounded-md opacity-0 group-hover/copy:opacity-100 transition-opacity hover:bg-white/10"
+                      className="absolute right-1 top-1 h-6 w-6 rounded-md opacity-100 sm:opacity-0 sm:group-hover/copy:opacity-100 transition-opacity hover:bg-white/10"
                       onClick={() => handleCopy(data.number, item.id + '-num', 'ID Number')}
+                      title="Copy ID Number"
                     >
                       {copiedId === item.id + '-num' ? (
                         <Check className="h-3 w-3 text-green-400" />
@@ -493,7 +454,7 @@ const DecryptedIdentityItem: React.FC<{
                       )}
                     </Button>
                   </div>
-                  <div className="bg-white/[0.02] p-2.5 rounded-xl border border-white/5 space-y-1 relative group/copy">
+                  <div className="bg-white/[0.02] p-2.5 rounded-xl border border-white/5 space-y-1 relative group/copy pr-9 min-w-0">
                     <span className="text-[9px] font-bold text-text/30 uppercase tracking-wider block">
                       Full Name
                     </span>
@@ -503,8 +464,9 @@ const DecryptedIdentityItem: React.FC<{
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1 h-6 w-6 rounded-md opacity-0 group-hover/copy:opacity-100 transition-opacity hover:bg-white/10"
+                      className="absolute right-1 top-1 h-6 w-6 rounded-md opacity-100 sm:opacity-0 sm:group-hover/copy:opacity-100 transition-opacity hover:bg-white/10"
                       onClick={() => handleCopy(data.fullName, item.id + '-name', 'Name')}
+                      title="Copy Full Name"
                     >
                       {copiedId === item.id + '-name' ? (
                         <Check className="h-3 w-3 text-green-400" />
@@ -516,12 +478,12 @@ const DecryptedIdentityItem: React.FC<{
                 </div>
 
                 {data.notes && (
-                  <div className="bg-white/[0.01] p-2.5 rounded-xl border border-white/5 text-xs text-text/60">
+                  <div className="bg-white/[0.01] p-2.5 rounded-xl border border-white/5 text-xs text-text/60 min-w-0">
                     <div className="flex items-center gap-1.5 mb-1 text-[9px] font-bold uppercase tracking-wider text-text/35">
                       <FileText className="h-3 w-3" />
                       <span>Security Notes</span>
                     </div>
-                    <p className="leading-relaxed whitespace-pre-wrap">{data.notes}</p>
+                    <p className="leading-relaxed whitespace-pre-wrap break-words">{data.notes}</p>
                   </div>
                 )}
               </div>
@@ -530,42 +492,7 @@ const DecryptedIdentityItem: React.FC<{
 
           {/* Tags management */}
           <div className="pt-3 border-t border-white/5">
-            <div className="flex flex-wrap gap-1.5 items-center">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center rounded-full bg-white/5 border border-white/5 px-2 py-0.5 text-[10px] text-text/50"
-                >
-                  #{tag}
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    className="ml-1 text-text/30 hover:text-red-400 focus:outline-none"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-              {isAddingTag ? (
-                <Input
-                  value={newTagInput}
-                  onChange={(e) => setNewTagInput(e.target.value)}
-                  onBlur={handleAddTag}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                  placeholder="tag..."
-                  className="h-5 py-0 px-1 text-[10px] w-14 bg-white/5 border-white/10 inline-block"
-                  autoFocus
-                />
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsAddingTag(true)}
-                  className="h-5 px-2 rounded-full text-[9px] border border-dashed border-white/10 text-text/40 hover:text-text hover:bg-white/5"
-                >
-                  + Tag
-                </Button>
-              )}
-            </div>
+            <TagManager item={item} size="sm" />
           </div>
         </CardContent>
       </Card>

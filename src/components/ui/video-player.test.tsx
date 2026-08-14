@@ -20,6 +20,13 @@ vi.mock('hls.js', () => ({
   },
 }));
 
+vi.mock('../../lib/videoTranscoder', () => ({
+  transcodeVideoInBrowser: vi.fn().mockResolvedValue({
+    url: 'blob:mock-transcoded-url',
+    blob: new Blob([], { type: 'video/mp4' }),
+  }),
+}));
+
 describe('VideoPlayer phase 1 controls', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -166,6 +173,28 @@ describe('VideoPlayer phase 1 controls', () => {
 
     const playerContainer = container.firstElementChild as HTMLElement;
     expect(playerContainer.style.aspectRatio).toContain('0.5625');
+  });
+
+  it('renders helpful error UI with Convert (WASM), Download and Retry buttons when format is unsupported', () => {
+    const { container } = render(
+      <VideoPlayer src="https://cdn.example.com/video.mkv" title="Sample Video" />
+    );
+    const video = container.querySelector('video') as HTMLVideoElement;
+    expect(video).toBeTruthy();
+
+    Object.defineProperty(video, 'error', {
+      configurable: true,
+      value: { code: 4, message: 'Format error' },
+    });
+
+    fireEvent.error(video);
+
+    expect(screen.getByText(/video format not supported/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /convert and play in browser/i })
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /download video/i }).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /retry playback/i })).toBeInTheDocument();
   });
 });
 

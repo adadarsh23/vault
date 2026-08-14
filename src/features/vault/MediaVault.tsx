@@ -31,6 +31,7 @@ import {
 import { MediaCard } from './components/MediaVault/MediaCard';
 import { MediaPagination } from './components/MediaVault/MediaPagination';
 import { MediaPreview } from './components/MediaVault/MediaPreview';
+import { preloadFFmpeg } from '../../lib/videoTranscoder';
 
 type FileWithWebkitPath = File & { webkitRelativePath?: string };
 
@@ -107,6 +108,10 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     setPreviewItem(null);
     setActivePreviewItem(null);
   }, [cancelScheduledPreviewActivation]);
+
+  useEffect(() => {
+    preloadFFmpeg();
+  }, []);
 
   // Use the new reusable hooks
   const {
@@ -612,7 +617,8 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
                 height: dimensions?.height,
                 aspectRatio: dimensions?.aspectRatio,
                 blurhash: blurhash || undefined,
-                isE2EE: isAlreadyEncrypted,
+                isE2EE: true,
+                clientEncrypted: true,
                 isLiveCapture,
               },
             },

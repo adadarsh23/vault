@@ -331,16 +331,137 @@ const containsAsciiAt = (buffer: Buffer, offset: number, value: string): boolean
 
 const isLikelyPhotoBinary = (buffer: Buffer): boolean => {
   if (!buffer.length) return false;
-  if (hasPrefix(buffer, [0xff, 0xd8, 0xff])) return true; // jpeg
-  if (hasPrefix(buffer, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return true; // png
-  if (containsAsciiAt(buffer, 0, 'GIF87a') || containsAsciiAt(buffer, 0, 'GIF89a')) return true; // gif
-  if (containsAsciiAt(buffer, 0, 'BM')) return true; // bmp
-  if (containsAsciiAt(buffer, 0, 'II*\u0000') || containsAsciiAt(buffer, 0, 'MM\u0000*'))
-    return true; // tiff
-  if (containsAsciiAt(buffer, 0, 'RIFF') && containsAsciiAt(buffer, 8, 'WEBP')) return true; // webp
+  // JPEG / JPG / JPE / JFIF / PJPEG / PJP
+  if (hasPrefix(buffer, [0xff, 0xd8, 0xff])) return true;
+  // PNG / APNG
+  if (hasPrefix(buffer, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return true;
+  // GIF (GIF87a / GIF89a)
+  if (containsAsciiAt(buffer, 0, 'GIF87a') || containsAsciiAt(buffer, 0, 'GIF89a')) return true;
+  // BMP / DIB
+  if (containsAsciiAt(buffer, 0, 'BM')) return true;
+  // TIFF / TIF / DNG / CR2 / NEF / NRW / ARW / SR2 / SRF / PEF / 3FR / FFF / IIQ / ERF / KDC / MEF / MOS / RWL / DCR / BAY / GPR
+  if (
+    hasPrefix(buffer, [0x49, 0x49, 0x2a, 0x00]) || // II*\0
+    hasPrefix(buffer, [0x4d, 0x4d, 0x00, 0x2a]) // MM\0*
+  ) {
+    return true;
+  }
+  // Fuji RAW (RAF)
+  if (containsAsciiAt(buffer, 0, 'FUJIFILMCCD-RAW')) return true;
+  // Olympus RAW (ORF)
+  if (
+    containsAsciiAt(buffer, 0, 'IIRO') ||
+    containsAsciiAt(buffer, 0, 'MMOR') ||
+    containsAsciiAt(buffer, 0, 'IIRS')
+  ) {
+    return true;
+  }
+  // Panasonic RAW (RW2)
+  if (hasPrefix(buffer, [0x49, 0x49, 0x55, 0x00])) return true;
+  // Minolta RAW (MRW)
+  if (hasPrefix(buffer, [0x00, 0x4d, 0x52, 0x4d])) return true;
+  // Sigma RAW (X3F)
+  if (containsAsciiAt(buffer, 0, 'FOVb')) return true;
+  // WebP: RIFF....WEBP
+  if (containsAsciiAt(buffer, 0, 'RIFF') && containsAsciiAt(buffer, 8, 'WEBP')) return true;
+  // HEIC / HEIF / AVIF / CR3 (ISO Base Media File Format brands)
   if (containsAsciiAt(buffer, 4, 'ftyp')) {
-    const brand = buffer.subarray(8, 12).toString('ascii');
-    if (['heic', 'heix', 'hevc', 'hevx', 'heif', 'mif1', 'msf1', 'avif'].includes(brand)) {
+    const brand = buffer.subarray(8, 12).toString('ascii').toLowerCase();
+    if (
+      [
+        'heic',
+        'heix',
+        'hevc',
+        'hevx',
+        'heif',
+        'heim',
+        'heis',
+        'hevm',
+        'hevs',
+        'mif1',
+        'msf1',
+        'avif',
+        'avis',
+        'crx ',
+        'crx',
+      ].some((b) => brand.startsWith(b.trim()))
+    ) {
+      return true;
+    }
+  }
+  // ICO / CUR
+  if (
+    (hasPrefix(buffer, [0x00, 0x00, 0x01, 0x00]) || hasPrefix(buffer, [0x00, 0x00, 0x02, 0x00])) &&
+    buffer.length >= 6
+  ) {
+    return true;
+  }
+  // Photoshop PSD
+  if (containsAsciiAt(buffer, 0, '8BPS')) return true;
+  // JPEG 2000 (JP2, J2K, JPF, JPM)
+  if (
+    hasPrefix(buffer, [0x00, 0x00, 0x00, 0x0c, 0x6a, 0x50, 0x20, 0x20]) || // \x00\x00\x00\x0cjP\x20\x20
+    hasPrefix(buffer, [0xff, 0x4f, 0xff, 0x51]) // J2K codestream SOC marker
+  ) {
+    return true;
+  }
+  // JPEG XR / HD Photo (JXR, HDP, WDP)
+  if (hasPrefix(buffer, [0x49, 0x49, 0xbc, 0x01]) || hasPrefix(buffer, [0x49, 0x49, 0xbc, 0x00])) {
+    return true;
+  }
+  // DirectDraw Surface (DDS)
+  if (containsAsciiAt(buffer, 0, 'DDS ')) return true;
+  // OpenEXR (EXR)
+  if (hasPrefix(buffer, [0x76, 0x2f, 0x31, 0x01])) return true;
+  // Radiance HDR (HDR / PIC)
+  if (containsAsciiAt(buffer, 0, '#?RADIANCE') || containsAsciiAt(buffer, 0, '#?RGBE')) {
+    return true;
+  }
+  // Apple Icon (ICNS)
+  if (containsAsciiAt(buffer, 0, 'icns')) return true;
+  // ZSoft PCX
+  if (
+    buffer.length >= 4 &&
+    buffer[0] === 0x0a &&
+    [0, 2, 3, 4, 5].includes(buffer[1]) &&
+    buffer[2] === 0x01
+  ) {
+    return true;
+  }
+  // SVGZ (GZIP compressed SVG)
+  if (hasPrefix(buffer, [0x1f, 0x8b])) return true;
+  // SVG: Inspect text for <svg or <?xml
+  if (buffer.length >= 5) {
+    const head = buffer
+      .subarray(0, Math.min(buffer.length, 1024))
+      .toString('utf8')
+      .trim()
+      .toLowerCase();
+    if (head.includes('<svg') || (head.startsWith('<?xml') && head.includes('<svg'))) {
+      return true;
+    }
+  }
+  // Mac PICT (PCT, PIC) - standard PICT v1/v2 header at offset 512
+  if (buffer.length >= 522) {
+    if (
+      (buffer[512] === 0x00 &&
+        buffer[513] === 0x11 &&
+        buffer[514] === 0x02 &&
+        buffer[515] === 0xff) ||
+      (buffer[512] === 0x11 && buffer[513] === 0x01)
+    ) {
+      return true;
+    }
+  }
+  // Client-encrypted payload or envelope string
+  if (buffer.length >= 16) {
+    const textSample = buffer.subarray(0, Math.min(buffer.length, 64)).toString('utf8');
+    if (
+      textSample.startsWith('V2_ENC:') ||
+      textSample.includes('"iv"') ||
+      textSample.includes('"wrappedDek"') ||
+      textSample.includes('"encryptedData"')
+    ) {
       return true;
     }
   }

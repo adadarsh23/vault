@@ -24,6 +24,7 @@ import { useVaultStore } from '../../store/vaultStore';
 import { requestGlobalItemNavigation } from '../../lib/global-navigation';
 import { cn } from '../../lib/utils';
 import { searchVaultItems, getHighlightedParts, FuzzySearchResult } from '../../lib/fuzzy';
+import { TagBadge } from './TagManager';
 
 interface TypeConfig {
   label: string;
@@ -384,7 +385,7 @@ export const CommandPalette: React.FC = () => {
           </div>
 
           {/* Results List */}
-          <div className="max-h-[380px] overflow-y-auto custom-scrollbar p-2.5 space-y-3.5">
+          <div className="max-h-[350px] overflow-y-auto custom-scrollbar p-2.5 space-y-3.5">
             {filteredItems.length > 0 ? (
               <>
                 {Object.entries(TYPE_CONFIGS).map(([type, config]) => {
@@ -433,18 +434,12 @@ export const CommandPalette: React.FC = () => {
                                     {tags.map((tag) => {
                                       const tagMatch = item.tagMatches.find((tm) => tm.tag === tag);
                                       return (
-                                        <span
+                                        <TagBadge
                                           key={tag}
-                                          className={cn(
-                                            'text-[9px] px-1.5 py-0.1 border rounded font-medium',
-                                            config.styles.tag
-                                          )}
-                                        >
-                                          #
-                                          {tagMatch
-                                            ? renderFuzzyHighlightedText(tag, tagMatch.matches)
-                                            : tag}
-                                        </span>
+                                          tag={tag}
+                                          size="xs"
+                                          highlightMatches={tagMatch?.matches}
+                                        />
                                       );
                                     })}
                                   </div>

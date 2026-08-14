@@ -2,10 +2,10 @@ import crypto from 'crypto';
 import { logger } from '../utils/logger.ts';
 
 const SIGNED_URL_SECRET = process.env.SIGNED_URL_SECRET || 'vault-secret-for-signed-urls';
-const SIGNED_URL_EXPIRY_MINUTES = 2;
+const SIGNED_URL_EXPIRY_MINUTES = Math.max(15, Number(process.env.SIGNED_URL_EXPIRY_MINUTES || 60));
 const MAX_SIGNED_URL_EXPIRY_MINUTES = Math.max(
-  1,
-  Number(process.env.MAX_SIGNED_URL_EXPIRY_MINUTES || 10)
+  60,
+  Number(process.env.MAX_SIGNED_URL_EXPIRY_MINUTES || 1440)
 );
 
 export interface SignedUrlOptions {
@@ -33,13 +33,13 @@ export const storageService = {
   ): string {
     const action = options.action || 'view';
     const actionTtl =
-      action === 'stream' ? 2 : action === 'download' ? 3 : SIGNED_URL_EXPIRY_MINUTES;
+      action === 'stream' ? 120 : action === 'download' ? 30 : SIGNED_URL_EXPIRY_MINUTES;
     const requestedTtl = Number(options.expiresInMinutes || actionTtl);
     const ttl = Math.max(1, Math.min(MAX_SIGNED_URL_EXPIRY_MINUTES, requestedTtl));
     const expiry = Math.floor(Date.now() / 1000) + ttl * 60;
     const ip = options.ipAddress || 'any';
     const sid = options.sessionId || 'any';
-    const device = options.deviceHash || 'any';
+    const device = options.deviceHash || 'direct';
 
     // Signature includes device fingerprint and session instead of just IP
     const payload = `${userId}:${itemId}:${action}:${expiry}:${sid}:${device}`;
@@ -54,7 +54,7 @@ export const storageService = {
       return `http://localhost:${port}`;
     };
     const baseUrl = resolvePublicBaseUrl();
-    return `${baseUrl}/api/vault/files/access/${itemId}?token=${signature}&expires=${expiry}&action=${action}&sid=${sid}&dev=${device}&uid=${userId}${options.ipAddress ? `&ip=${ip}` : ''}`;
+    return `${baseUrl}/api/vault/files/access/${itemId}?token=${signature}&expires=${expiry}&action=${action}&sid=${sid}&dev=${encodeURIComponent(device)}&uid=${encodeURIComponent(userId)}${options.ipAddress ? `&ip=${encodeURIComponent(ip)}` : ''}`;
   },
 
   /**
@@ -82,12 +82,19 @@ export const storageService = {
     }
 
     const sid = input.sessionId || 'any';
-    const device = input.deviceHash || 'any';
+    const device = input.deviceHash || 'direct';
 
     const payload = `${userId}:${itemId}:${input.action}:${input.expires}:${sid}:${device}`;
     const expectedSignature = crypto
       .createHmac('sha256', SIGNED_URL_SECRET)
       .update(payload)
+      .digest('hex');
+
+    // Also support fallback for legacy 'any' tokens
+    const legacyPayload = `${userId}:${itemId}:${input.action}:${input.expires}:${sid}:any`;
+    const legacySignature = crypto
+      .createHmac('sha256', SIGNED_URL_SECRET)
+      .update(legacyPayload)
       .digest('hex');
 
     // Check length first before using timingSafeEqual to avoid buffer length mismatch errors
@@ -101,10 +108,13 @@ export const storageService = {
       return false;
     }
 
-    const isValid = crypto.timingSafeEqual(
-      Buffer.from(input.token),
-      Buffer.from(expectedSignature)
-    );
+    let isValid = false;
+    if (input.token.length === expectedSignature.length) {
+      isValid = crypto.timingSafeEqual(Buffer.from(input.token), Buffer.from(expectedSignature));
+    }
+    if (!isValid && input.token.length === legacySignature.length) {
+      isValid = crypto.timingSafeEqual(Buffer.from(input.token), Buffer.from(legacySignature));
+    }
 
     if (isValid) {
       // SOFT IP BINDING: Check for IP drift but don't block

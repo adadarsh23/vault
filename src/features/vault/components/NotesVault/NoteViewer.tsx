@@ -40,6 +40,7 @@ import { NoteEditor } from '../../../../components/vault/NoteEditor';
 import { ScrollButton } from '../../../../components/vault/ScrollButton';
 import { getStringContent } from '../../../../lib/vaultItemContent';
 import { DecryptedMarkdown } from '../../../../components/vault/DecryptedMarkdown';
+import { TagManager } from '../../../../components/vault/TagManager';
 import { useScrollRestoration } from '../../../../hooks/useScrollRestoration';
 
 const AttachmentCard: React.FC<{
@@ -160,8 +161,6 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
 
   // Tags & Attachments state
   const { items, updateItem } = useVaultStore();
-  const [isAddingTag, setIsAddingTag] = useState(false);
-  const [newTagInput, setNewTagInput] = useState('');
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [pickerSearch, setPickerSearch] = useState('');
   const [previewAttachmentItem, setPreviewAttachmentItem] = useState<any | null>(null);
@@ -229,55 +228,6 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
   }, [items, attachmentIds, pickerSearch]);
 
   // Handlers
-  const handleAddTag = async () => {
-    const cleanedTag = newTagInput
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9-_]/g, '');
-    if (!cleanedTag) {
-      setIsAddingTag(false);
-      setNewTagInput('');
-      return;
-    }
-
-    if (noteTags.includes(cleanedTag)) {
-      toast.error('Tag already exists');
-      setIsAddingTag(false);
-      setNewTagInput('');
-      return;
-    }
-
-    const updatedTags = [...noteTags, cleanedTag];
-    const updatedMetadata = {
-      ...(selectedNote.metadata || {}),
-      tags: updatedTags,
-    };
-
-    try {
-      await updateItem(selectedNote.id, { metadata: updatedMetadata });
-      toast.success(`Tag #${cleanedTag} added`);
-    } catch {
-      toast.error('Failed to add tag');
-    } finally {
-      setIsAddingTag(false);
-      setNewTagInput('');
-    }
-  };
-
-  const handleRemoveTag = async (tagToRemove: string) => {
-    const updatedTags = noteTags.filter((t) => t !== tagToRemove);
-    const updatedMetadata = {
-      ...(selectedNote.metadata || {}),
-      tags: updatedTags,
-    };
-
-    try {
-      await updateItem(selectedNote.id, { metadata: updatedMetadata });
-      toast.success(`Tag #${tagToRemove} removed`);
-    } catch {
-      toast.error('Failed to remove tag');
-    }
-  };
 
   const handleLinkAttachment = async (itemId: string) => {
     const updatedAttachments = [...attachmentIds, itemId];
@@ -437,48 +387,8 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                   >
                     <div>
                       {/* Tags Section */}
-                      <div className="flex flex-wrap items-center gap-2 px-4 md:px-6 xl:px-8 pt-4">
-                        <div className="flex items-center gap-1.5 text-text/45 text-xs font-semibold">
-                          <Tag className="h-3.5 w-3.5" />
-                          <span>Tags:</span>
-                        </div>
-                        {noteTags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 font-medium"
-                          >
-                            #{tag}
-                            <button
-                              onClick={() => handleRemoveTag(tag)}
-                              className="text-yellow-400 hover:text-yellow-300 ml-0.5 focus:outline-none"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </span>
-                        ))}
-
-                        {isAddingTag ? (
-                          <input
-                            type="text"
-                            placeholder="tag..."
-                            className="text-xs bg-text/5 border border-text/15 rounded-full px-2.5 py-0.5 text-text focus:outline-none focus:border-text/30 w-24"
-                            value={newTagInput}
-                            onChange={(e) => setNewTagInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleAddTag();
-                              if (e.key === 'Escape') setIsAddingTag(false);
-                            }}
-                            onBlur={handleAddTag}
-                            autoFocus
-                          />
-                        ) : (
-                          <button
-                            onClick={() => setIsAddingTag(true)}
-                            className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-text/5 border border-text/10 hover:bg-text/10 text-text/60 hover:text-text transition-colors"
-                          >
-                            <Plus className="h-3 w-3" /> Add Tag
-                          </button>
-                        )}
+                      <div className="px-4 md:px-6 xl:px-8 pt-4">
+                        <TagManager item={selectedNote} showLabel size="sm" />
                       </div>
 
                       {/* Attachments Section */}

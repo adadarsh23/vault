@@ -225,16 +225,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
 
                   <div className="px-3 py-2 border-b border-white/5 flex items-center gap-2.5 mb-1 bg-white/[0.02] rounded-xl">
                     <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.15)] overflow-hidden">
-                      {masterKey ? (
-                        <SafeMedia
-                          item={item}
-                          masterKey={masterKey}
-                          type={type}
-                          isThumbnail={true}
-                          autoPlayVideo={false}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : type === 'photo' ? (
+                      {type === 'photo' ? (
                         <ImageIcon className="h-4 w-4" />
                       ) : (
                         <PlayCircle className="h-4 w-4" />

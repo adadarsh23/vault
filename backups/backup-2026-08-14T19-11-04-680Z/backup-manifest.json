@@ -1,0 +1,11 @@
+{
+  "createdAt": "2026-08-14T19:11:06.282Z",
+  "source": "C:\\Code\\vault",
+  "target": "C:\\Code\\vault\\backups\\backup-2026-08-14T19-11-04-680Z",
+  "skipped": [
+    "node_modules",
+    "build",
+    ".git",
+    "backups"
+  ]
+}
