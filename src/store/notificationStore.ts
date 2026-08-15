@@ -48,13 +48,20 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         const isTimeoutOrNetwork =
           error?.code === 'NETWORK_ERROR' ||
           error?.code === 'ECONNABORTED' ||
+          error?.code === 'HTTP_503' ||
+          error?.status === 503 ||
           error?.status === undefined ||
-          (typeof error?.message === 'string' && error.message.toLowerCase().includes('timeout')) ||
+          (typeof error?.message === 'string' &&
+            (error.message.toLowerCase().includes('timeout') ||
+              error.message.includes('503') ||
+              error.message.toLowerCase().includes('network'))) ||
           error?.response?.status === 503 ||
           error?.response?.data?.error?.code === 'SERVER_OVERLOADED';
 
         if (isTimeoutOrNetwork) {
-          console.warn('Notification fetch deferred (timeout or network unreachable).');
+          console.warn(
+            'Notification fetch deferred (service temporarily unavailable or network waking up).'
+          );
         } else {
           console.error('Failed to fetch notifications:', error);
         }

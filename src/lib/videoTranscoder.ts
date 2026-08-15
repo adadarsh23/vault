@@ -10,7 +10,26 @@ export interface TranscodeProgressEvent {
 
 let ffmpegInstance: any = null;
 let ffmpegLoadingPromise: Promise<any> | null = null;
+const MAX_TRANSCODE_CACHE_ENTRIES = 8;
 const transcodedBlobCache = new Map<string, { url: string; blob: Blob }>();
+
+function setBoundedTranscodeCache(key: string, value: { url: string; blob: Blob }) {
+  if (transcodedBlobCache.size >= MAX_TRANSCODE_CACHE_ENTRIES && !transcodedBlobCache.has(key)) {
+    const oldestKey = transcodedBlobCache.keys().next().value;
+    if (oldestKey) {
+      const old = transcodedBlobCache.get(oldestKey);
+      if (old?.url?.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(old.url);
+        } catch {
+          /* ignore */
+        }
+      }
+      transcodedBlobCache.delete(oldestKey);
+    }
+  }
+  transcodedBlobCache.set(key, value);
+}
 
 const FFMPEG_VERSION = '0.12.10';
 const FFMPEG_BASE_URL = `https://unpkg.com/@ffmpeg/ffmpeg@${FFMPEG_VERSION}/dist/esm`;
@@ -300,7 +319,7 @@ export async function transcodeVideoInBrowser(
       blob: convertedBlob,
     };
 
-    transcodedBlobCache.set(key, result);
+    setBoundedTranscodeCache(key, result);
 
     onProgress?.({
       progress: 100,

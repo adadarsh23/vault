@@ -44,6 +44,7 @@ export const uint8ArrayToBase64 = (array: Uint8Array): string => {
 };
 
 const normalizeBase64Input = (value: string): string => {
+  if (!value || typeof value !== 'string') return '';
   let normalized = value.trim();
   if (!normalized) {
     return '';
@@ -55,6 +56,10 @@ const normalizeBase64Input = (value: string): string => {
     } catch {
       // Keep original value when URI decoding fails.
     }
+  }
+
+  if (normalized.startsWith('V2_ENC:')) {
+    normalized = normalized.substring(7).trim();
   }
 
   // Handle data URL payloads and strip whitespace/newlines.
@@ -69,24 +74,32 @@ const normalizeBase64Input = (value: string): string => {
   normalized = normalized.replace(/-/g, '+').replace(/_/g, '/');
 
   const remainder = normalized.length % 4;
-  if (remainder > 0) {
-    normalized += '='.repeat(4 - remainder);
+  if (remainder === 2) {
+    normalized += '==';
+  } else if (remainder === 3) {
+    normalized += '=';
+  } else if (remainder === 1) {
+    normalized = normalized.slice(0, -1);
   }
 
   return normalized;
 };
 
 export const base64ToUint8Array = (base64: string): Uint8Array => {
-  if (!base64) return new Uint8Array(0);
-  const normalized = normalizeBase64Input(base64);
-  if (!normalized) return new Uint8Array(0);
+  if (!base64 || typeof base64 !== 'string') return new Uint8Array(0);
+  try {
+    const normalized = normalizeBase64Input(base64);
+    if (!normalized || !/^[A-Za-z0-9+/=]+$/.test(normalized)) return new Uint8Array(0);
 
-  const binaryString = atob(normalized);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+    const binaryString = atob(normalized);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+  } catch {
+    return new Uint8Array(0);
   }
-  return bytes;
 };
 
 const cryptoKeyCache = new Map<string, CryptoKey>();

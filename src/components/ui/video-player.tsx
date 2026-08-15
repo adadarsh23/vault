@@ -25,6 +25,7 @@ import { logger } from '../../lib/logger';
 import { toast } from 'sonner';
 import Hls from 'hls.js';
 import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';
+import { resolveApiBaseUrl } from '../../lib/apiBaseUrl';
 
 /* ---------------- UTIL ---------------- */
 
@@ -133,6 +134,14 @@ const isAllowedMediaUrl = (url: string, allowedMediaDomains: string[]) => {
     const host = parsed.hostname.toLowerCase();
     const normalizedAllowed = allowedMediaDomains.map((domain) => domain.toLowerCase());
     if (host === window.location.hostname.toLowerCase()) return true;
+
+    try {
+      const apiHost = new URL(resolveApiBaseUrl(), window.location.href).hostname.toLowerCase();
+      if (host === apiHost) return true;
+    } catch {
+      /* ignore */
+    }
+
     return normalizedAllowed.includes(host);
   } catch {
     return false;
@@ -1244,7 +1253,12 @@ const VideoPlayer = ({
         muted={isMuted}
         onClick={(e) => {
           e.stopPropagation();
-          togglePlay();
+          if (!showControls) {
+            setShowControls(true);
+            resetHideTimer();
+          } else {
+            togglePlay();
+          }
         }}
         onLoadedMetadata={handleLoadedMetadata}
         onLoadedData={() => setIsVideoReady(true)}
@@ -1441,14 +1455,24 @@ const VideoPlayer = ({
         {showControls && (
           <motion.div
             key="video-controls"
-            className="absolute bottom-0 left-0 right-0 px-2 sm:px-3 pt-2 pb-[env(safe-area-inset-bottom)] bg-black/40 backdrop-blur-xl border-t border-white/10"
-            initial={{ opacity: 0, y: 30 }}
+            className="absolute bottom-0 left-0 right-0 z-[30] px-2 sm:px-4 pt-4 sm:pt-6 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] sm:pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] bg-gradient-to-t from-black/95 via-black/80 to-transparent backdrop-blur-md border-t border-white/10 select-none pointer-events-auto"
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2 }}
+            onMouseEnter={() => {
+              if (hideTimer.current) clearTimeout(hideTimer.current);
+            }}
+            onMouseLeave={() => {
+              if (isPlaying && !error) {
+                hideTimer.current = setTimeout(() => setShowControls(false), 2500);
+              }
+            }}
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* SEEK */}
-            <div className="flex items-center gap-1 sm:gap-2 text-white text-[9px] sm:text-xs md:text-sm mb-2">
-              <span className="w-[34px] sm:w-[40px] text-right shrink-0">
+            {/* SEEK BAR ROW */}
+            <div className="flex items-center gap-1.5 sm:gap-2 text-white text-xs sm:text-sm mb-2 sm:mb-2.5 font-medium">
+              <span className="w-[34px] sm:w-[44px] text-right shrink-0 font-mono text-[10px] sm:text-xs text-white/90">
                 {formatTime(currentTime)}
               </span>
 
@@ -1459,30 +1483,30 @@ const VideoPlayer = ({
                   onChange={handleSeek}
                   onDragStart={onSeekStart}
                   onDragEnd={onSeekEnd}
-                  className="h-2.5 sm:h-2"
-                  thumbClassName="h-3.5 w-3.5 sm:h-3 sm:w-3"
+                  className="h-2 sm:h-2"
+                  thumbClassName="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5"
                 />
               </div>
 
-              <span className="w-[34px] sm:w-[40px] text-left shrink-0 font-mono">
+              <span className="w-[34px] sm:w-[44px] text-left shrink-0 font-mono text-[10px] sm:text-xs text-white/90">
                 {formatTime(duration)}
               </span>
             </div>
 
-            {/* ACTIONS */}
-            <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
-              {/* LEFT CONTROLS */}
-              <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
+            {/* ACTIONS ROW */}
+            <div className="flex items-center justify-between gap-1 sm:gap-2">
+              {/* LEFT CONTROLS (Playback & Audio) */}
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                 <Button
                   onClick={togglePlay}
                   aria-label={isPlaying ? 'Pause' : 'Play'}
                   size="icon"
-                  className="h-7 w-7 sm:h-9 sm:w-9 shrink-0"
+                  className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-lg bg-white/15 text-white hover:bg-white/25 active:scale-95 transition-all shadow-sm touch-manipulation"
                 >
                   {isPlaying ? (
-                    <Pause className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                    <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
                   ) : (
-                    <Play className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                    <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
                   )}
                 </Button>
 
@@ -1490,18 +1514,19 @@ const VideoPlayer = ({
                   onClick={toggleMute}
                   aria-label={isMuted ? 'Unmute' : 'Mute'}
                   size="icon"
-                  className="h-7 w-7 sm:h-9 sm:w-9 shrink-0"
+                  className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-lg bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all touch-manipulation"
                 >
                   {isMuted ? (
-                    <VolumeX className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                    <VolumeX className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   ) : volume > 0.5 ? (
-                    <Volume2 className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                    <Volume2 className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   ) : (
-                    <Volume1 className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                    <Volume1 className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   )}
                 </Button>
 
-                <div className="w-12 sm:w-24 md:w-28 flex-1 max-w-[100px] sm:max-w-none">
+                {/* Volume Slider - shown on tablet & desktop */}
+                <div className="hidden sm:block w-16 md:w-24 shrink-0">
                   <CustomSlider
                     label="Volume"
                     value={volume * 100}
@@ -1512,12 +1537,12 @@ const VideoPlayer = ({
                 </div>
               </div>
 
-              {/* RIGHT CONTROLS */}
-              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              {/* RIGHT CONTROLS (Quality, Speed, PiP, Fullscreen, Actions) */}
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                 <label className="sr-only" htmlFor="video-quality-select">
                   Quality
                 </label>
-                <div className="relative min-w-[78px]">
+                <div className="relative min-w-[58px] sm:min-w-[76px]">
                   <select
                     id="video-quality-select"
                     aria-label="Quality selector"
@@ -1525,7 +1550,7 @@ const VideoPlayer = ({
                     onChange={(e) => {
                       applyQualitySelection(Number(e.target.value));
                     }}
-                    className="h-7 sm:h-8 w-full appearance-none rounded-lg border border-white/25 bg-black/55 pl-2 pr-6 sm:pl-2.5 sm:pr-7 text-[11px] sm:text-xs font-medium text-white outline-none transition-colors hover:bg-black/65 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:border-white/50 touch-manipulation"
+                    className="h-8 w-full appearance-none rounded-lg border border-white/20 bg-black/60 pl-1.5 sm:pl-2.5 pr-5 sm:pr-6 text-[10px] sm:text-xs font-medium text-white outline-none transition-colors hover:bg-black/80 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:border-white/50 touch-manipulation"
                   >
                     {qualityOptions.map((option) => (
                       <option
@@ -1537,7 +1562,7 @@ const VideoPlayer = ({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/75" />
+                  <ChevronDown className="pointer-events-none absolute right-1.5 sm:right-2 top-1/2 h-3 w-3 sm:h-3.5 sm:w-3.5 -translate-y-1/2 text-white/75" />
                 </div>
 
                 <Button
@@ -1545,63 +1570,71 @@ const VideoPlayer = ({
                   aria-label={`Playback speed: ${playbackSpeed}x`}
                   disabled={!allowSpeedChange}
                   size="sm"
-                  className="h-5 sm:h-6 px-1 sm:px-1.5 text-[8px] sm:text-[9px] bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all touch-manipulation min-w-[24px]"
+                  className="h-8 px-1.5 sm:px-2 text-[10px] sm:text-xs font-semibold bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all touch-manipulation min-w-[28px] sm:min-w-[32px] rounded-lg"
                 >
-                  {playbackSpeed}
+                  {playbackSpeed}x
                 </Button>
+
+                {/* Mirror Button - tablet and desktop */}
                 <Button
                   onClick={() => setIsMirrored((prev) => !prev)}
                   aria-label={isMirrored ? 'Unmirror video' : 'Mirror video'}
                   title={isMirrored ? 'Unmirror video' : 'Mirror video'}
                   size="icon"
-                  className="h-4 w-4 sm:h-6 sm:w-6 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0"
+                  className="hidden sm:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
                 >
-                  <FlipHorizontal className="w-2 h-2 sm:w-3 sm:h-3" />
+                  <FlipHorizontal className="w-4 h-4" />
                 </Button>
 
                 <Button
                   onClick={togglePiP}
                   aria-label={isPiP ? 'Exit Picture in Picture' : 'Picture in Picture'}
+                  title={isPiP ? 'Exit Picture in Picture' : 'Picture in Picture'}
                   disabled={!allowPiP}
                   size="icon"
-                  className="h-4 w-4 sm:h-6 sm:w-6 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0"
+                  className="h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
                 >
-                  <PictureInPicture2 className="w-2 h-2 sm:w-3 sm:h-3" />
+                  <PictureInPicture2 className="w-4 h-4" />
                 </Button>
+
+                {/* Refresh button - desktop */}
+                <Button
+                  onClick={handleRefresh}
+                  aria-label="Refresh video"
+                  title="Refresh video"
+                  size="icon"
+                  className="hidden md:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+
+                {allowDownload && (
+                  <Button
+                    onClick={handleDownload}
+                    aria-label="Download video"
+                    title="Download video"
+                    size="icon"
+                    className="h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                  >
+                    <Download className="w-4 h-4" />
+                  </Button>
+                )}
 
                 <Button
                   onClick={() => {
                     void toggleFullscreen();
                   }}
                   aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                  title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
                   disabled={!allowFullscreen}
                   size="icon"
-                  className="h-4 w-4 sm:h-6 sm:w-6 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0"
+                  className="h-8 w-8 sm:h-9 sm:w-9 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
                 >
                   {isFullscreen ? (
-                    <Minimize2 className="w-2 h-2 sm:w-3 sm:h-3" />
+                    <Minimize2 className="w-4 h-4" />
                   ) : (
-                    <Maximize2 className="w-2 h-2 sm:w-3 sm:h-3" />
+                    <Maximize2 className="w-4 h-4" />
                   )}
-                </Button>
-
-                <Button
-                  onClick={handleRefresh}
-                  aria-label="Refresh video"
-                  size="icon"
-                  className="h-4 w-4 sm:h-6 sm:w-6 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0"
-                >
-                  <RefreshCw className="w-2 h-2 sm:w-3 sm:h-3" />
-                </Button>
-
-                <Button
-                  onClick={handleDownload}
-                  aria-label="Download video"
-                  disabled={!allowDownload}
-                  size="icon"
-                  className="h-4 w-4 sm:h-6 sm:w-6 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0"
-                >
-                  <Download className="w-2 h-2 sm:w-3 sm:h-3" />
                 </Button>
               </div>
             </div>

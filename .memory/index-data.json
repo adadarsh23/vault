@@ -1,38 +1,38 @@
 {
-  "generatedAt": "2026-08-14T20:31:25.416Z",
+  "generatedAt": "2026-08-15T03:20:02.773Z",
   "schema": "code-memory-index/v5",
   "totals": {
     "filesScanned": 469,
     "filesIndexed": 469,
     "filesSkipped": 0,
-    "bytesIndexed": 6352747,
-    "linesIndexed": 160265,
-    "codeLines": 143373,
-    "commentLines": 4082,
-    "blankLines": 12810,
-    "symbolCount": 2760,
-    "importCount": 1830,
+    "bytesIndexed": 6390202,
+    "linesIndexed": 160138,
+    "codeLines": 143237,
+    "commentLines": 4085,
+    "blankLines": 12816,
+    "symbolCount": 2758,
+    "importCount": 1831,
     "exportCount": 1172,
     "tagCount": 97
   },
   "quality": {
-    "commentDensity": 0.028,
+    "commentDensity": 0.029,
     "blankLineRatio": 0.08,
     "todoFilesRatio": 0.13,
     "avgSymbolsPerFile": 5.88,
     "avgImportsPerFile": 3.9,
-    "avgRiskPerFile": 21.27
+    "avgRiskPerFile": 21.28
   },
   "trend": {
     "filesIndexedDelta": 0,
-    "linesIndexedDelta": 521,
-    "symbolCountDelta": 7,
+    "linesIndexedDelta": -127,
+    "symbolCountDelta": -2,
     "importCountDelta": 1,
-    "avgRiskPerFileDelta": 0.02
+    "avgRiskPerFileDelta": 0.01
   },
   "history": {
-    "historyPath": "C:\\Code\\vault\\.memory\\history\\code-index-2026-08-14T20-31-25-416Z.json",
-    "historyCount": 5
+    "historyPath": "C:\\Code\\vault\\.memory\\history\\code-index-2026-08-15T03-20-02-773Z.json",
+    "historyCount": 6
   },
   "riskSummary": {
     "critical": 13,
@@ -44,16 +44,16 @@
     {
       "extension": ".ts",
       "files": 250,
-      "lines": 54553,
-      "bytes": 1609422,
-      "symbols": 1656,
-      "riskScore": 5072
+      "lines": 54640,
+      "bytes": 1612407,
+      "symbols": 1657,
+      "riskScore": 5078
     },
     {
       "extension": ".tsx",
       "files": 149,
-      "lines": 57168,
-      "bytes": 2120236,
+      "lines": 57201,
+      "bytes": 2122111,
       "symbols": 894,
       "riskScore": 3536
     },
@@ -76,9 +76,9 @@
     {
       "extension": ".json",
       "files": 10,
-      "lines": 35463,
-      "bytes": 1549707,
-      "symbols": 4,
+      "lines": 35240,
+      "bytes": 1571288,
+      "symbols": 2,
       "riskScore": 235
     },
     {
@@ -92,9 +92,9 @@
     {
       "extension": ".html",
       "files": 6,
-      "lines": 4974,
-      "bytes": 773710,
-      "symbols": 61,
+      "lines": 4950,
+      "bytes": 784724,
+      "symbols": 60,
       "riskScore": 185
     },
     {
@@ -144,11 +144,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 841793,
-        "hash": "7ccdaf2e9b6d024063acd11858ca8ef58825a18bf23e5936af0a70bd5161055f",
+        "bytes": 852376,
+        "hash": "31b27c1a67dba8430f6417a7564cacf4d9402cf8b67db598664b79dfd679cc6a",
         "lines": {
-          "total": 19758,
-          "code": 19758,
+          "total": 19643,
+          "code": 19643,
           "comments": 0,
           "blanks": 0
         },
@@ -157,10 +157,9 @@
         "importSpecifiers": [],
         "importsDetailed": [],
         "symbols": [
-          "correctly",
-          "call"
+          "correctly"
         ],
-        "symbolCount": 2,
+        "symbolCount": 1,
         "tags": [
           "OPTIMIZE",
           "TODO"
@@ -175,19 +174,19 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 19794,
-        "updatedAt": "2026-08-14T19:12:08.086Z",
+        "complexityScore": 19673,
+        "updatedAt": "2026-08-14T20:32:19.020Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 567588,
-        "hash": "7455085e1be5c78e7974925c80fefd73661a560f9ba2ecb1f8ca6887d48ecb65",
+        "bytes": 578586,
+        "hash": "295be3b68a89d6491d24093392239a49e2a9e2e0294cafea185cdc4da80b7e65",
         "lines": {
-          "total": 11891,
-          "code": 11890,
+          "total": 11783,
+          "code": 11782,
           "comments": 0,
           "blanks": 1
         },
@@ -195,10 +194,8 @@
         "exports": [],
         "importSpecifiers": [],
         "importsDetailed": [],
-        "symbols": [
-          "call"
-        ],
-        "symbolCount": 1,
+        "symbols": [],
+        "symbolCount": 0,
         "tags": [
           "OPTIMIZE",
           "TODO"
@@ -213,16 +210,16 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 11920,
-        "updatedAt": "2026-08-14T19:12:10.385Z",
+        "complexityScore": 11806,
+        "updatedAt": "2026-08-14T20:32:21.647Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 688190,
-        "hash": "b12eb775226a25536f423ca93ef5c0006b7f61ec6ce3aa0d12881601c01715e9",
+        "bytes": 700447,
+        "hash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -235,7 +232,6 @@
         "importsDetailed": [],
         "symbols": [
           "correctly",
-          "call",
           "He",
           "fe",
           "o",
@@ -295,7 +291,7 @@
           "Fe",
           "Lt"
         ],
-        "symbolCount": 60,
+        "symbolCount": 59,
         "tags": [
           "OPTIMIZE",
           "TODO",
@@ -311,8 +307,8 @@
           "ifCount": 168,
           "switchCount": 13
         },
-        "complexityScore": 2778,
-        "updatedAt": "2026-08-14T19:12:08.082Z",
+        "complexityScore": 2772,
+        "updatedAt": "2026-08-14T20:32:19.020Z",
         "riskScore": 68
       },
       {
@@ -511,7 +507,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 65005,
-        "hash": "cf389bc1a7f6700f9cacba3d6aa47317b19511a76c85a30f7a0c36b22d2c4c45",
+        "hash": "6f537b9275e8b014a301e0eddf70b74bebb03394e81c83be4ff305776a27951b",
         "lines": {
           "total": 1963,
           "code": 1962,
@@ -536,7 +532,7 @@
           "switchCount": 0
         },
         "complexityScore": 1962,
-        "updatedAt": "2026-08-14T19:12:10.385Z",
+        "updatedAt": "2026-08-14T20:32:21.650Z",
         "riskScore": 30
       },
       {
@@ -730,13 +726,13 @@
         "path": "src/components/ui/video-player.tsx",
         "extension": ".tsx",
         "directory": "src/components/ui",
-        "bytes": 55327,
-        "hash": "830c327544640a4aae16cf35c6bec517d78bb0c01df702f2e4473b746a90a708",
+        "bytes": 57202,
+        "hash": "60ce58c4c65e492e89e86e9d147d79cedde3ad529d878f009b4070b3baaebdb9",
         "lines": {
-          "total": 1617,
-          "code": 1448,
-          "comments": 39,
-          "blanks": 130
+          "total": 1650,
+          "code": 1477,
+          "comments": 40,
+          "blanks": 133
         },
         "imports": [
           "import { useRef, useState, useEffect, useCallback, useMemo } from 'react';",
@@ -748,7 +744,8 @@
           "import { logger } from '../../lib/logger';",
           "import { toast } from 'sonner';",
           "import Hls from 'hls.js';",
-          "import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';"
+          "import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';",
+          "import { resolveApiBaseUrl } from '../../lib/apiBaseUrl';"
         ],
         "exports": [
           "export const getMimeTypeFromUrl = (url: string): string | undefined => {",
@@ -769,7 +766,8 @@
           "../../lib/logger",
           "sonner",
           "hls.js",
-          "../../lib/videoTranscoder"
+          "../../lib/videoTranscoder",
+          "../../lib/apiBaseUrl"
         ],
         "importsDetailed": [
           {
@@ -816,6 +814,11 @@
             "specifier": "../../lib/videoTranscoder",
             "kind": "relative",
             "target": "src/lib/videoTranscoder"
+          },
+          {
+            "specifier": "../../lib/apiBaseUrl",
+            "kind": "relative",
+            "target": "src/lib/apiBaseUrl"
           }
         ],
         "symbols": [
@@ -874,14 +877,14 @@
         "keywordCounts": {
           "asyncCount": 7,
           "awaitCount": 7,
-          "tryCount": 23,
-          "catchCount": 25,
+          "tryCount": 24,
+          "catchCount": 26,
           "throwCount": 0,
-          "ifCount": 111,
+          "ifCount": 115,
           "switchCount": 1
         },
-        "complexityScore": 1763,
-        "updatedAt": "2026-08-14T20:08:18.664Z",
+        "complexityScore": 1795,
+        "updatedAt": "2026-08-15T03:04:46.667Z",
         "riskScore": 52
       },
       {
@@ -1909,13 +1912,13 @@
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47135,
-        "hash": "d05416d8317cd190429d62ec15b4fe10bf6b482320fbcacdaf85a387e67ecc03",
+        "bytes": 47324,
+        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
         "lines": {
           "total": 1337,
-          "code": 1152,
+          "code": 1153,
           "comments": 41,
-          "blanks": 144
+          "blanks": 143
         },
         "imports": [
           "import express from 'express';",
@@ -2110,11 +2113,11 @@
           "tryCount": 14,
           "catchCount": 14,
           "throwCount": 37,
-          "ifCount": 119,
+          "ifCount": 122,
           "switchCount": 0
         },
-        "complexityScore": 1395,
-        "updatedAt": "2026-08-14T20:25:30.511Z",
+        "complexityScore": 1396,
+        "updatedAt": "2026-08-15T02:45:27.671Z",
         "riskScore": 58
       },
       {
@@ -2444,13 +2447,13 @@
         "path": "src/lib/encryption.ts",
         "extension": ".ts",
         "directory": "src/lib",
-        "bytes": 31929,
-        "hash": "b485a3f5cabf4ddb69bf4fe9dfd213ef03425788f5b8f4644000cd7eb75c4d4d",
+        "bytes": 32132,
+        "hash": "a6cf0ad2456b57f88ae8fed22fac0dec0bcc2c93df568d5364f57539b642d6c7",
         "lines": {
-          "total": 1227,
-          "code": 985,
+          "total": 1237,
+          "code": 993,
           "comments": 112,
-          "blanks": 130
+          "blanks": 132
         },
         "imports": [
           "import { handleError } from './error-handler';",
@@ -2533,11 +2536,11 @@
           "tryCount": 10,
           "catchCount": 10,
           "throwCount": 5,
-          "ifCount": 88,
+          "ifCount": 91,
           "switchCount": 0
         },
-        "complexityScore": 1147,
-        "updatedAt": "2026-08-14T18:29:32.025Z",
+        "complexityScore": 1155,
+        "updatedAt": "2026-08-15T02:40:24.342Z",
         "riskScore": 47
       },
       {
@@ -2545,7 +2548,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "2ff86803de990bbef9de086127a814b8e49c0adb05a8938419f46a9472d879c1",
+        "hash": "eaeabccba68d7f20f4534afc71ef0a9081ae2d70041b8a7eb58297bab9228e8e",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -2572,19 +2575,19 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-14T19:12:10.385Z",
+        "updatedAt": "2026-08-14T20:32:21.649Z",
         "riskScore": 30
       },
       {
         "path": "src/lib/filePreview.ts",
         "extension": ".ts",
         "directory": "src/lib",
-        "bytes": 26401,
-        "hash": "8b9e45f39fe60bc0573d3d8af4d61ac686055e7ba4037fedf7d16defea7b83d2",
+        "bytes": 27345,
+        "hash": "4765822ee8f93257751997bc7e899b633e60834f6aff537d40212236b2a70eed",
         "lines": {
-          "total": 1057,
-          "code": 910,
-          "comments": 66,
+          "total": 1085,
+          "code": 937,
+          "comments": 67,
           "blanks": 81
         },
         "imports": [
@@ -2663,11 +2666,11 @@
           "tryCount": 9,
           "catchCount": 6,
           "throwCount": 0,
-          "ifCount": 87,
+          "ifCount": 93,
           "switchCount": 1
         },
-        "complexityScore": 1015,
-        "updatedAt": "2026-08-14T20:08:47.656Z",
+        "complexityScore": 1042,
+        "updatedAt": "2026-08-15T03:08:52.959Z",
         "riskScore": 41
       },
       {
@@ -4362,11 +4365,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 841793,
-        "hash": "7ccdaf2e9b6d024063acd11858ca8ef58825a18bf23e5936af0a70bd5161055f",
+        "bytes": 852376,
+        "hash": "31b27c1a67dba8430f6417a7564cacf4d9402cf8b67db598664b79dfd679cc6a",
         "lines": {
-          "total": 19758,
-          "code": 19758,
+          "total": 19643,
+          "code": 19643,
           "comments": 0,
           "blanks": 0
         },
@@ -4375,10 +4378,9 @@
         "importSpecifiers": [],
         "importsDetailed": [],
         "symbols": [
-          "correctly",
-          "call"
+          "correctly"
         ],
-        "symbolCount": 2,
+        "symbolCount": 1,
         "tags": [
           "OPTIMIZE",
           "TODO"
@@ -4393,16 +4395,16 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 19794,
-        "updatedAt": "2026-08-14T19:12:08.086Z",
+        "complexityScore": 19673,
+        "updatedAt": "2026-08-14T20:32:19.020Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 688190,
-        "hash": "b12eb775226a25536f423ca93ef5c0006b7f61ec6ce3aa0d12881601c01715e9",
+        "bytes": 700447,
+        "hash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -4415,7 +4417,6 @@
         "importsDetailed": [],
         "symbols": [
           "correctly",
-          "call",
           "He",
           "fe",
           "o",
@@ -4475,7 +4476,7 @@
           "Fe",
           "Lt"
         ],
-        "symbolCount": 60,
+        "symbolCount": 59,
         "tags": [
           "OPTIMIZE",
           "TODO",
@@ -4491,19 +4492,19 @@
           "ifCount": 168,
           "switchCount": 13
         },
-        "complexityScore": 2778,
-        "updatedAt": "2026-08-14T19:12:08.082Z",
+        "complexityScore": 2772,
+        "updatedAt": "2026-08-14T20:32:19.020Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 567588,
-        "hash": "7455085e1be5c78e7974925c80fefd73661a560f9ba2ecb1f8ca6887d48ecb65",
+        "bytes": 578586,
+        "hash": "295be3b68a89d6491d24093392239a49e2a9e2e0294cafea185cdc4da80b7e65",
         "lines": {
-          "total": 11891,
-          "code": 11890,
+          "total": 11783,
+          "code": 11782,
           "comments": 0,
           "blanks": 1
         },
@@ -4511,10 +4512,8 @@
         "exports": [],
         "importSpecifiers": [],
         "importsDetailed": [],
-        "symbols": [
-          "call"
-        ],
-        "symbolCount": 1,
+        "symbols": [],
+        "symbolCount": 0,
         "tags": [
           "OPTIMIZE",
           "TODO"
@@ -4529,8 +4528,8 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 11920,
-        "updatedAt": "2026-08-14T19:12:10.385Z",
+        "complexityScore": 11806,
+        "updatedAt": "2026-08-14T20:32:21.647Z",
         "riskScore": 44
       },
       {
@@ -4729,7 +4728,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 65005,
-        "hash": "cf389bc1a7f6700f9cacba3d6aa47317b19511a76c85a30f7a0c36b22d2c4c45",
+        "hash": "6f537b9275e8b014a301e0eddf70b74bebb03394e81c83be4ff305776a27951b",
         "lines": {
           "total": 1963,
           "code": 1962,
@@ -4754,7 +4753,7 @@
           "switchCount": 0
         },
         "complexityScore": 1962,
-        "updatedAt": "2026-08-14T19:12:10.385Z",
+        "updatedAt": "2026-08-14T20:32:21.650Z",
         "riskScore": 30
       },
       {
@@ -5066,13 +5065,13 @@
         "path": "src/components/ui/video-player.tsx",
         "extension": ".tsx",
         "directory": "src/components/ui",
-        "bytes": 55327,
-        "hash": "830c327544640a4aae16cf35c6bec517d78bb0c01df702f2e4473b746a90a708",
+        "bytes": 57202,
+        "hash": "60ce58c4c65e492e89e86e9d147d79cedde3ad529d878f009b4070b3baaebdb9",
         "lines": {
-          "total": 1617,
-          "code": 1448,
-          "comments": 39,
-          "blanks": 130
+          "total": 1650,
+          "code": 1477,
+          "comments": 40,
+          "blanks": 133
         },
         "imports": [
           "import { useRef, useState, useEffect, useCallback, useMemo } from 'react';",
@@ -5084,7 +5083,8 @@
           "import { logger } from '../../lib/logger';",
           "import { toast } from 'sonner';",
           "import Hls from 'hls.js';",
-          "import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';"
+          "import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';",
+          "import { resolveApiBaseUrl } from '../../lib/apiBaseUrl';"
         ],
         "exports": [
           "export const getMimeTypeFromUrl = (url: string): string | undefined => {",
@@ -5105,7 +5105,8 @@
           "../../lib/logger",
           "sonner",
           "hls.js",
-          "../../lib/videoTranscoder"
+          "../../lib/videoTranscoder",
+          "../../lib/apiBaseUrl"
         ],
         "importsDetailed": [
           {
@@ -5152,6 +5153,11 @@
             "specifier": "../../lib/videoTranscoder",
             "kind": "relative",
             "target": "src/lib/videoTranscoder"
+          },
+          {
+            "specifier": "../../lib/apiBaseUrl",
+            "kind": "relative",
+            "target": "src/lib/apiBaseUrl"
           }
         ],
         "symbols": [
@@ -5210,14 +5216,14 @@
         "keywordCounts": {
           "asyncCount": 7,
           "awaitCount": 7,
-          "tryCount": 23,
-          "catchCount": 25,
+          "tryCount": 24,
+          "catchCount": 26,
           "throwCount": 0,
-          "ifCount": 111,
+          "ifCount": 115,
           "switchCount": 1
         },
-        "complexityScore": 1763,
-        "updatedAt": "2026-08-14T20:08:18.664Z",
+        "complexityScore": 1795,
+        "updatedAt": "2026-08-15T03:04:46.667Z",
         "riskScore": 52
       },
       {
@@ -5890,7 +5896,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "2ff86803de990bbef9de086127a814b8e49c0adb05a8938419f46a9472d879c1",
+        "hash": "eaeabccba68d7f20f4534afc71ef0a9081ae2d70041b8a7eb58297bab9228e8e",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -5917,20 +5923,20 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-14T19:12:10.385Z",
+        "updatedAt": "2026-08-14T20:32:21.649Z",
         "riskScore": 30
       },
       {
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47135,
-        "hash": "d05416d8317cd190429d62ec15b4fe10bf6b482320fbcacdaf85a387e67ecc03",
+        "bytes": 47324,
+        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
         "lines": {
           "total": 1337,
-          "code": 1152,
+          "code": 1153,
           "comments": 41,
-          "blanks": 144
+          "blanks": 143
         },
         "imports": [
           "import express from 'express';",
@@ -6125,11 +6131,11 @@
           "tryCount": 14,
           "catchCount": 14,
           "throwCount": 37,
-          "ifCount": 119,
+          "ifCount": 122,
           "switchCount": 0
         },
-        "complexityScore": 1395,
-        "updatedAt": "2026-08-14T20:25:30.511Z",
+        "complexityScore": 1396,
+        "updatedAt": "2026-08-15T02:45:27.671Z",
         "riskScore": 58
       },
       {
@@ -7410,7 +7416,7 @@
           "switchCount": 0
         },
         "complexityScore": 755,
-        "updatedAt": "2026-08-14T19:12:10.385Z",
+        "updatedAt": "2026-08-14T20:32:21.650Z",
         "riskScore": 30
       },
       {
@@ -8584,8 +8590,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 688190,
-        "hash": "b12eb775226a25536f423ca93ef5c0006b7f61ec6ce3aa0d12881601c01715e9",
+        "bytes": 700447,
+        "hash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -8598,7 +8604,6 @@
         "importsDetailed": [],
         "symbols": [
           "correctly",
-          "call",
           "He",
           "fe",
           "o",
@@ -8658,7 +8663,7 @@
           "Fe",
           "Lt"
         ],
-        "symbolCount": 60,
+        "symbolCount": 59,
         "tags": [
           "OPTIMIZE",
           "TODO",
@@ -8674,8 +8679,8 @@
           "ifCount": 168,
           "switchCount": 13
         },
-        "complexityScore": 2778,
-        "updatedAt": "2026-08-14T19:12:08.082Z",
+        "complexityScore": 2772,
+        "updatedAt": "2026-08-14T20:32:19.020Z",
         "riskScore": 68
       },
       {
@@ -8816,13 +8821,13 @@
         "path": "src/components/ui/video-player.tsx",
         "extension": ".tsx",
         "directory": "src/components/ui",
-        "bytes": 55327,
-        "hash": "830c327544640a4aae16cf35c6bec517d78bb0c01df702f2e4473b746a90a708",
+        "bytes": 57202,
+        "hash": "60ce58c4c65e492e89e86e9d147d79cedde3ad529d878f009b4070b3baaebdb9",
         "lines": {
-          "total": 1617,
-          "code": 1448,
-          "comments": 39,
-          "blanks": 130
+          "total": 1650,
+          "code": 1477,
+          "comments": 40,
+          "blanks": 133
         },
         "imports": [
           "import { useRef, useState, useEffect, useCallback, useMemo } from 'react';",
@@ -8834,7 +8839,8 @@
           "import { logger } from '../../lib/logger';",
           "import { toast } from 'sonner';",
           "import Hls from 'hls.js';",
-          "import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';"
+          "import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';",
+          "import { resolveApiBaseUrl } from '../../lib/apiBaseUrl';"
         ],
         "exports": [
           "export const getMimeTypeFromUrl = (url: string): string | undefined => {",
@@ -8855,7 +8861,8 @@
           "../../lib/logger",
           "sonner",
           "hls.js",
-          "../../lib/videoTranscoder"
+          "../../lib/videoTranscoder",
+          "../../lib/apiBaseUrl"
         ],
         "importsDetailed": [
           {
@@ -8902,6 +8909,11 @@
             "specifier": "../../lib/videoTranscoder",
             "kind": "relative",
             "target": "src/lib/videoTranscoder"
+          },
+          {
+            "specifier": "../../lib/apiBaseUrl",
+            "kind": "relative",
+            "target": "src/lib/apiBaseUrl"
           }
         ],
         "symbols": [
@@ -8960,14 +8972,14 @@
         "keywordCounts": {
           "asyncCount": 7,
           "awaitCount": 7,
-          "tryCount": 23,
-          "catchCount": 25,
+          "tryCount": 24,
+          "catchCount": 26,
           "throwCount": 0,
-          "ifCount": 111,
+          "ifCount": 115,
           "switchCount": 1
         },
-        "complexityScore": 1763,
-        "updatedAt": "2026-08-14T20:08:18.664Z",
+        "complexityScore": 1795,
+        "updatedAt": "2026-08-15T03:04:46.667Z",
         "riskScore": 52
       },
       {
@@ -9572,13 +9584,13 @@
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47135,
-        "hash": "d05416d8317cd190429d62ec15b4fe10bf6b482320fbcacdaf85a387e67ecc03",
+        "bytes": 47324,
+        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
         "lines": {
           "total": 1337,
-          "code": 1152,
+          "code": 1153,
           "comments": 41,
-          "blanks": 144
+          "blanks": 143
         },
         "imports": [
           "import express from 'express';",
@@ -9773,11 +9785,11 @@
           "tryCount": 14,
           "catchCount": 14,
           "throwCount": 37,
-          "ifCount": 119,
+          "ifCount": 122,
           "switchCount": 0
         },
-        "complexityScore": 1395,
-        "updatedAt": "2026-08-14T20:25:30.511Z",
+        "complexityScore": 1396,
+        "updatedAt": "2026-08-15T02:45:27.671Z",
         "riskScore": 58
       },
       {
@@ -10527,13 +10539,13 @@
         "path": "src/lib/encryption.ts",
         "extension": ".ts",
         "directory": "src/lib",
-        "bytes": 31929,
-        "hash": "b485a3f5cabf4ddb69bf4fe9dfd213ef03425788f5b8f4644000cd7eb75c4d4d",
+        "bytes": 32132,
+        "hash": "a6cf0ad2456b57f88ae8fed22fac0dec0bcc2c93df568d5364f57539b642d6c7",
         "lines": {
-          "total": 1227,
-          "code": 985,
+          "total": 1237,
+          "code": 993,
           "comments": 112,
-          "blanks": 130
+          "blanks": 132
         },
         "imports": [
           "import { handleError } from './error-handler';",
@@ -10616,11 +10628,11 @@
           "tryCount": 10,
           "catchCount": 10,
           "throwCount": 5,
-          "ifCount": 88,
+          "ifCount": 91,
           "switchCount": 0
         },
-        "complexityScore": 1147,
-        "updatedAt": "2026-08-14T18:29:32.025Z",
+        "complexityScore": 1155,
+        "updatedAt": "2026-08-15T02:40:24.342Z",
         "riskScore": 47
       },
       {
@@ -11905,8 +11917,8 @@
         "path": "server.ts",
         "extension": ".ts",
         "directory": ".",
-        "bytes": 25417,
-        "hash": "8815d34fcc6811657116ee1010f4f336d6725fff357e11a3bada61af9e49718b",
+        "bytes": 25419,
+        "hash": "69c3aa9c26ed7b11bbcf8ea88ab9d34c7dedc5e41aea95294181ddef960312e7",
         "lines": {
           "total": 758,
           "code": 657,
@@ -12244,7 +12256,7 @@
           "switchCount": 0
         },
         "complexityScore": 894,
-        "updatedAt": "2026-08-14T16:04:57.649Z",
+        "updatedAt": "2026-08-15T02:45:32.293Z",
         "riskScore": 46
       },
       {
@@ -12468,11 +12480,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 841793,
-        "hash": "7ccdaf2e9b6d024063acd11858ca8ef58825a18bf23e5936af0a70bd5161055f",
+        "bytes": 852376,
+        "hash": "31b27c1a67dba8430f6417a7564cacf4d9402cf8b67db598664b79dfd679cc6a",
         "lines": {
-          "total": 19758,
-          "code": 19758,
+          "total": 19643,
+          "code": 19643,
           "comments": 0,
           "blanks": 0
         },
@@ -12481,10 +12493,9 @@
         "importSpecifiers": [],
         "importsDetailed": [],
         "symbols": [
-          "correctly",
-          "call"
+          "correctly"
         ],
-        "symbolCount": 2,
+        "symbolCount": 1,
         "tags": [
           "OPTIMIZE",
           "TODO"
@@ -12499,19 +12510,19 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 19794,
-        "updatedAt": "2026-08-14T19:12:08.086Z",
+        "complexityScore": 19673,
+        "updatedAt": "2026-08-14T20:32:19.020Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 567588,
-        "hash": "7455085e1be5c78e7974925c80fefd73661a560f9ba2ecb1f8ca6887d48ecb65",
+        "bytes": 578586,
+        "hash": "295be3b68a89d6491d24093392239a49e2a9e2e0294cafea185cdc4da80b7e65",
         "lines": {
-          "total": 11891,
-          "code": 11890,
+          "total": 11783,
+          "code": 11782,
           "comments": 0,
           "blanks": 1
         },
@@ -12519,10 +12530,8 @@
         "exports": [],
         "importSpecifiers": [],
         "importsDetailed": [],
-        "symbols": [
-          "call"
-        ],
-        "symbolCount": 1,
+        "symbols": [],
+        "symbolCount": 0,
         "tags": [
           "OPTIMIZE",
           "TODO"
@@ -12537,16 +12546,16 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 11920,
-        "updatedAt": "2026-08-14T19:12:10.385Z",
+        "complexityScore": 11806,
+        "updatedAt": "2026-08-14T20:32:21.647Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 688190,
-        "hash": "b12eb775226a25536f423ca93ef5c0006b7f61ec6ce3aa0d12881601c01715e9",
+        "bytes": 700447,
+        "hash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -12559,7 +12568,6 @@
         "importsDetailed": [],
         "symbols": [
           "correctly",
-          "call",
           "He",
           "fe",
           "o",
@@ -12619,7 +12627,7 @@
           "Fe",
           "Lt"
         ],
-        "symbolCount": 60,
+        "symbolCount": 59,
         "tags": [
           "OPTIMIZE",
           "TODO",
@@ -12635,8 +12643,8 @@
           "ifCount": 168,
           "switchCount": 13
         },
-        "complexityScore": 2778,
-        "updatedAt": "2026-08-14T19:12:08.082Z",
+        "complexityScore": 2772,
+        "updatedAt": "2026-08-14T20:32:19.020Z",
         "riskScore": 68
       },
       {
@@ -12835,7 +12843,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 65005,
-        "hash": "cf389bc1a7f6700f9cacba3d6aa47317b19511a76c85a30f7a0c36b22d2c4c45",
+        "hash": "6f537b9275e8b014a301e0eddf70b74bebb03394e81c83be4ff305776a27951b",
         "lines": {
           "total": 1963,
           "code": 1962,
@@ -12860,20 +12868,20 @@
           "switchCount": 0
         },
         "complexityScore": 1962,
-        "updatedAt": "2026-08-14T19:12:10.385Z",
+        "updatedAt": "2026-08-14T20:32:21.650Z",
         "riskScore": 30
       },
       {
         "path": "src/components/ui/video-player.tsx",
         "extension": ".tsx",
         "directory": "src/components/ui",
-        "bytes": 55327,
-        "hash": "830c327544640a4aae16cf35c6bec517d78bb0c01df702f2e4473b746a90a708",
+        "bytes": 57202,
+        "hash": "60ce58c4c65e492e89e86e9d147d79cedde3ad529d878f009b4070b3baaebdb9",
         "lines": {
-          "total": 1617,
-          "code": 1448,
-          "comments": 39,
-          "blanks": 130
+          "total": 1650,
+          "code": 1477,
+          "comments": 40,
+          "blanks": 133
         },
         "imports": [
           "import { useRef, useState, useEffect, useCallback, useMemo } from 'react';",
@@ -12885,7 +12893,8 @@
           "import { logger } from '../../lib/logger';",
           "import { toast } from 'sonner';",
           "import Hls from 'hls.js';",
-          "import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';"
+          "import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';",
+          "import { resolveApiBaseUrl } from '../../lib/apiBaseUrl';"
         ],
         "exports": [
           "export const getMimeTypeFromUrl = (url: string): string | undefined => {",
@@ -12906,7 +12915,8 @@
           "../../lib/logger",
           "sonner",
           "hls.js",
-          "../../lib/videoTranscoder"
+          "../../lib/videoTranscoder",
+          "../../lib/apiBaseUrl"
         ],
         "importsDetailed": [
           {
@@ -12953,6 +12963,11 @@
             "specifier": "../../lib/videoTranscoder",
             "kind": "relative",
             "target": "src/lib/videoTranscoder"
+          },
+          {
+            "specifier": "../../lib/apiBaseUrl",
+            "kind": "relative",
+            "target": "src/lib/apiBaseUrl"
           }
         ],
         "symbols": [
@@ -13011,14 +13026,14 @@
         "keywordCounts": {
           "asyncCount": 7,
           "awaitCount": 7,
-          "tryCount": 23,
-          "catchCount": 25,
+          "tryCount": 24,
+          "catchCount": 26,
           "throwCount": 0,
-          "ifCount": 111,
+          "ifCount": 115,
           "switchCount": 1
         },
-        "complexityScore": 1763,
-        "updatedAt": "2026-08-14T20:08:18.664Z",
+        "complexityScore": 1795,
+        "updatedAt": "2026-08-15T03:04:46.667Z",
         "riskScore": 52
       },
       {
@@ -14249,13 +14264,13 @@
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47135,
-        "hash": "d05416d8317cd190429d62ec15b4fe10bf6b482320fbcacdaf85a387e67ecc03",
+        "bytes": 47324,
+        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
         "lines": {
           "total": 1337,
-          "code": 1152,
+          "code": 1153,
           "comments": 41,
-          "blanks": 144
+          "blanks": 143
         },
         "imports": [
           "import express from 'express';",
@@ -14450,11 +14465,11 @@
           "tryCount": 14,
           "catchCount": 14,
           "throwCount": 37,
-          "ifCount": 119,
+          "ifCount": 122,
           "switchCount": 0
         },
-        "complexityScore": 1395,
-        "updatedAt": "2026-08-14T20:25:30.511Z",
+        "complexityScore": 1396,
+        "updatedAt": "2026-08-15T02:45:27.671Z",
         "riskScore": 58
       },
       {
@@ -14769,7 +14784,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "2ff86803de990bbef9de086127a814b8e49c0adb05a8938419f46a9472d879c1",
+        "hash": "eaeabccba68d7f20f4534afc71ef0a9081ae2d70041b8a7eb58297bab9228e8e",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -14796,20 +14811,20 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-14T19:12:10.385Z",
+        "updatedAt": "2026-08-14T20:32:21.649Z",
         "riskScore": 30
       },
       {
         "path": "src/lib/encryption.ts",
         "extension": ".ts",
         "directory": "src/lib",
-        "bytes": 31929,
-        "hash": "b485a3f5cabf4ddb69bf4fe9dfd213ef03425788f5b8f4644000cd7eb75c4d4d",
+        "bytes": 32132,
+        "hash": "a6cf0ad2456b57f88ae8fed22fac0dec0bcc2c93df568d5364f57539b642d6c7",
         "lines": {
-          "total": 1227,
-          "code": 985,
+          "total": 1237,
+          "code": 993,
           "comments": 112,
-          "blanks": 130
+          "blanks": 132
         },
         "imports": [
           "import { handleError } from './error-handler';",
@@ -14892,12 +14907,107 @@
           "tryCount": 10,
           "catchCount": 10,
           "throwCount": 5,
-          "ifCount": 88,
+          "ifCount": 91,
           "switchCount": 0
         },
-        "complexityScore": 1147,
-        "updatedAt": "2026-08-14T18:29:32.025Z",
+        "complexityScore": 1155,
+        "updatedAt": "2026-08-15T02:40:24.342Z",
         "riskScore": 47
+      },
+      {
+        "path": "src/lib/filePreview.ts",
+        "extension": ".ts",
+        "directory": "src/lib",
+        "bytes": 27345,
+        "hash": "4765822ee8f93257751997bc7e899b633e60834f6aff537d40212236b2a70eed",
+        "lines": {
+          "total": 1085,
+          "code": 937,
+          "comments": 67,
+          "blanks": 81
+        },
+        "imports": [
+          "import { decryptToFile, detectMimeTypeFromBytes, base64ToUint8Array } from './encryption';",
+          "import { VaultItem } from './storage';",
+          "import { resolveApiBaseUrl } from './apiBaseUrl';",
+          "import { getAuthToken } from './auth-session';",
+          "import { resolveRuntimeOrigin } from './sync/core';",
+          "import {"
+        ],
+        "exports": [
+          "export const inferMimeTypeFromItem = (item: VaultItem): string | undefined => {",
+          "export const getVaultItemFileUrl = (item: VaultItem): string | null => {",
+          "export const getVaultItemPreviewUrl = async (",
+          "export const vaultItemHasServerFileReference = (item: VaultItem): boolean =>",
+          "export const getVaultItemPreviewRevision = (item: VaultItem): string => {",
+          "export const describeVaultPreviewError = (error: unknown): string => {"
+        ],
+        "importSpecifiers": [
+          "./encryption",
+          "./storage",
+          "./apiBaseUrl",
+          "./auth-session",
+          "./sync/core"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "./encryption",
+            "kind": "relative",
+            "target": "src/lib/encryption"
+          },
+          {
+            "specifier": "./storage",
+            "kind": "relative",
+            "target": "src/lib/storage"
+          },
+          {
+            "specifier": "./apiBaseUrl",
+            "kind": "relative",
+            "target": "src/lib/apiBaseUrl"
+          },
+          {
+            "specifier": "./auth-session",
+            "kind": "relative",
+            "target": "src/lib/auth-session"
+          },
+          {
+            "specifier": "./sync/core",
+            "kind": "relative",
+            "target": "src/lib/sync/core"
+          }
+        ],
+        "symbols": [
+          "isAbsoluteUrl",
+          "isBlobOrDataUrl",
+          "looksLikeServerPath",
+          "isLikelyEncryptedString",
+          "looksLikeReadableMediaBytes",
+          "mt",
+          "normalizeMetadata",
+          "inferMimeTypeFromItem",
+          "resolveServerFileUrl",
+          "getVaultItemFileUrl",
+          "getVaultItemPreviewUrl",
+          "vaultItemHasServerFileReference",
+          "getVaultItemPreviewRevision",
+          "normalizeErrorText",
+          "describeVaultPreviewError"
+        ],
+        "symbolCount": 15,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 1,
+          "awaitCount": 11,
+          "tryCount": 9,
+          "catchCount": 6,
+          "throwCount": 0,
+          "ifCount": 93,
+          "switchCount": 1
+        },
+        "complexityScore": 1042,
+        "updatedAt": "2026-08-15T03:08:52.959Z",
+        "riskScore": 41
       },
       {
         "path": "src/features/vault/AudioVault.tsx",
@@ -15378,101 +15488,6 @@
         },
         "complexityScore": 1016,
         "updatedAt": "2026-08-03T10:05:40.127Z",
-        "riskScore": 41
-      },
-      {
-        "path": "src/lib/filePreview.ts",
-        "extension": ".ts",
-        "directory": "src/lib",
-        "bytes": 26401,
-        "hash": "8b9e45f39fe60bc0573d3d8af4d61ac686055e7ba4037fedf7d16defea7b83d2",
-        "lines": {
-          "total": 1057,
-          "code": 910,
-          "comments": 66,
-          "blanks": 81
-        },
-        "imports": [
-          "import { decryptToFile, detectMimeTypeFromBytes, base64ToUint8Array } from './encryption';",
-          "import { VaultItem } from './storage';",
-          "import { resolveApiBaseUrl } from './apiBaseUrl';",
-          "import { getAuthToken } from './auth-session';",
-          "import { resolveRuntimeOrigin } from './sync/core';",
-          "import {"
-        ],
-        "exports": [
-          "export const inferMimeTypeFromItem = (item: VaultItem): string | undefined => {",
-          "export const getVaultItemFileUrl = (item: VaultItem): string | null => {",
-          "export const getVaultItemPreviewUrl = async (",
-          "export const vaultItemHasServerFileReference = (item: VaultItem): boolean =>",
-          "export const getVaultItemPreviewRevision = (item: VaultItem): string => {",
-          "export const describeVaultPreviewError = (error: unknown): string => {"
-        ],
-        "importSpecifiers": [
-          "./encryption",
-          "./storage",
-          "./apiBaseUrl",
-          "./auth-session",
-          "./sync/core"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "./encryption",
-            "kind": "relative",
-            "target": "src/lib/encryption"
-          },
-          {
-            "specifier": "./storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "./apiBaseUrl",
-            "kind": "relative",
-            "target": "src/lib/apiBaseUrl"
-          },
-          {
-            "specifier": "./auth-session",
-            "kind": "relative",
-            "target": "src/lib/auth-session"
-          },
-          {
-            "specifier": "./sync/core",
-            "kind": "relative",
-            "target": "src/lib/sync/core"
-          }
-        ],
-        "symbols": [
-          "isAbsoluteUrl",
-          "isBlobOrDataUrl",
-          "looksLikeServerPath",
-          "isLikelyEncryptedString",
-          "looksLikeReadableMediaBytes",
-          "mt",
-          "normalizeMetadata",
-          "inferMimeTypeFromItem",
-          "resolveServerFileUrl",
-          "getVaultItemFileUrl",
-          "getVaultItemPreviewUrl",
-          "vaultItemHasServerFileReference",
-          "getVaultItemPreviewRevision",
-          "normalizeErrorText",
-          "describeVaultPreviewError"
-        ],
-        "symbolCount": 15,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 1,
-          "awaitCount": 11,
-          "tryCount": 9,
-          "catchCount": 6,
-          "throwCount": 0,
-          "ifCount": 87,
-          "switchCount": 1
-        },
-        "complexityScore": 1015,
-        "updatedAt": "2026-08-14T20:08:47.656Z",
         "riskScore": 41
       },
       {
@@ -16776,8 +16791,8 @@
         "path": "server.ts",
         "extension": ".ts",
         "directory": ".",
-        "bytes": 25417,
-        "hash": "8815d34fcc6811657116ee1010f4f336d6725fff357e11a3bada61af9e49718b",
+        "bytes": 25419,
+        "hash": "69c3aa9c26ed7b11bbcf8ea88ab9d34c7dedc5e41aea95294181ddef960312e7",
         "lines": {
           "total": 758,
           "code": 657,
@@ -17115,7 +17130,7 @@
           "switchCount": 0
         },
         "complexityScore": 894,
-        "updatedAt": "2026-08-14T16:04:57.649Z",
+        "updatedAt": "2026-08-15T02:45:32.293Z",
         "riskScore": 46
       },
       {
@@ -17901,13 +17916,13 @@
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47135,
-        "hash": "d05416d8317cd190429d62ec15b4fe10bf6b482320fbcacdaf85a387e67ecc03",
+        "bytes": 47324,
+        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
         "lines": {
           "total": 1337,
-          "code": 1152,
+          "code": 1153,
           "comments": 41,
-          "blanks": 144
+          "blanks": 143
         },
         "imports": [
           "import express from 'express';",
@@ -18102,11 +18117,11 @@
           "tryCount": 14,
           "catchCount": 14,
           "throwCount": 37,
-          "ifCount": 119,
+          "ifCount": 122,
           "switchCount": 0
         },
-        "complexityScore": 1395,
-        "updatedAt": "2026-08-14T20:25:30.511Z",
+        "complexityScore": 1396,
+        "updatedAt": "2026-08-15T02:45:27.671Z",
         "riskScore": 58
       },
       {
@@ -22283,8 +22298,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 688190,
-        "hash": "b12eb775226a25536f423ca93ef5c0006b7f61ec6ce3aa0d12881601c01715e9",
+        "bytes": 700447,
+        "hash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -22297,7 +22312,6 @@
         "importsDetailed": [],
         "symbols": [
           "correctly",
-          "call",
           "He",
           "fe",
           "o",
@@ -22357,7 +22371,7 @@
           "Fe",
           "Lt"
         ],
-        "symbolCount": 60,
+        "symbolCount": 59,
         "tags": [
           "OPTIMIZE",
           "TODO",
@@ -22373,19 +22387,19 @@
           "ifCount": 168,
           "switchCount": 13
         },
-        "complexityScore": 2778,
-        "updatedAt": "2026-08-14T19:12:08.082Z",
+        "complexityScore": 2772,
+        "updatedAt": "2026-08-14T20:32:19.020Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 567588,
-        "hash": "7455085e1be5c78e7974925c80fefd73661a560f9ba2ecb1f8ca6887d48ecb65",
+        "bytes": 578586,
+        "hash": "295be3b68a89d6491d24093392239a49e2a9e2e0294cafea185cdc4da80b7e65",
         "lines": {
-          "total": 11891,
-          "code": 11890,
+          "total": 11783,
+          "code": 11782,
           "comments": 0,
           "blanks": 1
         },
@@ -22393,10 +22407,8 @@
         "exports": [],
         "importSpecifiers": [],
         "importsDetailed": [],
-        "symbols": [
-          "call"
-        ],
-        "symbolCount": 1,
+        "symbols": [],
+        "symbolCount": 0,
         "tags": [
           "OPTIMIZE",
           "TODO"
@@ -22411,19 +22423,19 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 11920,
-        "updatedAt": "2026-08-14T19:12:10.385Z",
+        "complexityScore": 11806,
+        "updatedAt": "2026-08-14T20:32:21.647Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 841793,
-        "hash": "7ccdaf2e9b6d024063acd11858ca8ef58825a18bf23e5936af0a70bd5161055f",
+        "bytes": 852376,
+        "hash": "31b27c1a67dba8430f6417a7564cacf4d9402cf8b67db598664b79dfd679cc6a",
         "lines": {
-          "total": 19758,
-          "code": 19758,
+          "total": 19643,
+          "code": 19643,
           "comments": 0,
           "blanks": 0
         },
@@ -22432,10 +22444,9 @@
         "importSpecifiers": [],
         "importsDetailed": [],
         "symbols": [
-          "correctly",
-          "call"
+          "correctly"
         ],
-        "symbolCount": 2,
+        "symbolCount": 1,
         "tags": [
           "OPTIMIZE",
           "TODO"
@@ -22450,8 +22461,8 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 19794,
-        "updatedAt": "2026-08-14T19:12:08.086Z",
+        "complexityScore": 19673,
+        "updatedAt": "2026-08-14T20:32:19.020Z",
         "riskScore": 44
       },
       {
@@ -24475,11 +24486,11 @@
         "path": "src/lib/sync/itemCodec.ts",
         "extension": ".ts",
         "directory": "src/lib/sync",
-        "bytes": 18526,
-        "hash": "7899f4dc828594adc0c5ef5f62f0ffdc1ed5f76c54001f7575d29377bfc303f4",
+        "bytes": 18911,
+        "hash": "8ff393b3928a42deae68e3bb2d51e3ff0bad61ee791a4619d5fc633fada78465",
         "lines": {
-          "total": 589,
-          "code": 517,
+          "total": 599,
+          "code": 527,
           "comments": 16,
           "blanks": 56
         },
@@ -24543,13 +24554,13 @@
           "awaitCount": 3,
           "tryCount": 9,
           "catchCount": 9,
-          "throwCount": 7,
-          "ifCount": 39,
+          "throwCount": 10,
+          "ifCount": 42,
           "switchCount": 2
         },
-        "complexityScore": 640,
-        "updatedAt": "2026-08-07T10:43:18.681Z",
-        "riskScore": 41
+        "complexityScore": 650,
+        "updatedAt": "2026-08-15T03:15:03.742Z",
+        "riskScore": 47
       },
       {
         "path": "src/store/vaultStore.ts",
@@ -24791,11 +24802,11 @@
         "path": "lighthouse/report-split/performance.html",
         "extension": ".html",
         "directory": "lighthouse/report-split",
-        "bytes": 26252,
-        "hash": "fe5ca9e3d9a00021960bbc30f39aa16c3160d257fb03057ec3ef90892d54e1d1",
+        "bytes": 25009,
+        "hash": "e87f3a3f6fe44c08a6649f34721fa1b4cd8e753c3b83fbb54ba407dd879c4c00",
         "lines": {
-          "total": 647,
-          "code": 645,
+          "total": 623,
+          "code": 621,
           "comments": 1,
           "blanks": 1
         },
@@ -24818,8 +24829,8 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 657,
-        "updatedAt": "2026-08-14T19:12:10.385Z",
+        "complexityScore": 633,
+        "updatedAt": "2026-08-14T20:32:21.648Z",
         "riskScore": 37
       },
       {
@@ -24863,8 +24874,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 688190,
-        "hash": "b12eb775226a25536f423ca93ef5c0006b7f61ec6ce3aa0d12881601c01715e9",
+        "bytes": 700447,
+        "hash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -24877,7 +24888,6 @@
         "importsDetailed": [],
         "symbols": [
           "correctly",
-          "call",
           "He",
           "fe",
           "o",
@@ -24937,7 +24947,7 @@
           "Fe",
           "Lt"
         ],
-        "symbolCount": 60,
+        "symbolCount": 59,
         "tags": [
           "OPTIMIZE",
           "TODO",
@@ -24953,8 +24963,8 @@
           "ifCount": 168,
           "switchCount": 13
         },
-        "complexityScore": 2778,
-        "updatedAt": "2026-08-14T19:12:08.082Z",
+        "complexityScore": 2772,
+        "updatedAt": "2026-08-14T20:32:19.020Z",
         "riskScore": 68
       },
       {
@@ -26048,13 +26058,13 @@
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47135,
-        "hash": "d05416d8317cd190429d62ec15b4fe10bf6b482320fbcacdaf85a387e67ecc03",
+        "bytes": 47324,
+        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
         "lines": {
           "total": 1337,
-          "code": 1152,
+          "code": 1153,
           "comments": 41,
-          "blanks": 144
+          "blanks": 143
         },
         "imports": [
           "import express from 'express';",
@@ -26249,11 +26259,11 @@
           "tryCount": 14,
           "catchCount": 14,
           "throwCount": 37,
-          "ifCount": 119,
+          "ifCount": 122,
           "switchCount": 0
         },
-        "complexityScore": 1395,
-        "updatedAt": "2026-08-14T20:25:30.511Z",
+        "complexityScore": 1396,
+        "updatedAt": "2026-08-15T02:45:27.671Z",
         "riskScore": 58
       },
       {
@@ -27115,13 +27125,13 @@
         "path": "src/components/ui/video-player.tsx",
         "extension": ".tsx",
         "directory": "src/components/ui",
-        "bytes": 55327,
-        "hash": "830c327544640a4aae16cf35c6bec517d78bb0c01df702f2e4473b746a90a708",
+        "bytes": 57202,
+        "hash": "60ce58c4c65e492e89e86e9d147d79cedde3ad529d878f009b4070b3baaebdb9",
         "lines": {
-          "total": 1617,
-          "code": 1448,
-          "comments": 39,
-          "blanks": 130
+          "total": 1650,
+          "code": 1477,
+          "comments": 40,
+          "blanks": 133
         },
         "imports": [
           "import { useRef, useState, useEffect, useCallback, useMemo } from 'react';",
@@ -27133,7 +27143,8 @@
           "import { logger } from '../../lib/logger';",
           "import { toast } from 'sonner';",
           "import Hls from 'hls.js';",
-          "import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';"
+          "import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';",
+          "import { resolveApiBaseUrl } from '../../lib/apiBaseUrl';"
         ],
         "exports": [
           "export const getMimeTypeFromUrl = (url: string): string | undefined => {",
@@ -27154,7 +27165,8 @@
           "../../lib/logger",
           "sonner",
           "hls.js",
-          "../../lib/videoTranscoder"
+          "../../lib/videoTranscoder",
+          "../../lib/apiBaseUrl"
         ],
         "importsDetailed": [
           {
@@ -27201,6 +27213,11 @@
             "specifier": "../../lib/videoTranscoder",
             "kind": "relative",
             "target": "src/lib/videoTranscoder"
+          },
+          {
+            "specifier": "../../lib/apiBaseUrl",
+            "kind": "relative",
+            "target": "src/lib/apiBaseUrl"
           }
         ],
         "symbols": [
@@ -27259,14 +27276,14 @@
         "keywordCounts": {
           "asyncCount": 7,
           "awaitCount": 7,
-          "tryCount": 23,
-          "catchCount": 25,
+          "tryCount": 24,
+          "catchCount": 26,
           "throwCount": 0,
-          "ifCount": 111,
+          "ifCount": 115,
           "switchCount": 1
         },
-        "complexityScore": 1763,
-        "updatedAt": "2026-08-14T20:08:18.664Z",
+        "complexityScore": 1795,
+        "updatedAt": "2026-08-15T03:04:46.667Z",
         "riskScore": 52
       },
       {
@@ -28129,13 +28146,13 @@
         "path": "src/lib/encryption.ts",
         "extension": ".ts",
         "directory": "src/lib",
-        "bytes": 31929,
-        "hash": "b485a3f5cabf4ddb69bf4fe9dfd213ef03425788f5b8f4644000cd7eb75c4d4d",
+        "bytes": 32132,
+        "hash": "a6cf0ad2456b57f88ae8fed22fac0dec0bcc2c93df568d5364f57539b642d6c7",
         "lines": {
-          "total": 1227,
-          "code": 985,
+          "total": 1237,
+          "code": 993,
           "comments": 112,
-          "blanks": 130
+          "blanks": 132
         },
         "imports": [
           "import { handleError } from './error-handler';",
@@ -28218,11 +28235,11 @@
           "tryCount": 10,
           "catchCount": 10,
           "throwCount": 5,
-          "ifCount": 88,
+          "ifCount": 91,
           "switchCount": 0
         },
-        "complexityScore": 1147,
-        "updatedAt": "2026-08-14T18:29:32.025Z",
+        "complexityScore": 1155,
+        "updatedAt": "2026-08-15T02:40:24.342Z",
         "riskScore": 47
       },
       {
@@ -28307,11 +28324,91 @@
         "riskScore": 47
       },
       {
+        "path": "src/lib/sync/itemCodec.ts",
+        "extension": ".ts",
+        "directory": "src/lib/sync",
+        "bytes": 18911,
+        "hash": "8ff393b3928a42deae68e3bb2d51e3ff0bad61ee791a4619d5fc633fada78465",
+        "lines": {
+          "total": 599,
+          "code": 527,
+          "comments": 16,
+          "blanks": 56
+        },
+        "imports": [
+          "import { VaultItem } from '../storage';",
+          "import { decryptData, base64ToUint8Array } from '../cryptoPrimitives';",
+          "import { logger } from '../logger';"
+        ],
+        "exports": [
+          "export const toCloudCategory = (type: VaultItem['type']): string => {",
+          "export const parseJsonObject = (value: string): Record<string, unknown> | null => {",
+          "export const downloadAllFromResponseItems = async ("
+        ],
+        "importSpecifiers": [
+          "../storage",
+          "../cryptoPrimitives",
+          "../logger"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "../storage",
+            "kind": "relative",
+            "target": "src/lib/storage"
+          },
+          {
+            "specifier": "../cryptoPrimitives",
+            "kind": "relative",
+            "target": "src/lib/cryptoPrimitives"
+          },
+          {
+            "specifier": "../logger",
+            "kind": "relative",
+            "target": "src/lib/logger"
+          }
+        ],
+        "symbols": [
+          "toTimestampOrFallback",
+          "safeDecodeTitle",
+          "toCloudCategory",
+          "normalizeItemType",
+          "hasCoords",
+          "isLikelyBase64",
+          "getFolderFromMetadata",
+          "folder",
+          "parseJsonObject",
+          "VaultItemDecodeError",
+          "decodeBase64Payload",
+          "downloadAllFromResponseItems",
+          "decodeVaultDoc",
+          "itemId",
+          "fileRefPath"
+        ],
+        "symbolCount": 15,
+        "tags": [
+          "NOTE",
+          "TODO"
+        ],
+        "tagCount": 2,
+        "keywordCounts": {
+          "asyncCount": 2,
+          "awaitCount": 3,
+          "tryCount": 9,
+          "catchCount": 9,
+          "throwCount": 10,
+          "ifCount": 42,
+          "switchCount": 2
+        },
+        "complexityScore": 650,
+        "updatedAt": "2026-08-15T03:15:03.742Z",
+        "riskScore": 47
+      },
+      {
         "path": "server.ts",
         "extension": ".ts",
         "directory": ".",
-        "bytes": 25417,
-        "hash": "8815d34fcc6811657116ee1010f4f336d6725fff357e11a3bada61af9e49718b",
+        "bytes": 25419,
+        "hash": "69c3aa9c26ed7b11bbcf8ea88ab9d34c7dedc5e41aea95294181ddef960312e7",
         "lines": {
           "total": 758,
           "code": 657,
@@ -28649,7 +28746,7 @@
           "switchCount": 0
         },
         "complexityScore": 894,
-        "updatedAt": "2026-08-14T16:04:57.649Z",
+        "updatedAt": "2026-08-15T02:45:32.293Z",
         "riskScore": 46
       },
       {
@@ -29159,175 +29256,6 @@
         },
         "complexityScore": 884,
         "updatedAt": "2026-08-14T13:11:37.118Z",
-        "riskScore": 46
-      },
-      {
-        "path": "src/features/vault/LocationVault.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 22487,
-        "hash": "feee9a93f1c19d20aba2793ea121b07504cccbd09f93353275987c536419b9c9",
-        "lines": {
-          "total": 666,
-          "code": 604,
-          "comments": 3,
-          "blanks": 59
-        },
-        "imports": [
-          "import React, { useCallback, useEffect, useMemo, useState } from 'react';",
-          "import { MapPin } from 'lucide-react';",
-          "import { toast } from 'sonner';",
-          "import { FolderSidebar } from '../../components/vault/FolderSidebar';",
-          "import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';",
-          "import { decryptData, encryptData } from '../../lib/cryptoPrimitives';",
-          "import { logActivity } from '../../lib/activity';",
-          "import { getStringContent } from '../../lib/vaultItemContent';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { ErrorBoundary } from '../../components/ui/ErrorBoundary';",
-          "import { ErrorFallback } from '../../components/ui/ErrorFallback';",
-          "import { LocationList } from './components/LocationVault/LocationList';",
-          "import { LocationViewer } from './components/LocationVault/LocationViewer';",
-          "import { parseCoordinate } from '../../lib/utils';",
-          "import type { VaultItem } from '../../lib/storage';",
-          "import { sortPinnedFirst } from '../../lib/pinning';"
-        ],
-        "exports": [
-          "export const LocationVault: React.FC = () => ("
-        ],
-        "importSpecifiers": [
-          "react",
-          "lucide-react",
-          "sonner",
-          "../../components/vault/FolderSidebar",
-          "../../components/vault/MobileFolderMenu",
-          "../../lib/cryptoPrimitives",
-          "../../lib/activity",
-          "../../lib/vaultItemContent",
-          "../../hooks/useVaultFolders",
-          "../../store/vaultStore",
-          "../../components/ui/ErrorBoundary",
-          "../../components/ui/ErrorFallback",
-          "./components/LocationVault/LocationList",
-          "./components/LocationVault/LocationViewer",
-          "../../lib/utils",
-          "../../lib/storage",
-          "../../lib/pinning"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "lucide-react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../components/vault/FolderSidebar",
-            "kind": "relative",
-            "target": "src/components/vault/FolderSidebar"
-          },
-          {
-            "specifier": "../../components/vault/MobileFolderMenu",
-            "kind": "relative",
-            "target": "src/components/vault/MobileFolderMenu"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/vaultItemContent",
-            "kind": "relative",
-            "target": "src/lib/vaultItemContent"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../components/ui/ErrorBoundary",
-            "kind": "relative",
-            "target": "src/components/ui/ErrorBoundary"
-          },
-          {
-            "specifier": "../../components/ui/ErrorFallback",
-            "kind": "relative",
-            "target": "src/components/ui/ErrorFallback"
-          },
-          {
-            "specifier": "./components/LocationVault/LocationList",
-            "kind": "relative",
-            "target": "src/features/vault/components/LocationVault/LocationList"
-          },
-          {
-            "specifier": "./components/LocationVault/LocationViewer",
-            "kind": "relative",
-            "target": "src/features/vault/components/LocationVault/LocationViewer"
-          },
-          {
-            "specifier": "../../lib/utils",
-            "kind": "relative",
-            "target": "src/lib/utils"
-          },
-          {
-            "specifier": "../../lib/storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "../../lib/pinning",
-            "kind": "relative",
-            "target": "src/lib/pinning"
-          }
-        ],
-        "symbols": [
-          "LocationPayload",
-          "FormState",
-          "parseNum",
-          "validCoords",
-          "payloadToForm",
-          "formToPayload",
-          "LocationVaultInternal",
-          "decryptSelected",
-          "startCreate",
-          "startEdit",
-          "LocationVault"
-        ],
-        "symbolCount": 11,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 10,
-          "awaitCount": 14,
-          "tryCount": 8,
-          "catchCount": 8,
-          "throwCount": 5,
-          "ifCount": 40,
-          "switchCount": 0
-        },
-        "complexityScore": 721,
-        "updatedAt": "2026-08-06T04:11:24.467Z",
         "riskScore": 46
       }
     ],
@@ -29942,13 +29870,13 @@
         "path": "src/lib/encryption.ts",
         "extension": ".ts",
         "directory": "src/lib",
-        "bytes": 31929,
-        "hash": "b485a3f5cabf4ddb69bf4fe9dfd213ef03425788f5b8f4644000cd7eb75c4d4d",
+        "bytes": 32132,
+        "hash": "a6cf0ad2456b57f88ae8fed22fac0dec0bcc2c93df568d5364f57539b642d6c7",
         "lines": {
-          "total": 1227,
-          "code": 985,
+          "total": 1237,
+          "code": 993,
           "comments": 112,
-          "blanks": 130
+          "blanks": 132
         },
         "imports": [
           "import { handleError } from './error-handler';",
@@ -30031,11 +29959,11 @@
           "tryCount": 10,
           "catchCount": 10,
           "throwCount": 5,
-          "ifCount": 88,
+          "ifCount": 91,
           "switchCount": 0
         },
-        "complexityScore": 1147,
-        "updatedAt": "2026-08-14T18:29:32.025Z",
+        "complexityScore": 1155,
+        "updatedAt": "2026-08-15T02:40:24.342Z",
         "riskScore": 47
       },
       {
@@ -30848,13 +30776,13 @@
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47135,
-        "hash": "d05416d8317cd190429d62ec15b4fe10bf6b482320fbcacdaf85a387e67ecc03",
+        "bytes": 47324,
+        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
         "lines": {
           "total": 1337,
-          "code": 1152,
+          "code": 1153,
           "comments": 41,
-          "blanks": 144
+          "blanks": 143
         },
         "imports": [
           "import express from 'express';",
@@ -31049,11 +30977,11 @@
           "tryCount": 14,
           "catchCount": 14,
           "throwCount": 37,
-          "ifCount": 119,
+          "ifCount": 122,
           "switchCount": 0
         },
-        "complexityScore": 1395,
-        "updatedAt": "2026-08-14T20:25:30.511Z",
+        "complexityScore": 1396,
+        "updatedAt": "2026-08-15T02:45:27.671Z",
         "riskScore": 58
       },
       {
@@ -31579,13 +31507,13 @@
         "path": "src/lib/videoTranscoder.ts",
         "extension": ".ts",
         "directory": "src/lib",
-        "bytes": 8791,
-        "hash": "927426bab34269948fb9706ea81f12e2be39767e6ee51619a3d157aa1a2c40f9",
+        "bytes": 9405,
+        "hash": "46109af186876e037d14bed99c620cc548081266c1be67f5a94c870fea01e6e1",
         "lines": {
-          "total": 326,
-          "code": 256,
-          "comments": 28,
-          "blanks": 42
+          "total": 345,
+          "code": 273,
+          "comments": 29,
+          "blanks": 43
         },
         "imports": [
           "import { logger } from './logger';"
@@ -31610,6 +31538,7 @@
         "symbols": [
           "TranscodeProgressStage",
           "TranscodeProgressEvent",
+          "setBoundedTranscodeCache",
           "toCachedBlobURL",
           "fetchFileData",
           "preloadFFmpeg",
@@ -31617,28 +31546,28 @@
           "transcodeVideoInBrowser",
           "progressHandler"
         ],
-        "symbolCount": 8,
+        "symbolCount": 9,
         "tags": [],
         "tagCount": 0,
         "keywordCounts": {
           "asyncCount": 5,
           "awaitCount": 25,
-          "tryCount": 7,
-          "catchCount": 8,
+          "tryCount": 8,
+          "catchCount": 9,
           "throwCount": 3,
-          "ifCount": 15,
+          "ifCount": 18,
           "switchCount": 0
         },
-        "complexityScore": 307,
-        "updatedAt": "2026-08-14T16:34:49.170Z",
+        "complexityScore": 330,
+        "updatedAt": "2026-08-15T02:49:20.628Z",
         "riskScore": 22
       },
       {
         "path": "server.ts",
         "extension": ".ts",
         "directory": ".",
-        "bytes": 25417,
-        "hash": "8815d34fcc6811657116ee1010f4f336d6725fff357e11a3bada61af9e49718b",
+        "bytes": 25419,
+        "hash": "69c3aa9c26ed7b11bbcf8ea88ab9d34c7dedc5e41aea95294181ddef960312e7",
         "lines": {
           "total": 758,
           "code": 657,
@@ -31976,7 +31905,7 @@
           "switchCount": 0
         },
         "complexityScore": 894,
-        "updatedAt": "2026-08-14T16:04:57.649Z",
+        "updatedAt": "2026-08-15T02:45:32.293Z",
         "riskScore": 46
       },
       {
@@ -32527,13 +32456,13 @@
         "path": "src/lib/cryptoPrimitives.ts",
         "extension": ".ts",
         "directory": "src/lib",
-        "bytes": 10375,
-        "hash": "7d0efcf81f94eb1df0682700f39d326dcbda727ba4222e0959d44651ed55345c",
+        "bytes": 10776,
+        "hash": "69b29b0dae7940acf3d72fc1fea8fb1f0dc0a0aab79a071b5f866f5731db53fd",
         "lines": {
-          "total": 382,
-          "code": 308,
+          "total": 395,
+          "code": 320,
           "comments": 15,
-          "blanks": 59
+          "blanks": 60
         },
         "imports": [
           "import { argon2id } from 'hash-wasm';"
@@ -32586,14 +32515,14 @@
         "keywordCounts": {
           "asyncCount": 8,
           "awaitCount": 15,
-          "tryCount": 6,
-          "catchCount": 5,
+          "tryCount": 7,
+          "catchCount": 6,
           "throwCount": 3,
-          "ifCount": 20,
+          "ifCount": 24,
           "switchCount": 0
         },
-        "complexityScore": 401,
-        "updatedAt": "2026-08-14T16:34:48.579Z",
+        "complexityScore": 413,
+        "updatedAt": "2026-08-15T02:40:30.340Z",
         "riskScore": 33
       },
       {
@@ -33462,6 +33391,11 @@
         "from": "src/components/ui/video-player.tsx",
         "target": "src/lib/videoTranscoder",
         "specifier": "../../lib/videoTranscoder"
+      },
+      {
+        "from": "src/components/ui/video-player.tsx",
+        "target": "src/lib/apiBaseUrl",
+        "specifier": "../../lib/apiBaseUrl"
       },
       {
         "from": "src/components/vault/__tests__/TagManager.test.tsx",
@@ -36037,179 +35971,120 @@
         "from": "src/features/vault/TodoVault.tsx",
         "target": "src/lib/pinning",
         "specifier": "../../lib/pinning"
-      },
-      {
-        "from": "src/features/vault/VaultEcosystemPage.tsx",
-        "target": "src/components/ui/Button",
-        "specifier": "../../components/ui/Button"
       }
     ],
     "totals": {
       "filesWithInboundLinks": 30,
       "filesWithOutboundLinks": 30,
-      "missingRelativeTargets": 735
+      "missingRelativeTargets": 736
     }
   },
   "changes": {
     "hasPreviousIndex": true,
-    "previousGeneratedAt": "2026-08-14T19:11:02.687Z",
+    "previousGeneratedAt": "2026-08-14T20:31:25.416Z",
     "counts": {
       "added": 0,
       "removed": 0,
-      "changed": 21,
-      "unchanged": 448
+      "changed": 16,
+      "unchanged": 453
     },
     "added": [],
     "removed": [],
     "changed": [
       {
-        "path": "server/controllers/mediaController.ts",
-        "previousHash": "fd7bbb5d5476bf09b9f2cf3bda57b5fb8484a5e5888c828dea278ec51a0cae71",
-        "currentHash": "d05416d8317cd190429d62ec15b4fe10bf6b482320fbcacdaf85a387e67ecc03",
-        "previousLines": 1252,
-        "currentLines": 1337,
-        "deltaLines": 85,
-        "deltaSymbols": 0
-      },
-      {
         "path": "lighthouse/report.report.json",
-        "previousHash": "cb122516b81c9536d9aae3b91cb51437a6cd638ea3e048e98521d64f96bf67fc",
-        "currentHash": "7ccdaf2e9b6d024063acd11858ca8ef58825a18bf23e5936af0a70bd5161055f",
-        "previousLines": 19685,
-        "currentLines": 19758,
-        "deltaLines": 73,
-        "deltaSymbols": 1
+        "previousHash": "7ccdaf2e9b6d024063acd11858ca8ef58825a18bf23e5936af0a70bd5161055f",
+        "currentHash": "31b27c1a67dba8430f6417a7564cacf4d9402cf8b67db598664b79dfd679cc6a",
+        "previousLines": 19758,
+        "currentLines": 19643,
+        "deltaLines": -115,
+        "deltaSymbols": -1
       },
       {
         "path": "lighthouse/report-split/performance.json",
-        "previousHash": "c4f82b4859f1391467b55367598acef36209b280a8c8111ce1a0298f03bec882",
-        "currentHash": "7455085e1be5c78e7974925c80fefd73661a560f9ba2ecb1f8ca6887d48ecb65",
-        "previousLines": 11825,
-        "currentLines": 11891,
-        "deltaLines": 66,
-        "deltaSymbols": 1
-      },
-      {
-        "path": "src/lib/filePreview.ts",
-        "previousHash": "46b0744bf818c722c863d3205cee8083d5cad816f3f904b0aad03e25c82a4f41",
-        "currentHash": "8b9e45f39fe60bc0573d3d8af4d61ac686055e7ba4037fedf7d16defea7b83d2",
-        "previousLines": 991,
-        "currentLines": 1057,
-        "deltaLines": 66,
-        "deltaSymbols": 0
+        "previousHash": "7455085e1be5c78e7974925c80fefd73661a560f9ba2ecb1f8ca6887d48ecb65",
+        "currentHash": "295be3b68a89d6491d24093392239a49e2a9e2e0294cafea185cdc4da80b7e65",
+        "previousLines": 11891,
+        "currentLines": 11783,
+        "deltaLines": -108,
+        "deltaSymbols": -1
       },
       {
         "path": "src/components/ui/video-player.tsx",
-        "previousHash": "fdf5e07414c6acebede68f92b341c389d20fc2b0562ebed59a6a2719f6aee69f",
-        "currentHash": "830c327544640a4aae16cf35c6bec517d78bb0c01df702f2e4473b746a90a708",
-        "previousLines": 1567,
-        "currentLines": 1617,
-        "deltaLines": 50,
+        "previousHash": "830c327544640a4aae16cf35c6bec517d78bb0c01df702f2e4473b746a90a708",
+        "currentHash": "60ce58c4c65e492e89e86e9d147d79cedde3ad529d878f009b4070b3baaebdb9",
+        "previousLines": 1617,
+        "currentLines": 1650,
+        "deltaLines": 33,
         "deltaSymbols": 0
       },
       {
-        "path": "server/controllers/tusController.ts",
-        "previousHash": "d2a99be120f8eb69682c6c7ae084ed48811be899cca3c523474a0610ca6365ff",
-        "currentHash": "8a08d1710d134c759bdb3080aad13f70371a3c9d3194dfd54f10a521dd864b1b",
-        "previousLines": 197,
-        "currentLines": 236,
-        "deltaLines": 39,
-        "deltaSymbols": 1
-      },
-      {
-        "path": "server/controllers/masterKeyController.ts",
-        "previousHash": "6ac66173941c136540fad20f8413b62b63d283cf0a8b48add2213b0a101fe954",
-        "currentHash": "f9cdfe21ccf5b31f15846a264a501abf12b67be5511f10b0c222c22b82f5bc59",
-        "previousLines": 595,
-        "currentLines": 622,
-        "deltaLines": 27,
-        "deltaSymbols": 1
+        "path": "src/lib/filePreview.ts",
+        "previousHash": "8b9e45f39fe60bc0573d3d8af4d61ac686055e7ba4037fedf7d16defea7b83d2",
+        "currentHash": "4765822ee8f93257751997bc7e899b633e60834f6aff537d40212236b2a70eed",
+        "previousLines": 1057,
+        "currentLines": 1085,
+        "deltaLines": 28,
+        "deltaSymbols": 0
       },
       {
         "path": "lighthouse/report-split/performance.html",
-        "previousHash": "771fea8604646212355c1a28336764ea47be349984d202e242bf1dcf7c8ed000",
-        "currentHash": "fe5ca9e3d9a00021960bbc30f39aa16c3160d257fb03057ec3ef90892d54e1d1",
-        "previousLines": 623,
-        "currentLines": 647,
-        "deltaLines": 24,
+        "previousHash": "fe5ca9e3d9a00021960bbc30f39aa16c3160d257fb03057ec3ef90892d54e1d1",
+        "currentHash": "e87f3a3f6fe44c08a6649f34721fa1b4cd8e753c3b83fbb54ba407dd879c4c00",
+        "previousLines": 647,
+        "currentLines": 623,
+        "deltaLines": -24,
         "deltaSymbols": 0
       },
       {
-        "path": "server/controllers/vaultController.ts",
-        "previousHash": "fc8a5a1a3202e5ddbd110672d23f2f973ba79f5f7fb5852c7f9970369f8c28c7",
-        "currentHash": "00f0cd11fab56ce9000c8796299d008fa331dda0be774e905da52fa7854a116e",
-        "previousLines": 766,
-        "currentLines": 790,
-        "deltaLines": 24,
+        "path": "src/lib/videoTranscoder.ts",
+        "previousHash": "927426bab34269948fb9706ea81f12e2be39767e6ee51619a3d157aa1a2c40f9",
+        "currentHash": "46109af186876e037d14bed99c620cc548081266c1be67f5a94c870fea01e6e1",
+        "previousLines": 326,
+        "currentLines": 345,
+        "deltaLines": 19,
+        "deltaSymbols": 1
+      },
+      {
+        "path": "src/lib/cryptoPrimitives.ts",
+        "previousHash": "7d0efcf81f94eb1df0682700f39d326dcbda727ba4222e0959d44651ed55345c",
+        "currentHash": "69b29b0dae7940acf3d72fc1fea8fb1f0dc0a0aab79a071b5f866f5731db53fd",
+        "previousLines": 382,
+        "currentLines": 395,
+        "deltaLines": 13,
         "deltaSymbols": 0
       },
       {
-        "path": "src/features/vault/OtherFilesVault.tsx",
-        "previousHash": "32e5bcacbb35e777b4eea579c4f9670251ef8a925a9d7409c242e32ab9af1ebf",
-        "currentHash": "3d844926ca8a6d4ee426bf808352287b123bb6ef57c1cbff193b2aa77eb7514b",
-        "previousLines": 1962,
-        "currentLines": 1983,
-        "deltaLines": 21,
-        "deltaSymbols": 2
-      },
-      {
-        "path": "src/lib/error-handler.ts",
-        "previousHash": "80b44c28c0d1ade17ead8de881b2dcbc1ee647622df8e74addd176bee589bb15",
-        "currentHash": "d2a355251a7099d8ade6ca5cb164e8654994ef7d4f94c2e6d6ac77b80698d957",
-        "previousLines": 195,
-        "currentLines": 210,
-        "deltaLines": 15,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/features/vault/MediaVault.tsx",
-        "previousHash": "74a7a0e9d14bd254aae17af5105b3674bed624245c57ea3912c2a4d6e69a606d",
-        "currentHash": "e246e71f70156a259e28ac353c689e16b0912fed7ea5b9a10a565af1d9493b89",
-        "previousLines": 926,
-        "currentLines": 937,
-        "deltaLines": 11,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/middleware/errorHandler.ts",
-        "previousHash": "82f3ec0dbd8c9d3c6333fd9aff56dbbc5ed7905b10d52d647f9cf78793db8643",
-        "currentHash": "04254fae803c5f6605e8591bc814f18ce70f56585836f92f12d867bbf3325dba",
-        "previousLines": 179,
-        "currentLines": 189,
+        "path": "src/lib/encryption.ts",
+        "previousHash": "b485a3f5cabf4ddb69bf4fe9dfd213ef03425788f5b8f4644000cd7eb75c4d4d",
+        "currentHash": "a6cf0ad2456b57f88ae8fed22fac0dec0bcc2c93df568d5364f57539b642d6c7",
+        "previousLines": 1227,
+        "currentLines": 1237,
         "deltaLines": 10,
         "deltaSymbols": 0
       },
       {
-        "path": "src/lib/sync/tusUpload.ts",
-        "previousHash": "0fc8a54e8c48a1f2f29d8da494ea489f83d53d58fa1486df89cf03e1efe34e15",
-        "currentHash": "16fe41348c22c83f78958569bfcfeeceaea35e4e6d6951aed5b15829871613f3",
-        "previousLines": 201,
-        "currentLines": 205,
-        "deltaLines": 4,
+        "path": "src/lib/sync/itemCodec.ts",
+        "previousHash": "7899f4dc828594adc0c5ef5f62f0ffdc1ed5f76c54001f7575d29377bfc303f4",
+        "currentHash": "8ff393b3928a42deae68e3bb2d51e3ff0bad61ee791a4619d5fc633fada78465",
+        "previousLines": 589,
+        "currentLines": 599,
+        "deltaLines": 10,
         "deltaSymbols": 0
       },
       {
-        "path": "server/controllers/drmController.ts",
-        "previousHash": "f9ea9ed456efc4d2e6eed894185486a26a31b0008b69ae912186cc0d7847e02b",
-        "currentHash": "b70179bebef7218fb1a56889a0a78b9b519df2e0254cd0e495cb32b2401b5389",
-        "previousLines": 129,
-        "currentLines": 132,
-        "deltaLines": 3,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/lib/sync/chunkUpload.ts",
-        "previousHash": "e604595b830a263cd94f5458706657a975f08eb15a7979ea1784f2a1260b87dc",
-        "currentHash": "13c798f7fa30882086601d745b690ff44f1501e05f7e617436daec7ea49dd1a5",
-        "previousLines": 347,
-        "currentLines": 350,
-        "deltaLines": 3,
+        "path": "src/store/notificationStore.ts",
+        "previousHash": "2df287c10811f9bf4895d39dfd963a37c6ca5efb2865ec4b052dbb04c91ade4f",
+        "currentHash": "5c497e46c45cf85b4443570b94bf387737b99063bd94707826085e817950c8cd",
+        "previousLines": 126,
+        "currentLines": 133,
+        "deltaLines": 7,
         "deltaSymbols": 0
       },
       {
         "path": "lighthouse/report-split/accessibility.json",
-        "previousHash": "b5c03ecf1206f926eb106f734685181ca87e83ba1def7f48ad09d572e88b783f",
-        "currentHash": "2ff86803de990bbef9de086127a814b8e49c0adb05a8938419f46a9472d879c1",
+        "previousHash": "2ff86803de990bbef9de086127a814b8e49c0adb05a8938419f46a9472d879c1",
+        "currentHash": "eaeabccba68d7f20f4534afc71ef0a9081ae2d70041b8a7eb58297bab9228e8e",
         "previousLines": 1193,
         "currentLines": 1193,
         "deltaLines": 0,
@@ -36217,8 +36092,8 @@
       },
       {
         "path": "lighthouse/report-split/best-practices.json",
-        "previousHash": "3c046592286bc0fb34f9debb0db46128bbf3e43c860e88a813d239f318dfff91",
-        "currentHash": "cf389bc1a7f6700f9cacba3d6aa47317b19511a76c85a30f7a0c36b22d2c4c45",
+        "previousHash": "cf389bc1a7f6700f9cacba3d6aa47317b19511a76c85a30f7a0c36b22d2c4c45",
+        "currentHash": "6f537b9275e8b014a301e0eddf70b74bebb03394e81c83be4ff305776a27951b",
         "previousLines": 1963,
         "currentLines": 1963,
         "deltaLines": 0,
@@ -36226,8 +36101,8 @@
       },
       {
         "path": "lighthouse/report-split/seo.json",
-        "previousHash": "49adbfa1675632c5d435fceb26da2651d967c34a9aebc0277df258ef422d01ee",
-        "currentHash": "966b277b1b75cda24287b29c837219eda1d8b6f7f80aaef5464838d4e1f95b2b",
+        "previousHash": "966b277b1b75cda24287b29c837219eda1d8b6f7f80aaef5464838d4e1f95b2b",
+        "currentHash": "38545efa19506554875a758caef284b4f29dfc17eef393aec481872e8af01a83",
         "previousLines": 242,
         "currentLines": 242,
         "deltaLines": 0,
@@ -36235,19 +36110,28 @@
       },
       {
         "path": "lighthouse/report.report.html",
-        "previousHash": "d3378a8b29e1c16b2f4fd3e1a5c49278aa3e4da0dec739acf3a579856efe7d86",
-        "currentHash": "b12eb775226a25536f423ca93ef5c0006b7f61ec6ce3aa0d12881601c01715e9",
+        "previousHash": "b12eb775226a25536f423ca93ef5c0006b7f61ec6ce3aa0d12881601c01715e9",
+        "currentHash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
         "previousLines": 2894,
         "currentLines": 2894,
         "deltaLines": 0,
-        "deltaSymbols": 1
+        "deltaSymbols": -1
       },
       {
-        "path": "server/utils/fileStorage.ts",
-        "previousHash": "f876224271bfd2cec9b3047b6188c9471fd0c62cc7b84c6f7b021588c72b3eba",
-        "currentHash": "922da81d530a610791f938940511115635cc38326b5c21338b67d7ce9011cd62",
-        "previousLines": 636,
-        "currentLines": 636,
+        "path": "server.ts",
+        "previousHash": "8815d34fcc6811657116ee1010f4f336d6725fff357e11a3bada61af9e49718b",
+        "currentHash": "69c3aa9c26ed7b11bbcf8ea88ab9d34c7dedc5e41aea95294181ddef960312e7",
+        "previousLines": 758,
+        "currentLines": 758,
+        "deltaLines": 0,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "server/controllers/mediaController.ts",
+        "previousHash": "d05416d8317cd190429d62ec15b4fe10bf6b482320fbcacdaf85a387e67ecc03",
+        "currentHash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
+        "previousLines": 1337,
+        "currentLines": 1337,
         "deltaLines": 0,
         "deltaSymbols": 0
       }
@@ -36308,7 +36192,6 @@
       "scripts/vitest-related.mjs",
       "scripts/zip-prod.mjs",
       "SECURITY.md",
-      "server.ts",
       "server/boot/logger/colors.ts",
       "server/boot/logger/console.ts",
       "server/boot/logger/health.ts",
@@ -36318,10 +36201,14 @@
       "server/controllers/authController.ts",
       "server/controllers/captchaController.ts",
       "server/controllers/contactController.ts",
+      "server/controllers/drmController.ts",
       "server/controllers/folderController.ts",
       "server/controllers/healthController.ts",
       "server/controllers/legacyVaultController.ts",
+      "server/controllers/masterKeyController.ts",
+      "server/controllers/tusController.ts",
       "server/controllers/twoFactorController.ts",
+      "server/controllers/vaultController.ts",
       "server/keep-alive.ts",
       "server/lib/logrocket.ts",
       "server/lib/sentry.d.ts",
@@ -36330,6 +36217,7 @@
       "server/middleware/bodyParsers.ts",
       "server/middleware/csrfOriginMiddleware.ts",
       "server/middleware/csrfProtection.ts",
+      "server/middleware/errorHandler.ts",
       "server/middleware/expressValidate.ts",
       "server/middleware/mongoSanitize.ts",
       "server/middleware/originProtection.ts",
@@ -36400,6 +36288,7 @@
       "server/utils/cors.ts",
       "server/utils/crypto.ts",
       "server/utils/env.ts",
+      "server/utils/fileStorage.ts",
       "server/utils/imagePipeline.ts",
       "server/utils/jwtDiagnostics.ts",
       "server/utils/logger.ts",
@@ -36560,8 +36449,10 @@
       "src/features/vault/ecosystemHelpers.ts",
       "src/features/vault/IdentitiesVault.tsx",
       "src/features/vault/LocationVault.tsx",
+      "src/features/vault/MediaVault.tsx",
       "src/features/vault/NodeDetailsModal.tsx",
       "src/features/vault/NotesVault.tsx",
+      "src/features/vault/OtherFilesVault.tsx",
       "src/features/vault/PasswordManager_new.tsx",
       "src/features/vault/PasswordManager.tsx",
       "src/features/vault/PrivacyInterfacePage.tsx",
@@ -36604,10 +36495,9 @@
       "src/lib/cloudMasterKey.ts",
       "src/lib/cloudMasterKeyApi.ts",
       "src/lib/cookie-utils.ts",
-      "src/lib/cryptoPrimitives.ts",
       "src/lib/csrf.ts",
       "src/lib/deviceFingerprint.ts",
-      "src/lib/encryption.ts",
+      "src/lib/error-handler.ts",
       "src/lib/fileHandling.ts",
       "src/lib/folderGuards.ts",
       "src/lib/fuzzy.ts",
@@ -36624,12 +36514,13 @@
       "src/lib/streamDecryption.ts",
       "src/lib/sync.ts",
       "src/lib/sync/activitySync.ts",
+      "src/lib/sync/chunkUpload.ts",
       "src/lib/sync/core.ts",
       "src/lib/sync/downloads.ts",
-      "src/lib/sync/itemCodec.ts",
       "src/lib/sync/itemUploads.ts",
       "src/lib/sync/media.ts",
       "src/lib/sync/settingsSync.ts",
+      "src/lib/sync/tusUpload.ts",
       "src/lib/telemetry.d.ts",
       "src/lib/telemetry.js",
       "src/lib/utils.ts",
@@ -36638,7 +36529,6 @@
       "src/lib/vaultItemContent.ts",
       "src/lib/vaultKeyCheck.ts",
       "src/lib/vaultKeyRotation.ts",
-      "src/lib/videoTranscoder.ts",
       "src/main.tsx",
       "src/security/securityIntegration.test.tsx",
       "src/security/securityIntegration.tsx",
@@ -36646,7 +36536,6 @@
       "src/setupTests.ts",
       "src/store/activityStore.ts",
       "src/store/globalNavigationStore.ts",
-      "src/store/notificationStore.ts",
       "src/store/themeStore.ts",
       "src/store/vaultStore.ts",
       "src/vite-env.d.ts",
@@ -36932,13 +36821,13 @@
       "path": "lighthouse/report-split/performance.html",
       "extension": ".html",
       "lines": {
-        "total": 647,
-        "code": 645,
+        "total": 623,
+        "code": 621,
         "comments": 1,
         "blanks": 1
       },
       "symbolCount": 0,
-      "complexityScore": 657,
+      "complexityScore": 633,
       "riskScore": 37,
       "tagCount": 1,
       "tags": [
@@ -36953,13 +36842,13 @@
       "path": "lighthouse/report-split/performance.json",
       "extension": ".json",
       "lines": {
-        "total": 11891,
-        "code": 11890,
+        "total": 11783,
+        "code": 11782,
         "comments": 0,
         "blanks": 1
       },
-      "symbolCount": 1,
-      "complexityScore": 11920,
+      "symbolCount": 0,
+      "complexityScore": 11806,
       "riskScore": 44,
       "tagCount": 2,
       "tags": [
@@ -36968,8 +36857,7 @@
       ],
       "topSignals": [
         "OPTIMIZE",
-        "TODO",
-        "call"
+        "TODO"
       ],
       "importCount": 0
     },
@@ -37016,8 +36904,8 @@
         "comments": 192,
         "blanks": 320
       },
-      "symbolCount": 60,
-      "complexityScore": 2778,
+      "symbolCount": 59,
+      "complexityScore": 2772,
       "riskScore": 68,
       "tagCount": 3,
       "tags": [
@@ -37030,7 +36918,7 @@
         "TODO",
         "HACK",
         "correctly",
-        "call"
+        "He"
       ],
       "importCount": 0
     },
@@ -37038,13 +36926,13 @@
       "path": "lighthouse/report.report.json",
       "extension": ".json",
       "lines": {
-        "total": 19758,
-        "code": 19758,
+        "total": 19643,
+        "code": 19643,
         "comments": 0,
         "blanks": 0
       },
-      "symbolCount": 2,
-      "complexityScore": 19794,
+      "symbolCount": 1,
+      "complexityScore": 19673,
       "riskScore": 44,
       "tagCount": 2,
       "tags": [
@@ -37054,8 +36942,7 @@
       "topSignals": [
         "OPTIMIZE",
         "TODO",
-        "correctly",
-        "call"
+        "correctly"
       ],
       "importCount": 0
     },
@@ -38314,12 +38201,12 @@
       "extension": ".ts",
       "lines": {
         "total": 1337,
-        "code": 1152,
+        "code": 1153,
         "comments": 41,
-        "blanks": 144
+        "blanks": 143
       },
       "symbolCount": 31,
-      "complexityScore": 1395,
+      "complexityScore": 1396,
       "riskScore": 58,
       "tagCount": 0,
       "tags": [],
@@ -41265,13 +41152,13 @@
       "path": "src/components/ui/video-player.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 1617,
-        "code": 1448,
-        "comments": 39,
-        "blanks": 130
+        "total": 1650,
+        "code": 1477,
+        "comments": 40,
+        "blanks": 133
       },
       "symbolCount": 48,
-      "complexityScore": 1763,
+      "complexityScore": 1795,
       "riskScore": 52,
       "tagCount": 0,
       "tags": [],
@@ -41282,7 +41169,7 @@
         "../../lib/utils",
         "../../api/apiClient"
       ],
-      "importCount": 9
+      "importCount": 10
     },
     {
       "path": "src/components/ui/VoiceInput.tsx",
@@ -44924,13 +44811,13 @@
       "path": "src/lib/cryptoPrimitives.ts",
       "extension": ".ts",
       "lines": {
-        "total": 382,
-        "code": 308,
+        "total": 395,
+        "code": 320,
         "comments": 15,
-        "blanks": 59
+        "blanks": 60
       },
       "symbolCount": 15,
-      "complexityScore": 401,
+      "complexityScore": 413,
       "riskScore": 33,
       "tagCount": 0,
       "tags": [],
@@ -44992,13 +44879,13 @@
       "path": "src/lib/encryption.ts",
       "extension": ".ts",
       "lines": {
-        "total": 1227,
-        "code": 985,
+        "total": 1237,
+        "code": 993,
         "comments": 112,
-        "blanks": 130
+        "blanks": 132
       },
       "symbolCount": 26,
-      "complexityScore": 1147,
+      "complexityScore": 1155,
       "riskScore": 47,
       "tagCount": 0,
       "tags": [],
@@ -45061,13 +44948,13 @@
       "path": "src/lib/filePreview.ts",
       "extension": ".ts",
       "lines": {
-        "total": 1057,
-        "code": 910,
-        "comments": 66,
+        "total": 1085,
+        "code": 937,
+        "comments": 67,
         "blanks": 81
       },
       "symbolCount": 15,
-      "complexityScore": 1015,
+      "complexityScore": 1042,
       "riskScore": 41,
       "tagCount": 0,
       "tags": [],
@@ -45493,14 +45380,14 @@
       "path": "src/lib/sync/itemCodec.ts",
       "extension": ".ts",
       "lines": {
-        "total": 589,
-        "code": 517,
+        "total": 599,
+        "code": 527,
         "comments": 16,
         "blanks": 56
       },
       "symbolCount": 15,
-      "complexityScore": 640,
-      "riskScore": 41,
+      "complexityScore": 650,
+      "riskScore": 47,
       "tagCount": 2,
       "tags": [
         "NOTE",
@@ -45790,13 +45677,13 @@
       "path": "src/lib/videoTranscoder.ts",
       "extension": ".ts",
       "lines": {
-        "total": 326,
-        "code": 256,
-        "comments": 28,
-        "blanks": 42
+        "total": 345,
+        "code": 273,
+        "comments": 29,
+        "blanks": 43
       },
-      "symbolCount": 8,
-      "complexityScore": 307,
+      "symbolCount": 9,
+      "complexityScore": 330,
       "riskScore": 22,
       "tagCount": 0,
       "tags": [],
@@ -45804,8 +45691,8 @@
         "./logger",
         "TranscodeProgressStage",
         "TranscodeProgressEvent",
-        "toCachedBlobURL",
-        "fetchFileData"
+        "setBoundedTranscodeCache",
+        "toCachedBlobURL"
       ],
       "importCount": 1
     },
@@ -45970,13 +45857,13 @@
       "path": "src/store/notificationStore.ts",
       "extension": ".ts",
       "lines": {
-        "total": 126,
-        "code": 105,
+        "total": 133,
+        "code": 112,
         "comments": 5,
         "blanks": 16
       },
       "symbolCount": 2,
-      "complexityScore": 123,
+      "complexityScore": 130,
       "riskScore": 12,
       "tagCount": 0,
       "tags": [],

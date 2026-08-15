@@ -56,7 +56,7 @@ export const uint8ArrayToBase64 = (array: Uint8Array): string => {
  * Robust Base64 decoding to Uint8Array
  */
 export const base64ToUint8Array = (base64: string): Uint8Array => {
-  if (!base64) return new Uint8Array(0);
+  if (!base64 || typeof base64 !== 'string') return new Uint8Array(0);
   try {
     let clean = base64.trim();
     if (clean.includes('%')) {
@@ -77,6 +77,13 @@ export const base64ToUint8Array = (base64: string): Uint8Array => {
     const pad = clean.length % 4;
     if (pad === 2) clean += '==';
     else if (pad === 3) clean += '=';
+    else if (pad === 1) {
+      clean = clean.slice(0, -1);
+    }
+
+    if (!clean || !/^[A-Za-z0-9+/=]+$/.test(clean)) {
+      return new Uint8Array(0);
+    }
 
     const binaryString = atob(clean);
     const bytes = new Uint8Array(binaryString.length);
@@ -84,8 +91,7 @@ export const base64ToUint8Array = (base64: string): Uint8Array => {
       bytes[i] = binaryString.charCodeAt(i);
     }
     return bytes;
-  } catch (e) {
-    console.error('Base64 decoding failed', e);
+  } catch {
     return new Uint8Array(0);
   }
 };
@@ -1148,6 +1154,10 @@ export const decryptToFile = async (
   try {
     const bundle =
       typeof encryptedBundle === 'string' ? base64ToUint8Array(encryptedBundle) : encryptedBundle;
+
+    if (!bundle || bundle.length < 2) {
+      return null;
+    }
 
     // Detect E2EE Bundle: [EncKeyLen (2 bytes)] + [EncKey] + ...
     // Standard bundles start with 12 bytes IV.

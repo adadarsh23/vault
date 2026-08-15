@@ -23,8 +23,21 @@ const looksLikeServerPath = (value: string): boolean =>
   value.startsWith('gridfs://');
 
 const isLikelyEncryptedString = (value: string): boolean => {
+  if (typeof value !== 'string') {
+    return false;
+  }
   let normalized = value.trim();
   if (!normalized || normalized.length < 16) {
+    return false;
+  }
+  // Exclude URLs, blob/data URIs, server paths, and schemes from being treated as raw Base64 payloads
+  if (
+    isBlobOrDataUrl(normalized) ||
+    isAbsoluteUrl(normalized) ||
+    looksLikeServerPath(normalized) ||
+    normalized.startsWith('/') ||
+    normalized.includes('://')
+  ) {
     return false;
   }
   if (normalized.startsWith('V2_ENC:')) {
@@ -949,31 +962,37 @@ export const getVaultItemPreviewUrl = async (
   try {
     const { getSignedUrl } = await import('./sync/media');
     const signedUrl = await getSignedUrl(item.id, 'view');
-    const response = await fetch(signedUrl);
-    if (response.ok) {
-      const encryptedBlob = await response.blob();
-      if (encryptedBlob.size > 0) {
-        const u8 = new Uint8Array(await encryptedBlob.arrayBuffer());
-        if (looksLikeReadableMediaBytes(u8, effectiveMimeType)) {
-          const detected = detectMimeTypeFromBytes(u8);
-          const resolvedMime =
-            detected !== 'application/octet-stream' ? detected : effectiveMimeType;
-          const normalizedMime = resolvedMime === 'video/quicktime' ? 'video/mp4' : resolvedMime;
-          const blob = new Blob([u8], {
-            type:
-              normalizedMime || (item.type === 'video' ? 'video/mp4' : 'application/octet-stream'),
-          });
-          return URL.createObjectURL(blob);
+    if (signedUrl) {
+      if (item.type === 'video' && vaultItemHasServerFileReference(item)) {
+        return signedUrl;
+      }
+      const response = await fetch(signedUrl);
+      if (response.ok) {
+        const encryptedBlob = await response.blob();
+        if (encryptedBlob.size > 0) {
+          const u8 = new Uint8Array(await encryptedBlob.arrayBuffer());
+          if (looksLikeReadableMediaBytes(u8, effectiveMimeType)) {
+            const detected = detectMimeTypeFromBytes(u8);
+            const resolvedMime =
+              detected !== 'application/octet-stream' ? detected : effectiveMimeType;
+            const normalizedMime = resolvedMime === 'video/quicktime' ? 'video/mp4' : resolvedMime;
+            const blob = new Blob([u8], {
+              type:
+                normalizedMime ||
+                (item.type === 'video' ? 'video/mp4' : 'application/octet-stream'),
+            });
+            return URL.createObjectURL(blob);
+          }
+          return await decryptToFile(u8, masterKey, effectiveMimeType, rsaPrivateKey);
         }
-        return await decryptToFile(u8, masterKey, effectiveMimeType, rsaPrivateKey);
       }
     }
   } catch {
     // Ignore server signed URL fallback error
   }
 
-  // 6. Generic string decrypt fallback
-  if (typeof item.content === 'string') {
+  // 6. Generic string decrypt fallback (ONLY if valid encrypted string format)
+  if (typeof item.content === 'string' && isLikelyEncryptedString(item.content)) {
     return decryptToFile(item.content, masterKey, effectiveMimeType, rsaPrivateKey);
   }
 
@@ -1031,9 +1050,18 @@ export const describeVaultPreviewError = (error: unknown): string => {
     return 'This file is not available on the server anymore. It may only exist as encrypted data—try downloading or re-syncing.';
   }
   if (
+    text.includes('503') ||
+    text.includes('service unavailable') ||
+    text.includes('server_overloaded') ||
+    text.includes('temporarily unavailable')
+  ) {
+    return 'Cloud server is waking up or temporarily unavailable. Click Try again in a moment.';
+  }
+  if (
     text.includes('network') ||
     text.includes('failed to fetch') ||
-    text.includes('load failed')
+    text.includes('load failed') ||
+    text.includes('timeout')
   ) {
     return 'Network error. Check your connection and try again.';
   }

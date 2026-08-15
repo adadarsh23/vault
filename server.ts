@@ -233,11 +233,11 @@ const resolveCompressionEnabled = (): boolean => {
 };
 
 const resolveEventLoopLagThresholdMs = (): number => {
-  const parsed = Number.parseInt(process.env.EVENT_LOOP_LAG_THRESHOLD_MS || '250', 10);
+  const parsed = Number.parseInt(process.env.EVENT_LOOP_LAG_THRESHOLD_MS || '1000', 10);
   if (Number.isFinite(parsed) && parsed > 0) {
     return parsed;
   }
-  return 250;
+  return 1000;
 };
 
 const resolveOverloadProtectionEnabled = (): boolean => {

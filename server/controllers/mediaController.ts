@@ -523,70 +523,70 @@ const validateMediaAccess = async (
     }
   }
 
-  // 2. Validate Signed Capability / URL Token
+  // 2. Validate Signed Capability / URL Token if provided or if user is not authenticated via session/JWT
   const signature = getSingleQueryValue(q.token);
   const expiresRaw = getSingleQueryValue(q.expires);
 
-  if (!signature || !expiresRaw) {
+  if (signature && expiresRaw) {
+    const expires = Number.parseInt(expiresRaw, 10);
+    if (!Number.isSafeInteger(expires) || String(expires) !== expiresRaw) {
+      throw AppError.forbidden('Signed media token is invalid.', 'INVALID_SIGNATURE');
+    }
+
+    // For signed URL access where no session/JWT was provided, use the token claims target ID
+    const candidateUserId =
+      resolvedUserId || passedUserId || getSingleQueryValue(q.uid) || getSingleQueryValue(q.userId);
+    if (!candidateUserId) {
+      logger.warn('Media access denied: Identification missing', {
+        itemId,
+      });
+      throw AppError.unauthorized(
+        'User identification required for secure media playback.',
+        'AUTH_REQUIRED'
+      );
+    }
+
+    // If both a verified session and a signed claim target exist, ensure they match
+    if (resolvedUserId && candidateUserId !== resolvedUserId) {
+      throw AppError.forbidden(
+        'Signed media token does not match authenticated user.',
+        'USER_MISMATCH'
+      );
+    }
+
+    const signedSessionId = getSingleQueryValue(q.sid) || 'any';
+    const authenticatedSessionId = (req as any).user?.sessionId;
+    if (
+      authenticatedSessionId &&
+      signedSessionId !== 'any' &&
+      signedSessionId !== authenticatedSessionId
+    ) {
+      throw AppError.forbidden(
+        'Signed media token is not valid for this session.',
+        'SESSION_MISMATCH'
+      );
+    }
+
+    // Cryptographically verify the signed capability token against the candidate userId
+    const isValidSignature = storageService.verifySignedUrl(candidateUserId, itemId, {
+      token: signature,
+      expires,
+      action,
+      clientIp,
+      sessionId: signedSessionId,
+      deviceHash: getSingleQueryValue(q.dev),
+      originalIp: getSingleQueryValue(q.ip),
+    });
+
+    if (!isValidSignature) {
+      throw AppError.forbidden('Signed media token is invalid or expired.', 'INVALID_SIGNATURE');
+    }
+
+    // Now and only now is candidateUserId established as verified
+    resolvedUserId = candidateUserId;
+  } else if (!resolvedUserId) {
     throw AppError.forbidden('Media access token or expiration missing.', 'MISSING_SIGNATURE');
   }
-
-  const expires = Number.parseInt(expiresRaw, 10);
-  if (!Number.isSafeInteger(expires) || String(expires) !== expiresRaw) {
-    throw AppError.forbidden('Signed media token is invalid.', 'INVALID_SIGNATURE');
-  }
-
-  // For signed URL access where no session/JWT was provided, use the token claims target ID
-  const candidateUserId =
-    resolvedUserId || passedUserId || getSingleQueryValue(q.uid) || getSingleQueryValue(q.userId);
-  if (!candidateUserId) {
-    logger.warn('Media access denied: Identification missing', {
-      itemId,
-    });
-    throw AppError.unauthorized(
-      'User identification required for secure media playback.',
-      'AUTH_REQUIRED'
-    );
-  }
-
-  // If both a verified session and a signed claim target exist, ensure they match
-  if (resolvedUserId && candidateUserId !== resolvedUserId) {
-    throw AppError.forbidden(
-      'Signed media token does not match authenticated user.',
-      'USER_MISMATCH'
-    );
-  }
-
-  const signedSessionId = getSingleQueryValue(q.sid) || 'any';
-  const authenticatedSessionId = (req as any).user?.sessionId;
-  if (
-    authenticatedSessionId &&
-    signedSessionId !== 'any' &&
-    signedSessionId !== authenticatedSessionId
-  ) {
-    throw AppError.forbidden(
-      'Signed media token is not valid for this session.',
-      'SESSION_MISMATCH'
-    );
-  }
-
-  // Cryptographically verify the signed capability token against the candidate userId
-  const isValidSignature = storageService.verifySignedUrl(candidateUserId, itemId, {
-    token: signature,
-    expires,
-    action,
-    clientIp,
-    sessionId: signedSessionId,
-    deviceHash: getSingleQueryValue(q.dev),
-    originalIp: getSingleQueryValue(q.ip),
-  });
-
-  if (!isValidSignature) {
-    throw AppError.forbidden('Signed media token is invalid or expired.', 'INVALID_SIGNATURE');
-  }
-
-  // Now and only now is candidateUserId established as verified
-  resolvedUserId = candidateUserId;
 
   if (!resolvedUserId) {
     logger.warn('Media access denied: Identification missing', {

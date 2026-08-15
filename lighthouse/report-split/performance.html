@@ -119,7 +119,7 @@
             <h1>Performance</h1>
             <p class="muted">http://127.0.0.1:4173/</p>
           </div>
-          <span class="score warn">76</span>
+          <span class="score warn">77</span>
         </header>
         <div class="links">
           <a href="./performance.json">Category JSON</a>
@@ -149,7 +149,7 @@
         <div class="audit-title">Render-blocking requests</div>
         <div class="audit-description">Requests are blocking the page&#39;s initial render, which may delay LCP. Deferring or inlining can move these network requests out of the critical path.</div>
       </td>
-      <td>Est savings of 440 ms</td>
+      <td>Est savings of 590 ms</td>
     </tr>
 <tr>
       <td><span class="score fail">0</span></td>
@@ -165,7 +165,7 @@
         <div class="audit-title">Minimize main-thread work</div>
         <div class="audit-description">Consider reducing the time spent parsing, compiling and executing JS. You may find delivering smaller JS payloads helps with this. Learn how to minimize main-thread work</div>
       </td>
-      <td>3.0 s</td>
+      <td>3.3 s</td>
     </tr>
 <tr>
       <td><span class="score fail">22</span></td>
@@ -192,28 +192,12 @@
       <td>5.3 s</td>
     </tr>
 <tr>
-      <td><span class="score warn">83</span></td>
-      <td>
-        <div class="audit-title">First Contentful Paint</div>
-        <div class="audit-description">First Contentful Paint marks the time at which the first text or image is painted. Learn more about the First Contentful Paint metric.</div>
-      </td>
-      <td>2.0 s</td>
-    </tr>
-<tr>
       <td><span class="score warn">86</span></td>
       <td>
         <div class="audit-title">Speed Index</div>
         <div class="audit-description">Speed Index shows how quickly the contents of a page are visibly populated. Learn more about the Speed Index metric.</div>
       </td>
-      <td>3.6 s</td>
-    </tr>
-<tr>
-      <td><span class="score warn">89</span></td>
-      <td>
-        <div class="audit-title">Max Potential First Input Delay</div>
-        <div class="audit-description">The maximum potential First Input Delay that your users could experience is the duration of the longest task. Learn more about the Maximum Potential First Input Delay metric.</div>
-      </td>
-      <td>130 ms</td>
+      <td>3.7 s</td>
     </tr></tbody>
   </table>
         <h2>All Audits</h2>
@@ -226,12 +210,12 @@
       </tr>
     </thead>
     <tbody><tr>
-      <td><span class="score warn">83</span></td>
+      <td><span class="score pass">92</span></td>
       <td>
         <div class="audit-title">First Contentful Paint</div>
         <div class="audit-description">First Contentful Paint marks the time at which the first text or image is painted. Learn more about the First Contentful Paint metric.</div>
       </td>
-      <td>2.0 s</td>
+      <td>1.7 s</td>
     </tr>
 <tr>
       <td><span class="score fail">22</span></td>
@@ -242,12 +226,12 @@
       <td>5.3 s</td>
     </tr>
 <tr>
-      <td><span class="score pass">96</span></td>
+      <td><span class="score pass">95</span></td>
       <td>
         <div class="audit-title">Total Blocking Time</div>
         <div class="audit-description">Sum of all time periods between FCP and Time to Interactive, when task length exceeded 50ms, expressed in milliseconds. Learn more about the Total Blocking Time metric.</div>
       </td>
-      <td>130 ms</td>
+      <td>140 ms</td>
     </tr>
 <tr>
       <td><span class="score pass">100</span></td>
@@ -263,7 +247,7 @@
         <div class="audit-title">Speed Index</div>
         <div class="audit-description">Speed Index shows how quickly the contents of a page are visibly populated. Learn more about the Speed Index metric.</div>
       </td>
-      <td>3.6 s</td>
+      <td>3.7 s</td>
     </tr>
 <tr>
       <td><span class="score pass">100</span></td>
@@ -383,7 +367,7 @@
         <div class="audit-title">Render-blocking requests</div>
         <div class="audit-description">Requests are blocking the page&#39;s initial render, which may delay LCP. Deferring or inlining can move these network requests out of the critical path.</div>
       </td>
-      <td>Est savings of 440 ms</td>
+      <td>Est savings of 590 ms</td>
     </tr>
 <tr>
       <td><span class="score pass">100</span></td>
@@ -410,7 +394,7 @@
       <td>5.3 s</td>
     </tr>
 <tr>
-      <td><span class="score warn">89</span></td>
+      <td><span class="score pass">90</span></td>
       <td>
         <div class="audit-title">Max Potential First Input Delay</div>
         <div class="audit-description">The maximum potential First Input Delay that your users could experience is the duration of the longest task. Learn more about the Maximum Potential First Input Delay metric.</div>
@@ -471,7 +455,7 @@
         <div class="audit-title">JavaScript execution time</div>
         <div class="audit-description">Consider reducing the time spent parsing, compiling, and executing JS. You may find delivering smaller JS payloads helps with this. Learn how to reduce Javascript execution time.</div>
       </td>
-      <td>1.0 s</td>
+      <td>1.1 s</td>
     </tr>
 <tr>
       <td><span class="score fail">0</span></td>
@@ -479,7 +463,7 @@
         <div class="audit-title">Minimize main-thread work</div>
         <div class="audit-description">Consider reducing the time spent parsing, compiling and executing JS. You may find delivering smaller JS payloads helps with this. Learn how to minimize main-thread work</div>
       </td>
-      <td>3.0 s</td>
+      <td>3.3 s</td>
     </tr>
 <tr>
       <td><span class="score pass">Info</span></td>
@@ -487,7 +471,7 @@
         <div class="audit-title">Avoid long main-thread tasks</div>
         <div class="audit-description">Lists the longest tasks on the main thread, useful for identifying worst contributors to input delay. Learn how to avoid long main-thread tasks</div>
       </td>
-      <td>5 long tasks found</td>
+      <td>7 long tasks found</td>
     </tr>
 <tr>
       <td><span class="score na">N/A</span></td>

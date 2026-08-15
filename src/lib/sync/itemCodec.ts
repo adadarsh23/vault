@@ -196,8 +196,18 @@ const decodeBase64Payload = (
   kind: 'binary' | 'payload' = 'payload'
 ): Uint8Array => {
   try {
-    return base64ToUint8Array(payload);
-  } catch {
+    if (typeof payload !== 'string' || !payload.trim()) {
+      throw new VaultItemDecodeError(itemId, `Vault item ${kind} is not valid base64.`);
+    }
+    const bytes = base64ToUint8Array(payload);
+    if (bytes.length === 0) {
+      throw new VaultItemDecodeError(itemId, `Vault item ${kind} is not valid base64.`);
+    }
+    return bytes;
+  } catch (error) {
+    if (error instanceof VaultItemDecodeError) {
+      throw error;
+    }
     throw new VaultItemDecodeError(itemId, `Vault item ${kind} is not valid base64.`);
   }
 };
