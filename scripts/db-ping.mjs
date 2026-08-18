@@ -12,7 +12,7 @@ if (uriCandidates.length === 0) {
   process.exit(1);
 }
 
-const dbName = process.env.MONGODB_DB || 'admin';
+const dbName = process.env.MONGODB_DB_NAME || process.env.MONGODB_DB || 'vault';
 
 async function ping() {
   let lastError = null;

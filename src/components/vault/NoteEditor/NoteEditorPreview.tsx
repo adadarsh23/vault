@@ -260,10 +260,14 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
 
       if (!el) return;
 
-      el.scrollTo({
-        top: el.scrollHeight,
-        behavior: 'smooth',
-      });
+      try {
+        el.scrollTo({
+          top: el.scrollHeight,
+          behavior: 'smooth',
+        });
+      } catch {
+        el.scrollTop = el.scrollHeight;
+      }
     }, []);
 
     const scrollToRatio = useCallback((ratio: number) => {
@@ -420,6 +424,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
 
         <ScrollButton
           visible={showTop}
+          ariaLabel="Scroll to top"
           onClick={scrollToTop}
           icon={ChevronUp}
           className="bottom-14 right-5"
@@ -427,6 +432,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
 
         <ScrollButton
           visible={showBottom}
+          ariaLabel="Scroll to bottom"
           onClick={scrollToBottom}
           icon={ChevronDown}
           className="bottom-3 right-5"

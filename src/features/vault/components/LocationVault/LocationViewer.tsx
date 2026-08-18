@@ -713,6 +713,7 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                   <ScrollButton
                     icon={ChevronUp}
                     visible={showViewScrollTop}
+                    ariaLabel="Scroll to top"
                     onClick={() =>
                       viewRef.current?.scrollTo({
                         top: 0,

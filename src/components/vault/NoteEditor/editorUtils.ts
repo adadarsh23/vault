@@ -17,11 +17,23 @@ export const updateScrollVisibility = (
 };
 
 export const scrollToTop = (ref: React.RefObject<HTMLElement | null>) => {
-  ref.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  const el = ref.current;
+  if (!el) return;
+  try {
+    el.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch {
+    el.scrollTop = 0;
+  }
 };
 
 export const scrollToBottom = (ref: React.RefObject<HTMLElement | null>) => {
-  ref.current?.scrollTo({ top: ref.current.scrollHeight, behavior: 'smooth' });
+  const el = ref.current;
+  if (!el) return;
+  try {
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  } catch {
+    el.scrollTop = el.scrollHeight;
+  }
 };
 
 export const normalizeExternalUrl = (raw: string): string | null => {

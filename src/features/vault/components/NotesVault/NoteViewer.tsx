@@ -646,6 +646,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                   <ScrollButton
                     icon={ChevronUp}
                     visible={showViewScrollTop}
+                    ariaLabel="Scroll to top"
                     onClick={() => viewRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
                     className="bottom-6 right-8"
                   />

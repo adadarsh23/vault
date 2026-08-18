@@ -584,7 +584,7 @@ const validateMediaAccess = async (
 
     // Now and only now is candidateUserId established as verified
     resolvedUserId = candidateUserId;
-  } else if (!resolvedUserId) {
+  } else if (action === 'stream' || !resolvedUserId) {
     throw AppError.forbidden('Media access token or expiration missing.', 'MISSING_SIGNATURE');
   }
 

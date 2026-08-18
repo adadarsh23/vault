@@ -10,6 +10,7 @@ import {
   Wifi,
   X,
   Trash2,
+  PieChart,
 } from 'lucide-react';
 import { SectionCard, StatCard } from './SharedComponents';
 import {
@@ -169,6 +170,41 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
     }
   }, [location.hash, openProfileEditorRequestToken]);
 
+  const totalMediaBytes = React.useMemo(
+    () =>
+      (mediaBreakdown?.photo?.bytes || 0) +
+      (mediaBreakdown?.video?.bytes || 0) +
+      (mediaBreakdown?.audio?.bytes || 0) +
+      (mediaBreakdown?.other?.bytes || 0),
+    [mediaBreakdown]
+  );
+
+  const totalMediaCount = React.useMemo(
+    () =>
+      (mediaBreakdown?.photo?.count || 0) +
+      (mediaBreakdown?.video?.count || 0) +
+      (mediaBreakdown?.audio?.count || 0) +
+      (mediaBreakdown?.other?.count || 0),
+    [mediaBreakdown]
+  );
+
+  const photoPct =
+    totalMediaBytes > 0
+      ? Math.round(((mediaBreakdown?.photo?.bytes || 0) / totalMediaBytes) * 100)
+      : 0;
+  const videoPct =
+    totalMediaBytes > 0
+      ? Math.round(((mediaBreakdown?.video?.bytes || 0) / totalMediaBytes) * 100)
+      : 0;
+  const audioPct =
+    totalMediaBytes > 0
+      ? Math.round(((mediaBreakdown?.audio?.bytes || 0) / totalMediaBytes) * 100)
+      : 0;
+  const otherPct =
+    totalMediaBytes > 0
+      ? Math.round(((mediaBreakdown?.other?.bytes || 0) / totalMediaBytes) * 100)
+      : 0;
+
   return (
     <SectionCard
       title="Vault Profile"
@@ -218,21 +254,6 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                   </p>
                 ) : null}
               </div>
-              {/* <div className="shrink-0 pt-1 sm:pt-0">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setShowProfilePopup(true);
-                  }}
-                  className="flex items-center gap-1.5 rounded-xl border border-card-border/80 bg-card-bg/80 px-3 py-1.5 text-xs font-semibold text-text shadow-sm hover:bg-card-bg focus-visible:outline-none"
-                >
-                  <Pencil className="h-3.5 w-3.5 text-primary" />
-                  <span>Edit Profile</span>
-                </Button>
-              </div> */}
             </div>
           </div>
         </div>
@@ -278,6 +299,17 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
           </div>
           <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
+              Display Name
+            </p>
+            <p className="mt-2 truncate text-base font-semibold text-text">
+              {profile?.profileName?.trim() || accountName || 'Not configured'}
+            </p>
+            <p className="mt-1 text-xs text-text/45 truncate">
+              Custom profile alias visible across vault
+            </p>
+          </div>
+          <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
               User ID
             </p>
             <p className="mt-2 break-all text-xs font-medium text-text/75">
@@ -289,30 +321,38 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
           </div>
           <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
-              Profile Created
+              Two-Factor Auth
             </p>
             <p className="mt-2 text-sm font-semibold text-text">
-              {formatDate(profile?.profileDetails?.createdAt || profile?.createdAt)}
+              {profile?.twoFactorEnabled ? 'Enabled' : 'Disabled'}
             </p>
-            <p className="mt-1 text-xs text-text/45">Initial profile save timestamp</p>
+            <p className="mt-1 text-xs text-text/45 truncate">
+              {profile?.twoFactorEnabled
+                ? 'Multi-factor authentication active'
+                : 'Multi-factor verification inactive'}
+            </p>
           </div>
           <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
-              Last Login
+              Active Sessions
             </p>
             <p className="mt-2 text-sm font-semibold text-text">
-              {formatDate(profile?.meta?.lastLoginAt)}
+              {formatCountLabel(sessionsCount || profile?.sessions?.length || 1, 'session')}
             </p>
-            <p className="mt-1 text-xs text-text/45">Most recent authenticated access</p>
+            <p className="mt-1 text-xs text-text/45 truncate">
+              Authorized devices with active access tokens
+            </p>
           </div>
           <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
-              Profile Updated
+              Sync Status
             </p>
-            <p className="mt-2 text-sm font-semibold text-text">
-              {formatDate(profile?.profileDetails?.updatedAt || profile?.updatedAt)}
+            <p className="mt-2 text-sm font-semibold text-text">{syncHealthLabel}</p>
+            <p className="mt-1 text-xs text-text/45 truncate">
+              {lastSuccessfulSyncAt || profile?.meta?.lastSyncAt
+                ? `Last synced: ${formatDate(lastSuccessfulSyncAt || profile?.meta?.lastSyncAt)}`
+                : 'Cloud synchronization heartbeat'}
             </p>
-            <p className="mt-1 text-xs text-text/45">Latest profile change timestamp</p>
           </div>
           <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
@@ -325,64 +365,263 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
               Total encrypted records in this vault profile
             </p>
           </div>
+          <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
+              Storage Usage
+            </p>
+            <p className="mt-2 text-sm font-semibold text-text">{formatBytes(storageUsedBytes)}</p>
+            <p className="mt-1 text-xs text-text/45 truncate">
+              Total encrypted payload across all items
+            </p>
+          </div>
+          <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
+              Security Protocol
+            </p>
+            <p className="mt-2 text-sm font-semibold text-text">AES-256-GCM</p>
+            <p className="mt-1 text-xs text-text/45 truncate">
+              Argon2id master key derivation & zero-knowledge
+            </p>
+          </div>
+          <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
+              Last Login
+            </p>
+            <p className="mt-2 text-sm font-semibold text-text">
+              {formatDate(profile?.meta?.lastLoginAt)}
+            </p>
+            <p className="mt-1 text-xs text-text/45">Most recent authenticated access</p>
+          </div>
+          <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
+              Profile Created
+            </p>
+            <p className="mt-2 text-sm font-semibold text-text">
+              {formatDate(profile?.profileDetails?.createdAt || profile?.createdAt)}
+            </p>
+            <p className="mt-1 text-xs text-text/45">Initial profile save timestamp</p>
+          </div>
+          <div className={`${SETTINGS_PANEL} min-w-0 dark:bg-black/40`}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35">
+              Profile Updated
+            </p>
+            <p className="mt-2 text-sm font-semibold text-text">
+              {formatDate(profile?.profileDetails?.updatedAt || profile?.updatedAt)}
+            </p>
+            <p className="mt-1 text-xs text-text/45">Latest profile change timestamp</p>
+          </div>
         </div>
 
-        <div className="mt-6 space-y-3">
-          <h3 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-text/30">
-            <Image className="h-3.5 w-3.5" />
-            Media & File Breakdown
-          </h3>
+        <div className="mt-6 space-y-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-text/40">
+              <PieChart className="h-3.5 w-3.5 text-blue-400" />
+              Media & File Breakdown
+            </h3>
+            <div className="flex items-center gap-2 text-xs font-medium text-text/45">
+              <span>{formatCountLabel(totalMediaCount, 'item')}</span>
+              <span className="text-text/20">•</span>
+              <span className="font-semibold text-text/75">{formatBytes(totalMediaBytes)}</span>
+            </div>
+          </div>
+
+          {/* Segmented Distribution Bar */}
+          {totalMediaBytes > 0 && (
+            <div className="flex h-2 w-full gap-1 overflow-hidden rounded-full border border-card-border/60 bg-text/5 p-0.5 dark:border-white/10 dark:bg-black/40">
+              {photoPct > 0 && (
+                <div
+                  style={{ width: `${photoPct}%` }}
+                  className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                  title={`Photos: ${formatBytes(mediaBreakdown.photo.bytes)} (${photoPct}%)`}
+                />
+              )}
+              {videoPct > 0 && (
+                <div
+                  style={{ width: `${videoPct}%` }}
+                  className="h-full rounded-full bg-purple-500 transition-all duration-500"
+                  title={`Videos: ${formatBytes(mediaBreakdown.video.bytes)} (${videoPct}%)`}
+                />
+              )}
+              {audioPct > 0 && (
+                <div
+                  style={{ width: `${audioPct}%` }}
+                  className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                  title={`Audio: ${formatBytes(mediaBreakdown.audio.bytes)} (${audioPct}%)`}
+                />
+              )}
+              {otherPct > 0 && (
+                <div
+                  style={{ width: `${otherPct}%` }}
+                  className="h-full rounded-full bg-amber-500 transition-all duration-500"
+                  title={`All Other: ${formatBytes(mediaBreakdown.other.bytes)} (${otherPct}%)`}
+                />
+              )}
+            </div>
+          )}
+
           <div className="grid gap-2.5 sm:gap-3 min-[380px]:grid-cols-2 lg:grid-cols-4">
-            <div className={`${SETTINGS_PANEL_SOFT} p-3.5 sm:p-4 min-w-0`}>
-              <div className="flex items-center gap-2 mb-2 sm:mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
-                  <Image className="h-4 w-4 text-blue-400" />
+            {/* Photos */}
+            <div
+              className={`${SETTINGS_PANEL_SOFT} group relative min-w-0 overflow-hidden p-3.5 transition-all duration-300 hover:border-blue-500/30 hover:bg-blue-500/[0.02] dark:bg-black/30 sm:p-4`}
+            >
+              <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <div className="relative z-10 mb-2.5 flex items-center justify-between gap-2 sm:mb-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-blue-500/20 bg-blue-500/10 text-blue-400 transition-transform duration-300 group-hover:scale-105">
+                    <Image className="h-4 w-4" />
+                  </div>
+                  <p className="truncate text-xs font-semibold text-text/70 transition-colors group-hover:text-text">
+                    Photos
+                  </p>
                 </div>
-                <p className="text-xs font-semibold text-text/60 truncate">Photos</p>
+                {totalMediaBytes > 0 && (
+                  <span className="shrink-0 rounded-md border border-blue-500/20 bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-blue-400">
+                    {photoPct}%
+                  </span>
+                )}
               </div>
-              <p className="text-lg sm:text-xl font-bold text-text">{mediaBreakdown.photo.count}</p>
-              <p className="text-[10px] text-text/40 mt-1.5 font-medium truncate">
+              <div className="relative z-10 flex items-baseline gap-1.5">
+                <p className="text-lg font-bold tracking-tight text-text sm:text-xl">
+                  {mediaBreakdown.photo.count}
+                </p>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-text/35">
+                  {mediaBreakdown.photo.count === 1 ? 'file' : 'files'}
+                </span>
+              </div>
+              <p className="relative z-10 mt-1 truncate text-[11px] font-medium text-text/50">
                 {formatBytes(mediaBreakdown.photo.bytes)}
               </p>
+              <div className="relative z-10 mt-2.5 h-1 w-full overflow-hidden rounded-full bg-text/5">
+                <div
+                  className="h-full rounded-full bg-blue-500/70 transition-all duration-500"
+                  style={{
+                    width: `${totalMediaBytes > 0 ? (mediaBreakdown.photo.bytes / totalMediaBytes) * 100 : 0}%`,
+                  }}
+                />
+              </div>
             </div>
 
-            <div className={`${SETTINGS_PANEL_SOFT} p-3.5 sm:p-4 min-w-0`}>
-              <div className="flex items-center gap-2 mb-2 sm:mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10">
-                  <Video className="h-4 w-4 text-purple-400" />
+            {/* Videos */}
+            <div
+              className={`${SETTINGS_PANEL_SOFT} group relative min-w-0 overflow-hidden p-3.5 transition-all duration-300 hover:border-purple-500/30 hover:bg-purple-500/[0.02] dark:bg-black/30 sm:p-4`}
+            >
+              <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-purple-500/10 blur-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <div className="relative z-10 mb-2.5 flex items-center justify-between gap-2 sm:mb-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-purple-500/20 bg-purple-500/10 text-purple-400 transition-transform duration-300 group-hover:scale-105">
+                    <Video className="h-4 w-4" />
+                  </div>
+                  <p className="truncate text-xs font-semibold text-text/70 transition-colors group-hover:text-text">
+                    Videos
+                  </p>
                 </div>
-                <p className="text-xs font-semibold text-text/60 truncate">Videos</p>
+                {totalMediaBytes > 0 && (
+                  <span className="shrink-0 rounded-md border border-purple-500/20 bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-purple-400">
+                    {videoPct}%
+                  </span>
+                )}
               </div>
-              <p className="text-lg sm:text-xl font-bold text-text">{mediaBreakdown.video.count}</p>
-              <p className="text-[10px] text-text/40 mt-1.5 font-medium truncate">
+              <div className="relative z-10 flex items-baseline gap-1.5">
+                <p className="text-lg font-bold tracking-tight text-text sm:text-xl">
+                  {mediaBreakdown.video.count}
+                </p>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-text/35">
+                  {mediaBreakdown.video.count === 1 ? 'file' : 'files'}
+                </span>
+              </div>
+              <p className="relative z-10 mt-1 truncate text-[11px] font-medium text-text/50">
                 {formatBytes(mediaBreakdown.video.bytes)}
               </p>
+              <div className="relative z-10 mt-2.5 h-1 w-full overflow-hidden rounded-full bg-text/5">
+                <div
+                  className="h-full rounded-full bg-purple-500/70 transition-all duration-500"
+                  style={{
+                    width: `${totalMediaBytes > 0 ? (mediaBreakdown.video.bytes / totalMediaBytes) * 100 : 0}%`,
+                  }}
+                />
+              </div>
             </div>
 
-            <div className={`${SETTINGS_PANEL_SOFT} p-3.5 sm:p-4 min-w-0`}>
-              <div className="flex items-center gap-2 mb-2 sm:mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10">
-                  <Music className="h-4 w-4 text-green-400" />
+            {/* Audio */}
+            <div
+              className={`${SETTINGS_PANEL_SOFT} group relative min-w-0 overflow-hidden p-3.5 transition-all duration-300 hover:border-emerald-500/30 hover:bg-emerald-500/[0.02] dark:bg-black/30 sm:p-4`}
+            >
+              <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <div className="relative z-10 mb-2.5 flex items-center justify-between gap-2 sm:mb-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 transition-transform duration-300 group-hover:scale-105">
+                    <Music className="h-4 w-4" />
+                  </div>
+                  <p className="truncate text-xs font-semibold text-text/70 transition-colors group-hover:text-text">
+                    Audio
+                  </p>
                 </div>
-                <p className="text-xs font-semibold text-text/60 truncate">Audio</p>
+                {totalMediaBytes > 0 && (
+                  <span className="shrink-0 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">
+                    {audioPct}%
+                  </span>
+                )}
               </div>
-              <p className="text-lg sm:text-xl font-bold text-text">{mediaBreakdown.audio.count}</p>
-              <p className="text-[10px] text-text/40 mt-1.5 font-medium truncate">
+              <div className="relative z-10 flex items-baseline gap-1.5">
+                <p className="text-lg font-bold tracking-tight text-text sm:text-xl">
+                  {mediaBreakdown.audio.count}
+                </p>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-text/35">
+                  {mediaBreakdown.audio.count === 1 ? 'file' : 'files'}
+                </span>
+              </div>
+              <p className="relative z-10 mt-1 truncate text-[11px] font-medium text-text/50">
                 {formatBytes(mediaBreakdown.audio.bytes)}
               </p>
+              <div className="relative z-10 mt-2.5 h-1 w-full overflow-hidden rounded-full bg-text/5">
+                <div
+                  className="h-full rounded-full bg-emerald-500/70 transition-all duration-500"
+                  style={{
+                    width: `${totalMediaBytes > 0 ? (mediaBreakdown.audio.bytes / totalMediaBytes) * 100 : 0}%`,
+                  }}
+                />
+              </div>
             </div>
 
-            <div className={`${SETTINGS_PANEL_SOFT} p-3.5 sm:p-4 min-w-0`}>
-              <div className="flex items-center gap-2 mb-2 sm:mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
-                  <WalletCards className="h-4 w-4 text-amber-400" />
+            {/* All Other */}
+            <div
+              className={`${SETTINGS_PANEL_SOFT} group relative min-w-0 overflow-hidden p-3.5 transition-all duration-300 hover:border-amber-500/30 hover:bg-amber-500/[0.02] dark:bg-black/30 sm:p-4`}
+            >
+              <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <div className="relative z-10 mb-2.5 flex items-center justify-between gap-2 sm:mb-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-400 transition-transform duration-300 group-hover:scale-105">
+                    <WalletCards className="h-4 w-4" />
+                  </div>
+                  <p className="truncate text-xs font-semibold text-text/70 transition-colors group-hover:text-text">
+                    All Other
+                  </p>
                 </div>
-                <p className="text-xs font-semibold text-text/60 truncate">All Other</p>
+                {totalMediaBytes > 0 && (
+                  <span className="shrink-0 rounded-md border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400">
+                    {otherPct}%
+                  </span>
+                )}
               </div>
-              <p className="text-lg sm:text-xl font-bold text-text">{mediaBreakdown.other.count}</p>
-              <p className="text-[10px] text-text/40 mt-1.5 font-medium truncate">
+              <div className="relative z-10 flex items-baseline gap-1.5">
+                <p className="text-lg font-bold tracking-tight text-text sm:text-xl">
+                  {mediaBreakdown.other.count}
+                </p>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-text/35">
+                  {mediaBreakdown.other.count === 1 ? 'file' : 'files'}
+                </span>
+              </div>
+              <p className="relative z-10 mt-1 truncate text-[11px] font-medium text-text/50">
                 {formatBytes(mediaBreakdown.other.bytes)}
               </p>
+              <div className="relative z-10 mt-2.5 h-1 w-full overflow-hidden rounded-full bg-text/5">
+                <div
+                  className="h-full rounded-full bg-amber-500/70 transition-all duration-500"
+                  style={{
+                    width: `${totalMediaBytes > 0 ? (mediaBreakdown.other.bytes / totalMediaBytes) * 100 : 0}%`,
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

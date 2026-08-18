@@ -35,7 +35,7 @@ export const MobileExperienceCard: React.FC<MobileExperienceCardProps> = ({
             <div>
               <h3 className="font-bold text-text">Web App</h3>
               <p className="text-[10px] font-bold uppercase tracking-wider text-text/30">
-                Progressive Web App
+                Progressive App
               </p>
             </div>
           </div>

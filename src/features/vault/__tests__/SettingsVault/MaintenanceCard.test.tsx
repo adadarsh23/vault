@@ -140,6 +140,14 @@ describe('MaintenanceCard Component Test Suite', () => {
     expect(screen.getByRole('button', { name: /verify vault integrity/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /purge temp cache/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /export diagnostics/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /re-index search/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /compact database/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /ping sync relay/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /verify key fingerprints/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /scan breached passwords/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /test webauthn \/ passkeys/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /zeroize ram buffers/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /purge orphaned chunks/i })).toBeTruthy();
 
     // Click Show Less to collapse
     fireEvent.click(moreButton);
@@ -159,5 +167,24 @@ describe('MaintenanceCard Component Test Suite', () => {
     fireEvent.click(resetButton);
 
     expect(clearTrustedDeviceLabelsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('triggers handlers without error when other diagnostic buttons inside More section are clicked', () => {
+    render(<MaintenanceCard {...defaultProps} />);
+
+    const moreButton = screen.getByRole('button', { name: /toggle more maintenance options/i });
+    fireEvent.click(moreButton);
+
+    fireEvent.click(screen.getByRole('button', { name: /verify vault integrity/i }));
+    fireEvent.click(screen.getByRole('button', { name: /purge temp cache/i }));
+    fireEvent.click(screen.getByRole('button', { name: /export diagnostics/i }));
+    fireEvent.click(screen.getByRole('button', { name: /re-index search/i }));
+    fireEvent.click(screen.getByRole('button', { name: /compact database/i }));
+    fireEvent.click(screen.getByRole('button', { name: /ping sync relay/i }));
+    fireEvent.click(screen.getByRole('button', { name: /verify key fingerprints/i }));
+    fireEvent.click(screen.getByRole('button', { name: /scan breached passwords/i }));
+    fireEvent.click(screen.getByRole('button', { name: /test webauthn \/ passkeys/i }));
+    fireEvent.click(screen.getByRole('button', { name: /zeroize ram buffers/i }));
+    fireEvent.click(screen.getByRole('button', { name: /purge orphaned chunks/i }));
   });
 });

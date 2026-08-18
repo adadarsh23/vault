@@ -179,30 +179,6 @@
     <div id="theme-transition-overlay"></div>
 
     <style>
-      #theme-transition-overlay {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        z-index: 9999;
-        opacity: 0;
-        background: radial-gradient(
-          circle at var(--x, 50%) var(--y, 50%),
-          rgba(255, 255, 255, 0.18) 0%,
-          rgba(255, 255, 255, 0.08) 22%,
-          transparent 60%
-        );
-        transform: scale(0.92);
-        transition:
-          opacity 260ms ease,
-          transform 260ms ease;
-        will-change: opacity, transform;
-      }
-
-      #theme-transition-overlay.is-active {
-        opacity: 1;
-        transform: scale(1);
-      }
-
       @keyframes vault-root-spin {
         to {
           transform: rotate(360deg);
@@ -217,12 +193,6 @@
 
         50% {
           opacity: 0.9;
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        #theme-transition-overlay {
-          transition: none;
         }
       }
     </style>

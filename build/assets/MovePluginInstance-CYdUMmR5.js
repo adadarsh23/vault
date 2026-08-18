@@ -1,1 +1,0 @@
-import{a as r}from"./particles-C6iQTPHy.js";export{r as MovePluginInstance};

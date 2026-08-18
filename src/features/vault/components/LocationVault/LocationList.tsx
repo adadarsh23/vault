@@ -181,7 +181,7 @@ export const LocationList: React.FC<LocationListProps> = ({
                 }
               }}
               className={cn(
-                'w-full rounded-2xl border p-4 text-left transition-all',
+                'w-full rounded-2xl border p-4 text-left transition-all touch-manipulation',
                 selectedId === item.id
                   ? 'border-lime-500/20 bg-lime-500/5 shadow-[0_0_20px_rgba(132,204,22,0.05)]'
                   : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10'
@@ -253,6 +253,7 @@ export const LocationList: React.FC<LocationListProps> = ({
         <ScrollButton
           icon={ChevronUp}
           visible={showListScrollTop}
+          ariaLabel="Scroll to top"
           onClick={() => listRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
           className="bottom-4 right-4"
         />

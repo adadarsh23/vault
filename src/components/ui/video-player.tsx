@@ -131,6 +131,7 @@ const isAllowedMediaUrl = (url: string, allowedMediaDomains: string[]) => {
   try {
     const parsed = new URL(url, window.location.href);
     if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    if (!allowedMediaDomains || allowedMediaDomains.length === 0) return true;
     const host = parsed.hostname.toLowerCase();
     const normalizedAllowed = allowedMediaDomains.map((domain) => domain.toLowerCase());
     if (host === window.location.hostname.toLowerCase()) return true;
@@ -1385,16 +1386,15 @@ const VideoPlayer = ({
                   Convert & Play (WASM)
                 </Button>
               )}
-              {allowDownload && (
-                <Button
-                  onClick={handleDownload}
-                  aria-label="Download video"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs sm:text-sm px-4 py-2 sm:py-2.5 font-medium rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
-                >
-                  <Download className="w-3.5 h-3.5 mr-1.5 inline" />
-                  Download Video
-                </Button>
-              )}
+              <Button
+                onClick={handleDownload}
+                aria-label="Download video"
+                disabled={!allowDownload}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs sm:text-sm px-4 py-2 sm:py-2.5 font-medium rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+              >
+                <Download className="w-3.5 h-3.5 mr-1.5 inline" />
+                Download Video
+              </Button>
               <Button
                 onClick={() => {
                   setError(null);
@@ -1608,17 +1608,16 @@ const VideoPlayer = ({
                   <RefreshCw className="w-4 h-4" />
                 </Button>
 
-                {allowDownload && (
-                  <Button
-                    onClick={handleDownload}
-                    aria-label="Download video"
-                    title="Download video"
-                    size="icon"
-                    className="h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
-                )}
+                <Button
+                  onClick={handleDownload}
+                  aria-label="Download video"
+                  title="Download video"
+                  disabled={!allowDownload}
+                  size="icon"
+                  className="h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
 
                 <Button
                   onClick={() => {

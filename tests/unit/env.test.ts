@@ -65,14 +65,16 @@ describe('server environment validation', () => {
     );
   });
 
-  it('throws when both MONGODB_URI and MONGODB_URL are missing', () => {
+  it('throws when MongoDB connection strings are missing', () => {
     vi.stubEnv('JWT_SECRET', 'test-secret');
     vi.stubEnv('MONGODB_URI', '');
     vi.stubEnv('MONGODB_URL', '');
+    vi.stubEnv('MONGO_URI', '');
+    vi.stubEnv('MONGO_URL', '');
     vi.stubEnv('SKIP_MONGO_CONNECT', '');
 
     expect(() => validateRuntimeEnv()).toThrow(
-      /Missing required environment configuration: MONGODB_URI or MONGODB_URL/
+      /Missing required environment configuration: MONGODB_URI, MONGODB_URL, or MONGO_URI/
     );
   });
 
@@ -80,6 +82,8 @@ describe('server environment validation', () => {
     vi.stubEnv('JWT_SECRET', 'test-secret');
     vi.stubEnv('MONGODB_URI', '');
     vi.stubEnv('MONGODB_URL', '');
+    vi.stubEnv('MONGO_URI', '');
+    vi.stubEnv('MONGO_URL', '');
     vi.stubEnv('SKIP_MONGO_CONNECT', '1');
 
     expect(() => validateRuntimeEnv()).not.toThrow();
@@ -89,6 +93,17 @@ describe('server environment validation', () => {
     vi.stubEnv('JWT_SECRET', 'test-secret');
     vi.stubEnv('MONGODB_URI', '');
     vi.stubEnv('MONGODB_URL', 'mongodb://localhost:27017/test');
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('SKIP_MONGO_CONNECT', '');
+
+    expect(() => validateRuntimeEnv()).not.toThrow();
+  });
+
+  it('accepts MONGO_URI as a valid fallback when MONGODB_URI is absent', () => {
+    vi.stubEnv('JWT_SECRET', 'test-secret');
+    vi.stubEnv('MONGODB_URI', '');
+    vi.stubEnv('MONGODB_URL', '');
+    vi.stubEnv('MONGO_URI', 'mongodb://localhost:27017/test');
     vi.stubEnv('NODE_ENV', 'development');
     vi.stubEnv('SKIP_MONGO_CONNECT', '');
 

@@ -23,7 +23,7 @@ describe('Mobile & PWA Experience Component Test Suite', () => {
       );
 
       expect(screen.getByText('Mobile Experience')).toBeTruthy();
-      expect(screen.getByText('Progressive Web App')).toBeTruthy();
+      expect(screen.getByText('Progressive App')).toBeTruthy();
     });
 
     it('triggers onInstallRequest when "Add to Home Screen" button is clicked', () => {

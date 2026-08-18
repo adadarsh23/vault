@@ -1,0 +1,1 @@
+import{a as r}from"./particles-CHDJxyvB.js";export{r as MovePluginInstance};

@@ -185,7 +185,7 @@ export const SyncStorageCard: React.FC<SyncStorageCardProps> = memo(
               aria-label="Toggle more sync options"
             >
               <Sliders className="h-3.5 w-3.5 text-text/50" />
-              <span>{isExpanded ? 'Show Less' : 'More'}</span>
+              <span>{isExpanded ? 'Less' : 'More'}</span>
               {isExpanded ? (
                 <ChevronUp className="h-3.5 w-3.5" />
               ) : (

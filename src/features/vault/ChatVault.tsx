@@ -510,10 +510,6 @@ export const ChatVault: React.FC = () => {
     }
   }, [chatPayloads, chats, masterKey, persistConversation]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [activeChatId, activeVisibleMessages.length, detailTab]);
-
   const handleCreateChat = useCallback(async () => {
     const title = newChatTitle.trim();
     if (!title) {

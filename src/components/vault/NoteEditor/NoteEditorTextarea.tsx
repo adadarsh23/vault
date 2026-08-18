@@ -298,6 +298,7 @@ export const NoteEditorTextarea = forwardRef<HTMLTextAreaElement, NoteEditorText
         {/* SCROLL TOP BUTTON */}
         <ScrollButton
           visible={showEditorScrollTop}
+          ariaLabel="Scroll to top"
           onClick={scrollToTop}
           icon={ChevronUp}
           className="right-5 bottom-14"
@@ -306,6 +307,7 @@ export const NoteEditorTextarea = forwardRef<HTMLTextAreaElement, NoteEditorText
         {/* SCROLL BOTTOM BUTTON */}
         <ScrollButton
           visible={showEditorScrollBottom}
+          ariaLabel="Scroll to bottom"
           onClick={scrollToBottom}
           icon={ChevronDown}
           className="right-5 bottom-3"

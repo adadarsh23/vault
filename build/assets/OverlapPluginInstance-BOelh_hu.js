@@ -1,0 +1,1 @@
+import{l as r}from"./particles-CHDJxyvB.js";export{r as OverlapPluginInstance};

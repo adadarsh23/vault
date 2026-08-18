@@ -184,7 +184,7 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
                 }}
                 draggable
                 className={cn(
-                  'flex w-full cursor-pointer items-start gap-3 rounded-2xl border p-3 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-text/20 xl:gap-4 xl:p-4',
+                  'flex w-full cursor-pointer items-start gap-3 rounded-2xl border p-3 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-text/20 xl:gap-4 xl:p-4 touch-manipulation',
                   isActive
                     ? 'border-purple-500/20 bg-purple-500/5 shadow-[0_0_20px_rgba(168,85,247,0.05)]'
                     : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10'
@@ -284,6 +284,7 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
         <ScrollButton
           icon={ChevronUp}
           visible={showListScrollTop}
+          ariaLabel="Scroll to top"
           onClick={() => listRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
           className="bottom-4 right-4"
         />

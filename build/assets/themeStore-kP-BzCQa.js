@@ -1,2 +1,0 @@
-import{m as e}from"./react-framework-D6I3G_Xg.js";import{t}from"./utils-C8apmhcJ.js";var m="system",r={light:!0,dark:!0,system:!0},s=e=>(e=>"string"==typeof e&&e in r)(e)?e:m,h=e()(t((e,t)=>({theme:m,setTheme:m=>{const r=s(m);t().theme!==r&&e({theme:r})},resetTheme:()=>{t().theme!==m&&e({theme:m})}}),{name:"theme-storage",partialize:e=>({theme:e.theme}),merge:(e,t)=>{const m=e?.theme;return{...t,theme:s(m)}}}));export{h as t};
-//# sourceMappingURL=themeStore-kP-BzCQa.js.map

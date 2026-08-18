@@ -1,0 +1,1 @@
+import{o}from"./particles-CHDJxyvB.js";export{o as InteractivityPluginInstance};

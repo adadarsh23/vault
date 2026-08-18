@@ -400,7 +400,7 @@ export const NotesList: React.FC<NotesListProps> = ({
                   setIsEditing(false);
                 }
               }}
-              className={`w-full rounded-2xl border p-4 text-left transition-all ${
+              className={`w-full rounded-2xl border p-4 text-left transition-all touch-manipulation ${
                 selectedNoteId === note.id
                   ? 'border-yellow-500/20 bg-yellow-500/5 shadow-[0_0_20px_rgba(234,179,8,0.05)]'
                   : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10'
@@ -428,7 +428,7 @@ export const NotesList: React.FC<NotesListProps> = ({
                         <span className="text-[8px] text-text/10">•</span>
                         <span
                           className="text-[10px] text-yellow-400/50 font-bold uppercase tracking-tighter max-w-[120px] truncate"
-                          title={note.folder}
+                          title={`Folder: ${note.folder}`}
                         >
                           {note.folder}
                         </span>
@@ -437,14 +437,13 @@ export const NotesList: React.FC<NotesListProps> = ({
                   </div>
                 </div>
                 <Button
-                  type="button"
                   variant="ghost"
                   size="icon"
-                  disabled={pinningItemIds.includes(note.id)}
-                  onClick={(event) => {
-                    event.stopPropagation();
+                  onClick={(e) => {
+                    e.stopPropagation();
                     onTogglePin(note.id);
                   }}
+                  disabled={pinningItemIds.includes(note.id)}
                   className={cn(
                     'h-8 w-8 rounded-full transition-all',
                     note.isPinned
@@ -469,6 +468,7 @@ export const NotesList: React.FC<NotesListProps> = ({
         <ScrollButton
           icon={ChevronUp}
           visible={showListScrollTop}
+          ariaLabel="Scroll to top"
           onClick={() => listRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
           className="bottom-4 right-4"
         />

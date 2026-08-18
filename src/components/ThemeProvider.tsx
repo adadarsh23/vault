@@ -1,25 +1,67 @@
 import React, { useLayoutEffect, useCallback, useRef } from 'react';
 import { useThemeStore } from '../store/themeStore';
 
+declare global {
+  interface Window {
+    __recordThemeToggleOrigin?: (x: number, y: number) => void;
+  }
+}
+
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const theme = useThemeStore((state) => state.theme);
   const isFirstRender = useRef(true);
-  const lastClick = useRef({ x: 0, y: 0 });
+  const lastInteraction = useRef<{ x: number; y: number } | null>(null);
   const transitionInFlight = useRef(false);
   const overlayResetTimerRef = useRef<number | null>(null);
 
-  // Track global clicks to determine animation origin
-  useLayoutEffect(() => {
-    if (typeof window === 'undefined') return;
-    const handleGlobalClick = (e: MouseEvent) => {
-      lastClick.current = { x: e.clientX, y: e.clientY };
-    };
-    window.addEventListener('click', handleGlobalClick, { capture: true });
-    return () => window.removeEventListener('click', handleGlobalClick);
-  }, []);
-
-  // Utility: safe window check
   const isBrowser = typeof window !== 'undefined';
+
+  // Multi-input coordinate tracking (touch, pointer, mouse, stylus)
+  useLayoutEffect(() => {
+    if (!isBrowser) return;
+
+    const recordCoords = (clientX: number, clientY: number) => {
+      if (
+        typeof clientX === 'number' &&
+        typeof clientY === 'number' &&
+        !isNaN(clientX) &&
+        !isNaN(clientY) &&
+        (clientX > 0 || clientY > 0)
+      ) {
+        lastInteraction.current = { x: Math.round(clientX), y: Math.round(clientY) };
+      }
+    };
+
+    const handlePointerDown = (e: PointerEvent) => {
+      recordCoords(e.clientX, e.clientY);
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches && e.touches[0]) {
+        recordCoords(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      recordCoords(e.clientX, e.clientY);
+    };
+
+    // Expose explicit origin recorder for components like Sidebar
+    window.__recordThemeToggleOrigin = (x: number, y: number) => {
+      recordCoords(x, y);
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown, { capture: true, passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { capture: true, passive: true });
+    window.addEventListener('click', handleClick, { capture: true, passive: true });
+
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown, { capture: true });
+      window.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      window.removeEventListener('click', handleClick, { capture: true });
+      delete window.__recordThemeToggleOrigin;
+    };
+  }, [isBrowser]);
 
   // Resolve theme
   const getIsDark = useCallback(() => {
@@ -39,7 +81,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const root = document.documentElement;
       const newTheme = isDark ? 'dark' : 'light';
 
-      // Avoid unnecessary DOM updates
       if (!root.classList.contains(newTheme)) {
         root.classList.remove('light', 'dark');
         root.classList.add(newTheme);
@@ -59,14 +100,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const links = document.querySelectorAll(selector);
         links.forEach((link) => {
           const hLink = link as HTMLLinkElement;
-          // Only update SVG icons if we have them, or just swap if it's a general icon
           if (hLink.type === 'image/svg+xml' || selector.includes('icon')) {
             hLink.href = iconPath;
           }
         });
       });
 
-      // Update theme-color meta tag for mobile browsers (brute force refresh)
+      // Update theme-color meta tag for mobile browsers
       const themeColor = isDark ? '#0a0a0a' : '#ffffff';
       document.querySelectorAll("meta[name='theme-color']").forEach((meta) => {
         (meta as HTMLMetaElement).content = themeColor;
@@ -75,67 +115,135 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     [isBrowser]
   );
 
-  const triggerThemeOverlay = useCallback(
-    (x: number, y: number) => {
+  // Calculate coordinates and max radius to cover all 4 screen corners on any device
+  const getOriginAndRadius = useCallback(() => {
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+
+    const x =
+      lastInteraction.current && (lastInteraction.current.x > 0 || lastInteraction.current.y > 0)
+        ? lastInteraction.current.x
+        : Math.round(vw / 2);
+
+    const y =
+      lastInteraction.current && (lastInteraction.current.x > 0 || lastInteraction.current.y > 0)
+        ? lastInteraction.current.y
+        : Math.round(vh / 2);
+
+    const endRadius = Math.ceil(Math.hypot(Math.max(x, vw - x), Math.max(y, vh - y)));
+
+    return { x, y, endRadius };
+  }, []);
+
+  // Trigger subtle ambient ripple wave on theme shift
+  const triggerThemeWave = useCallback((x: number, y: number, isDark: boolean) => {
+    if (typeof document === 'undefined') return;
+    const existing = document.getElementById('theme-wave-pulse');
+    if (existing) existing.remove();
+
+    const pulse = document.createElement('div');
+    pulse.id = 'theme-wave-pulse';
+    pulse.style.setProperty('--origin-x', `${x}px`);
+    pulse.style.setProperty('--origin-y', `${y}px`);
+    pulse.className = isDark ? 'is-dark' : 'is-light';
+    document.body.appendChild(pulse);
+
+    setTimeout(() => {
+      pulse.remove();
+    }, 600);
+  }, []);
+
+  // Fallback animation for browsers without View Transitions API (Firefox, Safari < 18, etc.)
+  const runFallbackAnimation = useCallback(
+    (isDark: boolean) => {
       if (!isBrowser) return;
+
       const overlay = document.getElementById('theme-transition-overlay');
-      if (!overlay) return;
+      if (!overlay) {
+        updateAttributes(isDark);
+        return;
+      }
 
-      overlay.style.setProperty('--x', `${x}px`);
-      overlay.style.setProperty('--y', `${y}px`);
-      overlay.classList.remove('is-active');
+      const { x, y, endRadius } = getOriginAndRadius();
+      const targetBgColor = isDark ? '#0a0a0a' : '#ffffff';
 
-      // Use animation frame rather than synchronous layout thrashing
-      requestAnimationFrame(() => {
-        overlay.classList.add('is-active');
-      });
+      triggerThemeWave(x, y, isDark);
+
+      overlay.style.backgroundColor = targetBgColor;
+      overlay.style.clipPath = `circle(0px at ${x}px ${y}px)`;
+      overlay.classList.add('is-active');
 
       if (overlayResetTimerRef.current !== null) {
         window.clearTimeout(overlayResetTimerRef.current);
       }
-      overlayResetTimerRef.current = window.setTimeout(() => {
-        overlay.classList.remove('is-active');
-        overlayResetTimerRef.current = null;
-      }, 260);
+
+      requestAnimationFrame(() => {
+        overlay.style.clipPath = `circle(${endRadius}px at ${x}px ${y}px)`;
+
+        // Halfway through animation, swap document theme attributes
+        setTimeout(() => {
+          updateAttributes(isDark);
+        }, 240);
+
+        // After completion, cleanly hide overlay
+        overlayResetTimerRef.current = window.setTimeout(() => {
+          overlay.classList.remove('is-active');
+          overlay.style.clipPath = '';
+          overlayResetTimerRef.current = null;
+        }, 520);
+      });
     },
-    [isBrowser]
+    [isBrowser, getOriginAndRadius, triggerThemeWave, updateAttributes]
   );
 
-  // Animate theme change (cinematic ripple effect)
+  // Animate theme change
   const animateThemeChange = useCallback(
     (isDark: boolean) => {
       if (!isBrowser) return;
 
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      if (prefersReducedMotion || !('startViewTransition' in document)) {
+      if (prefersReducedMotion) {
         updateAttributes(isDark);
         return;
       }
 
-      const { x, y } = lastClick.current;
-      const endRadius = Math.hypot(
-        Math.max(x, window.innerWidth - x),
-        Math.max(y, window.innerHeight - y)
-      );
+      const { x, y, endRadius } = getOriginAndRadius();
+
+      // Check for native View Transitions API
+      if (
+        !('startViewTransition' in document) ||
+        typeof (document as any).startViewTransition !== 'function'
+      ) {
+        runFallbackAnimation(isDark);
+        return;
+      }
 
       if (transitionInFlight.current) {
-        triggerThemeOverlay(x, y);
         updateAttributes(isDark);
         return;
       }
 
       try {
         transitionInFlight.current = true;
+        triggerThemeWave(x, y, isDark);
+
+        // Suppress conflicting sub-transitions on document while capturing snapshot
+        document.documentElement.classList.add('theme-switching');
+
         // @ts-ignore
         const transition = document.startViewTransition(() => {
-          triggerThemeOverlay(x, y);
           updateAttributes(isDark);
         });
 
+        const cleanup = () => {
+          transitionInFlight.current = false;
+          document.documentElement.classList.remove('theme-switching');
+        };
+
         transition.ready
           .then(() => {
-            document.documentElement.animate(
+            const animation = document.documentElement.animate(
               {
                 clipPath: [
                   `circle(0px at ${x}px ${y}px)`,
@@ -143,41 +251,31 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 ],
               },
               {
-                duration: 700,
-                easing: 'cubic-bezier(0.65, 0, 0.35, 1)',
+                duration: 520,
+                easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
                 pseudoElement: '::view-transition-new(root)',
+                fill: 'forwards',
               }
             );
 
-            document.documentElement.animate(
-              {
-                transform: ['scale(1)', 'scale(0.98)'],
-                opacity: [1, 0.7],
-              },
-              {
-                duration: 700,
-                easing: 'cubic-bezier(0.65, 0, 0.35, 1)',
-                pseudoElement: '::view-transition-old(root)',
-              }
-            );
+            animation.finished.finally(() => {
+              cleanup();
+            });
           })
           .catch(() => {
-            // A transition can be aborted when state changes quickly; fallback is already applied.
-          })
-          .finally(() => {
-            transitionInFlight.current = false;
+            cleanup();
           });
 
-        transition.finished.catch(() => {
-          transitionInFlight.current = false;
+        transition.finished.finally(() => {
+          cleanup();
         });
       } catch {
         transitionInFlight.current = false;
-        triggerThemeOverlay(x, y);
+        document.documentElement.classList.remove('theme-switching');
         updateAttributes(isDark);
       }
     },
-    [isBrowser, triggerThemeOverlay, updateAttributes]
+    [isBrowser, getOriginAndRadius, runFallbackAnimation, triggerThemeWave, updateAttributes]
   );
 
   // Handle theme changes
@@ -202,6 +300,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const handleChange = (e: MediaQueryListEvent) => {
+      // Clear specific click position for system changes to ripple from center
+      lastInteraction.current = null;
       animateThemeChange(e.matches);
     };
 

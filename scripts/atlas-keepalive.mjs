@@ -6,7 +6,7 @@ const rawUriCandidates = [
   ['MONGO_URI', process.env.MONGO_URI],
   ['MONGODB_URI_FALLBACK', process.env.MONGODB_URI_FALLBACK],
 ].filter(([, value]) => Boolean(value && value.trim()));
-const dbName = process.env.MONGODB_DB || 'admin';
+const dbName = process.env.MONGODB_DB_NAME || process.env.MONGODB_DB || 'vault';
 const intervalMinutes = Number(process.env.ATLAS_KEEPALIVE_MINUTES || 10);
 
 if (rawUriCandidates.length === 0) {

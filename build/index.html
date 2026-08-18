@@ -30,7 +30,7 @@
       name="robots"
       content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     />
-    <link rel="canonical" href="https://my-vault-cic6.onrender.com/" />
+    <link rel="canonical" href="http://localhost:4000/" />
 
     <!-- Compatibility -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -38,12 +38,12 @@
     <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- Performance & DNS -->
-    <link rel="dns-prefetch" href="//my-vault-cic6.onrender.com" />
+    <link rel="dns-prefetch" href="//localhost:4000" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
     <link rel="dns-prefetch" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://my-vault-cic6.onrender.com/" crossorigin />
+    <link rel="preconnect" href="http://localhost:4000/" crossorigin />
 
     <!-- Icons & PWA -->
     <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg" />
@@ -74,13 +74,13 @@
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://my-vault-cic6.onrender.com/" />
+    <meta property="og:url" content="http://localhost:4000/" />
     <meta property="og:title" content="Vault - Secure Storage" />
     <meta
       property="og:description"
       content="Securely store your files, notes, and sensitive data with end-to-end peace of mind."
     />
-    <meta property="og:image" content="https://my-vault-cic6.onrender.com//web-app-manifest-512x512.png" />
+    <meta property="og:image" content="http://localhost:4000//web-app-manifest-512x512.png" />
     <meta property="og:image:width" content="512" />
     <meta property="og:image:height" content="512" />
     <meta property="og:image:alt" content="Vault - Secure Storage" />
@@ -89,13 +89,13 @@
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://my-vault-cic6.onrender.com/" />
+    <meta name="twitter:url" content="http://localhost:4000/" />
     <meta name="twitter:title" content="Vault - Secure Storage" />
     <meta
       name="twitter:description"
       content="Secure personal vault for storing files, notes, and sensitive data safely."
     />
-    <meta name="twitter:image" content="https://my-vault-cic6.onrender.com//web-app-manifest-512x512.png" />
+    <meta name="twitter:image" content="http://localhost:4000//web-app-manifest-512x512.png" />
     <meta name="twitter:image:alt" content="Vault - Secure Storage" />
 
     <!-- iOS/PWA Specifics -->
@@ -109,9 +109,9 @@
     <!-- Splash Screens (iOS) -->
     <link rel="apple-touch-startup-image" href="/web-app-manifest-512x512.png" />
     <link rel="fluid-icon" href="/favicon.svg" title="Vault" />
-    <script type="module" crossorigin src="/assets/index-DelwK3hs.js"></script>
+    <script type="module" crossorigin src="/assets/index-CaaCHeVF.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/vendor-CWlGCPL-.css">
-    <link rel="stylesheet" crossorigin href="/assets/index-CeF8a5Ft.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-DP0l_1-g.css">
   </head>
 
   <body>
@@ -182,30 +182,6 @@
     <div id="theme-transition-overlay"></div>
 
     <style>
-      #theme-transition-overlay {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        z-index: 9999;
-        opacity: 0;
-        background: radial-gradient(
-          circle at var(--x, 50%) var(--y, 50%),
-          rgba(255, 255, 255, 0.18) 0%,
-          rgba(255, 255, 255, 0.08) 22%,
-          transparent 60%
-        );
-        transform: scale(0.92);
-        transition:
-          opacity 260ms ease,
-          transform 260ms ease;
-        will-change: opacity, transform;
-      }
-
-      #theme-transition-overlay.is-active {
-        opacity: 1;
-        transform: scale(1);
-      }
-
       @keyframes vault-root-spin {
         to {
           transform: rotate(360deg);
@@ -220,12 +196,6 @@
 
         50% {
           opacity: 0.9;
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        #theme-transition-overlay {
-          transition: none;
         }
       }
     </style>

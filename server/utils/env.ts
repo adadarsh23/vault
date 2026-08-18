@@ -17,7 +17,7 @@ const requiredInProduction = [
   'CSRF_SECRET',
   'SIGNED_URL_SECRET',
 ];
-const mongoKeys = ['MONGODB_URI', 'MONGODB_URL'];
+const mongoKeys = ['MONGODB_URI', 'MONGODB_URL', 'MONGO_URI', 'MONGO_URL'];
 const registrationLookupTemplateKeys = [
   'FREE_IP_API_URL_TEMPLATE',
   'IPWHOIS_URL_TEMPLATE',
@@ -42,7 +42,7 @@ export const validateRuntimeEnv = (): void => {
   }
 
   if (!isMongoOptionalMode() && !mongoKeys.some((key) => trimEnv(process.env[key]))) {
-    missingKeys.push('MONGODB_URI or MONGODB_URL');
+    missingKeys.push('MONGODB_URI, MONGODB_URL, or MONGO_URI');
   }
 
   if (process.env.NODE_ENV === 'production') {

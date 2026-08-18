@@ -69,7 +69,11 @@ describe('ProfileCard Component Test Suite', () => {
 
     expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/@johndoe/i).length).toBeGreaterThan(0);
-    expect(screen.getByText('Healthy')).toBeTruthy();
+    expect(screen.getAllByText('Healthy').length).toBeGreaterThan(0);
+    expect(screen.getByText('Two-Factor Auth')).toBeTruthy();
+    expect(screen.getByText('Active Sessions')).toBeTruthy();
+    expect(screen.getByText('Security Protocol')).toBeTruthy();
+    expect(screen.getByText('Storage Usage')).toBeTruthy();
   });
 
   it('opens profile editor modal upon clicking profile card', () => {
@@ -167,5 +171,19 @@ describe('ProfileCard Component Test Suite', () => {
 
     expect(onSaveProfileMock).not.toHaveBeenCalled();
     expect(screen.queryByText('Edit Profile')).toBeNull();
+  });
+
+  it('renders media and storage breakdown with accurate categories and stats', () => {
+    render(
+      <MemoryRouter>
+        <ProfileCard {...defaultProps} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Media & File Breakdown')).toBeTruthy();
+    expect(screen.getByText('Photos')).toBeTruthy();
+    expect(screen.getByText('Videos')).toBeTruthy();
+    expect(screen.getByText('Audio')).toBeTruthy();
+    expect(screen.getByText('All Other')).toBeTruthy();
   });
 });

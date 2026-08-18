@@ -148,6 +148,9 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
   const activeChatTitle = activeChatItem?.title?.trim() || 'Untitled Chat';
   const activeChatLoadError = activeChatItem ? chatLoadErrors[activeChatItem.id] : undefined;
   const contentScrollRef = React.useRef<HTMLDivElement | null>(null);
+  const activeChatIdRef = React.useRef<string | null>(null);
+  const initialScrollDoneRef = React.useRef<boolean>(false);
+  const prevMessagesCountRef = React.useRef<number>(0);
   const [showScrollTop, setShowScrollTop] = React.useState(false);
   const [showScrollBottom, setShowScrollBottom] = React.useState(false);
   const [activeReactionTrayMessageId, setActiveReactionTrayMessageId] = React.useState<
@@ -226,6 +229,14 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
     setActiveReactionTrayMessageId(null);
   }, [activeChatId, detailTab]);
 
+  React.useEffect(() => {
+    if (activeChatIdRef.current !== activeChatId) {
+      activeChatIdRef.current = activeChatId;
+      initialScrollDoneRef.current = false;
+      prevMessagesCountRef.current = 0;
+    }
+  }, [activeChatId]);
+
   const updateScrollButtons = React.useCallback(() => {
     const element = contentScrollRef.current;
     if (!element) return;
@@ -237,15 +248,33 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
     setShowScrollBottom(nextShowBottom);
   }, []);
 
-  const scrollToBottom = React.useCallback(() => {
+  const scrollToBottom = React.useCallback((behavior: ScrollBehavior = 'smooth') => {
     const element = contentScrollRef.current;
     if (!element) return;
 
-    element.scrollTo({
-      top: element.scrollHeight,
-      behavior: 'smooth',
-    });
+    try {
+      element.scrollTo({
+        top: element.scrollHeight,
+        behavior,
+      });
+    } catch {
+      element.scrollTop = element.scrollHeight;
+    }
+
+    if (behavior === 'auto') {
+      element.scrollTop = element.scrollHeight;
+    }
   }, []);
+
+  const handleImageLoad = React.useCallback(() => {
+    const element = contentScrollRef.current;
+    if (!element) return;
+    const isNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 150;
+    if (!initialScrollDoneRef.current || isNearBottom) {
+      element.scrollTop = element.scrollHeight;
+    }
+    updateScrollButtons();
+  }, [updateScrollButtons]);
 
   const getMessageDayKey = React.useCallback((timestamp: number): string => {
     const date = new Date(timestamp);
@@ -272,6 +301,112 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
       year: target.getFullYear() === today.getFullYear() ? undefined : 'numeric',
     });
   }, []);
+
+  // Handle automatic scrolling to bottom when opening a chat or when new messages arrive
+  React.useEffect(() => {
+    if (detailTab !== 'messages' || !activeConversation || activeVisibleMessages.length === 0) {
+      return;
+    }
+
+    const element = contentScrollRef.current;
+    if (!element) return;
+
+    if (!initialScrollDoneRef.current) {
+      // First time loading this chat: immediately scroll to bottom and reinforce across animation frames & timeouts
+      element.scrollTop = element.scrollHeight;
+
+      const timers: number[] = [];
+      const raf1 = window.requestAnimationFrame(() => {
+        if (element) {
+          element.scrollTop = element.scrollHeight;
+          updateScrollButtons();
+        }
+        window.requestAnimationFrame(() => {
+          if (element) {
+            element.scrollTop = element.scrollHeight;
+            updateScrollButtons();
+          }
+        });
+        timers.push(
+          window.setTimeout(() => {
+            if (element) {
+              element.scrollTop = element.scrollHeight;
+              updateScrollButtons();
+            }
+          }, 50)
+        );
+        timers.push(
+          window.setTimeout(() => {
+            if (element) {
+              element.scrollTop = element.scrollHeight;
+              updateScrollButtons();
+            }
+          }, 150)
+        );
+        timers.push(
+          window.setTimeout(() => {
+            if (element) {
+              element.scrollTop = element.scrollHeight;
+              updateScrollButtons();
+            }
+          }, 300)
+        );
+      });
+
+      initialScrollDoneRef.current = true;
+      prevMessagesCountRef.current = activeVisibleMessages.length;
+
+      return () => {
+        window.cancelAnimationFrame(raf1);
+        timers.forEach((t) => window.clearTimeout(t));
+      };
+    } else {
+      // Subsequent new messages
+      if (activeVisibleMessages.length > prevMessagesCountRef.current) {
+        const lastMsg = activeVisibleMessages[activeVisibleMessages.length - 1];
+        const isFromMe = lastMsg?.sender === username;
+        const isNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 120;
+
+        if (isFromMe || isNearBottom) {
+          scrollToBottom('smooth');
+        } else {
+          updateScrollButtons();
+        }
+        prevMessagesCountRef.current = activeVisibleMessages.length;
+      }
+    }
+  }, [
+    activeChatId,
+    activeConversation,
+    activeVisibleMessages,
+    detailTab,
+    scrollToBottom,
+    updateScrollButtons,
+    username,
+  ]);
+
+  // Keep scroll pinned to bottom on layout/resize if at bottom or initial load
+  React.useEffect(() => {
+    const element = contentScrollRef.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      const isNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 120;
+      if (!initialScrollDoneRef.current || isNearBottom) {
+        element.scrollTop = element.scrollHeight;
+      }
+      updateScrollButtons();
+    });
+
+    resizeObserver.observe(element);
+    if (element.firstElementChild) {
+      resizeObserver.observe(element.firstElementChild);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [activeChatId, updateScrollButtons]);
 
   React.useEffect(() => {
     const rafId = window.requestAnimationFrame(() => {
@@ -501,6 +636,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                                         src={href}
                                         alt="Shared image"
                                         loading="lazy"
+                                        onLoad={handleImageLoad}
                                         className="h-auto max-h-64 w-full object-cover transition-transform duration-300 group-hover/image:scale-[1.01]"
                                       />
                                     </a>
@@ -717,6 +853,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
             <ScrollButton
               icon={ChevronUp}
               visible={showScrollTop}
+              ariaLabel="Scroll to top"
               onClick={() =>
                 contentScrollRef.current?.scrollTo({
                   top: 0,
@@ -728,7 +865,8 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
             <ScrollButton
               icon={ChevronDown}
               visible={showScrollBottom}
-              onClick={scrollToBottom}
+              ariaLabel="Scroll to bottom"
+              onClick={() => scrollToBottom('smooth')}
               className="bottom-4 right-4"
             />
           </div>

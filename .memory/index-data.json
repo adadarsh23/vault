@@ -1,83 +1,83 @@
 {
-  "generatedAt": "2026-08-15T03:20:02.773Z",
+  "generatedAt": "2026-08-18T05:48:54.241Z",
   "schema": "code-memory-index/v5",
   "totals": {
-    "filesScanned": 469,
-    "filesIndexed": 469,
+    "filesScanned": 470,
+    "filesIndexed": 470,
     "filesSkipped": 0,
-    "bytesIndexed": 6390202,
-    "linesIndexed": 160138,
-    "codeLines": 143237,
-    "commentLines": 4085,
-    "blankLines": 12816,
-    "symbolCount": 2758,
-    "importCount": 1831,
+    "bytesIndexed": 6403120,
+    "linesIndexed": 161376,
+    "codeLines": 144351,
+    "commentLines": 4096,
+    "blankLines": 12929,
+    "symbolCount": 2777,
+    "importCount": 1836,
     "exportCount": 1172,
     "tagCount": 97
   },
   "quality": {
-    "commentDensity": 0.029,
+    "commentDensity": 0.028,
     "blankLineRatio": 0.08,
     "todoFilesRatio": 0.13,
-    "avgSymbolsPerFile": 5.88,
-    "avgImportsPerFile": 3.9,
-    "avgRiskPerFile": 21.28
+    "avgSymbolsPerFile": 5.91,
+    "avgImportsPerFile": 3.91,
+    "avgRiskPerFile": 21.32
   },
   "trend": {
     "filesIndexedDelta": 0,
-    "linesIndexedDelta": -127,
-    "symbolCountDelta": -2,
-    "importCountDelta": 1,
-    "avgRiskPerFileDelta": 0.01
+    "linesIndexedDelta": 0,
+    "symbolCountDelta": 0,
+    "importCountDelta": 0,
+    "avgRiskPerFileDelta": 0
   },
   "history": {
-    "historyPath": "C:\\Code\\vault\\.memory\\history\\code-index-2026-08-15T03-20-02-773Z.json",
-    "historyCount": 6
+    "historyPath": "C:\\code\\vault\\.memory\\history\\code-index-2026-08-18T05-48-54-241Z.json",
+    "historyCount": 8
   },
   "riskSummary": {
     "critical": 13,
-    "high": 44,
-    "medium": 64,
-    "low": 348
+    "high": 45,
+    "medium": 65,
+    "low": 347
   },
   "extensionStats": [
     {
       "extension": ".ts",
       "files": 250,
-      "lines": 54640,
-      "bytes": 1612407,
-      "symbols": 1657,
-      "riskScore": 5078
+      "lines": 54696,
+      "bytes": 1614042,
+      "symbols": 1659,
+      "riskScore": 5084
     },
     {
       "extension": ".tsx",
-      "files": 149,
-      "lines": 57201,
-      "bytes": 2122111,
-      "symbols": 894,
-      "riskScore": 3536
+      "files": 150,
+      "lines": 58010,
+      "bytes": 2154976,
+      "symbols": 911,
+      "riskScore": 3559
     },
     {
       "extension": ".mjs",
       "files": 20,
       "lines": 2603,
-      "bytes": 87830,
+      "bytes": 87892,
       "symbols": 87,
       "riskScore": 364
     },
     {
       "extension": ".md",
       "files": 16,
-      "lines": 4026,
-      "bytes": 140311,
+      "lines": 4130,
+      "bytes": 152588,
       "symbols": 7,
       "riskScore": 324
     },
     {
       "extension": ".json",
       "files": 10,
-      "lines": 35240,
-      "bytes": 1571288,
+      "lines": 35424,
+      "bytes": 1547995,
       "symbols": 2,
       "riskScore": 235
     },
@@ -92,8 +92,8 @@
     {
       "extension": ".html",
       "files": 6,
-      "lines": 4950,
-      "bytes": 784724,
+      "lines": 4958,
+      "bytes": 772384,
       "symbols": 60,
       "riskScore": 185
     },
@@ -132,10 +132,10 @@
     {
       "extension": ".css",
       "files": 1,
-      "lines": 561,
-      "bytes": 14060,
+      "lines": 638,
+      "bytes": 15772,
       "symbols": 0,
-      "riskScore": 22
+      "riskScore": 30
     }
   ],
   "hotspots": {
@@ -144,11 +144,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 852376,
-        "hash": "31b27c1a67dba8430f6417a7564cacf4d9402cf8b67db598664b79dfd679cc6a",
+        "bytes": 840867,
+        "hash": "eed5bf77ce85776af9c7b5944809089bf594bdd84e7e948668957ce175d32e6b",
         "lines": {
-          "total": 19643,
-          "code": 19643,
+          "total": 19736,
+          "code": 19736,
           "comments": 0,
           "blanks": 0
         },
@@ -174,19 +174,19 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 19673,
-        "updatedAt": "2026-08-14T20:32:19.020Z",
+        "complexityScore": 19766,
+        "updatedAt": "2026-08-18T05:40:07.772Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 578586,
-        "hash": "295be3b68a89d6491d24093392239a49e2a9e2e0294cafea185cdc4da80b7e65",
+        "bytes": 566918,
+        "hash": "59b47ef8e425f8ea998fc1256df053c7a22d63d9dfde0158985411829e7831cf",
         "lines": {
-          "total": 11783,
-          "code": 11782,
+          "total": 11876,
+          "code": 11875,
           "comments": 0,
           "blanks": 1
         },
@@ -210,16 +210,16 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 11806,
-        "updatedAt": "2026-08-14T20:32:21.647Z",
+        "complexityScore": 11899,
+        "updatedAt": "2026-08-18T05:40:09.884Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 700447,
-        "hash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
+        "bytes": 687664,
+        "hash": "636cf90ada632d9a8c06e5334882a5b0bf16619474da7e412e745931a3f0c837",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -308,7 +308,7 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-14T20:32:19.020Z",
+        "updatedAt": "2026-08-18T05:40:07.765Z",
         "riskScore": 68
       },
       {
@@ -499,15 +499,15 @@
           "switchCount": 2
         },
         "complexityScore": 2043,
-        "updatedAt": "2026-08-14T20:19:00.366Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 58
       },
       {
         "path": "lighthouse/report-split/best-practices.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 65005,
-        "hash": "6f537b9275e8b014a301e0eddf70b74bebb03394e81c83be4ff305776a27951b",
+        "bytes": 64975,
+        "hash": "fcd7223ab0e36174fa12fe95d7676cc66f5df0f16b5f946def4fc651a1ba1bdb",
         "lines": {
           "total": 1963,
           "code": 1962,
@@ -532,7 +532,7 @@
           "switchCount": 0
         },
         "complexityScore": 1962,
-        "updatedAt": "2026-08-14T20:32:21.650Z",
+        "updatedAt": "2026-08-18T05:40:09.889Z",
         "riskScore": 30
       },
       {
@@ -719,18 +719,18 @@
           "switchCount": 3
         },
         "complexityScore": 1761,
-        "updatedAt": "2026-08-14T18:28:44.681Z",
+        "updatedAt": "2026-08-18T01:20:37.569Z",
         "riskScore": 58
       },
       {
         "path": "src/components/ui/video-player.tsx",
         "extension": ".tsx",
         "directory": "src/components/ui",
-        "bytes": 57202,
-        "hash": "60ce58c4c65e492e89e86e9d147d79cedde3ad529d878f009b4070b3baaebdb9",
+        "bytes": 57227,
+        "hash": "c15626842bd995f1055d846d508e8cfeb84349cdff556ef697e78ae2f7364fb5",
         "lines": {
-          "total": 1650,
-          "code": 1477,
+          "total": 1649,
+          "code": 1476,
           "comments": 40,
           "blanks": 133
         },
@@ -880,11 +880,11 @@
           "tryCount": 24,
           "catchCount": 26,
           "throwCount": 0,
-          "ifCount": 115,
+          "ifCount": 116,
           "switchCount": 1
         },
-        "complexityScore": 1795,
-        "updatedAt": "2026-08-15T03:04:46.667Z",
+        "complexityScore": 1794,
+        "updatedAt": "2026-08-18T01:36:16.214Z",
         "riskScore": 52
       },
       {
@@ -1135,7 +1135,7 @@
           "switchCount": 1
         },
         "complexityScore": 1653,
-        "updatedAt": "2026-08-14T08:19:41.514Z",
+        "updatedAt": "2026-08-18T01:20:37.375Z",
         "riskScore": 66
       },
       {
@@ -1253,7 +1253,7 @@
           "switchCount": 0
         },
         "complexityScore": 1386,
-        "updatedAt": "2026-08-06T10:15:17.740Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 46
       },
       {
@@ -1429,7 +1429,7 @@
           "switchCount": 1
         },
         "complexityScore": 1576,
-        "updatedAt": "2026-08-07T10:44:21.412Z",
+        "updatedAt": "2026-08-18T01:20:37.996Z",
         "riskScore": 66
       },
       {
@@ -1535,7 +1535,7 @@
           "switchCount": 0
         },
         "complexityScore": 1550,
-        "updatedAt": "2026-08-01T12:44:28.531Z",
+        "updatedAt": "2026-08-18T01:20:37.513Z",
         "riskScore": 61
       },
       {
@@ -1717,7 +1717,7 @@
           "switchCount": 0
         },
         "complexityScore": 1525,
-        "updatedAt": "2026-08-14T18:32:21.101Z",
+        "updatedAt": "2026-08-18T01:20:37.591Z",
         "riskScore": 66
       },
       {
@@ -1905,15 +1905,15 @@
           "switchCount": 0
         },
         "complexityScore": 1431,
-        "updatedAt": "2026-08-14T16:34:47.848Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 46
       },
       {
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47324,
-        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
+        "bytes": 47347,
+        "hash": "835f912c19be6f2314f60b70eb3fa0538538da4841d82e17b31cba3478dcae36",
         "lines": {
           "total": 1337,
           "code": 1153,
@@ -2117,7 +2117,7 @@
           "switchCount": 0
         },
         "complexityScore": 1396,
-        "updatedAt": "2026-08-15T02:45:27.671Z",
+        "updatedAt": "2026-08-18T01:36:22.752Z",
         "riskScore": 58
       },
       {
@@ -2306,7 +2306,7 @@
           "switchCount": 1
         },
         "complexityScore": 1374,
-        "updatedAt": "2026-08-14T18:32:10.207Z",
+        "updatedAt": "2026-08-18T01:20:37.564Z",
         "riskScore": 46
       },
       {
@@ -2440,7 +2440,7 @@
           "switchCount": 0
         },
         "complexityScore": 1438,
-        "updatedAt": "2026-08-03T04:31:13.668Z",
+        "updatedAt": "2026-08-18T01:20:37.928Z",
         "riskScore": 47
       },
       {
@@ -2540,7 +2540,7 @@
           "switchCount": 0
         },
         "complexityScore": 1155,
-        "updatedAt": "2026-08-15T02:40:24.342Z",
+        "updatedAt": "2026-08-18T01:20:37.939Z",
         "riskScore": 47
       },
       {
@@ -2548,7 +2548,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "eaeabccba68d7f20f4534afc71ef0a9081ae2d70041b8a7eb58297bab9228e8e",
+        "hash": "6c0684e2b6d8a82832b776186465532a37e1dc486d6018f8806cd69c1ea0988e",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -2575,7 +2575,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-14T20:32:21.649Z",
+        "updatedAt": "2026-08-18T05:40:09.887Z",
         "riskScore": 30
       },
       {
@@ -2670,7 +2670,7 @@
           "switchCount": 1
         },
         "complexityScore": 1042,
-        "updatedAt": "2026-08-15T03:08:52.959Z",
+        "updatedAt": "2026-08-18T01:20:37.942Z",
         "riskScore": 41
       },
       {
@@ -2756,7 +2756,7 @@
           "switchCount": 0
         },
         "complexityScore": 1010,
-        "updatedAt": "2026-08-06T06:04:57.049Z",
+        "updatedAt": "2026-08-18T01:20:37.479Z",
         "riskScore": 30
       },
       {
@@ -2906,7 +2906,7 @@
           "switchCount": 0
         },
         "complexityScore": 1016,
-        "updatedAt": "2026-08-03T10:05:40.127Z",
+        "updatedAt": "2026-08-18T01:20:37.479Z",
         "riskScore": 41
       },
       {
@@ -3090,20 +3090,20 @@
           "switchCount": 0
         },
         "complexityScore": 1040,
-        "updatedAt": "2026-08-14T18:32:03.346Z",
+        "updatedAt": "2026-08-18T01:20:37.563Z",
         "riskScore": 52
       },
       {
         "path": "src/features/vault/ChatVault.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault",
-        "bytes": 30532,
-        "hash": "5e20d4752fc262411899bd27212d129320c102e9fb8b900347ce3a10f576f6af",
+        "bytes": 30366,
+        "hash": "80afa0e23e21b34f5f633359e72557c407ce5a8e305bc07776ecead9e31c4059",
         "lines": {
-          "total": 947,
-          "code": 849,
+          "total": 943,
+          "code": 846,
           "comments": 0,
-          "blanks": 98
+          "blanks": 97
         },
         "imports": [
           "import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';",
@@ -3237,8 +3237,8 @@
           "ifCount": 55,
           "switchCount": 0
         },
-        "complexityScore": 912,
-        "updatedAt": "2026-08-06T06:06:23.587Z",
+        "complexityScore": 909,
+        "updatedAt": "2026-08-18T02:44:06.766Z",
         "riskScore": 41
       },
       {
@@ -3413,7 +3413,7 @@
           "switchCount": 1
         },
         "complexityScore": 994,
-        "updatedAt": "2026-08-14T18:28:50.881Z",
+        "updatedAt": "2026-08-18T01:20:37.571Z",
         "riskScore": 41
       },
       {
@@ -3612,8 +3612,108 @@
           "switchCount": 0
         },
         "complexityScore": 991,
-        "updatedAt": "2026-08-14T20:00:11.101Z",
+        "updatedAt": "2026-08-18T01:20:37.575Z",
         "riskScore": 52
+      },
+      {
+        "path": "src/features/vault/components/ChatVault/ChatConversationPanel.tsx",
+        "extension": ".tsx",
+        "directory": "src/features/vault/components/ChatVault",
+        "bytes": 40201,
+        "hash": "d99439c13db812f4b16964f9cbcfc34daed2d2e211f683e2857769f27241db4c",
+        "lines": {
+          "total": 930,
+          "code": 864,
+          "comments": 4,
+          "blanks": 62
+        },
+        "imports": [
+          "import React from 'react';",
+          "import { toast } from 'sonner';",
+          "import {",
+          "import { ScrollButton } from '../../../../components/vault/ScrollButton';",
+          "import { Button } from '../../../../components/ui/Button';",
+          "import { Input } from '../../../../components/ui/Input';",
+          "import { VaultItem } from '../../../../lib/storage';",
+          "import { cn } from '../../../../lib/utils';",
+          "import {",
+          "import {",
+          "import { PHOTO_FILE_EXTENSIONS } from '../../../../lib/fileHandling';"
+        ],
+        "exports": [
+          "export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({"
+        ],
+        "importSpecifiers": [
+          "react",
+          "sonner",
+          "../../../../components/vault/ScrollButton",
+          "../../../../components/ui/Button",
+          "../../../../components/ui/Input",
+          "../../../../lib/storage",
+          "../../../../lib/utils",
+          "../../../../lib/fileHandling"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "react",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "sonner",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "../../../../components/vault/ScrollButton",
+            "kind": "relative",
+            "target": "src/components/vault/ScrollButton"
+          },
+          {
+            "specifier": "../../../../components/ui/Button",
+            "kind": "relative",
+            "target": "src/components/ui/Button"
+          },
+          {
+            "specifier": "../../../../components/ui/Input",
+            "kind": "relative",
+            "target": "src/components/ui/Input"
+          },
+          {
+            "specifier": "../../../../lib/storage",
+            "kind": "relative",
+            "target": "src/lib/storage"
+          },
+          {
+            "specifier": "../../../../lib/utils",
+            "kind": "relative",
+            "target": "src/lib/utils"
+          },
+          {
+            "specifier": "../../../../lib/fileHandling",
+            "kind": "relative",
+            "target": "src/lib/fileHandling"
+          }
+        ],
+        "symbols": [
+          "ChatConversationPanelProps",
+          "ChatConversationPanel"
+        ],
+        "symbolCount": 2,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 1,
+          "awaitCount": 1,
+          "tryCount": 3,
+          "catchCount": 3,
+          "throwCount": 0,
+          "ifCount": 36,
+          "switchCount": 0
+        },
+        "complexityScore": 900,
+        "updatedAt": "2026-08-18T05:10:34.706Z",
+        "riskScore": 30
       },
       {
         "path": "src/features/vault/PasswordManager.tsx",
@@ -3801,7 +3901,7 @@
           "switchCount": 0
         },
         "complexityScore": 955,
-        "updatedAt": "2026-08-14T18:29:02.123Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 41
       },
       {
@@ -3910,7 +4010,7 @@
           "switchCount": 0
         },
         "complexityScore": 869,
-        "updatedAt": "2026-08-03T08:18:02.694Z",
+        "updatedAt": "2026-08-18T01:20:37.545Z",
         "riskScore": 41
       },
       {
@@ -4025,7 +4125,7 @@
           "switchCount": 0
         },
         "complexityScore": 927,
-        "updatedAt": "2026-08-03T02:57:58.996Z",
+        "updatedAt": "2026-08-18T01:20:37.445Z",
         "riskScore": 40
       },
       {
@@ -4172,192 +4272,8 @@
           "switchCount": 1
         },
         "complexityScore": 1027,
-        "updatedAt": "2026-08-14T17:27:59.683Z",
+        "updatedAt": "2026-08-18T01:20:37.346Z",
         "riskScore": 61
-      },
-      {
-        "path": "src/features/vault/WifiVault.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault",
-        "bytes": 33214,
-        "hash": "191121bf6e07459eb5da11d0cdced3ef9bfd2549df6627447fa1231772ae8967",
-        "lines": {
-          "total": 865,
-          "code": 814,
-          "comments": 3,
-          "blanks": 48
-        },
-        "imports": [
-          "import React, { useState, useEffect, useMemo } from 'react';",
-          "import { Button } from '../../components/ui/Button';",
-          "import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';",
-          "import { Input } from '../../components/ui/Input';",
-          "import { SearchInput } from '../../components/ui/SearchInput';",
-          "import {",
-          "import { QRCodeSVG } from 'qrcode.react';",
-          "import { toast } from 'sonner';",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { VaultItem } from '../../lib/storage';",
-          "import { encryptData, decryptData } from '../../lib/cryptoPrimitives';",
-          "import { useClipboard } from '../../hooks/useClipboard';",
-          "import { motion, AnimatePresence } from 'framer-motion';",
-          "import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';",
-          "import { logActivity } from '../../lib/activity';",
-          "import { setDraggedVaultItem } from '../../lib/vaultDragDrop';",
-          "import { FolderSidebar } from '../../components/vault/FolderSidebar';",
-          "import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';",
-          "import { TagManager } from '../../components/vault/TagManager';",
-          "import { useVaultFolders } from '../../hooks/useVaultFolders';"
-        ],
-        "exports": [
-          "export const WifiVault: React.FC = () => {"
-        ],
-        "importSpecifiers": [
-          "react",
-          "../../components/ui/Button",
-          "../../components/ui/Card",
-          "../../components/ui/Input",
-          "../../components/ui/SearchInput",
-          "qrcode.react",
-          "sonner",
-          "../../store/vaultStore",
-          "../../lib/storage",
-          "../../lib/cryptoPrimitives",
-          "../../hooks/useClipboard",
-          "framer-motion",
-          "../../lib/vaultItemContent",
-          "../../lib/activity",
-          "../../lib/vaultDragDrop",
-          "../../components/vault/FolderSidebar",
-          "../../components/vault/MobileFolderMenu",
-          "../../components/vault/TagManager",
-          "../../hooks/useVaultFolders"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../components/ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "../../components/ui/Card",
-            "kind": "relative",
-            "target": "src/components/ui/Card"
-          },
-          {
-            "specifier": "../../components/ui/Input",
-            "kind": "relative",
-            "target": "src/components/ui/Input"
-          },
-          {
-            "specifier": "../../components/ui/SearchInput",
-            "kind": "relative",
-            "target": "src/components/ui/SearchInput"
-          },
-          {
-            "specifier": "qrcode.react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "../../lib/cryptoPrimitives",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives"
-          },
-          {
-            "specifier": "../../hooks/useClipboard",
-            "kind": "relative",
-            "target": "src/hooks/useClipboard"
-          },
-          {
-            "specifier": "framer-motion",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/vaultItemContent",
-            "kind": "relative",
-            "target": "src/lib/vaultItemContent"
-          },
-          {
-            "specifier": "../../lib/activity",
-            "kind": "relative",
-            "target": "src/lib/activity"
-          },
-          {
-            "specifier": "../../lib/vaultDragDrop",
-            "kind": "relative",
-            "target": "src/lib/vaultDragDrop"
-          },
-          {
-            "specifier": "../../components/vault/FolderSidebar",
-            "kind": "relative",
-            "target": "src/components/vault/FolderSidebar"
-          },
-          {
-            "specifier": "../../components/vault/MobileFolderMenu",
-            "kind": "relative",
-            "target": "src/components/vault/MobileFolderMenu"
-          },
-          {
-            "specifier": "../../components/vault/TagManager",
-            "kind": "relative",
-            "target": "src/components/vault/TagManager"
-          },
-          {
-            "specifier": "../../hooks/useVaultFolders",
-            "kind": "relative",
-            "target": "src/hooks/useVaultFolders"
-          }
-        ],
-        "symbols": [
-          "WifiPayload",
-          "emptyPayload",
-          "getWifiQrString",
-          "escapeString",
-          "decrypt",
-          "handleCopy",
-          "handleSave",
-          "downloadQrCode",
-          "WifiVault",
-          "handleCreateWifi",
-          "handleUpdateWifi"
-        ],
-        "symbolCount": 11,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 4,
-          "awaitCount": 6,
-          "tryCount": 4,
-          "catchCount": 4,
-          "throwCount": 0,
-          "ifCount": 18,
-          "switchCount": 0
-        },
-        "complexityScore": 937,
-        "updatedAt": "2026-08-14T18:29:21.562Z",
-        "riskScore": 46
       }
     ],
     "largestByBytes": [
@@ -4365,11 +4281,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 852376,
-        "hash": "31b27c1a67dba8430f6417a7564cacf4d9402cf8b67db598664b79dfd679cc6a",
+        "bytes": 840867,
+        "hash": "eed5bf77ce85776af9c7b5944809089bf594bdd84e7e948668957ce175d32e6b",
         "lines": {
-          "total": 19643,
-          "code": 19643,
+          "total": 19736,
+          "code": 19736,
           "comments": 0,
           "blanks": 0
         },
@@ -4395,16 +4311,16 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 19673,
-        "updatedAt": "2026-08-14T20:32:19.020Z",
+        "complexityScore": 19766,
+        "updatedAt": "2026-08-18T05:40:07.772Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 700447,
-        "hash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
+        "bytes": 687664,
+        "hash": "636cf90ada632d9a8c06e5334882a5b0bf16619474da7e412e745931a3f0c837",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -4493,18 +4409,18 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-14T20:32:19.020Z",
+        "updatedAt": "2026-08-18T05:40:07.765Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 578586,
-        "hash": "295be3b68a89d6491d24093392239a49e2a9e2e0294cafea185cdc4da80b7e65",
+        "bytes": 566918,
+        "hash": "59b47ef8e425f8ea998fc1256df053c7a22d63d9dfde0158985411829e7831cf",
         "lines": {
-          "total": 11783,
-          "code": 11782,
+          "total": 11876,
+          "code": 11875,
           "comments": 0,
           "blanks": 1
         },
@@ -4528,8 +4444,8 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 11806,
-        "updatedAt": "2026-08-14T20:32:21.647Z",
+        "complexityScore": 11899,
+        "updatedAt": "2026-08-18T05:40:09.884Z",
         "riskScore": 44
       },
       {
@@ -4720,15 +4636,15 @@
           "switchCount": 2
         },
         "complexityScore": 2043,
-        "updatedAt": "2026-08-14T20:19:00.366Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 58
       },
       {
         "path": "lighthouse/report-split/best-practices.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 65005,
-        "hash": "6f537b9275e8b014a301e0eddf70b74bebb03394e81c83be4ff305776a27951b",
+        "bytes": 64975,
+        "hash": "fcd7223ab0e36174fa12fe95d7676cc66f5df0f16b5f946def4fc651a1ba1bdb",
         "lines": {
           "total": 1963,
           "code": 1962,
@@ -4753,7 +4669,7 @@
           "switchCount": 0
         },
         "complexityScore": 1962,
-        "updatedAt": "2026-08-14T20:32:21.650Z",
+        "updatedAt": "2026-08-18T05:40:09.889Z",
         "riskScore": 30
       },
       {
@@ -4940,7 +4856,7 @@
           "switchCount": 3
         },
         "complexityScore": 1761,
-        "updatedAt": "2026-08-14T18:28:44.681Z",
+        "updatedAt": "2026-08-18T01:20:37.569Z",
         "riskScore": 58
       },
       {
@@ -5058,18 +4974,18 @@
           "switchCount": 0
         },
         "complexityScore": 1386,
-        "updatedAt": "2026-08-06T10:15:17.740Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 46
       },
       {
         "path": "src/components/ui/video-player.tsx",
         "extension": ".tsx",
         "directory": "src/components/ui",
-        "bytes": 57202,
-        "hash": "60ce58c4c65e492e89e86e9d147d79cedde3ad529d878f009b4070b3baaebdb9",
+        "bytes": 57227,
+        "hash": "c15626842bd995f1055d846d508e8cfeb84349cdff556ef697e78ae2f7364fb5",
         "lines": {
-          "total": 1650,
-          "code": 1477,
+          "total": 1649,
+          "code": 1476,
           "comments": 40,
           "blanks": 133
         },
@@ -5219,11 +5135,11 @@
           "tryCount": 24,
           "catchCount": 26,
           "throwCount": 0,
-          "ifCount": 115,
+          "ifCount": 116,
           "switchCount": 1
         },
-        "complexityScore": 1795,
-        "updatedAt": "2026-08-15T03:04:46.667Z",
+        "complexityScore": 1794,
+        "updatedAt": "2026-08-18T01:36:16.214Z",
         "riskScore": 52
       },
       {
@@ -5411,7 +5327,7 @@
           "switchCount": 0
         },
         "complexityScore": 1431,
-        "updatedAt": "2026-08-14T16:34:47.848Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 46
       },
       {
@@ -5517,7 +5433,7 @@
           "switchCount": 0
         },
         "complexityScore": 1550,
-        "updatedAt": "2026-08-01T12:44:28.531Z",
+        "updatedAt": "2026-08-18T01:20:37.513Z",
         "riskScore": 61
       },
       {
@@ -5699,7 +5615,7 @@
           "switchCount": 0
         },
         "complexityScore": 1525,
-        "updatedAt": "2026-08-14T18:32:21.101Z",
+        "updatedAt": "2026-08-18T01:20:37.591Z",
         "riskScore": 66
       },
       {
@@ -5888,7 +5804,7 @@
           "switchCount": 1
         },
         "complexityScore": 1374,
-        "updatedAt": "2026-08-14T18:32:10.207Z",
+        "updatedAt": "2026-08-18T01:20:37.564Z",
         "riskScore": 46
       },
       {
@@ -5896,7 +5812,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "eaeabccba68d7f20f4534afc71ef0a9081ae2d70041b8a7eb58297bab9228e8e",
+        "hash": "6c0684e2b6d8a82832b776186465532a37e1dc486d6018f8806cd69c1ea0988e",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -5923,15 +5839,15 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-14T20:32:21.649Z",
+        "updatedAt": "2026-08-18T05:40:09.887Z",
         "riskScore": 30
       },
       {
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47324,
-        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
+        "bytes": 47347,
+        "hash": "835f912c19be6f2314f60b70eb3fa0538538da4841d82e17b31cba3478dcae36",
         "lines": {
           "total": 1337,
           "code": 1153,
@@ -6135,7 +6051,7 @@
           "switchCount": 0
         },
         "complexityScore": 1396,
-        "updatedAt": "2026-08-15T02:45:27.671Z",
+        "updatedAt": "2026-08-18T01:36:22.752Z",
         "riskScore": 58
       },
       {
@@ -6221,7 +6137,7 @@
           "switchCount": 0
         },
         "complexityScore": 1010,
-        "updatedAt": "2026-08-06T06:04:57.049Z",
+        "updatedAt": "2026-08-18T01:20:37.479Z",
         "riskScore": 30
       },
       {
@@ -6472,7 +6388,7 @@
           "switchCount": 1
         },
         "complexityScore": 1653,
-        "updatedAt": "2026-08-14T08:19:41.514Z",
+        "updatedAt": "2026-08-18T01:20:37.375Z",
         "riskScore": 66
       },
       {
@@ -6648,7 +6564,7 @@
           "switchCount": 1
         },
         "complexityScore": 1576,
-        "updatedAt": "2026-08-07T10:44:21.412Z",
+        "updatedAt": "2026-08-18T01:20:37.996Z",
         "riskScore": 66
       },
       {
@@ -6798,8 +6714,214 @@
           "switchCount": 0
         },
         "complexityScore": 1016,
-        "updatedAt": "2026-08-03T10:05:40.127Z",
+        "updatedAt": "2026-08-18T01:20:37.479Z",
         "riskScore": 41
+      },
+      {
+        "path": "src/features/vault/components/ChatVault/ChatConversationPanel.tsx",
+        "extension": ".tsx",
+        "directory": "src/features/vault/components/ChatVault",
+        "bytes": 40201,
+        "hash": "d99439c13db812f4b16964f9cbcfc34daed2d2e211f683e2857769f27241db4c",
+        "lines": {
+          "total": 930,
+          "code": 864,
+          "comments": 4,
+          "blanks": 62
+        },
+        "imports": [
+          "import React from 'react';",
+          "import { toast } from 'sonner';",
+          "import {",
+          "import { ScrollButton } from '../../../../components/vault/ScrollButton';",
+          "import { Button } from '../../../../components/ui/Button';",
+          "import { Input } from '../../../../components/ui/Input';",
+          "import { VaultItem } from '../../../../lib/storage';",
+          "import { cn } from '../../../../lib/utils';",
+          "import {",
+          "import {",
+          "import { PHOTO_FILE_EXTENSIONS } from '../../../../lib/fileHandling';"
+        ],
+        "exports": [
+          "export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({"
+        ],
+        "importSpecifiers": [
+          "react",
+          "sonner",
+          "../../../../components/vault/ScrollButton",
+          "../../../../components/ui/Button",
+          "../../../../components/ui/Input",
+          "../../../../lib/storage",
+          "../../../../lib/utils",
+          "../../../../lib/fileHandling"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "react",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "sonner",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "../../../../components/vault/ScrollButton",
+            "kind": "relative",
+            "target": "src/components/vault/ScrollButton"
+          },
+          {
+            "specifier": "../../../../components/ui/Button",
+            "kind": "relative",
+            "target": "src/components/ui/Button"
+          },
+          {
+            "specifier": "../../../../components/ui/Input",
+            "kind": "relative",
+            "target": "src/components/ui/Input"
+          },
+          {
+            "specifier": "../../../../lib/storage",
+            "kind": "relative",
+            "target": "src/lib/storage"
+          },
+          {
+            "specifier": "../../../../lib/utils",
+            "kind": "relative",
+            "target": "src/lib/utils"
+          },
+          {
+            "specifier": "../../../../lib/fileHandling",
+            "kind": "relative",
+            "target": "src/lib/fileHandling"
+          }
+        ],
+        "symbols": [
+          "ChatConversationPanelProps",
+          "ChatConversationPanel"
+        ],
+        "symbolCount": 2,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 1,
+          "awaitCount": 1,
+          "tryCount": 3,
+          "catchCount": 3,
+          "throwCount": 0,
+          "ifCount": 36,
+          "switchCount": 0
+        },
+        "complexityScore": 900,
+        "updatedAt": "2026-08-18T05:10:34.706Z",
+        "riskScore": 30
+      },
+      {
+        "path": "src/features/vault/components/SettingsVault/ProfileCard.tsx",
+        "extension": ".tsx",
+        "directory": "src/features/vault/components/SettingsVault",
+        "bytes": 39238,
+        "hash": "e24e2ac4033b1b7b6d80c00524383871f7efc253cf119ac68de87a301008370e",
+        "lines": {
+          "total": 866,
+          "code": 827,
+          "comments": 8,
+          "blanks": 31
+        },
+        "imports": [
+          "import React from 'react';",
+          "import {",
+          "import { SectionCard, StatCard } from './SharedComponents';",
+          "import {",
+          "import { type AuthenticatedProfile } from '../../../../lib/auth-api';",
+          "import { Button } from '../../../../components/ui/Button';",
+          "import { Input } from '../../../../components/ui/Input';",
+          "import { useLocation } from 'react-router-dom';",
+          "import { SmartAvatar } from '../../../../components/SmartAvatar';",
+          "import { useFastAvatar } from '../../../../hooks/useFastAvatar';"
+        ],
+        "exports": [
+          "export const ProfileCard: React.FC<ProfileCardProps> = ({"
+        ],
+        "importSpecifiers": [
+          "react",
+          "./SharedComponents",
+          "../../../../lib/auth-api",
+          "../../../../components/ui/Button",
+          "../../../../components/ui/Input",
+          "react-router-dom",
+          "../../../../components/SmartAvatar",
+          "../../../../hooks/useFastAvatar"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "react",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "./SharedComponents",
+            "kind": "relative",
+            "target": "src/features/vault/components/SettingsVault/SharedComponents"
+          },
+          {
+            "specifier": "../../../../lib/auth-api",
+            "kind": "relative",
+            "target": "src/lib/auth-api"
+          },
+          {
+            "specifier": "../../../../components/ui/Button",
+            "kind": "relative",
+            "target": "src/components/ui/Button"
+          },
+          {
+            "specifier": "../../../../components/ui/Input",
+            "kind": "relative",
+            "target": "src/components/ui/Input"
+          },
+          {
+            "specifier": "react-router-dom",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "../../../../components/SmartAvatar",
+            "kind": "relative",
+            "target": "src/components/SmartAvatar"
+          },
+          {
+            "specifier": "../../../../hooks/useFastAvatar",
+            "kind": "relative",
+            "target": "src/hooks/useFastAvatar"
+          }
+        ],
+        "symbols": [
+          "AuthenticatedProfile",
+          "isValidProfilePhotoInput",
+          "ProfileCardProps",
+          "ProfileCard",
+          "savedProfileName",
+          "savedProfilePhoto",
+          "accountName",
+          "activeName",
+          "popupAccountName"
+        ],
+        "symbolCount": 9,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 4,
+          "awaitCount": 2,
+          "tryCount": 3,
+          "catchCount": 2,
+          "throwCount": 0,
+          "ifCount": 12,
+          "switchCount": 0
+        },
+        "complexityScore": 905,
+        "updatedAt": "2026-08-18T02:28:39.084Z",
+        "riskScore": 30
       },
       {
         "path": "src/features/vault/IdentitiesVault.tsx",
@@ -6973,7 +7095,7 @@
           "switchCount": 1
         },
         "complexityScore": 994,
-        "updatedAt": "2026-08-14T18:28:50.881Z",
+        "updatedAt": "2026-08-18T01:20:37.571Z",
         "riskScore": 41
       },
       {
@@ -7088,7 +7210,7 @@
           "switchCount": 0
         },
         "complexityScore": 927,
-        "updatedAt": "2026-08-03T02:57:58.996Z",
+        "updatedAt": "2026-08-18T01:20:37.445Z",
         "riskScore": 40
       },
       {
@@ -7272,7 +7394,7 @@
           "switchCount": 0
         },
         "complexityScore": 1040,
-        "updatedAt": "2026-08-14T18:32:03.346Z",
+        "updatedAt": "2026-08-18T01:20:37.563Z",
         "riskScore": 52
       },
       {
@@ -7381,7 +7503,7 @@
           "switchCount": 0
         },
         "complexityScore": 869,
-        "updatedAt": "2026-08-03T08:18:02.694Z",
+        "updatedAt": "2026-08-18T01:20:37.545Z",
         "riskScore": 41
       },
       {
@@ -7416,107 +7538,7 @@
           "switchCount": 0
         },
         "complexityScore": 755,
-        "updatedAt": "2026-08-14T20:32:21.650Z",
-        "riskScore": 30
-      },
-      {
-        "path": "src/features/vault/components/ChatVault/ChatConversationPanel.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault/components/ChatVault",
-        "bytes": 35720,
-        "hash": "97aaddf9720180f7af7c4c74b40e30b69efe813d3e6fd65cabda3eb9999112a3",
-        "lines": {
-          "total": 792,
-          "code": 744,
-          "comments": 0,
-          "blanks": 48
-        },
-        "imports": [
-          "import React from 'react';",
-          "import { toast } from 'sonner';",
-          "import {",
-          "import { ScrollButton } from '../../../../components/vault/ScrollButton';",
-          "import { Button } from '../../../../components/ui/Button';",
-          "import { Input } from '../../../../components/ui/Input';",
-          "import { VaultItem } from '../../../../lib/storage';",
-          "import { cn } from '../../../../lib/utils';",
-          "import {",
-          "import {",
-          "import { PHOTO_FILE_EXTENSIONS } from '../../../../lib/fileHandling';"
-        ],
-        "exports": [
-          "export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({"
-        ],
-        "importSpecifiers": [
-          "react",
-          "sonner",
-          "../../../../components/vault/ScrollButton",
-          "../../../../components/ui/Button",
-          "../../../../components/ui/Input",
-          "../../../../lib/storage",
-          "../../../../lib/utils",
-          "../../../../lib/fileHandling"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../../../components/vault/ScrollButton",
-            "kind": "relative",
-            "target": "src/components/vault/ScrollButton"
-          },
-          {
-            "specifier": "../../../../components/ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "../../../../components/ui/Input",
-            "kind": "relative",
-            "target": "src/components/ui/Input"
-          },
-          {
-            "specifier": "../../../../lib/storage",
-            "kind": "relative",
-            "target": "src/lib/storage"
-          },
-          {
-            "specifier": "../../../../lib/utils",
-            "kind": "relative",
-            "target": "src/lib/utils"
-          },
-          {
-            "specifier": "../../../../lib/fileHandling",
-            "kind": "relative",
-            "target": "src/lib/fileHandling"
-          }
-        ],
-        "symbols": [
-          "ChatConversationPanelProps",
-          "ChatConversationPanel"
-        ],
-        "symbolCount": 2,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 1,
-          "awaitCount": 1,
-          "tryCount": 2,
-          "catchCount": 2,
-          "throwCount": 0,
-          "ifCount": 18,
-          "switchCount": 0
-        },
-        "complexityScore": 780,
-        "updatedAt": "2026-08-14T16:34:46.466Z",
+        "updatedAt": "2026-08-18T05:40:09.887Z",
         "riskScore": 30
       },
       {
@@ -7705,18 +7727,18 @@
           "switchCount": 0
         },
         "complexityScore": 955,
-        "updatedAt": "2026-08-14T18:29:02.123Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 41
       },
       {
         "path": "src/features/vault/components/NotesVault/NoteViewer.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault/components/NotesVault",
-        "bytes": 34037,
-        "hash": "4075e2a1364eb9593e363e51edfcd1e5c6a344d473416a5040070fbdd82afaff",
+        "bytes": 34083,
+        "hash": "d2c0b223d6c0ade9799e7289d3a0b84de52483902936a50599cfc5ec07dfea88",
         "lines": {
-          "total": 784,
-          "code": 740,
+          "total": 785,
+          "code": 741,
           "comments": 8,
           "blanks": 36
         },
@@ -7861,8 +7883,8 @@
           "ifCount": 6,
           "switchCount": 0
         },
-        "complexityScore": 851,
-        "updatedAt": "2026-08-14T13:11:17.623Z",
+        "complexityScore": 852,
+        "updatedAt": "2026-08-18T02:45:05.500Z",
         "riskScore": 42
       },
       {
@@ -7902,7 +7924,7 @@
           "switchCount": 0
         },
         "complexityScore": 721,
-        "updatedAt": "2026-08-14T04:51:25.636Z",
+        "updatedAt": "2026-08-18T01:20:37.146Z",
         "riskScore": 58
       },
       {
@@ -8036,7 +8058,7 @@
           "switchCount": 0
         },
         "complexityScore": 1438,
-        "updatedAt": "2026-08-03T04:31:13.668Z",
+        "updatedAt": "2026-08-18T01:20:37.928Z",
         "riskScore": 47
       },
       {
@@ -8220,118 +8242,8 @@
           "switchCount": 0
         },
         "complexityScore": 937,
-        "updatedAt": "2026-08-14T18:29:21.562Z",
+        "updatedAt": "2026-08-18T01:20:37.613Z",
         "riskScore": 46
-      },
-      {
-        "path": "src/features/vault/components/LocationVault/LocationViewer.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/vault/components/LocationVault",
-        "bytes": 32641,
-        "hash": "9ab98d407874dbee231568c19603287da9cfc8efb40081b39654b795f85e6fe3",
-        "lines": {
-          "total": 748,
-          "code": 723,
-          "comments": 1,
-          "blanks": 24
-        },
-        "imports": [
-          "import React, { useRef, useState } from 'react';",
-          "import { motion, AnimatePresence } from 'framer-motion';",
-          "import {",
-          "import { cn } from '../../../../lib/utils';",
-          "import { Button } from '../../../../components/ui/Button';",
-          "import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/Card';",
-          "import { Input } from '../../../../components/ui/Input';",
-          "import { ScrollButton } from '../../../../components/vault/ScrollButton';",
-          "import { MapPreview } from '../../../../components/vault/MapPreview';",
-          "import { GlobalNavigator } from '../../../../components/vault/GlobalNavigator';",
-          "import { parseCoordinate } from '../../../../lib/utils';"
-        ],
-        "exports": [
-          "export interface LocationViewerProps {",
-          "export const LocationViewer: React.FC<LocationViewerProps> = ({"
-        ],
-        "importSpecifiers": [
-          "react",
-          "framer-motion",
-          "../../../../lib/utils",
-          "../../../../components/ui/Button",
-          "../../../../components/ui/Card",
-          "../../../../components/ui/Input",
-          "../../../../components/vault/ScrollButton",
-          "../../../../components/vault/MapPreview",
-          "../../../../components/vault/GlobalNavigator"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "framer-motion",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../../../lib/utils",
-            "kind": "relative",
-            "target": "src/lib/utils"
-          },
-          {
-            "specifier": "../../../../components/ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "../../../../components/ui/Card",
-            "kind": "relative",
-            "target": "src/components/ui/Card"
-          },
-          {
-            "specifier": "../../../../components/ui/Input",
-            "kind": "relative",
-            "target": "src/components/ui/Input"
-          },
-          {
-            "specifier": "../../../../components/vault/ScrollButton",
-            "kind": "relative",
-            "target": "src/components/vault/ScrollButton"
-          },
-          {
-            "specifier": "../../../../components/vault/MapPreview",
-            "kind": "relative",
-            "target": "src/components/vault/MapPreview"
-          },
-          {
-            "specifier": "../../../../components/vault/GlobalNavigator",
-            "kind": "relative",
-            "target": "src/components/vault/GlobalNavigator"
-          }
-        ],
-        "symbols": [
-          "LocationPayload",
-          "FormState",
-          "Editor",
-          "LocationViewerProps",
-          "LocationViewer"
-        ],
-        "symbolCount": 5,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 0,
-          "awaitCount": 0,
-          "tryCount": 0,
-          "catchCount": 0,
-          "throwCount": 0,
-          "ifCount": 5,
-          "switchCount": 0
-        },
-        "complexityScore": 780,
-        "updatedAt": "2026-08-03T02:58:00.897Z",
-        "riskScore": 35
       }
     ],
     "mostSymbols": [
@@ -8583,15 +8495,15 @@
           "switchCount": 1
         },
         "complexityScore": 1653,
-        "updatedAt": "2026-08-14T08:19:41.514Z",
+        "updatedAt": "2026-08-18T01:20:37.375Z",
         "riskScore": 66
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 700447,
-        "hash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
+        "bytes": 687664,
+        "hash": "636cf90ada632d9a8c06e5334882a5b0bf16619474da7e412e745931a3f0c837",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -8680,7 +8592,7 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-14T20:32:19.020Z",
+        "updatedAt": "2026-08-18T05:40:07.765Z",
         "riskScore": 68
       },
       {
@@ -8814,18 +8726,18 @@
           "switchCount": 0
         },
         "complexityScore": 1438,
-        "updatedAt": "2026-08-03T04:31:13.668Z",
+        "updatedAt": "2026-08-18T01:20:37.928Z",
         "riskScore": 47
       },
       {
         "path": "src/components/ui/video-player.tsx",
         "extension": ".tsx",
         "directory": "src/components/ui",
-        "bytes": 57202,
-        "hash": "60ce58c4c65e492e89e86e9d147d79cedde3ad529d878f009b4070b3baaebdb9",
+        "bytes": 57227,
+        "hash": "c15626842bd995f1055d846d508e8cfeb84349cdff556ef697e78ae2f7364fb5",
         "lines": {
-          "total": 1650,
-          "code": 1477,
+          "total": 1649,
+          "code": 1476,
           "comments": 40,
           "blanks": 133
         },
@@ -8975,11 +8887,11 @@
           "tryCount": 24,
           "catchCount": 26,
           "throwCount": 0,
-          "ifCount": 115,
+          "ifCount": 116,
           "switchCount": 1
         },
-        "complexityScore": 1795,
-        "updatedAt": "2026-08-15T03:04:46.667Z",
+        "complexityScore": 1794,
+        "updatedAt": "2026-08-18T01:36:16.214Z",
         "riskScore": 52
       },
       {
@@ -9150,7 +9062,7 @@
           "switchCount": 0
         },
         "complexityScore": 990,
-        "updatedAt": "2026-08-14T19:24:12.803Z",
+        "updatedAt": "2026-08-18T01:20:37.247Z",
         "riskScore": 52
       },
       {
@@ -9297,7 +9209,7 @@
           "switchCount": 1
         },
         "complexityScore": 1027,
-        "updatedAt": "2026-08-14T17:27:59.683Z",
+        "updatedAt": "2026-08-18T01:20:37.346Z",
         "riskScore": 61
       },
       {
@@ -9401,7 +9313,7 @@
           "switchCount": 0
         },
         "complexityScore": 806,
-        "updatedAt": "2026-08-01T12:44:31.530Z",
+        "updatedAt": "2026-08-18T01:20:37.984Z",
         "riskScore": 41
       },
       {
@@ -9577,15 +9489,15 @@
           "switchCount": 1
         },
         "complexityScore": 1576,
-        "updatedAt": "2026-08-07T10:44:21.412Z",
+        "updatedAt": "2026-08-18T01:20:37.996Z",
         "riskScore": 66
       },
       {
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47324,
-        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
+        "bytes": 47347,
+        "hash": "835f912c19be6f2314f60b70eb3fa0538538da4841d82e17b31cba3478dcae36",
         "lines": {
           "total": 1337,
           "code": 1153,
@@ -9789,7 +9701,7 @@
           "switchCount": 0
         },
         "complexityScore": 1396,
-        "updatedAt": "2026-08-15T02:45:27.671Z",
+        "updatedAt": "2026-08-18T01:36:22.752Z",
         "riskScore": 58
       },
       {
@@ -9896,7 +9808,7 @@
           "switchCount": 0
         },
         "complexityScore": 920,
-        "updatedAt": "2026-08-01T12:44:25.131Z",
+        "updatedAt": "2026-08-18T01:20:37.210Z",
         "riskScore": 47
       },
       {
@@ -9972,7 +9884,7 @@
           "switchCount": 0
         },
         "complexityScore": 583,
-        "updatedAt": "2026-08-01T13:37:20.437Z",
+        "updatedAt": "2026-08-18T01:20:37.975Z",
         "riskScore": 39
       },
       {
@@ -10159,7 +10071,7 @@
           "switchCount": 3
         },
         "complexityScore": 1761,
-        "updatedAt": "2026-08-14T18:28:44.681Z",
+        "updatedAt": "2026-08-18T01:20:37.569Z",
         "riskScore": 58
       },
       {
@@ -10350,7 +10262,7 @@
           "switchCount": 2
         },
         "complexityScore": 2043,
-        "updatedAt": "2026-08-14T20:19:00.366Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 58
       },
       {
@@ -10532,7 +10444,7 @@
           "switchCount": 0
         },
         "complexityScore": 1525,
-        "updatedAt": "2026-08-14T18:32:21.101Z",
+        "updatedAt": "2026-08-18T01:20:37.591Z",
         "riskScore": 66
       },
       {
@@ -10632,7 +10544,7 @@
           "switchCount": 0
         },
         "complexityScore": 1155,
-        "updatedAt": "2026-08-15T02:40:24.342Z",
+        "updatedAt": "2026-08-18T01:20:37.939Z",
         "riskScore": 47
       },
       {
@@ -10747,7 +10659,7 @@
           "switchCount": 0
         },
         "complexityScore": 585,
-        "updatedAt": "2026-08-01T12:44:27.125Z",
+        "updatedAt": "2026-08-18T01:20:37.390Z",
         "riskScore": 39
       },
       {
@@ -10923,7 +10835,7 @@
           "switchCount": 0
         },
         "complexityScore": 991,
-        "updatedAt": "2026-08-13T12:22:14.067Z",
+        "updatedAt": "2026-08-18T01:20:37.671Z",
         "riskScore": 58
       },
       {
@@ -11054,7 +10966,7 @@
           "switchCount": 0
         },
         "complexityScore": 853,
-        "updatedAt": "2026-08-13T11:35:39.522Z",
+        "updatedAt": "2026-08-18T01:20:37.240Z",
         "riskScore": 61
       },
       {
@@ -11149,7 +11061,7 @@
           "switchCount": 0
         },
         "complexityScore": 561,
-        "updatedAt": "2026-08-01T12:44:27.169Z",
+        "updatedAt": "2026-08-18T01:20:37.396Z",
         "riskScore": 47
       },
       {
@@ -11279,7 +11191,7 @@
           "switchCount": 0
         },
         "complexityScore": 750,
-        "updatedAt": "2026-08-14T08:19:40.753Z",
+        "updatedAt": "2026-08-18T01:20:37.333Z",
         "riskScore": 52
       },
       {
@@ -11377,7 +11289,7 @@
           "switchCount": 0
         },
         "complexityScore": 615,
-        "updatedAt": "2026-08-01T12:44:31.288Z",
+        "updatedAt": "2026-08-18T01:20:37.965Z",
         "riskScore": 39
       },
       {
@@ -11483,7 +11395,7 @@
           "switchCount": 0
         },
         "complexityScore": 1550,
-        "updatedAt": "2026-08-01T12:44:28.531Z",
+        "updatedAt": "2026-08-18T01:20:37.513Z",
         "riskScore": 61
       },
       {
@@ -11564,7 +11476,7 @@
           "switchCount": 0
         },
         "complexityScore": 438,
-        "updatedAt": "2026-08-07T11:59:46.410Z",
+        "updatedAt": "2026-08-18T01:20:37.950Z",
         "riskScore": 47
       },
       {
@@ -11651,7 +11563,7 @@
           "switchCount": 0
         },
         "complexityScore": 874,
-        "updatedAt": "2026-08-14T16:34:44.654Z",
+        "updatedAt": "2026-08-18T01:20:37.462Z",
         "riskScore": 41
       },
       {
@@ -11735,7 +11647,7 @@
           "switchCount": 0
         },
         "complexityScore": 503,
-        "updatedAt": "2026-08-02T05:02:51.823Z",
+        "updatedAt": "2026-08-18T01:20:37.655Z",
         "riskScore": 27
       },
       {
@@ -11837,7 +11749,7 @@
           "switchCount": 0
         },
         "complexityScore": 850,
-        "updatedAt": "2026-08-06T12:04:43.794Z",
+        "updatedAt": "2026-08-18T01:20:37.885Z",
         "riskScore": 41
       },
       {
@@ -11910,7 +11822,7 @@
           "switchCount": 0
         },
         "complexityScore": 406,
-        "updatedAt": "2026-08-01T12:44:25.096Z",
+        "updatedAt": "2026-08-18T01:20:37.196Z",
         "riskScore": 35
       },
       {
@@ -12256,7 +12168,7 @@
           "switchCount": 0
         },
         "complexityScore": 894,
-        "updatedAt": "2026-08-15T02:45:32.293Z",
+        "updatedAt": "2026-08-18T01:20:37.215Z",
         "riskScore": 46
       },
       {
@@ -12404,7 +12316,7 @@
           "switchCount": 0
         },
         "complexityScore": 602,
-        "updatedAt": "2026-08-07T16:25:43.394Z",
+        "updatedAt": "2026-08-18T01:20:37.230Z",
         "riskScore": 32
       },
       {
@@ -12471,7 +12383,7 @@
           "switchCount": 0
         },
         "complexityScore": 393,
-        "updatedAt": "2026-08-14T05:46:16.136Z",
+        "updatedAt": "2026-08-18T01:20:37.928Z",
         "riskScore": 33
       }
     ],
@@ -12480,11 +12392,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 852376,
-        "hash": "31b27c1a67dba8430f6417a7564cacf4d9402cf8b67db598664b79dfd679cc6a",
+        "bytes": 840867,
+        "hash": "eed5bf77ce85776af9c7b5944809089bf594bdd84e7e948668957ce175d32e6b",
         "lines": {
-          "total": 19643,
-          "code": 19643,
+          "total": 19736,
+          "code": 19736,
           "comments": 0,
           "blanks": 0
         },
@@ -12510,19 +12422,19 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 19673,
-        "updatedAt": "2026-08-14T20:32:19.020Z",
+        "complexityScore": 19766,
+        "updatedAt": "2026-08-18T05:40:07.772Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 578586,
-        "hash": "295be3b68a89d6491d24093392239a49e2a9e2e0294cafea185cdc4da80b7e65",
+        "bytes": 566918,
+        "hash": "59b47ef8e425f8ea998fc1256df053c7a22d63d9dfde0158985411829e7831cf",
         "lines": {
-          "total": 11783,
-          "code": 11782,
+          "total": 11876,
+          "code": 11875,
           "comments": 0,
           "blanks": 1
         },
@@ -12546,16 +12458,16 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 11806,
-        "updatedAt": "2026-08-14T20:32:21.647Z",
+        "complexityScore": 11899,
+        "updatedAt": "2026-08-18T05:40:09.884Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 700447,
-        "hash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
+        "bytes": 687664,
+        "hash": "636cf90ada632d9a8c06e5334882a5b0bf16619474da7e412e745931a3f0c837",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -12644,7 +12556,7 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-14T20:32:19.020Z",
+        "updatedAt": "2026-08-18T05:40:07.765Z",
         "riskScore": 68
       },
       {
@@ -12835,15 +12747,15 @@
           "switchCount": 2
         },
         "complexityScore": 2043,
-        "updatedAt": "2026-08-14T20:19:00.366Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 58
       },
       {
         "path": "lighthouse/report-split/best-practices.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 65005,
-        "hash": "6f537b9275e8b014a301e0eddf70b74bebb03394e81c83be4ff305776a27951b",
+        "bytes": 64975,
+        "hash": "fcd7223ab0e36174fa12fe95d7676cc66f5df0f16b5f946def4fc651a1ba1bdb",
         "lines": {
           "total": 1963,
           "code": 1962,
@@ -12868,18 +12780,18 @@
           "switchCount": 0
         },
         "complexityScore": 1962,
-        "updatedAt": "2026-08-14T20:32:21.650Z",
+        "updatedAt": "2026-08-18T05:40:09.889Z",
         "riskScore": 30
       },
       {
         "path": "src/components/ui/video-player.tsx",
         "extension": ".tsx",
         "directory": "src/components/ui",
-        "bytes": 57202,
-        "hash": "60ce58c4c65e492e89e86e9d147d79cedde3ad529d878f009b4070b3baaebdb9",
+        "bytes": 57227,
+        "hash": "c15626842bd995f1055d846d508e8cfeb84349cdff556ef697e78ae2f7364fb5",
         "lines": {
-          "total": 1650,
-          "code": 1477,
+          "total": 1649,
+          "code": 1476,
           "comments": 40,
           "blanks": 133
         },
@@ -13029,11 +12941,11 @@
           "tryCount": 24,
           "catchCount": 26,
           "throwCount": 0,
-          "ifCount": 115,
+          "ifCount": 116,
           "switchCount": 1
         },
-        "complexityScore": 1795,
-        "updatedAt": "2026-08-15T03:04:46.667Z",
+        "complexityScore": 1794,
+        "updatedAt": "2026-08-18T01:36:16.214Z",
         "riskScore": 52
       },
       {
@@ -13220,7 +13132,7 @@
           "switchCount": 3
         },
         "complexityScore": 1761,
-        "updatedAt": "2026-08-14T18:28:44.681Z",
+        "updatedAt": "2026-08-18T01:20:37.569Z",
         "riskScore": 58
       },
       {
@@ -13471,7 +13383,7 @@
           "switchCount": 1
         },
         "complexityScore": 1653,
-        "updatedAt": "2026-08-14T08:19:41.514Z",
+        "updatedAt": "2026-08-18T01:20:37.375Z",
         "riskScore": 66
       },
       {
@@ -13647,7 +13559,7 @@
           "switchCount": 1
         },
         "complexityScore": 1576,
-        "updatedAt": "2026-08-07T10:44:21.412Z",
+        "updatedAt": "2026-08-18T01:20:37.996Z",
         "riskScore": 66
       },
       {
@@ -13753,7 +13665,7 @@
           "switchCount": 0
         },
         "complexityScore": 1550,
-        "updatedAt": "2026-08-01T12:44:28.531Z",
+        "updatedAt": "2026-08-18T01:20:37.513Z",
         "riskScore": 61
       },
       {
@@ -13935,7 +13847,7 @@
           "switchCount": 0
         },
         "complexityScore": 1525,
-        "updatedAt": "2026-08-14T18:32:21.101Z",
+        "updatedAt": "2026-08-18T01:20:37.591Z",
         "riskScore": 66
       },
       {
@@ -14069,7 +13981,7 @@
           "switchCount": 0
         },
         "complexityScore": 1438,
-        "updatedAt": "2026-08-03T04:31:13.668Z",
+        "updatedAt": "2026-08-18T01:20:37.928Z",
         "riskScore": 47
       },
       {
@@ -14257,15 +14169,15 @@
           "switchCount": 0
         },
         "complexityScore": 1431,
-        "updatedAt": "2026-08-14T16:34:47.848Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 46
       },
       {
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47324,
-        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
+        "bytes": 47347,
+        "hash": "835f912c19be6f2314f60b70eb3fa0538538da4841d82e17b31cba3478dcae36",
         "lines": {
           "total": 1337,
           "code": 1153,
@@ -14469,7 +14381,7 @@
           "switchCount": 0
         },
         "complexityScore": 1396,
-        "updatedAt": "2026-08-15T02:45:27.671Z",
+        "updatedAt": "2026-08-18T01:36:22.752Z",
         "riskScore": 58
       },
       {
@@ -14587,7 +14499,7 @@
           "switchCount": 0
         },
         "complexityScore": 1386,
-        "updatedAt": "2026-08-06T10:15:17.740Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 46
       },
       {
@@ -14776,7 +14688,7 @@
           "switchCount": 1
         },
         "complexityScore": 1374,
-        "updatedAt": "2026-08-14T18:32:10.207Z",
+        "updatedAt": "2026-08-18T01:20:37.564Z",
         "riskScore": 46
       },
       {
@@ -14784,7 +14696,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "eaeabccba68d7f20f4534afc71ef0a9081ae2d70041b8a7eb58297bab9228e8e",
+        "hash": "6c0684e2b6d8a82832b776186465532a37e1dc486d6018f8806cd69c1ea0988e",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -14811,7 +14723,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-14T20:32:21.649Z",
+        "updatedAt": "2026-08-18T05:40:09.887Z",
         "riskScore": 30
       },
       {
@@ -14911,7 +14823,7 @@
           "switchCount": 0
         },
         "complexityScore": 1155,
-        "updatedAt": "2026-08-15T02:40:24.342Z",
+        "updatedAt": "2026-08-18T01:20:37.939Z",
         "riskScore": 47
       },
       {
@@ -15006,7 +14918,7 @@
           "switchCount": 1
         },
         "complexityScore": 1042,
-        "updatedAt": "2026-08-15T03:08:52.959Z",
+        "updatedAt": "2026-08-18T01:20:37.942Z",
         "riskScore": 41
       },
       {
@@ -15190,7 +15102,7 @@
           "switchCount": 0
         },
         "complexityScore": 1040,
-        "updatedAt": "2026-08-14T18:32:03.346Z",
+        "updatedAt": "2026-08-18T01:20:37.563Z",
         "riskScore": 52
       },
       {
@@ -15337,7 +15249,7 @@
           "switchCount": 1
         },
         "complexityScore": 1027,
-        "updatedAt": "2026-08-14T17:27:59.683Z",
+        "updatedAt": "2026-08-18T01:20:37.346Z",
         "riskScore": 61
       },
       {
@@ -15487,7 +15399,7 @@
           "switchCount": 0
         },
         "complexityScore": 1016,
-        "updatedAt": "2026-08-03T10:05:40.127Z",
+        "updatedAt": "2026-08-18T01:20:37.479Z",
         "riskScore": 41
       },
       {
@@ -15573,7 +15485,7 @@
           "switchCount": 0
         },
         "complexityScore": 1010,
-        "updatedAt": "2026-08-06T06:04:57.049Z",
+        "updatedAt": "2026-08-18T01:20:37.479Z",
         "riskScore": 30
       },
       {
@@ -15748,7 +15660,7 @@
           "switchCount": 1
         },
         "complexityScore": 994,
-        "updatedAt": "2026-08-14T18:28:50.881Z",
+        "updatedAt": "2026-08-18T01:20:37.571Z",
         "riskScore": 41
       },
       {
@@ -15924,7 +15836,7 @@
           "switchCount": 0
         },
         "complexityScore": 991,
-        "updatedAt": "2026-08-13T12:22:14.067Z",
+        "updatedAt": "2026-08-18T01:20:37.671Z",
         "riskScore": 58
       },
       {
@@ -16123,7 +16035,7 @@
           "switchCount": 0
         },
         "complexityScore": 991,
-        "updatedAt": "2026-08-14T20:00:11.101Z",
+        "updatedAt": "2026-08-18T01:20:37.575Z",
         "riskScore": 52
       },
       {
@@ -16294,7 +16206,7 @@
           "switchCount": 0
         },
         "complexityScore": 990,
-        "updatedAt": "2026-08-14T19:24:12.803Z",
+        "updatedAt": "2026-08-18T01:20:37.247Z",
         "riskScore": 52
       },
       {
@@ -16483,7 +16395,7 @@
           "switchCount": 0
         },
         "complexityScore": 955,
-        "updatedAt": "2026-08-14T18:29:02.123Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 41
       },
       {
@@ -16667,7 +16579,7 @@
           "switchCount": 0
         },
         "complexityScore": 937,
-        "updatedAt": "2026-08-14T18:29:21.562Z",
+        "updatedAt": "2026-08-18T01:20:37.613Z",
         "riskScore": 46
       },
       {
@@ -16782,7 +16694,7 @@
           "switchCount": 0
         },
         "complexityScore": 927,
-        "updatedAt": "2026-08-03T02:57:58.996Z",
+        "updatedAt": "2026-08-18T01:20:37.445Z",
         "riskScore": 40
       }
     ],
@@ -17130,7 +17042,7 @@
           "switchCount": 0
         },
         "complexityScore": 894,
-        "updatedAt": "2026-08-15T02:45:32.293Z",
+        "updatedAt": "2026-08-18T01:20:37.215Z",
         "riskScore": 46
       },
       {
@@ -17330,7 +17242,7 @@
           "switchCount": 1
         },
         "complexityScore": 695,
-        "updatedAt": "2026-08-14T08:19:42.857Z",
+        "updatedAt": "2026-08-18T01:20:37.479Z",
         "riskScore": 45
       },
       {
@@ -17521,7 +17433,7 @@
           "switchCount": 0
         },
         "complexityScore": 884,
-        "updatedAt": "2026-08-14T13:11:37.118Z",
+        "updatedAt": "2026-08-18T01:20:37.566Z",
         "riskScore": 46
       },
       {
@@ -17720,7 +17632,7 @@
           "switchCount": 0
         },
         "complexityScore": 991,
-        "updatedAt": "2026-08-14T20:00:11.101Z",
+        "updatedAt": "2026-08-18T01:20:37.575Z",
         "riskScore": 52
       },
       {
@@ -17909,15 +17821,15 @@
           "switchCount": 0
         },
         "complexityScore": 955,
-        "updatedAt": "2026-08-14T18:29:02.123Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 41
       },
       {
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47324,
-        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
+        "bytes": 47347,
+        "hash": "835f912c19be6f2314f60b70eb3fa0538538da4841d82e17b31cba3478dcae36",
         "lines": {
           "total": 1337,
           "code": 1153,
@@ -18121,7 +18033,7 @@
           "switchCount": 0
         },
         "complexityScore": 1396,
-        "updatedAt": "2026-08-15T02:45:27.671Z",
+        "updatedAt": "2026-08-18T01:36:22.752Z",
         "riskScore": 58
       },
       {
@@ -18310,7 +18222,7 @@
           "switchCount": 1
         },
         "complexityScore": 1374,
-        "updatedAt": "2026-08-14T18:32:10.207Z",
+        "updatedAt": "2026-08-18T01:20:37.564Z",
         "riskScore": 46
       },
       {
@@ -18498,7 +18410,7 @@
           "switchCount": 0
         },
         "complexityScore": 1431,
-        "updatedAt": "2026-08-14T16:34:47.848Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 46
       },
       {
@@ -18682,7 +18594,7 @@
           "switchCount": 0
         },
         "complexityScore": 901,
-        "updatedAt": "2026-08-14T18:29:07.784Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 46
       },
       {
@@ -18866,7 +18778,7 @@
           "switchCount": 0
         },
         "complexityScore": 937,
-        "updatedAt": "2026-08-14T18:29:21.562Z",
+        "updatedAt": "2026-08-18T01:20:37.613Z",
         "riskScore": 46
       },
       {
@@ -19050,7 +18962,7 @@
           "switchCount": 0
         },
         "complexityScore": 1040,
-        "updatedAt": "2026-08-14T18:32:03.346Z",
+        "updatedAt": "2026-08-18T01:20:37.563Z",
         "riskScore": 52
       },
       {
@@ -19225,7 +19137,7 @@
           "switchCount": 1
         },
         "complexityScore": 994,
-        "updatedAt": "2026-08-14T18:28:50.881Z",
+        "updatedAt": "2026-08-18T01:20:37.571Z",
         "riskScore": 41
       },
       {
@@ -19412,7 +19324,7 @@
           "switchCount": 3
         },
         "complexityScore": 1761,
-        "updatedAt": "2026-08-14T18:28:44.681Z",
+        "updatedAt": "2026-08-18T01:20:37.569Z",
         "riskScore": 58
       },
       {
@@ -19581,7 +19493,7 @@
           "switchCount": 0
         },
         "complexityScore": 721,
-        "updatedAt": "2026-08-06T04:11:24.467Z",
+        "updatedAt": "2026-08-18T01:20:37.571Z",
         "riskScore": 46
       },
       {
@@ -19772,7 +19684,7 @@
           "switchCount": 2
         },
         "complexityScore": 2043,
-        "updatedAt": "2026-08-14T20:19:00.366Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 58
       },
       {
@@ -19938,7 +19850,7 @@
           "switchCount": 0
         },
         "complexityScore": 449,
-        "updatedAt": "2026-08-14T08:02:15.050Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 33
       },
       {
@@ -20114,7 +20026,7 @@
           "switchCount": 0
         },
         "complexityScore": 991,
-        "updatedAt": "2026-08-13T12:22:14.067Z",
+        "updatedAt": "2026-08-18T01:20:37.671Z",
         "riskScore": 58
       },
       {
@@ -20296,7 +20208,7 @@
           "switchCount": 0
         },
         "complexityScore": 1525,
-        "updatedAt": "2026-08-14T18:32:21.101Z",
+        "updatedAt": "2026-08-18T01:20:37.591Z",
         "riskScore": 66
       },
       {
@@ -20455,20 +20367,20 @@
           "switchCount": 0
         },
         "complexityScore": 865,
-        "updatedAt": "2026-08-13T11:25:59.234Z",
+        "updatedAt": "2026-08-18T01:20:37.430Z",
         "riskScore": 40
       },
       {
         "path": "src/features/vault/ChatVault.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault",
-        "bytes": 30532,
-        "hash": "5e20d4752fc262411899bd27212d129320c102e9fb8b900347ce3a10f576f6af",
+        "bytes": 30366,
+        "hash": "80afa0e23e21b34f5f633359e72557c407ce5a8e305bc07776ecead9e31c4059",
         "lines": {
-          "total": 947,
-          "code": 849,
+          "total": 943,
+          "code": 846,
           "comments": 0,
-          "blanks": 98
+          "blanks": 97
         },
         "imports": [
           "import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';",
@@ -20602,19 +20514,19 @@
           "ifCount": 55,
           "switchCount": 0
         },
-        "complexityScore": 912,
-        "updatedAt": "2026-08-06T06:06:23.587Z",
+        "complexityScore": 909,
+        "updatedAt": "2026-08-18T02:44:06.766Z",
         "riskScore": 41
       },
       {
         "path": "src/features/vault/components/NotesVault/NoteViewer.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault/components/NotesVault",
-        "bytes": 34037,
-        "hash": "4075e2a1364eb9593e363e51edfcd1e5c6a344d473416a5040070fbdd82afaff",
+        "bytes": 34083,
+        "hash": "d2c0b223d6c0ade9799e7289d3a0b84de52483902936a50599cfc5ec07dfea88",
         "lines": {
-          "total": 784,
-          "code": 740,
+          "total": 785,
+          "code": 741,
           "comments": 8,
           "blanks": 36
         },
@@ -20759,8 +20671,8 @@
           "ifCount": 6,
           "switchCount": 0
         },
-        "complexityScore": 851,
-        "updatedAt": "2026-08-14T13:11:17.623Z",
+        "complexityScore": 852,
+        "updatedAt": "2026-08-18T02:45:05.500Z",
         "riskScore": 42
       },
       {
@@ -20910,7 +20822,7 @@
           "switchCount": 0
         },
         "complexityScore": 1016,
-        "updatedAt": "2026-08-03T10:05:40.127Z",
+        "updatedAt": "2026-08-18T01:20:37.479Z",
         "riskScore": 41
       },
       {
@@ -21086,7 +20998,7 @@
           "switchCount": 1
         },
         "complexityScore": 1576,
-        "updatedAt": "2026-08-07T10:44:21.412Z",
+        "updatedAt": "2026-08-18T01:20:37.996Z",
         "riskScore": 66
       },
       {
@@ -21223,7 +21135,7 @@
           "switchCount": 0
         },
         "complexityScore": 152,
-        "updatedAt": "2026-08-02T04:14:56.975Z",
+        "updatedAt": "2026-08-18T01:20:37.245Z",
         "riskScore": 17
       },
       {
@@ -21364,7 +21276,7 @@
           "switchCount": 0
         },
         "complexityScore": 385,
-        "updatedAt": "2026-08-06T04:11:25.994Z",
+        "updatedAt": "2026-08-18T01:20:37.575Z",
         "riskScore": 34
       },
       {
@@ -21495,7 +21407,7 @@
           "switchCount": 0
         },
         "complexityScore": 175,
-        "updatedAt": "2026-08-01T12:44:31.444Z",
+        "updatedAt": "2026-08-18T01:20:37.984Z",
         "riskScore": 17
       },
       {
@@ -21666,7 +21578,7 @@
           "switchCount": 0
         },
         "complexityScore": 990,
-        "updatedAt": "2026-08-14T19:24:12.803Z",
+        "updatedAt": "2026-08-18T01:20:37.247Z",
         "riskScore": 52
       },
       {
@@ -21796,7 +21708,7 @@
           "switchCount": 0
         },
         "complexityScore": 448,
-        "updatedAt": "2026-08-14T07:45:59.659Z",
+        "updatedAt": "2026-08-18T01:20:37.566Z",
         "riskScore": 41
       },
       {
@@ -21944,7 +21856,7 @@
           "switchCount": 0
         },
         "complexityScore": 602,
-        "updatedAt": "2026-08-07T16:25:43.394Z",
+        "updatedAt": "2026-08-18T01:20:37.230Z",
         "riskScore": 32
       },
       {
@@ -22195,7 +22107,7 @@
           "switchCount": 1
         },
         "complexityScore": 1653,
-        "updatedAt": "2026-08-14T08:19:41.514Z",
+        "updatedAt": "2026-08-18T01:20:37.375Z",
         "riskScore": 66
       }
     ],
@@ -22251,7 +22163,7 @@
           "switchCount": 0
         },
         "complexityScore": 156,
-        "updatedAt": "2026-08-14T04:58:26.967Z",
+        "updatedAt": "2026-08-18T01:20:37.196Z",
         "riskScore": 67
       },
       {
@@ -22291,15 +22203,15 @@
           "switchCount": 0
         },
         "complexityScore": 721,
-        "updatedAt": "2026-08-14T04:51:25.636Z",
+        "updatedAt": "2026-08-18T01:20:37.146Z",
         "riskScore": 58
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 700447,
-        "hash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
+        "bytes": 687664,
+        "hash": "636cf90ada632d9a8c06e5334882a5b0bf16619474da7e412e745931a3f0c837",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -22388,18 +22300,18 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-14T20:32:19.020Z",
+        "updatedAt": "2026-08-18T05:40:07.765Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 578586,
-        "hash": "295be3b68a89d6491d24093392239a49e2a9e2e0294cafea185cdc4da80b7e65",
+        "bytes": 566918,
+        "hash": "59b47ef8e425f8ea998fc1256df053c7a22d63d9dfde0158985411829e7831cf",
         "lines": {
-          "total": 11783,
-          "code": 11782,
+          "total": 11876,
+          "code": 11875,
           "comments": 0,
           "blanks": 1
         },
@@ -22423,19 +22335,19 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 11806,
-        "updatedAt": "2026-08-14T20:32:21.647Z",
+        "complexityScore": 11899,
+        "updatedAt": "2026-08-18T05:40:09.884Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 852376,
-        "hash": "31b27c1a67dba8430f6417a7564cacf4d9402cf8b67db598664b79dfd679cc6a",
+        "bytes": 840867,
+        "hash": "eed5bf77ce85776af9c7b5944809089bf594bdd84e7e948668957ce175d32e6b",
         "lines": {
-          "total": 19643,
-          "code": 19643,
+          "total": 19736,
+          "code": 19736,
           "comments": 0,
           "blanks": 0
         },
@@ -22461,8 +22373,8 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 19673,
-        "updatedAt": "2026-08-14T20:32:19.020Z",
+        "complexityScore": 19766,
+        "updatedAt": "2026-08-18T05:40:07.772Z",
         "riskScore": 44
       },
       {
@@ -22498,7 +22410,7 @@
           "switchCount": 0
         },
         "complexityScore": 88,
-        "updatedAt": "2026-08-14T04:51:25.253Z",
+        "updatedAt": "2026-08-18T01:20:37.146Z",
         "riskScore": 26
       },
       {
@@ -22571,7 +22483,7 @@
           "switchCount": 0
         },
         "complexityScore": 406,
-        "updatedAt": "2026-08-01T12:44:25.096Z",
+        "updatedAt": "2026-08-18T01:20:37.196Z",
         "riskScore": 35
       },
       {
@@ -22662,7 +22574,7 @@
           "switchCount": 0
         },
         "complexityScore": 370,
-        "updatedAt": "2026-08-01T12:47:05.698Z",
+        "updatedAt": "2026-08-18T01:20:37.230Z",
         "riskScore": 36
       },
       {
@@ -22793,7 +22705,7 @@
           "switchCount": 0
         },
         "complexityScore": 853,
-        "updatedAt": "2026-08-13T11:35:39.522Z",
+        "updatedAt": "2026-08-18T01:20:37.240Z",
         "riskScore": 61
       },
       {
@@ -22847,7 +22759,7 @@
           "switchCount": 0
         },
         "complexityScore": 140,
-        "updatedAt": "2026-08-07T10:46:12.534Z",
+        "updatedAt": "2026-08-18T01:20:37.283Z",
         "riskScore": 32
       },
       {
@@ -22916,7 +22828,7 @@
           "switchCount": 0
         },
         "complexityScore": 178,
-        "updatedAt": "2026-08-01T12:44:26.594Z",
+        "updatedAt": "2026-08-18T01:20:37.346Z",
         "riskScore": 26
       },
       {
@@ -23063,7 +22975,7 @@
           "switchCount": 1
         },
         "complexityScore": 1027,
-        "updatedAt": "2026-08-14T17:27:59.683Z",
+        "updatedAt": "2026-08-18T01:20:37.346Z",
         "riskScore": 61
       },
       {
@@ -23192,7 +23104,7 @@
           "switchCount": 0
         },
         "complexityScore": 563,
-        "updatedAt": "2026-08-01T13:05:27.704Z",
+        "updatedAt": "2026-08-18T01:20:37.375Z",
         "riskScore": 46
       },
       {
@@ -23282,7 +23194,7 @@
           "switchCount": 0
         },
         "complexityScore": 493,
-        "updatedAt": "2026-08-14T12:49:51.981Z",
+        "updatedAt": "2026-08-18T01:20:37.375Z",
         "riskScore": 36
       },
       {
@@ -23533,7 +23445,7 @@
           "switchCount": 1
         },
         "complexityScore": 1653,
-        "updatedAt": "2026-08-14T08:19:41.514Z",
+        "updatedAt": "2026-08-18T01:20:37.375Z",
         "riskScore": 66
       },
       {
@@ -23579,7 +23491,7 @@
           "switchCount": 0
         },
         "complexityScore": 127,
-        "updatedAt": "2026-08-01T12:44:27.275Z",
+        "updatedAt": "2026-08-18T01:20:37.396Z",
         "riskScore": 26
       },
       {
@@ -23682,7 +23594,7 @@
           "switchCount": 0
         },
         "complexityScore": 558,
-        "updatedAt": "2026-08-14T18:20:15.676Z",
+        "updatedAt": "2026-08-18T01:20:37.462Z",
         "riskScore": 41
       },
       {
@@ -23788,7 +23700,7 @@
           "switchCount": 0
         },
         "complexityScore": 1550,
-        "updatedAt": "2026-08-01T12:44:28.531Z",
+        "updatedAt": "2026-08-18T01:20:37.513Z",
         "riskScore": 61
       },
       {
@@ -23918,7 +23830,7 @@
           "switchCount": 0
         },
         "complexityScore": 448,
-        "updatedAt": "2026-08-14T07:45:59.659Z",
+        "updatedAt": "2026-08-18T01:20:37.566Z",
         "riskScore": 41
       },
       {
@@ -24004,7 +23916,7 @@
           "switchCount": 0
         },
         "complexityScore": 528,
-        "updatedAt": "2026-08-06T10:04:27.267Z",
+        "updatedAt": "2026-08-18T01:20:37.897Z",
         "riskScore": 41
       },
       {
@@ -24080,7 +23992,7 @@
           "switchCount": 0
         },
         "complexityScore": 205,
-        "updatedAt": "2026-08-01T12:44:30.565Z",
+        "updatedAt": "2026-08-18T01:20:37.591Z",
         "riskScore": 30
       },
       {
@@ -24262,7 +24174,7 @@
           "switchCount": 0
         },
         "complexityScore": 1525,
-        "updatedAt": "2026-08-14T18:32:21.101Z",
+        "updatedAt": "2026-08-18T01:20:37.591Z",
         "riskScore": 66
       },
       {
@@ -24344,7 +24256,7 @@
           "switchCount": 0
         },
         "complexityScore": 158,
-        "updatedAt": "2026-08-03T02:58:02.475Z",
+        "updatedAt": "2026-08-18T01:20:37.613Z",
         "riskScore": 26
       },
       {
@@ -24398,7 +24310,7 @@
           "switchCount": 1
         },
         "complexityScore": 101,
-        "updatedAt": "2026-08-02T08:18:56.508Z",
+        "updatedAt": "2026-08-18T01:20:37.946Z",
         "riskScore": 26
       },
       {
@@ -24479,7 +24391,7 @@
           "switchCount": 0
         },
         "complexityScore": 438,
-        "updatedAt": "2026-08-07T11:59:46.410Z",
+        "updatedAt": "2026-08-18T01:20:37.950Z",
         "riskScore": 47
       },
       {
@@ -24559,7 +24471,7 @@
           "switchCount": 2
         },
         "complexityScore": 650,
-        "updatedAt": "2026-08-15T03:15:03.742Z",
+        "updatedAt": "2026-08-18T01:20:37.966Z",
         "riskScore": 47
       },
       {
@@ -24735,7 +24647,7 @@
           "switchCount": 1
         },
         "complexityScore": 1576,
-        "updatedAt": "2026-08-07T10:44:21.412Z",
+        "updatedAt": "2026-08-18T01:20:37.996Z",
         "riskScore": 66
       },
       {
@@ -24795,18 +24707,18 @@
           "switchCount": 0
         },
         "complexityScore": 96,
-        "updatedAt": "2026-08-01T12:44:32.392Z",
+        "updatedAt": "2026-08-18T01:20:38.059Z",
         "riskScore": 26
       },
       {
         "path": "lighthouse/report-split/performance.html",
         "extension": ".html",
         "directory": "lighthouse/report-split",
-        "bytes": 25009,
-        "hash": "e87f3a3f6fe44c08a6649f34721fa1b4cd8e753c3b83fbb54ba407dd879c4c00",
+        "bytes": 25452,
+        "hash": "c22f32c41a685c2052fc09e9e5f42de92d2956886deea20f68ff0e7646f14b64",
         "lines": {
-          "total": 623,
-          "code": 621,
+          "total": 631,
+          "code": 629,
           "comments": 1,
           "blanks": 1
         },
@@ -24829,8 +24741,8 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 633,
-        "updatedAt": "2026-08-14T20:32:21.648Z",
+        "complexityScore": 641,
+        "updatedAt": "2026-08-18T05:40:09.885Z",
         "riskScore": 37
       },
       {
@@ -24865,7 +24777,7 @@
           "switchCount": 0
         },
         "complexityScore": 94,
-        "updatedAt": "2026-08-01T12:44:24.738Z",
+        "updatedAt": "2026-08-18T01:20:37.146Z",
         "riskScore": 19
       }
     ],
@@ -24874,8 +24786,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 700447,
-        "hash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
+        "bytes": 687664,
+        "hash": "636cf90ada632d9a8c06e5334882a5b0bf16619474da7e412e745931a3f0c837",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -24964,7 +24876,7 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-14T20:32:19.020Z",
+        "updatedAt": "2026-08-18T05:40:07.765Z",
         "riskScore": 68
       },
       {
@@ -25018,7 +24930,7 @@
           "switchCount": 0
         },
         "complexityScore": 156,
-        "updatedAt": "2026-08-14T04:58:26.967Z",
+        "updatedAt": "2026-08-18T01:20:37.196Z",
         "riskScore": 67
       },
       {
@@ -25269,7 +25181,7 @@
           "switchCount": 1
         },
         "complexityScore": 1653,
-        "updatedAt": "2026-08-14T08:19:41.514Z",
+        "updatedAt": "2026-08-18T01:20:37.375Z",
         "riskScore": 66
       },
       {
@@ -25451,7 +25363,7 @@
           "switchCount": 0
         },
         "complexityScore": 1525,
-        "updatedAt": "2026-08-14T18:32:21.101Z",
+        "updatedAt": "2026-08-18T01:20:37.591Z",
         "riskScore": 66
       },
       {
@@ -25627,7 +25539,7 @@
           "switchCount": 1
         },
         "complexityScore": 1576,
-        "updatedAt": "2026-08-07T10:44:21.412Z",
+        "updatedAt": "2026-08-18T01:20:37.996Z",
         "riskScore": 66
       },
       {
@@ -25758,7 +25670,7 @@
           "switchCount": 0
         },
         "complexityScore": 853,
-        "updatedAt": "2026-08-13T11:35:39.522Z",
+        "updatedAt": "2026-08-18T01:20:37.240Z",
         "riskScore": 61
       },
       {
@@ -25905,7 +25817,7 @@
           "switchCount": 1
         },
         "complexityScore": 1027,
-        "updatedAt": "2026-08-14T17:27:59.683Z",
+        "updatedAt": "2026-08-18T01:20:37.346Z",
         "riskScore": 61
       },
       {
@@ -26011,7 +25923,7 @@
           "switchCount": 0
         },
         "complexityScore": 1550,
-        "updatedAt": "2026-08-01T12:44:28.531Z",
+        "updatedAt": "2026-08-18T01:20:37.513Z",
         "riskScore": 61
       },
       {
@@ -26051,15 +25963,15 @@
           "switchCount": 0
         },
         "complexityScore": 721,
-        "updatedAt": "2026-08-14T04:51:25.636Z",
+        "updatedAt": "2026-08-18T01:20:37.146Z",
         "riskScore": 58
       },
       {
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47324,
-        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
+        "bytes": 47347,
+        "hash": "835f912c19be6f2314f60b70eb3fa0538538da4841d82e17b31cba3478dcae36",
         "lines": {
           "total": 1337,
           "code": 1153,
@@ -26263,7 +26175,7 @@
           "switchCount": 0
         },
         "complexityScore": 1396,
-        "updatedAt": "2026-08-15T02:45:27.671Z",
+        "updatedAt": "2026-08-18T01:36:22.752Z",
         "riskScore": 58
       },
       {
@@ -26439,7 +26351,7 @@
           "switchCount": 0
         },
         "complexityScore": 991,
-        "updatedAt": "2026-08-13T12:22:14.067Z",
+        "updatedAt": "2026-08-18T01:20:37.671Z",
         "riskScore": 58
       },
       {
@@ -26626,7 +26538,7 @@
           "switchCount": 3
         },
         "complexityScore": 1761,
-        "updatedAt": "2026-08-14T18:28:44.681Z",
+        "updatedAt": "2026-08-18T01:20:37.569Z",
         "riskScore": 58
       },
       {
@@ -26817,7 +26729,7 @@
           "switchCount": 2
         },
         "complexityScore": 2043,
-        "updatedAt": "2026-08-14T20:19:00.366Z",
+        "updatedAt": "2026-08-18T01:20:37.579Z",
         "riskScore": 58
       },
       {
@@ -26988,7 +26900,7 @@
           "switchCount": 0
         },
         "complexityScore": 990,
-        "updatedAt": "2026-08-14T19:24:12.803Z",
+        "updatedAt": "2026-08-18T01:20:37.247Z",
         "riskScore": 52
       },
       {
@@ -27118,18 +27030,18 @@
           "switchCount": 0
         },
         "complexityScore": 750,
-        "updatedAt": "2026-08-14T08:19:40.753Z",
+        "updatedAt": "2026-08-18T01:20:37.333Z",
         "riskScore": 52
       },
       {
         "path": "src/components/ui/video-player.tsx",
         "extension": ".tsx",
         "directory": "src/components/ui",
-        "bytes": 57202,
-        "hash": "60ce58c4c65e492e89e86e9d147d79cedde3ad529d878f009b4070b3baaebdb9",
+        "bytes": 57227,
+        "hash": "c15626842bd995f1055d846d508e8cfeb84349cdff556ef697e78ae2f7364fb5",
         "lines": {
-          "total": 1650,
-          "code": 1477,
+          "total": 1649,
+          "code": 1476,
           "comments": 40,
           "blanks": 133
         },
@@ -27279,11 +27191,11 @@
           "tryCount": 24,
           "catchCount": 26,
           "throwCount": 0,
-          "ifCount": 115,
+          "ifCount": 116,
           "switchCount": 1
         },
-        "complexityScore": 1795,
-        "updatedAt": "2026-08-15T03:04:46.667Z",
+        "complexityScore": 1794,
+        "updatedAt": "2026-08-18T01:36:16.214Z",
         "riskScore": 52
       },
       {
@@ -27467,7 +27379,7 @@
           "switchCount": 0
         },
         "complexityScore": 1040,
-        "updatedAt": "2026-08-14T18:32:03.346Z",
+        "updatedAt": "2026-08-18T01:20:37.563Z",
         "riskScore": 52
       },
       {
@@ -27666,7 +27578,7 @@
           "switchCount": 0
         },
         "complexityScore": 991,
-        "updatedAt": "2026-08-14T20:00:11.101Z",
+        "updatedAt": "2026-08-18T01:20:37.575Z",
         "riskScore": 52
       },
       {
@@ -27735,7 +27647,7 @@
           "switchCount": 0
         },
         "complexityScore": 620,
-        "updatedAt": "2026-08-14T07:28:15.784Z",
+        "updatedAt": "2026-08-18T01:20:37.280Z",
         "riskScore": 51
       },
       {
@@ -27842,7 +27754,7 @@
           "switchCount": 0
         },
         "complexityScore": 920,
-        "updatedAt": "2026-08-01T12:44:25.131Z",
+        "updatedAt": "2026-08-18T01:20:37.210Z",
         "riskScore": 47
       },
       {
@@ -27937,7 +27849,7 @@
           "switchCount": 0
         },
         "complexityScore": 561,
-        "updatedAt": "2026-08-01T12:44:27.169Z",
+        "updatedAt": "2026-08-18T01:20:37.396Z",
         "riskScore": 47
       },
       {
@@ -28005,7 +27917,7 @@
           "switchCount": 0
         },
         "complexityScore": 654,
-        "updatedAt": "2026-08-14T20:01:46.328Z",
+        "updatedAt": "2026-08-18T01:20:37.396Z",
         "riskScore": 47
       },
       {
@@ -28139,7 +28051,7 @@
           "switchCount": 0
         },
         "complexityScore": 1438,
-        "updatedAt": "2026-08-03T04:31:13.668Z",
+        "updatedAt": "2026-08-18T01:20:37.928Z",
         "riskScore": 47
       },
       {
@@ -28239,7 +28151,7 @@
           "switchCount": 0
         },
         "complexityScore": 1155,
-        "updatedAt": "2026-08-15T02:40:24.342Z",
+        "updatedAt": "2026-08-18T01:20:37.939Z",
         "riskScore": 47
       },
       {
@@ -28320,7 +28232,7 @@
           "switchCount": 0
         },
         "complexityScore": 438,
-        "updatedAt": "2026-08-07T11:59:46.410Z",
+        "updatedAt": "2026-08-18T01:20:37.950Z",
         "riskScore": 47
       },
       {
@@ -28400,7 +28312,7 @@
           "switchCount": 2
         },
         "complexityScore": 650,
-        "updatedAt": "2026-08-15T03:15:03.742Z",
+        "updatedAt": "2026-08-18T01:20:37.966Z",
         "riskScore": 47
       },
       {
@@ -28746,7 +28658,7 @@
           "switchCount": 0
         },
         "complexityScore": 894,
-        "updatedAt": "2026-08-15T02:45:32.293Z",
+        "updatedAt": "2026-08-18T01:20:37.215Z",
         "riskScore": 46
       },
       {
@@ -28875,7 +28787,7 @@
           "switchCount": 0
         },
         "complexityScore": 563,
-        "updatedAt": "2026-08-01T13:05:27.704Z",
+        "updatedAt": "2026-08-18T01:20:37.375Z",
         "riskScore": 46
       },
       {
@@ -29064,7 +28976,7 @@
           "switchCount": 1
         },
         "complexityScore": 1374,
-        "updatedAt": "2026-08-14T18:32:10.207Z",
+        "updatedAt": "2026-08-18T01:20:37.564Z",
         "riskScore": 46
       },
       {
@@ -29255,7 +29167,7 @@
           "switchCount": 0
         },
         "complexityScore": 884,
-        "updatedAt": "2026-08-14T13:11:37.118Z",
+        "updatedAt": "2026-08-18T01:20:37.566Z",
         "riskScore": 46
       }
     ],
@@ -29433,7 +29345,7 @@
           "switchCount": 1
         },
         "complexityScore": 1576,
-        "updatedAt": "2026-08-07T10:44:21.412Z",
+        "updatedAt": "2026-08-18T01:20:37.996Z",
         "riskScore": 66
       },
       {
@@ -29580,7 +29492,7 @@
           "switchCount": 1
         },
         "complexityScore": 1027,
-        "updatedAt": "2026-08-14T17:27:59.683Z",
+        "updatedAt": "2026-08-18T01:20:37.346Z",
         "riskScore": 61
       },
       {
@@ -29626,7 +29538,7 @@
           "switchCount": 0
         },
         "complexityScore": 155,
-        "updatedAt": "2026-08-01T12:44:32.081Z",
+        "updatedAt": "2026-08-18T01:20:38.032Z",
         "riskScore": 23
       },
       {
@@ -29797,7 +29709,7 @@
           "switchCount": 0
         },
         "complexityScore": 990,
-        "updatedAt": "2026-08-14T19:24:12.803Z",
+        "updatedAt": "2026-08-18T01:20:37.247Z",
         "riskScore": 52
       },
       {
@@ -29863,7 +29775,7 @@
           "switchCount": 0
         },
         "complexityScore": 271,
-        "updatedAt": "2026-08-01T12:44:31.931Z",
+        "updatedAt": "2026-08-18T01:20:38.016Z",
         "riskScore": 23
       },
       {
@@ -29963,7 +29875,7 @@
           "switchCount": 0
         },
         "complexityScore": 1155,
-        "updatedAt": "2026-08-15T02:40:24.342Z",
+        "updatedAt": "2026-08-18T01:20:37.939Z",
         "riskScore": 47
       },
       {
@@ -30036,7 +29948,7 @@
           "switchCount": 0
         },
         "complexityScore": 459,
-        "updatedAt": "2026-08-03T05:50:12.250Z",
+        "updatedAt": "2026-08-18T01:20:38.012Z",
         "riskScore": 22
       },
       {
@@ -30167,7 +30079,7 @@
           "switchCount": 0
         },
         "complexityScore": 853,
-        "updatedAt": "2026-08-13T11:35:39.522Z",
+        "updatedAt": "2026-08-18T01:20:37.240Z",
         "riskScore": 61
       },
       {
@@ -30259,7 +30171,7 @@
           "switchCount": 0
         },
         "complexityScore": 243,
-        "updatedAt": "2026-08-03T03:15:45.906Z",
+        "updatedAt": "2026-08-18T01:20:38.010Z",
         "riskScore": 22
       },
       {
@@ -30393,7 +30305,7 @@
           "switchCount": 0
         },
         "complexityScore": 1438,
-        "updatedAt": "2026-08-03T04:31:13.668Z",
+        "updatedAt": "2026-08-18T01:20:37.928Z",
         "riskScore": 47
       },
       {
@@ -30440,7 +30352,7 @@
           "switchCount": 0
         },
         "complexityScore": 334,
-        "updatedAt": "2026-08-14T05:45:43.038Z",
+        "updatedAt": "2026-08-18T01:20:38.024Z",
         "riskScore": 22
       },
       {
@@ -30570,7 +30482,7 @@
           "switchCount": 0
         },
         "complexityScore": 750,
-        "updatedAt": "2026-08-14T08:19:40.753Z",
+        "updatedAt": "2026-08-18T01:20:37.333Z",
         "riskScore": 52
       },
       {
@@ -30769,15 +30681,15 @@
           "switchCount": 0
         },
         "complexityScore": 991,
-        "updatedAt": "2026-08-14T20:00:11.101Z",
+        "updatedAt": "2026-08-18T01:20:37.575Z",
         "riskScore": 52
       },
       {
         "path": "server/controllers/mediaController.ts",
         "extension": ".ts",
         "directory": "server/controllers",
-        "bytes": 47324,
-        "hash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
+        "bytes": 47347,
+        "hash": "835f912c19be6f2314f60b70eb3fa0538538da4841d82e17b31cba3478dcae36",
         "lines": {
           "total": 1337,
           "code": 1153,
@@ -30981,7 +30893,7 @@
           "switchCount": 0
         },
         "complexityScore": 1396,
-        "updatedAt": "2026-08-15T02:45:27.671Z",
+        "updatedAt": "2026-08-18T01:36:22.752Z",
         "riskScore": 58
       },
       {
@@ -31044,7 +30956,7 @@
           "switchCount": 0
         },
         "complexityScore": 359,
-        "updatedAt": "2026-08-14T08:14:45.167Z",
+        "updatedAt": "2026-08-18T01:20:37.362Z",
         "riskScore": 22
       },
       {
@@ -31159,7 +31071,7 @@
           "switchCount": 0
         },
         "complexityScore": 760,
-        "updatedAt": "2026-08-03T08:23:41.790Z",
+        "updatedAt": "2026-08-18T01:20:37.559Z",
         "riskScore": 41
       },
       {
@@ -31201,7 +31113,7 @@
           "switchCount": 0
         },
         "complexityScore": 185,
-        "updatedAt": "2026-08-01T12:44:22.704Z",
+        "updatedAt": "2026-08-18T01:20:37.112Z",
         "riskScore": 22
       },
       {
@@ -31243,7 +31155,7 @@
           "switchCount": 0
         },
         "complexityScore": 185,
-        "updatedAt": "2026-08-01T12:44:22.717Z",
+        "updatedAt": "2026-08-18T01:20:37.112Z",
         "riskScore": 22
       },
       {
@@ -31369,7 +31281,7 @@
           "switchCount": 0
         },
         "complexityScore": 626,
-        "updatedAt": "2026-08-14T08:19:41.332Z",
+        "updatedAt": "2026-08-18T01:20:37.362Z",
         "riskScore": 40
       },
       {
@@ -31442,7 +31354,7 @@
           "switchCount": 0
         },
         "complexityScore": 250,
-        "updatedAt": "2026-08-14T06:50:39.149Z",
+        "updatedAt": "2026-08-18T01:20:37.623Z",
         "riskScore": 16
       },
       {
@@ -31500,7 +31412,7 @@
           "switchCount": 0
         },
         "complexityScore": 337,
-        "updatedAt": "2026-08-14T08:13:34.630Z",
+        "updatedAt": "2026-08-18T01:20:37.333Z",
         "riskScore": 22
       },
       {
@@ -31559,7 +31471,7 @@
           "switchCount": 0
         },
         "complexityScore": 330,
-        "updatedAt": "2026-08-15T02:49:20.628Z",
+        "updatedAt": "2026-08-18T01:20:37.983Z",
         "riskScore": 22
       },
       {
@@ -31905,7 +31817,7 @@
           "switchCount": 0
         },
         "complexityScore": 894,
-        "updatedAt": "2026-08-15T02:45:32.293Z",
+        "updatedAt": "2026-08-18T01:20:37.215Z",
         "riskScore": 46
       },
       {
@@ -31982,7 +31894,7 @@
           "switchCount": 0
         },
         "complexityScore": 390,
-        "updatedAt": "2026-08-03T02:57:58.566Z",
+        "updatedAt": "2026-08-18T01:20:37.419Z",
         "riskScore": 27
       },
       {
@@ -32132,20 +32044,20 @@
           "switchCount": 0
         },
         "complexityScore": 1016,
-        "updatedAt": "2026-08-03T10:05:40.127Z",
+        "updatedAt": "2026-08-18T01:20:37.479Z",
         "riskScore": 41
       },
       {
         "path": "src/features/vault/ChatVault.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault",
-        "bytes": 30532,
-        "hash": "5e20d4752fc262411899bd27212d129320c102e9fb8b900347ce3a10f576f6af",
+        "bytes": 30366,
+        "hash": "80afa0e23e21b34f5f633359e72557c407ce5a8e305bc07776ecead9e31c4059",
         "lines": {
-          "total": 947,
-          "code": 849,
+          "total": 943,
+          "code": 846,
           "comments": 0,
-          "blanks": 98
+          "blanks": 97
         },
         "imports": [
           "import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';",
@@ -32279,8 +32191,8 @@
           "ifCount": 55,
           "switchCount": 0
         },
-        "complexityScore": 912,
-        "updatedAt": "2026-08-06T06:06:23.587Z",
+        "complexityScore": 909,
+        "updatedAt": "2026-08-18T02:44:06.766Z",
         "riskScore": 41
       },
       {
@@ -32449,7 +32361,7 @@
           "switchCount": 0
         },
         "complexityScore": 721,
-        "updatedAt": "2026-08-06T04:11:24.467Z",
+        "updatedAt": "2026-08-18T01:20:37.571Z",
         "riskScore": 46
       },
       {
@@ -32522,7 +32434,7 @@
           "switchCount": 0
         },
         "complexityScore": 413,
-        "updatedAt": "2026-08-15T02:40:30.340Z",
+        "updatedAt": "2026-08-18T01:20:37.934Z",
         "riskScore": 33
       },
       {
@@ -32573,7 +32485,7 @@
           "switchCount": 0
         },
         "complexityScore": 60,
-        "updatedAt": "2026-08-01T12:44:32.354Z",
+        "updatedAt": "2026-08-18T01:20:38.055Z",
         "riskScore": 12
       },
       {
@@ -32721,7 +32633,7 @@
           "switchCount": 0
         },
         "complexityScore": 602,
-        "updatedAt": "2026-08-07T16:25:43.394Z",
+        "updatedAt": "2026-08-18T01:20:37.230Z",
         "riskScore": 32
       }
     ]
@@ -35976,162 +35888,27 @@
     "totals": {
       "filesWithInboundLinks": 30,
       "filesWithOutboundLinks": 30,
-      "missingRelativeTargets": 736
+      "missingRelativeTargets": 738
     }
   },
   "changes": {
     "hasPreviousIndex": true,
-    "previousGeneratedAt": "2026-08-14T20:31:25.416Z",
+    "previousGeneratedAt": "2026-08-18T05:40:48.021Z",
     "counts": {
       "added": 0,
       "removed": 0,
-      "changed": 16,
-      "unchanged": 453
+      "changed": 1,
+      "unchanged": 469
     },
     "added": [],
     "removed": [],
     "changed": [
       {
-        "path": "lighthouse/report.report.json",
-        "previousHash": "7ccdaf2e9b6d024063acd11858ca8ef58825a18bf23e5936af0a70bd5161055f",
-        "currentHash": "31b27c1a67dba8430f6417a7564cacf4d9402cf8b67db598664b79dfd679cc6a",
-        "previousLines": 19758,
-        "currentLines": 19643,
-        "deltaLines": -115,
-        "deltaSymbols": -1
-      },
-      {
-        "path": "lighthouse/report-split/performance.json",
-        "previousHash": "7455085e1be5c78e7974925c80fefd73661a560f9ba2ecb1f8ca6887d48ecb65",
-        "currentHash": "295be3b68a89d6491d24093392239a49e2a9e2e0294cafea185cdc4da80b7e65",
-        "previousLines": 11891,
-        "currentLines": 11783,
-        "deltaLines": -108,
-        "deltaSymbols": -1
-      },
-      {
-        "path": "src/components/ui/video-player.tsx",
-        "previousHash": "830c327544640a4aae16cf35c6bec517d78bb0c01df702f2e4473b746a90a708",
-        "currentHash": "60ce58c4c65e492e89e86e9d147d79cedde3ad529d878f009b4070b3baaebdb9",
-        "previousLines": 1617,
-        "currentLines": 1650,
-        "deltaLines": 33,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/lib/filePreview.ts",
-        "previousHash": "8b9e45f39fe60bc0573d3d8af4d61ac686055e7ba4037fedf7d16defea7b83d2",
-        "currentHash": "4765822ee8f93257751997bc7e899b633e60834f6aff537d40212236b2a70eed",
-        "previousLines": 1057,
-        "currentLines": 1085,
-        "deltaLines": 28,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "lighthouse/report-split/performance.html",
-        "previousHash": "fe5ca9e3d9a00021960bbc30f39aa16c3160d257fb03057ec3ef90892d54e1d1",
-        "currentHash": "e87f3a3f6fe44c08a6649f34721fa1b4cd8e753c3b83fbb54ba407dd879c4c00",
-        "previousLines": 647,
-        "currentLines": 623,
-        "deltaLines": -24,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/lib/videoTranscoder.ts",
-        "previousHash": "927426bab34269948fb9706ea81f12e2be39767e6ee51619a3d157aa1a2c40f9",
-        "currentHash": "46109af186876e037d14bed99c620cc548081266c1be67f5a94c870fea01e6e1",
-        "previousLines": 326,
-        "currentLines": 345,
-        "deltaLines": 19,
-        "deltaSymbols": 1
-      },
-      {
-        "path": "src/lib/cryptoPrimitives.ts",
-        "previousHash": "7d0efcf81f94eb1df0682700f39d326dcbda727ba4222e0959d44651ed55345c",
-        "currentHash": "69b29b0dae7940acf3d72fc1fea8fb1f0dc0a0aab79a071b5f866f5731db53fd",
-        "previousLines": 382,
-        "currentLines": 395,
-        "deltaLines": 13,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/lib/encryption.ts",
-        "previousHash": "b485a3f5cabf4ddb69bf4fe9dfd213ef03425788f5b8f4644000cd7eb75c4d4d",
-        "currentHash": "a6cf0ad2456b57f88ae8fed22fac0dec0bcc2c93df568d5364f57539b642d6c7",
-        "previousLines": 1227,
-        "currentLines": 1237,
-        "deltaLines": 10,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/lib/sync/itemCodec.ts",
-        "previousHash": "7899f4dc828594adc0c5ef5f62f0ffdc1ed5f76c54001f7575d29377bfc303f4",
-        "currentHash": "8ff393b3928a42deae68e3bb2d51e3ff0bad61ee791a4619d5fc633fada78465",
-        "previousLines": 589,
-        "currentLines": 599,
-        "deltaLines": 10,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/store/notificationStore.ts",
-        "previousHash": "2df287c10811f9bf4895d39dfd963a37c6ca5efb2865ec4b052dbb04c91ade4f",
-        "currentHash": "5c497e46c45cf85b4443570b94bf387737b99063bd94707826085e817950c8cd",
-        "previousLines": 126,
-        "currentLines": 133,
-        "deltaLines": 7,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "lighthouse/report-split/accessibility.json",
-        "previousHash": "2ff86803de990bbef9de086127a814b8e49c0adb05a8938419f46a9472d879c1",
-        "currentHash": "eaeabccba68d7f20f4534afc71ef0a9081ae2d70041b8a7eb58297bab9228e8e",
-        "previousLines": 1193,
-        "currentLines": 1193,
-        "deltaLines": 0,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "lighthouse/report-split/best-practices.json",
-        "previousHash": "cf389bc1a7f6700f9cacba3d6aa47317b19511a76c85a30f7a0c36b22d2c4c45",
-        "currentHash": "6f537b9275e8b014a301e0eddf70b74bebb03394e81c83be4ff305776a27951b",
-        "previousLines": 1963,
-        "currentLines": 1963,
-        "deltaLines": 0,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "lighthouse/report-split/seo.json",
-        "previousHash": "966b277b1b75cda24287b29c837219eda1d8b6f7f80aaef5464838d4e1f95b2b",
-        "currentHash": "38545efa19506554875a758caef284b4f29dfc17eef393aec481872e8af01a83",
-        "previousLines": 242,
-        "currentLines": 242,
-        "deltaLines": 0,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "lighthouse/report.report.html",
-        "previousHash": "b12eb775226a25536f423ca93ef5c0006b7f61ec6ce3aa0d12881601c01715e9",
-        "currentHash": "caec278f36ac93be48d01af8b11a196fc623e44502b3a9fba027452004afca80",
-        "previousLines": 2894,
-        "currentLines": 2894,
-        "deltaLines": 0,
-        "deltaSymbols": -1
-      },
-      {
-        "path": "server.ts",
-        "previousHash": "8815d34fcc6811657116ee1010f4f336d6725fff357e11a3bada61af9e49718b",
-        "currentHash": "69c3aa9c26ed7b11bbcf8ea88ab9d34c7dedc5e41aea95294181ddef960312e7",
-        "previousLines": 758,
-        "currentLines": 758,
-        "deltaLines": 0,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/controllers/mediaController.ts",
-        "previousHash": "d05416d8317cd190429d62ec15b4fe10bf6b482320fbcacdaf85a387e67ecc03",
-        "currentHash": "64f5de49315d464cf6100067d43d8f7b65bd23bf929c99cd903f85cf2fabf93f",
-        "previousLines": 1337,
-        "currentLines": 1337,
+        "path": "package.json",
+        "previousHash": "bdbcbd1106d8e43329aa77090422fbd8daf16548b7b9ebb0197da3a71a673ed8",
+        "currentHash": "0d9b5d5c1a7434fb8477d36a784d193babdaf21ba3a67bc3b27167ff42efb84f",
+        "previousLines": 274,
+        "currentLines": 274,
         "deltaLines": 0,
         "deltaSymbols": 0
       }
@@ -36146,8 +35923,15 @@
       "fix.cjs",
       "fix.js",
       "lighthouse/report-split/accessibility.html",
+      "lighthouse/report-split/accessibility.json",
       "lighthouse/report-split/best-practices.html",
+      "lighthouse/report-split/best-practices.json",
+      "lighthouse/report-split/performance.html",
+      "lighthouse/report-split/performance.json",
       "lighthouse/report-split/seo.html",
+      "lighthouse/report-split/seo.json",
+      "lighthouse/report.report.html",
+      "lighthouse/report.report.json",
       "md/DEPLOYMENT_SECURITY_GUIDE.md",
       "md/FIXED_IT.md",
       "md/IMPLEMENTATION_CHECKLIST.md",
@@ -36160,7 +35944,6 @@
       "md/SENTRY_INTEGRATION.md",
       "metadata.json",
       "overload.html",
-      "package.json",
       "public/dashboard.svg",
       "public/favicon-dark.svg",
       "public/favicon.svg",
@@ -36192,6 +35975,7 @@
       "scripts/vitest-related.mjs",
       "scripts/zip-prod.mjs",
       "SECURITY.md",
+      "server.ts",
       "server/boot/logger/colors.ts",
       "server/boot/logger/console.ts",
       "server/boot/logger/health.ts",
@@ -36206,6 +35990,7 @@
       "server/controllers/healthController.ts",
       "server/controllers/legacyVaultController.ts",
       "server/controllers/masterKeyController.ts",
+      "server/controllers/mediaController.ts",
       "server/controllers/tusController.ts",
       "server/controllers/twoFactorController.ts",
       "server/controllers/vaultController.ts",
@@ -36336,6 +36121,7 @@
       "src/components/ui/SearchInput.tsx",
       "src/components/ui/Toaster.tsx",
       "src/components/ui/video-player.test.tsx",
+      "src/components/ui/video-player.tsx",
       "src/components/ui/VoiceInput.tsx",
       "src/components/vault/__tests__/TagManager.test.tsx",
       "src/components/vault/ActivityDetailsModal.tsx",
@@ -36495,10 +36281,13 @@
       "src/lib/cloudMasterKey.ts",
       "src/lib/cloudMasterKeyApi.ts",
       "src/lib/cookie-utils.ts",
+      "src/lib/cryptoPrimitives.ts",
       "src/lib/csrf.ts",
       "src/lib/deviceFingerprint.ts",
+      "src/lib/encryption.ts",
       "src/lib/error-handler.ts",
       "src/lib/fileHandling.ts",
+      "src/lib/filePreview.ts",
       "src/lib/folderGuards.ts",
       "src/lib/fuzzy.ts",
       "src/lib/global-navigation.ts",
@@ -36517,6 +36306,7 @@
       "src/lib/sync/chunkUpload.ts",
       "src/lib/sync/core.ts",
       "src/lib/sync/downloads.ts",
+      "src/lib/sync/itemCodec.ts",
       "src/lib/sync/itemUploads.ts",
       "src/lib/sync/media.ts",
       "src/lib/sync/settingsSync.ts",
@@ -36529,6 +36319,7 @@
       "src/lib/vaultItemContent.ts",
       "src/lib/vaultKeyCheck.ts",
       "src/lib/vaultKeyRotation.ts",
+      "src/lib/videoTranscoder.ts",
       "src/main.tsx",
       "src/security/securityIntegration.test.tsx",
       "src/security/securityIntegration.tsx",
@@ -36536,6 +36327,7 @@
       "src/setupTests.ts",
       "src/store/activityStore.ts",
       "src/store/globalNavigationStore.ts",
+      "src/store/notificationStore.ts",
       "src/store/themeStore.ts",
       "src/store/vaultStore.ts",
       "src/vite-env.d.ts",
@@ -36580,6 +36372,7 @@
       "tests/unit/sync-download-corruption.test.ts",
       "tests/unit/sync-ensure-auth.test.ts",
       "tests/unit/sync-upload-privacy.test.ts",
+      "tests/unit/theme-provider.test.tsx",
       "tests/unit/total-user-mirror.test.ts",
       "tests/unit/upload-validation.test.ts",
       "tests/unit/vault-drag-drop.test.ts",
@@ -36821,13 +36614,13 @@
       "path": "lighthouse/report-split/performance.html",
       "extension": ".html",
       "lines": {
-        "total": 623,
-        "code": 621,
+        "total": 631,
+        "code": 629,
         "comments": 1,
         "blanks": 1
       },
       "symbolCount": 0,
-      "complexityScore": 633,
+      "complexityScore": 641,
       "riskScore": 37,
       "tagCount": 1,
       "tags": [
@@ -36842,13 +36635,13 @@
       "path": "lighthouse/report-split/performance.json",
       "extension": ".json",
       "lines": {
-        "total": 11783,
-        "code": 11782,
+        "total": 11876,
+        "code": 11875,
         "comments": 0,
         "blanks": 1
       },
       "symbolCount": 0,
-      "complexityScore": 11806,
+      "complexityScore": 11899,
       "riskScore": 44,
       "tagCount": 2,
       "tags": [
@@ -36926,13 +36719,13 @@
       "path": "lighthouse/report.report.json",
       "extension": ".json",
       "lines": {
-        "total": 19643,
-        "code": 19643,
+        "total": 19736,
+        "code": 19736,
         "comments": 0,
         "blanks": 0
       },
       "symbolCount": 1,
-      "complexityScore": 19673,
+      "complexityScore": 19766,
       "riskScore": 44,
       "tagCount": 2,
       "tags": [
@@ -37183,13 +36976,13 @@
       "path": "package.json",
       "extension": ".json",
       "lines": {
-        "total": 276,
-        "code": 275,
+        "total": 274,
+        "code": 273,
         "comments": 0,
         "blanks": 1
       },
       "symbolCount": 0,
-      "complexityScore": 287,
+      "complexityScore": 285,
       "riskScore": 23,
       "tagCount": 1,
       "tags": [
@@ -37340,13 +37133,13 @@
       "path": "README.md",
       "extension": ".md",
       "lines": {
-        "total": 354,
-        "code": 279,
+        "total": 458,
+        "code": 357,
         "comments": 1,
-        "blanks": 74
+        "blanks": 100
       },
       "symbolCount": 2,
-      "complexityScore": 303,
+      "complexityScore": 381,
       "riskScore": 29,
       "tagCount": 1,
       "tags": [
@@ -38880,14 +38673,14 @@
       "path": "server/mongo.ts",
       "extension": ".ts",
       "lines": {
-        "total": 279,
-        "code": 233,
+        "total": 308,
+        "code": 262,
         "comments": 7,
         "blanks": 39
       },
-      "symbolCount": 13,
-      "complexityScore": 320,
-      "riskScore": 35,
+      "symbolCount": 15,
+      "complexityScore": 361,
+      "riskScore": 41,
       "tagCount": 0,
       "tags": [],
       "topSignals": [
@@ -38895,7 +38688,7 @@
         "dotenv",
         "mongoose",
         "getEnvValue",
-        "isSrvResolutionError"
+        "resolveDatabaseName"
       ],
       "importCount": 3
     },
@@ -40821,13 +40614,13 @@
       "path": "src/components/layout/Sidebar.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 340,
-        "code": 311,
-        "comments": 7,
-        "blanks": 22
+        "total": 381,
+        "code": 349,
+        "comments": 8,
+        "blanks": 24
       },
-      "symbolCount": 3,
-      "complexityScore": 350,
+      "symbolCount": 5,
+      "complexityScore": 400,
       "riskScore": 22,
       "tagCount": 0,
       "tags": [],
@@ -40913,22 +40706,22 @@
       "path": "src/components/ThemeProvider.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 222,
-        "code": 172,
-        "comments": 14,
-        "blanks": 36
+        "total": 322,
+        "code": 243,
+        "comments": 18,
+        "blanks": 61
       },
-      "symbolCount": 3,
-      "complexityScore": 196,
-      "riskScore": 16,
+      "symbolCount": 8,
+      "complexityScore": 297,
+      "riskScore": 22,
       "tagCount": 0,
       "tags": [],
       "topSignals": [
         "react",
         "../store/themeStore",
+        "Window",
         "ThemeProvider",
-        "handleGlobalClick",
-        "handleChange"
+        "recordCoords"
       ],
       "importCount": 2
     },
@@ -41152,13 +40945,13 @@
       "path": "src/components/ui/video-player.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 1650,
-        "code": 1477,
+        "total": 1649,
+        "code": 1476,
         "comments": 40,
         "blanks": 133
       },
       "symbolCount": 48,
-      "complexityScore": 1795,
+      "complexityScore": 1794,
       "riskScore": 52,
       "tagCount": 0,
       "tags": [],
@@ -41246,13 +41039,13 @@
       "path": "src/components/vault/AutoLockCountdownOverlay.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 81,
-        "code": 72,
+        "total": 94,
+        "code": 85,
         "comments": 0,
         "blanks": 9
       },
       "symbolCount": 2,
-      "complexityScore": 96,
+      "complexityScore": 109,
       "riskScore": 12,
       "tagCount": 0,
       "tags": [],
@@ -41527,13 +41320,13 @@
       "path": "src/components/vault/NoteEditor/editorUtils.ts",
       "extension": ".ts",
       "lines": {
-        "total": 41,
-        "code": 33,
+        "total": 53,
+        "code": 45,
         "comments": 0,
         "blanks": 8
       },
       "symbolCount": 5,
-      "complexityScore": 66,
+      "complexityScore": 78,
       "riskScore": 12,
       "tagCount": 0,
       "tags": [],
@@ -41573,13 +41366,13 @@
       "path": "src/components/vault/NoteEditor/NoteEditorPreview.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 586,
-        "code": 467,
+        "total": 592,
+        "code": 473,
         "comments": 32,
         "blanks": 87
       },
       "symbolCount": 8,
-      "complexityScore": 548,
+      "complexityScore": 554,
       "riskScore": 27,
       "tagCount": 0,
       "tags": [],
@@ -41596,13 +41389,13 @@
       "path": "src/components/vault/NoteEditor/NoteEditorTextarea.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 319,
-        "code": 285,
+        "total": 321,
+        "code": 287,
         "comments": 0,
         "blanks": 34
       },
       "symbolCount": 2,
-      "complexityScore": 318,
+      "complexityScore": 320,
       "riskScore": 29,
       "tagCount": 1,
       "tags": [
@@ -41782,13 +41575,13 @@
       "path": "src/components/vault/ScrollButton.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 31,
-        "code": 29,
+        "total": 53,
+        "code": 49,
         "comments": 0,
-        "blanks": 2
+        "blanks": 4
       },
       "symbolCount": 0,
-      "complexityScore": 38,
+      "complexityScore": 58,
       "riskScore": 12,
       "tagCount": 0,
       "tags": [],
@@ -42054,13 +41847,13 @@
       "path": "src/features/vault/__tests__/SettingsVault/MaintenanceCard.test.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 164,
-        "code": 115,
+        "total": 191,
+        "code": 139,
         "comments": 3,
-        "blanks": 46
+        "blanks": 49
       },
       "symbolCount": 1,
-      "complexityScore": 130,
+      "complexityScore": 154,
       "riskScore": 16,
       "tagCount": 0,
       "tags": [],
@@ -42098,13 +41891,13 @@
       "path": "src/features/vault/__tests__/SettingsVault/ProfileCard.test.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 172,
-        "code": 140,
+        "total": 190,
+        "code": 156,
         "comments": 1,
-        "blanks": 31
+        "blanks": 33
       },
       "symbolCount": 0,
-      "complexityScore": 152,
+      "complexityScore": 168,
       "riskScore": 16,
       "tagCount": 0,
       "tags": [],
@@ -42275,13 +42068,13 @@
       "path": "src/features/vault/ChatVault.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 947,
-        "code": 849,
+        "total": 943,
+        "code": 846,
         "comments": 0,
-        "blanks": 98
+        "blanks": 97
       },
       "symbolCount": 3,
-      "complexityScore": 912,
+      "complexityScore": 909,
       "riskScore": 41,
       "tagCount": 0,
       "tags": [],
@@ -42298,13 +42091,13 @@
       "path": "src/features/vault/components/ChatVault/ChatConversationPanel.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 792,
-        "code": 744,
-        "comments": 0,
-        "blanks": 48
+        "total": 930,
+        "code": 864,
+        "comments": 4,
+        "blanks": 62
       },
       "symbolCount": 2,
-      "complexityScore": 780,
+      "complexityScore": 900,
       "riskScore": 30,
       "tagCount": 0,
       "tags": [],
@@ -42321,13 +42114,13 @@
       "path": "src/features/vault/components/ChatVault/ChatListPanel.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 294,
-        "code": 281,
+        "total": 295,
+        "code": 282,
         "comments": 0,
         "blanks": 13
       },
       "symbolCount": 2,
-      "complexityScore": 320,
+      "complexityScore": 321,
       "riskScore": 21,
       "tagCount": 0,
       "tags": [],
@@ -42719,13 +42512,13 @@
       "path": "src/features/vault/components/LocationVault/LocationList.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 263,
-        "code": 254,
+        "total": 264,
+        "code": 255,
         "comments": 0,
         "blanks": 9
       },
       "symbolCount": 2,
-      "complexityScore": 290,
+      "complexityScore": 291,
       "riskScore": 16,
       "tagCount": 0,
       "tags": [],
@@ -42742,13 +42535,13 @@
       "path": "src/features/vault/components/LocationVault/LocationViewer.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 748,
-        "code": 723,
+        "total": 749,
+        "code": 724,
         "comments": 1,
         "blanks": 24
       },
       "symbolCount": 5,
-      "complexityScore": 780,
+      "complexityScore": 781,
       "riskScore": 35,
       "tagCount": 0,
       "tags": [],
@@ -42950,13 +42743,13 @@
       "path": "src/features/vault/components/NotesVault/NoteViewer.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 784,
-        "code": 740,
+        "total": 785,
+        "code": 741,
         "comments": 8,
         "blanks": 36
       },
       "symbolCount": 9,
-      "complexityScore": 851,
+      "complexityScore": 852,
       "riskScore": 42,
       "tagCount": 1,
       "tags": [
@@ -43173,14 +42966,14 @@
       "path": "src/features/vault/components/SettingsVault/MaintenanceCard.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 348,
-        "code": 335,
+        "total": 469,
+        "code": 448,
         "comments": 0,
-        "blanks": 13
+        "blanks": 21
       },
-      "symbolCount": 6,
-      "complexityScore": 383,
-      "riskScore": 22,
+      "symbolCount": 14,
+      "complexityScore": 544,
+      "riskScore": 27,
       "tagCount": 0,
       "tags": [],
       "topSignals": [
@@ -43244,13 +43037,13 @@
       "path": "src/features/vault/components/SettingsVault/ProfileCard.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 627,
-        "code": 593,
+        "total": 866,
+        "code": 827,
         "comments": 8,
-        "blanks": 26
+        "blanks": 31
       },
       "symbolCount": 9,
-      "complexityScore": 671,
+      "complexityScore": 905,
       "riskScore": 30,
       "tagCount": 0,
       "tags": [],
@@ -44478,14 +44271,14 @@
       "path": "src/index.css",
       "extension": ".css",
       "lines": {
-        "total": 561,
-        "code": 481,
-        "comments": 22,
-        "blanks": 58
+        "total": 638,
+        "code": 549,
+        "comments": 24,
+        "blanks": 65
       },
       "symbolCount": 0,
-      "complexityScore": 490,
-      "riskScore": 22,
+      "complexityScore": 558,
+      "riskScore": 30,
       "tagCount": 0,
       "tags": [],
       "topSignals": [
@@ -46474,13 +46267,13 @@
       "path": "tests/unit/env.test.ts",
       "extension": ".ts",
       "lines": {
-        "total": 216,
-        "code": 153,
+        "total": 231,
+        "code": 166,
         "comments": 14,
-        "blanks": 49
+        "blanks": 51
       },
       "symbolCount": 3,
-      "complexityScore": 180,
+      "complexityScore": 193,
       "riskScore": 16,
       "tagCount": 0,
       "tags": [],
@@ -46834,6 +46627,29 @@
         "../../src/lib/storage.ts",
         "../../src/lib/cryptoPrimitives.ts",
         "../../src/lib/auth-session.ts"
+      ],
+      "importCount": 5
+    },
+    {
+      "path": "tests/unit/theme-provider.test.tsx",
+      "extension": ".tsx",
+      "lines": {
+        "total": 83,
+        "code": 65,
+        "comments": 0,
+        "blanks": 18
+      },
+      "symbolCount": 2,
+      "complexityScore": 92,
+      "riskScore": 12,
+      "tagCount": 0,
+      "tags": [],
+      "topSignals": [
+        "react",
+        "vitest",
+        "@testing-library/react",
+        "../../src/components/ThemeProvider",
+        "../../src/store/themeStore"
       ],
       "importCount": 5
     },

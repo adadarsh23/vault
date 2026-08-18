@@ -4,8 +4,6 @@ import mongoose from 'mongoose';
 
 dotenv.config();
 
-const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME?.trim() || 'vault';
-
 const getEnvValue = (...keys: string[]): string | undefined => {
   for (const key of keys) {
     const value = process.env[key]?.trim();
@@ -17,21 +15,52 @@ const getEnvValue = (...keys: string[]): string | undefined => {
   return undefined;
 };
 
-const primaryUri = getEnvValue('MONGODB_URI', 'MONGODB_URL');
-// A direct Atlas URI must use mongodb:// with the three replica-set hosts.
-// mongodb+srv:// is not a fallback when SRV DNS is unavailable.
-const directFallbackUri = getEnvValue(
-  'MONGODB_URI_DIRECT',
-  'MONGODB_URI_FALLBACK',
-  'MONGODB_URL_FALLBACK'
-);
-const fallbackUri = directFallbackUri?.startsWith('mongodb://') ? directFallbackUri : undefined;
-const retryDnsServers = process.env.MONGODB_DNS_SERVERS?.split(',')
+const resolveDatabaseName = (mongoUri?: string): string => {
+  const configured = getEnvValue('MONGODB_DB_NAME', 'MONGODB_DB', 'MONGO_DB_NAME', 'MONGO_DB');
+  // 'admin' is MongoDB's internal auth/system database, not an application data database
+  if (configured && configured.toLowerCase() !== 'admin') {
+    return configured;
+  }
+  if (mongoUri) {
+    try {
+      const match = mongoUri.match(/(?:mongodb(?:\+srv)?:\/\/[^\/]+\/)([^?\/]+)/i);
+      if (match && match[1] && match[1].toLowerCase() !== 'admin') {
+        return match[1].trim();
+      }
+    } catch {
+      // ignore parsing errors
+    }
+  }
+  return 'vault';
+};
+
+const primaryUri = getEnvValue('MONGODB_URI', 'MONGODB_URL', 'MONGO_URI', 'MONGO_URL');
+const configuredFallbackUris = [
+  process.env.MONGODB_URI_DIRECT,
+  process.env.MONGODB_URI_FALLBACK,
+  process.env.MONGODB_URL_FALLBACK,
+  process.env.MONGO_URI_FALLBACK,
+  process.env.MONGO_URL_FALLBACK,
+  process.env.MONGODB_URI_1,
+  process.env.MONGODB_URI_2,
+  process.env.MONGODB_URI_3,
+]
+  .map((value) => value?.trim())
+  .filter((value): value is string =>
+    Boolean(value && (value.startsWith('mongodb://') || value.startsWith('mongodb+srv://')))
+  );
+
+const retryDnsServers = (
+  process.env.MONGODB_DNS_RETRY_SERVERS ||
+  process.env.MONGODB_DNS_SERVERS ||
+  '1.1.1.1,8.8.8.8'
+)
+  .split(',')
   .map((value) => value.trim())
-  .filter(Boolean) || ['1.1.1.1', '8.8.8.8'];
+  .filter(Boolean);
 
 if (!primaryUri) {
-  throw new Error('MONGODB_URI or MONGODB_URL is required in environment variables.');
+  throw new Error('MONGODB_URI (or MONGO_URI / MONGODB_URL) is required in environment variables.');
 }
 
 let connectionPromise: Promise<typeof mongoose> | null = null;
@@ -77,8 +106,9 @@ const connectWithUri = async (mongoUri: string): Promise<typeof mongoose> => {
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
   }
+  const dbName = resolveDatabaseName(mongoUri);
   const connection = await mongoose.connect(mongoUri, {
-    dbName: MONGODB_DB_NAME,
+    dbName,
     autoIndex: process.env.NODE_ENV !== 'production',
     serverSelectionTimeoutMS: 10_000,
     maxPoolSize: 20,
@@ -88,9 +118,10 @@ const connectWithUri = async (mongoUri: string): Promise<typeof mongoose> => {
 };
 
 const canConnectToUri = async (mongoUri: string): Promise<boolean> => {
+  const dbName = resolveDatabaseName(mongoUri);
   const probe = await mongoose
     .createConnection(mongoUri, {
-      dbName: MONGODB_DB_NAME,
+      dbName,
       autoIndex: false,
       serverSelectionTimeoutMS: 10_000,
       maxPoolSize: 5,
@@ -106,24 +137,18 @@ const canConnectToUri = async (mongoUri: string): Promise<boolean> => {
 };
 
 const buildUriCandidates = (): string[] => {
-  const candidates = [currentUri, primaryUri, fallbackUri]
+  const candidates = [currentUri, primaryUri, ...configuredFallbackUris]
     .filter((value): value is string => Boolean(value))
     .map((value) => value.trim());
 
   // Do not silently downgrade cloud vault storage to a local database.
   // Local fallback is explicitly opt-in for development only.
   if (process.env.MONGODB_ALLOW_LOCAL_FALLBACK === 'true') {
-    candidates.push(`mongodb://127.0.0.1:27017/${MONGODB_DB_NAME}`);
+    candidates.push(`mongodb://127.0.0.1:27017/${resolveDatabaseName(primaryUri)}`);
   }
 
   return [...new Set(candidates)];
 };
-
-if (directFallbackUri?.startsWith('mongodb+srv://')) {
-  console.warn(
-    'Ignoring MONGODB_URI_FALLBACK because it is mongodb+srv://. Configure MONGODB_URI_DIRECT with a direct Atlas replica-set URI.'
-  );
-}
 
 export const isStorageFullError = (error: unknown): boolean => {
   const candidate = error as {
@@ -223,6 +248,10 @@ export const connectToMongo = async (): Promise<typeof mongoose> => {
           return connection;
         } catch (error) {
           lastError = error;
+          const errMsg = error instanceof Error ? error.message : String(error);
+          console.warn(
+            `[MONGO] Candidate #${index + 1} connection failed (${errMsg}). Trying next candidate...`
+          );
 
           if (candidate === primaryUri && isSrvResolutionError(error) && applyDnsRetryServers()) {
             try {

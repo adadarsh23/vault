@@ -147,81 +147,185 @@ The platform implements an automated asset pipeline designed for fast load times
 
 ## ⚙️ Environment Configuration
 
-Copy `.env.example` to `.env` in the project root:
+The application uses environment variables for security, database connectivity, CORS policies, rate limiting, and observability. Three environment files are provided:
+
+- **`.env`**: Active configuration file loaded at runtime by the server and client.
+- **`.env.example`**: Clean template with placeholders and descriptive comments for developers.
+- **`.env.production.example`**: Complete reference configuration for Render Production (`https://my-vault-cic6.onrender.com`).
+
+### Quick Start Setup
+
+#### Local Development
 
 ```bash
+# Copy template to .env
 cp .env.example .env
+
+# Edit .env and supply your MongoDB URI & secrets
 ```
 
-### Essential Environment Variables
+#### Render Production Deployment
 
-| Variable                | Description                                              | Example / Recommended                               |
-| :---------------------- | :------------------------------------------------------- | :-------------------------------------------------- |
-| `MONGODB_URI`           | Primary MongoDB connection URI (Atlas SRV or direct)     | `mongodb+srv://user:pass@cluster.mongodb.net/vault` |
-| `MONGODB_URI_FALLBACK`  | Non-SRV Atlas fallback URI if SRV lookups fail           | `mongodb://user:pass@node1.mongodb.net/vault`       |
-| `JWT_SECRET`            | Secret key for short-lived JWT access tokens             | `your-256-bit-jwt-secret-string`                    |
-| `REFRESH_TOKEN_SECRET`  | Secret key for long-lived refresh tokens                 | `your-256-bit-refresh-secret-string`                |
-| `VAULT_ENCRYPTION_KEY`  | Server-side master envelope encryption key               | `32-byte-hex-or-base64-secret-key`                  |
-| `CLIENT_URL`            | Trusted frontend origin for CORS & cookie policy         | `https://my-vault.onrender.com`                     |
-| `PUBLIC_URL`            | Public server URL for health check keep-alive pings      | `https://my-vault.onrender.com`                     |
-| `VITE_API_BASE_URL`     | Frontend API endpoint URL                                | `https://my-vault.onrender.com`                     |
-| `VITE_DEV_API_BASE_URL` | Vite local development API endpoint                      | `http://localhost:4000`                             |
-| `TRUST_PROXY`           | Set `1` when deployed behind reverse proxy/load balancer | `1`                                                 |
-| `AUTH_RATE_LIMIT_MAX`   | Max login/auth requests per window (default: 15 min)     | `100`                                               |
-| `MAX_JSON_BODY_MB`      | Maximum allowed JSON request payload size                | `5`                                                 |
+```bash
+# Use production example as reference for Render dashboard environment variables
+cp .env.production.example .env
+```
 
 ---
 
-### Example Configuration Snippets
+### 📚 Comprehensive Environment Variable Reference
 
-#### 🌟 Standard Atlas Production Setup
+#### 1. Server & Runtime Environment
+
+| Variable                      | Description                                                        | Default / Example          |  Required  |
+| :---------------------------- | :----------------------------------------------------------------- | :------------------------- | :--------: |
+| `NODE_ENV`                    | Runtime environment (`development`, `production`, `test`)          | `production`               |    Yes     |
+| `PORT`                        | HTTP server port                                                   | `4000`                     |     No     |
+| `RENDER_SERVICE_ID`           | Render cloud service ID                                            | `srv-d6njnj4r85hc73fpivtg` |     No     |
+| `DISABLE_ORIGIN_PROTECTION`   | Bypass strict origin checks when SPA and API share the same origin | `true`                     |     No     |
+| `ALLOW_LOCAL_CORS_ORIGINS`    | Allow localhost browser origins in production                      | `false`                    |     No     |
+| `TRUST_PROXY`                 | Number of upstream reverse proxies (1 for Render / Cloudflare)     | `1`                        | Yes (Prod) |
+| `KEEP_ALIVE_ENABLED`          | Background keep-alive self-ping to prevent sleep                   | `true`                     |     No     |
+| `ENABLE_COMPRESSION`          | Automatic Brotli / Gzip response compression                       | `true`                     |     No     |
+| `ENABLE_OVERLOAD_PROTECTION`  | Event-loop lag monitoring and load shedding                        | `true`                     |     No     |
+| `EVENT_LOOP_LAG_THRESHOLD_MS` | Overload protection trigger threshold in ms                        | `1000`                     |     No     |
+
+#### 2. Database Configuration (MongoDB Atlas)
+
+| Variable                       | Description                                                | Default / Example                     | Required |
+| :----------------------------- | :--------------------------------------------------------- | :------------------------------------ | :------: |
+| `MONGODB_URI`                  | Primary MongoDB Atlas connection string (SRV)              | `mongodb+srv://user:pass@cluster0...` |   Yes    |
+| `MONGODB_URI_FALLBACK`         | Secondary fallback MongoDB connection string               | `mongodb+srv://user:pass@cluster1...` |    No    |
+| `MONGODB_URI_DIRECT`           | Direct non-SRV replica-set URI for DNS-restricted networks | `mongodb://user:pass@host1:27017...`  |    No    |
+| `MONGODB_DB`                   | MongoDB database name                                      | `vault`                               |    No    |
+| `MONGODB_ALLOW_LOCAL_FALLBACK` | Fallback to mock in-memory store if DB is down             | `false`                               |    No    |
+| `MONGODB_DNS_SERVERS`          | Primary DNS resolvers for Atlas SRV lookups                | `1.1.1.1,8.8.8.8`                     |    No    |
+| `MONGODB_DNS_RETRY_SERVERS`    | Fallback DNS resolvers for retry                           | `8.8.8.8,1.1.1.1`                     |    No    |
+| `ATLAS_KEEPALIVE_MINUTES`      | Frequency for database keep-alive ping                     | `10`                                  |    No    |
+| `SKIP_MONGO_CONNECT`           | Skip DB connection (testing/mock mode)                     | `false`                               |    No    |
+
+#### 3. Authentication, Cryptography & Security
+
+| Variable                             | Description                                                 | Default / Example                          |  Required  |
+| :----------------------------------- | :---------------------------------------------------------- | :----------------------------------------- | :--------: |
+| `JWT_SECRET`                         | 256-bit+ HMAC secret for access token signing               | `64+ char hex string`                      |    Yes     |
+| `JWT_EXPIRES_IN`                     | Access token lifespan                                       | `12h`                                      |     No     |
+| `REFRESH_TOKEN_SECRET`               | 256-bit+ HMAC secret for refresh token signing              | `64+ char hex string`                      | Yes (Prod) |
+| `REFRESH_TOKEN_EXPIRES_IN`           | Refresh token lifespan                                      | `30d`                                      |     No     |
+| `CSRF_SECRET`                        | Secret key for double-submit HMAC CSRF token validation     | `64+ char hex string`                      | Yes (Prod) |
+| `SIGNED_URL_SECRET`                  | Secret key for signed media URLs & temporary download links | `64+ char hex string`                      | Yes (Prod) |
+| `VAULT_ENCRYPTION_KEY`               | Master server envelope encryption key (32-byte hex/base64)  | `64+ char hex string`                      | Yes (Prod) |
+| `AUTH_PEPPER`                        | Server-side pepper for password hashing                     | `64+ char hex string`                      | Yes (Prod) |
+| `BCRYPT_ROUNDS`                      | Salt rounds for bcrypt hashing                              | `12`                                       |     No     |
+| `REQUIRE_ES256_IN_PRODUCTION`        | Enforce asymmetric ES256 key rings                          | `false`                                    |     No     |
+| `REQUIRE_ENVELOPE_KEK_IN_PRODUCTION` | Enforce KMS envelope KEK                                    | `false`                                    |     No     |
+| `RECAPTCHA_SECRET_KEY`               | Google reCAPTCHA v2 secret key for backend verification     | `6LeC-PAsAAAAALktpsRvS44FA9ndPSnS7p4a3u_F` | Yes (Prod) |
+| `VITE_RECAPTCHA_SITE_KEY`            | Google reCAPTCHA v2 site key for frontend widget            | `6LeC-PAsAAAAAOsr4Qf3gwf2pGY9CrkM2A_bM-CB` | Yes (Prod) |
+| `ALLOW_RECAPTCHA_TEST_HOST`          | Allow Google test-key host validation in production         | `false`                                    |     No     |
+| `DUMMY_PASSWORD_HASH`                | Dummy hash to prevent login timing enumeration attacks      | `Pre-computed bcrypt hash`                 |     No     |
+
+#### 4. Client & Public URLs
+
+| Variable                    | Description                                              | Default / Example                                           |  Required  |
+| :-------------------------- | :------------------------------------------------------- | :---------------------------------------------------------- | :--------: |
+| `CLIENT_URL`                | Allowed frontend origin for CORS & cookie policies       | `https://my-vault-cic6.onrender.com/`                       | Yes (Prod) |
+| `PUBLIC_URL`                | Canonical public URL for keep-alive pings & signed links | `https://my-vault-cic6.onrender.com`                        | Yes (Prod) |
+| `VITE_APP_PUBLIC_URL`       | Frontend public root URL injected into Vite runtime      | `https://my-vault-cic6.onrender.com/`                       | Yes (Prod) |
+| `VITE_API_BASE_URL`         | Primary client API base endpoint                         | `https://my-vault-cic6.onrender.com/`                       | Yes (Prod) |
+| `VITE_DEV_API_BASE_URL`     | Development API endpoint for local Vite server           | `http://localhost:4000`                                     |     No     |
+| `VITE_DEFAULT_API_BASE_URL` | Fallback API endpoint                                    | `http://127.0.0.1:4000`                                     |     No     |
+| `VITE_DNS_PREFETCH_HOST`    | Pre-connect DNS host hint for HTML head                  | `//my-vault-cic6.onrender.com`                              |     No     |
+| `VITE_CSP_CONNECT_SRC`      | CSP `connect-src` whitelist                              | `https://my-vault-cic6.onrender.com https://*.onrender.com` |     No     |
+| `VITE_APP_RELEASE`          | Frontend release version tag                             | `1.0.0`                                                     |     No     |
+
+#### 5. Cookies & Session Management
+
+| Variable                   | Description                                              | Default / Example            |  Required  |
+| :------------------------- | :------------------------------------------------------- | :--------------------------- | :--------: |
+| `REFRESH_COOKIE_DOMAIN`    | Domain for refresh cookie (`my-vault-cic6.onrender.com`) | `my-vault-cic6.onrender.com` |     No     |
+| `REFRESH_COOKIE_SAME_SITE` | SameSite cookie policy (`strict`, `lax`, `none`)         | `strict`                     |     No     |
+| `REFRESH_COOKIE_SECURE`    | HTTPS-only cookie flag                                   | `true`                       | Yes (Prod) |
+| `SESSION_RETENTION_MS`     | Max session retention window (7 days)                    | `604800000`                  |     No     |
+| `MAX_ACTIVE_DEVICES`       | Maximum active device sessions per user                  | `25`                         |     No     |
+| `MAX_USER_WRITE_RETRIES`   | Optimistic lock mutation retry attempts                  | `3`                          |     No     |
+
+#### 6. File Storage & Upload Limits
+
+| Variable                | Description                                       | Default / Example                | Required |
+| :---------------------- | :------------------------------------------------ | :------------------------------- | :------: |
+| `UPLOAD_DIR`            | Directory for persistent vault file storage       | `/var/data/uploads` or `uploads` |    No    |
+| `MULTIPART_TMP_ROOT`    | Ephemeral scratch directory for multipart uploads | `/tmp/vault/multipart-uploads`   |    No    |
+| `MAX_FILE_SIZE_MB`      | Server maximum file upload size limit             | `500` (or `4096`)                |    No    |
+| `VITE_MAX_FILE_SIZE_MB` | Client maximum file upload size validation        | `500` (or `4096`)                |    No    |
+| `MAX_JSON_BODY_MB`      | Server maximum JSON payload size                  | `100`                            |    No    |
+
+#### 7. Rate Limiting & Abuse Prevention
+
+| Variable                    | Description                                    | Default / Example | Required |
+| :-------------------------- | :--------------------------------------------- | :---------------- | :------: |
+| `API_RATE_LIMIT_WINDOW_MS`  | General API rate limit window in ms (15 min)   | `900000`          |    No    |
+| `API_RATE_LIMIT_MAX`        | Max general API requests per window            | `1000`            |    No    |
+| `AUTH_RATE_LIMIT_WINDOW_MS` | Auth endpoint rate limit window in ms (15 min) | `900000`          |    No    |
+| `AUTH_RATE_LIMIT_MAX`       | Max auth attempts per window                   | `100`             |    No    |
+
+#### 8. Vault Record & Data Field Limits
+
+| Variable                  | Description                                      | Default / Example | Required |
+| :------------------------ | :----------------------------------------------- | :---------------- | :------: |
+| `MAX_ACTIVITY_LOGS`       | Maximum audit log entries kept per user          | `500`             |    No    |
+| `MAX_LOGIN_HISTORY`       | Maximum login history records kept per user      | `20`              |    No    |
+| `MAX_ITEM_ID_LENGTH`      | Maximum character length of item IDs             | `128`             |    No    |
+| `MAX_TITLE_LENGTH`        | Maximum character length of vault item titles    | `200`             |    No    |
+| `MAX_NOTE_CONTENT_LENGTH` | Maximum length of encrypted note body            | `100000`          |    No    |
+| `MAX_TEXT_FIELD_LENGTH`   | Maximum length of standard encrypted text fields | `2000`            |    No    |
+| `MAX_FILE_NAME_LENGTH`    | Maximum character length of filenames            | `255`             |    No    |
+
+#### 9. Geolocation & Registration Telemetry
+
+| Variable                               | Description                                | Default / Example                          | Required |
+| :------------------------------------- | :----------------------------------------- | :----------------------------------------- | :------: |
+| `REGISTRATION_PROFILE_CAPTURE_ENABLED` | Geolocation capture upon user registration | `true`                                     |    No    |
+| `REGISTRATION_PROFILE_TIMEOUT_MS`      | Timeout for external geolocation APIs      | `2500`                                     |    No    |
+| `FREE_IP_API_URL_TEMPLATE`             | FreeIPAPI endpoint template                | `https://free.freeipapi.com/api/json/{ip}` |    No    |
+| `ENABLE_IPAPI_CO`                      | Enable IPAPI.co provider                   | `true`                                     |    No    |
+| `IPAPI_CO_URL_TEMPLATE`                | IPAPI.co endpoint template                 | `https://ipapi.co/{ip}/json/`              |    No    |
+| `ENABLE_IPWHO_IS`                      | Enable IPWho.is provider                   | `false`                                    |    No    |
+| `IPWHOIS_APP_API_KEY`                  | IPWhois.app API key                        | `sk.544e...`                               |    No    |
+| `IPGEOLOCATION_API_KEY`                | IPGeolocation.io API key                   | `64273...`                                 |    No    |
+| `IPLOCATE_IO_API_KEY`                  | IPLocate.io API key                        | `d6a93...`                                 |    No    |
+
+#### 10. Observability, Monitoring & Analytics
+
+| Variable                                 | Description                               | Default / Example           | Required |
+| :--------------------------------------- | :---------------------------------------- | :-------------------------- | :------: |
+| `SENTRY_ENABLED` / `VITE_SENTRY_ENABLED` | Master toggle for Sentry error monitoring | `false`                     |    No    |
+| `SENTRY_DSN`                             | Backend Sentry DSN endpoint               | `https://...@sentry.io/...` |    No    |
+| `VITE_SENTRY_DSN`                        | Frontend Sentry DSN endpoint              | `https://...@sentry.io/...` |    No    |
+| `LOGROCKET_APP_ID`                       | LogRocket backend ID                      | `o4jvc9/vault-backend`      |    No    |
+| `VITE_LOGROCKET_APP_ID`                  | LogRocket frontend ID                     | `o4jvc9/vault-oewnk`        |    No    |
+| `VITE_GA_ID`                             | Google Analytics 4 Measurement ID         | `G-RVR6ZG608D`              |    No    |
+| `ANALYZE_BUNDLE`                         | Generate Vite visualizer bundle map       | `false`                     |    No    |
+
+---
+
+### 🚀 Render Production Deployment Guide
+
+When deploying Vault to Render ([my-vault-cic6.onrender.com](https://my-vault-cic6.onrender.com)):
+
+1. **Service Type**: Web Service (Node.js environment).
+2. **Build Command**: `npm run build`
+3. **Start Command**: `npm start`
+4. **Health Check Path**: `/health`
+5. **Environment Variables**: Add all production variables from [`.env.production.example`](file:///c:/Code/vault/.env.production.example) in the Render Dashboard under **Environment**.
+
+#### Zero-Downtime Database Failover
+
+The backend supports automatic database cluster failover. If `MONGODB_URI` becomes unavailable or experiences SRV lookup timeout, the server automatically connects to `MONGODB_URI_FALLBACK`.
 
 ```env
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.ncuxgch.mongodb.net/personal-vault?retryWrites=true&w=majority&appName=Cluster0
-CLIENT_URL=https://my-vault-cic6.onrender.com
-PUBLIC_URL=https://my-vault-cic6.onrender.com
-VITE_APP_PUBLIC_URL=https://my-vault-cic6.onrender.com/
-VITE_DNS_PREFETCH_HOST=//my-vault-cic6.onrender.com
-RENDER_SERVICE_ID=srv-your-render-service-id
-VITE_API_BASE_URL=https://my-vault-cic6.onrender.com
-VITE_DEV_API_BASE_URL=http://localhost:4000
-VITE_DEFAULT_API_BASE_URL=http://127.0.0.1:4000
-VITE_CSP_CONNECT_SRC=https://my-vault-cic6.onrender.com https://*.onrender.com
-ANALYZE_BUNDLE=false
-MAX_JSON_BODY_MB=100
-AUTH_RATE_LIMIT_WINDOW_MS=900000
-AUTH_RATE_LIMIT_MAX=100
-REFRESH_COOKIE_SAME_SITE=strict
-REFRESH_COOKIE_SECURE=true
-FREE_IP_API_URL_TEMPLATE=https://free.freeipapi.com/api/json/{ip}
-IPWHOIS_URL_TEMPLATE=https://ipwho.is/{ip}
-IPINFO_IO_URL_TEMPLATE=https://ipinfo.io/{ip}/json
-IPGEOLOCATION_URL_TEMPLATE=https://api.ipgeolocation.io/ipgeo?apiKey={apiKey}&ip={ip}
+MONGODB_URI="mongodb+srv://adrajpu523_db_user:x3MijIdldwTAcF1w@cluster0.ncuxgch.mongodb.net/vault?retryWrites=true&w=majority&appName=Cluster0"
+MONGODB_URI_FALLBACK="mongodb+srv://adrajpu523_db_user:Ns4cz0uMqfAxI46I@cluster0.dxhm8nx.mongodb.net/vault?retryWrites=true&w=majority&appName=Cluster0"
 ```
-
-#### 🔄 Atlas Primary + Fallback Cluster Setup
-
-```env
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.ncuxgch.mongodb.net/personal-vault?retryWrites=true&w=majority&appName=Cluster0
-MONGODB_URI_FALLBACK=mongodb+srv://<username>:<password>@cluster1.example.mongodb.net/personal-vault?retryWrites=true&w=majority&appName=Cluster1
-CLIENT_URL=https://my-vault-cic6.onrender.com
-PUBLIC_URL=https://my-vault-cic6.onrender.com
-VITE_APP_PUBLIC_URL=https://my-vault-cic6.onrender.com/
-VITE_DNS_PREFETCH_HOST=//my-vault-cic6.onrender.com
-RENDER_SERVICE_ID=srv-your-render-service-id
-VITE_API_BASE_URL=https://my-vault-cic6.onrender.com
-VITE_DEV_API_BASE_URL=http://localhost:4000
-VITE_DEFAULT_API_BASE_URL=http://127.0.0.1:4000
-VITE_CSP_CONNECT_SRC=https://my-vault-cic6.onrender.com https://*.onrender.com
-ANALYZE_BUNDLE=false
-MAX_JSON_BODY_MB=100
-AUTH_RATE_LIMIT_WINDOW_MS=900000
-AUTH_RATE_LIMIT_MAX=100
-REFRESH_COOKIE_SAME_SITE=strict
-REFRESH_COOKIE_SECURE=true
-```
-
-> **Note**: The server automatically attempts connection to `MONGODB_URI` first. If SRV resolution or primary cluster fails, it gracefully falls back to `MONGODB_URI_FALLBACK`.
 
 ---
 

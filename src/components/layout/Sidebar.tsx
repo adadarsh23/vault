@@ -139,14 +139,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
   );
 
   const handleThemeChange = useCallback(
-    (newTheme: Theme, e: React.MouseEvent<HTMLButtonElement>) => {
-      if (typeof document !== 'undefined') {
-        const overlay = document.getElementById('theme-transition-overlay');
-        if (overlay) {
-          overlay.style.setProperty('--x', `${e.clientX}px`);
-          overlay.style.setProperty('--y', `${e.clientY}px`);
-        }
+    (
+      newTheme: Theme,
+      e?: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>
+    ) => {
+      if (typeof window !== 'undefined' && e?.currentTarget) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const clientX = (e as React.MouseEvent).clientX;
+        const clientY = (e as React.MouseEvent).clientY;
+        const x =
+          typeof clientX === 'number' && clientX > 0
+            ? clientX
+            : Math.round(rect.left + rect.width / 2);
+        const y =
+          typeof clientY === 'number' && clientY > 0
+            ? clientY
+            : Math.round(rect.top + rect.height / 2);
+        window.__recordThemeToggleOrigin?.(x, y);
       }
+
+      // Delicate tactile micro-haptic on mobile devices
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate(8);
+        } catch {}
+      }
+
       setTheme(newTheme);
     },
     [setTheme]
@@ -288,7 +306,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Theme Switch */}
         <div
           className={cn(
-            'flex items-center gap-1 rounded-xl bg-text/5 p-1.5',
+            'relative flex items-center gap-1 rounded-xl bg-text/5 p-1.5',
             compact && 'flex-col rounded-lg'
           )}
         >
@@ -301,15 +319,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 key={t.id}
                 onClick={(e) => handleThemeChange(t.id, e)}
                 className={cn(
-                  'flex flex-1 items-center justify-center rounded-lg py-2 transition-all focus:outline-none focus:ring-2 focus:ring-text/10',
+                  'relative flex flex-1 items-center justify-center rounded-lg py-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-text/10 cursor-pointer',
                   compact && 'w-full',
-                  isActive ? 'bg-text text-bg' : 'text-text/40 hover:text-text hover:bg-text/5'
+                  isActive ? 'text-bg font-medium' : 'text-text/40 hover:text-text hover:bg-text/5'
                 )}
                 aria-label={`Switch to ${t.label}`}
                 aria-pressed={isActive}
                 title={t.label}
               >
-                <Icon className="h-4 w-4" />
+                {isActive && (
+                  <motion.div
+                    layoutId="active-theme-pill"
+                    className="absolute inset-0 rounded-lg bg-text shadow-sm"
+                    transition={{
+                      type: 'spring',
+                      stiffness: 450,
+                      damping: 32,
+                    }}
+                  />
+                )}
+                <motion.div
+                  className="relative z-10 flex items-center justify-center"
+                  animate={
+                    isActive
+                      ? { scale: 1, rotate: t.id === 'light' ? 90 : t.id === 'dark' ? -15 : 0 }
+                      : { scale: 0.88, rotate: 0 }
+                  }
+                  whileHover={{ scale: 1.15 }}
+                  whileTap={{ scale: 0.85 }}
+                  transition={{ type: 'spring', stiffness: 450, damping: 24 }}
+                >
+                  <Icon className="h-4 w-4" />
+                </motion.div>
               </button>
             );
           })}
