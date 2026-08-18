@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-08-18T08:00:41.834Z",
+  "generatedAt": "2026-08-18T10:43:39.640Z",
   "schema": "code-memory-index/v5",
   "totals": {
     "filesScanned": 474,
     "filesIndexed": 474,
     "filesSkipped": 0,
-    "bytesIndexed": 6479439,
-    "linesIndexed": 163628,
-    "codeLines": 146394,
-    "commentLines": 4156,
+    "bytesIndexed": 6528839,
+    "linesIndexed": 163765,
+    "codeLines": 146530,
+    "commentLines": 4157,
     "blankLines": 13078,
     "symbolCount": 2806,
-    "importCount": 1853,
+    "importCount": 1854,
     "exportCount": 1187,
     "tagCount": 98
   },
@@ -24,15 +24,15 @@
     "avgRiskPerFile": 21.39
   },
   "trend": {
-    "filesIndexedDelta": 4,
-    "linesIndexedDelta": 2252,
-    "symbolCountDelta": 29,
-    "importCountDelta": 17,
-    "avgRiskPerFileDelta": 0.07
+    "filesIndexedDelta": 0,
+    "linesIndexedDelta": 137,
+    "symbolCountDelta": 0,
+    "importCountDelta": 1,
+    "avgRiskPerFileDelta": 0
   },
   "history": {
-    "historyPath": "C:\\code\\vault\\.memory\\history\\code-index-2026-08-18T08-00-41-834Z.json",
-    "historyCount": 9
+    "historyPath": "C:\\code\\vault\\.memory\\history\\code-index-2026-08-18T10-43-39-640Z.json",
+    "historyCount": 10
   },
   "riskSummary": {
     "critical": 13,
@@ -44,16 +44,16 @@
     {
       "extension": ".ts",
       "files": 253,
-      "lines": 55771,
-      "bytes": 1646808,
+      "lines": 55856,
+      "bytes": 1649838,
       "symbols": 1684,
       "riskScore": 5186
     },
     {
       "extension": ".tsx",
       "files": 150,
-      "lines": 58010,
-      "bytes": 2154977,
+      "lines": 58028,
+      "bytes": 2155571,
       "symbols": 911,
       "riskScore": 3559
     },
@@ -76,8 +76,8 @@
     {
       "extension": ".json",
       "files": 10,
-      "lines": 36472,
-      "bytes": 1579528,
+      "lines": 36506,
+      "bytes": 1610250,
       "symbols": 2,
       "riskScore": 235
     },
@@ -93,7 +93,7 @@
       "extension": ".html",
       "files": 6,
       "lines": 4966,
-      "bytes": 780291,
+      "bytes": 795345,
       "symbols": 60,
       "riskScore": 185
     },
@@ -144,11 +144,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 857055,
-        "hash": "1217306a1a1586ee84468fbef2fd1131385f1e4fe65160452684b0472b31b96b",
+        "bytes": 872356,
+        "hash": "c765630376144fc715a8e1ac6499da62cd0d432a8deb5d43656c91aec60d9268",
         "lines": {
-          "total": 20280,
-          "code": 20280,
+          "total": 20297,
+          "code": 20297,
           "comments": 0,
           "blanks": 0
         },
@@ -174,19 +174,19 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 20310,
-        "updatedAt": "2026-08-18T05:50:32.113Z",
+        "complexityScore": 20327,
+        "updatedAt": "2026-08-18T08:02:01.727Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 581543,
-        "hash": "5f76a87f233da30a1d171b918bec04bab81784b3a00dd4039088d7ded8938233",
+        "bytes": 596934,
+        "hash": "67bcc69758f3f5e47f937fb63011d4963e8b6569f064af0fa16747e639a81e47",
         "lines": {
-          "total": 12360,
-          "code": 12359,
+          "total": 12377,
+          "code": 12376,
           "comments": 0,
           "blanks": 1
         },
@@ -210,16 +210,16 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 12383,
-        "updatedAt": "2026-08-18T05:50:34.306Z",
+        "complexityScore": 12400,
+        "updatedAt": "2026-08-18T08:02:06.282Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 695162,
-        "hash": "a1968ebebb81d9d840e39f8666512cb96d4e8e8e532950c00d825c48cbfac92c",
+        "bytes": 710215,
+        "hash": "2fe45cfd12541ded91ad11b2c0e0749bf56c07ca3b14123b4f8c7c03d59ab028",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -308,7 +308,7 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-18T05:50:32.105Z",
+        "updatedAt": "2026-08-18T08:02:01.717Z",
         "riskScore": 68
       },
       {
@@ -506,8 +506,8 @@
         "path": "lighthouse/report-split/best-practices.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 65630,
-        "hash": "17e68b6927489b1969319735c34eb86a0cc421674d8d8b1da0114ec7ac1657cb",
+        "bytes": 65660,
+        "hash": "5c2cad838fd8111c6d8e9f6182a84d5328700605311e69a5f1405d7e597cfaf2",
         "lines": {
           "total": 1982,
           "code": 1981,
@@ -532,7 +532,7 @@
           "switchCount": 0
         },
         "complexityScore": 1981,
-        "updatedAt": "2026-08-18T05:50:34.313Z",
+        "updatedAt": "2026-08-18T08:02:06.296Z",
         "riskScore": 30
       },
       {
@@ -2448,7 +2448,7 @@
           "switchCount": 0
         },
         "complexityScore": 1438,
-        "updatedAt": "2026-08-18T01:20:37.928Z",
+        "updatedAt": "2026-08-18T08:59:42.785Z",
         "riskScore": 47
       },
       {
@@ -2556,7 +2556,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "12deb973194d0346f908e381e3c259219d160739b70c4041c527a3bf353e8311",
+        "hash": "190ab3d7780fba0c4597ce1f3fce9c30552f291171dfe6e44dc5f724336f1556",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -2583,7 +2583,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-18T05:50:34.311Z",
+        "updatedAt": "2026-08-18T08:02:06.295Z",
         "riskScore": 30
       },
       {
@@ -3878,6 +3878,115 @@
         "riskScore": 66
       },
       {
+        "path": "src/features/auth/VaultLoginForm.tsx",
+        "extension": ".tsx",
+        "directory": "src/features/auth",
+        "bytes": 37195,
+        "hash": "0addea56044f93083839895ff17f2cb11b1c95a071350d08a3a4a455b717927d",
+        "lines": {
+          "total": 897,
+          "code": 835,
+          "comments": 6,
+          "blanks": 56
+        },
+        "imports": [
+          "import React, { memo, useCallback, useState, useRef, useEffect, useMemo } from 'react';",
+          "import { Button } from '../../components/ui/Button';",
+          "import {",
+          "import {",
+          "import { motion } from 'framer-motion';",
+          "import { toast } from 'sonner';",
+          "import { handleError } from '../../lib/error-handler';",
+          "import { RecaptchaField } from '../../components/security/RecaptchaField';",
+          "import {",
+          "import { useVaultStore } from '../../store/vaultStore';",
+          "import { checkExactUsername } from '../../lib/auth-api';",
+          "import { useRecaptchaChallenge } from '../../hooks/useRecaptchaChallenge';"
+        ],
+        "exports": [
+          "export const VaultLoginForm: React.FC<Props> = memo("
+        ],
+        "importSpecifiers": [
+          "react",
+          "../../components/ui/Button",
+          "framer-motion",
+          "sonner",
+          "../../lib/error-handler",
+          "../../components/security/RecaptchaField",
+          "../../store/vaultStore",
+          "../../lib/auth-api",
+          "../../hooks/useRecaptchaChallenge"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "react",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "../../components/ui/Button",
+            "kind": "relative",
+            "target": "src/components/ui/Button"
+          },
+          {
+            "specifier": "framer-motion",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "sonner",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "../../lib/error-handler",
+            "kind": "relative",
+            "target": "src/lib/error-handler"
+          },
+          {
+            "specifier": "../../components/security/RecaptchaField",
+            "kind": "relative",
+            "target": "src/components/security/RecaptchaField"
+          },
+          {
+            "specifier": "../../store/vaultStore",
+            "kind": "relative",
+            "target": "src/store/vaultStore"
+          },
+          {
+            "specifier": "../../lib/auth-api",
+            "kind": "relative",
+            "target": "src/lib/auth-api"
+          },
+          {
+            "specifier": "../../hooks/useRecaptchaChallenge",
+            "kind": "relative",
+            "target": "src/hooks/useRecaptchaChallenge"
+          }
+        ],
+        "symbols": [
+          "Props",
+          "noop",
+          "isValidPassword",
+          "VaultLoginForm"
+        ],
+        "symbolCount": 4,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 3,
+          "awaitCount": 4,
+          "tryCount": 5,
+          "catchCount": 9,
+          "throwCount": 0,
+          "ifCount": 45,
+          "switchCount": 0
+        },
+        "complexityScore": 886,
+        "updatedAt": "2026-08-18T09:59:56.086Z",
+        "riskScore": 41
+      },
+      {
         "path": "src/features/vault/PasswordManager.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault",
@@ -4067,115 +4176,6 @@
         "riskScore": 41
       },
       {
-        "path": "src/features/auth/VaultLoginForm.tsx",
-        "extension": ".tsx",
-        "directory": "src/features/auth",
-        "bytes": 36601,
-        "hash": "cb98f93e71d01d9458556c738819610503392266a5cfb2cb9dd66632769fb8e2",
-        "lines": {
-          "total": 879,
-          "code": 818,
-          "comments": 5,
-          "blanks": 56
-        },
-        "imports": [
-          "import React, { memo, useCallback, useState, useRef, useEffect, useMemo } from 'react';",
-          "import { Button } from '../../components/ui/Button';",
-          "import {",
-          "import {",
-          "import { motion } from 'framer-motion';",
-          "import { toast } from 'sonner';",
-          "import { handleError } from '../../lib/error-handler';",
-          "import { RecaptchaField } from '../../components/security/RecaptchaField';",
-          "import {",
-          "import { useVaultStore } from '../../store/vaultStore';",
-          "import { checkExactUsername } from '../../lib/auth-api';",
-          "import { useRecaptchaChallenge } from '../../hooks/useRecaptchaChallenge';"
-        ],
-        "exports": [
-          "export const VaultLoginForm: React.FC<Props> = memo("
-        ],
-        "importSpecifiers": [
-          "react",
-          "../../components/ui/Button",
-          "framer-motion",
-          "sonner",
-          "../../lib/error-handler",
-          "../../components/security/RecaptchaField",
-          "../../store/vaultStore",
-          "../../lib/auth-api",
-          "../../hooks/useRecaptchaChallenge"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "react",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../components/ui/Button",
-            "kind": "relative",
-            "target": "src/components/ui/Button"
-          },
-          {
-            "specifier": "framer-motion",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "sonner",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../lib/error-handler",
-            "kind": "relative",
-            "target": "src/lib/error-handler"
-          },
-          {
-            "specifier": "../../components/security/RecaptchaField",
-            "kind": "relative",
-            "target": "src/components/security/RecaptchaField"
-          },
-          {
-            "specifier": "../../store/vaultStore",
-            "kind": "relative",
-            "target": "src/store/vaultStore"
-          },
-          {
-            "specifier": "../../lib/auth-api",
-            "kind": "relative",
-            "target": "src/lib/auth-api"
-          },
-          {
-            "specifier": "../../hooks/useRecaptchaChallenge",
-            "kind": "relative",
-            "target": "src/hooks/useRecaptchaChallenge"
-          }
-        ],
-        "symbols": [
-          "Props",
-          "noop",
-          "isValidPassword",
-          "VaultLoginForm"
-        ],
-        "symbolCount": 4,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 3,
-          "awaitCount": 3,
-          "tryCount": 4,
-          "catchCount": 8,
-          "throwCount": 0,
-          "ifCount": 43,
-          "switchCount": 0
-        },
-        "complexityScore": 869,
-        "updatedAt": "2026-08-18T01:20:37.545Z",
-        "riskScore": 41
-      },
-      {
         "path": "src/components/layout/VaultLayout.tsx",
         "extension": ".tsx",
         "directory": "src/components/layout",
@@ -4296,11 +4296,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 857055,
-        "hash": "1217306a1a1586ee84468fbef2fd1131385f1e4fe65160452684b0472b31b96b",
+        "bytes": 872356,
+        "hash": "c765630376144fc715a8e1ac6499da62cd0d432a8deb5d43656c91aec60d9268",
         "lines": {
-          "total": 20280,
-          "code": 20280,
+          "total": 20297,
+          "code": 20297,
           "comments": 0,
           "blanks": 0
         },
@@ -4326,16 +4326,16 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 20310,
-        "updatedAt": "2026-08-18T05:50:32.113Z",
+        "complexityScore": 20327,
+        "updatedAt": "2026-08-18T08:02:01.727Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 695162,
-        "hash": "a1968ebebb81d9d840e39f8666512cb96d4e8e8e532950c00d825c48cbfac92c",
+        "bytes": 710215,
+        "hash": "2fe45cfd12541ded91ad11b2c0e0749bf56c07ca3b14123b4f8c7c03d59ab028",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -4424,18 +4424,18 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-18T05:50:32.105Z",
+        "updatedAt": "2026-08-18T08:02:01.717Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 581543,
-        "hash": "5f76a87f233da30a1d171b918bec04bab81784b3a00dd4039088d7ded8938233",
+        "bytes": 596934,
+        "hash": "67bcc69758f3f5e47f937fb63011d4963e8b6569f064af0fa16747e639a81e47",
         "lines": {
-          "total": 12360,
-          "code": 12359,
+          "total": 12377,
+          "code": 12376,
           "comments": 0,
           "blanks": 1
         },
@@ -4459,8 +4459,8 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 12383,
-        "updatedAt": "2026-08-18T05:50:34.306Z",
+        "complexityScore": 12400,
+        "updatedAt": "2026-08-18T08:02:06.282Z",
         "riskScore": 44
       },
       {
@@ -4658,8 +4658,8 @@
         "path": "lighthouse/report-split/best-practices.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 65630,
-        "hash": "17e68b6927489b1969319735c34eb86a0cc421674d8d8b1da0114ec7ac1657cb",
+        "bytes": 65660,
+        "hash": "5c2cad838fd8111c6d8e9f6182a84d5328700605311e69a5f1405d7e597cfaf2",
         "lines": {
           "total": 1982,
           "code": 1981,
@@ -4684,7 +4684,7 @@
           "switchCount": 0
         },
         "complexityScore": 1981,
-        "updatedAt": "2026-08-18T05:50:34.313Z",
+        "updatedAt": "2026-08-18T08:02:06.296Z",
         "riskScore": 30
       },
       {
@@ -5827,7 +5827,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "12deb973194d0346f908e381e3c259219d160739b70c4041c527a3bf353e8311",
+        "hash": "190ab3d7780fba0c4597ce1f3fce9c30552f291171dfe6e44dc5f724336f1556",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -5854,7 +5854,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-18T05:50:34.311Z",
+        "updatedAt": "2026-08-18T08:02:06.295Z",
         "riskScore": 30
       },
       {
@@ -7424,12 +7424,12 @@
         "path": "src/features/auth/VaultLoginForm.tsx",
         "extension": ".tsx",
         "directory": "src/features/auth",
-        "bytes": 36601,
-        "hash": "cb98f93e71d01d9458556c738819610503392266a5cfb2cb9dd66632769fb8e2",
+        "bytes": 37195,
+        "hash": "0addea56044f93083839895ff17f2cb11b1c95a071350d08a3a4a455b717927d",
         "lines": {
-          "total": 879,
-          "code": 818,
-          "comments": 5,
+          "total": 897,
+          "code": 835,
+          "comments": 6,
           "blanks": 56
         },
         "imports": [
@@ -7518,15 +7518,15 @@
         "tagCount": 0,
         "keywordCounts": {
           "asyncCount": 3,
-          "awaitCount": 3,
-          "tryCount": 4,
-          "catchCount": 8,
+          "awaitCount": 4,
+          "tryCount": 5,
+          "catchCount": 9,
           "throwCount": 0,
-          "ifCount": 43,
+          "ifCount": 45,
           "switchCount": 0
         },
-        "complexityScore": 869,
-        "updatedAt": "2026-08-18T01:20:37.545Z",
+        "complexityScore": 886,
+        "updatedAt": "2026-08-18T09:59:56.086Z",
         "riskScore": 41
       },
       {
@@ -7561,7 +7561,7 @@
           "switchCount": 0
         },
         "complexityScore": 755,
-        "updatedAt": "2026-08-18T05:50:34.312Z",
+        "updatedAt": "2026-08-18T08:02:06.296Z",
         "riskScore": 30
       },
       {
@@ -8081,7 +8081,7 @@
           "switchCount": 0
         },
         "complexityScore": 1438,
-        "updatedAt": "2026-08-18T01:20:37.928Z",
+        "updatedAt": "2026-08-18T08:59:42.785Z",
         "riskScore": 47
       },
       {
@@ -8525,8 +8525,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 695162,
-        "hash": "a1968ebebb81d9d840e39f8666512cb96d4e8e8e532950c00d825c48cbfac92c",
+        "bytes": 710215,
+        "hash": "2fe45cfd12541ded91ad11b2c0e0749bf56c07ca3b14123b4f8c7c03d59ab028",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -8615,7 +8615,7 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-18T05:50:32.105Z",
+        "updatedAt": "2026-08-18T08:02:01.717Z",
         "riskScore": 68
       },
       {
@@ -8749,7 +8749,7 @@
           "switchCount": 0
         },
         "complexityScore": 1438,
-        "updatedAt": "2026-08-18T01:20:37.928Z",
+        "updatedAt": "2026-08-18T08:59:42.785Z",
         "riskScore": 47
       },
       {
@@ -10589,11 +10589,11 @@
         "path": "server/utils/auth.ts",
         "extension": ".ts",
         "directory": "server/utils",
-        "bytes": 14859,
-        "hash": "da112ab41840d9f20286cd5a3807b2054799db8b0ba3e95c886ae8bdc61da382",
+        "bytes": 15084,
+        "hash": "12548bc3800571dd2409e69f2beb6d61f12f36e2613acc62b1caae127629f287",
         "lines": {
-          "total": 470,
-          "code": 420,
+          "total": 478,
+          "code": 428,
           "comments": 4,
           "blanks": 46
         },
@@ -10696,8 +10696,8 @@
           "ifCount": 34,
           "switchCount": 0
         },
-        "complexityScore": 585,
-        "updatedAt": "2026-08-18T01:20:37.390Z",
+        "complexityScore": 593,
+        "updatedAt": "2026-08-18T10:19:24.971Z",
         "riskScore": 39
       },
       {
@@ -12437,11 +12437,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 857055,
-        "hash": "1217306a1a1586ee84468fbef2fd1131385f1e4fe65160452684b0472b31b96b",
+        "bytes": 872356,
+        "hash": "c765630376144fc715a8e1ac6499da62cd0d432a8deb5d43656c91aec60d9268",
         "lines": {
-          "total": 20280,
-          "code": 20280,
+          "total": 20297,
+          "code": 20297,
           "comments": 0,
           "blanks": 0
         },
@@ -12467,19 +12467,19 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 20310,
-        "updatedAt": "2026-08-18T05:50:32.113Z",
+        "complexityScore": 20327,
+        "updatedAt": "2026-08-18T08:02:01.727Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 581543,
-        "hash": "5f76a87f233da30a1d171b918bec04bab81784b3a00dd4039088d7ded8938233",
+        "bytes": 596934,
+        "hash": "67bcc69758f3f5e47f937fb63011d4963e8b6569f064af0fa16747e639a81e47",
         "lines": {
-          "total": 12360,
-          "code": 12359,
+          "total": 12377,
+          "code": 12376,
           "comments": 0,
           "blanks": 1
         },
@@ -12503,16 +12503,16 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 12383,
-        "updatedAt": "2026-08-18T05:50:34.306Z",
+        "complexityScore": 12400,
+        "updatedAt": "2026-08-18T08:02:06.282Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 695162,
-        "hash": "a1968ebebb81d9d840e39f8666512cb96d4e8e8e532950c00d825c48cbfac92c",
+        "bytes": 710215,
+        "hash": "2fe45cfd12541ded91ad11b2c0e0749bf56c07ca3b14123b4f8c7c03d59ab028",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -12601,7 +12601,7 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-18T05:50:32.105Z",
+        "updatedAt": "2026-08-18T08:02:01.717Z",
         "riskScore": 68
       },
       {
@@ -12799,8 +12799,8 @@
         "path": "lighthouse/report-split/best-practices.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 65630,
-        "hash": "17e68b6927489b1969319735c34eb86a0cc421674d8d8b1da0114ec7ac1657cb",
+        "bytes": 65660,
+        "hash": "5c2cad838fd8111c6d8e9f6182a84d5328700605311e69a5f1405d7e597cfaf2",
         "lines": {
           "total": 1982,
           "code": 1981,
@@ -12825,7 +12825,7 @@
           "switchCount": 0
         },
         "complexityScore": 1981,
-        "updatedAt": "2026-08-18T05:50:34.313Z",
+        "updatedAt": "2026-08-18T08:02:06.296Z",
         "riskScore": 30
       },
       {
@@ -14026,7 +14026,7 @@
           "switchCount": 0
         },
         "complexityScore": 1438,
-        "updatedAt": "2026-08-18T01:20:37.928Z",
+        "updatedAt": "2026-08-18T08:59:42.785Z",
         "riskScore": 47
       },
       {
@@ -14749,7 +14749,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "12deb973194d0346f908e381e3c259219d160739b70c4041c527a3bf353e8311",
+        "hash": "190ab3d7780fba0c4597ce1f3fce9c30552f291171dfe6e44dc5f724336f1556",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -14776,7 +14776,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-18T05:50:34.311Z",
+        "updatedAt": "2026-08-18T08:02:06.295Z",
         "riskScore": 30
       },
       {
@@ -22285,8 +22285,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 695162,
-        "hash": "a1968ebebb81d9d840e39f8666512cb96d4e8e8e532950c00d825c48cbfac92c",
+        "bytes": 710215,
+        "hash": "2fe45cfd12541ded91ad11b2c0e0749bf56c07ca3b14123b4f8c7c03d59ab028",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -22375,18 +22375,18 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-18T05:50:32.105Z",
+        "updatedAt": "2026-08-18T08:02:01.717Z",
         "riskScore": 68
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 581543,
-        "hash": "5f76a87f233da30a1d171b918bec04bab81784b3a00dd4039088d7ded8938233",
+        "bytes": 596934,
+        "hash": "67bcc69758f3f5e47f937fb63011d4963e8b6569f064af0fa16747e639a81e47",
         "lines": {
-          "total": 12360,
-          "code": 12359,
+          "total": 12377,
+          "code": 12376,
           "comments": 0,
           "blanks": 1
         },
@@ -22410,19 +22410,19 @@
           "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 12383,
-        "updatedAt": "2026-08-18T05:50:34.306Z",
+        "complexityScore": 12400,
+        "updatedAt": "2026-08-18T08:02:06.282Z",
         "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 857055,
-        "hash": "1217306a1a1586ee84468fbef2fd1131385f1e4fe65160452684b0472b31b96b",
+        "bytes": 872356,
+        "hash": "c765630376144fc715a8e1ac6499da62cd0d432a8deb5d43656c91aec60d9268",
         "lines": {
-          "total": 20280,
-          "code": 20280,
+          "total": 20297,
+          "code": 20297,
           "comments": 0,
           "blanks": 0
         },
@@ -22448,8 +22448,8 @@
           "ifCount": 4,
           "switchCount": 0
         },
-        "complexityScore": 20310,
-        "updatedAt": "2026-08-18T05:50:32.113Z",
+        "complexityScore": 20327,
+        "updatedAt": "2026-08-18T08:02:01.727Z",
         "riskScore": 44
       },
       {
@@ -24803,8 +24803,8 @@
         "path": "lighthouse/report-split/performance.html",
         "extension": ".html",
         "directory": "lighthouse/report-split",
-        "bytes": 25861,
-        "hash": "d3f83ab08398b49307f5943e01edd8c433e83b1bb619de570440a367ddafe903",
+        "bytes": 25862,
+        "hash": "2461dedea4f3cc868502ff9a98ff665dc09a3a5e812f7e107a32af0dce5ea07f",
         "lines": {
           "total": 639,
           "code": 637,
@@ -24831,7 +24831,7 @@
           "switchCount": 0
         },
         "complexityScore": 649,
-        "updatedAt": "2026-08-18T05:50:34.309Z",
+        "updatedAt": "2026-08-18T08:02:06.282Z",
         "riskScore": 37
       },
       {
@@ -24875,8 +24875,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 695162,
-        "hash": "a1968ebebb81d9d840e39f8666512cb96d4e8e8e532950c00d825c48cbfac92c",
+        "bytes": 710215,
+        "hash": "2fe45cfd12541ded91ad11b2c0e0749bf56c07ca3b14123b4f8c7c03d59ab028",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -24965,7 +24965,7 @@
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-18T05:50:32.105Z",
+        "updatedAt": "2026-08-18T08:02:01.717Z",
         "riskScore": 68
       },
       {
@@ -28156,7 +28156,7 @@
           "switchCount": 0
         },
         "complexityScore": 1438,
-        "updatedAt": "2026-08-18T01:20:37.928Z",
+        "updatedAt": "2026-08-18T08:59:42.785Z",
         "riskScore": 47
       },
       {
@@ -30132,13 +30132,13 @@
         "path": "tests/integration/auth-security.test.ts",
         "extension": ".ts",
         "directory": "tests/integration",
-        "bytes": 11818,
-        "hash": "1a32ba2cd154a9277ad41aa91e0954ca700caaba7329b905dfa61b42c38abedd",
+        "bytes": 13178,
+        "hash": "7f3a7118faa8d10dc8f47cc799f3765a6c16b100955ee6dc5e833a932bd04c2a",
         "lines": {
-          "total": 307,
-          "code": 219,
+          "total": 352,
+          "code": 263,
           "comments": 29,
-          "blanks": 59
+          "blanks": 60
         },
         "imports": [
           "import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';",
@@ -30216,8 +30216,8 @@
           "ifCount": 2,
           "switchCount": 0
         },
-        "complexityScore": 243,
-        "updatedAt": "2026-08-18T01:20:38.010Z",
+        "complexityScore": 287,
+        "updatedAt": "2026-08-18T08:51:45.849Z",
         "riskScore": 22
       },
       {
@@ -30351,7 +30351,7 @@
           "switchCount": 0
         },
         "complexityScore": 1438,
-        "updatedAt": "2026-08-18T01:20:37.928Z",
+        "updatedAt": "2026-08-18T08:59:42.785Z",
         "riskScore": 47
       },
       {
@@ -31017,11 +31017,11 @@
         "path": "src/features/auth/useVaultAuth.ts",
         "extension": ".ts",
         "directory": "src/features/auth",
-        "bytes": 29822,
-        "hash": "f068bf60721cbb9654f0d4fb63dfa4dc6cbfe5e440fe19fbbbd19fe9a4c32163",
+        "bytes": 30714,
+        "hash": "7ca06971a7355a9fff116c5c7f39c6d7419dc49530ca03f927fb3acd8a28a53a",
         "lines": {
-          "total": 840,
-          "code": 700,
+          "total": 860,
+          "code": 720,
           "comments": 70,
           "blanks": 70
         },
@@ -31033,6 +31033,7 @@
           "import { performHybridKeyExchange } from '../../lib/encryption';",
           "import { handleError } from '../../lib/error-handler';",
           "import {",
+          "import { clearAuthToken, clearCloudSessionHint } from '../../lib/auth-session';",
           "import { uploadKeyCheckToCloud } from '../../lib/sync';",
           "import { logActivity } from '../../lib/activity';",
           "import { validatePassword } from '../../lib/utils';",
@@ -31048,6 +31049,7 @@
           "../../lib/cryptoPrimitives",
           "../../lib/encryption",
           "../../lib/error-handler",
+          "../../lib/auth-session",
           "../../lib/sync",
           "../../lib/activity",
           "../../lib/utils",
@@ -31083,6 +31085,11 @@
             "specifier": "../../lib/error-handler",
             "kind": "relative",
             "target": "src/lib/error-handler"
+          },
+          {
+            "specifier": "../../lib/auth-session",
+            "kind": "relative",
+            "target": "src/lib/auth-session"
           },
           {
             "specifier": "../../lib/sync",
@@ -31121,11 +31128,11 @@
           "tryCount": 12,
           "catchCount": 14,
           "throwCount": 11,
-          "ifCount": 57,
+          "ifCount": 58,
           "switchCount": 0
         },
-        "complexityScore": 760,
-        "updatedAt": "2026-08-18T01:20:37.559Z",
+        "complexityScore": 783,
+        "updatedAt": "2026-08-18T09:23:56.036Z",
         "riskScore": 41
       },
       {
@@ -32887,12 +32894,12 @@
         "outDegree": 9
       },
       {
-        "path": "src/main.tsx",
+        "path": "src/features/auth/useVaultAuth.ts",
         "outDegree": 9
       },
       {
-        "path": "server/controllers/drmController.ts",
-        "outDegree": 8
+        "path": "src/main.tsx",
+        "outDegree": 9
       }
     ],
     "missingRelativeTargets": [
@@ -33715,6 +33722,11 @@
         "from": "src/features/auth/useVaultAuth.ts",
         "target": "src/lib/error-handler",
         "specifier": "../../lib/error-handler"
+      },
+      {
+        "from": "src/features/auth/useVaultAuth.ts",
+        "target": "src/lib/auth-session",
+        "specifier": "../../lib/auth-session"
       },
       {
         "from": "src/features/auth/useVaultAuth.ts",
@@ -35890,220 +35902,129 @@
         "from": "src/features/vault/TodoVault.tsx",
         "target": "src/hooks/useVaultFolders",
         "specifier": "../../hooks/useVaultFolders"
-      },
-      {
-        "from": "src/features/vault/TodoVault.tsx",
-        "target": "src/lib/pinning",
-        "specifier": "../../lib/pinning"
       }
     ],
     "totals": {
       "filesWithInboundLinks": 30,
       "filesWithOutboundLinks": 30,
-      "missingRelativeTargets": 738
+      "missingRelativeTargets": 739
     }
   },
   "changes": {
     "hasPreviousIndex": true,
-    "previousGeneratedAt": "2026-08-18T05:48:54.241Z",
+    "previousGeneratedAt": "2026-08-18T08:00:41.834Z",
     "counts": {
-      "added": 4,
+      "added": 0,
       "removed": 0,
-      "changed": 24,
-      "unchanged": 446
+      "changed": 13,
+      "unchanged": 461
     },
-    "added": [
-      "LICENSE.md",
-      "server/services/multiClusterAggregator.ts",
-      "server/services/multiClusterPool.ts",
-      "tests/unit/multi-cluster-aggregator.test.ts"
-    ],
+    "added": [],
     "removed": [],
     "changed": [
       {
-        "path": "lighthouse/report.report.json",
-        "previousHash": "eed5bf77ce85776af9c7b5944809089bf594bdd84e7e948668957ce175d32e6b",
-        "currentHash": "1217306a1a1586ee84468fbef2fd1131385f1e4fe65160452684b0472b31b96b",
-        "previousLines": 19736,
-        "currentLines": 20280,
-        "deltaLines": 544,
+        "path": "tests/integration/auth-security.test.ts",
+        "previousHash": "1a32ba2cd154a9277ad41aa91e0954ca700caaba7329b905dfa61b42c38abedd",
+        "currentHash": "7f3a7118faa8d10dc8f47cc799f3765a6c16b100955ee6dc5e833a932bd04c2a",
+        "previousLines": 307,
+        "currentLines": 352,
+        "deltaLines": 45,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "src/features/auth/useVaultAuth.ts",
+        "previousHash": "f068bf60721cbb9654f0d4fb63dfa4dc6cbfe5e440fe19fbbbd19fe9a4c32163",
+        "currentHash": "7ca06971a7355a9fff116c5c7f39c6d7419dc49530ca03f927fb3acd8a28a53a",
+        "previousLines": 840,
+        "currentLines": 860,
+        "deltaLines": 20,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "src/features/auth/VaultLoginForm.tsx",
+        "previousHash": "cb98f93e71d01d9458556c738819610503392266a5cfb2cb9dd66632769fb8e2",
+        "currentHash": "0addea56044f93083839895ff17f2cb11b1c95a071350d08a3a4a455b717927d",
+        "previousLines": 879,
+        "currentLines": 897,
+        "deltaLines": 18,
         "deltaSymbols": 0
       },
       {
         "path": "lighthouse/report-split/performance.json",
-        "previousHash": "59b47ef8e425f8ea998fc1256df053c7a22d63d9dfde0158985411829e7831cf",
-        "currentHash": "5f76a87f233da30a1d171b918bec04bab81784b3a00dd4039088d7ded8938233",
-        "previousLines": 11876,
-        "currentLines": 12360,
-        "deltaLines": 484,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "scripts/db-ping.mjs",
-        "previousHash": "c00d2219927aaf0655a7d412b50f95e8fab88fae72b41c002b1a73fc0b2399bc",
-        "currentHash": "295b24101dbaa23496b6ffb9a4eb4bc3267797443ba6603683873fc3e70eabe7",
-        "previousLines": 50,
-        "currentLines": 104,
-        "deltaLines": 54,
-        "deltaSymbols": 2
-      },
-      {
-        "path": "server/services/legacyVaultService.ts",
-        "previousHash": "a17305223a2dbf7c0622cf71e74633cb2268f0f8457f8183555c47a1ae5d095d",
-        "currentHash": "57fc3c382079eb52116a868f292c99dc844bad7e891ff03f2fe3cefd780ff87d",
-        "previousLines": 873,
-        "currentLines": 919,
-        "deltaLines": 46,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "scripts/atlas-keepalive.mjs",
-        "previousHash": "8aae4caa6f054bd634ff458e08aa6661382f970ae1d1fcc85c9f0e575ac78049",
-        "currentHash": "7dc8a4695b803f001ea49c8b7b5de1cdf8b10437916a2923b6315ccd1b1055f4",
-        "previousLines": 119,
-        "currentLines": 160,
-        "deltaLines": 41,
-        "deltaSymbols": 2
-      },
-      {
-        "path": "server/mongo.ts",
-        "previousHash": "d76265853b00cf02083043f94c678516832a90149fbb6dc21be9746b5abc9ecf",
-        "currentHash": "5341e1e4940f95ee570c98ec224325f36014ed27d8b671b2fb08d77ffe24446a",
-        "previousLines": 308,
-        "currentLines": 342,
-        "deltaLines": 34,
-        "deltaSymbols": 3
-      },
-      {
-        "path": "server/controllers/mediaController.ts",
-        "previousHash": "835f912c19be6f2314f60b70eb3fa0538538da4841d82e17b31cba3478dcae36",
-        "currentHash": "ddd8845a9f97007cf9d0ca1957c7cd9357670d89e312b8ceb7b2a84933f607b5",
-        "previousLines": 1337,
-        "currentLines": 1369,
-        "deltaLines": 32,
-        "deltaSymbols": 1
-      },
-      {
-        "path": "server/models/activityLog.ts",
-        "previousHash": "2f01f3b49e6046e621eaaec562c44ecf90027e8d5f7c5956ef7a44e6ee36c80c",
-        "currentHash": "ebe4bc08737fae1764908662f514953d796031b052d5fab5d2393768ad36a954",
-        "previousLines": 135,
-        "currentLines": 156,
-        "deltaLines": 21,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/services/authService.ts",
-        "previousHash": "335427c710079c8a38ab609b8cddfbe1d00763bc8f90a36d10edc89c8bf51d63",
-        "currentHash": "644a8cc1309ebc278245a1a90286673974f89a0894a3e9cb2036c970eb323853",
-        "previousLines": 581,
-        "currentLines": 602,
-        "deltaLines": 21,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "lighthouse/report-split/best-practices.json",
-        "previousHash": "fcd7223ab0e36174fa12fe95d7676cc66f5df0f16b5f946def4fc651a1ba1bdb",
-        "currentHash": "17e68b6927489b1969319735c34eb86a0cc421674d8d8b1da0114ec7ac1657cb",
-        "previousLines": 1963,
-        "currentLines": 1982,
-        "deltaLines": 19,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/utils/crypto.ts",
-        "previousHash": "0bbd2a8522208d45cad49991d3af67a89ddca07c32e9860f4dc327cccc9b52ab",
-        "currentHash": "a1a4db5f53bff7f58749983ef9b4e13ee838a1e1b1f4a008b1faeb4ed781d3b3",
-        "previousLines": 482,
-        "currentLines": 501,
-        "deltaLines": 19,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/models/vaultItem.ts",
-        "previousHash": "449cf3688ebf502ccf92733213d01d69de35596e00ab9c1a62d38af2cc91c29d",
-        "currentHash": "d1a739d7e62863a062f804044f6df6e3f91e2dc1e78d935d0372feda03222ebb",
-        "previousLines": 122,
-        "currentLines": 139,
+        "previousHash": "5f76a87f233da30a1d171b918bec04bab81784b3a00dd4039088d7ded8938233",
+        "currentHash": "67bcc69758f3f5e47f937fb63011d4963e8b6569f064af0fa16747e639a81e47",
+        "previousLines": 12360,
+        "currentLines": 12377,
         "deltaLines": 17,
         "deltaSymbols": 0
       },
       {
-        "path": "server/controllers/healthController.ts",
-        "previousHash": "49b592d9aaa42e37b9bbe318d780b0b7405587f72b4dbf96e011efebb917ce5d",
-        "currentHash": "29988b309ac93ddd7d7aeb4426cd71fd31aa45991ca0c7203343de3eaf7003a9",
-        "previousLines": 65,
-        "currentLines": 80,
-        "deltaLines": 15,
+        "path": "lighthouse/report.report.json",
+        "previousHash": "1217306a1a1586ee84468fbef2fd1131385f1e4fe65160452684b0472b31b96b",
+        "currentHash": "c765630376144fc715a8e1ac6499da62cd0d432a8deb5d43656c91aec60d9268",
+        "previousLines": 20280,
+        "currentLines": 20297,
+        "deltaLines": 17,
         "deltaSymbols": 0
       },
       {
-        "path": "server.ts",
-        "previousHash": "69c3aa9c26ed7b11bbcf8ea88ab9d34c7dedc5e41aea95294181ddef960312e7",
-        "currentHash": "ea911bb38d9d25609962c87413d5d616823d313fa1168927a5c81d87272d84ce",
-        "previousLines": 758,
-        "currentLines": 772,
-        "deltaLines": 14,
+        "path": "src/api/apiClient.ts",
+        "previousHash": "5a32cba37bdb40d8e2238a765433db10cecda2e372fe0393496ab444295ee05f",
+        "currentHash": "38d8d1ab59f271b4c312a705563b819a67f1f5662a166997364e048babee98e6",
+        "previousLines": 267,
+        "currentLines": 280,
+        "deltaLines": 13,
         "deltaSymbols": 0
       },
       {
-        "path": "server/services/vaultDataService.ts",
-        "previousHash": "d9bf065273847278f8434608e95c8962d29c9f6f51c56f5668189eebed966639",
-        "currentHash": "09361da258ef50f6617406c8ff03fa9595b3b9410563cf9e382cc5a702ca9df6",
-        "previousLines": 517,
-        "currentLines": 503,
-        "deltaLines": -14,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/services/vaultItemService.ts",
-        "previousHash": "9de76d7f52d5986e6e97bf931dc278659f57953e2ddf15337cc36aacdf78007e",
-        "currentHash": "aa7010eb8a0cf1db0ce430022a21445a903f4c12c8bffcbbf9c3af3da51e1196",
-        "previousLines": 438,
-        "currentLines": 426,
-        "deltaLines": -12,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/models/user.ts",
-        "previousHash": "64952a1419225e0346d1b0a0173d7a8d65413995885dbe1d3bbda8c2451c3790",
-        "currentHash": "d2273e6f189178456114bf453a094dd8d83c475bc99770037195065610978298",
-        "previousLines": 650,
-        "currentLines": 659,
-        "deltaLines": 9,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "lighthouse/report-split/performance.html",
-        "previousHash": "c22f32c41a685c2052fc09e9e5f42de92d2956886deea20f68ff0e7646f14b64",
-        "currentHash": "d3f83ab08398b49307f5943e01edd8c433e83b1bb619de570440a367ddafe903",
-        "previousLines": 631,
-        "currentLines": 639,
+        "path": "server/utils/auth.ts",
+        "previousHash": "da112ab41840d9f20286cd5a3807b2054799db8b0ba3e95c886ae8bdc61da382",
+        "currentHash": "12548bc3800571dd2409e69f2beb6d61f12f36e2613acc62b1caae127629f287",
+        "previousLines": 470,
+        "currentLines": 478,
         "deltaLines": 8,
         "deltaSymbols": 0
       },
       {
-        "path": "package.json",
-        "previousHash": "0d9b5d5c1a7434fb8477d36a784d193babdaf21ba3a67bc3b27167ff42efb84f",
-        "currentHash": "0e7c3e265f1287fa9726095a43840e4245b17635833a376cf53f3c415ffde401",
-        "previousLines": 274,
-        "currentLines": 275,
-        "deltaLines": 1,
+        "path": "server/services/recaptchaService.ts",
+        "previousHash": "b399faa13c1f97d9cae8210268c25b1cddba4fcc4ebdfd0bf5dbeb66b3aeaa84",
+        "currentHash": "877f1d631fcda449cc7e9a1781b346193e98e39ae31997315ef36712c83050ad",
+        "previousLines": 222,
+        "currentLines": 221,
+        "deltaLines": -1,
         "deltaSymbols": 0
       },
       {
         "path": "lighthouse/report-split/accessibility.json",
-        "previousHash": "6c0684e2b6d8a82832b776186465532a37e1dc486d6018f8806cd69c1ea0988e",
-        "currentHash": "12deb973194d0346f908e381e3c259219d160739b70c4041c527a3bf353e8311",
+        "previousHash": "12deb973194d0346f908e381e3c259219d160739b70c4041c527a3bf353e8311",
+        "currentHash": "190ab3d7780fba0c4597ce1f3fce9c30552f291171dfe6e44dc5f724336f1556",
         "previousLines": 1193,
         "currentLines": 1193,
         "deltaLines": 0,
         "deltaSymbols": 0
       },
       {
+        "path": "lighthouse/report-split/best-practices.json",
+        "previousHash": "17e68b6927489b1969319735c34eb86a0cc421674d8d8b1da0114ec7ac1657cb",
+        "currentHash": "5c2cad838fd8111c6d8e9f6182a84d5328700605311e69a5f1405d7e597cfaf2",
+        "previousLines": 1982,
+        "currentLines": 1982,
+        "deltaLines": 0,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "lighthouse/report-split/performance.html",
+        "previousHash": "d3f83ab08398b49307f5943e01edd8c433e83b1bb619de570440a367ddafe903",
+        "currentHash": "2461dedea4f3cc868502ff9a98ff665dc09a3a5e812f7e107a32af0dce5ea07f",
+        "previousLines": 639,
+        "currentLines": 639,
+        "deltaLines": 0,
+        "deltaSymbols": 0
+      },
+      {
         "path": "lighthouse/report-split/seo.json",
-        "previousHash": "9c163b1abae2feb40e9e1e60a3ea97f59339e708c9fb224bacfd03b904be5a28",
-        "currentHash": "d60b470a2445d4f5a005208a3726cebf076ae6279c3513e6dee4c4b7d269574e",
+        "previousHash": "d60b470a2445d4f5a005208a3726cebf076ae6279c3513e6dee4c4b7d269574e",
+        "currentHash": "7fdec8cc5d036bf30cea48ac32b72293d831ce78486d76d13b23a1f278d4e567",
         "previousLines": 242,
         "currentLines": 242,
         "deltaLines": 0,
@@ -36111,28 +36032,10 @@
       },
       {
         "path": "lighthouse/report.report.html",
-        "previousHash": "636cf90ada632d9a8c06e5334882a5b0bf16619474da7e412e745931a3f0c837",
-        "currentHash": "a1968ebebb81d9d840e39f8666512cb96d4e8e8e532950c00d825c48cbfac92c",
+        "previousHash": "a1968ebebb81d9d840e39f8666512cb96d4e8e8e532950c00d825c48cbfac92c",
+        "currentHash": "2fe45cfd12541ded91ad11b2c0e0749bf56c07ca3b14123b4f8c7c03d59ab028",
         "previousLines": 2894,
         "currentLines": 2894,
-        "deltaLines": 0,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "server/controllers/drmController.ts",
-        "previousHash": "b70179bebef7218fb1a56889a0a78b9b519df2e0254cd0e495cb32b2401b5389",
-        "currentHash": "e3fd09e36e77b3126b755fca8d8ee93935e0247a7a3f7102ea2ecb3ccea1781e",
-        "previousLines": 132,
-        "currentLines": 132,
-        "deltaLines": 0,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "src/features/LegalPage.tsx",
-        "previousHash": "b546dafde8a5bf31dbdf9dca86ee6a86de33fd98f58f57d651dfdc6cb71bbee5",
-        "currentHash": "ccb6b893de23b12c249da2cb9c4fb98a3618ef68c1baec00b77df597d11a4462",
-        "previousLines": 193,
-        "currentLines": 193,
         "deltaLines": 0,
         "deltaSymbols": 0
       }
@@ -36146,6 +36049,7 @@
       "docker-compose.yml",
       "fix.cjs",
       "fix.js",
+      "LICENSE.md",
       "lighthouse/report-split/accessibility.html",
       "lighthouse/report-split/best-practices.html",
       "lighthouse/report-split/seo.html",
@@ -36161,6 +36065,7 @@
       "md/SENTRY_INTEGRATION.md",
       "metadata.json",
       "overload.html",
+      "package.json",
       "public/dashboard.svg",
       "public/favicon-dark.svg",
       "public/favicon.svg",
@@ -36170,6 +36075,7 @@
       "public/sw.js",
       "public/vite-preload-shim.js",
       "README.md",
+      "scripts/atlas-keepalive.mjs",
       "scripts/build-env.mjs",
       "scripts/clean.mjs",
       "scripts/code-memory-index.mjs",
@@ -36182,6 +36088,7 @@
       "scripts/code-memory-index/path-utils.mjs",
       "scripts/code-memory-index/stats.mjs",
       "scripts/code-memory-visual.mjs",
+      "scripts/db-ping.mjs",
       "scripts/doctor.mjs",
       "scripts/env-check.mjs",
       "scripts/lighthouse-runner.mjs",
@@ -36190,6 +36097,7 @@
       "scripts/vitest-related.mjs",
       "scripts/zip-prod.mjs",
       "SECURITY.md",
+      "server.ts",
       "server/boot/logger/colors.ts",
       "server/boot/logger/console.ts",
       "server/boot/logger/health.ts",
@@ -36199,9 +36107,12 @@
       "server/controllers/authController.ts",
       "server/controllers/captchaController.ts",
       "server/controllers/contactController.ts",
+      "server/controllers/drmController.ts",
       "server/controllers/folderController.ts",
+      "server/controllers/healthController.ts",
       "server/controllers/legacyVaultController.ts",
       "server/controllers/masterKeyController.ts",
+      "server/controllers/mediaController.ts",
       "server/controllers/tusController.ts",
       "server/controllers/twoFactorController.ts",
       "server/controllers/vaultController.ts",
@@ -36221,6 +36132,7 @@
       "server/middleware/requestValidation.ts",
       "server/middleware/securityMiddleware.ts",
       "server/middleware/validate.ts",
+      "server/models/activityLog.ts",
       "server/models/Contact.ts",
       "server/models/folder.ts",
       "server/models/masterKey.ts",
@@ -36228,6 +36140,9 @@
       "server/models/RefreshToken.ts",
       "server/models/telemetry.ts",
       "server/models/totalUser.ts",
+      "server/models/user.ts",
+      "server/models/vaultItem.ts",
+      "server/mongo.ts",
       "server/network.ts",
       "server/responses.ts",
       "server/routes/authRoutes.ts",
@@ -36246,14 +36161,17 @@
       "server/services/adaptiveRateLimitService.ts",
       "server/services/aiAnomalyDetectionService.ts",
       "server/services/anomalyDetectionService.ts",
+      "server/services/authService.ts",
       "server/services/drmPackagingService.ts",
       "server/services/folderCryptoService.ts",
       "server/services/folderService.ts",
       "server/services/improvedLogging.ts",
+      "server/services/legacyVaultService.ts",
       "server/services/masterKeyService.ts",
       "server/services/mediaService.ts",
+      "server/services/multiClusterAggregator.ts",
+      "server/services/multiClusterPool.ts",
       "server/services/notificationService.ts",
-      "server/services/recaptchaService.ts",
       "server/services/requestFingerprintService.ts",
       "server/services/securityDashboardService.ts",
       "server/services/storageService.ts",
@@ -36263,6 +36181,8 @@
       "server/services/twoFactorService.ts",
       "server/services/uploadSecurityService.ts",
       "server/services/vaultAuthService.ts",
+      "server/services/vaultDataService.ts",
+      "server/services/vaultItemService.ts",
       "server/services/vaultService.internal.ts",
       "server/services/vaultService.ts",
       "server/socket.ts",
@@ -36271,9 +36191,9 @@
       "server/utils/apiError.ts",
       "server/utils/appError.ts",
       "server/utils/asyncHandler.ts",
-      "server/utils/auth.ts",
       "server/utils/compression.ts",
       "server/utils/cors.ts",
+      "server/utils/crypto.ts",
       "server/utils/env.ts",
       "server/utils/fileStorage.ts",
       "server/utils/imagePipeline.ts",
@@ -36287,7 +36207,6 @@
       "server/validators/requestChainValidator.ts",
       "server/validators/twoFactorValidator.ts",
       "server/vite.ts",
-      "src/api/apiClient.ts",
       "src/api/authApi.ts",
       "src/api/securityApi.ts",
       "src/api/systemApi.ts",
@@ -36354,10 +36273,9 @@
       "src/components/vault/TagManager.tsx",
       "src/features/auth/AuthScreen.tsx",
       "src/features/auth/SecurityLayers.tsx",
-      "src/features/auth/useVaultAuth.ts",
-      "src/features/auth/VaultLoginForm.tsx",
       "src/features/ContactPage.tsx",
       "src/features/LandingPage.tsx",
+      "src/features/LegalPage.tsx",
       "src/features/NotFoundPage.tsx",
       "src/features/vault/__tests__/ControlsAndShortcuts.test.tsx",
       "src/features/vault/__tests__/SettingsVault/EmergencyDestructionCard.test.tsx",
@@ -36537,7 +36455,6 @@
       "src/workers/ImageProcessorWorker.ts",
       "src/workers/media-processor.worker.ts",
       "tests/helpers/createAuthTestApp.ts",
-      "tests/integration/auth-security.test.ts",
       "tests/integration/auth.integration.test.ts",
       "tests/integration/multipart-security.test.ts",
       "tests/integration/streaming-security.test.ts",
@@ -36562,6 +36479,7 @@
       "tests/unit/logrocket-backend.test.ts",
       "tests/unit/logrocket-frontend.test.ts",
       "tests/unit/mongo-atlas-avatar.test.ts",
+      "tests/unit/multi-cluster-aggregator.test.ts",
       "tests/unit/password-generation.test.ts",
       "tests/unit/password-generator-enhanced.test.ts",
       "tests/unit/pinning.test.ts",
@@ -36853,13 +36771,13 @@
       "path": "lighthouse/report-split/performance.json",
       "extension": ".json",
       "lines": {
-        "total": 12360,
-        "code": 12359,
+        "total": 12377,
+        "code": 12376,
         "comments": 0,
         "blanks": 1
       },
       "symbolCount": 0,
-      "complexityScore": 12383,
+      "complexityScore": 12400,
       "riskScore": 44,
       "tagCount": 2,
       "tags": [
@@ -36937,13 +36855,13 @@
       "path": "lighthouse/report.report.json",
       "extension": ".json",
       "lines": {
-        "total": 20280,
-        "code": 20280,
+        "total": 20297,
+        "code": 20297,
         "comments": 0,
         "blanks": 0
       },
       "symbolCount": 1,
-      "complexityScore": 20310,
+      "complexityScore": 20327,
       "riskScore": 44,
       "tagCount": 2,
       "tags": [
@@ -39593,10 +39511,10 @@
       "path": "server/services/recaptchaService.ts",
       "extension": ".ts",
       "lines": {
-        "total": 222,
+        "total": 221,
         "code": 190,
         "comments": 2,
-        "blanks": 30
+        "blanks": 29
       },
       "symbolCount": 9,
       "complexityScore": 253,
@@ -40035,13 +39953,13 @@
       "path": "server/utils/auth.ts",
       "extension": ".ts",
       "lines": {
-        "total": 470,
-        "code": 420,
+        "total": 478,
+        "code": 428,
         "comments": 4,
         "blanks": 46
       },
       "symbolCount": 25,
-      "complexityScore": 585,
+      "complexityScore": 593,
       "riskScore": 39,
       "tagCount": 0,
       "tags": [],
@@ -40410,13 +40328,13 @@
       "path": "src/api/apiClient.ts",
       "extension": ".ts",
       "lines": {
-        "total": 267,
-        "code": 217,
+        "total": 280,
+        "code": 230,
         "comments": 14,
         "blanks": 36
       },
       "symbolCount": 13,
-      "complexityScore": 310,
+      "complexityScore": 323,
       "riskScore": 21,
       "tagCount": 0,
       "tags": [],
@@ -41931,13 +41849,13 @@
       "path": "src/features/auth/useVaultAuth.ts",
       "extension": ".ts",
       "lines": {
-        "total": 840,
-        "code": 700,
+        "total": 860,
+        "code": 720,
         "comments": 70,
         "blanks": 70
       },
       "symbolCount": 5,
-      "complexityScore": 760,
+      "complexityScore": 783,
       "riskScore": 41,
       "tagCount": 0,
       "tags": [],
@@ -41948,19 +41866,19 @@
         "../../lib/cryptoPrimitives",
         "../../lib/encryption"
       ],
-      "importCount": 10
+      "importCount": 11
     },
     {
       "path": "src/features/auth/VaultLoginForm.tsx",
       "extension": ".tsx",
       "lines": {
-        "total": 879,
-        "code": 818,
-        "comments": 5,
+        "total": 897,
+        "code": 835,
+        "comments": 6,
         "blanks": 56
       },
       "symbolCount": 4,
-      "complexityScore": 869,
+      "complexityScore": 886,
       "riskScore": 41,
       "tagCount": 0,
       "tags": [],
@@ -46124,13 +46042,13 @@
       "path": "tests/integration/auth-security.test.ts",
       "extension": ".ts",
       "lines": {
-        "total": 307,
-        "code": 219,
+        "total": 352,
+        "code": 263,
         "comments": 29,
-        "blanks": 59
+        "blanks": 60
       },
       "symbolCount": 0,
-      "complexityScore": 243,
+      "complexityScore": 287,
       "riskScore": 22,
       "tagCount": 0,
       "tags": [],

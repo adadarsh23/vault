@@ -1,0 +1,103 @@
+name: Render Keepalive
+
+on:
+  schedule:
+    # Every 14 minutes
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: render-keepalive
+  cancel-in-progress: false
+
+jobs:
+  keepalive:
+    name: Keep Render Service Awake
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      RENDER_KEEPALIVE_URL: ${{ secrets.RENDER_KEEPALIVE_URL }}
+      HEALTH_ENDPOINT: /health
+
+    steps:
+      - name: Validate configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${RENDER_KEEPALIVE_URL}" ]]; then
+            echo "::error::Repository secret RENDER_KEEPALIVE_URL is missing."
+            exit 1
+          fi
+
+          echo "Configuration validated."
+
+      - name: Ping Render health endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BASE_URL="${RENDER_KEEPALIVE_URL%/}"
+          URL="${BASE_URL}${HEALTH_ENDPOINT}"
+
+          echo "Checking: $URL"
+
+          HTTP_CODE=$(
+            curl \
+              --silent \
+              --show-error \
+              --location \
+              --connect-timeout 10 \
+              --max-time 30 \
+              --retry 3 \
+              --retry-delay 5 \
+              --retry-all-errors \
+              --write-out "%{http_code}" \
+              --output response.json \
+              --user-agent "GitHub-Actions-Render-Keepalive" \
+              "$URL"
+          )
+
+          echo "HTTP Status: $HTTP_CODE"
+
+          if [[ "$HTTP_CODE" != "200" ]]; then
+            echo "::error::Health check failed with HTTP $HTTP_CODE"
+
+            if [[ -f response.json ]]; then
+              echo "Response:"
+              cat response.json
+            fi
+
+            exit 1
+          fi
+
+          echo "Health check passed."
+
+          if [[ -s response.json ]]; then
+            echo "Response:"
+            cat response.json
+          fi
+
+      - name: Workflow summary
+        if: success()
+        run: |
+          {
+            echo "## ✅ Render Keepalive"
+            echo ""
+            echo "- Status: Success"
+            echo "- Endpoint: Health"
+            echo "- Time: $(date -u)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Failure summary
+        if: failure()
+        run: |
+          {
+            echo "## ❌ Render Keepalive Failed"
+            echo ""
+            echo "Check the workflow logs for details."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -367,6 +367,11 @@ export const getRefreshCookieOptionsForRequest = (req?: express.Request): expres
     const originHost = parseHostname(origin);
     const hostHost = parseHostname(host);
     const isCrossSiteRequest = Boolean(originHost && hostHost && originHost !== hostHost);
+    const isHttps =
+      req?.secure ||
+      req?.protocol === 'https' ||
+      req?.get('x-forwarded-proto')?.toLowerCase() === 'https' ||
+      IS_PRODUCTION;
 
     if (isCrossSiteRequest) {
       return {
@@ -376,7 +381,10 @@ export const getRefreshCookieOptionsForRequest = (req?: express.Request): expres
       };
     }
 
-    return base;
+    return {
+      ...base,
+      secure: isHttps ? true : base.secure,
+    };
   }
 
   return {

@@ -1,0 +1,90 @@
+name: MongoDB Atlas Keepalive
+
+on:
+  schedule:
+    # Run every 6 hours to prevent Atlas free clusters from sleeping/pausing
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: atlas-keepalive
+  cancel-in-progress: false
+
+jobs:
+  keepalive:
+    name: Ping All Atlas Clusters (Primary + Fallbacks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+      MONGODB_URI_FALLBACK: ${{ secrets.MONGODB_URI_FALLBACK }}
+      MONGODB_URL_FALLBACK: ${{ secrets.MONGODB_URL_FALLBACK }}
+      MONGODB_URI_1: ${{ secrets.MONGODB_URI_1 }}
+      MONGODB_URI_2: ${{ secrets.MONGODB_URI_2 }}
+      MONGODB_URI_3: ${{ secrets.MONGODB_URI_3 }}
+      MONGODB_URI_4: ${{ secrets.MONGODB_URI_4 }}
+      MONGODB_URI_5: ${{ secrets.MONGODB_URI_5 }}
+      MONGODB_URI_6: ${{ secrets.MONGODB_URI_6 }}
+      MONGODB_URI_7: ${{ secrets.MONGODB_URI_7 }}
+      MONGODB_URI_8: ${{ secrets.MONGODB_URI_8 }}
+      MONGODB_URI_9: ${{ secrets.MONGODB_URI_9 }}
+      MONGODB_URI_10: ${{ secrets.MONGODB_URI_10 }}
+      MONGODB_URI_DIRECT: ${{ secrets.MONGODB_URI_DIRECT }}
+      MONGODB_DB: ${{ secrets.MONGODB_DB || 'vault' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Validate configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${MONGODB_URI:-}" && -z "${MONGO_URI:-}" ]]; then
+            echo "::error::Repository secret MONGODB_URI is missing."
+            exit 1
+          fi
+          echo "Database URI configuration validated."
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --omit=dev
+
+      - name: Ping All Atlas Clusters (Primary & Fallback)
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run keepalive:once
+
+      - name: Workflow summary
+        if: success()
+        run: |
+          {
+            echo "## ✅ MongoDB Atlas Keepalive"
+            echo ""
+            echo "- Status: All clusters pinged successfully"
+            echo "- Mode: Multi-cluster concurrent ping"
+            echo "- Time: $(date -u)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Failure summary
+        if: failure()
+        run: |
+          {
+            echo "## ❌ Atlas Keepalive Failed"
+            echo ""
+            echo "Check the workflow logs for details."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -423,6 +423,31 @@ export const VaultLoginForm: React.FC<Props> = memo(
             description:
               'The account password is valid, but the Master Key is incorrect or cannot decrypt this vault.',
           });
+        } else if (
+          authMode === 'login' &&
+          (error?.status === 401 ||
+            error?.code === 'INVALID_CREDENTIALS' ||
+            /invalid username or password/i.test(msg))
+        ) {
+          try {
+            const check = await checkExactUsername(username.trim().toLowerCase());
+            if (!check.exists) {
+              toast.error('Account Not Found', {
+                description: `No account exists for "${username.trim()}". Please sign up to create this vault.`,
+                action: {
+                  label: 'Switch to Sign Up',
+                  onClick: () => {
+                    onAuthModeChange('register');
+                    toast.dismiss();
+                  },
+                },
+              });
+              return;
+            }
+          } catch {
+            // Fall through to default error handler
+          }
+          handleError(error, 'Vault Login');
         } else {
           handleError(error, twoFactorRequired ? '2FA Verification' : 'Vault Unlock');
         }
@@ -447,6 +472,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
       twoFactorRequired,
       authMode,
       usernameCheckState,
+      onAuthModeChange,
     ]);
 
     return (
@@ -481,10 +507,6 @@ export const VaultLoginForm: React.FC<Props> = memo(
                   type="button"
                   onClick={() => {
                     onAuthModeChange('login');
-                    setAccountPassword('');
-                    setVaultKey('');
-                    setShowAccountPassword(false);
-                    setShowVaultKey(false);
                     resetCaptchaChallenge();
                   }}
                   className={`rounded-xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.14em] transition-all ${
@@ -499,10 +521,6 @@ export const VaultLoginForm: React.FC<Props> = memo(
                   type="button"
                   onClick={() => {
                     onAuthModeChange('register');
-                    setAccountPassword('');
-                    setVaultKey('');
-                    setShowAccountPassword(false);
-                    setShowVaultKey(false);
                     resetCaptchaChallenge();
                   }}
                   className={`rounded-xl px-4 py-3 text-sm font-semibold uppercase tracking-[0.14em] transition-all ${

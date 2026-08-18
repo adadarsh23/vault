@@ -1,7 +1,7 @@
 {
   "requestedUrl": "http://127.0.0.1:4173/",
   "finalUrl": "http://127.0.0.1:4173/",
-  "fetchTime": "2026-08-18T08:01:50.033Z",
+  "fetchTime": "2026-08-18T10:44:41.665Z",
   "category": {
     "title": "Best Practices",
     "supportedModes": [
@@ -608,10 +608,29 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-B31e0YO0.js",
+              "url": "http://127.0.0.1:4173/assets/index-ko8wPf8M.js",
               "urlProvider": "network",
               "line": 1,
               "column": 4531
+            }
+          },
+          {
+            "featureId": {
+              "type": "link",
+              "text": "beforeinstallprompt",
+              "url": "https://webstatus.dev/features/beforeinstallprompt"
+            },
+            "displayStatus": {
+              "type": "baseline-status",
+              "status": "limited",
+              "displayString": "Limited Availability"
+            },
+            "source": {
+              "type": "source-location",
+              "url": "http://127.0.0.1:4173/",
+              "urlProvider": "network",
+              "line": -2,
+              "column": -2
             }
           },
           {
@@ -657,25 +676,6 @@
               "type": "link",
               "text": "accent-color",
               "url": "https://webstatus.dev/features/accent-color"
-            },
-            "displayStatus": {
-              "type": "baseline-status",
-              "status": "limited",
-              "displayString": "Limited Availability"
-            },
-            "source": {
-              "type": "source-location",
-              "url": "http://127.0.0.1:4173/",
-              "urlProvider": "network",
-              "line": -2,
-              "column": -2
-            }
-          },
-          {
-            "featureId": {
-              "type": "link",
-              "text": "beforeinstallprompt",
-              "url": "https://webstatus.dev/features/beforeinstallprompt"
             },
             "displayStatus": {
               "type": "baseline-status",
@@ -817,7 +817,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-B31e0YO0.js",
+              "url": "http://127.0.0.1:4173/assets/index-ko8wPf8M.js",
               "urlProvider": "network",
               "line": 1,
               "column": 8685
@@ -1254,7 +1254,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-B31e0YO0.js",
+              "url": "http://127.0.0.1:4173/assets/index-ko8wPf8M.js",
               "urlProvider": "network",
               "line": 1,
               "column": 8842
@@ -1273,7 +1273,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-B31e0YO0.js",
+              "url": "http://127.0.0.1:4173/assets/index-ko8wPf8M.js",
               "urlProvider": "network",
               "line": 1,
               "column": 8842
@@ -1657,8 +1657,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/vaultStore-BPOMLnRL.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultStore-BPOMLnRL.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/vaultStore-nQ9NgcOM.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/vaultStore-nQ9NgcOM.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1785,8 +1785,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-B2CtoNVo.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-B2CtoNVo.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-DY72BHes.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-DY72BHes.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1817,8 +1817,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/index-B31e0YO0.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-B31e0YO0.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/index-ko8wPf8M.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-ko8wPf8M.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1921,8 +1921,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/apiClient-D7oYsuYR.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/apiClient-D7oYsuYR.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/apiClient-CV-0_sYf.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/apiClient-CV-0_sYf.js.map",
             "subItems": {
               "type": "subitems",
               "items": []

@@ -77,8 +77,6 @@ const toHostnames = (origins: string[]): Set<string> => {
   return hosts;
 };
 
-const allowedCaptchaHostnames = toHostnames(getAllowedCorsOrigins());
-
 export const isAllowedCaptchaHostname = (hostname: string | null): boolean => {
   if (!hostname) {
     return false;
@@ -89,6 +87,7 @@ export const isAllowedCaptchaHostname = (hostname: string | null): boolean => {
     return false;
   }
 
+  const allowedCaptchaHostnames = toHostnames(getAllowedCorsOrigins());
   return allowedCaptchaHostnames.has(normalized);
 };
 
