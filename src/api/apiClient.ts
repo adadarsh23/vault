@@ -196,14 +196,27 @@ apiClient.interceptors.response.use(
   async (error: AxiosError<ApiResponse>) => {
     const originalRequest = error.config as
       (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    const isAuthUrl = Boolean(
+      originalRequest?.url &&
+      (originalRequest.url.includes('/auth/refresh') ||
+        originalRequest.url.includes('/auth/login') ||
+        originalRequest.url.includes('/auth/register') ||
+        originalRequest.url.includes('/auth/signup') ||
+        originalRequest.url.includes('/auth/salt') ||
+        originalRequest.url.includes('/auth/username-check') ||
+        originalRequest.url.includes('/auth/csrf-token') ||
+        originalRequest.url.includes('/2fa/login'))
+    );
     const isAuthRefreshCall = Boolean(originalRequest?.url?.includes('/auth/refresh'));
 
     // Handle 401 Unauthorized
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-      if (originalRequest.url?.includes('/auth/refresh')) {
-        clearAuthToken();
-        clearCloudSessionHint();
-        return Promise.reject(error);
+      if (isAuthUrl) {
+        if (isAuthRefreshCall) {
+          clearAuthToken();
+          clearCloudSessionHint();
+        }
+        return Promise.reject(normalizeApiError(error));
       }
 
       originalRequest._retry = true;

@@ -12,6 +12,7 @@ import {
   verify2FALogin,
   waitForPendingLogout,
 } from '../../lib/auth-api';
+import { clearAuthToken, clearCloudSessionHint } from '../../lib/auth-session';
 import { uploadKeyCheckToCloud } from '../../lib/sync';
 // import { handleError, ErrorCode } from "../../lib/error-handler"
 import { logActivity } from '../../lib/activity';
@@ -633,6 +634,25 @@ export const useVaultAuth = (options?: {
             actionType: 'auth_login',
             itemName: 'Vault Login Failure',
             description: 'MFA verification session expired or invalid.',
+            status: 'failure',
+          });
+        } else if (
+          errorCode === 'SESSION_REFRESH_FAILED' ||
+          errorCode === 'INVALID_TOKEN' ||
+          errorCode === 'AUTH_REQUIRED' ||
+          /session could not be refreshed/i.test(errorMessage) ||
+          /authentication token is invalid/i.test(errorMessage) ||
+          /authentication token is required/i.test(errorMessage)
+        ) {
+          toast.error('Session expired', {
+            description: 'Your saved cloud session has expired. Please sign in with your password.',
+          });
+          clearAuthToken();
+          clearCloudSessionHint();
+          logActivity({
+            actionType: 'auth_login',
+            itemName: 'Vault Login Failure',
+            description: 'Cloud session expired during vault unlock.',
             status: 'failure',
           });
         } else {
