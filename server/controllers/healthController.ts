@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import { ensureMongoReady } from '../mongo.ts';
+import { multiClusterPool } from '../services/multiClusterPool.ts';
 
 const DEFAULT_DB_NAME = process.env.MONGODB_DB_NAME?.trim() || 'vault';
 
@@ -28,6 +29,15 @@ export const getHealthStatus = async (_req: express.Request, res: express.Respon
   const ready = isMongoOptionalMode() ? true : await ensureMongoReady();
   writeHealthHeaders(res);
 
+  const clusterSummaries = multiClusterPool.getAllNodes().map((n) => ({
+    id: n.id,
+    name: n.name,
+    host: n.host,
+    healthy: n.isHealthy,
+    full: n.isFull,
+    lastPingMs: n.lastPingMs,
+  }));
+
   return res.status(ready ? 200 : 503).json({
     success: ready,
     status: ready ? 'connected' : 'disconnected',
@@ -35,6 +45,11 @@ export const getHealthStatus = async (_req: express.Request, res: express.Respon
       name: mongoose.connection.name || DEFAULT_DB_NAME,
       readyState: mongoose.connection.readyState,
       host: mongoose.connection.host || null,
+      multiCluster: {
+        totalConfigured: clusterSummaries.length,
+        healthyCount: clusterSummaries.filter((c) => c.healthy).length,
+        clusters: clusterSummaries,
+      },
     },
     timestamp: new Date().toISOString(),
   });

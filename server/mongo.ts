@@ -35,20 +35,33 @@ const resolveDatabaseName = (mongoUri?: string): string => {
 };
 
 const primaryUri = getEnvValue('MONGODB_URI', 'MONGODB_URL', 'MONGO_URI', 'MONGO_URL');
-const configuredFallbackUris = [
-  process.env.MONGODB_URI_DIRECT,
-  process.env.MONGODB_URI_FALLBACK,
-  process.env.MONGODB_URL_FALLBACK,
-  process.env.MONGO_URI_FALLBACK,
-  process.env.MONGO_URL_FALLBACK,
-  process.env.MONGODB_URI_1,
-  process.env.MONGODB_URI_2,
-  process.env.MONGODB_URI_3,
-]
-  .map((value) => value?.trim())
-  .filter((value): value is string =>
-    Boolean(value && (value.startsWith('mongodb://') || value.startsWith('mongodb+srv://')))
-  );
+const resolveConfiguredFallbackUris = (): string[] => {
+  const direct = process.env.MONGODB_URI_DIRECT?.trim();
+  const fallback = (
+    process.env.MONGODB_URI_FALLBACK ||
+    process.env.MONGODB_URL_FALLBACK ||
+    process.env.MONGO_URI_FALLBACK ||
+    process.env.MONGO_URL_FALLBACK
+  )?.trim();
+
+  const numberedKeys = Object.keys(process.env)
+    .filter((k) => /^(?:MONGODB|MONGO)_(?:URI|URL)_(\d+)$/i.test(k))
+    .sort((a, b) => {
+      const numA = Number.parseInt(a.match(/\d+$/)?.[0] || '0', 10);
+      const numB = Number.parseInt(b.match(/\d+$/)?.[0] || '0', 10);
+      return numA - numB;
+    });
+
+  const rawList = [direct, fallback, ...numberedKeys.map((key) => process.env[key]?.trim())];
+
+  return rawList
+    .filter((value): value is string =>
+      Boolean(value && (value.startsWith('mongodb://') || value.startsWith('mongodb+srv://')))
+    )
+    .filter((value, idx, self) => self.indexOf(value) === idx);
+};
+
+const configuredFallbackUris = resolveConfiguredFallbackUris();
 
 const retryDnsServers = (
   process.env.MONGODB_DNS_RETRY_SERVERS ||
@@ -294,9 +307,30 @@ export const connectToMongo = async (): Promise<typeof mongoose> => {
   return connectionPromise;
 };
 
+let lastFallbackProbeTime = 0;
+const FALLBACK_PROBE_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+
+export const probeFallbackCandidates = async (): Promise<void> => {
+  const now = Date.now();
+  if (now - lastFallbackProbeTime < FALLBACK_PROBE_INTERVAL_MS) {
+    return;
+  }
+  lastFallbackProbeTime = now;
+
+  for (const uri of configuredFallbackUris) {
+    if (uri && uri !== currentUri && !uri.includes('127.0.0.1') && !uri.includes('localhost')) {
+      canConnectToUri(uri).catch(() => {
+        // Non-blocking background keepalive probe
+      });
+    }
+  }
+};
+
 export const ensureMongoReady = async (): Promise<boolean> => {
   try {
     await connectToMongo();
+    // Non-blocking background keep-alive for fallback clusters
+    void probeFallbackCandidates();
     return mongoose.connection.readyState === 1;
   } catch (error) {
     console.error('MongoDB connection error:', error);

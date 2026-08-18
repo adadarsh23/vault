@@ -567,7 +567,7 @@
     "name": "video-players"
   },
   "index.html": {
-    "file": "assets/index-CaaCHeVF.js",
+    "file": "assets/index-B31e0YO0.js",
     "name": "index",
     "src": "index.html",
     "isEntry": true,
@@ -740,7 +740,7 @@
     "src": "node_modules/pqc-kyber/pqc_kyber_bg.wasm"
   },
   "src/components/app/LockedVaultHost.tsx": {
-    "file": "assets/LockedVaultHost-8DZJwHRX.js",
+    "file": "assets/LockedVaultHost-B2CtoNVo.js",
     "name": "LockedVaultHost",
     "src": "src/components/app/LockedVaultHost.tsx",
     "isDynamicEntry": true,
@@ -765,7 +765,7 @@
     ]
   },
   "src/components/app/UnlockedVaultHost.tsx": {
-    "file": "assets/UnlockedVaultHost-29cHA1RW.js",
+    "file": "assets/UnlockedVaultHost-v4MPUAPm.js",
     "name": "UnlockedVaultHost",
     "src": "src/components/app/UnlockedVaultHost.tsx",
     "isDynamicEntry": true,
@@ -924,7 +924,7 @@
     ]
   },
   "src/features/LegalPage.tsx": {
-    "file": "assets/LegalPage-DZ9froQg.js",
+    "file": "assets/LegalPage-BM2QtBiX.js",
     "name": "LegalPage",
     "src": "src/features/LegalPage.tsx",
     "isDynamicEntry": true,

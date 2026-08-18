@@ -12,6 +12,7 @@ import { AppError } from '../utils/appError.ts';
 import { logger } from '../utils/logger.ts';
 import { initializeDefaultUserFolders } from './folderService.ts';
 import { createNotification } from './notificationService.ts';
+import { findUserAcrossClusters, mirrorUserToAllClusters } from './multiClusterAggregator.ts';
 
 // Helper to hash refresh tokens
 export const hashRefreshToken = (token: string): string =>
@@ -306,12 +307,25 @@ export const authenticateUser = async (input: {
 }) => {
   const deviceId = normalizeSessionDeviceId(input.deviceId);
   const identifier = (input.username || '').trim().toLowerCase();
+  const escaped = identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const userQuery = {
+    $or: [
+      { username: identifier },
+      { email: identifier },
+      { username: new RegExp(`^${escaped}$`, 'i') },
+      { email: new RegExp(`^${escaped}$`, 'i') },
+    ],
+  };
 
-  const user = await User.findOne({
-    $or: [{ username: identifier }, { email: identifier }],
-  })
-    .select('+password')
-    .exec();
+  let user = await User.findOne(userQuery).select('+password').exec();
+
+  if (!user) {
+    const located = await findUserAcrossClusters(userQuery);
+    if (located) {
+      user = located.user;
+      void mirrorUserToAllClusters(user);
+    }
+  }
 
   if (!user) {
     throw AppError.unauthorized('Invalid username or password.', 'INVALID_CREDENTIALS');
@@ -337,7 +351,13 @@ export const authenticateUser = async (input: {
     }
   }
 
-  const isValid = storedHash ? await comparePassword(input.password, storedHash) : false;
+  let isValid = false;
+  if (storedHash && typeof input.password === 'string') {
+    isValid = await comparePassword(input.password, storedHash);
+    if (!isValid && input.password.trim() !== input.password) {
+      isValid = await comparePassword(input.password.trim(), storedHash);
+    }
+  }
 
   if (isValid && isLegacyEncrypted && storedHash) {
     // Seamless migration: upgrade stored password to direct KDF hash string
@@ -562,6 +582,7 @@ export const registerUser = async (input: {
 
   await user.save();
   await initializeDefaultUserFolders(user._id.toString(), user.username);
+  void mirrorUserToAllClusters(user);
 
   return {
     token: session.accessToken,

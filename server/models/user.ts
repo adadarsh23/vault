@@ -645,5 +645,14 @@ export type UserModel = Model<UserShape>;
 
 /* ------------------ MODEL ------------------ */
 
-export const User =
-  (mongoose.models.User as UserModel) || mongoose.model<UserShape>('User', userSchema);
+export const getUserModel = (customConnection?: mongoose.Connection): UserModel => {
+  if (customConnection) {
+    return (
+      (customConnection.models.User as UserModel) ||
+      (customConnection.model('User', userSchema) as unknown as UserModel)
+    );
+  }
+  return (mongoose.models.User as UserModel) || mongoose.model<UserShape>('User', userSchema);
+};
+
+export const User = getUserModel();

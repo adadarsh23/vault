@@ -117,6 +117,7 @@
     "env:check": "node scripts/env-check.mjs",
     "db:ping": "node scripts/db-ping.mjs",
     "keepalive": "node scripts/atlas-keepalive.mjs",
+    "keepalive:once": "node scripts/atlas-keepalive.mjs --once",
     "security:rewrap-kek": "tsx server/scripts/rewrapEnvelopeKeys.ts --dry-run",
     "lighthouse": "node scripts/lighthouse-runner.mjs",
     "lighthouse:open": "node scripts/open-report.mjs lighthouse/report-split/index.html",

@@ -27,7 +27,7 @@ const validateLicensePolicy = async (
 ) => {
   // 1. Ownership & Existence Check
   const DynamicVaultModel = getVaultItemModel(username);
-  const item = await findVaultItemFlexible(DynamicVaultModel, userId, itemId);
+  const item = await findVaultItemFlexible(DynamicVaultModel, userId, itemId, username);
   if (!item) {
     logger.warn('License Policy Failure: Item not found or unauthorized', { userId, itemId });
     throw AppError.notFound('Media content not found in vault');

@@ -15,6 +15,7 @@ import { randomUUID } from 'crypto';
 import mongoose from 'mongoose';
 
 import { connectToMongo } from './server/mongo.ts';
+import { multiClusterPool } from './server/services/multiClusterPool.ts';
 import { resolvePort, listenWithFallback } from './server/network.ts';
 import { registerSocketHandlers } from './server/socket.ts';
 import { registerVaultRoutes } from './server/routes/vaultRoutes.ts';
@@ -28,6 +29,16 @@ import { notificationRouter } from './server/routes/notificationRoutes.ts';
 import { avatarRouter } from './server/routes/avatarRoutes.ts';
 
 import { setupFrontendMiddleware } from './server/vite.ts';
+
+// Clean up duplicate plain LICENSE file if present
+const plainLicenseFile = path.join(process.cwd(), 'LICENSE');
+if (fs.existsSync(plainLicenseFile)) {
+  try {
+    fs.unlinkSync(plainLicenseFile);
+  } catch {
+    // ignore
+  }
+}
 import { installBodyParsers } from './server/middleware/bodyParsers.ts';
 import { installCsrfProtection } from './server/middleware/csrfProtection.ts';
 import { requireAuth } from './server/middleware/authMiddleware.ts';
@@ -382,6 +393,9 @@ async function startServer() {
       startupAnimator.update('Connecting to MongoDB', 'Negotiating database session');
       await runPhase('MongoDB Init', async () => {
         await connectToMongo();
+        void multiClusterPool.initialize().catch((err) => {
+          logger.warn('[MultiClusterPool] Background warmup warning:', err?.message || err);
+        });
       });
     }
 

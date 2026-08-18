@@ -155,10 +155,18 @@ export const comparePassword = async (
   plainTextPassword: string,
   hashedPassword: string
 ): Promise<boolean> => {
+  if (!plainTextPassword || !hashedPassword) {
+    return false;
+  }
+
   // Legacy support for bcrypt hashes (usually start with $2a$ or $2b$)
   if (hashedPassword.startsWith('$2')) {
     return bcrypt.compare(plainTextPassword, hashedPassword);
   }
+
+  const candidatePeppers = Array.from(
+    new Set([AUTH_PEPPER, 'default-pepper-for-dev-only', ''])
+  ).filter((p): p is string => typeof p === 'string');
 
   try {
     if (hashedPassword.startsWith(`${SCRYPT_HASH_PREFIX}$`)) {
@@ -181,18 +189,24 @@ export const comparePassword = async (
         return false;
       }
 
-      const derivedKey = await deriveScryptKey(plainTextPassword + AUTH_PEPPER, salt, {
-        N: n,
-        r,
-        p,
-        keyLen,
-        maxmem: Math.max(128 * r * n + 1024, 128 * 1024 * 1024),
-      });
+      for (const pepper of candidatePeppers) {
+        const derivedKey = await deriveScryptKey(plainTextPassword + pepper, salt, {
+          N: n,
+          r,
+          p,
+          keyLen,
+          maxmem: Math.max(128 * r * n + 1024, 128 * 1024 * 1024),
+        });
 
-      if (expectedBuffer.length !== derivedKey.length) {
-        return false;
+        if (
+          expectedBuffer.length === derivedKey.length &&
+          crypto.timingSafeEqual(expectedBuffer, derivedKey)
+        ) {
+          return true;
+        }
       }
-      return crypto.timingSafeEqual(expectedBuffer, derivedKey);
+
+      return false;
     }
 
     // Legacy "salt:hash" format.
@@ -206,16 +220,21 @@ export const comparePassword = async (
       return false;
     }
 
-    const derivedKey = await deriveScryptKey(
-      plainTextPassword + AUTH_PEPPER,
-      salt,
-      LEGACY_SCRYPT_CONFIG
-    );
-    if (expectedBuffer.length !== derivedKey.length) {
-      return false;
+    for (const pepper of candidatePeppers) {
+      const derivedKey = await deriveScryptKey(
+        plainTextPassword + pepper,
+        salt,
+        LEGACY_SCRYPT_CONFIG
+      );
+      if (
+        expectedBuffer.length === derivedKey.length &&
+        crypto.timingSafeEqual(expectedBuffer, derivedKey)
+      ) {
+        return true;
+      }
     }
 
-    return crypto.timingSafeEqual(expectedBuffer, derivedKey);
+    return false;
   } catch {
     return false;
   }

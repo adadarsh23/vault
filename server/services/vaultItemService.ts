@@ -1,4 +1,5 @@
 import { getVaultItemModel } from '../models/vaultItem.ts';
+import { aggregateVaultItems, deleteVaultItemAcrossClusters } from './multiClusterAggregator.ts';
 import mongoose from 'mongoose';
 import { AppError } from '../utils/appError.ts';
 import { logger } from '../utils/logger.ts';
@@ -300,9 +301,7 @@ export const saveEncryptedVaultItem = async (input: {
 };
 
 export const getVaultSnapshot = async (userId: string, username: string) => {
-  const DynamicVaultModel = getVaultItemModel(username);
-  const items = await DynamicVaultModel.find({ userId, isDeleted: false }).lean().exec();
-  return items;
+  return aggregateVaultItems(username, userId);
 };
 
 export const deleteVaultItemByCategory = async (input: {
@@ -314,25 +313,14 @@ export const deleteVaultItemByCategory = async (input: {
   ipAddress?: string;
   clientUpdatedAt?: string;
 }) => {
-  const { userId, itemId } = input;
+  const { userId, itemId, username } = input;
 
-  const DynamicVaultModel = getVaultItemModel(input.username);
-  const result = await DynamicVaultModel.findOneAndUpdate(
-    { userId, itemId },
-    {
-      isDeleted: true,
-      deletedAt: new Date(),
-      deviceId: input.deviceId,
-      ipAddress: input.ipAddress,
-    },
-    { returnDocument: 'after' }
-  );
-
-  if (!result) {
+  const deletedCount = await deleteVaultItemAcrossClusters(username, userId, itemId, false);
+  if (deletedCount === 0) {
     throw AppError.notFound('Vault item not found.', 'ITEM_NOT_FOUND');
   }
 
-  return result;
+  return { itemId, isDeleted: true, deletedCount };
 };
 
 /**

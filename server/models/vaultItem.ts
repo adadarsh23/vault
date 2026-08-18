@@ -96,8 +96,12 @@ export type VaultItemDocument = mongoose.HydratedDocument<VaultItemType>;
 /**
  * Returns a user-specific VaultItem model using a dedicated collection.
  * The collection name is derived from the username to ensure data isolation.
+ * Supports passing a custom connection for multi-cluster querying.
  */
-export const getVaultItemModel = (username: string): mongoose.Model<VaultItemType> => {
+export const getVaultItemModel = (
+  username: string,
+  customConnection?: mongoose.Connection
+): mongoose.Model<VaultItemType> => {
   if (!username || !username.trim()) {
     throw new Error('Username is required for isolated vault items');
   }
@@ -108,12 +112,25 @@ export const getVaultItemModel = (username: string): mongoose.Model<VaultItemTyp
     .replace(/[^a-z0-9_-]/g, '_');
   const collectionName = `${normalized}.${normalized}_vault_items`;
 
+  if (customConnection) {
+    if (customConnection.models[collectionName]) {
+      return customConnection.models[collectionName] as mongoose.Model<VaultItemType>;
+    }
+    const model = customConnection.model(collectionName, vaultItemSchema, collectionName);
+    if (typeof model?.createIndexes === 'function') {
+      model.createIndexes().catch(() => {});
+    }
+    return model as unknown as mongoose.Model<VaultItemType>;
+  }
+
   if (mongoose.models[collectionName]) {
     return mongoose.models[collectionName] as mongoose.Model<VaultItemType>;
   }
 
   const model = mongoose.model<VaultItemType>(collectionName, vaultItemSchema, collectionName);
-  model.createIndexes().catch(() => {});
+  if (typeof model?.createIndexes === 'function') {
+    model.createIndexes().catch(() => {});
+  }
   return model;
 };
 

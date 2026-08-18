@@ -113,11 +113,30 @@ encryptedActivityLogSchema.index({ userId: 1, category: 1, createdAt: -1 });
 export type ActivityLogType = InferSchemaType<typeof encryptedActivityLogSchema>;
 export type ActivityLogDocument = HydratedDocument<ActivityLogType>;
 
-export const getActivityLogModel = (username: string): Model<ActivityLogType> => {
+export const getActivityLogModel = (
+  username: string,
+  customConnection?: mongoose.Connection
+): Model<ActivityLogType> => {
   if (!username || !username.trim()) {
     throw new Error('Username is required for isolated activity logs');
   }
   const collectionName = `${username.trim()}.${username.trim()}_activity_logs`;
+
+  if (customConnection) {
+    if (customConnection.models[collectionName]) {
+      return customConnection.models[collectionName] as Model<ActivityLogType>;
+    }
+    const model = customConnection.model(
+      collectionName,
+      encryptedActivityLogSchema,
+      collectionName
+    );
+    if (typeof model?.createIndexes === 'function') {
+      model.createIndexes().catch(() => {});
+    }
+    return model as unknown as Model<ActivityLogType>;
+  }
+
   if (mongoose.models[collectionName]) {
     return mongoose.models[collectionName] as Model<ActivityLogType>;
   }
@@ -126,7 +145,9 @@ export const getActivityLogModel = (username: string): Model<ActivityLogType> =>
     encryptedActivityLogSchema,
     collectionName
   );
-  model.createIndexes().catch(() => {});
+  if (typeof model?.createIndexes === 'function') {
+    model.createIndexes().catch(() => {});
+  }
   return model;
 };
 

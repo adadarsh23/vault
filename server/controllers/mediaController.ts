@@ -23,6 +23,7 @@ import { User } from '../models/user.ts';
 import { isAllowedCorsOrigin } from '../utils/cors.ts';
 import { getTusSessionBuffer } from './tusController.ts';
 import { ensureMongoReady } from '../mongo.ts';
+import { multiClusterPool } from '../services/multiClusterPool.ts';
 
 const STORAGE_ROOT = path.join(process.cwd(), 'vault-storage');
 
@@ -61,7 +62,8 @@ const getSingleRouteParam = (value: string | string[] | undefined): string | und
 export const findVaultItemFlexible = async (
   DynamicVaultModel: mongoose.Model<any>,
   userId: string,
-  itemId: string
+  itemId: string,
+  username?: string
 ) => {
   if (!itemId || !userId) return null;
 
@@ -77,18 +79,46 @@ export const findVaultItemFlexible = async (
     queryConditions.push({ _id: new mongoose.Types.ObjectId(itemId) });
   }
 
-  const executeFindOne = async (conditions: Record<string, unknown>) => {
-    const query = DynamicVaultModel.findOne(conditions);
+  const executeFindOne = async (
+    model: mongoose.Model<any>,
+    conditions: Record<string, unknown>
+  ) => {
+    const query = model.findOne(conditions);
     return typeof query?.exec === 'function' ? query.exec() : query;
   };
 
-  // Strictly enforce userId scoping on all queries to prevent IDOR / BOLA vulnerabilities
-  const item = await executeFindOne({
+  // 1. Strictly enforce userId scoping on primary connection
+  let item = await executeFindOne(DynamicVaultModel, {
     userId,
     $or: queryConditions,
   });
 
-  return item;
+  if (item) {
+    return item;
+  }
+
+  // 2. Search across other cluster nodes in the multi-cluster pool if not found on primary
+  try {
+    const nodes = multiClusterPool.getHealthyNodes();
+    for (const node of nodes) {
+      if (node.connection === DynamicVaultModel.db) continue;
+      const targetUsername = username || DynamicVaultModel.modelName?.split('.')[0] || 'default';
+      const RemoteModel = getVaultItemModel(targetUsername, node.connection);
+      const remoteItem = await executeFindOne(RemoteModel, {
+        userId,
+        $or: queryConditions,
+      });
+      if (remoteItem) {
+        (remoteItem as any)._clusterNode = node;
+        (remoteItem as any)._customConnection = node.connection;
+        return remoteItem;
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  return null;
 };
 
 const mimeMap: Record<string, string> = {
@@ -642,7 +672,7 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
   if (!username) throw AppError.unauthorized('Username required for isolated vault access');
 
   const DynamicVaultModel = getVaultItemModel(username);
-  let item = await findVaultItemFlexible(DynamicVaultModel, resolvedUserId, itemId);
+  let item = await findVaultItemFlexible(DynamicVaultModel, resolvedUserId, itemId, username);
 
   if (!item || !item.file || !item.file.filePath) throw AppError.notFound('Media item not found');
   ensureUploadIsActive(item);
@@ -775,7 +805,7 @@ export const getMediaSegment = async (req: express.Request, res: express.Respons
   if (!username) throw AppError.unauthorized('Username required for isolated vault access');
 
   const DynamicVaultModel = getVaultItemModel(username);
-  let item = await findVaultItemFlexible(DynamicVaultModel, resolvedUserId, itemId);
+  let item = await findVaultItemFlexible(DynamicVaultModel, resolvedUserId, itemId, username);
 
   if (!item || !item.file || !item.file.filePath) throw AppError.notFound('Media item not found');
   ensureUploadIsActive(item);
@@ -845,13 +875,14 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
   if (!username) throw AppError.unauthorized('Username required for isolated vault access');
 
   const DynamicVaultModel = getVaultItemModel(username);
-  let item = await findVaultItemFlexible(DynamicVaultModel, resolvedUserId, itemId);
+  let item = await findVaultItemFlexible(DynamicVaultModel, resolvedUserId, itemId, username);
 
   const isObjectId = mongoose.Types.ObjectId.isValid(itemId);
 
   if (!item && isObjectId && mongoose.connection && mongoose.connection.db) {
     try {
-      const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+      const targetDb = (item as any)?._customConnection?.db || mongoose.connection.db;
+      const bucket = new mongoose.mongo.GridFSBucket(targetDb, {
         bucketName: 'vault_item_files',
       });
       const objectId = new mongoose.Types.ObjectId(itemId);
@@ -933,9 +964,10 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
         ? item.file.filePath.replace('gridfs://', '')
         : null);
 
-  if (gridFsId && mongoose.connection && mongoose.connection.db) {
+  const targetDb = (item as any)?._customConnection?.db || mongoose.connection.db;
+  if (gridFsId && targetDb) {
     try {
-      const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+      const bucket = new mongoose.mongo.GridFSBucket(targetDb, {
         bucketName: 'vault_item_files',
       });
       const objectId = new mongoose.Types.ObjectId(gridFsId);
@@ -1243,7 +1275,7 @@ export const createSignedUrl = async (req: express.Request, res: express.Respons
   const username = (req as any).user?.username;
   if (!username) throw AppError.unauthorized('Username required for isolated vault access');
   const DynamicVaultModel = getVaultItemModel(username);
-  const item = await findVaultItemFlexible(DynamicVaultModel, userId, itemId);
+  const item = await findVaultItemFlexible(DynamicVaultModel, userId, itemId, username);
   if (!item) throw AppError.notFound('File not found');
   ensureUploadIsActive(item);
   const url = storageService.generateSignedUrl(userId, itemId, fileName, {

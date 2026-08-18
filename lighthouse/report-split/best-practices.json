@@ -1,7 +1,7 @@
 {
   "requestedUrl": "http://127.0.0.1:4173/",
   "finalUrl": "http://127.0.0.1:4173/",
-  "fetchTime": "2026-08-18T05:50:19.343Z",
+  "fetchTime": "2026-08-18T08:01:50.033Z",
   "category": {
     "title": "Best Practices",
     "supportedModes": [
@@ -608,7 +608,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-CaaCHeVF.js",
+              "url": "http://127.0.0.1:4173/assets/index-B31e0YO0.js",
               "urlProvider": "network",
               "line": 1,
               "column": 4531
@@ -817,7 +817,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-CaaCHeVF.js",
+              "url": "http://127.0.0.1:4173/assets/index-B31e0YO0.js",
               "urlProvider": "network",
               "line": 1,
               "column": 8685
@@ -1254,7 +1254,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-CaaCHeVF.js",
+              "url": "http://127.0.0.1:4173/assets/index-B31e0YO0.js",
               "urlProvider": "network",
               "line": 1,
               "column": 8842
@@ -1273,7 +1273,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-CaaCHeVF.js",
+              "url": "http://127.0.0.1:4173/assets/index-B31e0YO0.js",
               "urlProvider": "network",
               "line": 1,
               "column": 8842
@@ -1482,10 +1482,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/",
+              "url": "http://127.0.0.1:4173/assets/Background-DtEXauNp.js",
               "urlProvider": "network",
-              "line": -2,
-              "column": -2
+              "line": 0,
+              "column": 1076
             }
           },
           {
@@ -1785,8 +1785,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-8DZJwHRX.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-8DZJwHRX.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-B2CtoNVo.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-B2CtoNVo.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1817,8 +1817,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/index-CaaCHeVF.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-CaaCHeVF.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/index-B31e0YO0.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-B31e0YO0.js.map",
             "subItems": {
               "type": "subitems",
               "items": []

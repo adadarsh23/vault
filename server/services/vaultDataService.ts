@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
-import { getActivityLogModel } from '../models/activityLog.ts';
 import { getVaultItemModel } from '../models/vaultItem.ts';
 import { deleteScopedVaultItemByUsername, saveScopedVaultItem } from './legacyVaultService.ts';
+import { aggregateVaultItems, aggregateActivityLogs } from './multiClusterAggregator.ts';
 import { encryptText } from '../utils/crypto.ts';
 import { AppError } from '../utils/appError.ts';
 import { logger } from '../utils/logger.ts';
@@ -46,19 +46,9 @@ export const getVaultSnapshot = async (userId: string) => {
   const user = await getUserOrThrow(userId);
   const username = user.username;
 
-  const DynamicVaultModel = getVaultItemModel(username);
-  const DynamicLogModel = getActivityLogModel(username);
-
-  const items = await DynamicVaultModel.find({ userId, isDeleted: false })
-    .allowDiskUse(true)
-    .lean()
-    .exec();
-  const logs = await DynamicLogModel.find({ userId })
-    .sort({ createdAt: -1 })
-    .allowDiskUse(true)
-    .limit(100)
-    .lean()
-    .exec();
+  // Use Multi-Cluster Smart Aggregator Engine to query all configured clusters in parallel
+  const items = await aggregateVaultItems(username, userId);
+  const logs = await aggregateActivityLogs(username, userId, 100);
 
   // Group items into categories for the legacy 'vault' object structure
   const vault: any = {
@@ -111,14 +101,10 @@ export const getVaultSyncChanges = async (userId: string, since?: string) => {
   const user = await getUserOrThrow(userId);
   const username = user.username;
 
-  const DynamicVaultModel = getVaultItemModel(username);
-  const items = await DynamicVaultModel.find({
-    userId,
+  // Aggregate sync changes across all clusters
+  const items = await aggregateVaultItems(username, userId, {
     updatedAt: { $gt: sinceDate },
-  })
-    .allowDiskUse(true)
-    .lean()
-    .exec();
+  });
 
   const vaultChanges: any = {
     photos: [],

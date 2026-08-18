@@ -1,4 +1,5 @@
 import { getVaultItemModel } from '../models/vaultItem.ts';
+import { multiClusterPool } from './multiClusterPool.ts';
 import mongoose from 'mongoose';
 import path from 'path';
 
@@ -364,6 +365,25 @@ const deleteGridFsFile = async (gridFsId: string | null | undefined) => {
       console.warn('Failed to delete GridFS file:', candidate);
     }
   }
+
+  // Cross-cluster cleanup
+  try {
+    const nodes = multiClusterPool.getHealthyNodes();
+    for (const node of nodes) {
+      if (node.connection.db) {
+        try {
+          const remoteBucket = new mongoose.mongo.GridFSBucket(node.connection.db, {
+            bucketName: 'vault_item_files',
+          });
+          await remoteBucket.delete(objectId);
+        } catch {
+          // ignore
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
 };
 
 const downloadGridFsFileAsBase64 = async (gridFsId: string) => {
@@ -372,8 +392,34 @@ const downloadGridFsFileAsBase64 = async (gridFsId: string) => {
     return '';
   }
 
-  const bucket = getLegacyBucket();
-  const [gridFsFile] = await bucket.find({ _id: objectId }).limit(1).toArray();
+  let bucket = getLegacyBucket();
+  let [gridFsFile] = await bucket.find({ _id: objectId }).limit(1).toArray();
+
+  if (!gridFsFile) {
+    try {
+      const nodes = multiClusterPool.getHealthyNodes();
+      for (const node of nodes) {
+        if (node.connection.db) {
+          const remoteBucket = new mongoose.mongo.GridFSBucket(node.connection.db, {
+            bucketName: 'vault_item_files',
+          });
+          const [remoteFile] = await remoteBucket.find({ _id: objectId }).limit(1).toArray();
+          if (remoteFile) {
+            bucket = remoteBucket;
+            gridFsFile = remoteFile;
+            break;
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!gridFsFile) {
+    return '';
+  }
+
   const encryptionMetadata = (gridFsFile?.metadata as any)?.encryption as
     Omit<EncryptedEnvelopePayload, 'cipherText'> | undefined;
 
