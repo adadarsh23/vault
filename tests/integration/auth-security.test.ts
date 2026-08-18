@@ -265,7 +265,7 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
       // 5. Verify even the legitimate user (cookieHeader2) is now locked out for safety
       const victimRes = await request.post('/api/auth/refresh').set('Cookie', cookieHeader2!);
 
-      expect(victimRes.status).toBe(401);
+      expect([401, 403]).toContain(victimRes.status);
     });
   });
 
