@@ -45,6 +45,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Validate configuration
         shell: bash
@@ -55,6 +56,12 @@ jobs:
             exit 1
           fi
           echo "Database URI configuration validated."
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --omit=dev
 
       - name: Ping All Atlas Clusters (Primary & Fallback)
         shell: bash
