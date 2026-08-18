@@ -64,7 +64,12 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
 
       // Verify Set-Cookie header contains HttpOnly refresh token
       const cookies = res.get('Set-Cookie') || [];
-      expect(cookies.some((c) => c.toLowerCase().includes('refresh_token') || c.toLowerCase().includes('refreshtoken'))).toBe(true);
+      expect(
+        cookies.some(
+          (c) =>
+            c.toLowerCase().includes('refresh_token') || c.toLowerCase().includes('refreshtoken')
+        )
+      ).toBe(true);
       expect(cookies.some((c) => c.includes('HttpOnly'))).toBe(true);
 
       // Verify Database Sanitization and Password Hashing
@@ -146,7 +151,12 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
       expect(loginRes.body).toHaveProperty('accessToken');
 
       const cookies = loginRes.get('Set-Cookie') || [];
-      expect(cookies.some((c) => c.toLowerCase().includes('refresh_token') || c.toLowerCase().includes('refreshtoken'))).toBe(true);
+      expect(
+        cookies.some(
+          (c) =>
+            c.toLowerCase().includes('refresh_token') || c.toLowerCase().includes('refreshtoken')
+        )
+      ).toBe(true);
 
       // Verify RefreshToken collection document created with familyId
       const refreshTokens = await RefreshToken.find({ isRevoked: false });
@@ -212,7 +222,8 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
 
       expect(refreshRes1.status).toBe(200);
       const resBody = refreshRes1.body;
-      const accessToken = resBody.accessToken || resBody.token || resBody?.data?.accessToken || resBody?.data?.token;
+      const accessToken =
+        resBody.accessToken || resBody.token || resBody?.data?.accessToken || resBody?.data?.token;
       expect(accessToken).toBeDefined();
 
       const cookieHeader2 = refreshRes1.get('Set-Cookie');
@@ -270,7 +281,11 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
         captchaToken: CAPTCHA_TOKEN,
       });
 
-      const token = signupRes.body.accessToken || signupRes.body.token || signupRes.body?.data?.accessToken || signupRes.body?.data?.token;
+      const token =
+        signupRes.body.accessToken ||
+        signupRes.body.token ||
+        signupRes.body?.data?.accessToken ||
+        signupRes.body?.data?.token;
 
       const meRes = await request.get('/api/auth/me').set('Authorization', `Bearer ${token}`);
 
@@ -324,7 +339,13 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
 
       // Verify cleared cookie header
       const cookies = logoutRes.get('Set-Cookie') || [];
-      expect(cookies.some((c) => c.toLowerCase().includes('refresh_token=;') || c.toLowerCase().includes('refreshtoken=;'))).toBe(true);
+      expect(
+        cookies.some(
+          (c) =>
+            c.toLowerCase().includes('refresh_token=;') ||
+            c.toLowerCase().includes('refreshtoken=;')
+        )
+      ).toBe(true);
     });
   });
 });
