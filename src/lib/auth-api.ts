@@ -1043,11 +1043,6 @@ export const verifyCloudUnlockCaptcha = async (captchaToken: string) => {
 };
 
 export const getAuthenticatedProfile = async (): Promise<AuthenticatedProfile> => {
-  const token = getAuthToken();
-  if (!token) {
-    return applyLocalProfileOverride(buildLocalFallbackProfile());
-  }
-
   let response: Response;
   let payload: AuthResponse<AuthenticatedProfile> | null;
   try {
@@ -1058,7 +1053,7 @@ export const getAuthenticatedProfile = async (): Promise<AuthenticatedProfile> =
         credentials: 'include',
         headers: {
           ...DEFAULT_BROWSER_AUTH_HEADERS,
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${getAuthToken() || ''}`,
         },
       },
       'Failed to load account sessions.'
@@ -1067,12 +1062,7 @@ export const getAuthenticatedProfile = async (): Promise<AuthenticatedProfile> =
     payload = request.payload;
   } catch (cause) {
     const candidate = cause as ApiRequestError;
-    if (
-      candidate?.status === 401 ||
-      candidate?.status === 403 ||
-      candidate?.status === 404 ||
-      candidate?.status === 405
-    ) {
+    if (candidate?.status === 404 || candidate?.status === 405) {
       return applyLocalProfileOverride(buildLocalFallbackProfile());
     }
     throw cause;
