@@ -1,4 +1,5 @@
 import { logger } from './logger';
+import { createTrackedBlobUrl } from './blobRegistry';
 
 export type TranscodeProgressStage = 'loading' | 'remuxing' | 'transcoding' | 'done';
 
@@ -312,7 +313,7 @@ export async function transcodeVideoInBrowser(
 
     const outputData = await ffmpeg.readFile(outputName);
     const convertedBlob = new Blob([outputData], { type: 'video/mp4' });
-    const convertedUrl = URL.createObjectURL(convertedBlob);
+    const convertedUrl = createTrackedBlobUrl(convertedBlob);
 
     const result = {
       url: convertedUrl,

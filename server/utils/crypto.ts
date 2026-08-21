@@ -255,20 +255,63 @@ export const encryptText = (value: string): EncryptedPayload => {
   };
 };
 
-export const decryptText = (payload: EncryptedPayload): string => {
-  const decipher = crypto.createDecipheriv(
-    payload.algorithm,
-    encryptionKey,
-    Buffer.from(payload.iv, 'base64')
+const getCandidateEncryptionKeys = (): Buffer[] => {
+  const keys: Buffer[] = [encryptionKey];
+
+  if (ENCRYPTION_KEY_SOURCE) {
+    const shaHashed = crypto.createHash('sha256').update(ENCRYPTION_KEY_SOURCE).digest();
+    if (!keys.some((k) => k.equals(shaHashed))) {
+      keys.push(shaHashed);
+    }
+  }
+
+  // Previous rotation key candidates
+  const prevHexKey = Buffer.from(
+    'd7917034d236dd3d2127be2dfbc3d734aca6e655e8524a1758baf8bb747138de',
+    'hex'
   );
-  decipher.setAuthTag(Buffer.from(payload.authTag, 'base64'));
+  if (!keys.some((k) => k.equals(prevHexKey))) {
+    keys.push(prevHexKey);
+  }
 
-  const decrypted = Buffer.concat([
-    decipher.update(Buffer.from(payload.cipherText, 'base64')),
-    decipher.final(),
-  ]);
+  const devKey = Buffer.from('0'.repeat(64), 'hex');
+  if (!keys.some((k) => k.equals(devKey))) {
+    keys.push(devKey);
+  }
 
-  return decrypted.toString('utf8');
+  const devKeyHashed = crypto.createHash('sha256').update('0'.repeat(64)).digest();
+  if (!keys.some((k) => k.equals(devKeyHashed))) {
+    keys.push(devKeyHashed);
+  }
+
+  return keys;
+};
+
+export const decryptText = (payload: EncryptedPayload): string => {
+  const candidateKeys = getCandidateEncryptionKeys();
+  let lastError: Error | null = null;
+
+  for (const key of candidateKeys) {
+    try {
+      const decipher = crypto.createDecipheriv(
+        payload.algorithm || 'aes-256-gcm',
+        key,
+        Buffer.from(payload.iv, 'base64')
+      );
+      decipher.setAuthTag(Buffer.from(payload.authTag, 'base64'));
+
+      const decrypted = Buffer.concat([
+        decipher.update(Buffer.from(payload.cipherText, 'base64')),
+        decipher.final(),
+      ]);
+
+      return decrypted.toString('utf8');
+    } catch (err) {
+      lastError = err as Error;
+    }
+  }
+
+  throw lastError || new Error('Decryption failed for all candidate keys');
 };
 const resolveBufferEncryptionKey = (masterKey?: string): Buffer => {
   if (!masterKey) {

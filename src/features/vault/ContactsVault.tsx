@@ -31,7 +31,7 @@ import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
 import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';
 import { useClipboard } from '../../hooks/useClipboard';
 import { logActivity } from '../../lib/activity';
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { setDraggedVaultItem, clearDraggedVaultItem } from '../../lib/vaultDragDrop';
 import { FolderSidebar } from '../../components/vault/FolderSidebar';
 import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
 import { TagManager } from '../../components/vault/TagManager';
@@ -778,6 +778,7 @@ export const ContactsVault: React.FC = () => {
               key={item.id}
               draggable
               onDragStart={(event) => setDraggedVaultItem(event, item.id)}
+              onDragEnd={clearDraggedVaultItem}
               onTouchStart={(event) => setDraggedVaultItem(event as any, item.id)}
               // onTouchMove={(e) => {
               //   /* Allow custom touch drag logic */

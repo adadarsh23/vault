@@ -2,6 +2,9 @@ import type {
   MediaProcessorRequest,
   MediaProcessorResponse,
 } from '../workers/media-processor.worker';
+import { stripExifInMemory } from './mediaExifScrubber';
+
+export { stripExifInMemory };
 
 let requestIdCounter = 0;
 
@@ -261,4 +264,73 @@ async function generateThumbnailMainThread(
 
     img.src = url;
   });
+}
+
+/**
+ * Strips EXIF metadata and GPS coordinates from a photo in a background Web Worker,
+ * with deterministic in-memory fallback to guarantee zero unscrubbed leaks.
+ */
+export async function stripExifInWorker(file: File): Promise<File> {
+  if (!file.type.startsWith('image/')) {
+    return file;
+  }
+
+  const fileBuffer = await file.arrayBuffer();
+  const worker = createWorker();
+
+  if (!worker) {
+    const cleanedBuffer = stripExifInMemory(fileBuffer, file.type);
+    const mime = file.type || 'image/jpeg';
+    const blob = new Blob([cleanedBuffer], { type: mime });
+    return new File([blob], file.name, {
+      type: mime,
+      lastModified: file.lastModified,
+    });
+  }
+
+  const id = `strip-${Date.now()}-${++requestIdCounter}`;
+
+  try {
+    const workerTransferBuffer = fileBuffer.slice(0);
+    const response = await new Promise<MediaProcessorResponse>((resolve, reject) => {
+      worker.onmessage = (e: MessageEvent<MediaProcessorResponse>) => {
+        if (e.data.id === id) resolve(e.data);
+      };
+      worker.onerror = (e) => reject(new Error(e.message || 'Media worker EXIF strip failed'));
+
+      const request: MediaProcessorRequest = {
+        id,
+        type: 'STRIP_EXIF',
+        fileBuffer: workerTransferBuffer,
+        mimeType: file.type || 'image/jpeg',
+      };
+      worker.postMessage(request, [workerTransferBuffer]);
+    });
+
+    if (!response.ok || response.type !== 'STRIP_EXIF') {
+      const cleanedBuffer = stripExifInMemory(fileBuffer, file.type);
+      const mime = file.type || 'image/jpeg';
+      const blob = new Blob([cleanedBuffer], { type: mime });
+      return new File([blob], file.name, {
+        type: mime,
+        lastModified: file.lastModified,
+      });
+    }
+
+    const blob = new Blob([response.cleanedBuffer], { type: response.mimeType });
+    return new File([blob], file.name, {
+      type: response.mimeType,
+      lastModified: file.lastModified,
+    });
+  } catch {
+    const cleanedBuffer = stripExifInMemory(fileBuffer, file.type);
+    const mime = file.type || 'image/jpeg';
+    const blob = new Blob([cleanedBuffer], { type: mime });
+    return new File([blob], file.name, {
+      type: mime,
+      lastModified: file.lastModified,
+    });
+  } finally {
+    worker.terminate();
+  }
 }

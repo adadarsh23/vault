@@ -117,15 +117,104 @@ export const resolveSignedUrl = (value: string, context: string, code: string): 
 };
 
 let activeRefreshPromise: Promise<string> | null = null;
-let syncWriteQueue: Promise<void> = Promise.resolve();
 
-export const runInSyncWriteQueue = async <T>(task: () => Promise<T>): Promise<T> => {
-  const runTask = syncWriteQueue.then(task, task);
-  syncWriteQueue = runTask.then(
-    () => undefined,
-    () => undefined
+export const DEFAULT_MAX_PARALLEL_SYNC_WRITES = 6;
+
+// Keyed per-item FIFO queues to prevent concurrent write races on the SAME item
+const itemWriteQueues = new Map<string, Promise<void>>();
+
+// Global bounded concurrency semaphore for parallel uploads across different items
+let activeWriteCount = 0;
+const writeWaiters: Array<() => void> = [];
+
+const acquireWriteSlot = async (maxParallel = DEFAULT_MAX_PARALLEL_SYNC_WRITES): Promise<void> => {
+  if (activeWriteCount < maxParallel) {
+    activeWriteCount += 1;
+    return;
+  }
+  return new Promise<void>((resolve) => {
+    writeWaiters.push(() => {
+      activeWriteCount += 1;
+      resolve();
+    });
+  });
+};
+
+const releaseWriteSlot = (): void => {
+  activeWriteCount = Math.max(0, activeWriteCount - 1);
+  const next = writeWaiters.shift();
+  if (next) {
+    next();
+  }
+};
+
+/**
+ * Runs a sync write task with per-key serialization and global bounded parallelism.
+ * If key (e.g. itemId) is provided, writes to the same item are sequenced in FIFO order.
+ * Different items execute in parallel up to maxParallel concurrency.
+ */
+export const runInSyncWriteQueue = async <T>(
+  task: () => Promise<T>,
+  key?: string,
+  maxParallel = DEFAULT_MAX_PARALLEL_SYNC_WRITES
+): Promise<T> => {
+  const resolvedKey = key && key.trim() ? key.trim() : '__global__';
+  const previousItemPromise = itemWriteQueues.get(resolvedKey) || Promise.resolve();
+
+  let releaseItemQueue: () => void = () => {};
+  const currentItemPromise = new Promise<void>((resolve) => {
+    releaseItemQueue = resolve;
+  });
+
+  // Attach to item queue so consecutive operations on the same key are ordered
+  itemWriteQueues.set(
+    resolvedKey,
+    previousItemPromise.then(
+      () => currentItemPromise,
+      () => currentItemPromise
+    )
   );
-  return runTask;
+
+  try {
+    await previousItemPromise;
+    await acquireWriteSlot(maxParallel);
+    try {
+      return await task();
+    } finally {
+      releaseWriteSlot();
+    }
+  } finally {
+    releaseItemQueue();
+    // Cleanup idle item queue entry if no further chained operations are pending
+    if (itemWriteQueues.get(resolvedKey) === currentItemPromise) {
+      itemWriteQueues.delete(resolvedKey);
+    }
+  }
+};
+
+/**
+ * Runs an array of items concurrently using a bounded parallel worker pool.
+ */
+export const runInParallelPool = async <T, R>(
+  items: T[],
+  worker: (item: T, index: number) => Promise<R>,
+  concurrency = DEFAULT_MAX_PARALLEL_SYNC_WRITES
+): Promise<R[]> => {
+  if (items.length === 0) return [];
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+
+  const poolWorker = async () => {
+    while (cursor < items.length) {
+      const idx = cursor;
+      cursor += 1;
+      results[idx] = await worker(items[idx], idx);
+    }
+  };
+
+  const workerCount = Math.max(1, Math.min(concurrency, items.length));
+  await Promise.all(Array.from({ length: workerCount }, () => poolWorker()));
+  return results;
 };
 
 export const getAuthHeaders = (): Record<string, string> => {

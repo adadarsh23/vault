@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useVaultStore } from '../../store/vaultStore';
 import { base64ToUint8Array, deriveKey } from '../../lib/cryptoPrimitives';
@@ -14,33 +14,164 @@ import {
 } from '../../lib/auth-api';
 import { clearAuthToken, clearCloudSessionHint } from '../../lib/auth-session';
 import { uploadKeyCheckToCloud } from '../../lib/sync';
-// import { handleError, ErrorCode } from "../../lib/error-handler"
 import { logActivity } from '../../lib/activity';
 import { validatePassword } from '../../lib/utils';
 import { identifyLogRocketUser } from '../../lib/logrocket';
+import { SecurityLayer } from './SecurityLayers';
 
-type AuthStatus = 'idle' | 'authenticating' | 'syncing' | 'success' | 'error';
+export type AuthStatus = 'idle' | 'authenticating' | 'syncing' | 'success' | 'error';
+
+export interface UseVaultAuthOptions {
+  initialUsername?: string;
+  cloudSessionActive?: boolean;
+  authMode?: 'login' | 'register';
+}
 
 const normalizeVaultUsername = (value: string) => value.trim().toLowerCase();
 const USERNAME_PATTERN = /^[a-z0-9._-]+$/i;
+const MIN_USERNAME_LENGTH = 3;
+const MAX_USERNAME_LENGTH = 64;
 const LAYER_UI_DELAY_MS = 8;
 const POST_UNLOCK_ACTIVE_DELAY_MS = 0;
 const POST_UNLOCK_COMPLETE_DELAY_MS = 0;
 const SUCCESS_TRANSITION_DELAY_MS = 0;
+const ERROR_STATUS_COOLDOWN_MS = 1500;
+const SUCCESS_COUNTDOWN_SECONDS = 2;
+
+export const FAILED_ATTEMPTS_STORAGE_KEY = 'vault_failed_unlock_attempts';
+export const EMERGENCY_WIPED_STORAGE_KEY = 'vault_emergency_wiped_at';
+
+export const getFailedUnlockAttempts = (): number => {
+  try {
+    if (typeof localStorage === 'undefined') return 0;
+    const val = localStorage.getItem(FAILED_ATTEMPTS_STORAGE_KEY);
+    const parsed = Number(val);
+    return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
+  } catch {
+    return 0;
+  }
+};
+
+export const incrementFailedUnlockAttempts = (): number => {
+  try {
+    const next = getFailedUnlockAttempts() + 1;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(FAILED_ATTEMPTS_STORAGE_KEY, String(next));
+    }
+    return next;
+  } catch {
+    return 1;
+  }
+};
+
+export const resetFailedUnlockAttempts = (): void => {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(FAILED_ATTEMPTS_STORAGE_KEY);
+    }
+  } catch {
+    /* ignore */
+  }
+};
+
+const getCryptoSubtle = (): SubtleCrypto | null => {
+  const cryptoObj =
+    typeof window !== 'undefined' && window.crypto
+      ? window.crypto
+      : typeof globalThis !== 'undefined' && globalThis.crypto
+        ? globalThis.crypto
+        : null;
+
+  return cryptoObj?.subtle ?? null;
+};
+
+const getRandomValues = (array: Uint8Array): Uint8Array => {
+  const cryptoObj =
+    typeof window !== 'undefined' && window.crypto
+      ? window.crypto
+      : typeof globalThis !== 'undefined' && globalThis.crypto
+        ? globalThis.crypto
+        : null;
+
+  if (cryptoObj?.getRandomValues) {
+    cryptoObj.getRandomValues(array as any);
+    return array;
+  }
+  for (let i = 0; i < array.length; i++) {
+    array[i] = Math.floor(Math.random() * 256);
+  }
+  return array;
+};
+
+export const SECURITY_LAYERS: readonly SecurityLayer[] = [
+  {
+    id: 'layer-kdf',
+    label: 'Layer 1: Key Derivation',
+    name: 'Argon2id',
+    description: 'Hardening password via memory-hard hashing',
+    desc: 'Hardening password via memory-hard hashing',
+  },
+  {
+    id: 'layer-exchange',
+    label: 'Layer 2: Key Exchange',
+    name: 'X25519 + Kyber768',
+    description: 'Post-Quantum Hybrid cryptographic bridge',
+    desc: 'Post-Quantum Hybrid cryptographic bridge',
+  },
+  {
+    id: 'layer-encryption',
+    label: 'Layer 3: Encryption',
+    name: 'AES-256-GCM',
+    description: 'Authenticated symmetric cipher suite',
+    desc: 'Authenticated symmetric cipher suite',
+  },
+  {
+    id: 'layer-transport',
+    label: 'Layer 4: Communication',
+    name: 'TLS 1.3 Tunnel',
+    description: 'Establishing perfect forward secrecy',
+    desc: 'Establishing perfect forward secrecy',
+  },
+  {
+    id: 'layer-verification',
+    label: 'Layer 5: Verification',
+    name: 'Ed25519 + ML-DSA',
+    description: 'Post-Quantum Hybrid device fingerprint verification',
+    desc: 'Post-Quantum Hybrid device fingerprint verification',
+  },
+  {
+    id: 'layer-pqc-fs',
+    label: 'Layer 6: Forward Secrecy',
+    name: 'PQC Hybrid FS',
+    description: 'Rotating ephemeral sub-session keys',
+    desc: 'Rotating ephemeral sub-session keys',
+  },
+  {
+    id: 'layer-storage',
+    label: 'Layer 7: Key Storage',
+    name: 'Secure Memory',
+    description: 'Shielding keys in isolated process memory',
+    desc: 'Shielding keys in isolated process memory',
+  },
+  {
+    id: 'layer-mfa',
+    label: 'Layer 8: Multi-Factor',
+    name: 'WebAuthn / FIDO2 Passkeys',
+    description: 'Phishing-resistant hardware MFA & integrity proof',
+    desc: 'Phishing-resistant hardware MFA & integrity proof',
+  },
+];
 
 /**
  * useVaultAuth
  * Production-ready authentication hook for the secure vault.
- * Manages the multi-layer security verification process and vault unlocking.
+ * Manages the multi-layer security verification process, 2FA flows, and vault unlocking.
  */
-export const useVaultAuth = (options?: {
-  initialUsername?: string;
-  cloudSessionActive?: boolean;
-  authMode?: 'login' | 'register';
-}) => {
+export const useVaultAuth = (options?: UseVaultAuthOptions) => {
   const initialUsername = options?.initialUsername?.trim().toLowerCase() || '';
   const cloudSessionActive = options?.cloudSessionActive === true;
   const authMode = options?.authMode === 'register' ? 'register' : 'login';
+
   const [username, setUsername] = useState(initialUsername);
   const [accountPassword, setAccountPassword] = useState('');
   const [vaultKey, setVaultKey] = useState('');
@@ -56,84 +187,70 @@ export const useVaultAuth = (options?: {
 
   const isComponentMounted = useRef(true);
   const pendingMasterKeyRef = useRef<string | null>(null);
+  const pendingVaultKeyRef = useRef<string | null>(null);
   const activeSaltRef = useRef<string | null>(null);
+  const statusCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevAuthModeRef = useRef(authMode);
+
   const unlock = useVaultStore((state) => state.unlock);
-  // const lock = useVaultStore((state) => state.lock)
   const completeUnlockTransition = useVaultStore((state) => state.completeUnlockTransition);
+
+  const resetTwoFactorFlow = useCallback(() => {
+    pendingMasterKeyRef.current = null;
+    pendingVaultKeyRef.current = null;
+    setTwoFactorRequired(false);
+    setOtpToken('');
+    setMfaToken(null);
+    setUserIdFor2FA(null);
+    setStatus('idle');
+  }, []);
 
   // Clean up on unmount to prevent state updates on unmounted component
   useEffect(() => {
     isComponentMounted.current = true;
     return () => {
       isComponentMounted.current = false;
+      if (statusCooldownTimerRef.current) {
+        clearTimeout(statusCooldownTimerRef.current);
+        statusCooldownTimerRef.current = null;
+      }
     };
   }, []);
 
   useEffect(() => {
-    if (cloudSessionActive && initialUsername) {
+    if (initialUsername) {
       setUsername(initialUsername);
     }
-  }, [cloudSessionActive, initialUsername]);
+  }, [initialUsername]);
+
+  useEffect(() => {
+    if (prevAuthModeRef.current !== authMode) {
+      prevAuthModeRef.current = authMode;
+      if (twoFactorRequired) {
+        resetTwoFactorFlow();
+      }
+    }
+  }, [authMode, twoFactorRequired, resetTwoFactorFlow]);
 
   // Keep "Verified" visible briefly before returning to idle
   useEffect(() => {
     if (successCountdown === null) return;
     if (successCountdown <= 0) {
-      setStatus('idle');
-      setSuccessCountdown(null);
+      if (isComponentMounted.current) {
+        setStatus('idle');
+        setSuccessCountdown(null);
+      }
       return;
     }
     const t = setTimeout(() => {
-      setSuccessCountdown((prev) => (prev === null ? null : prev - 1));
+      if (isComponentMounted.current) {
+        setSuccessCountdown((prev) => (prev === null ? null : prev - 1));
+      }
     }, 1000);
     return () => clearTimeout(t);
   }, [successCountdown]);
 
-  const securityLayers = useMemo(
-    () => [
-      {
-        label: 'Layer 1: Key Derivation',
-        name: 'Argon2id',
-        desc: 'Hardening password via memory-hard hashing',
-      },
-      {
-        label: 'Layer 2: Key Exchange',
-        name: 'X25519 + Kyber768',
-        desc: 'Post-Quantum Hybrid cryptographic bridge',
-      },
-      {
-        label: 'Layer 3: Encryption',
-        name: 'AES-256-GCM',
-        desc: 'Authenticated symmetric cipher suite',
-      },
-      {
-        label: 'Layer 4: Communication',
-        name: 'TLS 1.3 Tunnel',
-        desc: 'Establishing perfect forward secrecy',
-      },
-      {
-        label: 'Layer 5: Verification',
-        name: 'Ed25519 + ML-DSA',
-        desc: 'Post-Quantum Hybrid device fingerprint verification',
-      },
-      {
-        label: 'Layer 6: Forward Secrecy',
-        name: 'PQC Hybrid FS',
-        desc: 'Rotating ephemeral sub-session keys',
-      },
-      {
-        label: 'Layer 7: Key Storage',
-        name: 'Secure Memory',
-        desc: 'Shielding keys in isolated process memory',
-      },
-      {
-        label: 'Layer 8: Multi-Factor',
-        name: 'WebAuthn / FIDO2 Passkeys',
-        desc: 'Phishing-resistant hardware MFA & integrity proof',
-      },
-    ],
-    []
-  );
+  const securityLayers = SECURITY_LAYERS;
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -158,7 +275,7 @@ export const useVaultAuth = (options?: {
 
           if (isRegistration) {
             // Generate a random unique salt: 16 bytes converted to hex
-            const randBytes = crypto.getRandomValues(new Uint8Array(16));
+            const randBytes = getRandomValues(new Uint8Array(16));
             salt = Array.from(randBytes)
               .map((b) => b.toString(16).padStart(2, '0'))
               .join('');
@@ -191,18 +308,16 @@ export const useVaultAuth = (options?: {
           await sleep(LAYER_UI_DELAY_MS);
         } else if (i === 2) {
           // Layer 3: AES-256-GCM Initialization
-          // Check for WebCrypto support
-          if (!window.crypto || !window.crypto.subtle) {
+          const subtle = getCryptoSubtle();
+          if (!subtle) {
             throw new Error('Security Protocol Error: WebCrypto API not available.');
           }
           await sleep(LAYER_UI_DELAY_MS);
         } else if (i === 4) {
           // Layer 5: Ed25519 Verification / Identity Audit
-          // In a real scenario, this would verify the device signature
           await sleep(LAYER_UI_DELAY_MS);
         } else if (i === 7) {
           // Layer 8: MFA Checksum
-          // Pre-verification delay
           await sleep(LAYER_UI_DELAY_MS);
         } else {
           // Keep a small non-blocking cadence so layer changes remain readable.
@@ -222,6 +337,70 @@ export const useVaultAuth = (options?: {
   };
 
   /**
+   * Unlock vault with candidate salt retries if key check fails
+   */
+  const unlockVaultWithCandidateSalts = async (
+    primaryMasterKey: string,
+    rawKey: string,
+    normalizedUsername: string
+  ) => {
+    try {
+      await unlock(primaryMasterKey, normalizedUsername);
+      return true;
+    } catch (unlockErr: any) {
+      const isKeyCheckError =
+        /master key is incorrect or the vault data could not be decrypted/i.test(
+          unlockErr?.message || ''
+        );
+
+      if (isKeyCheckError && rawKey) {
+        const primarySalt = activeSaltRef.current;
+        const fetchedSalt = await fetchVaultSalt(normalizedUsername).catch(() => null);
+        const candidateSalts = Array.from(
+          new Set(
+            [
+              `${normalizedUsername}-vault-pqc-salt`,
+              fetchedSalt,
+              'vault-v1-stable-salt-32bytes',
+            ].filter((s): s is string => Boolean(s) && s !== primarySalt)
+          )
+        );
+
+        const triedSalts: string[] = [];
+        let unlockedWithAlt = false;
+
+        for (const altSalt of candidateSalts) {
+          triedSalts.push(altSalt);
+          try {
+            console.warn(
+              `Primary salt unlock failed. Retrying unlock with candidate salt (${altSalt})...`
+            );
+            const altMasterKey = await deriveKey(rawKey, altSalt);
+            await unlock(altMasterKey, normalizedUsername);
+            activeSaltRef.current = altSalt;
+            await uploadKeyCheckToCloud(altMasterKey, { force: true }).catch(() => {});
+            unlockedWithAlt = true;
+            break;
+          } catch {
+            // Try next candidate salt
+          }
+        }
+
+        if (!unlockedWithAlt) {
+          console.error(
+            `All candidate salts exhausted (${triedSalts.join(', ')}) – unlock failed.`,
+            unlockErr
+          );
+          throw unlockErr;
+        }
+        return true;
+      }
+
+      throw unlockErr;
+    }
+  };
+
+  /**
    * handleUnlock
    * Main entry point for vault authentication.
    */
@@ -230,11 +409,9 @@ export const useVaultAuth = (options?: {
       // Prevent double submissions
       if (status === 'authenticating' || !vaultKey) return false;
 
-      if (!username) {
-        toast.error('Security Protocol Violation', {
-          description: 'Account Identifier is required to derive the PQC encryption bridge.',
-        });
-        return false;
+      if (statusCooldownTimerRef.current) {
+        clearTimeout(statusCooldownTimerRef.current);
+        statusCooldownTimerRef.current = null;
       }
 
       const normalizedUsername = normalizeVaultUsername(username);
@@ -244,9 +421,15 @@ export const useVaultAuth = (options?: {
         });
         return false;
       }
-      if (normalizedUsername.length < 3) {
+      if (normalizedUsername.length < MIN_USERNAME_LENGTH) {
         toast.error('Account Identifier Too Short', {
-          description: 'Username must be at least 3 characters.',
+          description: `Username must be at least ${MIN_USERNAME_LENGTH} characters.`,
+        });
+        return false;
+      }
+      if (normalizedUsername.length > MAX_USERNAME_LENGTH) {
+        toast.error('Account Identifier Too Long', {
+          description: `Username must be at most ${MAX_USERNAME_LENGTH} characters.`,
         });
         return false;
       }
@@ -258,7 +441,7 @@ export const useVaultAuth = (options?: {
         return false;
       }
 
-      // 1. Production-ready Input Validation
+      // Input Validation for passwords
       if (!cloudSessionActive) {
         const authPasswordValidation = validatePassword(accountPassword);
         if (!authPasswordValidation.isValid) {
@@ -277,7 +460,7 @@ export const useVaultAuth = (options?: {
         return false;
       }
 
-      if (accountPassword && vaultKey && accountPassword === vaultKey) {
+      if (authMode === 'register' && accountPassword && vaultKey && accountPassword === vaultKey) {
         toast.error('Security Requirement Error', {
           description: 'Account password and Master Key must not be identical.',
         });
@@ -287,8 +470,39 @@ export const useVaultAuth = (options?: {
       setStatus('authenticating');
       setCurrentLayer(-1);
       pendingMasterKeyRef.current = null;
+      pendingVaultKeyRef.current = null;
 
       try {
+        const isDecoyEnabled =
+          useVaultStore.getState().preferences.isDecoyVaultEnabled ||
+          (typeof localStorage !== 'undefined' &&
+            localStorage.getItem('vault_decoy_enabled') === 'true');
+
+        if (isDecoyEnabled) {
+          const decoyHash =
+            useVaultStore.getState().preferences.decoyPasswordHash ||
+            (typeof localStorage !== 'undefined'
+              ? localStorage.getItem('vault_decoy_pin_hash')
+              : null);
+
+          if (decoyHash) {
+            const enc = new TextEncoder().encode(`vault-decoy-salt:${vaultKey}`);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', enc);
+            const inputHash = Array.from(new Uint8Array(hashBuffer))
+              .map((b) => b.toString(16).padStart(2, '0'))
+              .join('');
+
+            if (inputHash === decoyHash) {
+              await useVaultStore.getState().unlockDecoyVault(normalizedUsername);
+              if (isComponentMounted.current) {
+                setStatus('success');
+                completeUnlockTransition();
+              }
+              return true;
+            }
+          }
+        }
+
         // Prevent stale logout responses from clearing a newly-created session
         // while deriving the vault key in parallel.
         const [, masterKey] = await Promise.all([
@@ -297,6 +511,8 @@ export const useVaultAuth = (options?: {
         ]);
 
         if (!isComponentMounted.current) return false;
+
+        const rawVaultKey = vaultKey;
 
         if (!cloudSessionActive) {
           const authData = await authenticateVaultSession(
@@ -312,10 +528,11 @@ export const useVaultAuth = (options?: {
             if (!authData.userId || !authData.mfaToken) {
               throw new Error('Authentication session expired. Please sign in again.');
             }
-            setTwoFactorRequired(true);
+            pendingMasterKeyRef.current = masterKey;
+            pendingVaultKeyRef.current = rawVaultKey;
             setUserIdFor2FA(authData.userId);
             setMfaToken(authData.mfaToken);
-            pendingMasterKeyRef.current = masterKey;
+            setTwoFactorRequired(true);
             setStatus('idle');
             return true;
           }
@@ -332,112 +549,46 @@ export const useVaultAuth = (options?: {
 
         if (!isComponentMounted.current) return false;
 
-        // 3. Sensitive Memory Management: Clear password state immediately after use
-        const rawVaultKey = vaultKey;
+        // Sensitive Memory Management: Clear password state from UI
         setAccountPassword('');
         setVaultKey('');
         pendingMasterKeyRef.current = null;
+        pendingVaultKeyRef.current = null;
         setStatus('syncing');
 
-        // 4. Secure Vault Unlock
-        // We wait for the initial cloud sync before exposing the vault UI.
-        try {
-          await unlock(masterKey, normalizedUsername);
-        } catch (unlockErr: any) {
-          const isKeyCheckError =
-            /master key is incorrect or the vault data could not be decrypted/i.test(
-              unlockErr?.message || ''
-            );
-          if (isKeyCheckError && rawVaultKey) {
-            const primarySalt = activeSaltRef.current;
-            const fetchedSalt = await fetchVaultSalt(normalizedUsername).catch(() => null);
-            const candidateSalts = Array.from(
-              new Set(
-                [
-                  `${normalizedUsername}-vault-pqc-salt`,
-                  fetchedSalt,
-                  'vault-v1-stable-salt-32bytes',
-                ].filter((s): s is string => Boolean(s) && s !== primarySalt)
-              )
-            );
+        // Secure Vault Unlock
+        await unlockVaultWithCandidateSalts(masterKey, rawVaultKey, normalizedUsername);
 
-            const triedSalts: string[] = [];
-            let unlockedWithAlt = false;
-            for (const altSalt of candidateSalts) {
-              triedSalts.push(altSalt);
-              try {
-                console.warn(
-                  `Primary salt unlock failed. Retrying unlock with candidate salt (${altSalt})...`
-                );
-                const altMasterKey = await deriveKey(rawVaultKey, altSalt);
-                await unlock(altMasterKey, normalizedUsername);
-                activeSaltRef.current = altSalt;
-                const keyBuf = base64ToUint8Array(altMasterKey);
-                const cryptoKey = await crypto.subtle.importKey(
-                  'raw',
-                  keyBuf as any,
-                  { name: 'AES-GCM' },
-                  false,
-                  ['encrypt', 'decrypt']
-                );
-                keyBuf.fill(0);
-                await uploadKeyCheckToCloud(cryptoKey, { force: true }).catch(() => {});
-                unlockedWithAlt = true;
-                break;
-              } catch {
-                // Try next salt candidate
-              }
-            }
-
-            if (!unlockedWithAlt) {
-              console.error(
-                `All candidate salts exhausted (${triedSalts.join(', ')}) – unlock failed.`,
-                unlockErr
-              );
-              throw unlockErr;
-            }
-          } else {
-            throw unlockErr;
+        // If unlock succeeded, handle transition steps
+        if (isComponentMounted.current) {
+          setCurrentLayer(securityLayers.length - 1);
+          if (POST_UNLOCK_ACTIVE_DELAY_MS > 0) {
+            await sleep(POST_UNLOCK_ACTIVE_DELAY_MS);
           }
         }
 
-        if (!isComponentMounted.current) return false;
-
-        // Let the final layer tick once, then move directly into the vault UI.
-        setCurrentLayer(securityLayers.length - 1);
-        if (POST_UNLOCK_ACTIVE_DELAY_MS > 0) {
-          await sleep(POST_UNLOCK_ACTIVE_DELAY_MS);
+        if (isComponentMounted.current) {
+          setCurrentLayer(securityLayers.length);
+          if (POST_UNLOCK_COMPLETE_DELAY_MS > 0) {
+            await sleep(POST_UNLOCK_COMPLETE_DELAY_MS);
+          }
         }
 
-        if (!isComponentMounted.current) return false;
-
-        setCurrentLayer(securityLayers.length);
-        if (POST_UNLOCK_COMPLETE_DELAY_MS > 0) {
-          await sleep(POST_UNLOCK_COMPLETE_DELAY_MS);
+        if (isComponentMounted.current) {
+          setStatus('success');
+          if (SUCCESS_TRANSITION_DELAY_MS > 0) {
+            await sleep(SUCCESS_TRANSITION_DELAY_MS);
+          }
         }
-
-        if (!isComponentMounted.current) return false;
-
-        setStatus('success');
-        if (SUCCESS_TRANSITION_DELAY_MS > 0) {
-          await sleep(SUCCESS_TRANSITION_DELAY_MS);
-        }
-
-        if (!isComponentMounted.current) return false;
 
         completeUnlockTransition();
-        setSuccessCountdown(2); // show verified for ~10 seconds
 
-        // void unlock(masterKey, normalizedUsername).catch((error) => {
-        //   if (!isComponentMounted.current) return
-        //   lock()
-        //   setStatus('error')
-        //   setCurrentLayer(-1)
-        //   handleError(error, 'Vault background sync')
-        //   toast.error('Vault unlock failed', {
-        //     description: 'Background vault sync failed. Please sign in again.',
-        //   })
-        // })
+        if (isComponentMounted.current) {
+          setSuccessCountdown(SUCCESS_COUNTDOWN_SECONDS);
+        }
+
+        // Reset failed attempts upon successful authentication
+        resetFailedUnlockAttempts();
 
         logActivity({
           actionType: 'auth_login',
@@ -449,6 +600,7 @@ export const useVaultAuth = (options?: {
         toast.success('Security Cleared', {
           description: 'Vault unlocked with 8th-generation encryption bridge.',
         });
+
         return true;
       } catch (error: any) {
         if (!isComponentMounted.current) return false;
@@ -460,26 +612,87 @@ export const useVaultAuth = (options?: {
         setAccountPassword('');
         setVaultKey('');
         pendingMasterKeyRef.current = null;
+        pendingVaultKeyRef.current = null;
 
         const errorCode = typeof error?.code === 'string' ? error.code : undefined;
         const errorMessage = typeof error?.message === 'string' ? error.message : '';
 
+        const handleBruteForceFailure = async (credentialContext: 'password' | 'master_key') => {
+          const { preferences, emergencyLocalWipe } = useVaultStore.getState();
+          const isBruteForceWipeEnabled = preferences.isBruteForceWipeEnabled !== false;
+          const maxAttempts = preferences.maxFailedAttemptsBeforeWipe || 10;
+
+          if (!isBruteForceWipeEnabled) {
+            if (credentialContext === 'master_key') {
+              toast.error('Master Key Incorrect', {
+                description:
+                  'The account password is valid, but the Master Key is incorrect or cannot decrypt this vault.',
+              });
+            } else {
+              toast.error('Authentication failed', {
+                description: 'The username or account password is incorrect.',
+              });
+            }
+            logActivity({
+              actionType: 'auth_login',
+              itemName: 'Vault Login Failure',
+              description: 'Authentication failed with invalid credentials.',
+              status: 'failure',
+            });
+            return;
+          }
+
+          const currentFailed = incrementFailedUnlockAttempts();
+          if (currentFailed >= maxAttempts) {
+            await emergencyLocalWipe();
+            resetFailedUnlockAttempts();
+            toast.error("🚨 DEAD MAN'S SWITCH: LOCAL DATA SHREDDED", {
+              description: `Maximum failed attempts reached (${currentFailed}/${maxAttempts}). All local cryptographic keys and cached records on this device have been permanently shredded. (Cloud vault remains safe).`,
+              duration: 12000,
+            });
+            logActivity({
+              actionType: 'auth_lock',
+              itemName: "Dead Man's Switch",
+              description: `Emergency local wipe triggered after ${currentFailed} failed unlock attempts. Cloud data preserved.`,
+              status: 'failure',
+            });
+          } else {
+            const remaining = maxAttempts - currentFailed;
+            const desc =
+              credentialContext === 'master_key'
+                ? `Master key incorrect (Attempt ${currentFailed} of ${maxAttempts}). Warning: ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before this device automatically shreds local vault keys.`
+                : `Invalid username or password (Attempt ${currentFailed} of ${maxAttempts}). Warning: ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before this device automatically shreds local vault keys.`;
+            toast.error('Authentication Failed', {
+              description: desc,
+              duration: 6000,
+            });
+            logActivity({
+              actionType: 'auth_login',
+              itemName: 'Vault Login Failure',
+              description: `Authentication failed (Attempt ${currentFailed}/${maxAttempts}).`,
+              status: 'failure',
+            });
+          }
+        };
+
         if (
           errorCode === 'INVALID_CREDENTIALS' ||
-          /invalid username or password/i.test(errorMessage)
+          error?.status === 401 ||
+          /invalid username or password/i.test(errorMessage) ||
+          /incorrect password/i.test(errorMessage)
         ) {
-          toast.error('Authentication failed', {
-            description: 'The username or account password is incorrect.',
-          });
-          logActivity({
-            actionType: 'auth_login',
-            itemName: 'Vault Login Failure',
-            description: 'Authentication failed with invalid credentials.',
-            status: 'failure',
-          });
+          await handleBruteForceFailure('password');
+        } else if (
+          /candidate salts exhausted/i.test(errorMessage) ||
+          /master key is incorrect/i.test(errorMessage) ||
+          /could not be decrypted/i.test(errorMessage)
+        ) {
+          await handleBruteForceFailure('master_key');
         } else if (
           errorCode === 'TOO_MANY_AUTH_ATTEMPTS' ||
-          /too many authentication attempts/i.test(errorMessage)
+          errorCode === 'RATE_LIMITED' ||
+          /too many authentication attempts/i.test(errorMessage) ||
+          /too many attempts/i.test(errorMessage)
         ) {
           toast.error('Too many attempts', {
             description:
@@ -605,21 +818,6 @@ export const useVaultAuth = (options?: {
             status: 'failure',
           });
         } else if (
-          /candidate salts exhausted/i.test(errorMessage) ||
-          /master key is incorrect/i.test(errorMessage) ||
-          /could not be decrypted/i.test(errorMessage)
-        ) {
-          toast.error('Master Key Incorrect', {
-            description:
-              'The account password is valid, but the Master Key is incorrect or cannot decrypt this vault.',
-          });
-          logActivity({
-            actionType: 'auth_login',
-            itemName: 'Vault Login Failure',
-            description: 'Master Key does not match the encrypted vault.',
-            status: 'failure',
-          });
-        } else if (
           errorCode === 'MFA_TOKEN_INVALID' ||
           errorCode === 'MFA_TOKEN_MISSING' ||
           /authentication session expired/i.test(errorMessage)
@@ -628,8 +826,7 @@ export const useVaultAuth = (options?: {
             description:
               'Your secure sign-in session expired. Please sign in again and re-enter your 2FA code.',
           });
-          setTwoFactorRequired(false);
-          setOtpToken('');
+          resetTwoFactorFlow();
           logActivity({
             actionType: 'auth_login',
             itemName: 'Vault Login Failure',
@@ -640,6 +837,7 @@ export const useVaultAuth = (options?: {
           errorCode === 'SESSION_REFRESH_FAILED' ||
           errorCode === 'INVALID_TOKEN' ||
           errorCode === 'AUTH_REQUIRED' ||
+          errorCode === 'SESSION_EXPIRED' ||
           /session could not be refreshed/i.test(errorMessage) ||
           /authentication token is invalid/i.test(errorMessage) ||
           /authentication token is required/i.test(errorMessage)
@@ -668,18 +866,20 @@ export const useVaultAuth = (options?: {
         }
 
         // Re-enable input after a short cooldown on error
-        setTimeout(() => {
+        statusCooldownTimerRef.current = setTimeout(() => {
           if (isComponentMounted.current) setStatus('idle');
-        }, 1500);
+        }, ERROR_STATUS_COOLDOWN_MS);
+
         return false;
       }
     },
     [
       accountPassword,
+      authMode,
       cloudSessionActive,
       completeUnlockTransition,
-      // lock,
-      authMode,
+      resetTwoFactorFlow,
+      securityLayers.length,
       status,
       unlock,
       username,
@@ -689,10 +889,12 @@ export const useVaultAuth = (options?: {
 
   /**
    * handleVerifyOTP
+   * Verifies 2FA token and completes vault unlock.
    */
   const handleVerifyOTP = useCallback(
     async (captchaToken: string) => {
-      if (!userIdFor2FA || !otpToken || isVerifyingOTP) return false;
+      const cleanOtp = otpToken.trim();
+      if (!userIdFor2FA || !cleanOtp || isVerifyingOTP) return false;
 
       try {
         setIsVerifyingOTP(true);
@@ -703,138 +905,169 @@ export const useVaultAuth = (options?: {
         // Reuse the key derived during step 1 of auth when 2FA is required.
         const masterKey =
           pendingMasterKeyRef.current ??
-          (await runSecurityVerification(vaultKey, normalizedUsername));
+          (await runSecurityVerification(
+            pendingVaultKeyRef.current || vaultKey,
+            normalizedUsername
+          ));
 
         if (!mfaToken) {
           throw new Error('Authentication session expired. Please sign in again.');
         }
 
-        await verify2FALogin(userIdFor2FA, otpToken, mfaToken, captchaToken);
+        await verify2FALogin(userIdFor2FA, cleanOtp, mfaToken, captchaToken);
         identifyLogRocketUser(userIdFor2FA, {
           username: normalizedUsername,
         });
 
-        const rawVaultKey = vaultKey;
-        setAccountPassword('');
-        setVaultKey('');
-        pendingMasterKeyRef.current = null;
-        setOtpToken('');
-        setTwoFactorRequired(false);
-        setStatus('syncing');
+        const rawVaultKey = pendingVaultKeyRef.current || vaultKey;
 
-        try {
-          await unlock(masterKey, normalizedUsername);
-        } catch (unlockErr: any) {
-          const isKeyCheckError =
-            /master key is incorrect or the vault data could not be decrypted/i.test(
-              unlockErr?.message || ''
-            );
-          if (isKeyCheckError && rawVaultKey) {
-            const primarySalt = activeSaltRef.current;
-            const fetchedSalt = await fetchVaultSalt(normalizedUsername).catch(() => null);
-            const candidateSalts = Array.from(
-              new Set(
-                [
-                  `${normalizedUsername}-vault-pqc-salt`,
-                  fetchedSalt,
-                  'vault-v1-stable-salt-32bytes',
-                ].filter((s): s is string => Boolean(s) && s !== primarySalt)
-              )
-            );
-
-            const triedSalts: string[] = [];
-            let unlockedWithAlt = false;
-            for (const altSalt of candidateSalts) {
-              triedSalts.push(altSalt);
-              try {
-                console.warn(
-                  `Primary salt unlock failed during OTP. Retrying unlock with candidate salt (${altSalt})...`
-                );
-                const altMasterKey = await deriveKey(rawVaultKey, altSalt);
-                await unlock(altMasterKey, normalizedUsername);
-                activeSaltRef.current = altSalt;
-                const keyBuf = base64ToUint8Array(altMasterKey);
-                const cryptoKey = await crypto.subtle.importKey(
-                  'raw',
-                  keyBuf as any,
-                  { name: 'AES-GCM' },
-                  false,
-                  ['encrypt', 'decrypt']
-                );
-                keyBuf.fill(0);
-                await uploadKeyCheckToCloud(cryptoKey, { force: true }).catch(() => {});
-                unlockedWithAlt = true;
-                break;
-              } catch {
-                // Try next salt candidate
-              }
-            }
-
-            if (!unlockedWithAlt) {
-              console.error(
-                `All candidate salts exhausted during OTP (${triedSalts.join(', ')}) – unlock failed.`,
-                unlockErr
-              );
-              throw unlockErr;
-            }
-          } else {
-            throw unlockErr;
-          }
+        if (isComponentMounted.current) {
+          setAccountPassword('');
+          setVaultKey('');
+          setOtpToken('');
+          setStatus('syncing');
         }
 
-        setCurrentLayer(securityLayers.length);
-        setStatus('success');
-        completeUnlockTransition();
-        setSuccessCountdown(2);
+        // Unlock vault with candidate salts
+        await unlockVaultWithCandidateSalts(masterKey, rawVaultKey, normalizedUsername);
 
-        // void unlock(masterKey, normalizedUsername).catch((error) => {
-        //   if (!isComponentMounted.current) return
-        //   lock()
-        //   setStatus('error')
-        //   setCurrentLayer(-1)
-        //   handleError(error, 'Vault background sync')
-        //   toast.error('Vault unlock failed', {
-        //     description: 'Background vault sync failed. Please sign in again.',
-        //   })
-        // })
+        // Clear 2FA refs and state upon successful unlock
+        pendingMasterKeyRef.current = null;
+        pendingVaultKeyRef.current = null;
+
+        if (isComponentMounted.current) {
+          setTwoFactorRequired(false);
+          setCurrentLayer(securityLayers.length);
+          setStatus('success');
+          setSuccessCountdown(SUCCESS_COUNTDOWN_SECONDS);
+        }
+
+        completeUnlockTransition();
+
+        logActivity({
+          actionType: 'auth_login',
+          itemName: 'Vault Access',
+          description: 'Authenticated with 2FA and 8-layer security protocol',
+          status: 'success',
+        });
 
         toast.success('Security Cleared', {
           description: '2FA verified. Vault unlocked.',
         });
+
         return true;
-      } catch (error) {
-        pendingMasterKeyRef.current = null;
-        handleError(error, '2FA Verification');
-        setIsVerifyingOTP(false);
-        setStatus('idle');
-        setOtpToken('');
+      } catch (error: any) {
+        const errorCode = typeof error?.code === 'string' ? error.code : undefined;
+        const errorMessage = typeof error?.message === 'string' ? error.message : '';
+
+        const isSessionExpired =
+          errorCode === 'MFA_TOKEN_INVALID' ||
+          errorCode === 'MFA_TOKEN_MISSING' ||
+          errorCode === 'SESSION_EXPIRED' ||
+          /session expired/i.test(errorMessage) ||
+          /authentication session expired/i.test(errorMessage);
+
+        if (isSessionExpired) {
+          toast.error('Session expired', {
+            description: 'Your 2FA session expired. Please sign in again with your password.',
+          });
+          resetTwoFactorFlow();
+          logActivity({
+            actionType: 'auth_login',
+            itemName: 'Vault 2FA Failure',
+            description: '2FA session expired.',
+            status: 'failure',
+          });
+        } else if (
+          errorCode === 'INVALID_2FA_CODE' ||
+          errorCode === 'INVALID_OTP' ||
+          errorCode === 'INVALID_CREDENTIALS' ||
+          /invalid.*(code|token|otp)/i.test(errorMessage) ||
+          /incorrect.*(code|token|otp)/i.test(errorMessage) ||
+          /2fa verification failed/i.test(errorMessage)
+        ) {
+          toast.error('Invalid 2FA Code', {
+            description:
+              'The verification code is incorrect or has expired. Please check your authenticator app.',
+          });
+          // Do NOT clear pendingMasterKeyRef so the user can re-try typing OTP without re-deriving
+          if (isComponentMounted.current) {
+            setOtpToken('');
+            setStatus('idle');
+          }
+          logActivity({
+            actionType: 'auth_login',
+            itemName: 'Vault 2FA Failure',
+            description: 'Invalid 2FA verification code entered.',
+            status: 'failure',
+          });
+        } else if (
+          errorCode === 'TOO_MANY_AUTH_ATTEMPTS' ||
+          errorCode === 'RATE_LIMITED' ||
+          /too many/i.test(errorMessage)
+        ) {
+          toast.error('Too many attempts', {
+            description: 'Too many verification attempts detected. Please wait and try again.',
+          });
+          if (isComponentMounted.current) {
+            setStatus('idle');
+          }
+          logActivity({
+            actionType: 'auth_login',
+            itemName: 'Vault 2FA Failure',
+            description: '2FA blocked by rate limiter.',
+            status: 'failure',
+          });
+        } else if (
+          errorCode === 'NETWORK_ERROR' ||
+          /unable to reach the server/i.test(errorMessage) ||
+          /failed to fetch/i.test(errorMessage)
+        ) {
+          toast.error('Network connection issue', {
+            description: 'Could not reach the server. Check your connection and try again.',
+          });
+          if (isComponentMounted.current) {
+            setStatus('idle');
+          }
+          logActivity({
+            actionType: 'auth_login',
+            itemName: 'Vault 2FA Failure',
+            description: '2FA verification failed due to network connectivity.',
+            status: 'failure',
+          });
+        } else {
+          handleError(error, '2FA Verification');
+          if (isComponentMounted.current) {
+            setStatus('idle');
+          }
+          logActivity({
+            actionType: 'auth_login',
+            itemName: 'Vault 2FA Failure',
+            description: errorMessage || '2FA verification failed.',
+            status: 'failure',
+          });
+        }
+
         return false;
       } finally {
-        setIsVerifyingOTP(false);
+        if (isComponentMounted.current) {
+          setIsVerifyingOTP(false);
+        }
       }
     },
     [
-      userIdFor2FA,
-      otpToken,
+      completeUnlockTransition,
       isVerifyingOTP,
+      mfaToken,
+      otpToken,
+      resetTwoFactorFlow,
+      securityLayers.length,
+      unlock,
+      userIdFor2FA,
       username,
       vaultKey,
-      unlock,
-      completeUnlockTransition,
-      securityLayers.length,
-      mfaToken,
-      // lock,
     ]
   );
-
-  const resetTwoFactorFlow = useCallback(() => {
-    pendingMasterKeyRef.current = null;
-    setTwoFactorRequired(false);
-    setOtpToken('');
-    setMfaToken(null);
-    setUserIdFor2FA(null);
-    setStatus('idle');
-  }, []);
 
   return {
     username,
@@ -848,7 +1081,6 @@ export const useVaultAuth = (options?: {
     securityLayers,
     successCountdown,
     handleUnlock,
-    // 2FA
     twoFactorRequired,
     otpToken,
     setOtpToken,

@@ -3,6 +3,7 @@ import { VaultItem } from './storage';
 import { resolveApiBaseUrl } from './apiBaseUrl';
 import { getAuthToken } from './auth-session';
 import { resolveRuntimeOrigin } from './sync/core';
+import { createTrackedBlobUrl } from './blobRegistry';
 import {
   getAudioMimeType,
   AUDIO_MIME_MAP,
@@ -905,7 +906,7 @@ export const getVaultItemPreviewUrl = async (
       const blob = new Blob([new Uint8Array(item.content)], {
         type: normalizedMime || (item.type === 'video' ? 'video/mp4' : 'application/octet-stream'),
       });
-      return URL.createObjectURL(blob);
+      return createTrackedBlobUrl(blob);
     }
     return await decryptToFile(item.content, masterKey, effectiveMimeType, rsaPrivateKey);
   }
@@ -930,7 +931,10 @@ export const getVaultItemPreviewUrl = async (
 
   // 4. Server/Cloud file reference (cloud://, gridfs://, /api/vault/files/access/, /uploads/, etc.)
   const candidateServerUrl = getVaultItemFileUrl(item);
-  if (candidateServerUrl) {
+  if (
+    candidateServerUrl &&
+    (!candidateServerUrl.includes('/api/vault/files/access/') || candidateServerUrl.includes('token='))
+  ) {
     try {
       const response = await fetch(candidateServerUrl);
       if (response.ok) {
@@ -947,7 +951,7 @@ export const getVaultItemPreviewUrl = async (
                 normalizedMime ||
                 (item.type === 'video' ? 'video/mp4' : 'application/octet-stream'),
             });
-            return URL.createObjectURL(blob);
+            return createTrackedBlobUrl(blob);
           }
           const decryptedUrl = await decryptToFile(u8, masterKey, effectiveMimeType, rsaPrivateKey);
           if (decryptedUrl) return decryptedUrl;
@@ -981,7 +985,7 @@ export const getVaultItemPreviewUrl = async (
                 normalizedMime ||
                 (item.type === 'video' ? 'video/mp4' : 'application/octet-stream'),
             });
-            return URL.createObjectURL(blob);
+            return createTrackedBlobUrl(blob);
           }
           return await decryptToFile(u8, masterKey, effectiveMimeType, rsaPrivateKey);
         }

@@ -151,5 +151,136 @@ describe('upload content validation', () => {
         Buffer.from('#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n')
       )
     ).not.toThrow();
+
+    // Client Encrypted Cascade Cipher Envelope (VCAS01)
+    expect(() =>
+      assertFileContentMatchesCategory(
+        'photo',
+        'secure_photo.enc',
+        'image/jpeg',
+        Buffer.from([0x56, 0x43, 0x41, 0x53, 0x30, 0x31, 0x00, 0x01, 0x02, 0x03])
+      )
+    ).not.toThrow();
+  });
+
+  it('accepts valid signatures across multiple video formats including encrypted payloads', () => {
+    // Standard MP4
+    expect(() =>
+      assertFileContentMatchesCategory(
+        'video',
+        'test.mp4',
+        'video/mp4',
+        Buffer.from([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d])
+      )
+    ).not.toThrow();
+
+    // Modern MP4 with dash/iso5 brand
+    expect(() =>
+      assertFileContentMatchesCategory(
+        'video',
+        'movie.mp4',
+        'video/mp4',
+        Buffer.from([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x64, 0x61, 0x73, 0x68])
+      )
+    ).not.toThrow();
+
+    // WebM / MKV (EBML)
+    expect(() =>
+      assertFileContentMatchesCategory(
+        'video',
+        'test.webm',
+        'video/webm',
+        Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x9f, 0x42, 0x86, 0x81])
+      )
+    ).not.toThrow();
+
+    // AVI
+    expect(() =>
+      assertFileContentMatchesCategory(
+        'video',
+        'test.avi',
+        'video/x-msvideo',
+        Buffer.from('RIFF\x00\x00\x00\x00AVI LIST\x00\x00')
+      )
+    ).not.toThrow();
+
+    // FLV
+    expect(() =>
+      assertFileContentMatchesCategory(
+        'video',
+        'test.flv',
+        'video/x-flv',
+        Buffer.from('FLV\x01\x05\x00\x00\x00\x09')
+      )
+    ).not.toThrow();
+
+    // MPEG-TS
+    const tsBuffer = Buffer.alloc(188);
+    tsBuffer[0] = 0x47;
+    expect(() =>
+      assertFileContentMatchesCategory('video', 'test.ts', 'video/mp2t', tsBuffer)
+    ).not.toThrow();
+
+    // Encrypted Video Cascade Cipher Envelope (VCAS01)
+    expect(() =>
+      assertFileContentMatchesCategory(
+        'video',
+        'secure_video.enc',
+        'video/mp4',
+        Buffer.from([0x56, 0x43, 0x41, 0x53, 0x30, 0x31, 0xaa, 0xbb, 0xcc, 0xdd])
+      )
+    ).not.toThrow();
+  });
+
+  it('accepts valid signatures across audio formats including encrypted payloads', () => {
+    // MP3 with ID3 tag
+    expect(() =>
+      assertFileContentMatchesCategory(
+        'audio',
+        'song.mp3',
+        'audio/mpeg',
+        Buffer.from('ID3\x04\x00\x00\x00\x00\x00\x00')
+      )
+    ).not.toThrow();
+
+    // WAV
+    expect(() =>
+      assertFileContentMatchesCategory(
+        'audio',
+        'track.wav',
+        'audio/wav',
+        Buffer.from('RIFF\x00\x00\x00\x00WAVEfmt ')
+      )
+    ).not.toThrow();
+
+    // FLAC
+    expect(() =>
+      assertFileContentMatchesCategory(
+        'audio',
+        'track.flac',
+        'audio/flac',
+        Buffer.from('fLaC\x00\x00\x00\x22')
+      )
+    ).not.toThrow();
+
+    // Ogg Audio
+    expect(() =>
+      assertFileContentMatchesCategory(
+        'audio',
+        'voice.ogg',
+        'audio/ogg',
+        Buffer.from('OggS\x00\x02\x00\x00\x00\x00')
+      )
+    ).not.toThrow();
+
+    // Encrypted Audio Cascade Cipher Envelope (VCAS01)
+    expect(() =>
+      assertFileContentMatchesCategory(
+        'audio',
+        'voice_memo.enc',
+        'audio/mpeg',
+        Buffer.from([0x56, 0x43, 0x41, 0x53, 0x30, 0x31, 0x11, 0x22, 0x33, 0x44])
+      )
+    ).not.toThrow();
   });
 });

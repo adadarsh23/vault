@@ -109,18 +109,29 @@ describe('loginSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects weak passwords that do not include a special character', () => {
+  it('accepts valid password strings during login', () => {
     const result = loginSchema.safeParse({
       username: 'alice.user',
       password: 'Validpassword1234',
       captchaToken: CAPTCHA_TOKEN,
     });
 
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 });
 
 describe('registerSchema', () => {
+  it('rejects weak registration passwords that do not include a special character', () => {
+    const result = registerSchema.safeParse({
+      username: 'alice.user',
+      password: 'Validpassword1234',
+      masterKey: 'Validmasterkey123!',
+      captchaToken: CAPTCHA_TOKEN,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it('requires a strong master key', () => {
     const result = registerSchema.safeParse({
       username: 'alice.user',

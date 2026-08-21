@@ -1,4 +1,4 @@
-import { getVaultItemModel } from '../models/vaultItem.ts';
+import { getVaultItemModel, VaultItemType } from '../models/vaultItem.ts';
 import { multiClusterPool } from './multiClusterPool.ts';
 import mongoose from 'mongoose';
 import path from 'path';
@@ -578,7 +578,9 @@ export const saveLegacyVaultItem = async (input: LegacySaveInput) => {
     throw error;
   }
 
-  await cleanupLegacyStorageArtifacts(existing || {});
+  if (shouldUseGridFs || binaryPayload !== null) {
+    await cleanupLegacyStorageArtifacts(existing || {});
+  }
 
   return {
     vaultId: input.vaultId,
@@ -620,7 +622,7 @@ export const saveScopedVaultItem = async (input: ScopedSaveInput) => {
   const { userId, itemId, category, folder, payload, title, metadata } = input;
 
   const isBinary = Buffer.isBuffer(payload);
-  let encoding = resolvePayloadEncoding(payload);
+  let encoding: VaultItemType['encoding'] = resolvePayloadEncoding(payload);
   let finalPayload = '';
   let modernPayload = null;
   let gridFsId: string | null = null;
@@ -645,7 +647,7 @@ export const saveScopedVaultItem = async (input: ScopedSaveInput) => {
       },
       binaryPayload
     );
-    encoding = 'gridfs-binary' as any;
+    encoding = 'gridfs-binary';
     finalPayload = '';
   } else if (isBinary) {
     finalPayload = payload.toString('base64');
@@ -674,26 +676,99 @@ export const saveScopedVaultItem = async (input: ScopedSaveInput) => {
       const DynamicVaultModel = getVaultItemModel(input.username);
       const existing = await DynamicVaultModel.findOne({ userId, itemId }).lean();
 
+      // If this is a non-binary update (e.g. updating folder, title, pin, metadata) and the item already has a GridFS or file reference, preserve it!
+      let resolvedGridFsId = gridFsId;
+      let resolvedEncoding: VaultItemType['encoding'] = encoding;
+      let resolvedPayload = finalPayload;
+      let resolvedModernPayload = modernPayload;
+      let resolvedFile = {
+        fileName:
+          title ||
+          (metadata as any)?.originalName ||
+          (metadata as any)?.fileName ||
+          (existing as any)?.file?.fileName ||
+          'file',
+        filePath: gridFsId ? `cloud://${gridFsId}` : `cloud://${itemId}`,
+        mimeType:
+          (metadata as any)?.mimeType ||
+          (existing as any)?.file?.mimeType ||
+          'application/octet-stream',
+        size:
+          (metadata as any)?.size ||
+          (isBinary && binaryPayload ? binaryPayload.length : (existing as any)?.file?.size || 0),
+      };
+
+      if (!isBinary && existing) {
+        if (existing.gridFsId) {
+          resolvedGridFsId = existing.gridFsId;
+          resolvedEncoding = existing.encoding || 'gridfs-binary';
+          resolvedFile = {
+            ...existing.file,
+            fileName:
+              title ||
+              (metadata as any)?.originalName ||
+              (metadata as any)?.fileName ||
+              existing.file?.fileName ||
+              'file',
+            filePath: existing.file?.filePath || `cloud://${existing.gridFsId}`,
+            mimeType:
+              (metadata as any)?.mimeType || existing.file?.mimeType || 'application/octet-stream',
+            size: (metadata as any)?.size || existing.file?.size || 0,
+          };
+          if (!resolvedPayload && existing.payload) {
+            resolvedPayload = existing.payload;
+          }
+        } else if (existing.file?.filePath && !resolvedGridFsId) {
+          resolvedEncoding = existing.encoding || 'file-reference';
+          resolvedFile = {
+            ...existing.file,
+            fileName:
+              title ||
+              (metadata as any)?.originalName ||
+              (metadata as any)?.fileName ||
+              existing.file?.fileName ||
+              'file',
+            filePath: existing.file.filePath,
+            mimeType:
+              (metadata as any)?.mimeType || existing.file?.mimeType || 'application/octet-stream',
+            size: (metadata as any)?.size || existing.file?.size || 0,
+          };
+        } else if (
+          existing.encoding === 'binary-base64' &&
+          existing.payload &&
+          (!payload || payload === '')
+        ) {
+          resolvedEncoding = existing.encoding;
+          resolvedPayload = existing.payload;
+        }
+      }
+
+      const mergedMetadata = {
+        ...(existing?.metadata || {}),
+        ...(metadata || {}),
+      };
+
+      const resolvedFolder =
+        folder !== undefined
+          ? folder
+          : metadata?.folder !== undefined
+            ? (metadata.folder as string | null)
+            : existing?.folder || null;
+
       const result = await DynamicVaultModel.findOneAndUpdate(
         { userId, itemId },
         {
           userId,
           itemId,
           category,
-          folder: folder || metadata?.folder || null,
-          payload: finalPayload,
-          modernPayload,
-          gridFsId,
-          encoding,
+          folder: resolvedFolder,
+          payload: resolvedPayload,
+          modernPayload: resolvedModernPayload,
+          gridFsId: resolvedGridFsId,
+          encoding: resolvedEncoding,
           title,
-          file: {
-            fileName:
-              title || (metadata as any)?.originalName || (metadata as any)?.fileName || 'file',
-            filePath: gridFsId ? `cloud://${gridFsId}` : `cloud://${itemId}`,
-            mimeType: (metadata as any)?.mimeType || 'application/octet-stream',
-            size: (metadata as any)?.size || (isBinary && binaryPayload ? binaryPayload.length : 0),
-          },
-          metadata: metadata || {},
+          file: resolvedFile,
+          metadata: mergedMetadata,
           isPinned,
           pinnedAt,
           updatedAt: new Date(),
@@ -702,8 +777,8 @@ export const saveScopedVaultItem = async (input: ScopedSaveInput) => {
         { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
       );
 
-      // Cleanup old GridFS data if we replaced it
-      if (existing && existing.gridFsId && existing.gridFsId !== gridFsId) {
+      // Cleanup old GridFS data ONLY if a NEW GridFS file was actually uploaded and replaced the old one
+      if (existing && existing.gridFsId && gridFsId && existing.gridFsId !== gridFsId) {
         await deleteGridFsFile(existing.gridFsId);
       }
 
@@ -728,17 +803,94 @@ export const saveScopedVaultItem = async (input: ScopedSaveInput) => {
           });
         }
 
+        const existing = await DynamicVaultModel.findOne({ userId, itemId }).lean();
+        let resolvedGridFsId = gridFsId;
+        let resolvedEncoding: VaultItemType['encoding'] = encoding;
+        let resolvedPayload = finalPayload;
+        let resolvedModernPayload = modernPayload;
+        let resolvedFile = {
+          fileName:
+            title ||
+            (metadata as any)?.originalName ||
+            (metadata as any)?.fileName ||
+            (existing as any)?.file?.fileName ||
+            'file',
+          filePath: gridFsId ? `cloud://${gridFsId}` : `cloud://${itemId}`,
+          mimeType:
+            (metadata as any)?.mimeType ||
+            (existing as any)?.file?.mimeType ||
+            'application/octet-stream',
+          size:
+            (metadata as any)?.size ||
+            (isBinary && binaryPayload ? binaryPayload.length : (existing as any)?.file?.size || 0),
+        };
+
+        if (!isBinary && existing) {
+          if (existing.gridFsId) {
+            resolvedGridFsId = existing.gridFsId;
+            resolvedEncoding = existing.encoding || 'gridfs-binary';
+            resolvedFile = {
+              ...existing.file,
+              fileName:
+                title ||
+                (metadata as any)?.originalName ||
+                (metadata as any)?.fileName ||
+                existing.file?.fileName ||
+                'file',
+              filePath: existing.file?.filePath || `cloud://${existing.gridFsId}`,
+              mimeType:
+                (metadata as any)?.mimeType ||
+                existing.file?.mimeType ||
+                'application/octet-stream',
+              size: (metadata as any)?.size || existing.file?.size || 0,
+            };
+            if (!resolvedPayload && existing.payload) {
+              resolvedPayload = existing.payload;
+            }
+          } else if (existing.file?.filePath && !resolvedGridFsId) {
+            resolvedEncoding = existing.encoding || 'file-reference';
+            resolvedFile = {
+              ...existing.file,
+              fileName:
+                title ||
+                (metadata as any)?.originalName ||
+                (metadata as any)?.fileName ||
+                existing.file?.fileName ||
+                'file',
+              filePath: existing.file.filePath,
+              mimeType:
+                (metadata as any)?.mimeType ||
+                existing.file?.mimeType ||
+                'application/octet-stream',
+              size: (metadata as any)?.size || existing.file?.size || 0,
+            };
+          }
+        }
+
+        const mergedMetadata = {
+          ...(existing?.metadata || {}),
+          ...(metadata || {}),
+        };
+
+        const resolvedFolder =
+          folder !== undefined
+            ? folder
+            : metadata?.folder !== undefined
+              ? (metadata.folder as string | null)
+              : existing?.folder || null;
+
         return await DynamicVaultModel.findOneAndUpdate(
           { userId, itemId },
           {
             category,
-            folder: folder || metadata?.folder || null,
-            payload: finalPayload,
-            modernPayload,
-            gridFsId,
-            encoding,
+            folder: resolvedFolder,
+            payload: resolvedPayload,
+            modernPayload: resolvedModernPayload,
+            gridFsId: resolvedGridFsId,
+            encoding: resolvedEncoding,
             title,
-            metadata: metadata || {},
+            file: resolvedFile,
+            metadata: mergedMetadata,
             isPinned,
             pinnedAt,
             updatedAt: new Date(),

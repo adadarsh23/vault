@@ -29,11 +29,15 @@ import {
   Lock,
   Layers,
   WrapText,
+  ShieldAlert,
 } from 'lucide-react';
+import { ForensicWatermark } from '../../components/security/ForensicWatermark';
+import { useAntiScreenshotAndShield } from '../../hooks/useAntiScreenshotAndShield';
 import { toast } from 'sonner';
 import { useVaultStore } from '../../store/vaultStore';
 import { VaultItem } from '../../lib/storage';
 import { encryptFileInWorker } from '../../lib/cryptoPrimitives';
+import { stripExifInWorker, stripExifInMemory } from '../../lib/mediaWorker';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlobalNavigator } from '../../components/vault/GlobalNavigator';
 import { useGlobalNavigationStore } from '../../store/globalNavigationStore';
@@ -51,7 +55,7 @@ import { useVaultFolders } from '../../hooks/useVaultFolders';
 import { useVaultItems } from '../../hooks/useVaultItems';
 import { VaultLayout } from '../../components/layout/VaultLayout';
 import { cn } from '../../lib/utils';
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { setDraggedVaultItem, clearDraggedVaultItem } from '../../lib/vaultDragDrop';
 import {
   exceedsUploadSizeLimit,
   getUploadSizeErrorMessage,
@@ -426,8 +430,21 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
 
     void loadPreview();
 
+    const handlePanicLock = () => {
+      if (activeObjectUrl) {
+        URL.revokeObjectURL(activeObjectUrl);
+        activeObjectUrl = null;
+      }
+      setUrl(null);
+      setTextContent('');
+      setIsLoading(false);
+    };
+
+    window.addEventListener('vault:panic-lock', handlePanicLock);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('vault:panic-lock', handlePanicLock);
       if (activeObjectUrl) {
         URL.revokeObjectURL(activeObjectUrl);
       }
@@ -969,11 +986,28 @@ export const DocumentsVault: React.FC = () => {
   const masterKey = useVaultStore((state) => state.masterKey);
   const allowRestrictedTypes = useVaultStore((state) => state.allowRestrictedTypes);
   const setAllowRestrictedTypes = useVaultStore((state) => state.setAllowRestrictedTypes);
+  const isPrintBlockingEnabled = useVaultStore((state) => state.preferences.isPrintBlockingEnabled);
+  const isTabSwitchShieldEnabled = useVaultStore(
+    (state) => state.preferences.isTabSwitchShieldEnabled
+  );
+  const isForensicWatermarkEnabled = useVaultStore(
+    (state) => state.preferences.isForensicWatermarkEnabled
+  );
+  const isPhotoExifStripped = useVaultStore((state) => state.preferences.isPhotoExifStripped);
+
   const [isUploading, setIsUploading] = useState(false);
   const [previewItem, setPreviewItem] = useState<string | null>(null);
   const [moveMenuOpenId, setMoveMenuOpenId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const ITEMS_PER_PAGE = 8;
+
+  // Anti-Screenshot, Print Blocking & Tab Switch Shield Hook
+  const { isShieldActive, shieldReason, deactivateShield } = useAntiScreenshotAndShield({
+    isTabSwitchShieldEnabled: isTabSwitchShieldEnabled !== false,
+    isPrintBlockingEnabled: isPrintBlockingEnabled !== false,
+    isViewingSensitiveMedia: Boolean(previewItem),
+    customShieldMessage: '⚠️ Printing and PDF saving are prohibited for protected vault documents.',
+  });
 
   const isSupportedDocumentFile = (file: File) => {
     const extension = file.name.split('.').pop()?.toUpperCase() || '';
@@ -1166,14 +1200,43 @@ export const DocumentsVault: React.FC = () => {
 
     const CONCURRENCY = Math.min(4, total);
 
+    const yieldToMainThread = async () => {
+      await new Promise<void>((resolve) => {
+        if (typeof requestAnimationFrame !== 'undefined') {
+          requestAnimationFrame(() => resolve());
+        } else {
+          setTimeout(resolve, 0);
+        }
+      });
+    };
+
     const processFile = async (itemObj: { file: File; targetFolder: string | null }) => {
       const { file, targetFolder: itemFolder } = itemObj;
       try {
-        const encryptedData = await encryptFileInWorker(file, masterKey);
+        await yieldToMainThread();
+        let uploadFileObj = file;
+        if (
+          isPhotoExifStripped &&
+          (file.type.startsWith('image/') || /\.(jpe?g|png|webp|tif|tiff)$/i.test(file.name))
+        ) {
+          try {
+            uploadFileObj = await stripExifInWorker(file);
+          } catch {
+            const rawBuffer = await file.arrayBuffer();
+            const cleanedBuffer = stripExifInMemory(rawBuffer, file.type);
+            uploadFileObj = new File([cleanedBuffer], file.name, {
+              type: file.type || 'image/jpeg',
+              lastModified: file.lastModified,
+            });
+          }
+        }
+        await yieldToMainThread();
+        const encryptedData = await encryptFileInWorker(uploadFileObj, masterKey);
+        await yieldToMainThread();
         const resolvedMimeType =
-          file.type && file.type !== 'application/octet-stream'
-            ? file.type
-            : getDocumentMimeType(file.name);
+          uploadFileObj.type && uploadFileObj.type !== 'application/octet-stream'
+            ? uploadFileObj.type
+            : getDocumentMimeType(uploadFileObj.name);
 
         await addItem({
           type: 'document',
@@ -1380,6 +1443,7 @@ export const DocumentsVault: React.FC = () => {
                   transition={{ delay: idx * 0.03 }}
                   draggable
                   onDragStartCapture={(event) => setDraggedVaultItem(event, item.id)}
+                  onDragEnd={clearDraggedVaultItem}
                   onTouchStartCapture={(event: React.TouchEvent) =>
                     setDraggedVaultItem(event as any, item.id)
                   }
@@ -1660,12 +1724,63 @@ export const DocumentsVault: React.FC = () => {
               onNext={showNextDocument}
               layout="overlay"
             />
-            <div className="h-[92vh] sm:h-[88vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-zinc-950 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)] transition-all">
+            <div className="relative h-[92vh] sm:h-[88vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-zinc-950 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)] transition-all doc-preview-content vault-print-protected">
               <SafeDocumentPreview
                 item={previewedDocument}
                 masterKey={masterKey!}
                 onDownload={() => downloadFile(previewedDocument)}
               />
+
+              {/* Dynamic Forensic Watermark Overlay */}
+              {isForensicWatermarkEnabled !== false && (
+                <ForensicWatermark
+                  opacity={0.12}
+                  angle={-25}
+                  density="standard"
+                  classification="VAULT DOCUMENT // CONFIDENTIAL"
+                />
+              )}
+
+              {/* Tab Switch Auto-Shield Overlay */}
+              <AnimatePresence>
+                {isShieldActive && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.12 }}
+                    className="vault-tab-switch-shield"
+                    onClick={deactivateShield}
+                  >
+                    <div className="flex flex-col items-center gap-3 p-6 text-center">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl">
+                        <ShieldAlert className="h-7 w-7 text-amber-400" />
+                      </div>
+                      <p className="text-base font-bold text-white tracking-wide">
+                        {shieldReason === 'print-attempt'
+                          ? 'Document Print Protection Active'
+                          : 'Shield Active • Document Protected'}
+                      </p>
+                      <p className="text-xs text-white/60 max-w-xs leading-relaxed">
+                        {shieldReason === 'print-attempt'
+                          ? 'Printing or PDF exporting of encrypted documents is disabled.'
+                          : 'Document hidden to prevent multitasking switcher capture. Click or focus window to resume.'}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Print Blocked Notice for @media print */}
+            <div className="vault-print-blocked-notice">
+              <div className="flex items-center gap-2 text-red-600 mb-2">
+                <ShieldAlert className="h-8 w-8" />
+                <span className="text-xl font-bold">Encrypted Document Protected</span>
+              </div>
+              <p className="text-sm text-red-800/80">
+                Document printing is blocked by Vault Security Policy.
+              </p>
             </div>
           </motion.div>
         )}

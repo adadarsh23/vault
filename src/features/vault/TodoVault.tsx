@@ -31,7 +31,7 @@ import type { VaultItem } from '../../lib/storage';
 import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
 import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';
 import { logActivity } from '../../lib/activity';
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { setDraggedVaultItem, clearDraggedVaultItem } from '../../lib/vaultDragDrop';
 import { FolderSidebar } from '../../components/vault/FolderSidebar';
 import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
 import { useVaultFolders } from '../../hooks/useVaultFolders';
@@ -1110,6 +1110,7 @@ export const TodoVault: React.FC = () => {
                 whileHover={{ y: -3, transition: { duration: 0.2 } }}
                 draggable
                 onDragStartCapture={(event) => setDraggedVaultItem(event, item.id)}
+                onDragEnd={clearDraggedVaultItem}
                 onTouchStart={(event) => setDraggedVaultItem(event as any, item.id)}
                 title="Drag to a folder to move this todo"
                 className="h-full"

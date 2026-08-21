@@ -1,6 +1,6 @@
 import { getDeviceId } from '../auth-session';
 import { logger } from '../logger';
-import { API_BASE_URL, fetchWithRetry, getAuthHeaders } from './core';
+import { API_BASE_URL, fetchWithRetry, getAuthHeaders, runInParallelPool } from './core';
 
 const ACTIVITY_LOG_PAGE_SIZE = 1000;
 const ACTIVITY_LOG_MAX_PAGES = 1000;
@@ -62,20 +62,25 @@ export const uploadActivityLog = async (log: any): Promise<boolean> => {
 };
 
 /**
- * Syncs an array of logs to MongoDB via API.
+ * Syncs an array of logs to MongoDB via API using bounded parallel execution.
  */
-export const uploadLogsToCloud = async (logs: any[]) => {
+export const uploadLogsToCloud = async (logs: any[], concurrency = 4) => {
   const { markAsSynced } = (await import('../../store/activityStore')).useActivityStore.getState();
+  const pendingLogs = logs.filter((log) => log.isSynced === false || log.isSynced === undefined);
+  if (pendingLogs.length === 0) return;
+
   const syncedIds: string[] = [];
 
-  for (const log of logs) {
-    if (log.isSynced === false || log.isSynced === undefined) {
+  await runInParallelPool(
+    pendingLogs,
+    async (log) => {
       const success = await uploadActivityLog(log);
       if (success) {
         syncedIds.push(log.id);
       }
-    }
-  }
+    },
+    concurrency
+  );
 
   if (syncedIds.length > 0) {
     markAsSynced(syncedIds);

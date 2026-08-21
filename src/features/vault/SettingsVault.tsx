@@ -29,6 +29,7 @@ import { MaintenanceCard } from './components/SettingsVault/MaintenanceCard';
 import { EmergencyDestructionCard } from './components/SettingsVault/EmergencyDestructionCard';
 import { ShareVaultCard } from './components/SettingsVault/ShareVaultCard';
 import { TwoFactorSettingsCard } from './components/SettingsVault/TwoFactorSettingsCard';
+import { MerkleIntegrityCard } from './components/SettingsVault/MerkleIntegrityCard';
 import { SectionCard } from './components/SettingsVault/SharedComponents';
 
 interface SettingsVaultProps {
@@ -325,6 +326,8 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
           cancelSync={cancelSync}
           cancelActivityLogSync={cancelActivityLogSync}
         />
+
+        <MerkleIntegrityCard />
 
         <SectionCard
           title="Privacy & Interface"

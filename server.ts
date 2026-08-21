@@ -27,6 +27,7 @@ import { twoFactorRouter } from './server/routes/twoFactorRoutes.ts';
 import { securityRouter } from './server/routes/securityRoutes.ts';
 import { notificationRouter } from './server/routes/notificationRoutes.ts';
 import { avatarRouter } from './server/routes/avatarRoutes.ts';
+import { integrityRouter } from './server/routes/integrityRoutes.ts';
 
 import { setupFrontendMiddleware } from './server/vite.ts';
 
@@ -164,7 +165,7 @@ const buildHelmetConfig = (): Parameters<typeof helmet>[0] => {
               'https://www.recaptcha.net',
             ],
         styleSrc: ["'self'", "'unsafe-inline'", 'https:', 'https://fonts.googleapis.com'],
-        scriptSrcAttr: ["'none'"],
+        scriptSrcAttr: ["'unsafe-inline'"],
         fontSrc: ["'self'", 'https:', 'data:', 'https://fonts.gstatic.com'],
         frameSrc: [
           "'self'",
@@ -174,6 +175,7 @@ const buildHelmetConfig = (): Parameters<typeof helmet>[0] => {
           'https://*.google.co.in',
           'https://recaptcha.google.com',
           'https://www.recaptcha.net',
+          'https://www.openstreetmap.org',
         ],
         manifestSrc: ["'self'"],
         workerSrc: ["'self'", 'blob:', 'https://unpkg.com', 'https://cdn.jsdelivr.net'],
@@ -315,8 +317,10 @@ const setOverloadResponseHeaders = (res: express.Response): void => {
  * RATE LIMITING
  */
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 100 : 1000,
+  windowMs: Number.parseInt(process.env.API_RATE_LIMIT_WINDOW_MS || '', 10) || 15 * 60 * 1000,
+  max:
+    Number.parseInt(process.env.API_RATE_LIMIT_MAX || '', 10) ||
+    (process.env.NODE_ENV === 'production' ? 500 : 5000),
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -614,9 +618,9 @@ async function startServer() {
       app.use('/uploads', requireAuth, express.static(getUploadRoot()));
 
       app.use('/api', (req, res, next) => {
-        // Let auth-specific rate limiters handle refresh/login endpoints.
-        // Prevent global API throttling from breaking session restoration.
-        if (req.path === '/auth/refresh') {
+        // Let auth-specific rate limiters handle authentication endpoints.
+        // Prevent global API throttling from breaking login/registration/refresh flows.
+        if (req.path.startsWith('/auth')) {
           return next();
         }
         return apiLimiter(req, res, next);
@@ -629,6 +633,7 @@ async function startServer() {
       app.use('/api/security', securityRouter);
       app.use('/api/notifications', notificationRouter);
       app.use('/api/avatar', avatarRouter);
+      app.use('/api/vault/integrity', integrityRouter);
       registerVaultRoutes(app);
     });
 

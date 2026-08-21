@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from './Button';
 import {
   Play,
@@ -17,6 +17,17 @@ import {
   FlipHorizontal,
   ChevronDown,
   VideoOff,
+  Repeat,
+  Repeat1,
+  RotateCcw,
+  RotateCw,
+  Gauge,
+  X,
+  GripHorizontal,
+  Maximize,
+  Bookmark,
+  Layers,
+  Camera,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -27,12 +38,28 @@ import Hls from 'hls.js';
 import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';
 import { resolveApiBaseUrl } from '../../lib/apiBaseUrl';
 
+export type VideoVisualFilter = string;
+export interface VideoFilterOption {
+  id: string;
+  label: string;
+  shortLabel: string;
+  css: string;
+}
+export const VIDEO_FILTER_OPTIONS: readonly VideoFilterOption[] = [
+  { id: 'none', label: 'Normal', shortLabel: 'Normal', css: 'none' },
+];
+
 /* ---------------- UTIL ---------------- */
 
-const formatTime = (seconds: number) => {
-  if (!isFinite(seconds) || isNaN(seconds)) return '00:00';
-  const minutes = Math.floor(seconds / 60);
+export const formatTime = (seconds: number) => {
+  if (!isFinite(seconds) || isNaN(seconds) || seconds < 0) return '00:00';
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
   const remainingSeconds = Math.floor(seconds % 60);
+
+  if (hours > 0) {
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  }
   return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 };
 
@@ -247,15 +274,7 @@ export const sanitizeTelemetryMetadata = (input: unknown): unknown => {
 
 /* ---------------- UNIVERSAL SLIDER (MOBILE + DESKTOP) ---------------- */
 
-const CustomSlider = ({
-  value,
-  onChange,
-  onDragStart,
-  onDragEnd,
-  className,
-  label,
-  thumbClassName,
-}: {
+export interface CustomSliderProps {
   value: number;
   onChange: (value: number) => void;
   onDragStart?: () => void;
@@ -263,19 +282,41 @@ const CustomSlider = ({
   className?: string;
   label: string;
   thumbClassName?: string;
-}) => {
+  duration?: number;
+  showHoverTooltip?: boolean;
+  pointA?: number | null;
+  pointB?: number | null;
+}
+
+export const CustomSlider = ({
+  value,
+  onChange,
+  onDragStart,
+  onDragEnd,
+  className,
+  label,
+  thumbClassName,
+  duration = 0,
+  showHoverTooltip = true,
+  pointA = null,
+  pointB = null,
+}: CustomSliderProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
+  const [hoverPercent, setHoverPercent] = useState<number | null>(null);
+  const [isPointerInside, setIsPointerInside] = useState(false);
 
   const getPercent = (clientX: number) => {
     const rect = ref.current?.getBoundingClientRect();
-    if (!rect) return 0;
+    if (!rect || rect.width <= 0) return 0;
     const x = clientX - rect.left;
     return Math.min(Math.max((x / rect.width) * 100, 0), 100);
   };
 
   const update = (clientX: number) => {
-    onChange(getPercent(clientX));
+    const pct = getPercent(clientX);
+    onChange(pct);
+    setHoverPercent(pct);
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -286,6 +327,8 @@ const CustomSlider = ({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    const pct = getPercent(e.clientX);
+    setHoverPercent(pct);
     if (!isDragging.current) return;
     update(e.clientX);
   };
@@ -319,6 +362,18 @@ const CustomSlider = ({
     }
   };
 
+  const activeHoverPercent = isDragging.current ? value : hoverPercent;
+  const hoverTime =
+    activeHoverPercent !== null && duration > 0 ? (activeHoverPercent / 100) * duration : null;
+
+  // Clamped tooltip X position (percentage) to prevent edge cut-off
+  const clampedTooltipPercent =
+    activeHoverPercent !== null ? Math.min(Math.max(activeHoverPercent, 6), 94) : 50;
+
+  // A-B repeat range coordinates
+  const pointAPercent = pointA !== null && duration > 0 ? (pointA / duration) * 100 : null;
+  const pointBPercent = pointB !== null && duration > 0 ? (pointB / duration) * 100 : null;
+
   return (
     <div
       ref={ref}
@@ -330,53 +385,96 @@ const CustomSlider = ({
       aria-valuetext={`${Math.round(value)}%`}
       tabIndex={0}
       className={cn(
-        'relative w-full h-2 sm:h-1.5 rounded-full cursor-pointer touch-none outline-none focus-visible:ring-2 focus-visible:ring-white/50 bg-white/25 overflow-visible',
+        'group/slider relative w-full h-2 sm:h-1.5 rounded-full cursor-pointer touch-none outline-none focus-visible:ring-2 focus-visible:ring-primary/60 bg-white/20 overflow-visible transition-all duration-150',
         className
       )}
+      onPointerEnter={() => setIsPointerInside(true)}
+      onPointerLeave={() => {
+        setIsPointerInside(false);
+        if (!isDragging.current) setHoverPercent(null);
+      }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
       onKeyDown={onKeyDown}
     >
+      {/* Ghost hover bar marker */}
+      {hoverPercent !== null && isPointerInside && (
+        <div
+          className="absolute top-0 left-0 h-full bg-white/30 rounded-full transition-opacity duration-150 pointer-events-none"
+          style={{ width: `${hoverPercent}%` }}
+        />
+      )}
+
+      {/* A-B Repeat Segment Highlight */}
+      {pointAPercent !== null && pointBPercent !== null && pointBPercent > pointAPercent && (
+        <div
+          className="absolute top-0 h-full bg-primary/40 rounded-sm z-[1] pointer-events-none"
+          style={{
+            left: `${pointAPercent}%`,
+            width: `${pointBPercent - pointAPercent}%`,
+          }}
+        />
+      )}
+
+      {/* Point A Flag Marker */}
+      {pointAPercent !== null && (
+        <div
+          className="absolute top-1/2 -translate-y-1/2 z-[3] w-1.5 h-3.5 bg-emerald-400 rounded-xs shadow-md ring-1 ring-black/40 pointer-events-none"
+          style={{ left: `${pointAPercent}%` }}
+          title={`Point A: ${formatTime(pointA!)}`}
+        />
+      )}
+
+      {/* Point B Flag Marker */}
+      {pointBPercent !== null && (
+        <div
+          className="absolute top-1/2 -translate-y-1/2 z-[3] w-1.5 h-3.5 bg-amber-400 rounded-xs shadow-md ring-1 ring-black/40 pointer-events-none"
+          style={{ left: `${pointBPercent}%` }}
+          title={`Point B: ${formatTime(pointB!)}`}
+        />
+      )}
+
+      {/* Active progress bar */}
       <div
-        className="absolute top-0 left-0 h-full bg-white rounded-full"
+        className="absolute top-0 left-0 h-full bg-primary rounded-full z-[1]"
         style={{ width: `${value}%` }}
       />
-      {/* Thumb for better touch target/visibility */}
+
+      {/* Thumb */}
       <div
         className={cn(
-          'absolute z-[2] top-1/2 h-3 w-3 rounded-full bg-white shadow-lg ring-1 ring-black/25 transition-opacity opacity-100 sm:opacity-90',
+          'absolute z-[4] top-1/2 h-3.5 w-3.5 rounded-full bg-white shadow-lg ring-2 ring-primary/60 transition-transform hover:scale-125 active:scale-110',
           thumbClassName
         )}
         style={{
           left: `${value}%`,
-          transform: `translate(-50%, -50%)`,
+          transform: 'translate(-50%, -50%)',
         }}
       />
+
+      {/* Hover / Scrubbing Tooltip */}
+      {showHoverTooltip && (isPointerInside || isDragging.current) && hoverTime !== null && (
+        <div
+          data-testid="timeline-scrub-tooltip"
+          className="absolute bottom-full mb-2.5 z-[20] -translate-x-1/2 pointer-events-none flex flex-col items-center select-none animate-in fade-in zoom-in-95 duration-150"
+          style={{ left: `${clampedTooltipPercent}%` }}
+        >
+          <div className="px-2 py-1 bg-black/90 text-white font-mono text-[11px] font-semibold rounded-md shadow-xl border border-white/20 backdrop-blur-md whitespace-nowrap flex items-center gap-1.5">
+            <span>{formatTime(hoverTime)}</span>
+          </div>
+          {/* Tooltip Caret */}
+          <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-black/90 mt-[-1px]" />
+        </div>
+      )}
     </div>
   );
 };
 
 /* ---------------- VIDEO PLAYER ---------------- */
 
-const VideoPlayer = ({
-  src,
-  itemId,
-  title,
-  className,
-  style,
-  aspectRatio,
-  autoPlay = false,
-  lowDataMode = false,
-  networkAwareAutoplay = true,
-  showPerformanceHud = false,
-  allowDownload = true,
-  allowPiP = true,
-  allowFullscreen = true,
-  allowSpeedChange = true,
-  allowedMediaDomains = [],
-}: {
+export interface VideoPlayerProps {
   src: string;
   mimeType?: string;
   itemId?: string;
@@ -385,6 +483,7 @@ const VideoPlayer = ({
   style?: React.CSSProperties;
   aspectRatio?: number | string;
   autoPlay?: boolean;
+  loop?: boolean;
   lowDataMode?: boolean;
   networkAwareAutoplay?: boolean;
   showPerformanceHud?: boolean;
@@ -392,12 +491,46 @@ const VideoPlayer = ({
   allowPiP?: boolean;
   allowFullscreen?: boolean;
   allowSpeedChange?: boolean;
+  allowFloating?: boolean;
+  allowFilters?: boolean;
+  initialFilter?: string;
+  onFilterChange?: (filter: any) => void;
+  isFloating?: boolean;
+  onToggleFloating?: (floating: boolean) => void;
   allowedMediaDomains?: string[];
+  onClose?: () => void;
+}
+
+const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+const VideoPlayer: React.FC<VideoPlayerProps> = ({
+  src,
+  itemId,
+  title,
+  className,
+  style,
+  aspectRatio,
+  autoPlay = false,
+  loop = false,
+  lowDataMode = false,
+  networkAwareAutoplay = true,
+  showPerformanceHud = false,
+  allowDownload = true,
+  allowPiP = true,
+  allowFullscreen = true,
+  allowSpeedChange = true,
+  allowFloating = true,
+  allowFilters,
+  initialFilter,
+  onFilterChange,
+  isFloating: controlledFloating,
+  onToggleFloating,
+  allowedMediaDomains = [],
+  onClose,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
-  // const isInitialMount = useRef(true) // Removed unused variable
 
   const [activeSrc, setActiveSrc] = useState(src);
   const fallbackAttemptedRef = useRef(false);
@@ -414,6 +547,14 @@ const VideoPlayer = ({
     }
     setActiveSrc(src);
     fallbackAttemptedRef.current = false;
+    setCurrentTime(0);
+    if (videoRef.current) {
+      try {
+        videoRef.current.currentTime = 0;
+      } catch {
+        /* ignore */
+      }
+    }
   }, [src]);
 
   useEffect(() => {
@@ -440,6 +581,18 @@ const VideoPlayer = ({
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPiP, setIsPiP] = useState(false);
+  const [internalFloating, setInternalFloating] = useState(false);
+  const isFloating = controlledFloating !== undefined ? controlledFloating : internalFloating;
+  const [isLooping, setIsLooping] = useState(loop);
+  const [abRepeat, setAbRepeat] = useState<{
+    active: boolean;
+    pointA: number | null;
+    pointB: number | null;
+  }>({ active: false, pointA: null, pointB: null });
+
+  const [isSpeedMenuOpen, setIsSpeedMenuOpen] = useState(false);
+  const speedMenuRef = useRef<HTMLDivElement>(null);
+
   const [qualityOptions, setQualityOptions] = useState<{ index: number; label: string }[]>([
     { index: -1, label: 'Auto' },
   ]);
@@ -465,6 +618,74 @@ const VideoPlayer = ({
     bufferAhead: number;
     droppedFrames: number;
   }>({ level: -1, bufferAhead: 0, droppedFrames: 0 });
+
+  // Center HUD Badge State for quick hotkey/gesture visual feedback
+  const [hudBadge, setHudBadge] = useState<{
+    id: number;
+    icon: React.ReactNode;
+    text: string;
+  } | null>(null);
+  const hudBadgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerHudBadge = useCallback((icon: React.ReactNode, text: string) => {
+    if (hudBadgeTimer.current) clearTimeout(hudBadgeTimer.current);
+    setHudBadge({ id: Date.now(), icon, text });
+    hudBadgeTimer.current = setTimeout(() => {
+      setHudBadge(null);
+    }, 850);
+  }, []);
+
+  const captureSnapshot = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    triggerHudBadge(<Camera className="w-5 h-5" />, 'Snapshot Captured');
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      if (isMirrored) {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          const timestamp = Math.floor(currentTime);
+          link.download = `${(title || 'video').replace(/[^a-z0-9_-]/gi, '_')}_snapshot_${timestamp}s.jpg`;
+          link.href = url;
+          link.rel = 'noopener';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+          toast.success('Snapshot downloaded');
+        },
+        'image/jpeg',
+        0.95
+      );
+    } catch (e) {
+      toast.error('Could not capture frame');
+    }
+  }, [isMirrored, currentTime, title, triggerHudBadge]);
+
+  // Double-tap skip ripple state
+  const [skipRipple, setSkipRipple] = useState<{
+    side: 'left' | 'right';
+    seconds: number;
+    key: number;
+  } | null>(null);
+  const skipRippleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTapRef = useRef<{ time: number; side: 'left' | 'right'; count: number }>({
+    time: 0,
+    side: 'left',
+    count: 0,
+  });
+
   const lastResumeSaveAt = useRef(0);
   const lastBufferStartAt = useRef(0);
   const resumeKey = useMemo(() => `vault:video:resume:${itemId ?? activeSrc}`, [itemId, activeSrc]);
@@ -500,6 +721,19 @@ const VideoPlayer = ({
     mediaQuery?.addEventListener?.('change', updateLiteMode);
     return () => mediaQuery?.removeEventListener?.('change', updateLiteMode);
   }, [lowDataMode]);
+
+  // Click outside speed popup listener
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (speedMenuRef.current && !speedMenuRef.current.contains(e.target as Node)) {
+        setIsSpeedMenuOpen(false);
+      }
+    };
+    if (isSpeedMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSpeedMenuOpen]);
 
   const logEvent = useCallback(
     async (event: string, metadata: any = {}) => {
@@ -568,19 +802,16 @@ const VideoPlayer = ({
       return true;
     };
 
-    // Cleanup previous playback engine for source changes
     hlsRef.current?.destroy();
     hlsRef.current = null;
     setIsBuffering(true);
-    // Main loader: lightweight HLS/native playback for responsive previews
+
     const loadVideo = async () => {
-      // Prefer HLS chunk-based loading first for fast start + background buffering
       if (activeSrc.includes('.m3u8')) {
         if (Hls.isSupported()) {
           const hls = new Hls({
             enableWorker: true,
             lowLatencyMode: false,
-            // Start lower by default for faster first frame on large previews.
             startLevel: 0,
             capLevelToPlayerSize: true,
             backBufferLength: 30,
@@ -620,10 +851,9 @@ const VideoPlayer = ({
             }
             void shouldAutoplay().then((allowAutoPlay) => {
               if (!allowAutoPlay || disposed) return;
-              video.play().catch(() => setIsPlaying(false));
+              video.play()?.catch?.(() => setIsPlaying(false));
             });
 
-            // Adaptive preview quality: start lower, step up when stable.
             if (!lowDataMode) {
               setTimeout(() => {
                 if (disposed || !hlsRef.current) return;
@@ -633,7 +863,6 @@ const VideoPlayer = ({
           });
 
           hls.on(Hls.Events.FRAG_LOADING, () => {
-            // Next segment fetch in background
             if (!video.paused && video.readyState < 3) {
               setIsBuffering(true);
             }
@@ -761,7 +990,6 @@ const VideoPlayer = ({
   const isDraggingSeek = useRef(false);
   const lastVolume = useRef(1);
 
-  // Derive progress from currentTime/duration
   const progress = useMemo(
     () => (duration > 0 ? (currentTime / duration) * 100 : 0),
     [currentTime, duration]
@@ -810,16 +1038,14 @@ const VideoPlayer = ({
       setIsTranscoding(false);
       setTranscodeProgress(null);
     }
-  }, [activeSrc, src, title]);
+  }, [activeSrc, src, title, itemId]);
 
   const handleError = useCallback(async () => {
     const video = videoRef.current;
     const err = video?.error;
 
     logEvent('error', { code: err?.code, message: err?.message });
-
     setError(getPlayerErrorMessage(mapMediaErrorCodeToPlayerError(err?.code)));
-
     setIsBuffering(false);
   }, [logEvent]);
 
@@ -837,18 +1063,15 @@ const VideoPlayer = ({
     setDuration(safeDuration);
     setError(null);
     setIsVideoReady(true);
+    video.loop = isLooping;
+
+    // Always start playback from the absolute beginning (0:00)
     try {
-      const raw = window.localStorage.getItem(resumeKey);
-      if (!raw) return;
-      const parsed = Number(raw);
-      if (!Number.isFinite(parsed)) return;
-      if (parsed > 1 && parsed < Math.max(0, safeDuration - 1)) {
-        video.currentTime = parsed;
-        setCurrentTime(parsed);
-      }
-    } catch (storageError) {
-      logger.warn('Failed to restore resume position', { storageError });
+      video.currentTime = 0;
+    } catch {
+      /* ignore */
     }
+    setCurrentTime(0);
   };
 
   const handleTimeUpdate = () => {
@@ -857,6 +1080,20 @@ const VideoPlayer = ({
 
     const safeCurrentTime = finiteOrZero(video.currentTime);
     setCurrentTime(safeCurrentTime);
+
+    // Check A-B repeat boundary
+    if (
+      abRepeat.active &&
+      abRepeat.pointA !== null &&
+      abRepeat.pointB !== null &&
+      abRepeat.pointB > abRepeat.pointA
+    ) {
+      if (safeCurrentTime >= abRepeat.pointB || safeCurrentTime < abRepeat.pointA) {
+        video.currentTime = abRepeat.pointA;
+        return;
+      }
+    }
+
     const now = Date.now();
     if (now - lastResumeSaveAt.current < 2000) return;
     lastResumeSaveAt.current = now;
@@ -869,10 +1106,6 @@ const VideoPlayer = ({
 
   const [showPlayingBadge, setShowPlayingBadge] = useState(false);
   const badgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // const lastBufferEventRef = useRef<{ type: 'start' | 'end' | null; at: number }>({
-  //   type: null,
-  //   at: 0,
-  // })
 
   const handlePlay = () => {
     setIsPlaying(true);
@@ -889,17 +1122,24 @@ const VideoPlayer = ({
     lastBufferStartAt.current = now;
     void logEvent('buffer_start', { time: videoRef.current?.currentTime });
   };
+
   const handlePlaying = () => {
     setIsBuffering(false);
     setIsVideoReady(true);
     void logEvent('buffer_end', { time: videoRef.current?.currentTime });
-    // Also show badge when resuming from buffering
     setShowPlayingBadge(true);
     if (badgeTimer.current) clearTimeout(badgeTimer.current);
     badgeTimer.current = setTimeout(() => setShowPlayingBadge(false), 3000);
   };
 
   const handleEnded = () => {
+    if (isLooping) {
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play()?.catch?.(() => {});
+      }
+      return;
+    }
     setIsPlaying(false);
     setShowControls(true);
     try {
@@ -909,14 +1149,14 @@ const VideoPlayer = ({
     }
   };
 
-  /* ---------------- CONTROLS ---------------- */
+  /* ---------------- CONTROLS & ACTIONS ---------------- */
 
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video || error) return;
 
     if (video.paused) {
-      video.play().catch((err) => {
+      video.play()?.catch?.((err) => {
         console.warn('Playback failed:', err);
       });
     } else {
@@ -924,13 +1164,21 @@ const VideoPlayer = ({
     }
   }, [error]);
 
+  const seekRelative = useCallback((deltaSeconds: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    const safeDuration = finiteOrZero(video.duration) || Number.MAX_SAFE_INTEGER;
+    const nextTime = Math.min(safeDuration, Math.max(0, video.currentTime + deltaSeconds));
+    video.currentTime = nextTime;
+    setCurrentTime(nextTime);
+  }, []);
+
   const handleSeek = (value: number) => {
     const safeDuration = finiteOrZero(duration);
     if (safeDuration <= 0) return;
     const newTime = Math.min(safeDuration, Math.max(0, (finiteOrZero(value) / 100) * safeDuration));
     setCurrentTime(newTime);
 
-    // Only commit to video if not dragging or if it's the final update
     if (!isDraggingSeek.current && videoRef.current) {
       videoRef.current.currentTime = newTime;
     }
@@ -955,11 +1203,11 @@ const VideoPlayer = ({
     }
   };
 
-  const handleVolume = (value: number) => {
+  const handleVolume = useCallback((value: number) => {
     const video = videoRef.current;
     if (!video) return;
 
-    const v = value / 100;
+    const v = Math.max(0, Math.min(1, value / 100));
     if (v > 0) {
       lastVolume.current = v;
     }
@@ -968,50 +1216,94 @@ const VideoPlayer = ({
 
     setVolume(v);
     setIsMuted(v === 0);
-  };
+  }, []);
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    if (video.muted) {
+    if (video.muted || volume === 0) {
       const restoredVol = lastVolume.current || 1;
       video.volume = restoredVol;
       video.muted = false;
       setVolume(restoredVol);
       setIsMuted(false);
+      triggerHudBadge(
+        <Volume2 className="w-7 h-7 text-white" />,
+        `${Math.round(restoredVol * 100)}%`
+      );
     } else {
       lastVolume.current = volume;
       video.volume = 0;
       video.muted = true;
       setVolume(0);
       setIsMuted(true);
+      triggerHudBadge(<VolumeX className="w-7 h-7 text-white" />, 'Muted');
     }
-  };
+  }, [volume, triggerHudBadge]);
 
-  const setSpeed = (speed: number) => {
-    const video = videoRef.current;
-    if (!video) return;
+  const setSpeed = useCallback(
+    (speed: number) => {
+      const video = videoRef.current;
+      if (!video) return;
 
-    video.playbackRate = speed;
-    setPlaybackSpeed(speed);
-  };
+      try {
+        video.playbackRate = speed;
+        (video as any).preservesPitch = true;
+        (video as any).mozPreservesPitch = true;
+        (video as any).webkitPreservesPitch = true;
+      } catch {
+        /* ignore */
+      }
+      setPlaybackSpeed(speed);
+      setIsSpeedMenuOpen(false);
+      triggerHudBadge(<Gauge className="w-7 h-7 text-white" />, `${speed}x`);
+    },
+    [triggerHudBadge]
+  );
 
-  const speeds = [0.5, 1, 1.25, 1.5, 2];
+  const toggleLoop = useCallback(() => {
+    const next = !isLooping;
+    setIsLooping(next);
+    if (videoRef.current) {
+      videoRef.current.loop = next;
+    }
+    triggerHudBadge(
+      next ? (
+        <Repeat1 className="w-7 h-7 text-primary" />
+      ) : (
+        <Repeat className="w-7 h-7 text-white/70" />
+      ),
+      next ? 'Loop On' : 'Loop Off'
+    );
+  }, [isLooping, triggerHudBadge]);
 
-  const cycleSpeed = () => {
-    if (!allowSpeedChange) return;
-    const currentIndex = speeds.indexOf(playbackSpeed);
-    const nextIndex = (currentIndex + 1) % speeds.length;
-    setSpeed(speeds[nextIndex]);
-  };
+  const toggleABRepeat = useCallback(() => {
+    const now = currentTime;
+    setAbRepeat((prev) => {
+      if (!prev.active || prev.pointA === null) {
+        toast.success(`Point A set at ${formatTime(now)}`);
+        return { active: true, pointA: now, pointB: null };
+      }
+      if (prev.pointB === null) {
+        if (now <= prev.pointA) {
+          toast.error('Point B must be after Point A');
+          return prev;
+        }
+        toast.success(`A-B Repeat Active: ${formatTime(prev.pointA)} - ${formatTime(now)}`);
+        return { active: true, pointA: prev.pointA, pointB: now };
+      }
+      // Reset
+      toast.info('A-B Repeat Cleared');
+      return { active: false, pointA: null, pointB: null };
+    });
+  }, [currentTime]);
 
   const applyQualitySelection = (levelIndex: number) => {
     const hls = hlsRef.current;
     if (!hls) return;
 
     if (levelIndex < 0) {
-      // Re-enable adaptive bitrate mode explicitly.
       hls.currentLevel = -1;
       hls.nextLevel = -1;
       hls.loadLevel = -1;
@@ -1024,7 +1316,6 @@ const VideoPlayer = ({
       return;
     }
 
-    // Force manual level for immediate and upcoming fragment loads.
     hls.autoLevelCapping = levelIndex;
     hls.loadLevel = levelIndex;
     hls.currentLevel = levelIndex;
@@ -1046,8 +1337,10 @@ const VideoPlayer = ({
     try {
       if (document.fullscreenElement) {
         await document.exitFullscreen();
+        triggerHudBadge(<Minimize2 className="w-7 h-7 text-white" />, 'Exit Fullscreen');
       } else {
         await container.requestFullscreen();
+        triggerHudBadge(<Maximize2 className="w-7 h-7 text-white" />, 'Fullscreen');
       }
     } catch (fullscreenError) {
       logger.warn('Fullscreen toggle failed', { fullscreenError });
@@ -1067,11 +1360,26 @@ const VideoPlayer = ({
             requestPictureInPicture: () => Promise<PictureInPictureWindow>;
           }
         ).requestPictureInPicture();
+        triggerHudBadge(<PictureInPicture2 className="w-7 h-7 text-white" />, 'PiP Enabled');
       }
     } catch (pipError) {
       logger.warn('PiP toggle failed', { pipError });
     }
   };
+
+  const toggleFloating = useCallback(() => {
+    if (!allowFloating) return;
+    const next = !isFloating;
+    if (onToggleFloating) {
+      onToggleFloating(next);
+    } else {
+      setInternalFloating(next);
+    }
+    triggerHudBadge(
+      <Layers className="w-7 h-7 text-white" />,
+      next ? 'Mini Player' : 'Standard View'
+    );
+  }, [allowFloating, isFloating, onToggleFloating, triggerHudBadge]);
 
   const handleDownload = () => {
     const targetUrl = activeSrc || src;
@@ -1101,14 +1409,13 @@ const VideoPlayer = ({
       if (!targetUrl.startsWith('blob:') && !targetUrl.startsWith('data:')) {
         link.target = '_blank';
       }
-      link.rel = 'noopener noreferrer'; // Security best practice
+      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       toast.success('Download started');
     } catch (err) {
       console.error('Download failed:', err);
-      // Fallback: just open in new tab
       if (isSafeDownloadUrl(targetUrl)) {
         window.open(targetUrl, '_blank', 'noopener,noreferrer');
         toast.error('Direct download failed, opening in new tab');
@@ -1125,28 +1432,69 @@ const VideoPlayer = ({
     toast.success('Video refreshed');
   };
 
+  /* ---------------- ZERO-LAG INTERACTIVE GESTURE HANDLING ---------------- */
+
+  const handleVideoAreaClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const isLeft = clickX < rect.width / 2;
+    const side = isLeft ? 'left' : 'right';
+    const now = Date.now();
+
+    // Check double tap within 300ms on the same side
+    if (now - lastTapRef.current.time < 300 && lastTapRef.current.side === side) {
+      const newCount = lastTapRef.current.count + 1;
+      lastTapRef.current = { time: now, side, count: newCount };
+      const skipSecs = 10 * newCount;
+
+      if (side === 'left') {
+        seekRelative(-10);
+      } else {
+        seekRelative(10);
+      }
+
+      setSkipRipple({ side, seconds: skipSecs, key: now });
+      if (skipRippleTimer.current) clearTimeout(skipRippleTimer.current);
+      skipRippleTimer.current = setTimeout(() => {
+        setSkipRipple(null);
+        lastTapRef.current = { time: 0, side: 'left', count: 0 };
+      }, 700);
+      return;
+    }
+
+    // Single Tap / Click: instant response with zero lag!
+    lastTapRef.current = { time: now, side, count: 1 };
+    if (!showControls) {
+      setShowControls(true);
+      resetHideTimer();
+    } else {
+      togglePlay();
+    }
+  };
+
   /* ---------------- AUTO HIDE CONTROLS ---------------- */
 
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
     if (hideTimer.current) clearTimeout(hideTimer.current);
-    if (isPlaying && !error) {
-      hideTimer.current = setTimeout(() => setShowControls(false), 2500);
+    if (isPlaying && !error && !isSpeedMenuOpen) {
+      hideTimer.current = setTimeout(() => setShowControls(false), 3000);
     }
-  }, [isPlaying, error]);
+  }, [isPlaying, error, isSpeedMenuOpen]);
 
   useEffect(() => {
     resetHideTimer();
     return () => {
       if (hideTimer.current) clearTimeout(hideTimer.current);
     };
-  }, [isPlaying, error, resetHideTimer]);
+  }, [isPlaying, error, isSpeedMenuOpen, resetHideTimer]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (hideTimer.current) clearTimeout(hideTimer.current);
       if (badgeTimer.current) clearTimeout(badgeTimer.current);
+      if (hudBadgeTimer.current) clearTimeout(hudBadgeTimer.current);
+      if (skipRippleTimer.current) clearTimeout(skipRippleTimer.current);
       hlsRef.current?.destroy();
       hlsRef.current = null;
       const video = videoRef.current;
@@ -1154,27 +1502,27 @@ const VideoPlayer = ({
       try {
         video.pause();
       } catch {
-        // Ignore pause failures during teardown.
+        /* ignore */
       }
       try {
         video.srcObject = null;
       } catch {
-        // Ignore srcObject failures during teardown.
+        /* ignore */
       }
       try {
         video.removeAttribute('src');
       } catch {
-        // Ignore src cleanup failures.
+        /* ignore */
       }
       try {
         video.load();
       } catch {
-        // Ignore load reset failures.
+        /* ignore */
       }
     };
   }, []);
 
-  /* ---------------- KEYBOARD SUPPORT ---------------- */
+  /* ---------------- KEYBOARD SHORTCUTS ---------------- */
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1182,21 +1530,205 @@ const VideoPlayer = ({
       const container = containerRef.current;
       if (!video || !container || error) return;
 
-      const targetNode = e.target as Node | null;
-      if (!targetNode || !container.contains(targetNode)) return;
-
-      // Basic Player Controls
-      if (e.key === ' ') {
-        e.preventDefault();
-        togglePlay();
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        typeof (target as any).tagName === 'string' &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable ||
+          target.tagName === 'SELECT')
+      ) {
+        return;
       }
-      if (e.key === 'ArrowRight') video.currentTime += 5;
-      if (e.key === 'ArrowLeft') video.currentTime -= 5;
+
+      const isNode = typeof Node !== 'undefined' && target instanceof Node;
+      if (
+        isNode &&
+        target !== document.body &&
+        target !== document.documentElement &&
+        !container.contains(target)
+      ) {
+        return;
+      }
+
+      // Space or K: Play / Pause
+      if (e.key === ' ' || e.key === 'k' || e.key === 'K') {
+        e.preventDefault();
+        const wasPaused = video.paused;
+        togglePlay();
+        if (wasPaused) {
+          triggerHudBadge(<Play className="w-7 h-7 fill-white text-white" />, 'Play');
+        } else {
+          triggerHudBadge(<Pause className="w-7 h-7 fill-white text-white" />, 'Pause');
+        }
+        return;
+      }
+
+      // J: Rewind 10s
+      if (e.key === 'j' || e.key === 'J') {
+        e.preventDefault();
+        seekRelative(-10);
+        triggerHudBadge(<RotateCcw className="w-7 h-7 text-white" />, '-10s');
+        return;
+      }
+
+      // L: Forward 10s
+      if (e.key === 'l' || e.key === 'L') {
+        e.preventDefault();
+        seekRelative(10);
+        triggerHudBadge(<RotateCw className="w-7 h-7 text-white" />, '+10s');
+        return;
+      }
+
+      // ArrowLeft / ArrowRight: Frame step or 5s seek
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          seekRelative(10);
+          triggerHudBadge(<RotateCw className="w-7 h-7 text-white" />, '+10s');
+        } else if (video.paused) {
+          seekRelative(1 / 30);
+          triggerHudBadge(<RotateCw className="w-7 h-7 text-white" />, '+1 Frame');
+        } else {
+          seekRelative(5);
+          triggerHudBadge(<RotateCw className="w-7 h-7 text-white" />, '+5s');
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          seekRelative(-10);
+          triggerHudBadge(<RotateCcw className="w-7 h-7 text-white" />, '-10s');
+        } else if (video.paused) {
+          seekRelative(-1 / 30);
+          triggerHudBadge(<RotateCcw className="w-7 h-7 text-white" />, '-1 Frame');
+        } else {
+          seekRelative(-5);
+          triggerHudBadge(<RotateCcw className="w-7 h-7 text-white" />, '-5s');
+        }
+        return;
+      }
+
+      // Frame-by-frame: comma (,) and period (.)
+      if (e.key === ',') {
+        e.preventDefault();
+        seekRelative(-1 / 30);
+        triggerHudBadge(<RotateCcw className="w-7 h-7 text-white" />, '-1 Frame');
+        return;
+      }
+      if (e.key === '.') {
+        e.preventDefault();
+        seekRelative(1 / 30);
+        triggerHudBadge(<RotateCw className="w-7 h-7 text-white" />, '+1 Frame');
+        return;
+      }
+
+      // M: Mute toggle
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMute();
+        return;
+      }
+
+      // F: Fullscreen toggle
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        void toggleFullscreen();
+        return;
+      }
+
+      // P: PiP toggle
+      if (e.key === 'p' || e.key === 'P') {
+        e.preventDefault();
+        void togglePiP();
+        return;
+      }
+
+      // I: Mini Floating Player toggle
+      if (e.key === 'i' || e.key === 'I') {
+        e.preventDefault();
+        toggleFloating();
+        return;
+      }
+
+      // R: Looping toggle
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        toggleLoop();
+        return;
+      }
+
+      // Number keys 0-9: Jump to percentage (0% to 90%)
+      if (e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+        const pct = parseInt(e.key, 10) * 10;
+        const videoDuration = finiteOrZero(video.duration) || duration;
+        const targetSec = (pct / 100) * videoDuration;
+        video.currentTime = targetSec;
+        setCurrentTime(targetSec);
+        triggerHudBadge(<Play className="w-7 h-7 text-white" />, `${pct}%`);
+        return;
+      }
+
+      // [ / ]: Decrease / Increase speed
+      if (e.key === '[') {
+        e.preventDefault();
+        const idx = SPEED_OPTIONS.indexOf(playbackSpeed);
+        if (idx > 0) setSpeed(SPEED_OPTIONS[idx - 1]);
+        return;
+      }
+      if (e.key === ']') {
+        e.preventDefault();
+        const idx = SPEED_OPTIONS.indexOf(playbackSpeed);
+        if (idx < SPEED_OPTIONS.length - 1) setSpeed(SPEED_OPTIONS[idx + 1]);
+        return;
+      }
+
+      // ArrowUp / ArrowDown: Volume up/down 5%
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const nextVol = Math.min(100, Math.round(volume * 100) + 5);
+        handleVolume(nextVol);
+        triggerHudBadge(<Volume2 className="w-7 h-7 text-white" />, `${nextVol}%`);
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextVol = Math.max(0, Math.round(volume * 100) - 5);
+        handleVolume(nextVol);
+        triggerHudBadge(
+          nextVol === 0 ? (
+            <VolumeX className="w-7 h-7 text-white" />
+          ) : (
+            <Volume1 className="w-7 h-7 text-white" />
+          ),
+          `${nextVol}%`
+        );
+        return;
+      }
     };
 
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [togglePlay, error]);
+  }, [
+    togglePlay,
+    seekRelative,
+    toggleMute,
+    toggleFullscreen,
+    togglePiP,
+    toggleFloating,
+    toggleLoop,
+    duration,
+    playbackSpeed,
+    setSpeed,
+    volume,
+    handleVolume,
+    triggerHudBadge,
+    error,
+  ]);
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -1217,20 +1749,30 @@ const VideoPlayer = ({
     };
   }, []);
 
-  /* ---------------- UI ---------------- */
+  /* ---------------- UI RENDER ---------------- */
 
   return (
     <motion.div
       ref={containerRef}
+      layout={isFloating}
+      drag={isFloating}
+      dragMomentum={false}
+      dragElastic={0.1}
+      dragConstraints={{ top: 0, left: 0, right: 0, bottom: 0 }}
       className={cn(
-        'group relative flex items-center justify-center bg-black overflow-hidden max-w-full max-h-full transition-all duration-300',
-        effectiveAspectRatio && !error
-          ? 'w-full h-auto'
-          : 'w-full h-full min-h-[300px] sm:min-h-[380px]',
+        'group relative flex items-center justify-center bg-black overflow-hidden select-none transition-all duration-300',
+        isFloating
+          ? 'fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] w-[calc(100vw-2rem)] max-w-[280px] xs:max-w-[320px] sm:max-w-[360px] md:max-w-[380px] aspect-video rounded-2xl shadow-2xl ring-1 ring-white/20 border border-white/15 bg-black/95 backdrop-blur-2xl pointer-events-auto touch-manipulation cursor-grab active:cursor-grabbing'
+          : effectiveAspectRatio && !error
+            ? 'w-full h-full max-w-full max-h-full'
+            : 'w-full h-full min-h-[220px] sm:min-h-[300px] max-w-full max-h-full',
         className
       )}
       style={{
-        aspectRatio: effectiveAspectRatio && !error ? String(effectiveAspectRatio) : undefined,
+        aspectRatio:
+          !isFloating && effectiveAspectRatio && !error ? String(effectiveAspectRatio) : undefined,
+        maxHeight: !isFloating ? 'min(82vh, calc(100dvh - 5.5rem))' : undefined,
+        maxWidth: !isFloating ? 'min(96vw, 1500px)' : undefined,
         ...style,
       }}
       onMouseMove={resetHideTimer}
@@ -1241,26 +1783,62 @@ const VideoPlayer = ({
         toast.error('Context menu is disabled for secure content.');
       }}
     >
+      {/* FLOATING HEADER BAR */}
+      {isFloating && (
+        <div className="absolute top-0 left-0 right-0 h-8 sm:h-9 bg-black/85 backdrop-blur-md z-[35] flex items-center justify-between px-2.5 sm:px-3 border-b border-white/10 select-none">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <GripHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/50 shrink-0" />
+            <span className="text-white text-[11px] sm:text-xs font-semibold truncate max-w-[140px] xs:max-w-[180px] sm:max-w-[220px]">
+              {title || 'Video'}
+            </span>
+          </div>
+          <div className="flex items-center gap-0.5 sm:gap-1">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFloating();
+              }}
+              aria-label="Restore standard player"
+              title="Restore standard view"
+              className="h-6 w-6 sm:h-7 sm:w-7 text-white/80 hover:text-white hover:bg-white/15 rounded-md"
+            >
+              <Maximize className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            </Button>
+            {onClose && (
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+                aria-label="Close floating player"
+                title="Close"
+                className="h-6 w-6 sm:h-7 sm:w-7 text-white/80 hover:text-red-400 hover:bg-white/15 rounded-md"
+              >
+                <X className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* VIDEO ELEMENT */}
       <video
         ref={videoRef}
         src={activeSrc.includes('.m3u8') ? undefined : activeSrc}
         className={cn(
-          'h-full w-full max-h-full object-contain transition-opacity duration-300',
-          isMirrored ? 'scale-x-[-1]' : ''
+          'h-full w-full max-h-[min(82vh,calc(100dvh-5.5rem))] max-w-full object-contain transition-opacity duration-300',
+          isMirrored ? 'scale-x-[-1]' : '',
+          isFloating ? 'pt-8 pb-1' : ''
         )}
         preload="auto"
         playsInline
         autoPlay={autoPlay}
+        loop={isLooping}
         muted={isMuted}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (!showControls) {
-            setShowControls(true);
-            resetHideTimer();
-          } else {
-            togglePlay();
-          }
-        }}
         onLoadedMetadata={handleLoadedMetadata}
         onLoadedData={() => setIsVideoReady(true)}
         onTimeUpdate={handleTimeUpdate}
@@ -1274,6 +1852,86 @@ const VideoPlayer = ({
         onError={handleError}
       />
 
+      {/* ZERO-LAG INTERACTIVE GESTURE & CLICK OVERLAY */}
+      <div
+        data-testid="video-gesture-area"
+        className="absolute inset-0 z-[10] cursor-pointer touch-manipulation"
+        onClick={handleVideoAreaClick}
+      />
+
+      {/* CENTER BIG PLAY/PAUSE BUTTON FOR INSTANT TOUCH/CLICK */}
+      <AnimatePresence>
+        {!isPlaying && isVideoReady && !error && showControls && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.15 }}
+            className="absolute inset-0 z-[22] flex items-center justify-center pointer-events-none"
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePlay();
+              }}
+              aria-label="Play video"
+              className="pointer-events-auto h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-black/60 hover:bg-black/80 active:scale-95 text-white backdrop-blur-md border border-white/25 shadow-2xl flex items-center justify-center transition-all hover:scale-105"
+            >
+              <Play className="h-6 w-6 sm:h-7 sm:w-7 fill-white text-white translate-x-0.5" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* YOUTUBE-STYLE DOUBLE TAP SKIP RIPPLE */}
+      <AnimatePresence>
+        {skipRipple && (
+          <motion.div
+            key={skipRipple.key}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            transition={{ duration: 0.25 }}
+            className={cn(
+              'absolute top-0 bottom-0 w-1/2 z-[25] flex flex-col items-center justify-center bg-white/15 backdrop-blur-xs pointer-events-none select-none',
+              skipRipple.side === 'left' ? 'left-0 rounded-r-[100px]' : 'right-0 rounded-l-[100px]'
+            )}
+          >
+            <div className="flex flex-col items-center gap-1.5 text-white drop-shadow-2xl">
+              {skipRipple.side === 'left' ? (
+                <RotateCcw className="w-8 h-8 sm:w-10 sm:h-10 animate-pulse text-white" />
+              ) : (
+                <RotateCw className="w-8 h-8 sm:w-10 sm:h-10 animate-pulse text-white" />
+              )}
+              <span className="text-xs sm:text-sm font-bold tracking-wide">
+                {skipRipple.side === 'left' ? `-${skipRipple.seconds}s` : `+${skipRipple.seconds}s`}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* CENTRAL HUD BADGE (HOTKEYS & GESTURES) */}
+      <AnimatePresence>
+        {hudBadge && (
+          <motion.div
+            key={hudBadge.id}
+            initial={{ opacity: 0, scale: 0.7, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.85, y: -10 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 350 }}
+            className="absolute inset-0 z-[28] flex items-center justify-center pointer-events-none select-none"
+          >
+            <div className="flex flex-col items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-black/75 backdrop-blur-2xl border border-white/20 shadow-2xl text-white min-w-[100px]">
+              {hudBadge.icon}
+              <span className="text-xs sm:text-sm font-bold tracking-wide">{hudBadge.text}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* LOADING SKELETON */}
       <AnimatePresence>
         {!isVideoReady && !error && (
           <motion.div
@@ -1292,20 +1950,19 @@ const VideoPlayer = ({
         )}
       </AnimatePresence>
 
-      {/* BUFFER */}
+      {/* BUFFER SPINNER */}
       {isBuffering && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]/60 backdrop-blur-sm">
+        <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]/60 backdrop-blur-sm z-[20] pointer-events-none">
           <div className="flex flex-col items-center gap-2">
-            <Loader2 className="animate-spin text-white w-8 h-8 opacity-50" />
-            {reconnectMessage ? (
-              <p className="text-[11px] text-white/70">{reconnectMessage}</p>
-            ) : null}
+            <Loader2 className="animate-spin text-white w-8 h-8 opacity-75" />
+            {reconnectMessage && <p className="text-[11px] text-white/70">{reconnectMessage}</p>}
           </div>
         </div>
       )}
 
+      {/* PERFORMANCE HUD */}
       {showPerformanceHud && (
-        <div className="absolute left-3 top-3 z-[40] rounded-md bg-black/60 px-2 py-1 text-[10px] text-white/80">
+        <div className="absolute left-3 top-3 z-[40] rounded-md bg-black/60 px-2 py-1 text-[10px] text-white/80 font-mono">
           <p>Q: {hudState.level < 0 ? 'auto' : hudState.level}</p>
           <p>Label: {currentQualityLabel}</p>
           <p>Buf: {hudState.bufferAhead.toFixed(1)}s</p>
@@ -1313,16 +1970,16 @@ const VideoPlayer = ({
         </div>
       )}
 
-      {/* TITLE OVERLAY */}
+      {/* TITLE OVERLAY (STANDARD VIEW) */}
       <AnimatePresence>
-        {showControls && title && (
+        {!isFloating && showControls && title && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-0 left-0 right-0 p-3 sm:p-5 pt-4 sm:pt-8 bg-gradient-to-b from-black/90 via-black/40 to-transparent z-[20] pointer-events-none"
+            className="absolute top-0 left-0 right-0 p-3 sm:p-4 pt-3 sm:pt-6 bg-gradient-to-b from-black/90 via-black/40 to-transparent z-[20] pointer-events-none"
           >
-            <h3 className="text-white text-[13px] sm:text-sm md:text-base font-bold truncate drop-shadow-xl text-center">
+            <h3 className="text-white text-xs sm:text-sm md:text-base font-bold truncate drop-shadow-xl text-center px-4">
               {title}
             </h3>
           </motion.div>
@@ -1358,7 +2015,7 @@ const VideoPlayer = ({
         </div>
       )}
 
-      {/* ERROR */}
+      {/* ERROR OVERLAY */}
       {error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0a]/95 backdrop-blur-md text-center p-4 sm:p-6 z-[35] overflow-y-auto">
           <div className="my-auto flex flex-col items-center justify-center max-w-md w-full py-4">
@@ -1416,19 +2073,19 @@ const VideoPlayer = ({
         </div>
       )}
 
-      {/* CONTROLS */}
+      {/* STREAMING BADGE */}
       <AnimatePresence>
-        {showPlayingBadge && (
+        {showPlayingBadge && !isFloating && (
           <motion.div
             key="playing-badge"
             initial={{ opacity: 0, scale: 0.8, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 10 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="absolute top-6 left-6 z-[30] pointer-events-none"
+            className="absolute top-4 left-4 z-[30] pointer-events-none"
           >
-            <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-black/40 backdrop-blur-2xl border border-white/10 shadow-2xl">
-              <div className="flex gap-1 items-end h-3 w-4">
+            <div className="flex items-center gap-2.5 px-2.5 py-1 rounded-xl bg-black/40 backdrop-blur-2xl border border-white/10 shadow-2xl">
+              <div className="flex gap-1 items-end h-2.5 w-3.5">
                 <motion.div
                   animate={{ height: ['20%', '100%', '20%'] }}
                   transition={{ repeat: Infinity, duration: 0.6 }}
@@ -1445,34 +2102,39 @@ const VideoPlayer = ({
                   className="w-1 bg-primary rounded-full"
                 />
               </div>
-              {/* <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">
-                Streaming Securely
-              </span> */}
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
 
+      {/* RESPONSIVE CONTROLS OVERLAY */}
+      <AnimatePresence>
         {showControls && (
           <motion.div
             key="video-controls"
-            className="absolute bottom-0 left-0 right-0 z-[30] px-2 sm:px-4 pt-4 sm:pt-6 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] sm:pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] bg-gradient-to-t from-black/95 via-black/80 to-transparent backdrop-blur-md border-t border-white/10 select-none pointer-events-auto"
-            initial={{ opacity: 0, y: 20 }}
+            className={cn(
+              'absolute bottom-0 left-0 right-0 z-[30] bg-gradient-to-t from-black/95 via-black/85 to-transparent backdrop-blur-md border-t border-white/10 select-none pointer-events-auto transition-all',
+              isFloating
+                ? 'px-2 py-1.5'
+                : 'px-2 sm:px-4 pt-2.5 sm:pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] sm:pb-[calc(env(safe-area-inset-bottom,0px)+0.6rem)]'
+            )}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.2 }}
+            exit={{ opacity: 0, y: 15 }}
+            transition={{ duration: 0.15 }}
             onMouseEnter={() => {
               if (hideTimer.current) clearTimeout(hideTimer.current);
             }}
             onMouseLeave={() => {
-              if (isPlaying && !error) {
-                hideTimer.current = setTimeout(() => setShowControls(false), 2500);
+              if (isPlaying && !error && !isSpeedMenuOpen) {
+                hideTimer.current = setTimeout(() => setShowControls(false), 3000);
               }
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* SEEK BAR ROW */}
-            <div className="flex items-center gap-1.5 sm:gap-2 text-white text-xs sm:text-sm mb-2 sm:mb-2.5 font-medium">
-              <span className="w-[34px] sm:w-[44px] text-right shrink-0 font-mono text-[10px] sm:text-xs text-white/90">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-white text-xs sm:text-sm mb-1 sm:mb-1.5 font-medium">
+              <span className="w-[32px] sm:w-[42px] text-right shrink-0 font-mono text-[10px] sm:text-xs text-white/90">
                 {formatTime(currentTime)}
               </span>
 
@@ -1480,15 +2142,18 @@ const VideoPlayer = ({
                 <CustomSlider
                   label="Seek video"
                   value={progress}
+                  duration={duration}
+                  pointA={abRepeat.pointA}
+                  pointB={abRepeat.pointB}
                   onChange={handleSeek}
                   onDragStart={onSeekStart}
                   onDragEnd={onSeekEnd}
-                  className="h-2 sm:h-2"
-                  thumbClassName="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5"
+                  className={cn(isFloating ? 'h-1.5' : 'h-2')}
+                  thumbClassName={cn(isFloating ? 'h-2.5 w-2.5' : 'h-3.5 w-3.5')}
                 />
               </div>
 
-              <span className="w-[34px] sm:w-[44px] text-left shrink-0 font-mono text-[10px] sm:text-xs text-white/90">
+              <span className="w-[32px] sm:w-[42px] text-left shrink-0 font-mono text-[10px] sm:text-xs text-white/90">
                 {formatTime(duration)}
               </span>
             </div>
@@ -1496,145 +2161,344 @@ const VideoPlayer = ({
             {/* ACTIONS ROW */}
             <div className="flex items-center justify-between gap-1 sm:gap-2">
               {/* LEFT CONTROLS (Playback & Audio) */}
-              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                 <Button
                   onClick={togglePlay}
                   aria-label={isPlaying ? 'Pause' : 'Play'}
                   size="icon"
-                  className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-lg bg-white/15 text-white hover:bg-white/25 active:scale-95 transition-all shadow-sm touch-manipulation"
+                  className={cn(
+                    'shrink-0 rounded-lg bg-white/15 text-white hover:bg-white/25 active:scale-95 transition-all shadow-sm touch-manipulation',
+                    isFloating ? 'h-7 w-7' : 'h-8 w-8 sm:h-9 sm:w-9'
+                  )}
                 >
                   {isPlaying ? (
-                    <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
+                    <Pause
+                      className={cn(
+                        isFloating ? 'w-3.5 h-3.5' : 'w-4 h-4 sm:w-4.5 sm:h-4.5',
+                        'fill-white'
+                      )}
+                    />
                   ) : (
-                    <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
+                    <Play
+                      className={cn(
+                        isFloating ? 'w-3.5 h-3.5' : 'w-4 h-4 sm:w-4.5 sm:h-4.5',
+                        'fill-white'
+                      )}
+                    />
                   )}
                 </Button>
+
+                {/* 10s Rewind (Tablet/Desktop) */}
+                {!isFloating && (
+                  <Button
+                    onClick={() => seekRelative(-10)}
+                    aria-label="Rewind 10 seconds"
+                    title="Rewind 10s (J)"
+                    size="icon"
+                    className="hidden sm:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+
+                {/* 10s Forward (Tablet/Desktop) */}
+                {!isFloating && (
+                  <Button
+                    onClick={() => seekRelative(10)}
+                    aria-label="Forward 10 seconds"
+                    title="Forward 10s (L)"
+                    size="icon"
+                    className="hidden sm:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                  >
+                    <RotateCw className="w-3.5 h-3.5" />
+                  </Button>
+                )}
 
                 <Button
                   onClick={toggleMute}
                   aria-label={isMuted ? 'Unmute' : 'Mute'}
+                  title="Mute (M)"
                   size="icon"
-                  className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-lg bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all touch-manipulation"
+                  className={cn(
+                    'shrink-0 rounded-lg bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all touch-manipulation',
+                    isFloating ? 'h-7 w-7' : 'h-8 w-8 sm:h-9 sm:w-9'
+                  )}
                 >
                   {isMuted ? (
-                    <VolumeX className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                    <VolumeX className={isFloating ? 'w-3.5 h-3.5' : 'w-4 h-4'} />
                   ) : volume > 0.5 ? (
-                    <Volume2 className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                    <Volume2 className={isFloating ? 'w-3.5 h-3.5' : 'w-4 h-4'} />
                   ) : (
-                    <Volume1 className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                    <Volume1 className={isFloating ? 'w-3.5 h-3.5' : 'w-4 h-4'} />
                   )}
                 </Button>
 
                 {/* Volume Slider - shown on tablet & desktop */}
-                <div className="hidden sm:block w-16 md:w-24 shrink-0">
-                  <CustomSlider
-                    label="Volume"
-                    value={volume * 100}
-                    onChange={handleVolume}
-                    className="h-2 sm:h-1.5"
-                    thumbClassName="h-3 w-3 sm:h-2.5 sm:w-2.5"
-                  />
-                </div>
+                {!isFloating && (
+                  <div className="hidden sm:block w-14 md:w-20 shrink-0">
+                    <CustomSlider
+                      label="Volume"
+                      value={volume * 100}
+                      onChange={handleVolume}
+                      showHoverTooltip={false}
+                      className="h-1.5"
+                      thumbClassName="h-2.5 w-2.5"
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* RIGHT CONTROLS (Quality, Speed, PiP, Fullscreen, Actions) */}
-              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-                <label className="sr-only" htmlFor="video-quality-select">
-                  Quality
-                </label>
-                <div className="relative min-w-[58px] sm:min-w-[76px]">
-                  <select
-                    id="video-quality-select"
-                    aria-label="Quality selector"
-                    value={selectedQualityIndex}
-                    onChange={(e) => {
-                      applyQualitySelection(Number(e.target.value));
-                    }}
-                    className="h-8 w-full appearance-none rounded-lg border border-white/20 bg-black/60 pl-1.5 sm:pl-2.5 pr-5 sm:pr-6 text-[10px] sm:text-xs font-medium text-white outline-none transition-colors hover:bg-black/80 focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:border-white/50 touch-manipulation"
+              {/* RIGHT CONTROLS */}
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 relative">
+                {/* HLS QUALITY SELECTOR (Desktop/Tablet) */}
+                {!isFloating && qualityOptions.length > 1 && (
+                  <div className="hidden sm:block relative min-w-[54px] sm:min-w-[68px]">
+                    <select
+                      id="video-quality-select"
+                      aria-label="Quality selector"
+                      value={selectedQualityIndex}
+                      onChange={(e) => {
+                        applyQualitySelection(Number(e.target.value));
+                      }}
+                      className="h-8 w-full appearance-none rounded-lg border border-white/20 bg-black/60 pl-1.5 sm:pl-2 pr-4 sm:pr-5 text-[10px] sm:text-xs font-medium text-white outline-none transition-colors hover:bg-black/80 focus-visible:ring-2 focus-visible:ring-white/60 touch-manipulation"
+                    >
+                      {qualityOptions.map((option) => (
+                        <option
+                          key={`${option.index}-${option.label}`}
+                          value={option.index}
+                          className="bg-zinc-900 text-white"
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-1 top-1/2 h-3 w-3 -translate-y-1/2 text-white/75" />
+                  </div>
+                )}
+
+                {/* QUICK SPEED SELECTOR POPUP */}
+                {!isFloating && (
+                  <div className="relative" ref={speedMenuRef}>
+                    <Button
+                      onClick={() => {
+                        if (!allowSpeedChange) return;
+                        setIsSpeedMenuOpen((prev) => !prev);
+                      }}
+                      aria-label={`Playback speed: ${playbackSpeed}x`}
+                      title="Playback speed"
+                      disabled={!allowSpeedChange}
+                      size="sm"
+                      className={cn(
+                        'h-8 px-1.5 sm:px-2 text-[10px] sm:text-xs font-semibold text-white active:scale-95 transition-all touch-manipulation min-w-[28px] sm:min-w-[32px] rounded-lg',
+                        playbackSpeed !== 1
+                          ? 'bg-primary/30 text-primary border border-primary/40'
+                          : 'bg-white/10 hover:bg-white/20'
+                      )}
+                    >
+                      {playbackSpeed}x
+                    </Button>
+
+                    {/* Speed Popup */}
+                    <AnimatePresence>
+                      {isSpeedMenuOpen && (
+                        <motion.div
+                          data-testid="speed-selector-popup"
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute bottom-full right-0 mb-2 p-2.5 rounded-xl bg-black/95 backdrop-blur-2xl border border-white/20 shadow-2xl z-[50] min-w-[160px]"
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-white/10">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-white/70">
+                              Playback Speed
+                            </span>
+                            <span className="text-[10px] text-white/40 font-mono">[ / ]</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {SPEED_OPTIONS.map((speed) => (
+                              <button
+                                key={speed}
+                                onClick={() => setSpeed(speed)}
+                                className={cn(
+                                  'px-2 py-1.5 rounded-lg text-xs font-medium transition-all text-center touch-manipulation',
+                                  playbackSpeed === speed
+                                    ? 'bg-primary text-primary-foreground font-bold shadow-md shadow-primary/20'
+                                    : 'bg-white/10 text-white hover:bg-white/20 active:scale-95'
+                                )}
+                              >
+                                {speed}x
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
+                {/* LOOP TOGGLE BUTTON */}
+                {!isFloating && (
+                  <Button
+                    onClick={toggleLoop}
+                    aria-label={isLooping ? 'Disable Loop' : 'Enable Loop'}
+                    title={isLooping ? 'Disable Loop (R)' : 'Enable Loop (R)'}
+                    size="icon"
+                    className={cn(
+                      'h-8 w-8 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation',
+                      isLooping
+                        ? 'bg-primary/30 text-primary border border-primary/50'
+                        : 'bg-white/10 text-white hover:bg-white/20'
+                    )}
                   >
-                    {qualityOptions.map((option) => (
-                      <option
-                        key={`${option.index}-${option.label}`}
-                        value={option.index}
-                        className="bg-zinc-900 text-white"
-                      >
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-1.5 sm:right-2 top-1/2 h-3 w-3 sm:h-3.5 sm:w-3.5 -translate-y-1/2 text-white/75" />
-                </div>
+                    {isLooping ? (
+                      <Repeat1 className="w-3.5 h-3.5" />
+                    ) : (
+                      <Repeat className="w-3.5 h-3.5" />
+                    )}
+                  </Button>
+                )}
 
-                <Button
-                  onClick={cycleSpeed}
-                  aria-label={`Playback speed: ${playbackSpeed}x`}
-                  disabled={!allowSpeedChange}
-                  size="sm"
-                  className="h-8 px-1.5 sm:px-2 text-[10px] sm:text-xs font-semibold bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all touch-manipulation min-w-[28px] sm:min-w-[32px] rounded-lg"
-                >
-                  {playbackSpeed}x
-                </Button>
+                {/* A-B REPEAT (DESKTOP) */}
+                {!isFloating && (
+                  <Button
+                    onClick={toggleABRepeat}
+                    aria-label={
+                      abRepeat.active
+                        ? abRepeat.pointB !== null
+                          ? 'Clear A-B Repeat'
+                          : 'Set Point B'
+                        : 'Set Point A'
+                    }
+                    title={
+                      abRepeat.active
+                        ? abRepeat.pointB !== null
+                          ? `A-B Repeat Active (${formatTime(abRepeat.pointA!)} - ${formatTime(abRepeat.pointB!)})`
+                          : `Point A set at ${formatTime(abRepeat.pointA!)}. Click to set Point B.`
+                        : 'Set Point A (A-B Repeat)'
+                    }
+                    size="icon"
+                    className={cn(
+                      'hidden lg:inline-flex h-8 w-8 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation',
+                      abRepeat.active
+                        ? abRepeat.pointB !== null
+                          ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
+                          : 'bg-amber-500/30 text-amber-300 border border-amber-500/50 animate-pulse'
+                        : 'bg-white/10 text-white hover:bg-white/20'
+                    )}
+                  >
+                    <Bookmark className="w-3.5 h-3.5" />
+                  </Button>
+                )}
 
-                {/* Mirror Button - tablet and desktop */}
-                <Button
-                  onClick={() => setIsMirrored((prev) => !prev)}
-                  aria-label={isMirrored ? 'Unmirror video' : 'Mirror video'}
-                  title={isMirrored ? 'Unmirror video' : 'Mirror video'}
-                  size="icon"
-                  className="hidden sm:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
-                >
-                  <FlipHorizontal className="w-4 h-4" />
-                </Button>
+                {/* MIRROR TOGGLE (TABLET/DESKTOP) */}
+                {!isFloating && (
+                  <Button
+                    onClick={() => setIsMirrored((prev) => !prev)}
+                    aria-label={isMirrored ? 'Unmirror video' : 'Mirror video'}
+                    title={isMirrored ? 'Unmirror video' : 'Mirror video'}
+                    size="icon"
+                    className="hidden sm:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                  >
+                    <FlipHorizontal className="w-3.5 h-3.5" />
+                  </Button>
+                )}
 
-                <Button
-                  onClick={togglePiP}
-                  aria-label={isPiP ? 'Exit Picture in Picture' : 'Picture in Picture'}
-                  title={isPiP ? 'Exit Picture in Picture' : 'Picture in Picture'}
-                  disabled={!allowPiP}
-                  size="icon"
-                  className="h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
-                >
-                  <PictureInPicture2 className="w-4 h-4" />
-                </Button>
+                {/* PICTURE IN PICTURE (TABLET/DESKTOP) */}
+                {!isFloating && (
+                  <Button
+                    onClick={togglePiP}
+                    aria-label={isPiP ? 'Exit Picture in Picture' : 'Picture in Picture'}
+                    title="Picture in Picture (P)"
+                    disabled={!allowPiP}
+                    size="icon"
+                    className="hidden md:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                  >
+                    <PictureInPicture2 className="w-3.5 h-3.5" />
+                  </Button>
+                )}
 
-                {/* Refresh button - desktop */}
-                <Button
-                  onClick={handleRefresh}
-                  aria-label="Refresh video"
-                  title="Refresh video"
-                  size="icon"
-                  className="hidden md:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </Button>
+                {/* MINI FLOATING PLAYER TOGGLE */}
+                {allowFloating && (
+                  <Button
+                    onClick={toggleFloating}
+                    aria-label={isFloating ? 'Exit Floating Player' : 'Floating Mini Player'}
+                    title={isFloating ? 'Expand to Full Player (I)' : 'Minimize to Mini Player (I)'}
+                    size="icon"
+                    className={cn(
+                      'active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation',
+                      isFloating
+                        ? 'h-7 w-7 bg-primary/30 text-primary border border-primary/50'
+                        : 'h-8 w-8 bg-white/10 text-white hover:bg-white/20'
+                    )}
+                  >
+                    {isFloating ? (
+                      <Maximize className="w-3.5 h-3.5" />
+                    ) : (
+                      <Layers className="w-3.5 h-3.5" />
+                    )}
+                  </Button>
+                )}
 
-                <Button
-                  onClick={handleDownload}
-                  aria-label="Download video"
-                  title="Download video"
-                  disabled={!allowDownload}
-                  size="icon"
-                  className="h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
-                >
-                  <Download className="w-4 h-4" />
-                </Button>
+                {/* INSTANT SNAPSHOT CAPTURE */}
+                {!isFloating && (
+                  <Button
+                    onClick={captureSnapshot}
+                    aria-label="Capture Snapshot Frame"
+                    title="Capture Snapshot Frame"
+                    size="icon"
+                    className="hidden lg:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                  </Button>
+                )}
 
-                <Button
-                  onClick={() => {
-                    void toggleFullscreen();
-                  }}
-                  aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                  title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                  disabled={!allowFullscreen}
-                  size="icon"
-                  className="h-8 w-8 sm:h-9 sm:w-9 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
-                >
-                  {isFullscreen ? (
-                    <Minimize2 className="w-4 h-4" />
-                  ) : (
-                    <Maximize2 className="w-4 h-4" />
-                  )}
-                </Button>
+                {/* REFRESH (DESKTOP) */}
+                {!isFloating && (
+                  <Button
+                    onClick={handleRefresh}
+                    aria-label="Refresh video"
+                    title="Refresh video"
+                    size="icon"
+                    className="hidden lg:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+
+                {/* DOWNLOAD (DESKTOP) */}
+                {!isFloating && (
+                  <Button
+                    onClick={handleDownload}
+                    aria-label="Download video"
+                    title="Download video"
+                    disabled={!allowDownload}
+                    size="icon"
+                    className="hidden md:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+
+                {/* FULLSCREEN */}
+                {!isFloating && (
+                  <Button
+                    onClick={() => {
+                      void toggleFullscreen();
+                    }}
+                    aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                    title="Fullscreen (F)"
+                    disabled={!allowFullscreen}
+                    size="icon"
+                    className="h-8 w-8 sm:h-9 sm:w-9 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                  >
+                    {isFullscreen ? (
+                      <Minimize2 className="w-4 h-4" />
+                    ) : (
+                      <Maximize2 className="w-4 h-4" />
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
           </motion.div>

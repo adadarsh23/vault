@@ -4,6 +4,7 @@ import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { ScrollButton } from '../../../../components/vault/ScrollButton';
 import { VaultItem } from '../../../../lib/storage';
+import { clearDraggedVaultItem } from '../../../../lib/vaultDragDrop';
 import { cn } from '../../../../lib/utils';
 import { ChatMessage } from './types';
 import { formatListTime, getAvatarLabel } from './utils';
@@ -182,6 +183,7 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
                   event.dataTransfer.effectAllowed = 'move';
                   onChatDragStart(event, chatItem.id);
                 }}
+                onDragEnd={clearDraggedVaultItem}
                 draggable
                 className={cn(
                   'flex w-full cursor-pointer items-start gap-3 rounded-2xl border p-3 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-text/20 xl:gap-4 xl:p-4 touch-manipulation',

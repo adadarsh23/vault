@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearDraggedVaultItem,
   getDraggedVaultItem,
+  getDraggedVaultItems,
   setDraggedVaultItem,
+  setDraggedVaultItems,
 } from '../../src/lib/vaultDragDrop.ts';
 
 type DragDataTransferLike = {
@@ -117,5 +119,62 @@ describe('vaultDragDrop', () => {
 
     expect(setDraggedVaultItem({ dataTransfer: transfer }, 'safe-id')).toBe(true);
     expect(getDraggedVaultItem({})).toBe('safe-id');
+  });
+
+  describe('Multi-item drag and drop', () => {
+    it('sets and retrieves multiple item IDs via setDraggedVaultItems', () => {
+      const transfer = createDataTransferMock();
+      const ids = ['item-1', 'item-2', 'item-3'];
+
+      const wasSet = setDraggedVaultItems({ dataTransfer: transfer }, ids);
+
+      expect(wasSet).toBe(true);
+      expect(transfer.effectAllowed).toBe('move');
+      expect(JSON.parse(transfer.getData('application/x-my-vault-items'))).toEqual(ids);
+      expect(transfer.getData('application/x-my-vault-item')).toBe('item-1');
+      expect(transfer.getData('text/plain')).toBe('vault-items:item-1,item-2,item-3');
+
+      expect(getDraggedVaultItems({ dataTransfer: transfer })).toEqual(ids);
+      expect(getDraggedVaultItem({ dataTransfer: transfer })).toBe('item-1');
+    });
+
+    it('supports array argument in setDraggedVaultItem', () => {
+      const transfer = createDataTransferMock();
+      const ids = ['item-a', 'item-b'];
+
+      const wasSet = setDraggedVaultItem({ dataTransfer: transfer }, ids);
+
+      expect(wasSet).toBe(true);
+      expect(getDraggedVaultItems({ dataTransfer: transfer })).toEqual(ids);
+    });
+
+    it('parses prefixed vault-items text/plain payload when custom json payload is missing', () => {
+      const transfer = createDataTransferMock({
+        'text/plain': 'vault-items:photo-1,photo-2,photo-3',
+      });
+
+      expect(getDraggedVaultItems({ dataTransfer: transfer })).toEqual([
+        'photo-1',
+        'photo-2',
+        'photo-3',
+      ]);
+      expect(getDraggedVaultItem({ dataTransfer: transfer })).toBe('photo-1');
+    });
+
+    it('filters out duplicates and empty strings in setDraggedVaultItems', () => {
+      const transfer = createDataTransferMock();
+      const ids = ['item-1', '', '  ', 'item-1', 'item-2'];
+
+      const wasSet = setDraggedVaultItems({ dataTransfer: transfer }, ids);
+
+      expect(wasSet).toBe(true);
+      expect(getDraggedVaultItems({ dataTransfer: transfer })).toEqual(['item-1', 'item-2']);
+    });
+
+    it('handles multiple items via fallback in-memory storage', () => {
+      const ids = ['mem-1', 'mem-2'];
+      expect(setDraggedVaultItems({}, ids)).toBe(true);
+      expect(getDraggedVaultItems({})).toEqual(ids);
+    });
   });
 });

@@ -60,10 +60,10 @@ export function validatePassword(password: string): { isValid: boolean; error?: 
     };
   }
 
-  if (!/^[A-Z]/.test(password)) {
+  if (!/[A-Z]/.test(password)) {
     return {
       isValid: false,
-      error: 'Password must start with a capital letter.',
+      error: 'Password must contain at least one uppercase letter.',
     };
   }
 
@@ -99,8 +99,14 @@ export function validatePassword(password: string): { isValid: boolean; error?: 
 function getRandomInt(max: number): number {
   if (max <= 0) return 0;
 
+  const maxUint32 = 0xffffffff;
+  const limit = maxUint32 - (maxUint32 % max);
   const array = new Uint32Array(1);
-  crypto.getRandomValues(array);
+
+  do {
+    crypto.getRandomValues(array);
+  } while (array[0] >= limit);
+
   return array[0] % max;
 }
 

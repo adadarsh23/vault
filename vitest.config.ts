@@ -13,8 +13,12 @@ export default defineConfig({
     testTimeout: 20000,
     hookTimeout: 60000,
     setupFiles: ['./tests/setup/vitest.setup.ts', './src/setupTests.ts'],
-    include: ['tests/**/*.test.ts', 'src/**/*.test.ts', 'src/**/*.test.tsx'],
-    environmentMatchGlobs: [['src/**/*.test.tsx', 'jsdom']],
+    include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx', 'src/**/*.test.ts', 'src/**/*.test.tsx'],
+    environmentMatchGlobs: [
+      ['**/*.test.tsx', 'jsdom'],
+      ['src/**/*.test.tsx', 'jsdom'],
+      ['tests/**/*.test.tsx', 'jsdom'],
+    ],
     coverage: {
       enabled: false,
       reporter: ['text', 'html'],

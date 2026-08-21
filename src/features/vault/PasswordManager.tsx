@@ -27,14 +27,320 @@ import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
 import { useClipboard } from '../../hooks/useClipboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { logActivity } from '../../lib/activity';
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { setDraggedVaultItem, clearDraggedVaultItem } from '../../lib/vaultDragDrop';
 import { sortPinnedFirst } from '../../lib/pinning';
 
 import { FolderSidebar } from '../../components/vault/FolderSidebar';
 import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
 import { TagManager } from '../../components/vault/TagManager';
 import { useVaultFolders } from '../../hooks/useVaultFolders';
-import { generateSecurePassword, PASSWORD_CONFIG } from '../../lib/passwordGenerator';
+import {
+  generateSecurePassword,
+  PASSWORD_CONFIG,
+  generatePasswordWithOptions,
+  evaluatePasswordStrength,
+} from '../../lib/passwordGenerator';
+import { Settings, Sparkles, RefreshCw } from 'lucide-react';
+
+const PasswordStrengthMeter: React.FC<{ password?: string }> = ({ password = '' }) => {
+  const strength = useMemo(() => evaluatePasswordStrength(password), [password]);
+
+  if (!password) return null;
+
+  return (
+    <div className="space-y-1.5 mt-1.5 text-xs">
+      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider">
+        <span className="text-text/40">Password Strength</span>
+        <span className={`${strength.color.replace('bg-', 'text-')} font-bold`}>
+          {strength.label}
+        </span>
+      </div>
+      <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+        <div
+          className={`h-full ${strength.color} transition-all duration-300`}
+          style={{ width: `${strength.percentage}%` }}
+        />
+      </div>
+      {strength.suggestions.length > 0 && (
+        <ul className="text-[9px] text-text/40 list-disc list-inside space-y-0.5 mt-1">
+          {strength.suggestions.slice(0, 2).map((s, idx) => (
+            <li key={idx}>{s}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+
+const PasswordGeneratorPanel: React.FC<{
+  onSelectPassword: (pass: string) => void;
+  initialLength?: number;
+}> = ({ onSelectPassword, initialLength = 20 }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [length, setLength] = useState(initialLength);
+  const [uppercase, setUppercase] = useState(true);
+  const [lowercase, setLowercase] = useState(true);
+  const [numbers, setNumbers] = useState(true);
+  const [symbols, setSymbols] = useState(true);
+  const [excludeConfusing, setExcludeConfusing] = useState(true);
+
+  const [passphrase, setPassphrase] = useState(false);
+  const [numWords, setNumWords] = useState(4);
+  const [separator, setSeparator] = useState('-');
+  const [capitalize, setCapitalize] = useState(true);
+
+  const handleGenerate = () => {
+    const generated = generatePasswordWithOptions({
+      length,
+      uppercase,
+      lowercase,
+      numbers,
+      symbols,
+      excludeConfusing,
+      passphrase,
+      numWords,
+      separator,
+      capitalize,
+    });
+    onSelectPassword(generated);
+  };
+
+  useEffect(() => {
+    handleGenerate();
+  }, [
+    length,
+    uppercase,
+    lowercase,
+    numbers,
+    symbols,
+    excludeConfusing,
+    passphrase,
+    numWords,
+    separator,
+    capitalize,
+  ]);
+
+  const generateSuggestion = (type: 'random' | 'passphrase' | 'pin') => {
+    let pass = '';
+    if (type === 'random') {
+      pass = generatePasswordWithOptions({
+        length: 16,
+        uppercase: true,
+        lowercase: true,
+        numbers: true,
+        symbols: true,
+      });
+    } else if (type === 'passphrase') {
+      pass = generatePasswordWithOptions({
+        passphrase: true,
+        numWords: 4,
+        separator: '-',
+        capitalize: true,
+      });
+    } else if (type === 'pin') {
+      pass = generatePasswordWithOptions({
+        length: 6,
+        uppercase: false,
+        lowercase: false,
+        numbers: true,
+        symbols: false,
+      });
+    }
+    onSelectPassword(pass);
+    toast.info(`Generated ${type} style password`);
+  };
+
+  return (
+    <div className="space-y-3 p-3.5 rounded-xl bg-black/20 border border-white/5 mt-1.5 transition-all text-xs">
+      <div className="flex items-center justify-between">
+        <span className="font-bold text-text/70 flex items-center gap-1.5">
+          <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+          Quick Suggestions:
+        </span>
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 cursor-pointer focus:outline-none"
+        >
+          <Settings className="h-3.5 w-3.5" />
+          {isOpen ? 'Hide Options' : 'Customize Generator'}
+        </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => generateSuggestion('random')}
+          className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-medium hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/20 transition-all focus:outline-none cursor-pointer"
+        >
+          Random (Strong)
+        </button>
+        <button
+          type="button"
+          onClick={() => generateSuggestion('passphrase')}
+          className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-medium hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/20 transition-all focus:outline-none cursor-pointer"
+        >
+          Passphrase (Memorable)
+        </button>
+        <button
+          type="button"
+          onClick={() => generateSuggestion('pin')}
+          className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-medium hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/20 transition-all focus:outline-none cursor-pointer"
+        >
+          6-Digit PIN
+        </button>
+        <button
+          type="button"
+          onClick={handleGenerate}
+          className="p-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/15 transition-all ml-auto focus:outline-none cursor-pointer"
+          title="Regenerate"
+        >
+          <RefreshCw className="h-3.5 w-3.5 text-text/60" />
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden space-y-3 pt-2 border-t border-white/5"
+          >
+            <div className="flex rounded-lg bg-black/30 p-0.5 border border-white/5">
+              <button
+                type="button"
+                className={`flex-1 py-1 rounded-md text-center text-[10px] font-bold uppercase tracking-wider transition-colors ${!passphrase ? 'bg-amber-500 text-white font-bold' : 'text-text/40 hover:text-text/70'}`}
+                onClick={() => setPassphrase(false)}
+              >
+                Random Characters
+              </button>
+              <button
+                type="button"
+                className={`flex-1 py-1 rounded-md text-center text-[10px] font-bold uppercase tracking-wider transition-colors ${passphrase ? 'bg-amber-500 text-white font-bold' : 'text-text/40 hover:text-text/70'}`}
+                onClick={() => setPassphrase(true)}
+              >
+                Memorable Words
+              </button>
+            </div>
+
+            {!passphrase ? (
+              <>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-text/50 font-medium">
+                    <span>Length: {length} chars</span>
+                    <span>8 - 64</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="8"
+                    max="64"
+                    value={length}
+                    onChange={(e) => setLength(parseInt(e.target.value))}
+                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                  <label className="flex items-center gap-1.5 text-text/70 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={uppercase}
+                      onChange={(e) => setUppercase(e.target.checked)}
+                      className="rounded border-white/10 bg-black/20 text-amber-500 focus:ring-0 focus:ring-offset-0"
+                    />
+                    Uppercase (A-Z)
+                  </label>
+                  <label className="flex items-center gap-1.5 text-text/70 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={lowercase}
+                      onChange={(e) => setLowercase(e.target.checked)}
+                      className="rounded border-white/10 bg-black/20 text-amber-500 focus:ring-0 focus:ring-offset-0"
+                    />
+                    Lowercase (a-z)
+                  </label>
+                  <label className="flex items-center gap-1.5 text-text/70 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={numbers}
+                      onChange={(e) => setNumbers(e.target.checked)}
+                      className="rounded border-white/10 bg-black/20 text-amber-500 focus:ring-0 focus:ring-offset-0"
+                    />
+                    Numbers (0-9)
+                  </label>
+                  <label className="flex items-center gap-1.5 text-text/70 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={symbols}
+                      onChange={(e) => setSymbols(e.target.checked)}
+                      className="rounded border-white/10 bg-black/20 text-amber-500 focus:ring-0 focus:ring-offset-0"
+                    />
+                    Symbols (!@#$)
+                  </label>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-text/50 font-medium">
+                    <span>Number of words: {numWords}</span>
+                    <span>3 - 8</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="3"
+                    max="8"
+                    value={numWords}
+                    onChange={(e) => setNumWords(parseInt(e.target.value))}
+                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[10px] items-center">
+                  <label className="flex items-center gap-1.5 text-text/70 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={capitalize}
+                      onChange={(e) => setCapitalize(e.target.checked)}
+                      className="rounded border-white/10 bg-black/20 text-amber-500 focus:ring-0 focus:ring-offset-0"
+                    />
+                    Capitalize words
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-text/50">Sep:</span>
+                    <select
+                      value={separator}
+                      onChange={(e) => setSeparator(e.target.value)}
+                      className="bg-black/35 border border-white/10 rounded px-1 py-0.5 text-text focus:outline-none text-[10px]"
+                    >
+                      <option value="-">Hyphen (-)</option>
+                      <option value="_">Underscore (_)</option>
+                      <option value=" ">Space ( )</option>
+                      <option value="">None</option>
+                    </select>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="border-t border-white/5 pt-2">
+              <label className="flex items-center gap-1.5 text-[10px] text-text/70 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={excludeConfusing}
+                  onChange={(e) => setExcludeConfusing(e.target.checked)}
+                  className="rounded border-white/10 bg-black/20 text-amber-500 focus:ring-0 focus:ring-offset-0"
+                />
+                Exclude confusing characters (e.g. 1, l, I, 0, O)
+              </label>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 const DecryptedPasswordCard: React.FC<{
   item: any;
@@ -594,6 +900,18 @@ export const PasswordManager: React.FC = () => {
       setTargetItemId(null);
     }
   }, [targetItemId, passwords, setTargetItemId, setCurrentFolder]);
+
+  useEffect(() => {
+    const handlePanicLock = () => {
+      setIsAdding(false);
+      setNewSite('');
+      setNewUsername('');
+      setNewPassword('');
+      setNewTotpSecret('');
+    };
+    window.addEventListener('vault:panic-lock', handlePanicLock);
+    return () => window.removeEventListener('vault:panic-lock', handlePanicLock);
+  }, []);
   const normalizedSearchQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery]);
 
   const filteredPasswords = useMemo(
@@ -803,23 +1121,29 @@ export const PasswordManager: React.FC = () => {
                     />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="flex gap-2">
-                      <Input
-                        type="text"
-                        placeholder="Password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                      />
-                      <Button variant="secondary" onClick={generatePassword}>
-                        Generate
-                      </Button>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          type="text"
+                          placeholder="Password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                        />
+                        <Button variant="secondary" onClick={generatePassword}>
+                          Generate
+                        </Button>
+                      </div>
+                      <PasswordStrengthMeter password={newPassword} />
                     </div>
-                    <Input
-                      placeholder="2FA / TOTP Secret (optional)"
-                      value={newTotpSecret}
-                      onChange={(e) => setNewTotpSecret(e.target.value)}
-                    />
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="2FA / TOTP Secret (optional)"
+                        value={newTotpSecret}
+                        onChange={(e) => setNewTotpSecret(e.target.value)}
+                      />
+                    </div>
                   </div>
+                  <PasswordGeneratorPanel onSelectPassword={setNewPassword} />
                   <div className="flex justify-end gap-2 pt-2">
                     <Button variant="ghost" onClick={() => setIsAdding(false)}>
                       Cancel
@@ -861,6 +1185,7 @@ export const PasswordManager: React.FC = () => {
               key={item.id}
               draggable
               onDragStart={(event) => setDraggedVaultItem(event, item.id)}
+              onDragEnd={clearDraggedVaultItem}
               onTouchStart={(event) => setDraggedVaultItem(event as any, item.id)}
               onTouchMove={() => {
                 /* Allow custom touch drag logic */

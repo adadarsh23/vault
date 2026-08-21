@@ -55,8 +55,16 @@ const resolveMemoryOnlyMultipartUploads = (): boolean => {
 
 const MEMORY_ONLY_MULTIPART_UPLOADS = resolveMemoryOnlyMultipartUploads();
 
-const getRouteParam = (value: string | string[] | undefined): string | undefined =>
-  typeof value === 'string' ? value : undefined;
+const getRouteParam = (value: unknown): string | undefined => {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (Array.isArray(value) && value.length > 0) {
+    const first = value[0];
+    if (typeof first === 'string') return first.trim();
+    if (typeof first === 'number' && Number.isFinite(first)) return String(first);
+  }
+  return undefined;
+};
 
 type MultipartSessionRecord = {
   uploadId: string;

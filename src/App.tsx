@@ -4,6 +4,7 @@ import { Toaster } from './components/ui/Toaster';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { ErrorFallback } from './components/ui/ErrorFallback';
 import { LoadingScreen } from './components/app/LoadingScreen';
+import { UniversalSyncWidget } from './components/vault/UniversalSyncWidget';
 import { useVaultStore } from './store/vaultStore';
 import { useMediaQuery } from './hooks/use-media-query';
 import { logger } from './lib/logger';
@@ -160,6 +161,7 @@ export default function App() {
           <LockedVaultHost shouldReduceMotion={shouldReduceMotion} />
         )}
       </Suspense>
+      {isVaultReady && <UniversalSyncWidget />}
     </ErrorBoundary>
   );
 }

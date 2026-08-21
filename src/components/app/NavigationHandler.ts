@@ -83,10 +83,21 @@ const parseTabPath = (tabPath: string): { tab: TabId; hash: string } | null => {
 
   const [rawTab, rawHash] = tabPath.split('#');
 
-  if (!rawTab || !isTabId(rawTab)) return null;
+  if (!rawTab) return null;
+
+  let tabKey: TabId | null = isTabId(rawTab) ? (rawTab as TabId) : null;
+
+  if (!tabKey) {
+    const mapped = mapItemTypeToTab(rawTab as VaultItem['type']);
+    if (isTabId(mapped)) {
+      tabKey = mapped as TabId;
+    }
+  }
+
+  if (!tabKey) return null;
 
   return {
-    tab: rawTab,
+    tab: tabKey,
     hash: rawHash ? `#${encodeURIComponent(rawHash)}` : '',
   };
 };

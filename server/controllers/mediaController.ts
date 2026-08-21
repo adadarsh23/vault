@@ -869,7 +869,8 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
     );
   }
 
-  const resolvedUserId = await validateMediaAccess(req, undefined, itemId, 'view');
+  const requestedAction = getSingleQueryValue(req.query.action) || 'view';
+  const resolvedUserId = await validateMediaAccess(req, undefined, itemId, requestedAction);
 
   const username = (req as any).user?.username;
   if (!username) throw AppError.unauthorized('Username required for isolated vault access');
@@ -943,8 +944,6 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
   }
   ensureUploadIsActive(item);
 
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-
   const fileName = item.file?.fileName || item.title || 'file';
   const ext = path.extname(fileName).toLowerCase();
   const mimeType =
@@ -954,6 +953,13 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
     'application/octet-stream';
   const isStreamableMedia = mimeType.startsWith('video/') || mimeType.startsWith('audio/');
   const requestedRange = req.headers.range;
+
+  if (requestedAction === 'download') {
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${encodeURIComponent(fileName)}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
+    );
+  }
 
   // 1. Try reading from MongoDB Atlas GridFS Cloud Storage
   const gridFsId =

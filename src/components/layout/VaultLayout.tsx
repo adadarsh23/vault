@@ -5,7 +5,11 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { cn } from '../../lib/utils';
 import { VaultItem } from '../../lib/storage';
-import { getDraggedVaultItem, clearDraggedVaultItem } from '../../lib/vaultDragDrop';
+import {
+  getDraggedVaultItems,
+  clearDraggedVaultItem,
+  useVaultDragState,
+} from '../../lib/vaultDragDrop';
 import { isSavedFolderName } from '../../lib/folderGuards';
 
 interface VaultLayoutProps {
@@ -37,7 +41,7 @@ interface VaultLayoutProps {
     onRename: (oldName: string) => void;
     onDelete: (name: string) => void;
   };
-  onMoveItemToFolder?: (itemId: string, folder: string | null) => Promise<void> | void;
+  onMoveItemToFolder?: (itemId: string | string[], folder: string | null) => Promise<void> | void;
   children: React.ReactNode;
   sidebarIcon?: React.ElementType;
 }
@@ -67,36 +71,19 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
   const [searchInput, setSearchInput] = useState(searchQuery);
   const [dropTarget, setDropTarget] = useState<string | null | undefined>(undefined);
   const [isFileDropActive, setIsFileDropActive] = useState(false);
-  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const { isDragging, itemIds: draggedItemIds } = useVaultDragState();
 
-  useEffect(() => {
-    const handleGlobalDragStart = (e: DragEvent) => {
-      const itemId = getDraggedVaultItem({ dataTransfer: e.dataTransfer });
-      if (itemId) {
-        setDraggedItemId(itemId);
-      }
-    };
+  const draggedItems = React.useMemo(() => {
+    if (draggedItemIds.length === 0) return [];
+    return items.filter((item) => draggedItemIds.includes(item.id));
+  }, [draggedItemIds, items]);
 
-    const handleGlobalDragEnd = () => {
-      setDraggedItemId(null);
-      clearDraggedVaultItem();
-    };
-
-    window.addEventListener('dragstart', handleGlobalDragStart);
-    window.addEventListener('dragend', handleGlobalDragEnd);
-
-    return () => {
-      window.removeEventListener('dragstart', handleGlobalDragStart);
-      window.removeEventListener('dragend', handleGlobalDragEnd);
-    };
-  }, []);
-
-  const draggedItem = React.useMemo(() => {
-    if (!draggedItemId) return null;
-    return items.find((item) => item.id === draggedItemId);
-  }, [draggedItemId, items]);
-
-  const draggedItemFolder = draggedItem ? (draggedItem.folder ?? null) : undefined;
+  const commonSourceFolder = React.useMemo(() => {
+    if (draggedItems.length === 0) return undefined;
+    const firstFolder = draggedItems[0].folder ?? null;
+    const allSame = draggedItems.every((item) => (item.folder ?? null) === firstFolder);
+    return allSame ? firstFolder : undefined;
+  }, [draggedItems]);
 
   useEffect(() => {
     setSearchInput(searchQuery);
@@ -155,15 +142,22 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
     return !name || folders.some((f) => f !== oldName && f.toLowerCase() === normalized);
   };
 
+  useEffect(() => {
+    if (!isDragging) {
+      setDropTarget(undefined);
+    }
+  }, [isDragging]);
+
   const handleFolderDragOver = (event: React.DragEvent<HTMLElement>, folder: string | null) => {
-    if (!onMoveItemToFolder || !getDraggedVaultItem(event)) return;
+    if (!onMoveItemToFolder) return;
+    const itemIds = getDraggedVaultItems(event);
+    if (itemIds.length === 0) return;
 
-    const itemId = getDraggedVaultItem(event);
-    const dragged = items.find((item) => item.id === itemId);
-    const sourceFolder = dragged ? (dragged.folder ?? null) : undefined;
-
-    // Do not allow drop on the folder where the item already is
-    if (sourceFolder === folder) return;
+    // Check if all dragged items are already in this folder
+    const dragged = items.filter((item) => itemIds.includes(item.id));
+    const isAllInFolder =
+      dragged.length > 0 && dragged.every((item) => (item.folder ?? null) === folder);
+    if (isAllInFolder) return;
 
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
@@ -173,17 +167,17 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
   const handleFolderDrop = async (event: React.DragEvent<HTMLElement>, folder: string | null) => {
     if (!onMoveItemToFolder) return;
     event.preventDefault();
-    const itemId = getDraggedVaultItem(event);
+    const itemIds = getDraggedVaultItems(event);
     setDropTarget(undefined);
-    if (!itemId) return;
+    clearDraggedVaultItem();
+    if (itemIds.length === 0) return;
 
-    const dragged = items.find((item) => item.id === itemId);
-    const sourceFolder = dragged ? (dragged.folder ?? null) : undefined;
+    const dragged = items.filter((item) => itemIds.includes(item.id));
+    const isAllInFolder =
+      dragged.length > 0 && dragged.every((item) => (item.folder ?? null) === folder);
+    if (isAllInFolder) return;
 
-    // Do not allow drop on the folder where the item already is
-    if (sourceFolder === folder) return;
-
-    await onMoveItemToFolder(itemId, folder);
+    await onMoveItemToFolder(itemIds.length === 1 ? itemIds[0] : itemIds, folder);
   };
 
   const handleFolderDragLeave = (folder: string | null) => {
@@ -240,50 +234,83 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
           </Button>
         </div>
 
-        <div className="space-y-1">
-          <button
-            onClick={() => onFolderSelect(null)}
-            onDragOver={(event) => handleFolderDragOver(event, null)}
-            onDrop={(event) => void handleFolderDrop(event, null)}
-            onDragLeave={() => handleFolderDragLeave(null)}
-            role="tab"
-            data-drop-target="true"
-            aria-selected={currentFolder === null}
-            aria-label={allItemLabel || `All ${itemTypeLabel}s`}
-            className={cn(
-              'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all border border-transparent',
-              dropTarget === null && 'ring-2 ring-primary/50 bg-primary/10 text-text',
-              // Highlight if this is the source folder of the dragged item
-              draggedItemId &&
-                draggedItemFolder === null &&
-                'border border-dashed border-primary/40 bg-primary/10 text-primary',
-              // Highlight other folders as valid drop zones
-              draggedItemId &&
-                draggedItemFolder !== null &&
-                'border border-dashed border-primary/20 bg-primary/5 text-text/70',
-              !draggedItemId &&
-                (currentFolder === null ? 'bg-text/10 text-text' : 'text-text/60 hover:bg-text/5')
-            )}
-          >
-            <SidebarIcon className="h-4 w-4 shrink-0" />
-            <span className="flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis font-bold">
-              {allItemLabel || `All ${itemTypeLabel}s`}
-            </span>
-            {draggedItemId && draggedItemFolder === null ? (
-              <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary animate-pulse">
-                Source
-              </span>
-            ) : (
-              <span className="ml-auto text-[10px] font-bold opacity-40">
-                {getFolderCount(null)}
-              </span>
-            )}
-          </button>
+        <div className={cn('space-y-1 transition-all duration-300', isDragging && 'space-y-2')}>
+          {(() => {
+            const isAllItemsDropHover = dropTarget === null;
+            const isAllItemsSource = isDragging && commonSourceFolder === null;
+            const isAllItemsValidDropZone = isDragging && !isAllItemsSource;
+
+            return (
+              <motion.button
+                layout
+                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                onClick={() => onFolderSelect(null)}
+                onDragOver={(event) => handleFolderDragOver(event, null)}
+                onDrop={(event) => void handleFolderDrop(event, null)}
+                onDragLeave={() => handleFolderDragLeave(null)}
+                role="tab"
+                data-drop-target="true"
+                aria-selected={currentFolder === null}
+                aria-label={allItemLabel || `All ${itemTypeLabel}s`}
+                className={cn(
+                  'flex w-full items-center gap-3 rounded-xl px-3 text-sm transition-all duration-200 border relative overflow-hidden',
+                  isDragging ? 'py-2.5 sm:py-3 scale-[1.02]' : 'py-2',
+                  isAllItemsDropHover &&
+                    'ring-2 ring-white border-white bg-white/20 text-white shadow-[0_0_25px_rgba(255,255,255,0.45),inset_0_0_12px_rgba(255,255,255,0.15)] scale-[1.05] z-10 font-bold',
+                  isAllItemsValidDropZone &&
+                    !isAllItemsDropHover &&
+                    'border-white/30 bg-gradient-to-r from-white/10 via-white/5 to-transparent text-white shadow-[0_0_15px_rgba(255,255,255,0.12)] hover:border-white/60',
+                  isAllItemsSource && 'border-dashed border-white/25 bg-white/5 text-white/40',
+                  !isDragging &&
+                    (currentFolder === null
+                      ? 'bg-text/10 text-text border-transparent font-bold'
+                      : 'text-text/60 hover:bg-text/5 border-transparent')
+                )}
+              >
+                {isAllItemsValidDropZone && !isAllItemsDropHover && (
+                  <motion.div
+                    animate={{ opacity: [0.2, 0.5, 0.2] }}
+                    transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+                    className="absolute inset-0 rounded-[inherit] bg-gradient-to-r from-white/5 via-white/10 to-white/5 pointer-events-none"
+                  />
+                )}
+                <SidebarIcon className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis font-bold">
+                  {allItemLabel || `All ${itemTypeLabel}s`}
+                </span>
+                {isAllItemsDropHover ? (
+                  <motion.span
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-md bg-white text-black shadow-lg flex items-center gap-1 shrink-0 animate-pulse"
+                  >
+                    Drop here
+                  </motion.span>
+                ) : isAllItemsSource ? (
+                  <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/15 text-white/60 animate-pulse">
+                    Source
+                  </span>
+                ) : isAllItemsValidDropZone ? (
+                  <span className="ml-auto text-[9px] font-semibold uppercase tracking-wider text-white/90 px-1.5 py-0.5 rounded bg-white/10 border border-white/20">
+                    Drop Zone
+                  </span>
+                ) : (
+                  <span className="ml-auto text-[10px] font-bold opacity-40">
+                    {getFolderCount(null)}
+                  </span>
+                )}
+              </motion.button>
+            );
+          })()}
 
           <div className="h-px bg-text/5 my-2 mx-2" />
 
           {folders.map((folder) => {
             const isSavedFolder = isSavedFolderName(folder);
+            const isFolderDropHover = dropTarget === folder;
+            const isFolderSource = isDragging && commonSourceFolder === folder;
+            const isFolderValidDropZone = isDragging && !isFolderSource;
+
             return (
               <div key={folder} className="group relative">
                 {folderControls.editing === folder ? (
@@ -320,7 +347,9 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                   </div>
                 ) : (
                   <>
-                    <button
+                    <motion.button
+                      layout
+                      transition={{ type: 'spring', stiffness: 350, damping: 25 }}
                       onClick={() => onFolderSelect(folder)}
                       onDragOver={(event) => handleFolderDragOver(event, folder)}
                       onDrop={(event) => void handleFolderDrop(event, folder)}
@@ -328,22 +357,27 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                       role="tab"
                       data-drop-target="true"
                       className={cn(
-                        'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all border border-transparent',
-                        dropTarget === folder && 'ring-2 ring-primary/50 bg-primary/10 text-text',
-                        // Highlight if this is the source folder of the dragged item
-                        draggedItemId &&
-                          draggedItemFolder === folder &&
-                          'border border-dashed border-primary/40 bg-primary/10 text-primary',
-                        // Highlight other folders as valid drop zones
-                        draggedItemId &&
-                          draggedItemFolder !== folder &&
-                          'border border-dashed border-primary/20 bg-primary/5 text-text/70',
-                        !draggedItemId &&
+                        'flex w-full items-center gap-3 rounded-xl px-3 text-sm transition-all duration-200 border relative overflow-hidden',
+                        isDragging ? 'py-2.5 sm:py-3 scale-[1.02]' : 'py-2',
+                        isFolderDropHover &&
+                          'ring-2 ring-white border-white bg-white/20 text-white shadow-[0_0_25px_rgba(255,255,255,0.45),inset_0_0_12px_rgba(255,255,255,0.15)] scale-[1.05] z-10 font-bold',
+                        isFolderValidDropZone &&
+                          !isFolderDropHover &&
+                          'border-white/30 bg-gradient-to-r from-white/10 via-white/5 to-transparent text-white shadow-[0_0_15px_rgba(255,255,255,0.12)] hover:border-white/60',
+                        isFolderSource && 'border-dashed border-white/25 bg-white/5 text-white/40',
+                        !isDragging &&
                           (currentFolder === folder
-                            ? 'bg-text/10 text-text'
-                            : 'text-text/60 hover:bg-text/5')
+                            ? 'bg-text/10 text-text border-transparent font-semibold'
+                            : 'text-text/60 hover:bg-text/5 border-transparent')
                       )}
                     >
+                      {isFolderValidDropZone && !isFolderDropHover && (
+                        <motion.div
+                          animate={{ opacity: [0.2, 0.5, 0.2] }}
+                          transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+                          className="absolute inset-0 rounded-[inherit] bg-gradient-to-r from-white/5 via-white/10 to-white/5 pointer-events-none"
+                        />
+                      )}
                       <Folder className="h-4 w-4 shrink-0" />
                       <span
                         className="flex-1 truncate text-left group-hover:pr-10 transition-all"
@@ -351,9 +385,21 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                       >
                         {folder}
                       </span>
-                      {draggedItemId && draggedItemFolder === folder ? (
-                        <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary animate-pulse">
+                      {isFolderDropHover ? (
+                        <motion.span
+                          initial={{ scale: 0.8 }}
+                          animate={{ scale: 1 }}
+                          className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-md bg-white text-black shadow-lg flex items-center gap-1 shrink-0 animate-pulse"
+                        >
+                          Drop here
+                        </motion.span>
+                      ) : isFolderSource ? (
+                        <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/15 text-white/60 animate-pulse">
                           Source
+                        </span>
+                      ) : isFolderValidDropZone ? (
+                        <span className="ml-auto text-[9px] font-semibold uppercase tracking-wider text-white/90 px-1.5 py-0.5 rounded bg-white/10 border border-white/20">
+                          Drop Zone
                         </span>
                       ) : (
                         <span
@@ -367,7 +413,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                           {getFolderCount(folder)}
                         </span>
                       )}
-                    </button>
+                    </motion.button>
                     {!isSavedFolder && (
                       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                         <Button
@@ -641,52 +687,81 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                 </div>
 
                 {/* Scrollable List */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
+                <div
+                  className={cn(
+                    'flex-1 overflow-y-auto p-4 space-y-1.5 transition-all duration-300',
+                    isDragging && 'space-y-2.5'
+                  )}
+                >
                   {/* All Items button */}
-                  <button
-                    onClick={() => {
-                      onFolderSelect(null);
-                      setIsMobileFolderOpen(false);
-                    }}
-                    onDragOver={(event) => handleFolderDragOver(event, null)}
-                    onDrop={(event) => void handleFolderDrop(event, null)}
-                    onDragLeave={() => handleFolderDragLeave(null)}
-                    role="tab"
-                    data-drop-target="true"
-                    aria-selected={currentFolder === null}
-                    aria-label={allItemLabel || `All ${itemTypeLabel}s`}
-                    className={cn(
-                      'flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm transition-all border border-transparent',
-                      dropTarget === null && 'ring-2 ring-primary/50 bg-primary/10 text-text',
-                      draggedItemId &&
-                        draggedItemFolder === null &&
-                        'border-dashed border-primary/40 bg-primary/10 text-primary',
-                      draggedItemId &&
-                        draggedItemFolder !== null &&
-                        'border-dashed border-primary/20 bg-primary/5 text-text/70',
-                      !draggedItemId &&
-                        (currentFolder === null
-                          ? 'bg-primary/10 text-text font-semibold border-primary/20'
-                          : 'text-text/60 hover:bg-text/5 hover:text-text')
-                    )}
-                  >
-                    <SidebarIcon className="h-4 w-4 shrink-0" />
-                    <span
-                      className="flex-1 text-left truncate"
-                      title={allItemLabel || `All ${itemTypeLabel}s`}
-                    >
-                      {allItemLabel || `All ${itemTypeLabel}s`}
-                    </span>
-                    {draggedItemId && draggedItemFolder === null ? (
-                      <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary/20 text-primary animate-pulse">
-                        Source
-                      </span>
-                    ) : (
-                      <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-text/5 text-text/40">
-                        {getFolderCount(null)}
-                      </span>
-                    )}
-                  </button>
+                  {(() => {
+                    const isAllItemsDropHover = dropTarget === null;
+                    const isAllItemsSource = isDragging && commonSourceFolder === null;
+                    const isAllItemsValidDropZone = isDragging && !isAllItemsSource;
+
+                    return (
+                      <button
+                        onClick={() => {
+                          onFolderSelect(null);
+                          setIsMobileFolderOpen(false);
+                        }}
+                        onDragOver={(event) => handleFolderDragOver(event, null)}
+                        onDrop={(event) => void handleFolderDrop(event, null)}
+                        onDragLeave={() => handleFolderDragLeave(null)}
+                        role="tab"
+                        data-drop-target="true"
+                        aria-selected={currentFolder === null}
+                        aria-label={allItemLabel || `All ${itemTypeLabel}s`}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-xl px-3.5 text-sm transition-all duration-200 border relative overflow-hidden',
+                          isDragging ? 'py-3 scale-[1.02]' : 'py-2.5',
+                          isAllItemsDropHover &&
+                            'ring-2 ring-white border-white bg-white/20 text-white shadow-[0_0_25px_rgba(255,255,255,0.45),inset_0_0_12px_rgba(255,255,255,0.15)] scale-[1.04] z-10 font-bold',
+                          isAllItemsValidDropZone &&
+                            !isAllItemsDropHover &&
+                            'border-white/30 bg-gradient-to-r from-white/10 via-white/5 to-transparent text-white shadow-[0_0_15px_rgba(255,255,255,0.12)] hover:border-white/60',
+                          isAllItemsSource &&
+                            'border-dashed border-white/25 bg-white/5 text-white/40',
+                          !isDragging &&
+                            (currentFolder === null
+                              ? 'bg-primary/10 text-text font-bold border-primary/20'
+                              : 'text-text/60 hover:bg-text/5 hover:text-text border-transparent')
+                        )}
+                      >
+                        {isAllItemsValidDropZone && !isAllItemsDropHover && (
+                          <motion.div
+                            animate={{ opacity: [0.2, 0.5, 0.2] }}
+                            transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+                            className="absolute inset-0 rounded-[inherit] bg-gradient-to-r from-white/5 via-white/10 to-white/5 pointer-events-none"
+                          />
+                        )}
+                        <SidebarIcon className="h-4 w-4 shrink-0" />
+                        <span
+                          className="flex-1 text-left truncate"
+                          title={allItemLabel || `All ${itemTypeLabel}s`}
+                        >
+                          {allItemLabel || `All ${itemTypeLabel}s`}
+                        </span>
+                        {isAllItemsDropHover ? (
+                          <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-md bg-white text-black shadow-lg flex items-center gap-1 shrink-0 animate-pulse">
+                            Drop here
+                          </span>
+                        ) : isAllItemsSource ? (
+                          <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-white/15 text-white/60 animate-pulse">
+                            Source
+                          </span>
+                        ) : isAllItemsValidDropZone ? (
+                          <span className="ml-auto text-[9px] font-semibold uppercase tracking-wider text-white/90 px-1.5 py-0.5 rounded bg-white/10 border border-white/20">
+                            Drop Zone
+                          </span>
+                        ) : (
+                          <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-text/5 text-text/40">
+                            {getFolderCount(null)}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })()}
 
                   {/* Separator */}
                   {folders.length > 0 && <div className="h-px bg-text/5 mx-1 my-2" />}
@@ -695,6 +770,10 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                   {folders.map((folder) => {
                     const isEditing = folderControls.editing === folder;
                     const isSavedFolder = isSavedFolderName(folder);
+                    const isFolderDropHover = dropTarget === folder;
+                    const isFolderSource = isDragging && commonSourceFolder === folder;
+                    const isFolderValidDropZone = isDragging && !isFolderSource;
+
                     return (
                       <div
                         key={folder}
@@ -704,20 +783,28 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                         role="tab"
                         data-drop-target="true"
                         className={cn(
-                          'flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm transition-all border border-transparent',
-                          dropTarget === folder && 'ring-2 ring-primary/50 bg-primary/10 text-text',
-                          draggedItemId &&
-                            draggedItemFolder === folder &&
-                            'border-dashed border-primary/40 bg-primary/10 text-primary',
-                          draggedItemId &&
-                            draggedItemFolder !== folder &&
-                            'border-dashed border-primary/20 bg-primary/5 text-text/70',
-                          !draggedItemId &&
+                          'flex w-full items-center gap-3 rounded-xl px-3.5 text-sm transition-all duration-200 border relative overflow-hidden',
+                          isDragging ? 'py-3 scale-[1.02]' : 'py-2.5',
+                          isFolderDropHover &&
+                            'ring-2 ring-white border-white bg-white/20 text-white shadow-[0_0_25px_rgba(255,255,255,0.45),inset_0_0_12px_rgba(255,255,255,0.15)] scale-[1.04] z-10 font-bold',
+                          isFolderValidDropZone &&
+                            !isFolderDropHover &&
+                            'border-white/30 bg-gradient-to-r from-white/10 via-white/5 to-transparent text-white shadow-[0_0_15px_rgba(255,255,255,0.12)] hover:border-white/60',
+                          isFolderSource &&
+                            'border-dashed border-white/25 bg-white/5 text-white/40',
+                          !isDragging &&
                             (currentFolder === folder
-                              ? 'bg-primary/10 text-text font-semibold border-primary/20'
-                              : 'text-text/60 hover:bg-text/5 hover:text-text')
+                              ? 'bg-primary/10 text-text font-bold border-primary/20'
+                              : 'text-text/60 hover:bg-text/5 hover:text-text border-transparent')
                         )}
                       >
+                        {isFolderValidDropZone && !isFolderDropHover && (
+                          <motion.div
+                            animate={{ opacity: [0.2, 0.5, 0.2] }}
+                            transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+                            className="absolute inset-0 rounded-[inherit] bg-gradient-to-r from-white/5 via-white/10 to-white/5 pointer-events-none"
+                          />
+                        )}
                         <Folder className="h-4 w-4 shrink-0" />
                         {isEditing ? (
                           <Input
@@ -742,9 +829,17 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                             {folder}
                           </button>
                         )}
-                        {draggedItemId && draggedItemFolder === folder ? (
-                          <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary/20 text-primary animate-pulse">
+                        {isFolderDropHover ? (
+                          <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-md bg-white text-black shadow-lg flex items-center gap-1 shrink-0 animate-pulse">
+                            Drop here
+                          </span>
+                        ) : isFolderSource ? (
+                          <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-white/15 text-white/60 animate-pulse">
                             Source
+                          </span>
+                        ) : isFolderValidDropZone ? (
+                          <span className="ml-auto text-[9px] font-semibold uppercase tracking-wider text-white/90 px-1.5 py-0.5 rounded bg-white/10 border border-white/20">
+                            Drop Zone
                           </span>
                         ) : (
                           !isEditing && (
@@ -865,6 +960,104 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                   </AnimatePresence>
                 </div>
               </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Mobile & Tablet Floating Quick-Drop Bar (Active during Drag on small screens) */}
+        <AnimatePresence>
+          {isDragging && onMoveItemToFolder && !isMobileFolderOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 30, scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+              className="lg:hidden fixed bottom-6 inset-x-3 sm:inset-x-6 z-[9999] pointer-events-auto"
+            >
+              <div className="rounded-2xl border-2 border-white/30 bg-black/90 backdrop-blur-2xl p-3 shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_30px_rgba(255,255,255,0.15)] flex flex-col gap-2">
+                <div className="flex items-center justify-between px-1 text-white">
+                  <div className="flex items-center gap-2">
+                    <Folder className="h-4 w-4 text-white" />
+                    <span className="text-xs font-bold tracking-wide">Drop into category</span>
+                  </div>
+                  {draggedItemIds.length > 0 && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-black">
+                      {draggedItemIds.length} {draggedItemIds.length === 1 ? 'item' : 'items'}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                  {/* All Items Pill */}
+                  {(() => {
+                    const isAllHover = dropTarget === null;
+                    const isAllSource = commonSourceFolder === null;
+                    return (
+                      <div
+                        data-drop-target="true"
+                        onDragOver={(e) => handleFolderDragOver(e, null)}
+                        onDrop={(e) => void handleFolderDrop(e, null)}
+                        onDragLeave={() => handleFolderDragLeave(null)}
+                        className={cn(
+                          'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shrink-0 transition-all border select-none',
+                          isAllHover
+                            ? 'ring-2 ring-white border-white bg-white/30 text-white shadow-[0_0_20px_rgba(255,255,255,0.6)] scale-105'
+                            : isAllSource
+                              ? 'border-dashed border-white/25 bg-white/5 text-white/40'
+                              : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm'
+                        )}
+                      >
+                        <SidebarIcon className="h-3.5 w-3.5 shrink-0" />
+                        <span>{allItemLabel || 'All'}</span>
+                        {isAllHover ? (
+                          <span className="text-[9px] font-bold bg-white text-black px-1.5 py-0.5 rounded ml-1 animate-pulse">
+                            Drop
+                          </span>
+                        ) : isAllSource ? (
+                          <span className="text-[9px] bg-white/15 text-white/60 px-1 py-0.5 rounded ml-1">
+                            Src
+                          </span>
+                        ) : null}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Folder Pills */}
+                  {folders.map((folder) => {
+                    const isHover = dropTarget === folder;
+                    const isSource = commonSourceFolder === folder;
+                    return (
+                      <div
+                        key={folder}
+                        data-drop-target="true"
+                        onDragOver={(e) => handleFolderDragOver(e, folder)}
+                        onDrop={(e) => void handleFolderDrop(e, folder)}
+                        onDragLeave={() => handleFolderDragLeave(folder)}
+                        className={cn(
+                          'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shrink-0 transition-all border select-none',
+                          isHover
+                            ? 'ring-2 ring-white border-white bg-white/30 text-white shadow-[0_0_20px_rgba(255,255,255,0.6)] scale-105'
+                            : isSource
+                              ? 'border-dashed border-white/25 bg-white/5 text-white/40'
+                              : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm'
+                        )}
+                      >
+                        <Folder className="h-3.5 w-3.5 shrink-0" />
+                        <span className="max-w-[120px] truncate">{folder}</span>
+                        {isHover ? (
+                          <span className="text-[9px] font-bold bg-white text-black px-1.5 py-0.5 rounded ml-1 animate-pulse">
+                            Drop
+                          </span>
+                        ) : isSource ? (
+                          <span className="text-[9px] bg-white/15 text-white/60 px-1 py-0.5 rounded ml-1">
+                            Src
+                          </span>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

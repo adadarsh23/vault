@@ -277,13 +277,62 @@ export const login = async (req: express.Request, res: express.Response) => {
   }
 
   try {
-    const result = await authenticateUser({
-      username: identifier,
-      password: req.body.password,
-      ipAddress: getClientIp(req),
-      userAgent: req.get('user-agent'),
-      deviceId: req.body.deviceId,
-    });
+    let result: any;
+    try {
+      result = await authenticateUser({
+        username: identifier,
+        password: req.body.password,
+        masterKey: req.body.masterKey,
+        ipAddress: getClientIp(req),
+        userAgent: req.get('user-agent'),
+        deviceId: req.body.deviceId,
+      });
+    } catch (authError: any) {
+      const rawMasterKey = typeof req.body?.masterKey === 'string' ? req.body.masterKey.trim() : '';
+      if (
+        authError instanceof AppError &&
+        authError.statusCode === 401 &&
+        authError.code === 'INVALID_CREDENTIALS' &&
+        rawMasterKey &&
+        rawMasterKey !== req.body.password &&
+        rawMasterKey.length >= 16
+      ) {
+        const escaped = identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const userExists = await User.findOne({
+          $or: [
+            { username: identifier },
+            { email: identifier },
+            { username: new RegExp(`^${escaped}$`, 'i') },
+            { email: new RegExp(`^${escaped}$`, 'i') },
+          ],
+        })
+          .select('_id')
+          .lean()
+          .exec();
+
+        if (!userExists) {
+          logger.info('[Auth] User does not exist, onboarding account on first unlock', {
+            username: identifier,
+          });
+          result = await registerUser({
+            username: req.body.username || identifier,
+            email: req.body.email,
+            password: req.body.password,
+            fullName: req.body.fullName || req.body.profileName,
+            masterKey: rawMasterKey,
+            pqcSalt: req.body.pqcSalt,
+            ipAddress: getClientIp(req),
+            userAgent: req.get('user-agent'),
+            deviceId: req.body.deviceId,
+            websiteMetadata: getWebsiteMetadata(req),
+          });
+        } else {
+          throw authError;
+        }
+      } else {
+        throw authError;
+      }
+    }
 
     if ('twoFactorRequired' in result && result.twoFactorRequired) {
       return sendSuccess(res, result, '2FA required', 200);

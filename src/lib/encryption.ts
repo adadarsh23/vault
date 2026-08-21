@@ -1,5 +1,45 @@
 import { handleError } from './error-handler';
-import { deriveKey as deriveKeyFromPrimitives } from './cryptoPrimitives';
+import {
+  deriveKey as deriveKeyFromPrimitives,
+  decryptFileEnvelope,
+  encryptFileEnvelope,
+  rotateItemEnvelopeKey,
+  isEnvelopeBundle,
+  isCascadeBundle,
+  encryptChaCha20Poly1305,
+  decryptChaCha20Poly1305,
+  touchCryptoKeyCache,
+  clearCryptoKeyCache,
+  getOrCreateCryptoKey,
+  ENVELOPE_MAGIC_CASCADE,
+  ENVELOPE_MAGIC_V2,
+  CASCADE_HEADER_LENGTH,
+  AES_GCM_IV_LENGTH,
+  AES_GCM_AAD,
+  DEK_AAD,
+  CRYPTO_KEY_CACHE_TTL_MS,
+} from './cryptoPrimitives';
+import { createTrackedBlobUrl } from './blobRegistry';
+
+export {
+  decryptFileEnvelope,
+  encryptFileEnvelope,
+  rotateItemEnvelopeKey,
+  isEnvelopeBundle,
+  isCascadeBundle,
+  encryptChaCha20Poly1305,
+  decryptChaCha20Poly1305,
+  touchCryptoKeyCache,
+  clearCryptoKeyCache,
+  getOrCreateCryptoKey,
+  ENVELOPE_MAGIC_CASCADE,
+  ENVELOPE_MAGIC_V2,
+  CASCADE_HEADER_LENGTH,
+  AES_GCM_IV_LENGTH,
+  AES_GCM_AAD,
+  DEK_AAD,
+  CRYPTO_KEY_CACHE_TTL_MS,
+};
 
 /**
  * Constants for encryption security
@@ -15,7 +55,6 @@ const SECURITY_CONSTANTS = {
   RSA_ALGORITHM: 'RSA-OAEP',
   RSA_HASH: 'SHA-256',
 } as const;
-const AES_GCM_AAD = new TextEncoder().encode('vault:e2ee:aes-gcm:v2');
 
 const toArrayBuffer = (value: Uint8Array): ArrayBuffer => new Uint8Array(value).buffer;
 
@@ -214,7 +253,8 @@ export const performHybridKeyExchange = async (peerPublicKey?: {
   const sodium = await import('libsodium-wrappers').then((m) => m.default || m);
   let kyber: any;
   try {
-    kyber = await import('pqc-kyber');
+    const kyberModule = 'pqc-kyber';
+    kyber = await import(/* @vite-ignore */ kyberModule);
   } catch {
     kyber = {
       keypair: () => ({ pubkey: new Uint8Array(800), secret: new Uint8Array(1600) }),
@@ -498,7 +538,7 @@ export const decryptFileE2EE = async (
         : finalMimeType || 'application/octet-stream';
 
     const blob = new Blob([decrypted], { type: normalizedBlobMime });
-    return URL.createObjectURL(blob);
+    return createTrackedBlobUrl(blob);
   } catch (error) {
     handleError(error, 'E2EE File Decryption');
     return null;
@@ -506,48 +546,15 @@ export const decryptFileE2EE = async (
 };
 
 /**
- * Encrypts a File object efficiently and returns a binary bundle (IV + Ciphertext)
+ * Encrypts a File object efficiently using the Dual-Engine Cascade Cipher (AES-256-GCM + ChaCha20-Poly1305)
  */
 export const encryptFile = async (
-  file: File,
+  file: File | Blob | Uint8Array,
   secretKey: string | CryptoKey
 ): Promise<Uint8Array> => {
   try {
-    const arrayBuffer = await file.arrayBuffer();
-    const data = new Uint8Array(arrayBuffer);
-
-    let cryptoKey: CryptoKey;
-    if (secretKey instanceof CryptoKey) {
-      cryptoKey = secretKey;
-    } else {
-      const keyBuf = base64ToUint8Array(secretKey);
-      cryptoKey = await crypto.subtle.importKey(
-        'raw',
-        toArrayBuffer(keyBuf),
-        { name: 'AES-GCM' },
-        false,
-        ['encrypt']
-      );
-      keyBuf.fill(0);
-    }
-
-    const iv = crypto.getRandomValues(new Uint8Array(SECURITY_CONSTANTS.AES_GCM_IV_LENGTH));
-
-    const ciphertext = await crypto.subtle.encrypt(
-      {
-        name: 'AES-GCM',
-        iv: toArrayBuffer(iv),
-        additionalData: toArrayBuffer(AES_GCM_AAD),
-      },
-      cryptoKey,
-      toArrayBuffer(data)
-    );
-
-    const bundle = new Uint8Array(iv.length + ciphertext.byteLength);
-    bundle.set(iv);
-    bundle.set(new Uint8Array(ciphertext), iv.length);
-
-    return bundle;
+    const arrayBuffer = file instanceof Uint8Array ? file : await file.arrayBuffer();
+    return await encryptFileEnvelope(arrayBuffer, secretKey);
   } catch (error) {
     handleError(error, 'File Encryption Service');
     throw error;
@@ -1176,59 +1183,45 @@ export const decryptToFile = async (
       return null;
     }
 
-    let cryptoKey: CryptoKey;
-    if (secretKey instanceof CryptoKey) {
-      cryptoKey = secretKey;
-    } else {
-      const keyBuf = base64ToUint8Array(secretKey);
-      if (keyBuf.length !== SECURITY_CONSTANTS.KEY_BYTE_LENGTH) {
-        return null;
+    const decrypted = await decryptFileEnvelope(bundle, secretKey);
+    const decryptedBytes = new Uint8Array(decrypted);
+
+    try {
+      let finalMimeType = mimeType;
+      const detected = detectMimeTypeFromBytes(decryptedBytes);
+      const detectedIsMedia =
+        detected.startsWith('audio/') ||
+        detected.startsWith('video/') ||
+        detected.startsWith('image/');
+      if (
+        detected !== 'application/octet-stream' &&
+        (!finalMimeType ||
+          finalMimeType === 'application/octet-stream' ||
+          (detectedIsMedia &&
+            (finalMimeType.startsWith('audio/') ||
+              finalMimeType.startsWith('video/') ||
+              finalMimeType.startsWith('image/')) &&
+            finalMimeType !== detected &&
+            !(finalMimeType.startsWith('audio/') && detected === 'video/webm')) ||
+          (finalMimeType === 'audio/mpeg' && detected !== 'audio/mpeg') ||
+          (finalMimeType === 'image/jpeg' &&
+            detected.startsWith('image/') &&
+            detected !== 'image/jpeg'))
+      ) {
+        finalMimeType = detected;
       }
-      cryptoKey = await crypto.subtle.importKey(
-        'raw',
-        toArrayBuffer(keyBuf),
-        { name: 'AES-GCM' },
-        false,
-        ['decrypt']
-      );
+
+      const normalizedBlobMime =
+        finalMimeType === 'video/quicktime'
+          ? 'video/mp4'
+          : finalMimeType || 'application/octet-stream';
+
+      const blob = new Blob([decryptedBytes], { type: normalizedBlobMime });
+      return createTrackedBlobUrl(blob);
+    } catch (innerError) {
+      handleError(innerError, 'File Decryption Blob Pipeline');
+      return null;
     }
-
-    const iv = bundle.slice(0, SECURITY_CONSTANTS.AES_GCM_IV_LENGTH);
-    const ciphertext = bundle.slice(SECURITY_CONSTANTS.AES_GCM_IV_LENGTH);
-
-    const decrypted = await decryptAesGcmWithFallback(cryptoKey, iv, ciphertext);
-
-    let finalMimeType = mimeType;
-    const detected = detectMimeTypeFromBytes(new Uint8Array(decrypted));
-    const detectedIsMedia =
-      detected.startsWith('audio/') ||
-      detected.startsWith('video/') ||
-      detected.startsWith('image/');
-    if (
-      detected !== 'application/octet-stream' &&
-      (!finalMimeType ||
-        finalMimeType === 'application/octet-stream' ||
-        (detectedIsMedia &&
-          (finalMimeType.startsWith('audio/') ||
-            finalMimeType.startsWith('video/') ||
-            finalMimeType.startsWith('image/')) &&
-          finalMimeType !== detected &&
-          !(finalMimeType.startsWith('audio/') && detected === 'video/webm')) ||
-        (finalMimeType === 'audio/mpeg' && detected !== 'audio/mpeg') ||
-        (finalMimeType === 'image/jpeg' &&
-          detected.startsWith('image/') &&
-          detected !== 'image/jpeg'))
-    ) {
-      finalMimeType = detected;
-    }
-
-    const normalizedBlobMime =
-      finalMimeType === 'video/quicktime'
-        ? 'video/mp4'
-        : finalMimeType || 'application/octet-stream';
-
-    const blob = new Blob([decrypted], { type: normalizedBlobMime });
-    return URL.createObjectURL(blob);
   } catch (error) {
     handleError(error, 'File Decryption Service');
     return null;

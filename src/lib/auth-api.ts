@@ -502,6 +502,12 @@ const fetchTypedAuthJson = async <TData>(
   try {
     response = await fetch(input, requestInit);
   } catch (cause) {
+    if (
+      (cause instanceof DOMException && cause.name === 'AbortError') ||
+      (cause as { name?: string })?.name === 'AbortError'
+    ) {
+      throw cause;
+    }
     throw createApiRequestError('Unable to reach the server.', {
       code: 'NETWORK_ERROR',
       cause,
@@ -622,12 +628,16 @@ export const authenticateVaultSession = async (
   return data;
 };
 
-export const checkExactUsername = async (username: string): Promise<UsernameExactMatchResponse> => {
+export const checkExactUsername = async (
+  username: string,
+  options?: { signal?: AbortSignal }
+): Promise<UsernameExactMatchResponse> => {
   const { response, payload } = await fetchTypedAuthJson<UsernameExactMatchResponse>(
     `${API_BASE_URL}/api/auth/username-check?username=${encodeURIComponent(username)}`,
     {
       method: 'GET',
       credentials: 'include',
+      signal: options?.signal,
     },
     'Username check failed.'
   );

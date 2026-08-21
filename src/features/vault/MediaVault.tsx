@@ -13,25 +13,40 @@ import {
   PHOTO_FILE_INPUT_ACCEPT,
   VIDEO_FILE_INPUT_ACCEPT,
 } from '../../lib/fileHandling';
-import { getVaultItemPreviewUrl } from '../../lib/filePreview';
+import {
+  getVaultItemPreviewUrl,
+  vaultItemHasServerFileReference,
+} from '../../lib/filePreview';
 import { useVaultFolders } from '../../hooks/useVaultFolders';
 import { useVaultItems } from '../../hooks/useVaultItems';
 import { VaultLayout } from '../../components/layout/VaultLayout';
 import { VaultItem } from '../../lib/storage';
 import { LiveCaptureModal } from './components/LiveCaptureModal';
-import { vaultApi } from '../../api/vaultApi';
-import { compressFileInWorker, generateBlurhashInWorker } from '../../lib/mediaWorker';
+import {
+  compressFileInWorker,
+  generateBlurhashInWorker,
+  stripExifInWorker,
+} from '../../lib/mediaWorker';
+import { stripExifInMemory } from '../../lib/mediaExifScrubber';
 
-// New extracted components and utilities
+// Extracted components and utilities
 import {
   getFileExtension,
   getMediaDimensions,
   normalizeMediaMimeType,
+  GridDensity,
+  MediaFilterType,
+  MediaSortType,
+  filterAndSortMedia,
 } from './components/MediaVault/mediaUtils';
-import { MediaCard } from './components/MediaVault/MediaCard';
-import { MediaPagination } from './components/MediaVault/MediaPagination';
+import { MediaFilters } from './components/MediaVault/MediaFilters';
+import { MediaTimelineView } from './components/MediaVault/MediaTimelineView';
+import { MediaBulkToolbar } from './components/MediaVault/MediaBulkToolbar';
 import { MediaPreview } from './components/MediaVault/MediaPreview';
+import { MediaInspectorDrawer } from './components/MediaVault/MediaInspectorDrawer';
 import { preloadFFmpeg } from '../../lib/videoTranscoder';
+import { computeBufferHash } from '../../lib/merkleTree';
+import { vaultApi } from '../../api/vaultApi';
 
 type FileWithWebkitPath = File & { webkitRelativePath?: string };
 
@@ -51,11 +66,10 @@ const toPositiveIntOrFallback = (value: unknown, fallback: number): number => {
 };
 
 export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
-  // const singularLabel = type === 'photo' ? 'Photo' : 'Video'
-  // const pluralLabel = `${singularLabel}s`
   const items = useVaultStore((state) => state.items);
   const addItem = useVaultStore((state) => state.addItem);
   const removeItem = useVaultStore((state) => state.removeItem);
+  const batchUpdateItems = useVaultStore((state) => state.batchUpdateItems);
   const togglePin = useVaultStore((state) => state.togglePin);
   const fetchItems = useVaultStore((state) => state.fetchItems);
   const pinningItemIds = useVaultStore((state) => state.pinningItemIds);
@@ -72,12 +86,34 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
   const isLightweightPreviewModeEnabled = useVaultStore(
     (state) => state.preferences.isLightweightPreviewModeEnabled
   );
+  const isPhotoExifStripped = useVaultStore((state) => state.preferences.isPhotoExifStripped);
+
   const [isUploading, setIsUploading] = useState(false);
   const [isLiveRecordOpen, setIsLiveRecordOpen] = useState(false);
   const [previewItem, setPreviewItem] = useState<string | null>(null);
   const [activePreviewItem, setActivePreviewItem] = useState<string | null>(null);
   const [moveMenuOpenId, setMoveMenuOpenId] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [inspectorItem, setInspectorItem] = useState<VaultItem | null>(null);
+
+  // Gallery filters, sorting, density, and multi-selection state
+  const [activeFilter, setActiveFilter] = useState<MediaFilterType>('all');
+  const [activeSort, setActiveSort] = useState<MediaSortType>('date-desc');
+  const [density, setDensity] = useState<GridDensity>(() => {
+    try {
+      const saved = localStorage.getItem(`vault_media_density_${type}`);
+      if (saved === 'compact' || saved === 'standard' || saved === 'large' || saved === 'list') {
+        return saved;
+      }
+    } catch {
+      // ignore
+    }
+    return 'standard';
+  });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const lastSelectedIdRef = useRef<string | null>(null);
+
   const modalRef = useRef<HTMLDivElement | null>(null) as React.RefObject<HTMLDivElement>;
   const previewRafOneRef = useRef<number | null>(null);
   const previewRafTwoRef = useRef<number | null>(null);
@@ -86,6 +122,15 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
   const uploadTargetFolder = useRef<string | null>(null);
   const targetItemId = useGlobalNavigationStore((state) => state.targetItemId);
   const setTargetItemId = useGlobalNavigationStore((state) => state.setTargetItemId);
+
+  const handleDensityChange = (newDensity: GridDensity) => {
+    setDensity(newDensity);
+    try {
+      localStorage.setItem(`vault_media_density_${type}`, newDensity);
+    } catch {
+      // ignore
+    }
+  };
 
   const cancelScheduledPreviewActivation = useCallback(() => {
     if (previewRafOneRef.current !== null) {
@@ -113,7 +158,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     preloadFFmpeg();
   }, []);
 
-  // Use the new reusable hooks
+  // Reusable folder and item hooks
   const {
     folders,
     currentFolder,
@@ -134,12 +179,176 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
 
   const { searchQuery, setSearchQuery, filteredItems } = useVaultItems(type, currentFolder);
 
-  const [itemsPerPage, setItemsPerPage] = useState(8);
-  const LARGE_MEDIA_DIRECT_UPLOAD_BYTES = 12 * 1024 * 1024;
-  const MULTIPART_PARALLELISM = 3;
-  const FILE_HASH_CHUNK_BYTES = 8 * 1024 * 1024;
+  // Apply filters and sorting
+  const processedItems = useMemo(
+    () => filterAndSortMedia(filteredItems, activeFilter, activeSort),
+    [filteredItems, activeFilter, activeSort]
+  );
 
-  const getMultipartParallelism = useCallback((fileSize: number) => {
+  // Selection toggle logic (with Shift-Click range support)
+  const handleToggleSelect = useCallback(
+    (id: string, shiftKey = false) => {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+
+        if (shiftKey && lastSelectedIdRef.current) {
+          const lastIdx = processedItems.findIndex((i) => i.id === lastSelectedIdRef.current);
+          const currentIdx = processedItems.findIndex((i) => i.id === id);
+
+          if (lastIdx !== -1 && currentIdx !== -1) {
+            const start = Math.min(lastIdx, currentIdx);
+            const end = Math.max(lastIdx, currentIdx);
+            for (let i = start; i <= end; i++) {
+              next.add(processedItems[i].id);
+            }
+            if (!isSelectionMode) setIsSelectionMode(true);
+            return next;
+          }
+        }
+
+        if (next.has(id)) {
+          next.delete(id);
+          if (next.size === 0 && isSelectionMode) {
+            // Keep selection mode active if user wants or let them exit via button
+          }
+        } else {
+          next.add(id);
+          if (!isSelectionMode) setIsSelectionMode(true);
+        }
+
+        lastSelectedIdRef.current = id;
+        return next;
+      });
+    },
+    [processedItems, isSelectionMode]
+  );
+
+  const handleSelectAll = useCallback(() => {
+    setSelectedIds(new Set(processedItems.map((i) => i.id)));
+  }, [processedItems]);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+    setIsSelectionMode(false);
+    lastSelectedIdRef.current = null;
+  }, []);
+
+  const handleToggleSelectionMode = useCallback(() => {
+    setIsSelectionMode((prev) => {
+      if (prev) {
+        setSelectedIds(new Set());
+        lastSelectedIdRef.current = null;
+        return false;
+      }
+      return true;
+    });
+  }, []);
+
+  // Bulk Operations
+  const handleBulkMove = useCallback(
+    async (targetFolder: string | null) => {
+      const selected = Array.from(selectedIds);
+      if (selected.length === 0) return;
+
+      const toastId = toast.loading(`Moving ${selected.length} items...`);
+      try {
+        const updates = selected.map((id) => ({
+          id,
+          updates: { folder: targetFolder || undefined },
+        }));
+        await batchUpdateItems(updates);
+        toast.success(
+          `Moved ${selected.length} items to ${targetFolder || (type === 'photo' ? 'All Photos' : 'All Videos')}`,
+          { id: toastId }
+        );
+        logActivity({
+          actionType: 'item_update',
+          itemName: `${selected.length} ${type}s`,
+          description: `Bulk moved to folder ${targetFolder || 'root'}`,
+          status: 'success',
+        });
+        handleClearSelection();
+      } catch (err) {
+        toast.error('Failed to move items.', { id: toastId });
+      }
+    },
+    [selectedIds, batchUpdateItems, type, handleClearSelection]
+  );
+
+  const handleBulkDelete = useCallback(async () => {
+    const selected = Array.from(selectedIds);
+    if (selected.length === 0) return;
+
+    const toastId = toast.loading(`Deleting ${selected.length} items...`);
+    let deletedCount = 0;
+
+    try {
+      for (const id of selected) {
+        try {
+          await removeItem(id);
+          deletedCount++;
+        } catch {
+          // ignore individual deletion errors
+        }
+      }
+      toast.success(`Deleted ${deletedCount} items from vault`, { id: toastId });
+      logActivity({
+        actionType: 'item_delete',
+        itemName: `${deletedCount} ${type}s`,
+        description: `Bulk deleted ${deletedCount} items`,
+        status: 'success',
+      });
+      handleClearSelection();
+    } catch (err) {
+      toast.error('Failed to delete some items.', { id: toastId });
+    }
+  }, [selectedIds, removeItem, type, handleClearSelection]);
+
+  const handleBulkPin = useCallback(
+    async (pinState: boolean) => {
+      const selected = Array.from(selectedIds);
+      if (selected.length === 0) return;
+
+      const toastId = toast.loading(
+        `${pinState ? 'Pinning' : 'Unpinning'} ${selected.length} items...`
+      );
+      try {
+        const updates = selected.map((id) => ({
+          id,
+          updates: {
+            isPinned: pinState,
+            pinnedAt: pinState ? Date.now() : null,
+          },
+        }));
+        await batchUpdateItems(updates);
+        toast.success(`${pinState ? 'Pinned' : 'Unpinned'} ${selected.length} items`, {
+          id: toastId,
+        });
+        handleClearSelection();
+      } catch (err) {
+        toast.error('Failed to update pin status.', { id: toastId });
+      }
+    },
+    [selectedIds, batchUpdateItems, handleClearSelection]
+  );
+
+  const yieldToMainThread = useCallback(
+    () =>
+      new Promise<void>((resolve) => {
+        if (typeof requestAnimationFrame !== 'undefined') {
+          requestAnimationFrame(() => resolve());
+        } else {
+          setTimeout(resolve, 0);
+        }
+      }),
+    []
+  );
+
+  const LARGE_MEDIA_DIRECT_UPLOAD_BYTES = 12 * 1024 * 1024;
+  const MULTIPART_PARALLELISM = 2;
+  const FILE_HASH_CHUNK_BYTES = 2 * 1024 * 1024;
+
+  const getMultipartParallelism = useCallback((_fileSize: number) => {
     if (typeof navigator === 'undefined') {
       return MULTIPART_PARALLELISM;
     }
@@ -149,25 +358,17 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
       hardwareConcurrency?: number;
     };
     const connection = nav.connection;
-    const cpu = Number(nav.hardwareConcurrency || 4);
 
-    if (connection?.saveData) return 2;
-    if (connection?.effectiveType === 'slow-2g' || connection?.effectiveType === '2g') {
+    if (
+      connection?.saveData ||
+      connection?.effectiveType === 'slow-2g' ||
+      connection?.effectiveType === '2g'
+    ) {
       return 1;
     }
-    if (connection?.effectiveType === '3g') {
-      return 2;
-    }
 
-    if (fileSize >= 512 * 1024 * 1024 && cpu >= 8 && (connection?.downlink || 0) >= 20) {
-      return 5;
-    }
-
-    if (cpu >= 6) {
-      return 4;
-    }
-
-    return MULTIPART_PARALLELISM;
+    // Keep concurrency capped to 2 to prevent RAM exhaustion and UI freezing
+    return 2;
   }, []);
 
   const sha256Hex = useCallback(async (data: Uint8Array) => {
@@ -184,50 +385,36 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     return hex;
   }, []);
 
-  const sha256FileHexChunked = useCallback(async (file: File, chunkSize: number) => {
-    if (!Number.isFinite(chunkSize) || chunkSize <= 0) {
-      throw new Error('Invalid hash chunk size');
-    }
-    if (file.size === 0) {
-      const emptyDigest = await crypto.subtle.digest('SHA-256', new Uint8Array(0));
-      const uint8 = new Uint8Array(emptyDigest);
-      let hex = '';
-      for (let i = 0; i < uint8.length; i++) {
-        hex += uint8[i].toString(16).padStart(2, '0');
+  const sha256FileHexChunked = useCallback(
+    async (file: File, chunkSize: number) => {
+      if (!Number.isFinite(chunkSize) || chunkSize <= 0) {
+        throw new Error('Invalid hash chunk size');
       }
-      return hex;
-    }
-    const hasher = await createSHA256();
-    hasher.init();
-    const totalParts = Math.ceil(file.size / chunkSize);
-    for (let i = 0; i < totalParts; i += 1) {
-      const start = i * chunkSize;
-      const end = Math.min(start + chunkSize, file.size);
-      const chunkArrayBuffer = (await file.slice(start, end).arrayBuffer()) as ArrayBuffer;
-      const chunkBuffer = new Uint8Array(chunkArrayBuffer);
-      hasher.update(chunkBuffer);
-      // Yield to the browser event loop to prevent UI lag / freezing during large video hashing
-      if (i % 2 === 0) {
-        await new Promise((resolve) => setTimeout(resolve, 0));
+      if (file.size === 0) {
+        const emptyDigest = await crypto.subtle.digest('SHA-256', new Uint8Array(0));
+        const uint8 = new Uint8Array(emptyDigest);
+        let hex = '';
+        for (let i = 0; i < uint8.length; i++) {
+          hex += uint8[i].toString(16).padStart(2, '0');
+        }
+        return hex;
       }
-    }
-    return hasher.digest('hex');
-  }, []);
-
-  useEffect(() => {
-    let timeout: any;
-
-    const update = () => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        setItemsPerPage(window.innerWidth < 768 ? 4 : 8);
-      }, 150);
-    };
-
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
+      const hasher = await createSHA256();
+      hasher.init();
+      const totalParts = Math.ceil(file.size / chunkSize);
+      for (let i = 0; i < totalParts; i += 1) {
+        const start = i * chunkSize;
+        const end = Math.min(start + chunkSize, file.size);
+        const chunkArrayBuffer = (await file.slice(start, end).arrayBuffer()) as ArrayBuffer;
+        const chunkBuffer = new Uint8Array(chunkArrayBuffer);
+        hasher.update(chunkBuffer);
+        // Yield to main thread on each chunk to keep UI smooth and 60 FPS
+        await yieldToMainThread();
+      }
+      return hasher.digest('hex');
+    },
+    [yieldToMainThread]
+  );
 
   const supportedExtensions: string[] = Array.from(
     type === 'photo' ? FILE_TYPE_SUPPORT.photo : FILE_TYPE_SUPPORT.video
@@ -244,35 +431,40 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     return hasSupportedMime || supportedExtensions.includes(extension);
   };
 
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [type, currentFolder, searchQuery]);
-
   const previewedMedia = useMemo(
-    () => filteredItems.find((item) => item.id === activePreviewItem) ?? null,
-    [filteredItems, activePreviewItem]
+    () => processedItems.find((item) => item.id === activePreviewItem) ?? null,
+    [processedItems, activePreviewItem]
   );
 
   const currentPreviewIndex = useMemo(() => {
     if (!previewItem) return -1;
-    return filteredItems.findIndex((item) => item.id === previewItem);
-  }, [filteredItems, previewItem]);
+    return processedItems.findIndex((item) => item.id === previewItem);
+  }, [processedItems, previewItem]);
 
   const canPrevious = currentPreviewIndex > 0;
-  const canNext = currentPreviewIndex >= 0 && currentPreviewIndex < filteredItems.length - 1;
+  const canNext = currentPreviewIndex >= 0 && currentPreviewIndex < processedItems.length - 1;
 
   const showPreviousMedia = useCallback(() => {
-    if (canPrevious) {
-      const nextId = filteredItems[currentPreviewIndex - 1].id;
-      openPreview(nextId);
+    if (processedItems.length === 0) return;
+    if (canPrevious && currentPreviewIndex > 0) {
+      const prevItem = processedItems[currentPreviewIndex - 1];
+      if (prevItem) openPreview(prevItem.id);
+    } else if (processedItems.length > 1) {
+      const lastItem = processedItems[processedItems.length - 1];
+      if (lastItem) openPreview(lastItem.id);
     }
-  }, [canPrevious, filteredItems, currentPreviewIndex, openPreview]);
+  }, [canPrevious, processedItems, currentPreviewIndex, openPreview]);
+
   const showNextMedia = useCallback(() => {
-    if (canNext) {
-      const nextId = filteredItems[currentPreviewIndex + 1].id;
-      openPreview(nextId);
+    if (processedItems.length === 0) return;
+    if (canNext && currentPreviewIndex < processedItems.length - 1) {
+      const nextItem = processedItems[currentPreviewIndex + 1];
+      if (nextItem) openPreview(nextItem.id);
+    } else if (processedItems.length > 1) {
+      const firstItem = processedItems[0];
+      if (firstItem) openPreview(firstItem.id);
     }
-  }, [canNext, filteredItems, currentPreviewIndex, openPreview]);
+  }, [canNext, processedItems, currentPreviewIndex, openPreview]);
 
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
@@ -282,13 +474,17 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
   const onTouchStart = (e: React.TouchEvent) => {
     touchEndX.current = null;
     touchEndY.current = null;
-    touchStartX.current = e.targetTouches[0].clientX;
-    touchStartY.current = e.targetTouches[0].clientY;
+    if (e.targetTouches && e.targetTouches.length > 0) {
+      touchStartX.current = e.targetTouches[0].clientX;
+      touchStartY.current = e.targetTouches[0].clientY;
+    }
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.targetTouches[0].clientX;
-    touchEndY.current = e.targetTouches[0].clientY;
+    if (e.targetTouches && e.targetTouches.length > 0) {
+      touchEndX.current = e.targetTouches[0].clientX;
+      touchEndY.current = e.targetTouches[0].clientY;
+    }
   };
 
   const onTouchEnd = () => {
@@ -304,7 +500,6 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     const distanceY = touchStartY.current - touchEndY.current;
     const minSwipeDistance = 75;
 
-    // Only handle horizontal swipes if it is primarily horizontal
     if (Math.abs(distanceX) > Math.abs(distanceY)) {
       if (distanceX > minSwipeDistance && canNext) {
         showNextMedia();
@@ -317,14 +512,15 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
 
   useEffect(() => {
     if (!targetItemId) return;
-    const target = filteredItems.find((item) => item.id === targetItemId);
+    const target = processedItems.find((item) => item.id === targetItemId);
     if (!target) return;
 
     openPreview(target.id);
     setTargetItemId(null);
-  }, [targetItemId, filteredItems, setTargetItemId, openPreview]);
+  }, [targetItemId, processedItems, setTargetItemId, openPreview]);
 
-  // Safety net: if RAF-based activation misses for any reason, force activation.
+  const [isFloatingPreview, setIsFloatingPreview] = useState(false);
+
   useEffect(() => {
     if (!previewItem || activePreviewItem) return;
     const timer = window.setTimeout(() => {
@@ -334,7 +530,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
   }, [previewItem, activePreviewItem]);
 
   useEffect(() => {
-    if (previewItem) {
+    if (previewItem && !isFloatingPreview) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -343,7 +539,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [previewItem]);
+  }, [previewItem, isFloatingPreview]);
 
   useEffect(() => {
     if (!previewItem) return;
@@ -415,7 +611,8 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     files: File[],
     targetFolder: string | null,
     isAlreadyEncrypted = false,
-    isLiveCapture = false
+    isLiveCapture = false,
+    additionalMetadata?: Record<string, any>
   ) => {
     if (!files.length) return;
     if (!masterKey) {
@@ -430,6 +627,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
 
     try {
       for (let index = 0; index < total; index += 1) {
+        await yieldToMainThread();
         const file = files[index];
         if (!isSupportedMediaFile(file)) {
           toast.error(
@@ -443,19 +641,14 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
           failedCount++;
           continue;
         }
-        const toastId = toast.loading(`Encrypting ${type} ${index + 1} of ${total}...`);
+        const toastId = toast.loading(`Preparing ${type} ${index + 1} of ${total}...`);
 
         try {
-          // Detect if file is coming from a folder upload.
           const folderFromPath = readTopLevelFolderFromWebkitPath(file);
-
           const fileTargetFolder = folderFromPath || targetFolder;
 
-          // Security-first upload strategy:
-          // avoid direct multipart-by-default for videos and use encrypted upload path
-          // unless file size crosses the large-file optimization threshold.
           const shouldUseDirectLargeUpload =
-            !isAlreadyEncrypted && file.size >= LARGE_MEDIA_DIRECT_UPLOAD_BYTES;
+            !isAlreadyEncrypted && type !== 'photo' && file.size >= LARGE_MEDIA_DIRECT_UPLOAD_BYTES;
 
           if (shouldUseDirectLargeUpload) {
             try {
@@ -489,7 +682,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
                 typeof multipartData?.uploadId === 'string'
                   ? multipartData.uploadId.trim()
                   : String(multipartData?.uploadId || '');
-              const partSize = toPositiveIntOrFallback(multipartData?.partSize, 8 * 1024 * 1024);
+              const partSize = toPositiveIntOrFallback(multipartData?.partSize, 4 * 1024 * 1024);
               const uploadedParts = new Set<number>(
                 Array.isArray(multipartData?.uploadedParts)
                   ? multipartData.uploadedParts
@@ -503,7 +696,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
               try {
                 window.localStorage.setItem(resumeKey, uploadId);
               } catch {
-                // ignore storage failures
+                // ignore
               }
 
               const totalParts = Math.ceil(file.size / partSize);
@@ -517,7 +710,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
                   0,
                   Math.min(100, Math.round((completedParts / Math.max(totalParts, 1)) * 100))
                 );
-                toast.loading(`Uploading large ${index + 1}/${total}: ${progress}%...`, {
+                toast.loading(`Uploading background ${index + 1}/${total}: ${progress}%...`, {
                   id: toastId,
                 });
               };
@@ -540,8 +733,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
                   );
                   completedParts += 1;
                   updateProgress();
-                  // Yield to the event loop so progress toasts and animations update smoothly without jank
-                  await new Promise((resolve) => setTimeout(resolve, 0));
+                  await yieldToMainThread();
                 }
               };
 
@@ -550,15 +742,9 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
                 Math.min(getMultipartParallelism(file.size), pendingPartIndexes.length || 1)
               );
 
-              await Promise.all(
-                Array.from(
-                  {
-                    length: parallelWorkers,
-                  },
-                  () => partWorker()
-                )
-              );
+              await Promise.all(Array.from({ length: parallelWorkers }, () => partWorker()));
 
+              await yieldToMainThread();
               const fullHash = await sha256FileHexChunked(file, FILE_HASH_CHUNK_BYTES);
               await vaultApi.completeMultipartUpload(uploadId, {
                 fileSha256: fullHash,
@@ -567,13 +753,11 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
               try {
                 window.localStorage.removeItem(resumeKey);
               } catch {
-                // ignore storage failures
+                // ignore
               }
 
               await fetchItems('manual');
-              toast.success(`${file.name} uploaded successfully`, {
-                id: toastId,
-              });
+              toast.success(`${file.name} uploaded successfully`, { id: toastId });
               logActivity({
                 actionType: 'file_upload',
                 itemName: file.name,
@@ -597,22 +781,40 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
             }
           }
 
-          // Offload image compression and blurhash computation to background Web Worker to prevent UI freezing
           let uploadFileObj = file;
           let blurhash: string | null = null;
           if (type === 'photo' && !isAlreadyEncrypted) {
-            toast.loading(`Processing image in Web Worker ${index + 1}/${total}...`, {
+            toast.loading(`Sanitizing & processing image in Web Worker ${index + 1}/${total}...`, {
               id: toastId,
             });
-            uploadFileObj = await compressFileInWorker(file, 0.85);
+            if (isPhotoExifStripped) {
+              try {
+                uploadFileObj = await stripExifInWorker(uploadFileObj);
+              } catch {
+                const rawBuffer = await uploadFileObj.arrayBuffer();
+                const cleanedBuffer = stripExifInMemory(rawBuffer, uploadFileObj.type);
+                uploadFileObj = new File([cleanedBuffer], uploadFileObj.name, {
+                  type: uploadFileObj.type || 'image/jpeg',
+                  lastModified: uploadFileObj.lastModified,
+                });
+              }
+            }
+            uploadFileObj = await compressFileInWorker(uploadFileObj, 0.85);
             blurhash = await generateBlurhashInWorker(uploadFileObj);
+            await yieldToMainThread();
           }
 
+          await yieldToMainThread();
           const encryptedData = isAlreadyEncrypted
             ? new Uint8Array(await file.arrayBuffer())
             : await encryptFileInWorker(uploadFileObj, masterKey);
 
+          await yieldToMainThread();
           const dimensions = await getMediaDimensions(uploadFileObj, type);
+
+          await yieldToMainThread();
+          const blake3Hash = await computeBufferHash(encryptedData, 'blake3');
+          const sha256Hash = await computeBufferHash(encryptedData, 'sha256');
 
           await addItem(
             {
@@ -627,10 +829,18 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
                 width: dimensions?.width,
                 height: dimensions?.height,
                 aspectRatio: dimensions?.aspectRatio,
+                duration: dimensions?.duration,
                 blurhash: blurhash || undefined,
+                sha256: sha256Hash,
+                integrity: {
+                  algorithm: 'blake3',
+                  hash: blake3Hash,
+                  verifiedAt: Date.now(),
+                },
                 isE2EE: true,
                 clientEncrypted: true,
                 isLiveCapture,
+                ...additionalMetadata,
               },
             },
             (progress) => {
@@ -639,13 +849,11 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
               });
             }
           );
-          toast.success(`${file.name} uploaded successfully`, { id: toastId });
+          toast.success(`${file.name} uploaded & bound to Merkle Tree`, { id: toastId });
           successCount++;
         } catch (error) {
           console.error('Upload failed:', error);
-          toast.error(`Failed to upload ${file.name}. Please try again.`, {
-            id: toastId,
-          });
+          toast.error(`Failed to upload ${file.name}. Please try again.`, { id: toastId });
           logActivity({
             actionType: 'file_upload',
             itemName: file.name,
@@ -695,6 +903,28 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     const toastId = toast.loading('Preparing download...');
 
     try {
+      // 1. If it's a server-backed item, use direct signed download URL for zero-RAM browser streaming download
+      if (vaultItemHasServerFileReference(item)) {
+        try {
+          const { getSignedUrl } = await import('../../lib/sync/media');
+          const downloadUrl = await getSignedUrl(item.id, 'download');
+          if (downloadUrl) {
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = item.title || 'download';
+            link.rel = 'noopener';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast.success(`Downloaded ${item.title}`, { id: toastId });
+            return;
+          }
+        } catch {
+          // fallback to client-side decrypt path
+        }
+      }
+
+      // 2. Client-side E2EE decryption
       let fileUrl: string | null = await getVaultItemPreviewUrl(
         item,
         masterKey,
@@ -704,64 +934,13 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
 
       if (!fileUrl) throw new Error('Decryption failed');
 
-      // Validate blob URL.
-      if (fileUrl.startsWith('blob:')) {
-        try {
-          const response = await fetch(fileUrl);
-          if (!response.ok) {
-            // Blob expired or invalid, try to regenerate
-            fileUrl = await getVaultItemPreviewUrl(
-              item,
-              masterKey,
-              item.metadata?.mimeType,
-              rsaKeyPair?.privateKey ?? undefined
-            );
-            if (!fileUrl) throw new Error('Blob regeneration failed');
-          }
-        } catch {
-          // Blob expired → regenerate
-          fileUrl = await getVaultItemPreviewUrl(
-            item,
-            masterKey,
-            item.metadata?.mimeType,
-            rsaKeyPair?.privateKey ?? undefined
-          );
-          if (!fileUrl) throw new Error('Blob regeneration failed');
-        }
-      }
-
-      let objectUrlToRevoke: string | null = null;
-      let downloadHref = fileUrl;
-
-      // For signed/http URLs, convert to an object URL so filename download is reliable.
-      if (!downloadHref.startsWith('blob:') && !downloadHref.startsWith('data:')) {
-        const response = await fetch(downloadHref, {
-          credentials: 'include',
-          mode: 'cors',
-        });
-        if (!response.ok) {
-          throw new Error(`Download fetch failed with status ${response.status}`);
-        }
-        const fileBlob = await response.blob();
-        objectUrlToRevoke = URL.createObjectURL(fileBlob);
-        downloadHref = objectUrlToRevoke;
-      }
-
       const link = document.createElement('a');
-      link.href = downloadHref;
-      link.download = item.title;
+      link.href = fileUrl;
+      link.download = item.title || 'download';
       link.rel = 'noopener';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      // Cleanup safely.
-      if (fileUrl.startsWith('blob:')) {
-        setTimeout(() => URL.revokeObjectURL(fileUrl!), 2000);
-      }
-      if (objectUrlToRevoke) {
-        setTimeout(() => URL.revokeObjectURL(objectUrlToRevoke), 2000);
-      }
 
       toast.success(`Downloaded ${item.title}`, { id: toastId });
     } catch (error) {
@@ -787,16 +966,9 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     [masterKey, type, openPreview]
   );
 
-  useEffect(() => {
-    return () => {
-      cancelScheduledPreviewActivation();
-    };
-  }, [cancelScheduledPreviewActivation]);
-
   return (
     <VaultLayout
       title={`${type}s`}
-      // title={pluralLabel}
       description={
         currentFolder
           ? `${type.charAt(0).toUpperCase() + type.slice(1)}s in album "${currentFolder}"`
@@ -846,12 +1018,29 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
         isOpen={isLiveRecordOpen}
         onClose={() => setIsLiveRecordOpen(false)}
         type={type}
-        onCapture={async (file, isEncrypted) => {
-          await handleUploadFiles([file], currentFolder, isEncrypted, true);
+        onCapture={async (file, isEncrypted, additionalMetadata) => {
+          await handleUploadFiles([file], currentFolder, isEncrypted, true, additionalMetadata);
         }}
       />
 
-      {filteredItems.length === 0 ? (
+      {/* Filter Chips, Sort, Density Switcher & Batch Mode Toggle */}
+      <MediaFilters
+        type={type}
+        totalCount={filteredItems.length}
+        filteredCount={processedItems.length}
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+        activeSort={activeSort}
+        onSortChange={setActiveSort}
+        density={density}
+        onDensityChange={handleDensityChange}
+        isSelectionMode={isSelectionMode}
+        onToggleSelectionMode={handleToggleSelectionMode}
+        selectedCount={selectedIds.size}
+      />
+
+      {/* Gallery Timeline & Adaptive Infinite Scrolling Grid / List */}
+      {processedItems.length === 0 ? (
         <div
           className="flex flex-col items-center justify-center py-20 opacity-40 cursor-pointer hover:opacity-70 transition-opacity"
           onClick={() => {
@@ -867,47 +1056,45 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
           <p className="text-lg">No {type}s found.</p>
         </div>
       ) : (
-        <div
-          role="grid"
-          aria-label={`${type} grid`}
-          className={`grid gap-6 pt-6 px-1 md:px-4 touch-pan-y ${
-            type === 'video'
-              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3'
-              : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3'
-          }`}
-        >
-          {filteredItems
-            .slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
-            .map((item, idx) => (
-              <MediaCard
-                key={item.id}
-                item={item}
-                idx={idx}
-                type={type}
-                masterKey={masterKey}
-                isSelected={previewItem === item.id}
-                moveMenuOpenId={moveMenuOpenId}
-                folders={folders}
-                onPreview={handlePreview}
-                onMoveMenuToggle={setMoveMenuOpenId}
-                onMoveToFolder={handleMoveToFolder}
-                onDownload={handleDownload}
-                onDelete={handleDelete}
-                onTogglePin={(id) => void togglePin(id)}
-                isPinning={pinningItemIds.includes(item.id)}
-                lightweightPreviewMode={isLightweightPreviewModeEnabled}
-              />
-            ))}
-        </div>
+        <MediaTimelineView
+          items={processedItems}
+          type={type}
+          masterKey={masterKey}
+          density={density}
+          selectedIds={selectedIds}
+          isSelectionMode={isSelectionMode}
+          onToggleSelect={handleToggleSelect}
+          previewItem={previewItem}
+          moveMenuOpenId={moveMenuOpenId}
+          folders={folders}
+          onPreview={handlePreview}
+          onMoveMenuToggle={setMoveMenuOpenId}
+          onMoveToFolder={handleMoveToFolder}
+          onDownload={handleDownload}
+          onDelete={handleDelete}
+          onTogglePin={(id) => void togglePin(id)}
+          onOpenInspector={(item) => setInspectorItem(item)}
+          pinningItemIds={pinningItemIds}
+          lightweightPreviewMode={isLightweightPreviewModeEnabled}
+        />
       )}
 
-      <MediaPagination
-        currentPage={currentPage}
-        totalItems={filteredItems.length}
-        itemsPerPage={itemsPerPage}
-        onPageChange={setCurrentPage}
+      {/* Multi-Selection Bulk Actions Toolbar */}
+      <MediaBulkToolbar
+        selectedIds={selectedIds}
+        allItems={processedItems}
+        folders={folders}
+        type={type}
+        masterKey={masterKey}
+        rsaPrivateKey={rsaKeyPair?.privateKey}
+        onClearSelection={handleClearSelection}
+        onSelectAll={handleSelectAll}
+        onBulkMove={handleBulkMove}
+        onBulkDelete={handleBulkDelete}
+        onBulkPin={handleBulkPin}
       />
 
+      {/* Enhanced Lightbox Preview Modal */}
       <MediaPreview
         previewItem={previewItem}
         previewedMedia={previewedMedia}
@@ -920,9 +1107,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
         isPerformanceHudEnabled={isPerformanceHudEnabled}
         canPrevious={canPrevious}
         canNext={canNext}
-        onClose={() => {
-          closePreview();
-        }}
+        onClose={closePreview}
         onPrevious={showPreviousMedia}
         onNext={showNextMedia}
         onDownload={handleDownload}
@@ -930,6 +1115,17 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         modalRef={modalRef}
+        allItems={processedItems}
+        onSelectMedia={openPreview}
+        onFloatingChange={setIsFloatingPreview}
+      />
+
+      {/* Standalone Inspector Drawer (from card menu) */}
+      <MediaInspectorDrawer
+        item={inspectorItem}
+        isOpen={Boolean(inspectorItem)}
+        onClose={() => setInspectorItem(null)}
+        type={type}
       />
     </VaultLayout>
   );

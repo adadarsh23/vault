@@ -21,13 +21,18 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
   beforeAll(async () => {
     process.env.SKIP_RECAPTCHA = 'true';
     try {
-      await connectToMongo();
+      await Promise.race([
+        connectToMongo(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('MongoDB connection timeout')), 3000)
+        ),
+      ]);
       isMongoConnected = mongoose.connection.readyState === 1;
     } catch {
       console.warn('MongoDB connection unavailable. Skipping DB integration tests.');
       isMongoConnected = false;
     }
-  });
+  }, 10000);
 
   afterAll(async () => {
     if (isMongoConnected) {

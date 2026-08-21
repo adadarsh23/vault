@@ -30,7 +30,7 @@ import { useClipboard } from '../../hooks/useClipboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getStringContent, parseJsonSafely } from '../../lib/vaultItemContent';
 import { logActivity } from '../../lib/activity';
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { setDraggedVaultItem, clearDraggedVaultItem } from '../../lib/vaultDragDrop';
 
 import { FolderSidebar } from '../../components/vault/FolderSidebar';
 import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
@@ -906,6 +906,7 @@ export const IdentitiesVault: React.FC = () => {
                 key={item.id}
                 draggable
                 onDragStart={(event) => setDraggedVaultItem(event, item.id)}
+                onDragEnd={clearDraggedVaultItem}
                 onTouchStart={(event) => setDraggedVaultItem(event as any, item.id)}
                 // onTouchMove={(e) => {
                 //   /* Allow custom touch drag logic */

@@ -18,6 +18,7 @@ export type ActivityActionType =
   | 'item_delete'
   | 'item_create'
   | 'copy_value'
+  | 'security_alert'
   | 'error';
 
 export interface ActivityEntry {
@@ -64,6 +65,7 @@ const ACTIVITY_ACTION_SET: Record<ActivityActionType, true> = {
   item_delete: true,
   item_create: true,
   copy_value: true,
+  security_alert: true,
   error: true,
 };
 

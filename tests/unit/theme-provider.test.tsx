@@ -1,3 +1,5 @@
+/* @vitest-environment jsdom */
+
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, act } from '@testing-library/react';
@@ -61,6 +63,7 @@ describe('ThemeProvider & Theme Changing Animation', () => {
   });
 
   it('handles fallback animation when startViewTransition is unsupported', () => {
+    vi.useFakeTimers();
     const overlay = document.createElement('div');
     overlay.id = 'theme-transition-overlay';
     document.body.appendChild(overlay);
@@ -75,8 +78,13 @@ describe('ThemeProvider & Theme Changing Animation', () => {
       useThemeStore.getState().setTheme('light');
     });
 
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
     expect(document.documentElement.classList.contains('light')).toBe(true);
 
     overlay.remove();
+    vi.useRealTimers();
   });
 });

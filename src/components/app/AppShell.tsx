@@ -9,10 +9,13 @@ import { cn } from '../../lib/utils';
 import { useVaultStore } from '../../store/vaultStore';
 import { getAuthenticatedProfile } from '../../lib/auth-api';
 import { useNotificationStore } from '../../store/notificationStore';
+import { useScrollRestoration } from '../../hooks/useScrollRestoration';
 import { Lock, X } from 'lucide-react';
 import { AppHeader } from './AppHeader';
 import { LoadingScreen } from './LoadingScreen';
-import { useScrollRestoration } from '../../hooks/useScrollRestoration';
+import { ForensicWatermark } from '../security/ForensicWatermark';
+import { VaultIntegrityAlarmModal } from '../security/VaultIntegrityAlarmModal';
+import { VaultIntegrityAlarmBanner } from '../security/VaultIntegrityAlarmBanner';
 
 const MaintenanceModal = lazy(() =>
   import('../vault/MaintenanceModal').then((m) => ({
@@ -316,10 +319,48 @@ export function AppShell({
 }) {
   const sidebarPosition = useVaultStore((state) => state.preferences.sidebarPosition);
   const username = useVaultStore((state) => state.username);
+  const panicLock = useVaultStore((state) => state.panicLock);
 
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const fetchNotifications = useNotificationStore((state) => state.fetchNotifications);
   const [showNotifications, setShowNotifications] = React.useState(false);
+
+  // 3× Escape key rapid press -> Instant Panic Lock & Memory Purge
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let escPressTimestamps: number[] = [];
+    const ESC_WINDOW_MS = 1200;
+    const REQUIRED_PRESSES = 3;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        const now = Date.now();
+        escPressTimestamps = escPressTimestamps.filter((t) => now - t <= ESC_WINDOW_MS);
+        escPressTimestamps.push(now);
+
+        if (escPressTimestamps.length >= REQUIRED_PRESSES) {
+          escPressTimestamps = [];
+          panicLock();
+        }
+      }
+    };
+
+    const handlePanicEvent = () => {
+      setHeaderProfilePreview(null);
+      setShowNotifications(false);
+      setIsSidebarOpen(false);
+      resetSidebarGesture();
+    };
+
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    window.addEventListener('vault:panic-lock', handlePanicEvent);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, { capture: true });
+      window.removeEventListener('vault:panic-lock', handlePanicEvent);
+    };
+  }, [panicLock, resetSidebarGesture, setIsSidebarOpen]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -633,6 +674,7 @@ export function AppShell({
           />
 
           <div className="flex flex-1 flex-col overflow-hidden">
+            <VaultIntegrityAlarmBanner />
             <AppHeader
               showNotifications={showNotifications}
               setShowNotifications={setShowNotifications}
@@ -799,15 +841,18 @@ export function AppShell({
 
       {headerProfilePreview && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm vault-print-protected"
           onClick={() => setHeaderProfilePreview(null)}
         >
-          <div className="relative w-full max-w-3xl" onClick={(event) => event.stopPropagation()}>
+          <div
+            className="relative w-full max-w-3xl overflow-hidden rounded-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
             <button
               type="button"
               aria-label="Close image preview"
               onClick={() => setHeaderProfilePreview(null)}
-              className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              className="absolute right-3 top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
               <X className="h-5 w-5" />
             </button>
@@ -816,11 +861,19 @@ export function AppShell({
               alt={headerProfilePreview.alt}
               loading="eager"
               decoding="async"
-              className="max-h-[85vh] w-full rounded-2xl object-contain"
+              className="max-h-[85vh] w-full rounded-2xl object-contain vault-print-protected"
+            />
+            <ForensicWatermark
+              opacity={0.15}
+              angle={-25}
+              density="standard"
+              classification="VAULT PROFILE // CONFIDENTIAL"
             />
           </div>
         </div>
       )}
+
+      <VaultIntegrityAlarmModal />
     </>
   );
 }

@@ -42,6 +42,7 @@ import { getStringContent } from '../../../../lib/vaultItemContent';
 import { DecryptedMarkdown } from '../../../../components/vault/DecryptedMarkdown';
 import { TagManager } from '../../../../components/vault/TagManager';
 import { useScrollRestoration } from '../../../../hooks/useScrollRestoration';
+import { ForensicWatermark } from '../../../../components/security/ForensicWatermark';
 
 const AttachmentCard: React.FC<{
   item: any;
@@ -752,7 +753,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
               </div>
             </div>
 
-            <div className="flex-1 overflow-auto flex items-center justify-center p-6 bg-black/10">
+            <div className="relative flex-1 overflow-auto flex items-center justify-center p-6 bg-black/10 vault-print-protected">
               {isPreviewLoading ? (
                 <div className="flex flex-col items-center gap-2 text-text/45">
                   <Loader2 className="h-8 w-8 animate-spin" />
@@ -760,16 +761,24 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                 </div>
               ) : previewUrl ? (
                 previewAttachmentItem.type === 'photo' ? (
-                  <img
-                    src={previewUrl}
-                    alt={previewAttachmentItem.title || 'Attachment preview'}
-                    className="max-h-[60vh] max-w-full rounded-lg object-contain shadow-lg"
-                  />
+                  <div className="relative max-h-[60vh] max-w-full flex items-center justify-center overflow-hidden rounded-lg">
+                    <img
+                      src={previewUrl}
+                      alt={previewAttachmentItem.title || 'Attachment preview'}
+                      className="max-h-[60vh] max-w-full rounded-lg object-contain shadow-lg vault-print-protected"
+                    />
+                    <ForensicWatermark
+                      opacity={0.14}
+                      angle={-25}
+                      density="standard"
+                      classification="VAULT ATTACHMENT // CONFIDENTIAL"
+                    />
+                  </div>
                 ) : (
                   <iframe
                     src={previewUrl}
                     title="Document Preview"
-                    className="w-full h-[55vh] border-none bg-white rounded-lg"
+                    className="w-full h-[55vh] border-none bg-white rounded-lg vault-print-protected"
                   />
                 )
               ) : (

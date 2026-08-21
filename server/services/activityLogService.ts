@@ -134,10 +134,8 @@ const decryptActivityDetails = (encryptedData: any): Record<string, unknown> | n
     }
 
     return JSON.parse(decrypted) as Record<string, unknown>;
-  } catch (error) {
-    logger.error('[ActivityLogService] Error decrypting activity details', error, {
-      context: 'decryptActivityDetails',
-    });
+  } catch {
+    // Gracefully handle legacy records without polluting terminal logs
     return null;
   }
 };

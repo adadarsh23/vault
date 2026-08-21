@@ -3,6 +3,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import VideoPlayer, {
+  CustomSlider,
+  formatTime,
   getHlsRecoveryAction,
   getMimeTypeFromUrl,
   getPlayerErrorMessage,
@@ -32,10 +34,7 @@ describe('VideoPlayer phase 1 controls', () => {
     window.localStorage.clear();
   });
 
-  it('restores resume position from localStorage after metadata loads', () => {
-    const key = 'vault:video:resume:item-123';
-    window.localStorage.setItem(key, '42');
-
+  it('starts playback cleanly from the beginning (0s) after metadata loads', () => {
     const { container } = render(
       <VideoPlayer src="https://cdn.example.com/video.mp4" itemId="item-123" />
     );
@@ -48,7 +47,7 @@ describe('VideoPlayer phase 1 controls', () => {
     });
 
     fireEvent.loadedMetadata(video);
-    expect(video.currentTime).toBe(42);
+    expect(video.currentTime).toBe(0);
   });
 
   it('requests fullscreen when fullscreen button is clicked', async () => {
@@ -258,5 +257,172 @@ describe('getMimeTypeFromUrl', () => {
     expect(getMimeTypeFromUrl('https://example.com/file.mov')).toBe('video/quicktime');
     expect(getMimeTypeFromUrl('https://example.com/file.avi')).toBe('video/x-msvideo');
     expect(getMimeTypeFromUrl('https://example.com/file.unknown')).toBeUndefined();
+  });
+});
+
+describe('VideoPlayer Polish Enhancements', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    vi.clearAllMocks();
+  });
+
+  it('renders quick speed selector popup and changes playback rate', () => {
+    const { container } = render(<VideoPlayer src="https://cdn.example.com/video.mp4" />);
+    const video = container.querySelector('video') as HTMLVideoElement;
+
+    // Initially 1x
+    const speedButton = screen.getByRole('button', { name: /playback speed: 1x/i });
+    expect(speedButton).toBeInTheDocument();
+
+    // Click speed button to open popover
+    fireEvent.click(speedButton);
+
+    const popup = screen.getByTestId('speed-selector-popup');
+    expect(popup).toBeInTheDocument();
+
+    // Select 1.5x
+    const speed15Btn = screen.getByRole('button', { name: '1.5x' });
+    fireEvent.click(speed15Btn);
+
+    expect(video.playbackRate).toBe(1.5);
+    expect(screen.getByRole('button', { name: /playback speed: 1.5x/i })).toBeInTheDocument();
+  });
+
+  it('toggles looping mode and updates video.loop attribute', () => {
+    const { container } = render(<VideoPlayer src="https://cdn.example.com/video.mp4" />);
+    const video = container.querySelector('video') as HTMLVideoElement;
+
+    expect(video.loop).toBe(false);
+
+    // Click Loop button
+    const loopBtn = screen.getByRole('button', { name: /enable loop/i });
+    fireEvent.click(loopBtn);
+
+    expect(video.loop).toBe(true);
+    expect(screen.getByRole('button', { name: /disable loop/i })).toBeInTheDocument();
+
+    // Click again to disable
+    fireEvent.click(screen.getByRole('button', { name: /disable loop/i }));
+    expect(video.loop).toBe(false);
+  });
+
+  it('handles double-tap skip on left (-10s) and right (+10s) sides', () => {
+    const { container } = render(<VideoPlayer src="https://cdn.example.com/video.mp4" />);
+    const video = container.querySelector('video') as HTMLVideoElement;
+    Object.defineProperty(video, 'duration', { configurable: true, value: 120 });
+    video.currentTime = 50;
+
+    const gestureArea = screen.getByTestId('video-gesture-area');
+    Object.defineProperty(gestureArea, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ left: 0, width: 400, top: 0, height: 300 }),
+    });
+
+    // Double tap right side (clientX = 300) -> +10s
+    fireEvent.click(gestureArea, { clientX: 300 });
+    fireEvent.click(gestureArea, { clientX: 300 });
+
+    expect(video.currentTime).toBe(60);
+
+    // Double tap left side (clientX = 100) -> -10s
+    fireEvent.click(gestureArea, { clientX: 100 });
+    fireEvent.click(gestureArea, { clientX: 100 });
+
+    expect(video.currentTime).toBe(50);
+  });
+
+  it('handles keyboard shortcuts for play/pause, seeking, mute, looping, and speed', () => {
+    const { container } = render(<VideoPlayer src="https://cdn.example.com/video.mp4" />);
+    const video = container.querySelector('video') as HTMLVideoElement;
+    Object.defineProperty(video, 'duration', { configurable: true, value: 100 });
+    video.currentTime = 20;
+
+    const playMock = vi.spyOn(video, 'play').mockResolvedValue();
+    vi.spyOn(video, 'pause').mockImplementation(() => {});
+
+    // Space / K -> toggle play
+    Object.defineProperty(video, 'paused', { configurable: true, value: true });
+    fireEvent.keyDown(window, { key: ' ' });
+    expect(playMock).toHaveBeenCalled();
+
+    // J -> -10s
+    fireEvent.keyDown(window, { key: 'j' });
+    expect(video.currentTime).toBe(10);
+
+    // L -> +10s
+    fireEvent.keyDown(window, { key: 'l' });
+    expect(video.currentTime).toBe(20);
+
+    // M -> Mute toggle
+    fireEvent.keyDown(window, { key: 'm' });
+    expect(video.muted).toBe(true);
+
+    // R -> Loop toggle
+    fireEvent.keyDown(window, { key: 'r' });
+    expect(video.loop).toBe(true);
+
+    // Number keys: '5' -> 50%
+    fireEvent.keyDown(window, { key: '5' });
+    expect(video.currentTime).toBe(50);
+
+    // Speed hotkeys: ']' increases speed
+    fireEvent.keyDown(window, { key: ']' });
+    expect(video.playbackRate).toBe(1.25);
+  });
+
+  it('toggles mini floating player mode', () => {
+    render(<VideoPlayer src="https://cdn.example.com/video.mp4" title="My Test Video" />);
+
+    // Click floating mini player button
+    const floatBtn = screen.getByRole('button', { name: /floating mini player/i });
+    fireEvent.click(floatBtn);
+
+    // In floating mode, title in header and restore button should be present
+    expect(screen.getByRole('button', { name: /restore standard/i })).toBeInTheDocument();
+
+    // Click restore
+    fireEvent.click(screen.getByRole('button', { name: /restore standard/i }));
+    expect(screen.getByRole('button', { name: /floating mini player/i })).toBeInTheDocument();
+  });
+
+  it('renders hover preview tooltip on timeline slider pointer move', () => {
+    const handleChange = vi.fn();
+    const { container } = render(
+      <CustomSlider label="Seek video" value={25} duration={120} onChange={handleChange} />
+    );
+
+    const slider = container.querySelector('[role="slider"]') as HTMLElement;
+    expect(slider).toBeInTheDocument();
+
+    Object.defineProperty(slider, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ left: 0, width: 200, top: 0, height: 10 }),
+    });
+
+    // Pointer move at 50% (x=100) -> 60s (01:00)
+    fireEvent.pointerEnter(slider);
+    fireEvent.pointerMove(slider, { clientX: 100 });
+
+    const tooltip = screen.getByTestId('timeline-scrub-tooltip');
+    expect(tooltip).toBeInTheDocument();
+    expect(tooltip.textContent).toContain('01:00');
+  });
+
+  it('triggers snapshot frame capture when snapshot button is clicked', () => {
+    render(<VideoPlayer src="https://cdn.example.com/video.mp4" title="Sample" />);
+
+    const snapBtn = screen.getByRole('button', { name: /capture snapshot frame/i });
+    expect(snapBtn).toBeInTheDocument();
+    fireEvent.click(snapBtn);
+  });
+});
+
+describe('formatTime helper', () => {
+  it('formats seconds into mm:ss and hh:mm:ss appropriately', () => {
+    expect(formatTime(0)).toBe('00:00');
+    expect(formatTime(65)).toBe('01:05');
+    expect(formatTime(3665)).toBe('01:01:05');
+    expect(formatTime(NaN)).toBe('00:00');
+    expect(formatTime(-10)).toBe('00:00');
   });
 });

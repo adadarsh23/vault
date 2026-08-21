@@ -157,8 +157,45 @@ export function getHighlightedParts(text: string, matches: number[]): TextPart[]
 }
 
 /**
+ * Extracts a concise snippet of transcript text around the matched query.
+ */
+export function getTranscriptSnippet(
+  transcript: string,
+  query: string,
+  maxLength = 80
+): { snippet: string; matches: number[] } {
+  if (!transcript || !query) return { snippet: '', matches: [] };
+
+  const lowerTranscript = transcript.toLowerCase();
+  const lowerQuery = query.toLowerCase().trim();
+  const directIndex = lowerTranscript.indexOf(lowerQuery);
+
+  let start = 0;
+  if (directIndex >= 0) {
+    start = Math.max(0, directIndex - Math.floor((maxLength - lowerQuery.length) / 2));
+  }
+  let end = Math.min(transcript.length, start + maxLength);
+  if (end - start < maxLength && start > 0) {
+    start = Math.max(0, end - maxLength);
+  }
+
+  let snippet = transcript.slice(start, end);
+  if (start > 0) snippet = '...' + snippet;
+  if (end < transcript.length) snippet = snippet + '...';
+
+  // Highlight query within the snippet
+  const snippetLower = snippet.toLowerCase();
+  const matchResult = fuzzyMatch(lowerQuery, snippetLower);
+
+  return {
+    snippet,
+    matches: matchResult ? matchResult.matches : [],
+  };
+}
+
+/**
  * Searches across all vault items using a client-side fuzzy matching index.
- * Only indexes public metadata fields like title, folder, type, and tags.
+ * Indexes title, folder, type, tags, and encrypted speech transcripts.
  */
 export function searchVaultItems(
   items: VaultItem[],
@@ -254,7 +291,34 @@ export function searchVaultItems(
         }
       }
 
-      const hasMatch = titleMatch || folderMatch || typeMatch || tagMatches.length > 0;
+      // Search speech transcript metadata for audio memos and videos
+      const transcript =
+        typeof item.metadata?.transcript === 'string' ? item.metadata.transcript : '';
+      const transcriptLower = transcript.toLowerCase();
+      const actualQueryLower = actualQuery.toLowerCase();
+      const directTranscriptIndex = transcriptLower.indexOf(actualQueryLower);
+      const transcriptFuzzy = directTranscriptIndex === -1 && transcript.length > 0
+        ? fuzzyMatch(actualQuery, transcript.slice(0, 300))
+        : null;
+
+      let transcriptScore = 0;
+      let snippetData: { snippet: string; matches: number[] } | null = null;
+
+      if (directTranscriptIndex >= 0) {
+        // Direct word/substring match in transcript is high confidence
+        transcriptScore = 35 + actualQuery.length * 5;
+        snippetData = getTranscriptSnippet(transcript, actualQuery);
+      } else if (transcriptFuzzy) {
+        transcriptScore = transcriptFuzzy.score * 0.85;
+        snippetData = getTranscriptSnippet(transcript, actualQuery);
+      }
+
+      const hasMatch =
+        titleMatch ||
+        folderMatch ||
+        typeMatch ||
+        tagMatches.length > 0 ||
+        transcriptScore > 0;
 
       if (hasMatch) {
         const scores: number[] = [];
@@ -262,6 +326,7 @@ export function searchVaultItems(
         if (folderMatch) scores.push(folderMatch.score * 0.8);
         if (typeMatch) scores.push(typeMatch.score * 0.6);
         if (tagMatches.length > 0) scores.push(bestTagScore * 0.7);
+        if (transcriptScore > 0) scores.push(transcriptScore);
 
         const maxScore = Math.max(...scores);
 
@@ -272,6 +337,8 @@ export function searchVaultItems(
           folderMatches: folderMatch ? folderMatch.matches : [],
           typeMatches: typeMatch ? typeMatch.matches : [],
           tagMatches,
+          transcriptMatches: snippetData ? snippetData.matches : undefined,
+          transcriptSnippet: snippetData ? snippetData.snippet : undefined,
         });
       }
     }

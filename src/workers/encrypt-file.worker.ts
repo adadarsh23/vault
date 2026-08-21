@@ -1,7 +1,12 @@
 const AES_GCM_IV_LENGTH = 12;
+const CHACHA20_NONCE_LENGTH = 12;
 const KEY_BYTE_LENGTH = 32;
-const AES_GCM_AAD = new TextEncoder().encode('vault:e2ee:aes-gcm:v2');
+const CASCADE_DEK_BYTES = 64;
 const MAX_SECRET_KEY_BASE64_LENGTH = 1024;
+const AES_GCM_AAD = new TextEncoder().encode('vault:e2ee:aes-gcm:v2');
+const CHACHA_AAD = new TextEncoder().encode('vault:e2ee:chacha20-poly1305:v1');
+const CASCADE_DEK_AAD = new TextEncoder().encode('vault:dek:cascade-gcm:v1');
+const ENVELOPE_MAGIC_CASCADE = new Uint8Array([0x56, 0x43, 0x41, 0x53, 0x30, 0x31]); // "VCAS01"
 
 type EncryptFileWorkerRequest = {
   fileBuffer: ArrayBuffer;
@@ -120,6 +125,18 @@ const toFailure = (error: unknown): { code: EncryptFileWorkerErrorCode; message:
   return { code: 'ENCRYPTION_FAILED', message: 'File encryption failed.' };
 };
 
+let sodiumPromise: Promise<any> | null = null;
+const getSodium = async () => {
+  if (!sodiumPromise) {
+    sodiumPromise = import('libsodium-wrappers').then(async (m) => {
+      const s = m.default || m;
+      await s.ready;
+      return s;
+    });
+  }
+  return sodiumPromise;
+};
+
 workerScope.onmessage = async (event: MessageEvent<unknown>) => {
   let requestId: string | undefined;
   try {
@@ -133,13 +150,11 @@ workerScope.onmessage = async (event: MessageEvent<unknown>) => {
     }
 
     const { fileBuffer, secretKey } = request;
-    const iv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
-    const ivForCrypto = Uint8Array.from(iv);
-    const aadForCrypto = Uint8Array.from(AES_GCM_AAD);
 
-    let cryptoKey: CryptoKey;
+    // 1. Prepare Master Key (KEK)
+    let kekCryptoKey: CryptoKey;
     if (secretKey instanceof CryptoKey) {
-      cryptoKey = secretKey;
+      kekCryptoKey = secretKey;
     } else {
       const keyBuf = base64ToUint8Array(secretKey);
       if (keyBuf.length !== KEY_BYTE_LENGTH) {
@@ -150,7 +165,7 @@ workerScope.onmessage = async (event: MessageEvent<unknown>) => {
       }
 
       const keyMaterial = Uint8Array.from(keyBuf);
-      cryptoKey = await crypto.subtle.importKey('raw', keyMaterial, { name: 'AES-GCM' }, false, [
+      kekCryptoKey = await crypto.subtle.importKey('raw', keyMaterial, { name: 'AES-GCM' }, false, [
         'encrypt',
       ]);
 
@@ -159,26 +174,92 @@ workerScope.onmessage = async (event: MessageEvent<unknown>) => {
       keyMaterial.fill(0);
     }
 
-    const ciphertext = await crypto.subtle.encrypt(
-      {
-        name: 'AES-GCM',
-        iv: ivForCrypto,
-        additionalData: aadForCrypto,
-      },
-      cryptoKey,
-      fileBuffer
+    // 2. Generate random 64-byte Dual DEKs (32B AES-GCM + 32B ChaCha20-Poly1305)
+    const dekBytes = crypto.getRandomValues(new Uint8Array(CASCADE_DEK_BYTES));
+    const dekAesBytes = new Uint8Array(dekBytes.buffer, dekBytes.byteOffset, 32);
+    const dekChaChaBytes = new Uint8Array(dekBytes.buffer, dekBytes.byteOffset + 32, 32);
+
+    const dekCryptoKey = await crypto.subtle.importKey(
+      'raw',
+      dekAesBytes,
+      { name: 'AES-GCM' },
+      false,
+      ['encrypt']
     );
 
-    const encrypted = new Uint8Array(iv.length + ciphertext.byteLength);
-    encrypted.set(iv);
-    encrypted.set(new Uint8Array(ciphertext), iv.length);
+    // 3. Layer 1 (Inner): Encrypt File Buffer with AES-256-GCM
+    const fileAesIv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
+    const fileAesCiphertext = await crypto.subtle.encrypt(
+      {
+        name: 'AES-GCM',
+        iv: Uint8Array.from(fileAesIv),
+        additionalData: Uint8Array.from(AES_GCM_AAD),
+      },
+      dekCryptoKey,
+      fileBuffer
+    );
+    const aesCipherBytes = new Uint8Array(fileAesCiphertext);
+
+    // 4. Layer 2 (Outer): Encrypt AES Ciphertext with ChaCha20-Poly1305
+    const sodium = await getSodium();
+    const fileChaChaNonce = crypto.getRandomValues(new Uint8Array(CHACHA20_NONCE_LENGTH));
+    const cascadeCiphertext = sodium.crypto_aead_chacha20poly1305_ietf_encrypt(
+      aesCipherBytes,
+      CHACHA_AAD,
+      null,
+      fileChaChaNonce,
+      dekChaChaBytes
+    );
+
+    // Shred intermediate AES ciphertext
+    aesCipherBytes.fill(0);
+
+    // 5. Encrypt Dual DEKs with KEK
+    const kekIv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
+    const encryptedDek = await crypto.subtle.encrypt(
+      {
+        name: 'AES-GCM',
+        iv: Uint8Array.from(kekIv),
+        additionalData: Uint8Array.from(CASCADE_DEK_AAD),
+      },
+      kekCryptoKey,
+      dekBytes.buffer
+    );
+
+    // Secure zero-out DEK buffer
+    dekBytes.fill(0);
+
+    const encDekBytes = new Uint8Array(encryptedDek);
+    const encFileBytes = new Uint8Array(cascadeCiphertext);
+
+    // Bundle: [6B VCAS01] + [12B KEK IV] + [80B Encrypted DEK] + [12B File AES IV] + [12B File ChaCha Nonce] + [Cascade Ciphertext]
+    const bundle = new Uint8Array(
+      ENVELOPE_MAGIC_CASCADE.length +
+        kekIv.length +
+        encDekBytes.length +
+        fileAesIv.length +
+        fileChaChaNonce.length +
+        encFileBytes.length
+    );
+    let offset = 0;
+    bundle.set(ENVELOPE_MAGIC_CASCADE, offset);
+    offset += ENVELOPE_MAGIC_CASCADE.length;
+    bundle.set(kekIv, offset);
+    offset += kekIv.length;
+    bundle.set(encDekBytes, offset);
+    offset += encDekBytes.length;
+    bundle.set(fileAesIv, offset);
+    offset += fileAesIv.length;
+    bundle.set(fileChaChaNonce, offset);
+    offset += fileChaChaNonce.length;
+    bundle.set(encFileBytes, offset);
 
     const payload: EncryptFileWorkerResponseSuccess = {
       ok: true,
-      encryptedBuffer: encrypted.buffer,
+      encryptedBuffer: bundle.buffer,
       requestId,
     };
-    workerScope.postMessage(payload as EncryptFileWorkerResponse, [encrypted.buffer]);
+    workerScope.postMessage(payload as EncryptFileWorkerResponse, [bundle.buffer]);
   } catch (error) {
     const failure = toFailure(error);
     postFailure(requestId, failure.code, failure.message);

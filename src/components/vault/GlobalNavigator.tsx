@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { cn } from '../../lib/utils';
 
 interface GlobalNavigatorProps {
   canPrevious: boolean;
@@ -48,42 +49,58 @@ export const GlobalNavigator: React.FC<GlobalNavigatorProps> = ({
   if (layout === 'overlay') {
     return (
       <>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`absolute left-4 top-1/2 z-50 -translate-y-1/2 text-white disabled:opacity-30 ${className}`.trim()}
+        {/* Left Arrow Button (Pushed to far left, invisible background) */}
+        <button
           onClick={onPrevious}
           disabled={!canPrevious}
+          aria-label="Previous item (Left Arrow)"
+          title="Previous (Arrow Left)"
+          className={cn(
+            'absolute left-1 sm:left-2 md:left-3 top-1/2 -translate-y-1/2 z-40 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-transparent hover:bg-white/15 active:bg-white/25 text-white/70 hover:text-white transition-all active:scale-95 disabled:opacity-0 pointer-events-auto select-none',
+            className
+          )}
         >
-          <ChevronLeft className="h-6 w-6" />
-        </Button>
+          <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]" />
+        </button>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`absolute right-4 top-1/2 z-50 -translate-y-1/2 text-white disabled:opacity-30 ${className}`.trim()}
+        {/* Right Arrow Button (Pushed to far right, invisible background) */}
+        <button
           onClick={onNext}
           disabled={!canNext}
+          aria-label="Next item (Right Arrow)"
+          title="Next (Arrow Right)"
+          className={cn(
+            'absolute right-1 sm:right-2 md:right-3 top-1/2 -translate-y-1/2 z-40 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-transparent hover:bg-white/15 active:bg-white/25 text-white/70 hover:text-white transition-all active:scale-95 disabled:opacity-0 pointer-events-auto select-none',
+            className
+          )}
         >
-          <ChevronRight className="h-6 w-6" />
-        </Button>
+          <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]" />
+        </button>
       </>
     );
   }
 
   return (
-    <div className={`flex gap-2 ${className}`.trim()}>
+    <div className={cn('flex items-center gap-1 sm:gap-2', className)}>
       <Button
         variant="ghost"
         size="icon"
         onClick={onPrevious}
-        className="h-9 w-9"
+        className="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-transparent hover:bg-white/10"
         disabled={!canPrevious}
+        aria-label="Previous item"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]" />
       </Button>
-      <Button variant="ghost" size="icon" onClick={onNext} className="h-9 w-9" disabled={!canNext}>
-        <ChevronRight className="h-4 w-4" />
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onNext}
+        className="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-transparent hover:bg-white/10"
+        disabled={!canNext}
+        aria-label="Next item"
+      >
+        <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]" />
       </Button>
     </div>
   );

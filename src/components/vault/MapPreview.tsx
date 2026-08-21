@@ -11,7 +11,12 @@ export const MapPreview: React.FC<MapPreviewProps> = ({ lat, lng, height = '320p
   const [loaded, setLoaded] = useState(false);
 
   const src = useMemo(() => {
-    return `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
+    const delta = 0.008;
+    const minLon = lng - delta;
+    const maxLon = lng + delta;
+    const minLat = lat - delta;
+    const maxLat = lat + delta;
+    return `https://www.openstreetmap.org/export/embed.html?bbox=${minLon}%2C${minLat}%2C${maxLon}%2C${maxLat}&layer=mapnik&marker=${lat}%2C${lng}`;
   }, [lat, lng]);
 
   const prevCoords = useRef({ lat, lng });

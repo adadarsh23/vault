@@ -84,6 +84,17 @@ export const NotesVault: React.FC = () => {
       setTargetItemId(null);
     }
   }, [targetItemId, notes, setTargetItemId, setCurrentFolder]);
+
+  useEffect(() => {
+    const handlePanicLock = () => {
+      setSelectedNoteId(null);
+      setIsEditing(false);
+      setEditTitle('');
+      setEditContent('');
+    };
+    window.addEventListener('vault:panic-lock', handlePanicLock);
+    return () => window.removeEventListener('vault:panic-lock', handlePanicLock);
+  }, []);
   const normalizedSearchQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery]);
 
   // Update the filteredNotes useMemo hook in NotesVault.tsx:

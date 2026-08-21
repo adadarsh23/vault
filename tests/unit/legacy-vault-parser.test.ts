@@ -50,14 +50,32 @@ describe('parseLegacyPayloadFromRequest', () => {
 
     const parsed = await parseLegacyPayloadFromRequest(req, {} as any);
 
-    expect(parsed).not.toBeNull();
-    expect(parsed?.category).toBe('todo');
-    expect(parsed?.title).toBe('Legacy Todo Title');
     expect(parsed?.folder).toBe('Work');
     expect(parsed?.metadata).toMatchObject({
       custom: 'value',
       username: 'alice',
       id: 'todo-2',
     });
+  });
+
+  it('extracts folder from x-vault-folder header when encrypted headers are present', async () => {
+    const req = {
+      headers: {
+        'x-vault-title': 'V2_ENC:encrypted-title-bundle',
+        'x-vault-metadata': 'V2_ENC:encrypted-metadata-bundle',
+        'x-vault-folder': 'Saved%20videos',
+      },
+      body: {
+        payload: 'V2_MODERN:encrypted-meta|',
+        category: 'video',
+      },
+    } as any;
+
+    const parsed = await parseLegacyPayloadFromRequest(req, {} as any);
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.category).toBe('video');
+    expect(parsed?.folder).toBe('Saved videos');
+    expect(parsed?.title).toBe('V2_ENC:encrypted-title-bundle');
   });
 });

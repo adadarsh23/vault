@@ -64,6 +64,11 @@ vi.mock('../../lib/activity', () => ({
 
 vi.mock('../../lib/vaultDragDrop', () => ({
   setDraggedVaultItem: vi.fn(),
+  clearDraggedVaultItem: vi.fn(),
+  getDraggedVaultItem: vi.fn(),
+  getDraggedVaultItems: vi.fn(),
+  setDraggedVaultItems: vi.fn(),
+  useVaultDragState: () => ({ isDragging: false, itemIds: [], count: 0 }),
 }));
 
 vi.mock('sonner', () => ({

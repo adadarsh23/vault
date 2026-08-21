@@ -142,10 +142,15 @@ describe('validatePassword', () => {
     expect(result.error).toMatch(/at least/i);
   });
 
-  it('rejects a password that does not start with a capital letter', () => {
+  it('rejects a password with no uppercase letter', () => {
     const result = validatePassword('lowercase1!password');
     expect(result.isValid).toBe(false);
-    expect(result.error).toMatch(/capital/i);
+    expect(result.error).toMatch(/uppercase/i);
+  });
+
+  it('accepts a password with uppercase letter in the middle', () => {
+    const result = validatePassword('lowercase1!Password');
+    expect(result).toEqual({ isValid: true });
   });
 
   it('rejects a password with no lowercase letter', () => {

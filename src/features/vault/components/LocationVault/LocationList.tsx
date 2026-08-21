@@ -12,11 +12,11 @@ import {
   Navigation,
   Pin,
   Loader2,
+  X,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScrollButton } from '../../../../components/vault/ScrollButton';
-import { setDraggedVaultItem } from '../../../../lib/vaultDragDrop';
-import { X } from 'lucide-react';
+import { setDraggedVaultItem, clearDraggedVaultItem } from '../../../../lib/vaultDragDrop';
 
 export interface LocationListProps {
   locations: any[];
@@ -162,6 +162,7 @@ export const LocationList: React.FC<LocationListProps> = ({
               tabIndex={0}
               draggable
               onDragStartCapture={(event) => setDraggedVaultItem(event, item.id)}
+              onDragEnd={clearDraggedVaultItem}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               whileHover={{ x: 4 }}

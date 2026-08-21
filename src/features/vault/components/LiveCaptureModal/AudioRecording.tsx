@@ -13,6 +13,10 @@ interface AudioRecordingProps {
   onStop: () => void;
   recordingSize?: number;
   isWaveformEnabled?: boolean;
+  voiceClarityPreset?: string;
+  liveTranscript?: string;
+  isTranscribing?: boolean;
+  transcriptLang?: 'en-IN' | 'hi-IN';
 }
 
 export const AudioRecording: React.FC<AudioRecordingProps> = ({
@@ -23,6 +27,10 @@ export const AudioRecording: React.FC<AudioRecordingProps> = ({
   onStop,
   recordingSize = 0,
   isWaveformEnabled = true,
+  voiceClarityPreset = 'crystal',
+  liveTranscript = '',
+  isTranscribing = false,
+  transcriptLang = 'en-IN',
 }) => {
   const isMobile = useMediaQuery('(max-width: 640px)');
   const isTablet = useMediaQuery('(max-width: 1024px)');
@@ -266,14 +274,27 @@ export const AudioRecording: React.FC<AudioRecordingProps> = ({
             </p>
 
             {isRecording && (
-              <div className="flex items-center gap-4 text-[10px] sm:text-xs font-mono text-white/40">
-                {/* <span className="flex items-center gap-1.5">
-                  <span className="h-1 w-1 rounded-full bg-red-500 animate-pulse" />
-                  {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:
-                  {(recordingTime % 60).toString().padStart(2, '0')}
-                </span> */}
-                {/* <span className="w-px h-3 bg-white/10" /> */}
-                <span>{(recordingSize / (1024 * 1024)).toFixed(2)} MB</span>
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-4 text-[10px] sm:text-xs font-mono text-white/40">
+                  <span>{(recordingSize / (1024 * 1024)).toFixed(2)} MB</span>
+                </div>
+
+                {voiceClarityPreset && voiceClarityPreset !== 'off' && (
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-[10px] font-medium backdrop-blur-md shadow-sm">
+                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                    <span>Voice Clarity Active • Fan & Hum Filtered ({voiceClarityPreset})</span>
+                  </div>
+                )}
+
+                {liveTranscript && isTranscribing && (
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/80 border border-white/15 text-[10px] sm:text-xs backdrop-blur-2xl shadow-xl animate-in fade-in slide-in-from-bottom-1 max-w-sm">
+                    <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <span className="font-black text-[8px] uppercase tracking-wider text-emerald-400 shrink-0">
+                      {transcriptLang === 'hi-IN' ? 'HI' : 'EN'}
+                    </span>
+                    <p className="truncate text-white/90 font-medium">"{liveTranscript}"</p>
+                  </div>
+                )}
               </div>
             )}
           </motion.div>

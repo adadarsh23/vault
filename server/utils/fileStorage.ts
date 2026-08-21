@@ -453,14 +453,27 @@ const isLikelyPhotoBinary = (buffer: Buffer): boolean => {
       return true;
     }
   }
-  // Client-encrypted payload or envelope string
+  // Client-encrypted payload or envelope
+  if (isLikelyEncryptedBinary(buffer)) {
+    return true;
+  }
+  return false;
+};
+
+const isLikelyEncryptedBinary = (buffer: Buffer): boolean => {
+  if (!buffer || buffer.length < 6) return false;
+  // VCAS01 binary cascade cipher envelope
+  if (hasPrefix(buffer, [0x56, 0x43, 0x41, 0x53, 0x30, 0x31])) return true;
+  // Text-based encrypted payload, JSON envelope, or V2 modern token
   if (buffer.length >= 16) {
-    const textSample = buffer.subarray(0, Math.min(buffer.length, 64)).toString('utf8');
+    const textSample = buffer.subarray(0, Math.min(buffer.length, 128)).toString('utf8');
     if (
       textSample.startsWith('V2_ENC:') ||
+      textSample.startsWith('V2_MODERN:') ||
       textSample.includes('"iv"') ||
       textSample.includes('"wrappedDek"') ||
-      textSample.includes('"encryptedData"')
+      textSample.includes('"encryptedData"') ||
+      textSample.includes('"payload"')
     ) {
       return true;
     }
@@ -470,25 +483,77 @@ const isLikelyPhotoBinary = (buffer: Buffer): boolean => {
 
 const isLikelyVideoBinary = (buffer: Buffer): boolean => {
   if (!buffer.length) return false;
-  if (containsAsciiAt(buffer, 4, 'ftyp')) {
-    const brand = buffer.subarray(8, 12).toString('ascii');
-    if (['isom', 'iso2', 'mp41', 'mp42', 'avc1', 'M4V ', 'qt  ', '3gp4', '3gp5'].includes(brand)) {
-      return true;
-    }
+  // Encrypted vault video payload
+  if (isLikelyEncryptedBinary(buffer)) return true;
+  // Any ISO Base Media File Format (MP4, MOV, M4V, 3GP, 3G2, F4V, etc.)
+  if (containsAsciiAt(buffer, 4, 'ftyp') || containsAsciiAt(buffer, 0, 'ftyp')) return true;
+  // QuickTime movie atoms at offset 4 (moov, mdat, wide, free, skip)
+  if (
+    containsAsciiAt(buffer, 4, 'moov') ||
+    containsAsciiAt(buffer, 4, 'mdat') ||
+    containsAsciiAt(buffer, 4, 'wide') ||
+    containsAsciiAt(buffer, 4, 'free') ||
+    containsAsciiAt(buffer, 4, 'skip')
+  ) {
+    return true;
   }
-  if (hasPrefix(buffer, [0x1a, 0x45, 0xdf, 0xa3])) return true; // webm/mkv ebml
-  if (containsAsciiAt(buffer, 0, 'RIFF') && containsAsciiAt(buffer, 8, 'AVI ')) return true; // avi
+  // Matroska / WebM EBML
+  if (hasPrefix(buffer, [0x1a, 0x45, 0xdf, 0xa3])) return true;
+  // AVI
+  if (containsAsciiAt(buffer, 0, 'RIFF') && containsAsciiAt(buffer, 8, 'AVI ')) return true;
+  // FLV
+  if (containsAsciiAt(buffer, 0, 'FLV')) return true;
+  // MPEG-TS
+  if (buffer[0] === 0x47 && (buffer.length < 188 || buffer[188] === 0x47)) return true;
+  // MPEG-PS / VOB / MPG
+  if (hasPrefix(buffer, [0x00, 0x00, 0x01, 0xba]) || hasPrefix(buffer, [0x00, 0x00, 0x01, 0xb3])) {
+    return true;
+  }
+  // Ogg Video
+  if (containsAsciiAt(buffer, 0, 'OggS')) return true;
+  // ASF / WMV
+  if (hasPrefix(buffer, [0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11])) return true;
+  // MXF
+  if (hasPrefix(buffer, [0x06, 0x0e, 0x2b, 0x34])) return true;
+  // RealMedia
+  if (containsAsciiAt(buffer, 0, '.RMF')) return true;
+  // Raw H.264 / H.265 NAL units
+  if (hasPrefix(buffer, [0x00, 0x00, 0x00, 0x01]) || hasPrefix(buffer, [0x00, 0x00, 0x01])) {
+    return true;
+  }
   return false;
 };
 
 const isLikelyAudioBinary = (buffer: Buffer): boolean => {
   if (!buffer.length) return false;
+  // Encrypted vault audio payload
+  if (isLikelyEncryptedBinary(buffer)) return true;
+  // ID3 MP3 or MP3 sync frame
   if (containsAsciiAt(buffer, 0, 'ID3')) return true;
   if (buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0) return true;
+  // WAV
   if (containsAsciiAt(buffer, 0, 'RIFF') && containsAsciiAt(buffer, 8, 'WAVE')) return true;
-  if (containsAsciiAt(buffer, 0, 'OggS')) return true;
+  // FLAC
   if (containsAsciiAt(buffer, 0, 'fLaC')) return true;
-  if (containsAsciiAt(buffer, 4, 'ftyp')) return true;
+  // Ogg Audio / Opus
+  if (containsAsciiAt(buffer, 0, 'OggS')) return true;
+  // AAC ADTS
+  if (buffer[0] === 0xff && (buffer[1] & 0xf6) === 0xf0) return true;
+  // M4A / MP4 Audio
+  if (containsAsciiAt(buffer, 4, 'ftyp') || containsAsciiAt(buffer, 0, 'ftyp')) return true;
+  // AIFF / AIFC
+  if (
+    containsAsciiAt(buffer, 0, 'FORM') &&
+    (containsAsciiAt(buffer, 8, 'AIFF') || containsAsciiAt(buffer, 8, 'AIFC'))
+  ) {
+    return true;
+  }
+  // Core Audio Format (CAF)
+  if (containsAsciiAt(buffer, 0, 'caff')) return true;
+  // MIDI
+  if (containsAsciiAt(buffer, 0, 'MThd')) return true;
+  // ASF / WMA
+  if (hasPrefix(buffer, [0x30, 0x26, 0xb2, 0x75])) return true;
   return false;
 };
 

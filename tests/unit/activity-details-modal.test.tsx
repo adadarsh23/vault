@@ -1,3 +1,5 @@
+/* @vitest-environment jsdom */
+
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -37,10 +39,10 @@ describe('ActivityDetailsModal', () => {
     render(<ActivityDetailsModal entry={mockEntry} onClose={onCloseMock} />);
 
     // Header and title
-    expect(screen.getByText('Github Account Password')).toBeInTheDocument();
-    expect(screen.getByText('Password Created')).toBeInTheDocument();
-    expect(screen.getByText('Credentials')).toBeInTheDocument();
-    expect(screen.getByText('success')).toBeInTheDocument();
+    expect(screen.getAllByText('Github Account Password')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Password Created')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Credentials')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('success')[0]).toBeInTheDocument();
     expect(screen.getByText(/Synced/i)).toBeInTheDocument();
 
     // Event summary description

@@ -19,17 +19,24 @@ const uint8ArrayToBase64 = (array: Uint8Array): string => {
 };
 
 self.onmessage = async (event: MessageEvent<DeriveKeyWorkerRequest>) => {
-  const { password, salt, iterations, memorySize, parallelism, hashLength } = event.data;
-
   try {
+    if (!event.data || typeof event.data !== 'object') {
+      throw new Error('Invalid derivation request payload');
+    }
+
+    const { password, salt, iterations, memorySize, parallelism, hashLength } = event.data;
+    if (!password || !salt) {
+      throw new Error('Password and salt are required for derivation');
+    }
+
     const saltBuf = new TextEncoder().encode(salt.padEnd(32, '0').slice(0, 32));
     const hash = await argon2id({
       password,
       salt: saltBuf,
-      iterations,
-      memorySize,
-      parallelism,
-      hashLength,
+      iterations: Number.isFinite(iterations) ? iterations : 3,
+      memorySize: Number.isFinite(memorySize) ? memorySize : 65536,
+      parallelism: Number.isFinite(parallelism) ? parallelism : 4,
+      hashLength: Number.isFinite(hashLength) ? hashLength : 32,
       outputType: 'binary',
     });
 

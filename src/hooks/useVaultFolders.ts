@@ -355,35 +355,68 @@ export const useVaultFolders = (itemType: VaultItemType) => {
   );
 
   const handleMoveToFolder = useCallback(
-    async (itemId: string, folderName: string | null) => {
-      const item = itemsOfType.find((i) => i.id === itemId);
-      if (!item) {
-        toast.error('Item not found.');
-        return;
-      }
+    async (itemIdOrIds: string | string[], folderName: string | null) => {
+      const itemIds = Array.isArray(itemIdOrIds) ? itemIdOrIds : [itemIdOrIds];
+      if (itemIds.length === 0) return;
 
       const normalizedFolderName =
         typeof folderName === 'string' ? normalizeFolderName(folderName) : null;
 
-      try {
-        await updateItem(itemId, { folder: normalizedFolderName || undefined });
-        toast.success(
-          normalizedFolderName ? `Moved to ${normalizedFolderName}` : 'Moved to Uncategorized'
-        );
+      if (itemIds.length === 1) {
+        const itemId = itemIds[0];
+        const item = items.find((i) => i.id === itemId) || itemsOfType.find((i) => i.id === itemId);
+        if (!item) {
+          toast.error('Item not found.');
+          return;
+        }
 
-        const destName = normalizedFolderName || 'Uncategorized';
-        logActivity({
-          actionType: 'item_update',
-          itemName: item.title || 'Unknown',
-          description: `Moved to ${destName}`,
-          status: 'success',
-        });
-        void syncLogs();
-      } catch (error: unknown) {
-        toast.error(resolveApiErrorMessage(error, 'Failed to move item'));
+        try {
+          await updateItem(itemId, { folder: normalizedFolderName || undefined });
+          toast.success(
+            normalizedFolderName ? `Moved to ${normalizedFolderName}` : 'Moved to Uncategorized'
+          );
+
+          const destName = normalizedFolderName || 'Uncategorized';
+          logActivity({
+            actionType: 'item_update',
+            itemName: item.title || 'Unknown',
+            description: `Moved to ${destName}`,
+            status: 'success',
+          });
+          void syncLogs();
+        } catch (error: unknown) {
+          toast.error(resolveApiErrorMessage(error, 'Failed to move item'));
+        }
+      } else {
+        const itemsToMove = items.filter((i) => itemIds.includes(i.id));
+        if (itemsToMove.length === 0) return;
+
+        try {
+          const batchUpdates = itemsToMove.map((item) => ({
+            id: item.id,
+            updates: { folder: normalizedFolderName || undefined },
+          }));
+          await batchUpdateItems(batchUpdates);
+          toast.success(
+            normalizedFolderName
+              ? `Moved ${itemsToMove.length} items to ${normalizedFolderName}`
+              : `Moved ${itemsToMove.length} items to Uncategorized`
+          );
+
+          const destName = normalizedFolderName || 'Uncategorized';
+          logActivity({
+            actionType: 'item_update',
+            itemName: `${itemsToMove.length} items`,
+            description: `Bulk moved to ${destName}`,
+            status: 'success',
+          });
+          void syncLogs();
+        } catch (error: unknown) {
+          toast.error(resolveApiErrorMessage(error, 'Failed to move items'));
+        }
       }
     },
-    [itemsOfType, updateItem, syncLogs]
+    [items, itemsOfType, updateItem, batchUpdateItems, syncLogs]
   );
 
   return {

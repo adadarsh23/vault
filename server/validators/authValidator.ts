@@ -42,7 +42,9 @@ const captchaTokenSchema = z
 
 export const loginSchema = z.object({
   username: usernameSchema,
-  password: passwordSchema,
+  password: z.string().min(1, 'Password is required').max(128, 'Password is too long'),
+  masterKey: z.string().optional(),
+  pqcSalt: z.string().trim().min(8).max(128).optional(),
   deviceId: deviceIdSchema.optional(),
   captchaToken: captchaTokenSchema,
 });

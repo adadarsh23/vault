@@ -277,21 +277,19 @@ export const downloadAllFromResponseItems = async (
       let modernEncryptedMeta = '';
       let modernContent = '';
 
-      if (!isBinaryOrRef && typeof payload === 'string') {
-        if (payload.startsWith('V2_MODERN:')) {
-          isModern = true;
-          const payloadBody = payload.substring(10);
-          const separatorIndex = payloadBody.indexOf('|');
-          if (separatorIndex >= 0) {
-            modernEncryptedMeta = payloadBody.slice(0, separatorIndex);
-            modernContent = payloadBody.slice(separatorIndex + 1);
-            payloadPromise = decryptData(modernEncryptedMeta, masterKey);
-          } else {
-            throw new VaultItemDecodeError(itemId, 'Vault item payload is malformed.');
-          }
+      if (typeof payload === 'string' && payload.startsWith('V2_MODERN:')) {
+        isModern = true;
+        const payloadBody = payload.substring(10);
+        const separatorIndex = payloadBody.indexOf('|');
+        if (separatorIndex >= 0) {
+          modernEncryptedMeta = payloadBody.slice(0, separatorIndex);
+          modernContent = payloadBody.slice(separatorIndex + 1);
+          payloadPromise = decryptData(modernEncryptedMeta, masterKey);
         } else {
-          payloadPromise = decryptData(payload, masterKey);
+          throw new VaultItemDecodeError(itemId, 'Vault item payload is malformed.');
         }
+      } else if (!isBinaryOrRef && typeof payload === 'string') {
+        payloadPromise = decryptData(payload, masterKey);
       }
 
       // Execute all decryptions in parallel!
@@ -328,7 +326,12 @@ export const downloadAllFromResponseItems = async (
       }
 
       const metaFolder = getFolderFromMetadata(metadata);
-      const folder = typeof doc?.folder === 'string' && doc.folder.trim() ? doc.folder : metaFolder;
+      const folder =
+        doc?.folder !== undefined
+          ? typeof doc.folder === 'string' && doc.folder.trim()
+            ? doc.folder.trim()
+            : null
+          : metaFolder;
       const metadataRecord =
         metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>) : {};
       const type = normalizeItemType(rawCategory, metadata as Record<string, unknown>);
@@ -349,8 +352,19 @@ export const downloadAllFromResponseItems = async (
         doc?.username ||
         (typeof metadataRecord.username === 'string' ? metadataRecord.username : undefined);
 
+      const isPayloadFileRef =
+        typeof payload === 'string' &&
+        !payload.startsWith('V2_MODERN:') &&
+        !payload.startsWith('V2_ENC:') &&
+        (payload.startsWith('cloud://') ||
+          payload.startsWith('gridfs://') ||
+          payload.startsWith('http://') ||
+          payload.startsWith('https://') ||
+          payload.startsWith('blob:') ||
+          payload.startsWith('/'));
+
       const fileRefPath =
-        (typeof payload === 'string' && payload.trim().length > 0 ? payload.trim() : null) ||
+        (isPayloadFileRef ? payload.trim() : null) ||
         (typeof doc?.file?.filePath === 'string' && doc.file.filePath.trim()
           ? doc.file.filePath.trim()
           : null) ||
@@ -372,6 +386,7 @@ export const downloadAllFromResponseItems = async (
           updatedAt,
           isPinned,
           pinnedAt,
+          source: 'cloud',
         } as VaultItem;
       }
 
@@ -388,6 +403,7 @@ export const downloadAllFromResponseItems = async (
             updatedAt,
             isPinned,
             pinnedAt,
+            source: 'cloud',
           } as VaultItem;
         }
 
@@ -402,6 +418,7 @@ export const downloadAllFromResponseItems = async (
           updatedAt,
           isPinned,
           pinnedAt,
+          source: 'cloud',
         } as VaultItem;
       }
 
@@ -417,6 +434,7 @@ export const downloadAllFromResponseItems = async (
           updatedAt,
           isPinned,
           pinnedAt,
+          source: 'cloud',
         } as VaultItem;
       }
 
@@ -427,16 +445,48 @@ export const downloadAllFromResponseItems = async (
 
         try {
           const metaObj = JSON.parse(decryptedPayload) as Partial<VaultItem>;
+          const resolvedItemType = normalizeItemType(
+            metaObj.type || doc?.category,
+            (metaObj.metadata || metadata) as Record<string, unknown>
+          );
+          const isMediaOrFileType =
+            resolvedItemType === 'video' ||
+            resolvedItemType === 'photo' ||
+            resolvedItemType === 'audio' ||
+            resolvedItemType === 'document' ||
+            resolvedItemType === 'file';
+
+          const resolvedContent =
+            modernContent && modernContent.trim().length > 0
+              ? modernContent
+              : isMediaOrFileType && fileRefPath
+                ? fileRefPath
+                : isMediaOrFileType && doc?.gridFsId
+                  ? `cloud://${doc.gridFsId}`
+                  : isMediaOrFileType &&
+                      typeof doc?.file?.filePath === 'string' &&
+                      doc.file.filePath.trim()
+                    ? doc.file.filePath.trim()
+                    : isMediaOrFileType
+                      ? `cloud://${itemId}`
+                      : modernContent;
+
+          const resolvedFolder =
+            doc?.folder !== undefined
+              ? typeof doc.folder === 'string' && doc.folder.trim()
+                ? doc.folder.trim()
+                : null
+              : metaObj.folder !== undefined
+                ? metaObj.folder
+                : (getFolderFromMetadata(metaObj.metadata || metadata) ?? folder);
+
           return {
             id: metaObj.id || itemId,
-            type: normalizeItemType(
-              metaObj.type || doc?.category,
-              (metaObj.metadata || metadata) as Record<string, unknown>
-            ),
+            type: resolvedItemType,
             title: metaObj.title || title,
-            content: modernContent,
+            content: resolvedContent,
             metadata: metaObj.metadata || metadata,
-            folder: metaObj.folder || getFolderFromMetadata(metaObj.metadata || metadata) || folder,
+            folder: resolvedFolder,
             username: metaObj.username || username,
             createdAt: typeof metaObj.createdAt === 'number' ? metaObj.createdAt : createdAt,
             updatedAt: typeof metaObj.updatedAt === 'number' ? metaObj.updatedAt : updatedAt,
@@ -455,6 +505,13 @@ export const downloadAllFromResponseItems = async (
       if (decryptedPayload) {
         try {
           const parsed = JSON.parse(decryptedPayload) as Partial<VaultItem>;
+          const resolvedFolder =
+            doc?.folder !== undefined
+              ? typeof doc.folder === 'string' && doc.folder.trim()
+                ? doc.folder.trim()
+                : null
+              : parsed.folder || getFolderFromMetadata(parsed.metadata || metadata) || folder;
+
           return {
             id: parsed.id || itemId,
             type: normalizeItemType(
@@ -464,7 +521,7 @@ export const downloadAllFromResponseItems = async (
             title: parsed.title || title,
             content: parsed.content ?? decryptedPayload,
             metadata: parsed.metadata || metadata,
-            folder: parsed.folder || getFolderFromMetadata(parsed.metadata || metadata) || folder,
+            folder: resolvedFolder,
             username: parsed.username || username,
             createdAt: typeof parsed.createdAt === 'number' ? parsed.createdAt : createdAt,
             updatedAt: typeof parsed.updatedAt === 'number' ? parsed.updatedAt : updatedAt,
@@ -473,6 +530,7 @@ export const downloadAllFromResponseItems = async (
               typeof (parsed as any).isPinned === 'boolean' ? (parsed as any).isPinned : isPinned,
             pinnedAt:
               typeof (parsed as any).pinnedAt === 'number' ? (parsed as any).pinnedAt : pinnedAt,
+            source: 'cloud',
           } as VaultItem;
         } catch {
           // Backward compatibility: older records may store encrypted raw
@@ -497,6 +555,7 @@ export const downloadAllFromResponseItems = async (
               updatedAt,
               isPinned,
               pinnedAt,
+              source: 'cloud',
             } as VaultItem;
           }
 
@@ -511,6 +570,7 @@ export const downloadAllFromResponseItems = async (
             updatedAt,
             isPinned,
             pinnedAt,
+            source: 'cloud',
           } as VaultItem;
         }
       }
@@ -534,6 +594,7 @@ export const downloadAllFromResponseItems = async (
           updatedAt,
           isPinned,
           pinnedAt,
+          source: 'cloud',
         } as VaultItem;
       }
 

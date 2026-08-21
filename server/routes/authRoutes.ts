@@ -66,15 +66,35 @@ const normalizeRateLimitKeySegment = (value: unknown): string => {
   return normalized.slice(0, 128);
 };
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 const authLimiterWindowMs = toPositiveInteger(
   process.env.AUTH_RATE_LIMIT_WINDOW_MS,
   15 * 60 * 1000
 );
-const authLimiterMax = toPositiveInteger(process.env.AUTH_RATE_LIMIT_MAX, 20);
-const refreshLimiterMax = toPositiveInteger(process.env.AUTH_REFRESH_RATE_LIMIT_MAX, 30);
+const authLimiterMax = toPositiveInteger(
+  process.env.AUTH_RATE_LIMIT_MAX,
+  isDev ? 500 : 100
+);
+const refreshLimiterMax = toPositiveInteger(
+  process.env.AUTH_REFRESH_RATE_LIMIT_MAX,
+  isDev ? 500 : 100
+);
+const usernameCheckLimiterMax = toPositiveInteger(
+  process.env.AUTH_USERNAME_CHECK_RATE_LIMIT_MAX,
+  isDev ? 1000 : 200
+);
 const changePasswordLimiterMax = toPositiveInteger(
   process.env.AUTH_CHANGE_PASSWORD_RATE_LIMIT_MAX,
-  5
+  isDev ? 50 : 20
+);
+const masterKeyCaptchaLimiterMax = toPositiveInteger(
+  process.env.MASTER_KEY_CAPTCHA_RATE_LIMIT_MAX,
+  isDev ? 100 : 30
+);
+const cloudUnlockCaptchaLimiterMax = toPositiveInteger(
+  process.env.AUTH_CLOUD_UNLOCK_CAPTCHA_RATE_LIMIT_MAX,
+  isDev ? 200 : 50
 );
 
 const getAuthRateLimitKey = (req: express.Request) => {
@@ -110,13 +130,10 @@ const refreshLimiter = rateLimit({
 
 const usernameCheckLimiter = rateLimit({
   windowMs: authLimiterWindowMs,
-  max: toPositiveInteger(process.env.AUTH_USERNAME_CHECK_RATE_LIMIT_MAX, 40),
+  max: usernameCheckLimiterMax,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    const username = normalizeRateLimitKeySegment(req.query?.username);
-    return `${getClientIp(req)}:${req.path}:${username}`;
-  },
+  keyGenerator: (req) => `${getClientIp(req)}:${req.path}`,
   message: {
     success: false,
     message: 'Too many username checks. Please try again later.',
@@ -140,7 +157,7 @@ const changePasswordLimiter = rateLimit({
 
 const masterKeyCaptchaLimiter = rateLimit({
   windowMs: authLimiterWindowMs,
-  max: toPositiveInteger(process.env.MASTER_KEY_CAPTCHA_RATE_LIMIT_MAX, 6),
+  max: masterKeyCaptchaLimiterMax,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) =>
@@ -154,7 +171,7 @@ const masterKeyCaptchaLimiter = rateLimit({
 
 const cloudUnlockCaptchaLimiter = rateLimit({
   windowMs: authLimiterWindowMs,
-  max: toPositiveInteger(process.env.AUTH_CLOUD_UNLOCK_CAPTCHA_RATE_LIMIT_MAX, 12),
+  max: cloudUnlockCaptchaLimiterMax,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => `${getClientIp(req)}:${req.path}`,

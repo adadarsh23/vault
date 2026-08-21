@@ -1,5 +1,6 @@
 import { getOrCreateCryptoKey, AES_GCM_IV_LENGTH, AES_GCM_AAD } from './cryptoPrimitives';
 import { detectMimeTypeFromBytes } from './encryption';
+import { createTrackedBlobUrl } from './blobRegistry';
 
 async function decryptBlock(
   cryptoKey: CryptoKey,
@@ -172,5 +173,5 @@ export async function getDecryptStreamResponseUrl(
   const finalBlob =
     finalMimeType && finalMimeType !== blob.type ? blob.slice(0, blob.size, finalMimeType) : blob;
 
-  return URL.createObjectURL(finalBlob);
+  return createTrackedBlobUrl(finalBlob);
 }

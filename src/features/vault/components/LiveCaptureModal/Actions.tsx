@@ -5,6 +5,8 @@ import {
   Check,
   Plus,
   Square,
+  Pause,
+  Play,
   Info,
   Camera,
   User,
@@ -15,10 +17,13 @@ import {
   Shield,
   Gauge,
   MoveDiagonal2,
+  CameraIcon,
+  RotateCcw,
 } from 'lucide-react';
+
 import { Button } from '../../../../components/ui/Button';
 import { cn } from '../../../../lib/utils';
-import { CaptureType } from './types';
+import { CaptureType, CaptureRatio, CaptureQuality, CaptureSize, BurstOption } from './types';
 
 interface ActionsProps {
   type: CaptureType;
@@ -27,23 +32,28 @@ interface ActionsProps {
   isSuccess: boolean;
   isEncrypting: boolean;
   isRecording: boolean;
+  isPaused?: boolean;
   isInfoEnabled: boolean;
   onRetake: () => void;
   onSave: () => void;
   onTakePhoto: () => void;
   onStartRecording: () => void;
   onStopRecording: () => void;
+  onTogglePause?: () => void;
+  onTakeSnapshot?: () => void;
+  burstCount?: BurstOption;
   onToggleInfo: () => void;
   onToggleCamera: () => void;
   onToggleHorizontalFlip: () => void;
   cameraFacing: 'user' | 'environment';
   isHorizontallyFlipped: boolean;
-  captureRatio: '1:1' | '4:5' | '3:4' | '4:3' | '2:3' | '3:2' | '9:16' | '16:9' | '21:9';
-  captureQuality: 'high' | 'balanced' | 'low';
-  captureSize: 'full' | 'medium' | 'compact';
+  captureRatio: CaptureRatio;
+  captureQuality: CaptureQuality;
+  captureSize: CaptureSize;
   onCycleCaptureRatio: () => void;
   onCycleCaptureQuality: () => void;
   onCycleCaptureSize: () => void;
+  isTimelapse?: boolean;
 }
 
 export const Actions: React.FC<ActionsProps> = ({
@@ -53,12 +63,16 @@ export const Actions: React.FC<ActionsProps> = ({
   isSuccess,
   isEncrypting,
   isRecording,
+  isPaused = false,
   isInfoEnabled,
   onRetake,
   onSave,
   onTakePhoto,
   onStartRecording,
   onStopRecording,
+  onTogglePause,
+  onTakeSnapshot,
+  burstCount = 1,
   onToggleInfo,
   onToggleCamera,
   onToggleHorizontalFlip,
@@ -70,6 +84,7 @@ export const Actions: React.FC<ActionsProps> = ({
   onCycleCaptureRatio,
   onCycleCaptureQuality,
   onCycleCaptureSize,
+  isTimelapse = false,
 }) => {
   const qualityLabel =
     captureQuality === 'high' ? 'High' : captureQuality === 'balanced' ? 'Balanced' : 'Low';
@@ -83,35 +98,29 @@ export const Actions: React.FC<ActionsProps> = ({
   const RatioIcon =
     captureRatio === '1:1'
       ? SquareDashed
-      : captureRatio === '4:5'
+      : captureRatio === '4:5' || captureRatio === '3:4' || captureRatio === '2:3'
         ? RectangleVertical
-        : captureRatio === '3:4'
-          ? RectangleVertical
-          : captureRatio === '4:3'
-            ? Crop
-            : captureRatio === '2:3'
-              ? RectangleVertical
-              : captureRatio === '3:2'
-                ? Crop
-                : captureRatio === '21:9'
-                  ? Crop
-                  : Crop;
+        : Crop;
 
   return (
-    <div className="z-10 flex items-center justify-center p-2 md:p-4 bg-black/30 border-t border-white/20 backdrop-blur-3xl relative">
+    <div className="z-15 shrink-0 flex items-center justify-center p-2.5 sm:p-3 md:p-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] bg-zinc-950/95 border-t border-white/15 backdrop-blur-3xl relative select-none">
       <div className="absolute inset-0 bg-linear-to-t from-primary/10 to-transparent pointer-events-none opacity-60" />
 
       {capturedBlob ? (
-        <div className="flex w-full max-w-xl items-center justify-center gap-3 md:gap-6 relative z-10">
+        <div className="flex w-full max-w-md items-center justify-center gap-2 sm:gap-4 relative z-10 px-2">
+          {/* Retake Button */}
           <Button
             type="button"
             variant="ghost"
             size="lg"
             onClick={onRetake}
-            className="h-11 md:h-14 flex-1 rounded-xl md:rounded-2xl bg-white/3 px-4 md:px-8 text-white/60 hover:bg-white/10 hover:text-white border border-white/5 font-black uppercase tracking-widest text-[9px] md:text-xs transition-all active:scale-95"
+            className="h-11 sm:h-12 flex-1 rounded-2xl bg-white/5 px-3 sm:px-6 text-white/70 hover:bg-white/10 hover:text-white border border-white/10 font-bold uppercase tracking-wider text-[11px] sm:text-xs transition-all active:scale-95 flex items-center justify-center gap-2"
           >
-            Retake
+            <RotateCcw className="h-4 w-4 shrink-0" />
+            <span>Retake</span>
           </Button>
+
+          {/* Upload / Save to Vault Button */}
           <Button
             type="button"
             variant="primary"
@@ -119,40 +128,30 @@ export const Actions: React.FC<ActionsProps> = ({
             onClick={onSave}
             disabled={isSaving || isSuccess}
             className={cn(
-              'group relative h-11 md:h-14 flex-[1.5] overflow-hidden rounded-xl md:rounded-2xl px-6 md:px-10 text-black transition-all active:scale-95 shadow-2xl',
+              'group relative h-11 sm:h-12 flex-[1.4] overflow-hidden rounded-2xl px-4 sm:px-8 text-black transition-all active:scale-95 shadow-xl',
               isSuccess ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-primary shadow-primary/20',
               (isSaving || isSuccess) && 'cursor-not-allowed opacity-80'
             )}
           >
-            <div className="relative z-10 flex items-center justify-center gap-2 md:gap-3">
+            <div className="relative z-10 flex items-center justify-center gap-2">
               {isEncrypting ? (
-                <Shield className="h-4 w-4 md:h-5 md:w-5 animate-pulse fill-black/10" />
+                <Shield className="h-4 w-4 sm:h-5 sm:w-5 animate-pulse fill-black/10 shrink-0" />
               ) : isSaving ? (
-                <CloudUpload className="h-4 w-4 md:h-5 md:w-5 animate-bounce" />
+                <CloudUpload className="h-4 w-4 sm:h-5 sm:w-5 animate-bounce shrink-0" />
               ) : isSuccess ? (
-                <Check className="h-4 w-4 md:h-5 md:w-5 stroke-[4px]" />
+                <Check className="h-4 w-4 sm:h-5 sm:w-5 stroke-[4px] shrink-0" />
               ) : (
-                <Plus className="h-4 w-4 md:h-5 md:w-5 stroke-[3px]" />
+                <Plus className="h-4 w-4 sm:h-5 sm:w-5 stroke-[3px] shrink-0" />
               )}
-              <div className="flex flex-col items-start leading-none text-left">
-                <span className="text-xs md:text-sm font-black uppercase tracking-widest">
-                  {isEncrypting
-                    ? 'Encrypting'
-                    : isSaving
-                      ? 'Syncing'
-                      : isSuccess
-                        ? 'Transmitted'
-                        : 'Upload'}
-                </span>
-                {!isEncrypting && !isSaving && !isSuccess && (
-                  <span
-                    key="e2ee-badge"
-                    className="hidden sm:block text-[8px] md:text-[9px] font-bold opacity-70 tracking-wider"
-                  >
-                    E2EE
-                  </span>
-                )}
-              </div>
+              <span className="text-xs sm:text-sm font-black uppercase tracking-wider truncate">
+                {isEncrypting
+                  ? 'Encrypting'
+                  : isSaving
+                    ? 'Syncing'
+                    : isSuccess
+                      ? 'Saved'
+                      : 'Save Vault'}
+              </span>
             </div>
 
             {!isSaving && !isSuccess && (
@@ -171,24 +170,9 @@ export const Actions: React.FC<ActionsProps> = ({
       ) : (
         <div className="relative w-full">
           {(type === 'photo' || type === 'video') && (
-            <div className="grid grid-cols-3 items-center gap-2">
-              <div className="flex items-center gap-2 justify-start">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={onToggleInfo}
-                  className={cn(
-                    'h-9 w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/60 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200',
-                    isInfoEnabled && 'text-primary border-primary/20 bg-primary/10'
-                  )}
-                  disabled={isVideoRecording}
-                  title="Capture info"
-                  aria-label="Toggle capture info overlay"
-                >
-                  <Info className="h-4 w-4 md:h-4 md:w-4" />
-                </Button>
-
+            <div className="grid grid-cols-3 items-center gap-1 sm:gap-2">
+              {/* Left Controls: Ratio & Size & Info */}
+              <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 justify-start">
                 <Button
                   type="button"
                   variant="ghost"
@@ -196,20 +180,14 @@ export const Actions: React.FC<ActionsProps> = ({
                   onClick={onCycleCaptureRatio}
                   disabled={disableCaptureTuning}
                   className={cn(
-                    'h-9 w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/80 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200',
+                    'h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/80 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200 active:scale-90',
                     'text-primary border-primary/20 bg-primary/10'
                   )}
                   title={`Aspect ratio: ${captureRatio}`}
                   aria-label={`Aspect ratio: ${captureRatio}`}
                 >
-                  <RatioIcon className="h-4 w-4 md:h-4 md:w-4" />
+                  <RatioIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
-                <span
-                  className="hidden lg:inline-flex min-w-[46px] items-center justify-center rounded-md border border-primary/30 bg-primary/10 px-2 py-1 text-[10px] font-bold tracking-wide text-primary"
-                  aria-label={`Current ratio ${captureRatio}`}
-                >
-                  {captureRatio}
-                </span>
 
                 <Button
                   type="button"
@@ -218,7 +196,7 @@ export const Actions: React.FC<ActionsProps> = ({
                   onClick={onCycleCaptureSize}
                   disabled={disableCaptureTuning}
                   className={cn(
-                    'h-9 w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/60 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200',
+                    'h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/60 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200 active:scale-90',
                     captureSize === 'full'
                       ? 'text-sky-300 border-sky-400/30 bg-sky-500/10'
                       : captureSize === 'medium'
@@ -228,49 +206,130 @@ export const Actions: React.FC<ActionsProps> = ({
                   title={`Size: ${sizeLabel}`}
                   aria-label={`Capture size: ${sizeLabel}`}
                 >
-                  <MoveDiagonal2 className="h-4 w-4 md:h-4 md:w-4" />
+                  <MoveDiagonal2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
               </div>
 
-              <div className="flex items-center justify-center">
+              {/* Center Shutter / Record & Pause Controls */}
+              <div className="flex items-center justify-center gap-2 sm:gap-3">
                 {type === 'photo' ? (
                   <button
                     type="button"
                     onClick={onTakePhoto}
-                    className="group relative flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full border-[5px] border-white transition-all hover:scale-110 active:scale-90 shadow-2xl"
+                    className={cn(
+                      'group relative flex h-14 w-14 sm:h-15 sm:w-15 md:h-16 md:w-16 items-center justify-center rounded-full border-[4px] sm:border-[5px] transition-all hover:scale-105 active:scale-95 shadow-2xl shrink-0',
+                      burstCount > 1
+                        ? 'border-amber-400 shadow-amber-400/20'
+                        : 'border-white shadow-white/10'
+                    )}
+                    aria-label={burstCount > 1 ? `Take ${burstCount} Burst Photos` : 'Take Photo'}
                   >
-                    <div className="h-11 w-11 md:h-12 md:w-12 rounded-full bg-white group-hover:scale-90 transition-transform" />
-                    <div className="absolute -inset-4 rounded-full border border-white/5 animate-ping opacity-20 pointer-events-none" />
+                    <div
+                      className={cn(
+                        'h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 rounded-full group-hover:scale-90 transition-transform shadow-inner',
+                        burstCount > 1 ? 'bg-amber-400' : 'bg-white'
+                      )}
+                    />
+                    {burstCount > 1 && (
+                      <span className="absolute text-[10px] font-black text-black select-none pointer-events-none">
+                        {burstCount}x
+                      </span>
+                    )}
+                    <div className="absolute -inset-3 rounded-full border border-white/10 animate-ping opacity-20 pointer-events-none" />
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={isRecording ? onStopRecording : onStartRecording}
-                    className={cn(
-                      'group relative flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full border-[5px] transition-all hover:scale-110 active:scale-90 shadow-2xl',
-                      isRecording
-                        ? 'border-red-500 shadow-red-500/20'
-                        : 'border-white shadow-white/5'
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    {/* In-Video Snapshot Button during active recording */}
+                    {isRecording && onTakeSnapshot && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={onTakeSnapshot}
+                        className="h-10 w-10 sm:h-11 sm:w-11 rounded-full border border-white/20 bg-black/60 text-white hover:bg-white/10 hover:text-primary transition-all shadow-lg active:scale-90"
+                        title="Take Still Photo while recording"
+                        aria-label="Take Still Photo"
+                      >
+                        <CameraIcon className="h-4 w-4" />
+                      </Button>
                     )}
-                  >
-                    {isRecording ? (
-                      <Square className="h-6 w-6 md:h-8 md:w-8 fill-red-500 text-red-500 rounded-sm" />
-                    ) : (
-                      <div
+
+                    {/* Main Record / Stop Button */}
+                    <button
+                      type="button"
+                      onClick={isRecording ? onStopRecording : onStartRecording}
+                      className={cn(
+                        'group relative flex h-14 w-14 sm:h-15 sm:w-15 md:h-16 md:w-16 items-center justify-center rounded-full border-[4px] sm:border-[5px] transition-all hover:scale-105 active:scale-95 shadow-2xl shrink-0',
+                        isRecording
+                          ? isTimelapse
+                            ? 'border-amber-400 shadow-amber-400/40'
+                            : 'border-red-500 shadow-red-500/30'
+                          : isTimelapse
+                            ? 'border-amber-300 shadow-amber-300/30'
+                            : 'border-white shadow-white/10'
+                      )}
+                      aria-label={isRecording ? 'Stop Recording' : 'Start Recording'}
+                    >
+                      {isRecording ? (
+                        <Square
+                          className={cn(
+                            'h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 rounded-sm',
+                            isTimelapse
+                              ? 'fill-amber-400 text-amber-400'
+                              : 'fill-red-500 text-red-500'
+                          )}
+                        />
+                      ) : (
+                        <div
+                          className={cn(
+                            'h-9 w-9 sm:h-10 sm:w-10 md:h-11 md:w-11 rounded-full transition-all group-hover:scale-90 shadow-inner',
+                            isTimelapse
+                              ? 'bg-amber-400'
+                              : type === 'video'
+                                ? 'bg-red-500'
+                                : 'bg-primary'
+                          )}
+                        />
+                      )}
+                      {isRecording && !isPaused && (
+                        <div
+                          className={cn(
+                            'absolute -inset-3 rounded-full border animate-ping pointer-events-none',
+                            isTimelapse ? 'border-amber-400/40' : 'border-red-500/30'
+                          )}
+                        />
+                      )}
+                    </button>
+
+                    {/* Pause / Resume Button during active recording */}
+                    {isRecording && onTogglePause && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={onTogglePause}
                         className={cn(
-                          'h-10 w-10 md:h-12 md:w-12 rounded-full transition-all group-hover:scale-90',
-                          type === 'video' ? 'bg-red-500' : 'bg-primary'
+                          'h-10 w-10 sm:h-11 sm:w-11 rounded-full border transition-all shadow-lg',
+                          isPaused
+                            ? 'bg-amber-500/20 border-amber-400 text-amber-300 hover:bg-amber-500/30'
+                            : 'bg-black/60 border-white/20 text-white hover:bg-white/10'
                         )}
-                      />
+                        title={isPaused ? 'Resume Recording' : 'Pause Recording'}
+                        aria-label={isPaused ? 'Resume Recording' : 'Pause Recording'}
+                      >
+                        {isPaused ? (
+                          <Play className="h-4 w-4 fill-amber-300 text-amber-300" />
+                        ) : (
+                          <Pause className="h-4 w-4 fill-white text-white" />
+                        )}
+                      </Button>
                     )}
-                    {isRecording && (
-                      <div className="absolute -inset-4 rounded-full border border-red-500/20 animate-ping pointer-events-none" />
-                    )}
-                  </button>
+                  </div>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 justify-end">
+              {/* Right Controls: Quality & Mirror & Flip Camera */}
+              <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 justify-end">
                 <Button
                   type="button"
                   variant="ghost"
@@ -278,7 +337,7 @@ export const Actions: React.FC<ActionsProps> = ({
                   onClick={onCycleCaptureQuality}
                   disabled={disableCaptureTuning}
                   className={cn(
-                    'h-9 w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/60 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200',
+                    'h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/60 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200',
                     captureQuality === 'high'
                       ? 'text-emerald-300 border-emerald-400/30 bg-emerald-500/10'
                       : captureQuality === 'balanced'
@@ -288,7 +347,7 @@ export const Actions: React.FC<ActionsProps> = ({
                   title={`Quality: ${qualityLabel}`}
                   aria-label={`Capture quality: ${qualityLabel}`}
                 >
-                  <Gauge className="h-4 w-4 md:h-4 md:w-4" />
+                  <Gauge className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
 
                 <Button
@@ -298,7 +357,7 @@ export const Actions: React.FC<ActionsProps> = ({
                   onClick={onToggleHorizontalFlip}
                   disabled={isVideoRecording}
                   className={cn(
-                    'h-9 w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/60 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200',
+                    'h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/60 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200',
                     isHorizontallyFlipped && 'text-primary border-primary/20 bg-primary/10'
                   )}
                   title={
@@ -312,7 +371,7 @@ export const Actions: React.FC<ActionsProps> = ({
                       : 'Flip view left-right'
                   }
                 >
-                  <FlipHorizontal className="h-4 w-4 md:h-4 md:w-4" />
+                  <FlipHorizontal className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
 
                 <Button
@@ -321,7 +380,7 @@ export const Actions: React.FC<ActionsProps> = ({
                   size="icon"
                   onClick={onToggleCamera}
                   disabled={isVideoRecording}
-                  className="h-9 w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/60 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200"
+                  className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/60 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200"
                   title={
                     isFrontCamera
                       ? 'Front camera active. Tap to switch to back camera.'
@@ -334,9 +393,9 @@ export const Actions: React.FC<ActionsProps> = ({
                   }
                 >
                   {isFrontCamera ? (
-                    <User className="h-4 w-4 md:h-4 md:w-4" />
+                    <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   ) : (
-                    <Camera className="h-4 w-4 md:h-4 md:w-4" />
+                    <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   )}
                 </Button>
               </div>
@@ -344,9 +403,9 @@ export const Actions: React.FC<ActionsProps> = ({
           )}
 
           {type === 'audio' && (
-            <div className="h-14 flex flex-col items-center justify-center">
-              <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em]">
-                Session Link Active
+            <div className="h-12 flex flex-col items-center justify-center">
+              <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em]">
+                Live Audio Interlink Active
               </p>
             </div>
           )}

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { logActivity, getSessionName } from '../lib/activity';
 import { logger } from '../lib/logger';
+import { touchCryptoKeyCache, clearCryptoKeyCache } from '../lib/cryptoPrimitives';
 
 interface InactivityOptions {
   isUnlocked: boolean;
@@ -26,7 +27,7 @@ const normalizeAutoLockDuration = (value: number): number => {
 
 /**
  * useInactivity
- * Manages auto-locking and UI blurring based on user activity and tab visibility.
+ * Manages auto-locking, RAM key shredding, and UI blurring based on user activity and tab visibility.
  */
 export const useInactivity = ({
   isUnlocked,
@@ -48,6 +49,7 @@ export const useInactivity = ({
 
     let inactivityTimeout: ReturnType<typeof setTimeout> | null = null;
     let lockTimeout: ReturnType<typeof setTimeout> | null = null;
+    let countdownStartTimeout: ReturnType<typeof setTimeout> | null = null;
     let countdownInterval: ReturnType<typeof setInterval> | null = null;
     let isDisposed = false;
     let hasAutoLocked = false;
@@ -62,6 +64,10 @@ export const useInactivity = ({
         clearTimeout(lockTimeout);
         lockTimeout = null;
       }
+      if (countdownStartTimeout) {
+        clearTimeout(countdownStartTimeout);
+        countdownStartTimeout = null;
+      }
       if (countdownInterval) {
         clearInterval(countdownInterval);
         countdownInterval = null;
@@ -73,6 +79,7 @@ export const useInactivity = ({
       hasAutoLocked = true;
 
       try {
+        clearCryptoKeyCache();
         lock();
         toast.info('Session expired. Vault is secure.');
         logActivity({
@@ -106,6 +113,7 @@ export const useInactivity = ({
       setCountdownSeconds(null);
       hasAutoLocked = false;
       clearTimers();
+      touchCryptoKeyCache();
 
       if (!isUnlocked) return;
 
@@ -127,7 +135,7 @@ export const useInactivity = ({
         // Start checking for countdown when we get close
         const timeUntilCountdown = lockDelayMs - COUNTDOWN_THRESHOLD_SEC * 1000;
         if (timeUntilCountdown > 0) {
-          setTimeout(() => {
+          countdownStartTimeout = setTimeout(() => {
             if (isDisposed || hasAutoLocked || lockTime < Date.now()) return;
             updateCountdown();
             countdownInterval = setInterval(updateCountdown, 1000);

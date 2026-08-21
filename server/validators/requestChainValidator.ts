@@ -173,8 +173,7 @@ export const multipartRouteParamsValidation = [
   param('partNumber')
     .optional()
     .isInt({ min: 1, max: 2000 })
-    .withMessage('partNumber must be an integer between 1 and 2000.')
-    .toInt(),
+    .withMessage('partNumber must be an integer between 1 and 2000.'),
 ];
 
 export const multipartStartBodyValidation = [
@@ -205,7 +204,7 @@ export const multipartStartBodyValidation = [
     .withMessage(`fileSize must be between 1 and ${maxUploadFileSizeBytes}.`)
     .toInt(),
   body('folder')
-    .optional()
+    .optional({ values: 'null' })
     .isString()
     .withMessage('folder must be a string.')
     .bail()
@@ -213,7 +212,7 @@ export const multipartStartBodyValidation = [
     .isLength({ max: 256 })
     .withMessage('folder must be 256 characters or fewer.'),
   body('resumeUploadId')
-    .optional()
+    .optional({ values: 'null' })
     .isString()
     .withMessage('resumeUploadId must be a string.')
     .bail()
@@ -221,7 +220,7 @@ export const multipartStartBodyValidation = [
     .matches(UPLOAD_ID_PATTERN)
     .withMessage('resumeUploadId format is invalid.'),
   body('keepMetadata')
-    .optional()
+    .optional({ values: 'null' })
     .isBoolean()
     .withMessage('keepMetadata must be a boolean.')
     .toBoolean(),
@@ -230,7 +229,7 @@ export const multipartStartBodyValidation = [
 export const multipartCompleteBodyValidation = [
   body().isObject().withMessage('Request body must be a JSON object.'),
   body('fileSha256')
-    .optional()
+    .optional({ values: 'null' })
     .isString()
     .withMessage('fileSha256 must be a string.')
     .bail()
@@ -238,7 +237,7 @@ export const multipartCompleteBodyValidation = [
     .matches(HASH_HEX_64_PATTERN)
     .withMessage('fileSha256 must be a 64-character hex hash.'),
   body('deviceId')
-    .optional()
+    .optional({ values: 'null' })
     .isString()
     .withMessage('deviceId must be a string.')
     .bail()
@@ -249,7 +248,7 @@ export const multipartCompleteBodyValidation = [
     .matches(DEVICE_ID_PATTERN)
     .withMessage('deviceId format is invalid.'),
   body('clientUpdatedAt')
-    .optional()
+    .optional({ values: 'null' })
     .isString()
     .withMessage('clientUpdatedAt must be a string.')
     .bail()

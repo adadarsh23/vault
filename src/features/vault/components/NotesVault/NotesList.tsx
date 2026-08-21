@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollButton } from '../../../../components/vault/ScrollButton';
-import { setDraggedVaultItem } from '../../../../lib/vaultDragDrop';
+import { setDraggedVaultItem, clearDraggedVaultItem } from '../../../../lib/vaultDragDrop';
 
 export interface NotesListProps {
   notes: any[];
@@ -384,6 +384,7 @@ export const NotesList: React.FC<NotesListProps> = ({
               tabIndex={0}
               draggable
               onDragStartCapture={(event) => setDraggedVaultItem(event, note.id)}
+              onDragEnd={clearDraggedVaultItem}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               whileHover={{ x: 4 }}

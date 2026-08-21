@@ -65,16 +65,18 @@ export const safeDecodeURIComponent = (value: string): string => {
   }
 };
 
-export const resolvePayloadEncoding = (payload: string | Buffer) => {
+export const resolvePayloadEncoding = (
+  payload: string | Buffer
+): 'utf-8' | 'binary-base64' | 'modern' => {
   if (Buffer.isBuffer(payload)) {
-    return 'binary-base64' as const;
+    return 'binary-base64';
   }
 
   if (typeof payload === 'string' && payload.startsWith('V2_MODERN:')) {
-    return 'modern' as const;
+    return 'modern';
   }
 
-  return 'legacy-encrypted' as const;
+  return 'utf-8';
 };
 
 export const parseCategory = (value: unknown): string => {

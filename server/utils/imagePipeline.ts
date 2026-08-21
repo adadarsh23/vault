@@ -61,11 +61,9 @@ const stripExifFromJpeg = (buffer: Buffer): Buffer => {
       return buffer;
     }
     const nextOffset = offset + 2 + segmentLength;
-    const isExifSegment =
-      marker === 0xe1 &&
-      offset + 10 <= buffer.length &&
-      buffer.subarray(offset + 4, offset + 10).toString('ascii') === 'Exif\u0000\u0000';
-    if (!isExifSegment) {
+    // Strip APP1..APP15 (0xE1..0xEF) and COM (0xFE) metadata segments
+    const isMetadataSegment = (marker >= 0xe1 && marker <= 0xef) || marker === 0xfe;
+    if (!isMetadataSegment) {
       chunks.push(buffer.subarray(offset, nextOffset));
     }
     offset = nextOffset;

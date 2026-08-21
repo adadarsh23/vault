@@ -301,6 +301,7 @@ export const issueUserSession = (
 export const authenticateUser = async (input: {
   username: string;
   password: string;
+  masterKey?: string;
   deviceId?: string;
   ipAddress?: string;
   userAgent?: string;
@@ -317,7 +318,7 @@ export const authenticateUser = async (input: {
     ],
   };
 
-  let user = await User.findOne(userQuery).select('+password').exec();
+  let user = await User.findOne(userQuery).select('+password +masterKey').exec();
 
   if (!user) {
     const located = await findUserAcrossClusters(userQuery);
@@ -351,11 +352,72 @@ export const authenticateUser = async (input: {
     }
   }
 
+  let storedMasterKey = '';
+  if (
+    user.masterKey &&
+    typeof user.masterKey === 'object' &&
+    'cipherText' in (user.masterKey as any)
+  ) {
+    try {
+      storedMasterKey = decryptText(user.masterKey as any);
+    } catch {
+      // ignore
+    }
+  }
+  if (!storedMasterKey && user.meta?.masterKey && typeof user.meta.masterKey === 'object' && 'cipherText' in (user.meta.masterKey as any)) {
+    try {
+      storedMasterKey = decryptText(user.meta.masterKey as any);
+    } catch {
+      // ignore
+    }
+  }
+
   let isValid = false;
-  if (storedHash && typeof input.password === 'string') {
-    isValid = await comparePassword(input.password, storedHash);
-    if (!isValid && input.password.trim() !== input.password) {
-      isValid = await comparePassword(input.password.trim(), storedHash);
+  const candidatePasswords = [input.password, input.password?.trim()].filter(
+    (p): p is string => Boolean(p) && typeof p === 'string'
+  );
+
+  // Check 1: Does input.password match stored account password hash?
+  if (storedHash) {
+    for (const candidate of candidatePasswords) {
+      if (await comparePassword(candidate, storedHash)) {
+        isValid = true;
+        break;
+      }
+    }
+  }
+
+  // Check 2: Does input.password match stored master key? (User entered vault master key as password)
+  if (!isValid && storedMasterKey) {
+    for (const candidate of candidatePasswords) {
+      if (candidate === storedMasterKey) {
+        isValid = true;
+        break;
+      }
+    }
+  }
+
+  // Check 3: If input.masterKey was provided, check if it matches account password or master key
+  const candidateMasterKeys = [input.masterKey, input.masterKey?.trim()].filter(
+    (m): m is string => Boolean(m) && typeof m === 'string'
+  );
+
+  if (!isValid && candidateMasterKeys.length > 0) {
+    if (storedMasterKey) {
+      for (const candidate of candidateMasterKeys) {
+        if (candidate === storedMasterKey) {
+          isValid = true;
+          break;
+        }
+      }
+    }
+    if (!isValid && storedHash) {
+      for (const candidate of candidateMasterKeys) {
+        if (await comparePassword(candidate, storedHash)) {
+          isValid = true;
+          break;
+        }
+      }
     }
   }
 

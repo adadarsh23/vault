@@ -429,6 +429,19 @@ export const CommandPalette: React.FC = () => {
                                 <p className="font-semibold text-sm truncate">
                                   {renderFuzzyHighlightedText(item.item.title, item.titleMatches)}
                                 </p>
+                                {item.transcriptSnippet && (
+                                  <div className="mt-1 flex items-center gap-1.5 text-[11px] text-cyan-300/90 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20 max-w-full">
+                                    <MessageSquareText className="h-3 w-3 shrink-0 text-cyan-400" />
+                                    <span className="truncate italic">
+                                      {item.transcriptMatches && item.transcriptMatches.length > 0
+                                        ? renderFuzzyHighlightedText(
+                                            item.transcriptSnippet,
+                                            item.transcriptMatches
+                                          )
+                                        : item.transcriptSnippet}
+                                    </span>
+                                  </div>
+                                )}
                                 {tags.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mt-1">
                                     {tags.map((tag) => {

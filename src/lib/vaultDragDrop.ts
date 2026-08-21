@@ -1,11 +1,19 @@
+import { useState, useEffect } from 'react';
 import type React from 'react';
 
-const VAULT_ITEM_DRAG_TYPE = 'application/x-my-vault-item';
-const VAULT_ITEM_PLAIN_PREFIX = 'vault-item:';
+export const VAULT_ITEM_DRAG_TYPE = 'application/x-my-vault-item';
+export const VAULT_ITEMS_DRAG_TYPE = 'application/x-my-vault-items';
+export const VAULT_ITEM_PLAIN_PREFIX = 'vault-item:';
+export const VAULT_ITEMS_PLAIN_PREFIX = 'vault-items:';
 const MAX_VAULT_ITEM_ID_LENGTH = 256;
 const DRAG_FALLBACK_TTL_MS = 30_000;
 
-type DragDataTransferLike = Pick<DataTransfer, 'effectAllowed' | 'setData' | 'getData' | 'types'>;
+type DragDataTransferLike = Pick<
+  DataTransfer,
+  'effectAllowed' | 'setData' | 'getData' | 'types'
+> & {
+  setDragImage?: (image: Element, x: number, y: number) => void;
+};
 
 type DragEventLike =
   | Pick<React.DragEvent<HTMLElement>, 'dataTransfer'>
@@ -13,29 +21,32 @@ type DragEventLike =
 
 type DragFallbackState = {
   itemId: string;
+  itemIds: string[];
   expiresAt: number;
 };
 
 let dragFallbackState: DragFallbackState | null = null;
 
-const setDragFallback = (itemId: string) => {
+const setDragFallback = (itemIds: string[]) => {
+  if (itemIds.length === 0) return;
   dragFallbackState = {
-    itemId,
+    itemId: itemIds[0],
+    itemIds,
     expiresAt: Date.now() + DRAG_FALLBACK_TTL_MS,
   };
 };
 
-const getDragFallback = (): string | null => {
+const getDragFallbackItems = (): string[] => {
   if (!dragFallbackState) {
-    return null;
+    return [];
   }
 
   if (Date.now() > dragFallbackState.expiresAt) {
     dragFallbackState = null;
-    return null;
+    return [];
   }
 
-  return dragFallbackState.itemId;
+  return dragFallbackState.itemIds || (dragFallbackState.itemId ? [dragFallbackState.itemId] : []);
 };
 
 const normalizeVaultItemId = (value: string): string | null => {
@@ -50,6 +61,22 @@ const normalizeVaultItemId = (value: string): string | null => {
   }
 
   return trimmed;
+};
+
+const normalizeVaultItemIds = (value: string | string[]): string[] => {
+  if (Array.isArray(value)) {
+    const deduped = Array.from(
+      new Set(
+        value
+          .map((id) => (typeof id === 'string' ? normalizeVaultItemId(id) : null))
+          .filter((id): id is string => id !== null)
+      )
+    );
+    return deduped;
+  }
+
+  const single = normalizeVaultItemId(value);
+  return single ? [single] : [];
 };
 
 const safeGetData = (dataTransfer: DragDataTransferLike, format: string): string => {
@@ -72,15 +99,29 @@ const dragTypesContain = (
 
 export const clearDraggedVaultItem = () => {
   dragFallbackState = null;
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('vault-drag-end'));
+  }
 };
 
-export const setDraggedVaultItem = (event: DragEventLike, itemId: string): boolean => {
-  const normalizedItemId = normalizeVaultItemId(itemId);
-  if (!normalizedItemId) {
+export const setDraggedVaultItems = (
+  event: DragEventLike,
+  itemIdOrIds: string | string[]
+): boolean => {
+  const normalizedIds = normalizeVaultItemIds(itemIdOrIds);
+  if (normalizedIds.length === 0) {
     return false;
   }
 
-  setDragFallback(normalizedItemId);
+  setDragFallback(normalizedIds);
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('vault-drag-start', {
+        detail: { itemIds: normalizedIds, count: normalizedIds.length },
+      })
+    );
+  }
 
   const dataTransfer = event.dataTransfer;
   if (!dataTransfer) {
@@ -89,12 +130,52 @@ export const setDraggedVaultItem = (event: DragEventLike, itemId: string): boole
 
   try {
     dataTransfer.effectAllowed = 'move';
-    dataTransfer.setData(VAULT_ITEM_DRAG_TYPE, normalizedItemId);
-    dataTransfer.setData('text/plain', `${VAULT_ITEM_PLAIN_PREFIX}${normalizedItemId}`);
+    dataTransfer.setData(VAULT_ITEM_DRAG_TYPE, normalizedIds[0]);
+    dataTransfer.setData(VAULT_ITEMS_DRAG_TYPE, JSON.stringify(normalizedIds));
+
+    if (normalizedIds.length > 1) {
+      dataTransfer.setData('text/plain', `${VAULT_ITEMS_PLAIN_PREFIX}${normalizedIds.join(',')}`);
+    } else {
+      dataTransfer.setData('text/plain', `${VAULT_ITEM_PLAIN_PREFIX}${normalizedIds[0]}`);
+    }
     return true;
   } catch {
     return true;
   }
+};
+
+export const setDraggedVaultItem = (
+  event: DragEventLike,
+  itemIdOrIds: string | string[]
+): boolean => {
+  return setDraggedVaultItems(event, itemIdOrIds);
+};
+
+export const createMultiItemDragImage = (count: number, label = 'items'): HTMLElement => {
+  const container = document.createElement('div');
+  container.style.position = 'fixed';
+  container.style.top = '-9999px';
+  container.style.left = '-9999px';
+  container.style.pointerEvents = 'none';
+  container.style.zIndex = '99999';
+  container.innerHTML = `
+    <div style="position: relative; width: 144px; height: 86px; pointer-events: none;">
+      <div style="position: absolute; inset: 0; transform: rotate(-4deg) translateY(-2px); border-radius: 12px; background: rgba(10, 10, 10, 0.8); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 25px rgba(0,0,0,0.6);"></div>
+      <div style="position: absolute; inset: 0; transform: rotate(2deg) translateY(2px); border-radius: 12px; background: rgba(15, 15, 15, 0.9); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 10px 25px rgba(0,0,0,0.6);"></div>
+      <div style="position: absolute; inset: 0; border-radius: 12px; background: rgba(0, 0, 0, 0.96); border: 2px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.25); backdrop-filter: blur(16px);">
+        <div style="display: flex; align-items: center; gap: 8px; color: #ffffff; font-weight: 700; font-size: 13px; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+            <circle cx="9" cy="9" r="2"/>
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+          </svg>
+          <span>Moving ${count} ${label}</span>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(container);
+  return container;
 };
 
 /* ─────────────────────────────────────────────────────────────
@@ -240,32 +321,22 @@ const createDragEvent = (type: string, dataTransfer?: any): Event => {
 
 const isDropTarget = (el: Element): boolean => {
   const htmlEl = el as HTMLElement;
-  if (htmlEl.ondragover || htmlEl.ondrop) return true;
   if (
+    el.hasAttribute('data-drop-target') ||
+    el.getAttribute('data-drop-target') === 'true' ||
+    el.classList.contains('drop-target') ||
+    el.classList.contains('folder-drop-zone') ||
+    el.classList.contains('vault-folder')
+  ) {
+    return true;
+  }
+  if (
+    htmlEl.ondragover ||
+    htmlEl.ondrop ||
     el.hasAttribute('ondragover') ||
     el.hasAttribute('ondrop') ||
     el.hasAttribute('onDragOver') ||
-    el.hasAttribute('onDrop') ||
-    el.hasAttribute('data-drop-target') ||
-    el.getAttribute('data-drop-target') === 'true'
-  ) {
-    return true;
-  }
-  const role = el.getAttribute('role');
-  if (
-    role === 'tab' ||
-    role === 'button' ||
-    role === 'treeitem' ||
-    role === 'listitem' ||
-    role === 'gridcell'
-  ) {
-    return true;
-  }
-  if (
-    el.classList.contains('drop-target') ||
-    el.classList.contains('folder-item') ||
-    el.classList.contains('vault-folder') ||
-    el.tagName === 'BUTTON'
+    el.hasAttribute('onDrop')
   ) {
     return true;
   }
@@ -314,15 +385,36 @@ const startTouchDrag = (clientX: number, clientY: number) => {
   dragGhost.style.left = '0px';
   dragGhost.style.top = '0px';
   dragGhost.style.transform = `translate3d(${clientX - touchStartOffset.x}px, ${clientY - touchStartOffset.y}px, 0) scale(1.04)`;
-  dragGhost.style.opacity = '0.9';
+  dragGhost.style.opacity = '0.92';
   dragGhost.style.pointerEvents = 'none';
   dragGhost.style.zIndex = '99999';
   dragGhost.style.willChange = 'transform';
   dragGhost.style.transition = 'transform 0.04s linear';
   dragGhost.style.boxShadow =
-    '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(59, 130, 246, 0.6)';
+    '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 25px rgba(255, 255, 255, 0.25)';
   dragGhost.style.borderRadius = '1rem';
-  dragGhost.style.backdropFilter = 'blur(12px)';
+  dragGhost.style.backdropFilter = 'blur(16px)';
+
+  // Check if multiple items are dragged
+  const fallbackItems = getDragFallbackItems();
+  if (fallbackItems.length > 1) {
+    const badge = document.createElement('div');
+    badge.style.position = 'absolute';
+    badge.style.top = '-8px';
+    badge.style.right = '-8px';
+    badge.style.backgroundColor = '#000000';
+    badge.style.color = '#ffffff';
+    badge.style.fontSize = '11px';
+    badge.style.fontWeight = 'bold';
+    badge.style.padding = '3px 8px';
+    badge.style.borderRadius = '9999px';
+    badge.style.boxShadow = '0 4px 14px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.4)';
+    badge.style.border = '2px solid #ffffff';
+    badge.style.zIndex = '100000';
+    badge.innerText = `${fallbackItems.length}`;
+    dragGhost.appendChild(badge);
+  }
+
   document.body.appendChild(dragGhost);
 
   // Dispatch synthetic dragstart
@@ -475,6 +567,7 @@ const handleTouchEnd = (e: TouchEvent) => {
   lastTarget = null;
   lastMoveTime = 0;
   isDraggingActive = false;
+  clearDraggedVaultItem();
 };
 
 export const initTouchDragDrop = () => {
@@ -487,34 +580,168 @@ export const initTouchDragDrop = () => {
   window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
 };
 
-export const getDraggedVaultItem = (event: DragEventLike): string | null => {
+export const getDraggedVaultItems = (event: DragEventLike): string[] => {
   const dataTransfer = event.dataTransfer;
   if (!dataTransfer) {
-    return getDragFallback();
+    return getDragFallbackItems();
   }
 
-  const customId = normalizeVaultItemId(safeGetData(dataTransfer, VAULT_ITEM_DRAG_TYPE));
-  if (customId) {
-    setDragFallback(customId);
-    return customId;
-  }
-
-  const plainValue = safeGetData(dataTransfer, 'text/plain');
-  const prefixedPlainId = plainValue.startsWith(VAULT_ITEM_PLAIN_PREFIX)
-    ? normalizeVaultItemId(plainValue.slice(VAULT_ITEM_PLAIN_PREFIX.length))
-    : null;
-  if (prefixedPlainId) {
-    setDragFallback(prefixedPlainId);
-    return prefixedPlainId;
-  }
-
-  if (dragTypesContain(dataTransfer.types, VAULT_ITEM_DRAG_TYPE)) {
-    const legacyPlainId = normalizeVaultItemId(plainValue);
-    if (legacyPlainId) {
-      setDragFallback(legacyPlainId);
-      return legacyPlainId;
+  // 1. Check custom items type (JSON array)
+  const itemsJson = safeGetData(dataTransfer, VAULT_ITEMS_DRAG_TYPE);
+  if (itemsJson) {
+    try {
+      const parsed = JSON.parse(itemsJson);
+      const normalized = normalizeVaultItemIds(parsed);
+      if (normalized.length > 0) {
+        setDragFallback(normalized);
+        return normalized;
+      }
+    } catch {
+      // ignore
     }
   }
 
-  return getDragFallback();
+  // 2. Check custom single item type
+  const customId = normalizeVaultItemId(safeGetData(dataTransfer, VAULT_ITEM_DRAG_TYPE));
+  if (customId) {
+    setDragFallback([customId]);
+    return [customId];
+  }
+
+  // 3. Check plain text payload
+  const plainValue = safeGetData(dataTransfer, 'text/plain');
+  if (plainValue.startsWith(VAULT_ITEMS_PLAIN_PREFIX)) {
+    const rawContent = plainValue.slice(VAULT_ITEMS_PLAIN_PREFIX.length);
+    try {
+      const parsed = JSON.parse(rawContent);
+      const normalized = normalizeVaultItemIds(parsed);
+      if (normalized.length > 0) {
+        setDragFallback(normalized);
+        return normalized;
+      }
+    } catch {
+      const parts = rawContent
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const normalized = normalizeVaultItemIds(parts);
+      if (normalized.length > 0) {
+        setDragFallback(normalized);
+        return normalized;
+      }
+    }
+  }
+
+  if (plainValue.startsWith(VAULT_ITEM_PLAIN_PREFIX)) {
+    const prefixedPlainId = normalizeVaultItemId(plainValue.slice(VAULT_ITEM_PLAIN_PREFIX.length));
+    if (prefixedPlainId) {
+      setDragFallback([prefixedPlainId]);
+      return [prefixedPlainId];
+    }
+  }
+
+  // 4. Legacy plain id fallback
+  if (
+    dragTypesContain(dataTransfer.types, VAULT_ITEMS_DRAG_TYPE) ||
+    dragTypesContain(dataTransfer.types, VAULT_ITEM_DRAG_TYPE)
+  ) {
+    const legacyPlainId = normalizeVaultItemId(plainValue);
+    if (legacyPlainId) {
+      setDragFallback([legacyPlainId]);
+      return [legacyPlainId];
+    }
+  }
+
+  return getDragFallbackItems();
+};
+
+export const getDraggedVaultItem = (event: DragEventLike): string | null => {
+  const items = getDraggedVaultItems(event);
+  return items.length > 0 ? items[0] : null;
+};
+
+export interface VaultDragState {
+  isDragging: boolean;
+  itemIds: string[];
+  count: number;
+}
+
+export const useVaultDragState = (): VaultDragState => {
+  const [dragState, setDragState] = useState<VaultDragState>(() => {
+    const items = getDragFallbackItems();
+    return {
+      isDragging: items.length > 0,
+      itemIds: items,
+      count: items.length,
+    };
+  });
+
+  useEffect(() => {
+    const handleDragStart = (e: DragEvent) => {
+      const items = getDraggedVaultItems({ dataTransfer: e.dataTransfer });
+      if (items.length > 0) {
+        setDragState({
+          isDragging: true,
+          itemIds: items,
+          count: items.length,
+        });
+      }
+    };
+
+    const handleCustomStart = (e: Event) => {
+      const customEvent = e as CustomEvent<{ itemIds: string[]; count: number }>;
+      const items = customEvent.detail?.itemIds || [];
+      if (items.length > 0) {
+        setDragState({
+          isDragging: true,
+          itemIds: items,
+          count: items.length,
+        });
+      }
+    };
+
+    const handleDragEnd = () => {
+      dragFallbackState = null;
+      setDragState({
+        isDragging: false,
+        itemIds: [],
+        count: 0,
+      });
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleDragEnd();
+        clearDraggedVaultItem();
+      }
+    };
+
+    window.addEventListener('dragstart', handleDragStart);
+    window.addEventListener('dragend', handleDragEnd);
+    window.addEventListener('drop', handleDragEnd);
+    window.addEventListener('dragcancel', handleDragEnd as EventListener);
+    window.addEventListener('vault-drag-start', handleCustomStart);
+    window.addEventListener('vault-drag-end', handleDragEnd);
+    window.addEventListener('mouseup', handleDragEnd);
+    window.addEventListener('touchend', handleDragEnd);
+    window.addEventListener('touchcancel', handleDragEnd);
+    window.addEventListener('blur', handleDragEnd);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('dragstart', handleDragStart);
+      window.removeEventListener('dragend', handleDragEnd);
+      window.removeEventListener('drop', handleDragEnd);
+      window.removeEventListener('dragcancel', handleDragEnd as EventListener);
+      window.removeEventListener('vault-drag-start', handleCustomStart);
+      window.removeEventListener('vault-drag-end', handleDragEnd);
+      window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchend', handleDragEnd);
+      window.removeEventListener('touchcancel', handleDragEnd);
+      window.removeEventListener('blur', handleDragEnd);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  return dragState;
 };

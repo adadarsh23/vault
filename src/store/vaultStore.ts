@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { VaultItem, loadLocalItemsFromDb, saveItem, deleteItem } from '../lib/storage';
+import { VaultItem, loadLocalItemsFromDb, saveItem, deleteItem, clearVault } from '../lib/storage';
 import {
   base64ToUint8Array,
   deriveKey,
@@ -20,6 +20,7 @@ import {
   uploadProfileToCloud,
   uploadKeyCheckToCloud,
   getVaultId,
+  runInParallelPool,
 } from '../lib/sync';
 import { useActivityStore } from './activityStore';
 import { toast } from 'sonner';
@@ -37,6 +38,8 @@ import { fetchVaultSalt, logoutVaultSession, revokeVaultDeviceSession } from '..
 import { reencryptVaultItemContent } from '../lib/vaultKeyRotation';
 import { normalizeGeneratedCredentialLength, validatePassword } from '../lib/utils';
 import { useNotificationStore } from './notificationStore';
+import { useIntegrityStore } from './integrityStore';
+import { revokeAllActiveBlobUrls } from '../lib/blobRegistry';
 
 export interface SecurityPreferences {
   isAutoLockEnabled: boolean;
@@ -65,6 +68,14 @@ export interface SecurityPreferences {
   isPhotoExifStripped: boolean;
   isVideoBufferingEnabled: boolean;
   isAudioWaveformEnabled: boolean;
+  isDiscreetModeEnabled: boolean;
+  isDecoyVaultEnabled: boolean;
+  decoyPasswordHash?: string;
+  isPrintBlockingEnabled: boolean;
+  isTabSwitchShieldEnabled: boolean;
+  isForensicWatermarkEnabled: boolean;
+  isBruteForceWipeEnabled: boolean;
+  maxFailedAttemptsBeforeWipe: number;
 }
 
 interface CloudSettingsSnapshot {
@@ -95,6 +106,7 @@ const RELOAD_AFTER_PURGE_DELAY_MS = 2_000;
 const CLOUD_SOURCE = 'cloud';
 const IMPORTED_ITEM_TITLE_PREFIX = 'Imported item';
 const MAX_IMPORTED_ITEM_TITLE_LENGTH = 200;
+
 const VALID_ITEM_TYPES: ReadonlySet<VaultItem['type']> = new Set([
   'photo',
   'video',
@@ -117,6 +129,7 @@ interface VaultState {
   items: VaultItem[];
   isUnlocked: boolean;
   isVaultReady: boolean;
+  isDecoyMode: boolean;
   username: string | null;
   masterKey: CryptoKey | null;
   vaultId: string | null;
@@ -133,11 +146,17 @@ interface VaultState {
   hasPendingLogSync: boolean;
   pinningItemIds: string[];
   rsaKeyPair: CryptoKeyPair | null;
+  isDiscreetMode: boolean;
 
   // Actions
   unlock: (key: string, identity: string) => Promise<void>;
+  unlockDecoyVault: (identity: string) => Promise<void>;
+  setDecoyMode: (enabled: boolean) => void;
   completeUnlockTransition: () => void;
   lock: () => void;
+  panicLock: () => void;
+  toggleDiscreetMode: () => void;
+  setDiscreetMode: (enabled: boolean) => void;
   fullLogout: (options?: { skipServerLogout?: boolean }) => void;
   setAllowRestrictedTypes: (allow: boolean) => void;
   updatePreferences: (updates: Partial<SecurityPreferences>) => void;
@@ -165,6 +184,7 @@ interface VaultState {
   syncLogs: () => Promise<void>;
   migrateLocalToCloud: () => Promise<void>;
   destroyAllData: () => Promise<void>;
+  emergencyLocalWipe: () => Promise<void>;
   cancelSync: () => void;
   cancelActivityLogSync: () => void;
 }
@@ -196,6 +216,14 @@ const DEFAULT_PREFERENCES: SecurityPreferences = {
   isPhotoExifStripped: true,
   isVideoBufferingEnabled: true,
   isAudioWaveformEnabled: false,
+  isDiscreetModeEnabled: true,
+  isDecoyVaultEnabled: false,
+  decoyPasswordHash: undefined,
+  isPrintBlockingEnabled: true,
+  isTabSwitchShieldEnabled: true,
+  isForensicWatermarkEnabled: true,
+  isBruteForceWipeEnabled: true,
+  maxFailedAttemptsBeforeWipe: 10,
 };
 
 const sanitizePreferences = (
@@ -585,6 +613,86 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   hasPendingLogSync: false,
   pinningItemIds: [],
   rsaKeyPair: null,
+  isDiscreetMode: true,
+  isDecoyMode: false,
+
+  unlockDecoyVault: async (identity: string) => {
+    const dummyItems: VaultItem[] = [
+      {
+        id: 'decoy-photo-1',
+        type: 'photo',
+        title: 'Alpine Peak.jpg',
+        content:
+          'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect fill="%230f172a" width="800" height="600"/><path fill="%2338bdf8" opacity="0.4" d="M0 450 L300 200 L550 400 L800 250 L800 600 L0 600 Z"/><path fill="%230284c7" opacity="0.6" d="M0 500 L200 350 L450 480 L700 320 L800 400 L800 600 L0 600 Z"/><circle cx="650" cy="120" r="50" fill="%23facc15" opacity="0.8"/></svg>',
+        folder: 'Wallpapers',
+        createdAt: Date.now() - 86400000 * 3,
+        updatedAt: Date.now() - 86400000 * 3,
+        metadata: {
+          mimeType: 'image/svg+xml',
+          size: 1024,
+          extension: 'jpg',
+          width: 800,
+          height: 600,
+          aspectRatio: 1.33,
+          isE2EE: true,
+        },
+      },
+      {
+        id: 'decoy-photo-2',
+        type: 'photo',
+        title: 'Emerald Meadow.png',
+        content:
+          'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect fill="%23064e3b" width="800" height="600"/><path fill="%2310b981" opacity="0.4" d="M0 600 L150 300 L300 600 L450 350 L600 600 L750 400 L800 500 L800 600 Z"/><circle cx="150" cy="150" r="40" fill="%23e2e8f0" opacity="0.4"/></svg>',
+        folder: 'Wallpapers',
+        createdAt: Date.now() - 86400000 * 2,
+        updatedAt: Date.now() - 86400000 * 2,
+        metadata: {
+          mimeType: 'image/svg+xml',
+          size: 1024,
+          extension: 'png',
+          width: 800,
+          height: 600,
+          aspectRatio: 1.33,
+          isE2EE: true,
+        },
+      },
+      {
+        id: 'decoy-note-1',
+        type: 'note',
+        title: 'Weekly Groceries',
+        content: 'Organic Apples, Almond Milk, Brown Rice, Avocados, Green Tea',
+        createdAt: Date.now() - 86400000,
+        updatedAt: Date.now() - 86400000,
+        metadata: {
+          mimeType: 'text/plain',
+          size: 64,
+          isE2EE: true,
+        },
+      },
+    ];
+
+    set({
+      items: dummyItems,
+      isUnlocked: true,
+      isVaultReady: true,
+      isDecoyMode: true,
+      username: identity || 'Decoy User',
+      masterKey: null,
+      vaultId: `decoy-${Date.now()}`,
+      isLoading: false,
+      syncStatus: 'success',
+    });
+
+    logActivity({
+      actionType: 'auth_login',
+      itemName: 'Duress Session',
+      description: 'Decoy vault unlocked in duress isolation mode.',
+      status: 'success',
+    });
+    toast.success('Synced 3 items');
+  },
+
+  setDecoyMode: (enabled: boolean) => set({ isDecoyMode: enabled }),
 
   unlock: async (key: string, identity: string) => {
     set({ isLoading: true });
@@ -617,18 +725,22 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       const localItems = await loadLocalItemsFromDb().catch(() => []);
 
       const now = Date.now();
-      set((state) => ({
-        ...buildSyncedSnapshotState(state, snapshot, {
+      set((state) => {
+        const syncedState = buildSyncedSnapshotState(state, snapshot, {
           includeLocalRuntimeItems: true,
           additionalLocalItems: localItems,
           now,
-        }),
-        isUnlocked: true,
-        isVaultReady: true,
-        masterKey: cryptoKey,
-        vaultId: derivedVaultId,
-        username: identity,
-      }));
+        });
+        return {
+          ...syncedState,
+          isDiscreetMode: Boolean(syncedState.preferences.isDiscreetModeEnabled),
+          isUnlocked: true,
+          isVaultReady: true,
+          masterKey: cryptoKey,
+          vaultId: derivedVaultId,
+          username: identity,
+        };
+      });
 
       // Ensure RSA Identity persistence (Layer 4)
       runInBackground(
@@ -704,6 +816,12 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   lock: () => {
+    try {
+      revokeAllActiveBlobUrls();
+    } catch {
+      /* ignore */
+    }
+
     const { masterKey, preferences, items } = get();
 
     logActivity({
@@ -737,6 +855,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     set({
       isUnlocked: false,
       isVaultReady: false,
+      isDecoyMode: false,
       username: null,
       masterKey: null,
       vaultId: null,
@@ -748,10 +867,42 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     });
   },
 
+  panicLock: () => {
+    try {
+      revokeAllActiveBlobUrls();
+    } catch {
+      /* ignore */
+    }
+    get().lock();
+    toast.error('🚨 Vault locked immediately via Panic Button.');
+  },
+
+  toggleDiscreetMode: () => {
+    const next = !get().isDiscreetMode;
+    set({ isDiscreetMode: next });
+    get().updatePreferences({ isDiscreetModeEnabled: next });
+    if (next) {
+      toast.info('Discreet Mode active. Media thumbnails are blurred.');
+    } else {
+      toast.info('Discreet Mode deactivated.');
+    }
+  },
+
+  setDiscreetMode: (enabled: boolean) => {
+    set({ isDiscreetMode: enabled });
+    get().updatePreferences({ isDiscreetModeEnabled: enabled });
+  },
+
   fullLogout: (options) => {
     if (!options?.skipServerLogout) {
       // Fire and forget server-side logout
       void logoutVaultSession();
+    }
+
+    try {
+      revokeAllActiveBlobUrls();
+    } catch {
+      /* ignore */
     }
 
     clearAuthToken();
@@ -839,32 +990,36 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         }
       }
       const sourceItems = Array.from(mergedItemsMap.values());
-
-      const updatedItems: VaultItem[] = [];
       const total = sourceItems.length;
 
-      for (let i = 0; i < total; i++) {
-        const item = sourceItems[i];
+      const updatedItems: VaultItem[] = new Array(total);
+      let rotatedCount = 0;
 
-        try {
-          const newContent = await reencryptVaultItemContent(item, oldMasterKey, resolvedNewKey);
+      await runInParallelPool(
+        sourceItems,
+        async (item, i) => {
+          try {
+            const newContent = await reencryptVaultItemContent(item, oldMasterKey, resolvedNewKey);
 
-          const updatedItem = {
-            ...item,
-            content: newContent,
-            updatedAt: Date.now(),
-          };
-          await uploadItemToCloud(updatedItem, resolvedNewKey);
-          updatedItems.push(updatedItem);
+            const updatedItem = {
+              ...item,
+              content: newContent,
+              updatedAt: Date.now(),
+            };
+            await uploadItemToCloud(updatedItem, resolvedNewKey);
+            updatedItems[i] = updatedItem;
 
-          reportProgress(onProgress, i + 1, total);
-          await maybeYieldToMainThread(total, KEY_ROTATION_YIELD_THRESHOLD);
-        } catch (err: unknown) {
-          throw new Error(
-            `Key rotation failed at "${item.title}": ${getErrorMessage(err, 'Unknown error')}`
-          );
-        }
-      }
+            rotatedCount += 1;
+            reportProgress(onProgress, rotatedCount, total);
+            await maybeYieldToMainThread(total, KEY_ROTATION_YIELD_THRESHOLD);
+          } catch (err: unknown) {
+            throw new Error(
+              `Key rotation failed at "${item.title}": ${getErrorMessage(err, 'Unknown error')}`
+            );
+          }
+        },
+        6
+      );
 
       // Re-encrypt settings for the new vault
       const { preferences, allowRestrictedTypes, rsaKeyPair } = get();
@@ -930,12 +1085,38 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   exportVaultData: async (onProgress) => {
-    const { items } = get();
+    const { items, masterKey } = get();
+    let sourceItems = items;
+    if (masterKey) {
+      try {
+        const localItems = await loadLocalItemsFromDb().catch(() => []);
+        const merged = new Map<string, VaultItem>();
+        for (const item of [...items, ...localItems]) {
+          const existing = merged.get(item.id);
+          if (!existing) {
+            merged.set(item.id, item);
+          } else if (
+            (existing.content === '' ||
+              (typeof existing.content === 'string' && existing.content.length === 0)) &&
+            (item.content instanceof Uint8Array ||
+              (typeof item.content === 'string' && item.content.length > 0))
+          ) {
+            merged.set(item.id, item);
+          } else if ((item.updatedAt || 0) >= (existing.updatedAt || 0)) {
+            merged.set(item.id, item);
+          }
+        }
+        sourceItems = Array.from(merged.values());
+      } catch {
+        sourceItems = items;
+      }
+    }
+
     const itemsToExport = [];
-    const total = items.length;
+    const total = sourceItems.length;
 
     for (let i = 0; i < total; i++) {
-      const item = items[i];
+      const item = sourceItems[i];
       if (item.content instanceof Uint8Array) {
         itemsToExport.push({
           ...item,
@@ -956,7 +1137,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     logActivity({
       actionType: 'export',
       itemName: 'Vault export',
-      description: `Exported ${items.length} items`,
+      description: `Exported ${sourceItems.length} items`,
       status: 'success',
     });
     return exported;
@@ -994,11 +1175,18 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       const newItems = Array.from(dedupedItemsMap.values());
 
       const total = newItems.length;
-      for (let i = 0; i < total; i++) {
-        await uploadItemToCloud(newItems[i], masterKey);
-        reportProgress(onProgress, i + 1, total);
-        await maybeYieldToMainThread(total, IMPORT_YIELD_THRESHOLD);
-      }
+      let completedCount = 0;
+
+      await runInParallelPool(
+        newItems,
+        async (item) => {
+          await uploadItemToCloud(item, masterKey);
+          completedCount += 1;
+          reportProgress(onProgress, completedCount, total);
+          await maybeYieldToMainThread(total, IMPORT_YIELD_THRESHOLD);
+        },
+        6
+      );
 
       await get().fetchItems();
       toast.success(`Imported ${total} items successfully`);
@@ -1024,31 +1212,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   syncWithCloud: async () => {
-    const { masterKey } = get();
-    if (!masterKey) return;
-
-    set({ isLoading: true, syncStatus: 'syncing' });
-
-    try {
-      const snapshot = await loadVaultSnapshot(masterKey);
-
-      const now = Date.now();
-      set((state) =>
-        buildSyncedSnapshotState(state, snapshot, {
-          includeLocalRuntimeItems: true,
-          now,
-        })
-      );
-
-      setActivityLoggingEnabled(
-        resolveActivityLoggingPreference(snapshot, get().preferences.isActivityLoggingEnabled)
-      );
-
-      toast.success(`Vault synchronized: ${snapshot.items.length} items verified`);
-    } catch (error) {
-      set({ isLoading: false, syncStatus: 'error', pinningItemIds: [] });
-      handleError(error, 'Cloud Sync');
-    }
+    await get().fetchItems('manual');
   },
 
   retryFailedSync: async () => {
@@ -1166,10 +1330,24 @@ export const useVaultStore = create<VaultState>((set, get) => ({
           await saveItem(newItem);
         }
       }
+
+      // Memory optimization: For large binary payloads saved in cloud/IndexedDB,
+      // create a lightweight copy for in-memory React state so the browser doesn't run out of memory.
+      const inMemoryItem: VaultItem =
+        newItem.source === 'cloud' &&
+        newItem.content instanceof Uint8Array &&
+        newItem.content.byteLength > 512 * 1024
+          ? { ...newItem, content: '' }
+          : newItem;
+
       set((state) => ({
-        items: [newItem, ...state.items.filter((i) => i.id !== newItem.id)],
+        items: [inMemoryItem, ...state.items.filter((i) => i.id !== inMemoryItem.id)],
         isLoading: false,
       }));
+      useIntegrityStore
+        .getState()
+        .rebuildLocalMerkleTree(get().items)
+        .catch(() => {});
       toast.success(
         `${newItem.title} saved ${newItem.source === 'local' ? 'locally' : 'to cloud'}`
       );
@@ -1206,6 +1384,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         items: state.items.filter((i) => i.id !== id),
         isLoading: false,
       }));
+      useIntegrityStore
+        .getState()
+        .rebuildLocalMerkleTree(get().items)
+        .catch(() => {});
       toast.success('Item removed');
       logActivity({
         actionType: 'item_delete',
@@ -1225,9 +1407,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     const item = items.find((i) => i.id === id);
     if (!item || !masterKey) return;
 
-    const updatedItem = {
+    const updatedItem: VaultItem = {
       ...item,
       ...updates,
+      source: updates.source || item.source || 'cloud',
       username: updates.username || item.username || get().username || undefined,
       updatedAt: Date.now(),
     };
@@ -1236,7 +1419,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     try {
       await saveItem(updatedItem);
 
-      if (updatedItem.source === 'cloud') {
+      if (updatedItem.source !== 'local') {
         try {
           await uploadItemToCloud(updatedItem, masterKey);
         } catch (uploadErr) {
@@ -1350,19 +1533,32 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         return {
           ...item,
           ...update.updates,
+          source: update.updates.source || item.source || 'cloud',
           updatedAt: now,
         };
       });
 
-      // Upload all changed items to cloud
+      // Persist to local IndexedDB and upload all changed items to cloud in parallel
       const currentBatch = batchUpdates.map((u) => {
         const item = updatedItems.find((i) => i.id === u.id);
         return item!;
       });
 
       for (const item of currentBatch) {
-        await uploadItemToCloud(item, masterKey);
+        try {
+          await saveItem(item);
+        } catch (saveErr) {
+          console.warn('Failed to save batch item to local DB:', saveErr);
+        }
       }
+
+      await runInParallelPool(
+        currentBatch,
+        async (item) => {
+          await uploadItemToCloud(item, masterKey);
+        },
+        6
+      );
 
       set({ items: updatedItems, isLoading: false });
       toast.success(`Updated ${batchUpdates.length} items`);
@@ -1470,6 +1666,67 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       handleError(error, 'Emergency Destruction');
       set({ isLoading: false });
     }
+  },
+
+  emergencyLocalWipe: async () => {
+    try {
+      revokeAllActiveBlobUrls();
+    } catch {
+      /* ignore */
+    }
+
+    try {
+      clearCryptoKeyCache();
+    } catch {
+      /* ignore */
+    }
+
+    try {
+      await clearVault();
+    } catch {
+      /* ignore */
+    }
+
+    try {
+      clearAuthToken();
+      clearCloudSessionHint();
+      clearRememberedVaultAccess();
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.clear();
+      }
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('vault_cloud_session_hint');
+        localStorage.removeItem('vault_remembered_access');
+        localStorage.removeItem('vault_remembered_access_secret');
+        localStorage.setItem('vault_emergency_wiped_at', String(Date.now()));
+      }
+    } catch {
+      /* ignore */
+    }
+
+    useActivityStore.getState().clearActivity();
+
+    set({
+      items: [],
+      isUnlocked: false,
+      isVaultReady: false,
+      masterKey: null,
+      vaultId: null,
+      username: null,
+      rsaKeyPair: null,
+      syncStatus: 'idle',
+      lastSyncError: null,
+      hasPendingSyncRetry: false,
+      pinningItemIds: [],
+    });
+
+    logActivity({
+      actionType: 'auth_lock',
+      itemName: "Dead Man's Switch Shredder",
+      description:
+        'Emergency local wipe executed after brute-force threshold reached. Cloud data preserved.',
+      status: 'failure',
+    });
   },
 
   cancelSync: () => {

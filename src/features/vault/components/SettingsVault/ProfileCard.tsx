@@ -64,13 +64,13 @@ interface ProfileCardProps {
   storageUsedBytes: number;
   itemCount: number;
   sessionsCount: number;
-  mediaBreakdown: {
-    photo: { count: number; bytes: number };
-    video: { count: number; bytes: number };
-    audio: { count: number; bytes: number };
-    other: { count: number; bytes: number };
+  mediaBreakdown?: {
+    photo?: { count?: number; bytes?: number };
+    video?: { count?: number; bytes?: number };
+    audio?: { count?: number; bytes?: number };
+    other?: { count?: number; bytes?: number };
   };
-  onNavigate: (tab: string) => void;
+  onNavigate?: (tab: string) => void;
   openProfileEditorRequestToken?: number;
 }
 
@@ -85,7 +85,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   itemCount,
   sessionsCount,
   mediaBreakdown,
-  // onNavigate,
+  onNavigate,
   openProfileEditorRequestToken,
 }) => {
   const location = useLocation();
@@ -170,40 +170,54 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
     }
   }, [location.hash, openProfileEditorRequestToken]);
 
+  const safeMediaBreakdown = React.useMemo(
+    () => ({
+      photo: {
+        count: mediaBreakdown?.photo?.count || 0,
+        bytes: mediaBreakdown?.photo?.bytes || 0,
+      },
+      video: {
+        count: mediaBreakdown?.video?.count || 0,
+        bytes: mediaBreakdown?.video?.bytes || 0,
+      },
+      audio: {
+        count: mediaBreakdown?.audio?.count || 0,
+        bytes: mediaBreakdown?.audio?.bytes || 0,
+      },
+      other: {
+        count: mediaBreakdown?.other?.count || 0,
+        bytes: mediaBreakdown?.other?.bytes || 0,
+      },
+    }),
+    [mediaBreakdown]
+  );
+
   const totalMediaBytes = React.useMemo(
     () =>
-      (mediaBreakdown?.photo?.bytes || 0) +
-      (mediaBreakdown?.video?.bytes || 0) +
-      (mediaBreakdown?.audio?.bytes || 0) +
-      (mediaBreakdown?.other?.bytes || 0),
-    [mediaBreakdown]
+      safeMediaBreakdown.photo.bytes +
+      safeMediaBreakdown.video.bytes +
+      safeMediaBreakdown.audio.bytes +
+      safeMediaBreakdown.other.bytes,
+    [safeMediaBreakdown]
   );
 
   const totalMediaCount = React.useMemo(
     () =>
-      (mediaBreakdown?.photo?.count || 0) +
-      (mediaBreakdown?.video?.count || 0) +
-      (mediaBreakdown?.audio?.count || 0) +
-      (mediaBreakdown?.other?.count || 0),
-    [mediaBreakdown]
+      safeMediaBreakdown.photo.count +
+      safeMediaBreakdown.video.count +
+      safeMediaBreakdown.audio.count +
+      safeMediaBreakdown.other.count,
+    [safeMediaBreakdown]
   );
 
   const photoPct =
-    totalMediaBytes > 0
-      ? Math.round(((mediaBreakdown?.photo?.bytes || 0) / totalMediaBytes) * 100)
-      : 0;
+    totalMediaBytes > 0 ? Math.round((safeMediaBreakdown.photo.bytes / totalMediaBytes) * 100) : 0;
   const videoPct =
-    totalMediaBytes > 0
-      ? Math.round(((mediaBreakdown?.video?.bytes || 0) / totalMediaBytes) * 100)
-      : 0;
+    totalMediaBytes > 0 ? Math.round((safeMediaBreakdown.video.bytes / totalMediaBytes) * 100) : 0;
   const audioPct =
-    totalMediaBytes > 0
-      ? Math.round(((mediaBreakdown?.audio?.bytes || 0) / totalMediaBytes) * 100)
-      : 0;
+    totalMediaBytes > 0 ? Math.round((safeMediaBreakdown.audio.bytes / totalMediaBytes) * 100) : 0;
   const otherPct =
-    totalMediaBytes > 0
-      ? Math.round(((mediaBreakdown?.other?.bytes || 0) / totalMediaBytes) * 100)
-      : 0;
+    totalMediaBytes > 0 ? Math.round((safeMediaBreakdown.other.bytes / totalMediaBytes) * 100) : 0;
 
   return (
     <SectionCard
@@ -432,28 +446,28 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 <div
                   style={{ width: `${photoPct}%` }}
                   className="h-full rounded-full bg-blue-500 transition-all duration-500"
-                  title={`Photos: ${formatBytes(mediaBreakdown.photo.bytes)} (${photoPct}%)`}
+                  title={`Photos: ${formatBytes(safeMediaBreakdown.photo.bytes)} (${photoPct}%)`}
                 />
               )}
               {videoPct > 0 && (
                 <div
                   style={{ width: `${videoPct}%` }}
                   className="h-full rounded-full bg-purple-500 transition-all duration-500"
-                  title={`Videos: ${formatBytes(mediaBreakdown.video.bytes)} (${videoPct}%)`}
+                  title={`Videos: ${formatBytes(safeMediaBreakdown.video.bytes)} (${videoPct}%)`}
                 />
               )}
               {audioPct > 0 && (
                 <div
                   style={{ width: `${audioPct}%` }}
                   className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                  title={`Audio: ${formatBytes(mediaBreakdown.audio.bytes)} (${audioPct}%)`}
+                  title={`Audio: ${formatBytes(safeMediaBreakdown.audio.bytes)} (${audioPct}%)`}
                 />
               )}
               {otherPct > 0 && (
                 <div
                   style={{ width: `${otherPct}%` }}
                   className="h-full rounded-full bg-amber-500 transition-all duration-500"
-                  title={`All Other: ${formatBytes(mediaBreakdown.other.bytes)} (${otherPct}%)`}
+                  title={`All Other: ${formatBytes(safeMediaBreakdown.other.bytes)} (${otherPct}%)`}
                 />
               )}
             </div>
@@ -462,7 +476,17 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
           <div className="grid gap-2.5 sm:gap-3 min-[380px]:grid-cols-2 lg:grid-cols-4">
             {/* Photos */}
             <div
-              className={`${SETTINGS_PANEL_SOFT} group relative min-w-0 overflow-hidden p-3.5 transition-all duration-300 hover:border-blue-500/30 hover:bg-blue-500/[0.02] dark:bg-black/30 sm:p-4`}
+              role="button"
+              tabIndex={0}
+              aria-label={`View Photos (${safeMediaBreakdown.photo.count} files, ${formatBytes(safeMediaBreakdown.photo.bytes)})`}
+              onClick={() => onNavigate?.('photos')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onNavigate?.('photos');
+                }
+              }}
+              className={`${SETTINGS_PANEL_SOFT} group relative min-w-0 cursor-pointer overflow-hidden p-3.5 transition-all duration-300 hover:border-blue-500/30 hover:bg-blue-500/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 dark:bg-black/30 sm:p-4`}
             >
               <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <div className="relative z-10 mb-2.5 flex items-center justify-between gap-2 sm:mb-3">
@@ -482,20 +506,20 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
               </div>
               <div className="relative z-10 flex items-baseline gap-1.5">
                 <p className="text-lg font-bold tracking-tight text-text sm:text-xl">
-                  {mediaBreakdown.photo.count}
+                  {safeMediaBreakdown.photo.count}
                 </p>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-text/35">
-                  {mediaBreakdown.photo.count === 1 ? 'file' : 'files'}
+                  {safeMediaBreakdown.photo.count === 1 ? 'file' : 'files'}
                 </span>
               </div>
               <p className="relative z-10 mt-1 truncate text-[11px] font-medium text-text/50">
-                {formatBytes(mediaBreakdown.photo.bytes)}
+                {formatBytes(safeMediaBreakdown.photo.bytes)}
               </p>
               <div className="relative z-10 mt-2.5 h-1 w-full overflow-hidden rounded-full bg-text/5">
                 <div
                   className="h-full rounded-full bg-blue-500/70 transition-all duration-500"
                   style={{
-                    width: `${totalMediaBytes > 0 ? (mediaBreakdown.photo.bytes / totalMediaBytes) * 100 : 0}%`,
+                    width: `${totalMediaBytes > 0 ? (safeMediaBreakdown.photo.bytes / totalMediaBytes) * 100 : 0}%`,
                   }}
                 />
               </div>
@@ -503,7 +527,17 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
 
             {/* Videos */}
             <div
-              className={`${SETTINGS_PANEL_SOFT} group relative min-w-0 overflow-hidden p-3.5 transition-all duration-300 hover:border-purple-500/30 hover:bg-purple-500/[0.02] dark:bg-black/30 sm:p-4`}
+              role="button"
+              tabIndex={0}
+              aria-label={`View Videos (${safeMediaBreakdown.video.count} files, ${formatBytes(safeMediaBreakdown.video.bytes)})`}
+              onClick={() => onNavigate?.('videos')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onNavigate?.('videos');
+                }
+              }}
+              className={`${SETTINGS_PANEL_SOFT} group relative min-w-0 cursor-pointer overflow-hidden p-3.5 transition-all duration-300 hover:border-purple-500/30 hover:bg-purple-500/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 dark:bg-black/30 sm:p-4`}
             >
               <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-purple-500/10 blur-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <div className="relative z-10 mb-2.5 flex items-center justify-between gap-2 sm:mb-3">
@@ -523,20 +557,20 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
               </div>
               <div className="relative z-10 flex items-baseline gap-1.5">
                 <p className="text-lg font-bold tracking-tight text-text sm:text-xl">
-                  {mediaBreakdown.video.count}
+                  {safeMediaBreakdown.video.count}
                 </p>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-text/35">
-                  {mediaBreakdown.video.count === 1 ? 'file' : 'files'}
+                  {safeMediaBreakdown.video.count === 1 ? 'file' : 'files'}
                 </span>
               </div>
               <p className="relative z-10 mt-1 truncate text-[11px] font-medium text-text/50">
-                {formatBytes(mediaBreakdown.video.bytes)}
+                {formatBytes(safeMediaBreakdown.video.bytes)}
               </p>
               <div className="relative z-10 mt-2.5 h-1 w-full overflow-hidden rounded-full bg-text/5">
                 <div
                   className="h-full rounded-full bg-purple-500/70 transition-all duration-500"
                   style={{
-                    width: `${totalMediaBytes > 0 ? (mediaBreakdown.video.bytes / totalMediaBytes) * 100 : 0}%`,
+                    width: `${totalMediaBytes > 0 ? (safeMediaBreakdown.video.bytes / totalMediaBytes) * 100 : 0}%`,
                   }}
                 />
               </div>
@@ -544,7 +578,17 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
 
             {/* Audio */}
             <div
-              className={`${SETTINGS_PANEL_SOFT} group relative min-w-0 overflow-hidden p-3.5 transition-all duration-300 hover:border-emerald-500/30 hover:bg-emerald-500/[0.02] dark:bg-black/30 sm:p-4`}
+              role="button"
+              tabIndex={0}
+              aria-label={`View Audio (${safeMediaBreakdown.audio.count} files, ${formatBytes(safeMediaBreakdown.audio.bytes)})`}
+              onClick={() => onNavigate?.('audio')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onNavigate?.('audio');
+                }
+              }}
+              className={`${SETTINGS_PANEL_SOFT} group relative min-w-0 cursor-pointer overflow-hidden p-3.5 transition-all duration-300 hover:border-emerald-500/30 hover:bg-emerald-500/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 dark:bg-black/30 sm:p-4`}
             >
               <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <div className="relative z-10 mb-2.5 flex items-center justify-between gap-2 sm:mb-3">
@@ -564,20 +608,20 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
               </div>
               <div className="relative z-10 flex items-baseline gap-1.5">
                 <p className="text-lg font-bold tracking-tight text-text sm:text-xl">
-                  {mediaBreakdown.audio.count}
+                  {safeMediaBreakdown.audio.count}
                 </p>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-text/35">
-                  {mediaBreakdown.audio.count === 1 ? 'file' : 'files'}
+                  {safeMediaBreakdown.audio.count === 1 ? 'file' : 'files'}
                 </span>
               </div>
               <p className="relative z-10 mt-1 truncate text-[11px] font-medium text-text/50">
-                {formatBytes(mediaBreakdown.audio.bytes)}
+                {formatBytes(safeMediaBreakdown.audio.bytes)}
               </p>
               <div className="relative z-10 mt-2.5 h-1 w-full overflow-hidden rounded-full bg-text/5">
                 <div
                   className="h-full rounded-full bg-emerald-500/70 transition-all duration-500"
                   style={{
-                    width: `${totalMediaBytes > 0 ? (mediaBreakdown.audio.bytes / totalMediaBytes) * 100 : 0}%`,
+                    width: `${totalMediaBytes > 0 ? (safeMediaBreakdown.audio.bytes / totalMediaBytes) * 100 : 0}%`,
                   }}
                 />
               </div>
@@ -585,7 +629,17 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
 
             {/* All Other */}
             <div
-              className={`${SETTINGS_PANEL_SOFT} group relative min-w-0 overflow-hidden p-3.5 transition-all duration-300 hover:border-amber-500/30 hover:bg-amber-500/[0.02] dark:bg-black/30 sm:p-4`}
+              role="button"
+              tabIndex={0}
+              aria-label={`View All Other Files (${safeMediaBreakdown.other.count} files, ${formatBytes(safeMediaBreakdown.other.bytes)})`}
+              onClick={() => onNavigate?.('files')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onNavigate?.('files');
+                }
+              }}
+              className={`${SETTINGS_PANEL_SOFT} group relative min-w-0 cursor-pointer overflow-hidden p-3.5 transition-all duration-300 hover:border-amber-500/30 hover:bg-amber-500/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 dark:bg-black/30 sm:p-4`}
             >
               <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               <div className="relative z-10 mb-2.5 flex items-center justify-between gap-2 sm:mb-3">
@@ -605,20 +659,20 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
               </div>
               <div className="relative z-10 flex items-baseline gap-1.5">
                 <p className="text-lg font-bold tracking-tight text-text sm:text-xl">
-                  {mediaBreakdown.other.count}
+                  {safeMediaBreakdown.other.count}
                 </p>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-text/35">
-                  {mediaBreakdown.other.count === 1 ? 'file' : 'files'}
+                  {safeMediaBreakdown.other.count === 1 ? 'file' : 'files'}
                 </span>
               </div>
               <p className="relative z-10 mt-1 truncate text-[11px] font-medium text-text/50">
-                {formatBytes(mediaBreakdown.other.bytes)}
+                {formatBytes(safeMediaBreakdown.other.bytes)}
               </p>
               <div className="relative z-10 mt-2.5 h-1 w-full overflow-hidden rounded-full bg-text/5">
                 <div
                   className="h-full rounded-full bg-amber-500/70 transition-all duration-500"
                   style={{
-                    width: `${totalMediaBytes > 0 ? (mediaBreakdown.other.bytes / totalMediaBytes) * 100 : 0}%`,
+                    width: `${totalMediaBytes > 0 ? (safeMediaBreakdown.other.bytes / totalMediaBytes) * 100 : 0}%`,
                   }}
                 />
               </div>

@@ -38,11 +38,15 @@ import {
   RotateCcw,
   FileText,
   Info,
+  ShieldAlert,
 } from 'lucide-react';
+import { ForensicWatermark } from '../../components/security/ForensicWatermark';
+import { useAntiScreenshotAndShield } from '../../hooks/useAntiScreenshotAndShield';
 import { toast } from 'sonner';
 import { useVaultStore } from '../../store/vaultStore';
 import { VaultItem } from '../../lib/storage';
 import { encryptFileInWorker } from '../../lib/cryptoPrimitives';
+import { stripExifInWorker, stripExifInMemory } from '../../lib/mediaWorker';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlobalNavigator } from '../../components/vault/GlobalNavigator';
 import { useGlobalNavigationStore } from '../../store/globalNavigationStore';
@@ -56,7 +60,7 @@ import {
   getVaultItemPreviewUrl,
   describeVaultPreviewError,
 } from '../../lib/filePreview';
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { setDraggedVaultItem, clearDraggedVaultItem } from '../../lib/vaultDragDrop';
 import {
   exceedsUploadSizeLimit,
   getUploadSizeErrorMessage,
@@ -1259,9 +1263,26 @@ export const OtherFilesVault: React.FC = () => {
   const togglePin = useVaultStore((state) => state.togglePin);
   const pinningItemIds = useVaultStore((state) => state.pinningItemIds);
   const masterKey = useVaultStore((state) => state.masterKey);
+  const isPrintBlockingEnabled = useVaultStore((state) => state.preferences.isPrintBlockingEnabled);
+  const isTabSwitchShieldEnabled = useVaultStore(
+    (state) => state.preferences.isTabSwitchShieldEnabled
+  );
+  const isForensicWatermarkEnabled = useVaultStore(
+    (state) => state.preferences.isForensicWatermarkEnabled
+  );
+  const isPhotoExifStripped = useVaultStore((state) => state.preferences.isPhotoExifStripped);
+
   const [isUploading, setIsUploading] = useState(false);
   const [previewItem, setPreviewItem] = useState<string | null>(null);
   const [moveMenuOpenId, setMoveMenuOpenId] = useState<string | null>(null);
+
+  // Anti-Screenshot, Print Blocking & Tab Switch Shield Hook
+  const { isShieldActive, shieldReason, deactivateShield } = useAntiScreenshotAndShield({
+    isTabSwitchShieldEnabled: isTabSwitchShieldEnabled !== false,
+    isPrintBlockingEnabled: isPrintBlockingEnabled !== false,
+    isViewingSensitiveMedia: Boolean(previewItem),
+    customShieldMessage: '⚠️ Printing and PDF saving are prohibited for protected vault files.',
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetFolder = useRef<string | null>(null);
   const targetItemId = useGlobalNavigationStore((state) => state.targetItemId);
@@ -1461,20 +1482,37 @@ export const OtherFilesVault: React.FC = () => {
           throttledToastUpdate(`[${completedCount + 1}/${total}] Encrypting "${file.name}"...`);
         }
 
-        const encryptedData = await encryptFileInWorker(file, masterKey);
-        const fileExt = file.name.split('.').pop()?.toUpperCase() || 'FILE';
+        let uploadFileObj = file;
+        if (
+          isPhotoExifStripped &&
+          (file.type.startsWith('image/') || /\.(jpe?g|png|webp|tif|tiff)$/i.test(file.name))
+        ) {
+          try {
+            uploadFileObj = await stripExifInWorker(file);
+          } catch {
+            const rawBuffer = await file.arrayBuffer();
+            const cleanedBuffer = stripExifInMemory(rawBuffer, file.type);
+            uploadFileObj = new File([cleanedBuffer], file.name, {
+              type: file.type || 'image/jpeg',
+              lastModified: file.lastModified,
+            });
+          }
+        }
+
+        const encryptedData = await encryptFileInWorker(uploadFileObj, masterKey);
+        const fileExt = uploadFileObj.name.split('.').pop()?.toUpperCase() || 'FILE';
 
         await yieldToMainThread();
 
         await addItem(
           {
             type: 'file',
-            title: file.name,
+            title: uploadFileObj.name,
             content: encryptedData,
             folder: itemFolder || undefined,
             metadata: {
-              mimeType: file.type || 'application/octet-stream',
-              size: file.size,
+              mimeType: uploadFileObj.type || 'application/octet-stream',
+              size: uploadFileObj.size,
               extension: fileExt,
               isE2EE: true,
               clientEncrypted: true,
@@ -1677,6 +1715,7 @@ export const OtherFilesVault: React.FC = () => {
                   transition={{ delay: idx * 0.03 }}
                   draggable
                   onDragStartCapture={(event) => setDraggedVaultItem(event, item.id)}
+                  onDragEnd={clearDraggedVaultItem}
                   onTouchStartCapture={(event: React.TouchEvent) =>
                     setDraggedVaultItem(event as any, item.id)
                   }
@@ -1966,12 +2005,63 @@ export const OtherFilesVault: React.FC = () => {
               onNext={showNextFile}
               layout="overlay"
             />
-            <div className="h-[92vh] sm:h-[88vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-zinc-950 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)] transition-all flex flex-col min-h-0">
+            <div className="relative h-[92vh] sm:h-[88vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-zinc-950 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)] transition-all flex flex-col min-h-0 doc-preview-content vault-print-protected">
               <SafeUniversalPreview
                 item={previewedFile}
                 masterKey={masterKey!}
                 onDownload={() => downloadFile(previewedFile)}
               />
+
+              {/* Dynamic Forensic Watermark Overlay */}
+              {isForensicWatermarkEnabled !== false && (
+                <ForensicWatermark
+                  opacity={0.12}
+                  angle={-25}
+                  density="standard"
+                  classification="VAULT FILE // CONFIDENTIAL"
+                />
+              )}
+
+              {/* Tab Switch Auto-Shield Overlay */}
+              <AnimatePresence>
+                {isShieldActive && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.12 }}
+                    className="vault-tab-switch-shield"
+                    onClick={deactivateShield}
+                  >
+                    <div className="flex flex-col items-center gap-3 p-6 text-center">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl">
+                        <ShieldAlert className="h-7 w-7 text-amber-400" />
+                      </div>
+                      <p className="text-base font-bold text-white tracking-wide">
+                        {shieldReason === 'print-attempt'
+                          ? 'File Print Protection Active'
+                          : 'Shield Active • File Protected'}
+                      </p>
+                      <p className="text-xs text-white/60 max-w-xs leading-relaxed">
+                        {shieldReason === 'print-attempt'
+                          ? 'Printing or PDF exporting of encrypted files is disabled.'
+                          : 'File hidden to prevent multitasking switcher capture. Click or focus window to resume.'}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Print Blocked Notice for @media print */}
+            <div className="vault-print-blocked-notice">
+              <div className="flex items-center gap-2 text-red-600 mb-2">
+                <ShieldAlert className="h-8 w-8" />
+                <span className="text-xl font-bold">Encrypted File Protected</span>
+              </div>
+              <p className="text-sm text-red-800/80">
+                File printing is blocked by Vault Security Policy.
+              </p>
             </div>
           </motion.div>
         )}

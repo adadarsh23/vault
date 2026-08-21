@@ -25,9 +25,13 @@ export const useVaultItems = (
 
   const filteredItems = useMemo(() => {
     const filtered = typedItems.filter((m) => {
+      const transcript =
+        typeof m.metadata?.transcript === 'string' ? m.metadata.transcript.toLowerCase() : '';
+      const matchesTranscript = transcript.includes(normalizedSearchQuery);
       const matchesSearch =
         normalizedSearchQuery.length === 0 ||
-        normalizeTitle(m.title).includes(normalizedSearchQuery);
+        normalizeTitle(m.title).includes(normalizedSearchQuery) ||
+        matchesTranscript;
 
       // If currentFolder is null, show absolutely everything of this type (All View)
       if (currentFolder === null) return matchesSearch;

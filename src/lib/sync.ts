@@ -1,4 +1,11 @@
-export { ensureAuth, fetchWithRetry, getAuthHeaders, getVaultId } from './sync/core';
+export {
+  ensureAuth,
+  fetchWithRetry,
+  getAuthHeaders,
+  getVaultId,
+  runInParallelPool,
+  runInSyncWriteQueue,
+} from './sync/core';
 export { uploadItemToCloud } from './sync/itemUploads';
 export {
   uploadKeyCheckToCloud,

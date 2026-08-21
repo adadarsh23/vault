@@ -46,6 +46,7 @@ export const uploadItemToCloud = async (
         finalPayload = JSON.stringify({
           payload: `V2_MODERN:${encryptedMetadata}|${item.content}`,
           category,
+          folder: item.folder && String(item.folder).trim() ? String(item.folder).trim() : null,
         });
       }
 
@@ -59,9 +60,11 @@ export const uploadItemToCloud = async (
         'X-Vault-Title': `V2_ENC:${encryptedTitle}`,
         'X-Vault-Metadata': `V2_ENC:${encryptedMetadataHeader}`,
       };
-      // Binary uploads cannot send folder in JSON body; server cannot read encrypted metadata headers.
+      // Binary and JSON uploads explicitly communicate folder state (including empty for uncategorized)
       if (item.folder && String(item.folder).trim()) {
-        uploadHeaders['X-Vault-Folder'] = encodeURIComponent(String(item.folder));
+        uploadHeaders['X-Vault-Folder'] = encodeURIComponent(String(item.folder).trim());
+      } else {
+        uploadHeaders['X-Vault-Folder'] = '';
       }
 
       if (finalPayload instanceof Uint8Array) {
@@ -86,7 +89,7 @@ export const uploadItemToCloud = async (
           onProgress
         );
       }
-    });
+    }, item.id);
   } catch (error) {
     handleError(error, syncContext);
     throw error;

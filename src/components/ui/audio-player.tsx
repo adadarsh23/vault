@@ -2,8 +2,13 @@
 
 import { useRef, useState, useEffect, useCallback, memo, useId } from 'react';
 import { Button } from './Button';
-import { Play, Pause, Volume2, Volume1, VolumeX, RotateCcw, Download } from 'lucide-react';
+import { Play, Pause, Volume2, Volume1, VolumeX, RotateCcw, Download, AudioLines, Sparkles } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import {
+  attachVoiceClarityToMediaElement,
+  VoiceClarityPreset,
+  VOICE_CLARITY_PRESETS,
+} from '../../lib/audioDsp';
 
 /* ---------------- UTIL ---------------- */
 const formatTime = (seconds: number) => {
@@ -204,6 +209,31 @@ export const AudioPlayer = ({
   const [hasError, setHasError] = useState(false);
   const [waveformPeaks, setWaveformPeaks] = useState<number[]>([]);
   const [isGeneratingWaveform, setIsGeneratingWaveform] = useState(false);
+  const [voiceClarityPreset, setVoiceClarityPreset] = useState<VoiceClarityPreset>('off');
+  const dspControllerRef = useRef<{ setPreset: (p: VoiceClarityPreset) => void; destroy: () => void } | null>(null);
+
+  const toggleVoiceClarity = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const presets: VoiceClarityPreset[] = ['off', 'crystal', 'aggressive', 'warm-interview'];
+    const nextIdx = (presets.indexOf(voiceClarityPreset) + 1) % presets.length;
+    const nextPreset = presets[nextIdx];
+    setVoiceClarityPreset(nextPreset);
+
+    if (nextPreset === 'off') {
+      if (dspControllerRef.current) {
+        dspControllerRef.current.destroy();
+        dspControllerRef.current = null;
+      }
+    } else {
+      if (!dspControllerRef.current) {
+        dspControllerRef.current = attachVoiceClarityToMediaElement(audio, nextPreset);
+      } else {
+        dspControllerRef.current.setPreset(nextPreset);
+      }
+    }
+  }, [voiceClarityPreset]);
 
   const isLive = !isFinite(duration) || (duration === 0 && currentTime > 0);
   const showSpinner = (isLoading || isWaiting) && isPlaying;
@@ -314,6 +344,10 @@ export const AudioPlayer = ({
   // Clean unmount teardown
   useEffect(() => {
     return () => {
+      if (dspControllerRef.current) {
+        dspControllerRef.current.destroy();
+        dspControllerRef.current = null;
+      }
       const audio = audioRef.current;
       if (audio) {
         try {
@@ -758,6 +792,33 @@ export const AudioPlayer = ({
               className="text-[10px] font-bold text-white/60 hover:text-white bg-white/5 px-2 py-1 rounded-md min-w-[36px] disabled:opacity-30"
             >
               {playbackSpeed}x
+            </button>
+
+            {/* Voice Clarity DSP Filter Toggle */}
+            <button
+              type="button"
+              onClick={toggleVoiceClarity}
+              disabled={hasError}
+              title={`Voice Clarity DSP: ${VOICE_CLARITY_PRESETS[voiceClarityPreset].name}`}
+              aria-label={`Voice Clarity DSP: ${VOICE_CLARITY_PRESETS[voiceClarityPreset].name}`}
+              className={cn(
+                'flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md transition-all border',
+                voiceClarityPreset !== 'off'
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
+                  : 'bg-white/5 text-white/50 border-white/10 hover:text-white hover:bg-white/10'
+              )}
+            >
+              <Sparkles
+                className={cn(
+                  'h-3 w-3',
+                  voiceClarityPreset !== 'off' ? 'text-cyan-400' : 'text-white/40'
+                )}
+              />
+              <span className="hidden sm:inline">
+                {voiceClarityPreset === 'off'
+                  ? 'DSP'
+                  : VOICE_CLARITY_PRESETS[voiceClarityPreset].name}
+              </span>
             </button>
           </div>
 

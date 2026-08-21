@@ -16,6 +16,10 @@ import {
   ShieldCheck,
   HardDrive,
   Pin,
+  MessageSquareText,
+  Sparkles,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { toast } from 'sonner';
@@ -33,11 +37,11 @@ import { logActivity } from '../../lib/activity';
 import { useVaultFolders } from '../../hooks/useVaultFolders';
 import { useVaultItems } from '../../hooks/useVaultItems';
 import { VaultLayout } from '../../components/layout/VaultLayout';
+import { GlobalNavigator } from '../../components/vault/GlobalNavigator';
 import { cn } from '../../lib/utils';
 import { useGlobalNavigationStore } from '../../store/globalNavigationStore';
-import { GlobalNavigator } from '../../components/vault/GlobalNavigator';
 import { VaultItem } from '../../lib/storage';
-import { setDraggedVaultItem } from '../../lib/vaultDragDrop';
+import { setDraggedVaultItem, clearDraggedVaultItem } from '../../lib/vaultDragDrop';
 import { LiveCaptureModal } from './components/LiveCaptureModal';
 import {
   exceedsUploadSizeLimit,
@@ -61,6 +65,7 @@ const SafeAudioPreview: React.FC<{
   const currentBlobUrlRef = useRef<string | null>(null);
 
   const revisionKey = useMemo(() => getVaultItemPreviewRevision(item), [item]);
+  const [copiedTranscript, setCopiedTranscript] = useState(false);
 
   const handleRetry = () => {
     if (currentBlobUrlRef.current && currentBlobUrlRef.current.startsWith('blob:')) {
@@ -141,7 +146,18 @@ const SafeAudioPreview: React.FC<{
   }, [revisionKey, masterKey, rsaKeyPair, retryTrigger, item.id]);
 
   useEffect(() => {
+    const handlePanicLock = () => {
+      if (currentBlobUrlRef.current && currentBlobUrlRef.current.startsWith('blob:')) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = null;
+      }
+      setUrl(null);
+      setIsLoading(false);
+    };
+
+    window.addEventListener('vault:panic-lock', handlePanicLock);
     return () => {
+      window.removeEventListener('vault:panic-lock', handlePanicLock);
       if (currentBlobUrlRef.current && currentBlobUrlRef.current.startsWith('blob:')) {
         URL.revokeObjectURL(currentBlobUrlRef.current);
         currentBlobUrlRef.current = null;
@@ -187,6 +203,47 @@ const SafeAudioPreview: React.FC<{
           compact ? 'p-2' : 'p-6'
         )}
       />
+      {item.metadata?.transcript && !compact && (
+        <div className="mt-4 rounded-2xl border border-cyan-500/20 bg-cyan-950/20 p-4 backdrop-blur-md">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
+              <MessageSquareText className="h-4 w-4 text-cyan-400" />
+              <span>Encrypted Speech Transcript</span>
+              {item.metadata?.voiceClarityPreset && (
+                <span className="ml-2 rounded-full bg-cyan-500/10 border border-cyan-500/30 px-2 py-0.5 text-[10px] text-cyan-300">
+                  DSP: {String(item.metadata.voiceClarityPreset).toUpperCase()}
+                </span>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                void navigator.clipboard.writeText(item.metadata?.transcript);
+                setCopiedTranscript(true);
+                toast.success('Transcript copied to clipboard');
+                setTimeout(() => setCopiedTranscript(false), 2000);
+              }}
+              className="h-7 px-2 text-xs text-cyan-300 hover:bg-cyan-500/20"
+            >
+              {copiedTranscript ? (
+                <>
+                  <Check className="h-3 w-3 mr-1 text-emerald-400" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3 w-3 mr-1" />
+                  Copy Transcript
+                </>
+              )}
+            </Button>
+          </div>
+          <p className="text-xs leading-relaxed text-white/80 font-sans whitespace-pre-wrap select-text max-h-48 overflow-y-auto custom-scrollbar">
+            {item.metadata.transcript}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
@@ -369,7 +426,8 @@ export const AudioVault: React.FC = () => {
     files: File[],
     targetFolder: string | null,
     isAlreadyEncrypted = false,
-    isLiveCapture = false
+    isLiveCapture = false,
+    additionalMetadata?: Record<string, any>
   ) => {
     if (!files.length || !masterKey) return;
 
@@ -406,15 +464,27 @@ export const AudioVault: React.FC = () => {
     let successCount = 0;
     let failedCount = 0;
 
-    const CONCURRENCY = Math.min(3, total);
+    const CONCURRENCY = Math.min(2, total);
+
+    const yieldToMainThread = async () => {
+      await new Promise<void>((resolve) => {
+        if (typeof requestAnimationFrame !== 'undefined') {
+          requestAnimationFrame(() => resolve());
+        } else {
+          setTimeout(resolve, 0);
+        }
+      });
+    };
 
     const processFile = async (item: { file: File; targetFolder: string | null }) => {
       const { file, targetFolder: itemFolder } = item;
       try {
+        await yieldToMainThread();
         const encryptedData = isAlreadyEncrypted
           ? new Uint8Array(await file.arrayBuffer())
           : await encryptFileInWorker(file, masterKey);
 
+        await yieldToMainThread();
         const resolvedMimeType =
           file.type && file.type !== 'application/octet-stream'
             ? file.type
@@ -432,6 +502,7 @@ export const AudioVault: React.FC = () => {
             isE2EE: true,
             clientEncrypted: true,
             isLiveCapture,
+            ...additionalMetadata,
           },
         });
 
@@ -576,8 +647,8 @@ export const AudioVault: React.FC = () => {
         isOpen={isLiveRecordOpen}
         onClose={() => setIsLiveRecordOpen(false)}
         type="audio"
-        onCapture={async (file, isEncrypted) => {
-          await handleUploadFiles([file], currentFolder, isEncrypted, true);
+        onCapture={async (file, isEncrypted, additionalMetadata) => {
+          await handleUploadFiles([file], currentFolder, isEncrypted, true, additionalMetadata);
         }}
       />
 
@@ -606,6 +677,7 @@ export const AudioVault: React.FC = () => {
                 transition={{ delay: idx * 0.03 }}
                 draggable
                 onDragStartCapture={(event) => setDraggedVaultItem(event, item.id)}
+                onDragEnd={clearDraggedVaultItem}
                 onTouchStartCapture={(event: React.TouchEvent) =>
                   setDraggedVaultItem(event as any, item.id)
                 }
@@ -654,7 +726,27 @@ export const AudioVault: React.FC = () => {
                             </span>
                           </span>
                         )}
+                        {item.metadata?.voiceClarityPreset && item.metadata.voiceClarityPreset !== 'off' && (
+                          <span className="flex items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-[10px] text-cyan-300 border border-cyan-500/20">
+                            <Sparkles className="h-2.5 w-2.5" />
+                            Voice DSP
+                          </span>
+                        )}
+                        {item.metadata?.transcript && (
+                          <span
+                            className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-300 border border-emerald-500/20"
+                            title={String(item.metadata.transcript)}
+                          >
+                            <MessageSquareText className="h-2.5 w-2.5" />
+                            Transcript
+                          </span>
+                        )}
                       </div>
+                      {item.metadata?.transcript && (
+                        <p className="mt-2 text-xs text-white/70 italic line-clamp-1 border-l-2 border-cyan-400/50 pl-2 select-text">
+                          "{item.metadata.transcript}"
+                        </p>
+                      )}
                     </div>
                     <div className="relative">
                       <Button

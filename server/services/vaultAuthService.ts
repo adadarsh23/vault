@@ -251,7 +251,7 @@ export const authenticateUser = async (input: AuthInput) => {
   return retryLoadedUserMutation({
     mutationName: 'authenticateUser',
     loadUser: async () => {
-      const userDocument = await User.findOne({ username }).select('+password').exec();
+      const userDocument = await User.findOne({ username }).select('+password +masterKey').exec();
 
       if (!userDocument) {
         // Perform dummy comparison to prevent timing attacks
@@ -280,7 +280,59 @@ export const authenticateUser = async (input: AuthInput) => {
           // ignore
         }
       }
-      const isValidPassword = storedHash ? await comparePassword(password, storedHash) : false;
+
+      let storedMasterKey = '';
+      if (
+        user.masterKey &&
+        typeof user.masterKey === 'object' &&
+        'cipherText' in (user.masterKey as any)
+      ) {
+        try {
+          storedMasterKey = decryptText(user.masterKey as any);
+        } catch {
+          // ignore
+        }
+      }
+      if (!storedMasterKey && user.meta?.masterKey && typeof user.meta.masterKey === 'object' && 'cipherText' in (user.meta.masterKey as any)) {
+        try {
+          storedMasterKey = decryptText(user.meta.masterKey as any);
+        } catch {
+          // ignore
+        }
+      }
+
+      let isValidPassword = false;
+      const candidatePasswords = [password, password?.trim()].filter(
+        (p): p is string => Boolean(p) && typeof p === 'string'
+      );
+
+      if (storedHash) {
+        for (const candidate of candidatePasswords) {
+          if (await comparePassword(candidate, storedHash)) {
+            isValidPassword = true;
+            break;
+          }
+        }
+      }
+
+      if (!isValidPassword && storedMasterKey) {
+        for (const candidate of candidatePasswords) {
+          if (candidate === storedMasterKey) {
+            isValidPassword = true;
+            break;
+          }
+        }
+      }
+
+      const rawMasterKey = typeof input.masterKey === 'string' ? input.masterKey.trim() : '';
+      if (!isValidPassword && rawMasterKey) {
+        if (storedMasterKey && rawMasterKey === storedMasterKey) {
+          isValidPassword = true;
+        } else if (storedHash && (await comparePassword(rawMasterKey, storedHash))) {
+          isValidPassword = true;
+        }
+      }
+
       if (isValidPassword && isLegacyEncrypted && storedHash) {
         user.password = storedHash as any;
       }

@@ -64,14 +64,26 @@ const installTestPolyfills = () => {
   }
 
   if (
-    typeof window.IntersectionObserver === 'undefined' &&
+    typeof window.IntersectionObserver === 'undefined' ||
     typeof globalThis.IntersectionObserver === 'undefined'
   ) {
     class IntersectionObserverMock {
       readonly root: Element | Document | null = null;
       readonly rootMargin = '';
       readonly thresholds: ReadonlyArray<number> = [];
-      observe(): void {}
+      private callback?: (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => void;
+
+      constructor(callback?: (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => void) {
+        this.callback = callback;
+      }
+
+      observe(target: Element): void {
+        this.callback?.(
+          [{ isIntersecting: true, target } as unknown as IntersectionObserverEntry],
+          this as unknown as IntersectionObserver
+        );
+      }
+
       unobserve(): void {}
       disconnect(): void {}
       takeRecords(): IntersectionObserverEntry[] {
@@ -80,6 +92,11 @@ const installTestPolyfills = () => {
     }
 
     Object.defineProperty(window, 'IntersectionObserver', {
+      configurable: true,
+      writable: true,
+      value: IntersectionObserverMock,
+    });
+    Object.defineProperty(globalThis, 'IntersectionObserver', {
       configurable: true,
       writable: true,
       value: IntersectionObserverMock,
