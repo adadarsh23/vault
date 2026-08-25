@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { ProfileCard } from '../../components/SettingsVault/ProfileCard';
@@ -72,7 +72,7 @@ describe('ProfileCard Component Test Suite', () => {
     render(
       <MemoryRouter>
         <ProfileCard {...defaultProps} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0);
@@ -88,7 +88,7 @@ describe('ProfileCard Component Test Suite', () => {
     render(
       <MemoryRouter>
         <ProfileCard {...defaultProps} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const profileCardButton = screen.getByRole('button', { name: /open profile editor/i });
@@ -103,7 +103,7 @@ describe('ProfileCard Component Test Suite', () => {
     render(
       <MemoryRouter>
         <ProfileCard {...defaultProps} isSavingProfile={true} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const profileCardButton = screen.getByRole('button', { name: /open profile editor/i });
@@ -119,7 +119,7 @@ describe('ProfileCard Component Test Suite', () => {
     render(
       <MemoryRouter>
         <ProfileCard {...defaultProps} onSaveProfile={onSaveProfileMock} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const profileCardButton = screen.getByRole('button', { name: /open profile editor/i });
@@ -129,7 +129,9 @@ describe('ProfileCard Component Test Suite', () => {
     fireEvent.change(displayNameInput, { target: { value: 'Jane Doe' } });
 
     const saveButton = screen.getByRole('button', { name: /save profile/i });
-    fireEvent.click(saveButton);
+    await act(async () => {
+      fireEvent.click(saveButton);
+    });
 
     expect(onSaveProfileMock).toHaveBeenCalledWith('Jane Doe', 'https://example.com/avatar.jpg');
     await waitFor(() => {
@@ -146,14 +148,16 @@ describe('ProfileCard Component Test Suite', () => {
     render(
       <MemoryRouter>
         <ProfileCard {...defaultProps} onSaveProfile={onSaveProfileMock} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const profileCardButton = screen.getByRole('button', { name: /open profile editor/i });
     fireEvent.click(profileCardButton);
 
     const saveButton = screen.getByRole('button', { name: /save profile/i });
-    fireEvent.click(saveButton);
+    await act(async () => {
+      fireEvent.click(saveButton);
+    });
 
     expect(onSaveProfileMock).toHaveBeenCalled();
     await waitFor(() => {
@@ -168,7 +172,7 @@ describe('ProfileCard Component Test Suite', () => {
     render(
       <MemoryRouter>
         <ProfileCard {...defaultProps} onSaveProfile={onSaveProfileMock} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const profileCardButton = screen.getByRole('button', { name: /open profile editor/i });
@@ -185,7 +189,7 @@ describe('ProfileCard Component Test Suite', () => {
     render(
       <MemoryRouter>
         <ProfileCard {...defaultProps} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText('Media & File Breakdown')).toBeTruthy();
@@ -200,7 +204,7 @@ describe('ProfileCard Component Test Suite', () => {
     render(
       <MemoryRouter>
         <ProfileCard {...defaultProps} onNavigate={onNavigateMock} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const videoCard = screen.getByRole('button', { name: /view videos/i });
@@ -216,7 +220,7 @@ describe('ProfileCard Component Test Suite', () => {
     render(
       <MemoryRouter>
         <ProfileCard {...defaultProps} mediaBreakdown={undefined as any} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText('Media & File Breakdown')).toBeTruthy();

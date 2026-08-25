@@ -56,7 +56,7 @@ describe('server auth utilities', async () => {
     // Manually forge a valid-looking JWT with a wrong secret
     const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
     const payload = Buffer.from(JSON.stringify({ sub: 'u1', type: 'access' })).toString(
-      'base64url'
+      'base64url',
     );
     const fakeToken = `${header}.${payload}.badsignature`;
 

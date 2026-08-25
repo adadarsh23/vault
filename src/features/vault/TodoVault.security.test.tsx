@@ -169,7 +169,7 @@ describe('TodoVault security write path', () => {
         completed: false,
         dueDate: '',
         priority: 'medium',
-      })
+      }),
     );
     mockUpdateItem.mockRejectedValueOnce(new Error('update failed'));
 

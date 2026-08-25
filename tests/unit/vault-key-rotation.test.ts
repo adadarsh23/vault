@@ -11,7 +11,7 @@ describe('vaultKeyRotation', () => {
     const rotated = await reencryptVaultItemContent(
       { title: 'Note', content: encrypted },
       oldKey,
-      newKey
+      newKey,
     );
 
     expect(typeof rotated).toBe('string');
@@ -26,7 +26,7 @@ describe('vaultKeyRotation', () => {
     const rotated = await reencryptVaultItemContent(
       { title: 'Todo', content: plaintext },
       oldKey,
-      newKey
+      newKey,
     );
 
     expect(rotated).toBe(plaintext);
@@ -40,7 +40,7 @@ describe('vaultKeyRotation', () => {
     const rotated = await reencryptVaultItemContent(
       { title: 'Video', content: serverRef },
       oldKey,
-      newKey
+      newKey,
     );
 
     expect(rotated).toBe(serverRef);
@@ -54,7 +54,7 @@ describe('vaultKeyRotation', () => {
     const rotated = await reencryptVaultItemContent(
       { title: 'Binary', content: encryptedBytes },
       key,
-      key
+      key,
     );
 
     expect(rotated).toBe(encryptedBytes);
@@ -68,8 +68,8 @@ describe('vaultKeyRotation', () => {
       reencryptVaultItemContent(
         { title: 'Note', content: encrypted },
         'not-a-valid-derived-key',
-        'still-not-valid'
-      )
+        'still-not-valid',
+      ),
     ).rejects.toMatchObject({
       code: 'INVALID_KEY_MATERIAL',
     });

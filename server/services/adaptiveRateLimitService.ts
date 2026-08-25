@@ -153,7 +153,7 @@ export class AdaptiveRateLimitService {
   async checkRateLimit(
     identifier: string,
     category: 'default' | 'auth' | 'api' | 'file' = 'default',
-    userId?: string
+    userId?: string,
   ): Promise<{
     allowed: boolean;
     remaining: number;
@@ -203,7 +203,7 @@ export class AdaptiveRateLimitService {
         cooldownKey,
         cooldownEnd.toString(),
         'EX',
-        Math.ceil(this.COOLDOWN_PERIODS.throttle / 1000)
+        Math.ceil(this.COOLDOWN_PERIODS.throttle / 1000),
       );
       action = 'throttle';
 
@@ -236,7 +236,7 @@ export class AdaptiveRateLimitService {
       apiAnomalies?: number;
       dataAccess?: number;
       newLocations?: number;
-    }
+    },
   ): Promise<UserRiskProfile> {
     let profile = this.userProfiles.get(userId);
 
@@ -281,7 +281,7 @@ export class AdaptiveRateLimitService {
       'reputation',
       profile.reputation,
       'patterns',
-      profile.suspiciousPatterns.toString()
+      profile.suspiciousPatterns.toString(),
     );
     await this.redisClient.expire(`user:risk:${userId}`, 86400); // 24 hour TTL
 
@@ -293,7 +293,7 @@ export class AdaptiveRateLimitService {
    */
   private getAdaptiveLimits(
     category: 'default' | 'auth' | 'api' | 'file',
-    profile: UserRiskProfile | null
+    profile: UserRiskProfile | null,
   ): AdaptiveLimit {
     const baseLimit = this.BASE_LIMITS[category];
     const multiplier = profile ? this.RISK_MULTIPLIERS[profile.reputation] : 1.0;

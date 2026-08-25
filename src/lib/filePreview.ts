@@ -888,7 +888,7 @@ export const getVaultItemPreviewUrl = async (
   item: VaultItem,
   masterKey: string | CryptoKey | null | undefined,
   mimeType?: string,
-  rsaPrivateKey?: CryptoKeyPair['privateKey'] | null
+  rsaPrivateKey?: CryptoKeyPair['privateKey'] | null,
 ): Promise<string | null> => {
   const effectiveMimeType = mimeType || inferMimeTypeFromItem(item);
 
@@ -905,14 +905,14 @@ export const getVaultItemPreviewUrl = async (
   if (!masterKey) {
     if (typeof item.content === 'string') {
       return createTrackedBlobUrl(
-        new Blob([item.content], { type: effectiveMimeType || 'text/plain' })
+        new Blob([item.content], { type: effectiveMimeType || 'text/plain' }),
       );
     }
     if (item.content instanceof Uint8Array) {
       return createTrackedBlobUrl(
         new Blob([new Uint8Array(item.content)], {
           type: effectiveMimeType || 'application/octet-stream',
-        })
+        }),
       );
     }
     return null;
@@ -941,7 +941,7 @@ export const getVaultItemPreviewUrl = async (
           rawBytes,
           masterKey,
           effectiveMimeType,
-          rsaPrivateKey
+          rsaPrivateKey,
         );
         if (decryptedUrl) return decryptedUrl;
       } catch {
@@ -954,7 +954,8 @@ export const getVaultItemPreviewUrl = async (
   const candidateServerUrl = getVaultItemFileUrl(item);
   if (
     candidateServerUrl &&
-    (!candidateServerUrl.includes('/api/vault/files/access/') || candidateServerUrl.includes('token='))
+    (!candidateServerUrl.includes('/api/vault/files/access/') ||
+      candidateServerUrl.includes('token='))
   ) {
     try {
       const response = await fetch(candidateServerUrl);

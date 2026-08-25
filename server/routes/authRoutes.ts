@@ -70,31 +70,28 @@ const isDev = process.env.NODE_ENV !== 'production';
 
 const authLimiterWindowMs = toPositiveInteger(
   process.env.AUTH_RATE_LIMIT_WINDOW_MS,
-  15 * 60 * 1000
+  15 * 60 * 1000,
 );
-const authLimiterMax = toPositiveInteger(
-  process.env.AUTH_RATE_LIMIT_MAX,
-  isDev ? 500 : 100
-);
+const authLimiterMax = toPositiveInteger(process.env.AUTH_RATE_LIMIT_MAX, isDev ? 500 : 100);
 const refreshLimiterMax = toPositiveInteger(
   process.env.AUTH_REFRESH_RATE_LIMIT_MAX,
-  isDev ? 500 : 100
+  isDev ? 500 : 100,
 );
 const usernameCheckLimiterMax = toPositiveInteger(
   process.env.AUTH_USERNAME_CHECK_RATE_LIMIT_MAX,
-  isDev ? 1000 : 200
+  isDev ? 1000 : 200,
 );
 const changePasswordLimiterMax = toPositiveInteger(
   process.env.AUTH_CHANGE_PASSWORD_RATE_LIMIT_MAX,
-  isDev ? 50 : 20
+  isDev ? 50 : 20,
 );
 const masterKeyCaptchaLimiterMax = toPositiveInteger(
   process.env.MASTER_KEY_CAPTCHA_RATE_LIMIT_MAX,
-  isDev ? 100 : 30
+  isDev ? 100 : 30,
 );
 const cloudUnlockCaptchaLimiterMax = toPositiveInteger(
   process.env.AUTH_CLOUD_UNLOCK_CAPTCHA_RATE_LIMIT_MAX,
-  isDev ? 200 : 50
+  isDev ? 200 : 50,
 );
 
 const getAuthRateLimitKey = (req: express.Request) => {
@@ -204,7 +201,7 @@ authRouter.post(
   authLimiter,
   validate(registerSchema),
   requireRecaptcha({ action: 'auth_register' }),
-  asyncHandler(register)
+  asyncHandler(register),
 );
 authRouter.post(
   '/register',
@@ -213,7 +210,7 @@ authRouter.post(
   authLimiter,
   validate(registerSchema),
   requireRecaptcha({ action: 'auth_register' }),
-  asyncHandler(register)
+  asyncHandler(register),
 );
 authRouter.post(
   '/login',
@@ -222,38 +219,38 @@ authRouter.post(
   authLimiter,
   validate(loginSchema),
   requireRecaptcha({ action: 'auth_login' }),
-  asyncHandler(login)
+  asyncHandler(login),
 );
 authRouter.get(
   '/username-check',
   usernameCheckLimiter,
   validateRequest(usernameQueryValidation),
-  asyncHandler(checkUsername)
+  asyncHandler(checkUsername),
 );
 authRouter.get(
   '/salt',
   usernameCheckLimiter,
   validateRequest(usernameQueryValidation),
-  asyncHandler(getSalt)
+  asyncHandler(getSalt),
 );
 authRouter.post(
   '/refresh',
   requireTrustedBrowserOrigin,
   refreshLimiter,
-  asyncHandler(refreshSession)
+  asyncHandler(refreshSession),
 );
 // Backward-compatible aliases for clients still using legacy refresh paths.
 authRouter.post(
   '/refresh-session',
   requireTrustedBrowserOrigin,
   refreshLimiter,
-  asyncHandler(refreshSession)
+  asyncHandler(refreshSession),
 );
 authRouter.post(
   '/session/refresh',
   requireTrustedBrowserOrigin,
   refreshLimiter,
-  asyncHandler(refreshSession)
+  asyncHandler(refreshSession),
 );
 authRouter.post('/logout', requireTrustedBrowserOrigin, asyncHandler(logout));
 authRouter.get('/me', requireAuth, asyncHandler(getMe));
@@ -262,56 +259,56 @@ authRouter.post(
   requireTrustedBrowserOrigin,
   requireAuth,
   validateRequest(revokeSessionsValidation),
-  asyncHandler(revokeSessions)
+  asyncHandler(revokeSessions),
 );
 authRouter.post(
   '/sessions/device-name',
   requireTrustedBrowserOrigin,
   requireAuth,
   validateRequest(deviceSessionRenameValidation),
-  asyncHandler(updateDeviceName)
+  asyncHandler(updateDeviceName),
 );
 authRouter.post(
   '/profile',
   requireTrustedBrowserOrigin,
   requireAuth,
   validate(updateProfileSchema),
-  asyncHandler(updateProfile)
+  asyncHandler(updateProfile),
 );
 authRouter.put(
   '/profile',
   requireTrustedBrowserOrigin,
   requireAuth,
   validate(updateProfileSchema),
-  asyncHandler(updateProfile)
+  asyncHandler(updateProfile),
 );
 authRouter.patch(
   '/profile',
   requireTrustedBrowserOrigin,
   requireAuth,
   validate(updateProfileSchema),
-  asyncHandler(updateProfile)
+  asyncHandler(updateProfile),
 );
 authRouter.post(
   '/me/profile',
   requireTrustedBrowserOrigin,
   requireAuth,
   validate(updateProfileSchema),
-  asyncHandler(updateProfile)
+  asyncHandler(updateProfile),
 );
 authRouter.put(
   '/me',
   requireTrustedBrowserOrigin,
   requireAuth,
   validate(updateProfileSchema),
-  asyncHandler(updateProfile)
+  asyncHandler(updateProfile),
 );
 authRouter.patch(
   '/me',
   requireTrustedBrowserOrigin,
   requireAuth,
   validate(updateProfileSchema),
-  asyncHandler(updateProfile)
+  asyncHandler(updateProfile),
 );
 authRouter.post(
   '/change-password',
@@ -320,7 +317,7 @@ authRouter.post(
   changePasswordLimiter,
   validate(changePasswordSchema),
   requireRecaptcha({ action: 'auth_change_password' }),
-  asyncHandler(changePassword)
+  asyncHandler(changePassword),
 );
 authRouter.post(
   '/captcha/verify-cloud-unlock',
@@ -328,7 +325,7 @@ authRouter.post(
   cloudUnlockCaptchaLimiter,
   validate(cloudUnlockCaptchaSchema),
   requireRecaptcha({ action: 'auth_cloud_unlock' }),
-  asyncHandler(verifyCloudUnlockCaptcha)
+  asyncHandler(verifyCloudUnlockCaptcha),
 );
 authRouter.post(
   '/captcha/verify-master-key-change',
@@ -337,5 +334,5 @@ authRouter.post(
   masterKeyCaptchaLimiter,
   validate(masterKeyCaptchaSchema),
   requireRecaptcha({ action: 'master_key_change' }),
-  asyncHandler(verifyMasterKeyCaptcha)
+  asyncHandler(verifyMasterKeyCaptcha),
 );

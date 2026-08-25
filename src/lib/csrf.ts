@@ -106,7 +106,7 @@ export const fetchCsrfToken = async (forceRefresh = false): Promise<string | nul
 
 export const getCsrfTokenForApiRequest = async (
   requestUrl: string | undefined,
-  requestMethod: string | undefined
+  requestMethod: string | undefined,
 ): Promise<string | null> => {
   if (!isBrowser || isTestRuntime || !requestUrl) {
     return null;
@@ -131,7 +131,7 @@ export const installGlobalFetchCsrfProtection = (): void => {
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const method = normalizeMethod(
-      init?.method || (input instanceof Request ? input.method : undefined)
+      init?.method || (input instanceof Request ? input.method : undefined),
     );
     const url = resolveUrlFromFetchInput(input);
 

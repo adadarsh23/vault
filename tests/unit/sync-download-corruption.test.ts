@@ -34,7 +34,7 @@ describe('downloadVaultSnapshotFromCloud corruption tolerance', () => {
         createdAt: 1700000000000,
         updatedAt: 1700000000000,
       }),
-      masterKey
+      masterKey,
     );
 
     const warnSpy = vi.spyOn(logger, 'warn');
@@ -55,7 +55,7 @@ describe('downloadVaultSnapshotFromCloud corruption tolerance', () => {
             payload: `V2_MODERN:${encryptedMetadata}|hello from cloud`,
           },
         ],
-      })
+      }),
     );
 
     const snapshot = await downloadVaultSnapshotFromCloud(masterKey);
@@ -65,10 +65,10 @@ describe('downloadVaultSnapshotFromCloud corruption tolerance', () => {
     expect(snapshot.items[0]?.content).toBe('hello from cloud');
 
     expect(
-      warnSpy.mock.calls.some(([message]) => message === 'Cloud sync skipped corrupted item(s)')
+      warnSpy.mock.calls.some(([message]) => message === 'Cloud sync skipped corrupted item(s)'),
     ).toBe(true);
     expect(
-      errorSpy.mock.calls.some(([message]) => message === 'Error in Partial Sync Failure')
+      errorSpy.mock.calls.some(([message]) => message === 'Error in Partial Sync Failure'),
     ).toBe(false);
   });
 
@@ -84,7 +84,7 @@ describe('downloadVaultSnapshotFromCloud corruption tolerance', () => {
         createdAt: 1700000000000,
         updatedAt: 1700000000000,
       }),
-      masterKey
+      masterKey,
     );
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
@@ -101,7 +101,7 @@ describe('downloadVaultSnapshotFromCloud corruption tolerance', () => {
             payload: `V2_MODERN:${encryptedMetadata}|valid cloud content`,
           },
         ],
-      })
+      }),
     );
 
     const snapshot = await downloadVaultSnapshotFromCloud(masterKey);
@@ -123,11 +123,11 @@ describe('downloadVaultSnapshotFromCloud corruption tolerance', () => {
             payload: `V2_MODERN:invalid-encrypted-metadata-string|content`,
           },
         ],
-      })
+      }),
     );
 
     await expect(downloadVaultSnapshotFromCloud(masterKey)).rejects.toThrow(
-      'This cloud vault does not match the currently unlocked master Key.'
+      'This cloud vault does not match the currently unlocked master Key.',
     );
   });
 
@@ -145,7 +145,7 @@ describe('downloadVaultSnapshotFromCloud corruption tolerance', () => {
         createdAt: 1700000000000,
         updatedAt: 1700000000000,
       }),
-      masterKey
+      masterKey,
     );
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
@@ -167,7 +167,7 @@ describe('downloadVaultSnapshotFromCloud corruption tolerance', () => {
             payload: `V2_MODERN:${encryptedMetadata}|valid cloud content 3`,
           },
         ],
-      })
+      }),
     );
 
     const snapshot = await downloadVaultSnapshotFromCloud(masterKey);

@@ -46,6 +46,36 @@ const installTestPolyfills = () => {
     });
   }
 
+  if (typeof Element !== 'undefined' && typeof Element.prototype.scrollIntoView !== 'function') {
+    Object.defineProperty(Element.prototype, 'scrollIntoView', {
+      configurable: true,
+      writable: true,
+      value: () => undefined,
+    });
+  }
+
+  if (typeof Element !== 'undefined' && typeof Element.prototype.scrollBy !== 'function') {
+    Object.defineProperty(Element.prototype, 'scrollBy', {
+      configurable: true,
+      writable: true,
+      value: () => undefined,
+    });
+  }
+
+  if (
+    typeof HTMLCanvasElement !== 'undefined' &&
+    typeof HTMLCanvasElement.prototype.toBlob !== 'function'
+  ) {
+    Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+      configurable: true,
+      writable: true,
+      value(callback: (blob: Blob | null) => void, type = 'image/png') {
+        const blob = new Blob([''], { type });
+        setTimeout(() => callback(blob), 0);
+      },
+    });
+  }
+
   if (
     typeof window.ResizeObserver === 'undefined' &&
     typeof globalThis.ResizeObserver === 'undefined'
@@ -71,16 +101,21 @@ const installTestPolyfills = () => {
       readonly root: Element | Document | null = null;
       readonly rootMargin = '';
       readonly thresholds: ReadonlyArray<number> = [];
-      private callback?: (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => void;
+      private callback?: (
+        entries: IntersectionObserverEntry[],
+        observer: IntersectionObserver,
+      ) => void;
 
-      constructor(callback?: (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => void) {
+      constructor(
+        callback?: (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => void,
+      ) {
         this.callback = callback;
       }
 
       observe(target: Element): void {
         this.callback?.(
           [{ isIntersecting: true, target } as unknown as IntersectionObserverEntry],
-          this as unknown as IntersectionObserver
+          this as unknown as IntersectionObserver,
         );
       }
 

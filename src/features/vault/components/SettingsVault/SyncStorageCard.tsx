@@ -239,7 +239,7 @@ export const SyncStorageCard: React.FC<SyncStorageCardProps> = memo(
         </div>
       </SectionCard>
     );
-  }
+  },
 );
 
 SyncStorageCard.displayName = 'SyncStorageCard';

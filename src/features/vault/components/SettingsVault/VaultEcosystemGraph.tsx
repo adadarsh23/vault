@@ -62,7 +62,7 @@ export const VaultEcosystemCard: React.FC<VaultEcosystemCardProps> = memo(
         </div>
       </CardContent>
     </Card>
-  )
+  ),
 );
 
 export const VaultEcosystemGraph = memo(({ itemCount, categoryStats }: VaultEcosystemCardProps) => {
@@ -118,7 +118,7 @@ export const VaultEcosystemGraph = memo(({ itemCount, categoryStats }: VaultEcos
         y: 280,
       },
     ],
-    [itemCount]
+    [itemCount],
   );
 
   const categories = React.useMemo(
@@ -205,7 +205,7 @@ export const VaultEcosystemGraph = memo(({ itemCount, categoryStats }: VaultEcos
         angle: 180,
       },
     ],
-    [categoryStats]
+    [categoryStats],
   );
 
   const repeatingTransition = (duration: number, delay = 0) =>
@@ -452,7 +452,7 @@ export const VaultEcosystemGraph = memo(({ itemCount, categoryStats }: VaultEcos
               }
               transition={repeatingTransition(
                 3.6,
-                node.id === 'user' ? 0 : node.id === 'kdf' ? 0.7 : node.id === 'local' ? 1.4 : 2.1
+                node.id === 'user' ? 0 : node.id === 'kdf' ? 0.7 : node.id === 'local' ? 1.4 : 2.1,
               )}
             />
             <circle

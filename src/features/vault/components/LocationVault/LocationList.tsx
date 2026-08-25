@@ -76,7 +76,7 @@ export const LocationList: React.FC<LocationListProps> = ({
     <div
       className={cn(
         'w-full md:w-80 shrink-0 flex-col gap-6 border-r border-white/5 pr-6 transition-colors',
-        selectedId || isCreating ? 'hidden md:flex' : 'flex'
+        selectedId || isCreating ? 'hidden md:flex' : 'flex',
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -185,7 +185,7 @@ export const LocationList: React.FC<LocationListProps> = ({
                 'w-full rounded-2xl border p-4 text-left transition-all touch-manipulation',
                 selectedId === item.id
                   ? 'border-lime-500/20 bg-lime-500/5 shadow-[0_0_20px_rgba(132,204,22,0.05)]'
-                  : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10'
+                  : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10',
               )}
               title="Drag to a folder to move this location"
             >
@@ -195,7 +195,7 @@ export const LocationList: React.FC<LocationListProps> = ({
                     'p-2 rounded-xl transition-colors',
                     selectedId === item.id
                       ? 'bg-lime-500/20 text-lime-400'
-                      : 'bg-white/5 text-text/20'
+                      : 'bg-white/5 text-text/20',
                   )}
                 >
                   <MapPin className="h-4 w-4" />
@@ -204,7 +204,7 @@ export const LocationList: React.FC<LocationListProps> = ({
                   <p
                     className={cn(
                       'truncate text-sm font-semibold transition-colors',
-                      selectedId === item.id ? 'text-text' : 'text-text/70'
+                      selectedId === item.id ? 'text-text' : 'text-text/70',
                     )}
                   >
                     {item.title}
@@ -236,7 +236,7 @@ export const LocationList: React.FC<LocationListProps> = ({
                     'h-8 w-8 rounded-full transition-all',
                     item.isPinned
                       ? 'text-lime-400 bg-lime-400/10 hover:bg-lime-400/20'
-                      : 'text-text/30 hover:text-text/80 hover:bg-white/10'
+                      : 'text-text/30 hover:text-text/80 hover:bg-white/10',
                   )}
                   title={item.isPinned ? 'Unpin location' : 'Pin location'}
                 >

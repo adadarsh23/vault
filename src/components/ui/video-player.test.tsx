@@ -36,7 +36,7 @@ describe('VideoPlayer phase 1 controls', () => {
 
   it('starts playback cleanly from the beginning (0s) after metadata loads', () => {
     const { container } = render(
-      <VideoPlayer src="https://cdn.example.com/video.mp4" itemId="item-123" />
+      <VideoPlayer src="https://cdn.example.com/video.mp4" itemId="item-123" />,
     );
 
     const video = container.querySelector('video') as HTMLVideoElement;
@@ -117,7 +117,7 @@ describe('VideoPlayer phase 1 controls', () => {
 
   it('does not request PiP when policy disallows PiP', () => {
     const { container } = render(
-      <VideoPlayer src="https://cdn.example.com/video.mp4" allowPiP={false} />
+      <VideoPlayer src="https://cdn.example.com/video.mp4" allowPiP={false} />,
     );
     const video = container.querySelector('video') as HTMLVideoElement & {
       requestPictureInPicture?: () => Promise<unknown>;
@@ -142,7 +142,7 @@ describe('VideoPlayer phase 1 controls', () => {
       <VideoPlayer
         src="https://evil.example.com/video.mp4"
         allowedMediaDomains={['cdn.example.com']}
-      />
+      />,
     );
     expect(screen.getByText(/media url is not allowed by security policy/i)).toBeInTheDocument();
   });
@@ -176,7 +176,7 @@ describe('VideoPlayer phase 1 controls', () => {
 
   it('renders helpful error UI with Convert (WASM), Download and Retry buttons when format is unsupported', () => {
     const { container } = render(
-      <VideoPlayer src="https://cdn.example.com/video.mkv" title="Sample Video" />
+      <VideoPlayer src="https://cdn.example.com/video.mkv" title="Sample Video" />,
     );
     const video = container.querySelector('video') as HTMLVideoElement;
     expect(video).toBeTruthy();
@@ -190,7 +190,7 @@ describe('VideoPlayer phase 1 controls', () => {
 
     expect(screen.getByText(/video format not supported/i)).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /convert and play in browser/i })
+      screen.getByRole('button', { name: /convert and play in browser/i }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /download video/i }).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: /retry playback/i })).toBeInTheDocument();
@@ -388,7 +388,7 @@ describe('VideoPlayer Polish Enhancements', () => {
   it('renders hover preview tooltip on timeline slider pointer move', () => {
     const handleChange = vi.fn();
     const { container } = render(
-      <CustomSlider label="Seek video" value={25} duration={120} onChange={handleChange} />
+      <CustomSlider label="Seek video" value={25} duration={120} onChange={handleChange} />,
     );
 
     const slider = container.querySelector('[role="slider"]') as HTMLElement;

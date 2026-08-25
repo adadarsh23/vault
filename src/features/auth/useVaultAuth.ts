@@ -24,6 +24,7 @@ export type AuthStatus = 'idle' | 'authenticating' | 'syncing' | 'success' | 'er
 export interface UseVaultAuthOptions {
   initialUsername?: string;
   cloudSessionActive?: boolean;
+  initialCloudSessionActive?: boolean;
   authMode?: 'login' | 'register';
 }
 
@@ -169,7 +170,8 @@ export const SECURITY_LAYERS: readonly SecurityLayer[] = [
  */
 export const useVaultAuth = (options?: UseVaultAuthOptions) => {
   const initialUsername = options?.initialUsername?.trim().toLowerCase() || '';
-  const cloudSessionActive = options?.cloudSessionActive === true;
+  const cloudSessionActive =
+    options?.cloudSessionActive === true || options?.initialCloudSessionActive === true;
   const authMode = options?.authMode === 'register' ? 'register' : 'login';
 
   const [username, setUsername] = useState(initialUsername);
@@ -342,7 +344,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
   const unlockVaultWithCandidateSalts = async (
     primaryMasterKey: string,
     rawKey: string,
-    normalizedUsername: string
+    normalizedUsername: string,
   ) => {
     try {
       await unlock(primaryMasterKey, normalizedUsername);
@@ -350,7 +352,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
     } catch (unlockErr: any) {
       const isKeyCheckError =
         /master key is incorrect or the vault data could not be decrypted/i.test(
-          unlockErr?.message || ''
+          unlockErr?.message || '',
         );
 
       if (isKeyCheckError && rawKey) {
@@ -362,8 +364,8 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
               `${normalizedUsername}-vault-pqc-salt`,
               fetchedSalt,
               'vault-v1-stable-salt-32bytes',
-            ].filter((s): s is string => Boolean(s) && s !== primarySalt)
-          )
+            ].filter((s): s is string => Boolean(s) && s !== primarySalt),
+          ),
         );
 
         const triedSalts: string[] = [];
@@ -373,7 +375,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
           triedSalts.push(altSalt);
           try {
             console.warn(
-              `Primary salt unlock failed. Retrying unlock with candidate salt (${altSalt})...`
+              `Primary salt unlock failed. Retrying unlock with candidate salt (${altSalt})...`,
             );
             const altMasterKey = await deriveKey(rawKey, altSalt);
             await unlock(altMasterKey, normalizedUsername);
@@ -389,7 +391,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
         if (!unlockedWithAlt) {
           console.error(
             `All candidate salts exhausted (${triedSalts.join(', ')}) – unlock failed.`,
-            unlockErr
+            unlockErr,
           );
           throw unlockErr;
         }
@@ -445,39 +447,47 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
       // Check Decoy / Duress Mode FIRST before password policy check
       const isDecoyVaultConfigured =
         useVaultStore.getState().preferences.isDecoyVaultEnabled !== false &&
-        (typeof localStorage === 'undefined' || localStorage.getItem('vault_decoy_enabled') !== 'false');
+        (typeof localStorage === 'undefined' ||
+          localStorage.getItem('vault_decoy_enabled') !== 'false');
 
       if (isDecoyVaultConfigured) {
         const storedHashes = [
           useVaultStore.getState().preferences.decoyPasswordHash,
           typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_pin_hash') : null,
-          typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_password_hash') : null,
+          typeof localStorage !== 'undefined'
+            ? localStorage.getItem('vault_decoy_password_hash')
+            : null,
           typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_hash') : null,
           typeof localStorage !== 'undefined' ? localStorage.getItem('decoy_pin_hash') : null,
           typeof localStorage !== 'undefined' ? localStorage.getItem('decoyPasswordHash') : null,
-          typeof localStorage !== 'undefined' ? localStorage.getItem(`vault_decoy_pin_hash_${normalizedUsername}`) : null,
-          typeof localStorage !== 'undefined' ? localStorage.getItem(`vault_decoy_hash_${normalizedUsername}`) : null,
-          typeof localStorage !== 'undefined' ? localStorage.getItem(`decoyPasswordHash_${normalizedUsername}`) : null,
-        ].filter(
-          (h): h is string =>
-            Boolean(
-              h &&
-                typeof h === 'string' &&
-                h.trim().length > 0 &&
-                h !== 'true' &&
-                h !== 'false' &&
-                h !== 'null' &&
-                h !== 'undefined'
-            )
+          typeof localStorage !== 'undefined'
+            ? localStorage.getItem(`vault_decoy_pin_hash_${normalizedUsername}`)
+            : null,
+          typeof localStorage !== 'undefined'
+            ? localStorage.getItem(`vault_decoy_hash_${normalizedUsername}`)
+            : null,
+          typeof localStorage !== 'undefined'
+            ? localStorage.getItem(`decoyPasswordHash_${normalizedUsername}`)
+            : null,
+        ].filter((h): h is string =>
+          Boolean(
+            h &&
+            typeof h === 'string' &&
+            h.trim().length > 0 &&
+            h !== 'true' &&
+            h !== 'false' &&
+            h !== 'null' &&
+            h !== 'undefined',
+          ),
         );
 
         if (storedHashes.length > 0) {
           const candidateCredentials = Array.from(
             new Set(
               [vaultKey, accountPassword, vaultKey?.trim(), accountPassword?.trim()].filter(
-                (c): c is string => Boolean(c && typeof c === 'string' && c.length >= 4)
-              )
-            )
+                (c): c is string => Boolean(c && typeof c === 'string' && c.length >= 4),
+              ),
+            ),
           );
 
           for (const candidateHash of storedHashes) {
@@ -563,7 +573,6 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
       pendingVaultKeyRef.current = null;
 
       try {
-
         // Prevent stale logout responses from clearing a newly-created session
         // while deriving the vault key in parallel.
         const [, masterKey] = await Promise.all([
@@ -582,7 +591,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
             resolvedAccountPassword,
             captchaToken,
             resolvedVaultKey,
-            { pqcSalt: activeSaltRef.current || undefined }
+            { pqcSalt: activeSaltRef.current || undefined },
           );
 
           if (authData.twoFactorRequired) {
@@ -946,7 +955,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
       unlock,
       username,
       vaultKey,
-    ]
+    ],
   );
 
   /**
@@ -969,7 +978,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
           pendingMasterKeyRef.current ??
           (await runSecurityVerification(
             pendingVaultKeyRef.current || vaultKey,
-            normalizedUsername
+            normalizedUsername,
           ));
 
         if (!mfaToken) {
@@ -1128,7 +1137,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
       userIdFor2FA,
       username,
       vaultKey,
-    ]
+    ],
   );
 
   return {

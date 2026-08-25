@@ -72,7 +72,7 @@ export function detectDevice(): DeviceInfo {
 export function getEffectivePlatform(
   selectedPlatform: PlatformType,
   detectedOS: DetectedOS,
-  isTouch: boolean
+  isTouch: boolean,
 ): 'mac' | 'windows' | 'linux' | 'touch' {
   if (selectedPlatform !== 'auto') {
     return selectedPlatform;
@@ -98,7 +98,7 @@ export function getEffectivePlatform(
  */
 export function formatKeyForPlatform(
   key: string,
-  platform: 'mac' | 'windows' | 'linux' | 'touch'
+  platform: 'mac' | 'windows' | 'linux' | 'touch',
 ): string {
   const isMac = platform === 'mac';
 
@@ -160,7 +160,7 @@ export function formatKeyForPlatform(
  */
 export function formatKeysForPlatform(
   keys: string[],
-  platform: 'mac' | 'windows' | 'linux' | 'touch'
+  platform: 'mac' | 'windows' | 'linux' | 'touch',
 ): string[] {
   return keys.map((key) => formatKeyForPlatform(key, platform));
 }
@@ -187,7 +187,7 @@ export function matchesShortcut(event: KeyboardEvent, keys: string[]): boolean {
 
   // Extract non-modifier key requirement
   const mainKeys = keys.filter(
-    (k) => !['ctrl', 'cmd', 'mod', 'alt', 'option', 'opt', 'shift'].includes(k.toLowerCase())
+    (k) => !['ctrl', 'cmd', 'mod', 'alt', 'option', 'opt', 'shift'].includes(k.toLowerCase()),
   );
 
   if (mainKeys.length === 0) return true;

@@ -353,7 +353,7 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
     <div
       className={cn(
         'flex-1 min-w-0 h-full',
-        !selectedId && !isCreating ? 'hidden md:block' : 'block'
+        !selectedId && !isCreating ? 'hidden md:block' : 'block',
       )}
     >
       <AnimatePresence mode="wait">
@@ -448,7 +448,7 @@ export const LocationViewer: React.FC<LocationViewerProps> = ({
                         'h-9 transition-all',
                         confirmDeleteId === selectedItem.id
                           ? 'px-3 text-xs'
-                          : 'w-9 text-text/40 hover:text-red-400'
+                          : 'w-9 text-text/40 hover:text-red-400',
                       )}
                     >
                       {confirmDeleteId === selectedItem.id ? (

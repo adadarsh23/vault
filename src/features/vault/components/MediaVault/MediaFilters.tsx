@@ -112,7 +112,7 @@ export const MediaFilters: React.FC<MediaFiltersProps> = ({
                   'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all whitespace-nowrap border select-none shrink-0',
                   isActive
                     ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.2)]'
-                    : 'bg-white/5 text-text/60 border-white/10 hover:bg-white/10 hover:text-text hover:border-white/20'
+                    : 'bg-white/5 text-text/60 border-white/10 hover:bg-white/10 hover:text-text hover:border-white/20',
                 )}
                 aria-pressed={isActive}
               >
@@ -135,7 +135,7 @@ export const MediaFilters: React.FC<MediaFiltersProps> = ({
                 'h-7 sm:h-7.5 rounded-full border px-2.5 text-[11px] backdrop-blur-md flex items-center gap-1 transition-all',
                 isSortOpen
                   ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.2)]'
-                  : 'border-white/10 bg-white/5 text-text/80 hover:bg-white/10 hover:border-white/20'
+                  : 'border-white/10 bg-white/5 text-text/80 hover:bg-white/10 hover:border-white/20',
               )}
               aria-label="Sort options"
             >
@@ -144,7 +144,7 @@ export const MediaFilters: React.FC<MediaFiltersProps> = ({
               <ChevronDown
                 className={cn(
                   'h-2.5 w-2.5 opacity-60 transition-transform duration-200',
-                  isSortOpen && 'rotate-180'
+                  isSortOpen && 'rotate-180',
                 )}
               />
             </Button>
@@ -183,7 +183,7 @@ export const MediaFilters: React.FC<MediaFiltersProps> = ({
                             'w-full rounded-xl px-2.5 py-1.5 text-left text-[11px] transition-colors flex items-center justify-between gap-2',
                             isActive
                               ? 'bg-blue-500/20 text-blue-300 font-semibold'
-                              : 'text-text/80 hover:bg-white/10 hover:text-white'
+                              : 'text-text/80 hover:bg-white/10 hover:text-white',
                           )}
                         >
                           <div className="flex items-center gap-1.5">
@@ -209,7 +209,7 @@ export const MediaFilters: React.FC<MediaFiltersProps> = ({
               title="Compact View"
               className={cn(
                 'rounded-full p-1 transition-all text-text/60 hover:text-text',
-                density === 'compact' && 'bg-white/20 text-white shadow-sm'
+                density === 'compact' && 'bg-white/20 text-white shadow-sm',
               )}
               aria-label="Compact grid view"
             >
@@ -220,7 +220,7 @@ export const MediaFilters: React.FC<MediaFiltersProps> = ({
               title="Standard View"
               className={cn(
                 'rounded-full p-1 transition-all text-text/60 hover:text-text',
-                density === 'standard' && 'bg-white/20 text-white shadow-sm'
+                density === 'standard' && 'bg-white/20 text-white shadow-sm',
               )}
               aria-label="Standard grid view"
             >
@@ -231,7 +231,7 @@ export const MediaFilters: React.FC<MediaFiltersProps> = ({
               title="Large View"
               className={cn(
                 'rounded-full p-1 transition-all text-text/60 hover:text-text',
-                density === 'large' && 'bg-white/20 text-white shadow-sm'
+                density === 'large' && 'bg-white/20 text-white shadow-sm',
               )}
               aria-label="Large grid view"
             >
@@ -242,7 +242,7 @@ export const MediaFilters: React.FC<MediaFiltersProps> = ({
               title="List View"
               className={cn(
                 'rounded-full p-1 transition-all text-text/60 hover:text-text',
-                density === 'list' && 'bg-white/20 text-white shadow-sm'
+                density === 'list' && 'bg-white/20 text-white shadow-sm',
               )}
               aria-label="List view"
             >
@@ -259,7 +259,7 @@ export const MediaFilters: React.FC<MediaFiltersProps> = ({
               'h-7 sm:h-7.5 rounded-full border px-2.5 text-[11px] transition-all flex items-center gap-1 shrink-0',
               isSelectionMode
                 ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.2)]'
-                : 'border-white/10 bg-white/5 text-text/70 hover:bg-white/10 hover:border-white/20'
+                : 'border-white/10 bg-white/5 text-text/70 hover:bg-white/10 hover:border-white/20',
             )}
             aria-label="Toggle batch selection"
           >

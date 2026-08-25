@@ -367,6 +367,8 @@ const DecryptedCardItem: React.FC<{
             cvv: meta.cvv || '123',
             cardholderName: meta.cardholderName || 'Decoy User',
             bankName: meta.bankName || item.title || 'Standard Bank',
+            accountNumber: meta.accountNumber || '',
+            routingNumber: meta.routingNumber || '',
             cardType: meta.cardType || 'visa',
           };
         }
@@ -863,7 +865,7 @@ export const CardsVault: React.FC = () => {
         (item) =>
           item.title.toLowerCase().includes(q) ||
           item.metadata?.bankName?.toLowerCase().includes(q) ||
-          item.metadata?.cardholderName?.toLowerCase().includes(q)
+          item.metadata?.cardholderName?.toLowerCase().includes(q),
       );
     }
     return result.sort((a, b) => {

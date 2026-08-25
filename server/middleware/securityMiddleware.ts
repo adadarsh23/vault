@@ -38,7 +38,7 @@ interface RequestWithSecurity extends Request {
 export const securityMiddleware = async (
   req: RequestWithSecurity,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const requestId = `req_${randomUUID()}`;
@@ -54,7 +54,7 @@ export const securityMiddleware = async (
           req,
           req.user?.userId,
           clientData,
-          fingerprintId
+          fingerprintId,
         )
       : {
           isValid: false,
@@ -81,7 +81,7 @@ export const securityMiddleware = async (
         ip,
         null, // Location would come from GeoIP lookup
         fingerprintId || 'unknown',
-        req.get('user-agent') || ''
+        req.get('user-agent') || '',
       );
 
       riskScore += loginAnomaly.loginRisk;
@@ -92,7 +92,7 @@ export const securityMiddleware = async (
         const apiAnalysis = await aiAnomalyDetectionService.analyzeApiUsage(
           req.user.userId,
           `${req.method} ${req.path}`,
-          0 // Will be updated on response
+          0, // Will be updated on response
         );
 
         if (apiAnalysis.isAnomalous) {
@@ -167,7 +167,7 @@ export const securityMiddleware = async (
 export const fileUploadSecurityMiddleware = async (
   req: RequestWithSecurity,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const rawFiles = req.files;
@@ -211,7 +211,7 @@ export const fileUploadSecurityMiddleware = async (
             req.user.userId,
             ip,
             fileName,
-            'Dangerous file extension'
+            'Dangerous file extension',
           );
         }
 
@@ -236,7 +236,7 @@ export const fileUploadSecurityMiddleware = async (
       if (Buffer.isBuffer(buffer)) {
         const ascii = buffer.toString('latin1');
         const isEicar = ascii.includes(
-          'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'
+          'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*',
         );
         if (isEicar) {
           const ip = (req.ip || req.socket.remoteAddress || 'unknown').replace(/^::ffff:/, '');
@@ -245,7 +245,7 @@ export const fileUploadSecurityMiddleware = async (
               req.user.userId,
               ip,
               fileName,
-              'Malware signature detected (EICAR)'
+              'Malware signature detected (EICAR)',
             );
           }
           return res.status(400).json({
@@ -269,7 +269,7 @@ export const fileUploadSecurityMiddleware = async (
 export const performanceSecurityMiddleware = (
   req: RequestWithSecurity,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const startTime = Date.now();
 

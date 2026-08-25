@@ -19,146 +19,146 @@ import { VaultIntegrityAlarmBanner } from '../security/VaultIntegrityAlarmBanner
 const MaintenanceModal = lazy(() =>
   import('../vault/MaintenanceModal').then((m) => ({
     default: m.MaintenanceModal || (m as any).default,
-  }))
+  })),
 );
 const CommandPalette = lazy(() =>
   import('../vault/CommandPalette').then((m) => ({
     default: m.CommandPalette || (m as any).default,
-  }))
+  })),
 );
 
 // Main
 const Dashboard = lazy(() =>
   import('../../features/vault/Dashboard').then((m) => ({
     default: m.Dashboard || (m as any).default,
-  }))
+  })),
 );
 
 // Personal Information
 const IdentitiesVault = lazy(() =>
   import('../../features/vault/IdentitiesVault').then((m) => ({
     default: m.IdentitiesVault || (m as any).default,
-  }))
+  })),
 );
 const ContactsVault = lazy(() =>
   import('../../features/vault/ContactsVault').then((m) => ({
     default: m.ContactsVault || (m as any).default,
-  }))
+  })),
 );
 const PasswordManager = lazy(() =>
   import('../../features/vault/PasswordManager').then((m) => ({
     default: m.PasswordManager || (m as any).default,
-  }))
+  })),
 );
 const CardsVault = lazy(() =>
   import('../../features/vault/CardsVault').then((m) => ({
     default: m.CardsVault || (m as any).default,
-  }))
+  })),
 );
 const WifiVault = lazy(() =>
   import('../../features/vault/WifiVault').then((m) => ({
     default: m.WifiVault || (m as any).default,
-  }))
+  })),
 );
 const SecretsVault = lazy(() =>
   import('../../features/vault/SecretsVault').then((m) => ({
     default: m.SecretsVault || (m as any).default,
-  }))
+  })),
 );
 
 // Notes & Productivity
 const NotesVault = lazy(() =>
   import('../../features/vault/NotesVault').then((m) => ({
     default: m.NotesVault || (m as any).default,
-  }))
+  })),
 );
 const TodoVault = lazy(() =>
   import('../../features/vault/TodoVault').then((m) => ({
     default: m.TodoVault || (m as any).default,
-  }))
+  })),
 );
 const ChatVault = lazy(() =>
   import('../../features/vault/ChatVault').then((m) => ({
     default: m.ChatVault || (m as any).default,
-  }))
+  })),
 );
 const LocationVault = lazy(() =>
   import('../../features/vault/LocationVault').then((m) => ({
     default: m.LocationVault || (m as any).default,
-  }))
+  })),
 );
 
 // Media
 const MediaVault = lazy(() =>
   import('../../features/vault/MediaVault').then((m) => ({
     default: m.MediaVault || (m as any).default,
-  }))
+  })),
 );
 const AudioVault = lazy(() =>
   import('../../features/vault/AudioVault').then((m) => ({
     default: m.AudioVault || (m as any).default,
-  }))
+  })),
 );
 
 // Documents & Files
 const DocumentsVault = lazy(() =>
   import('../../features/vault/DocumentsVault').then((m) => ({
     default: m.DocumentsVault || (m as any).default,
-  }))
+  })),
 );
 const OtherFilesVault = lazy(() =>
   import('../../features/vault/OtherFilesVault').then((m) => ({
     default: m.OtherFilesVault || (m as any).default,
-  }))
+  })),
 );
 
 // App
 const PrivacyInterfacePage = lazy(() =>
   import('../../features/vault/PrivacyInterfacePage').then((m) => ({
     default: m.PrivacyInterfacePage || (m as any).default,
-  }))
+  })),
 );
 const ShortcutsPage = lazy(() =>
   import('../../features/vault/ShortcutsPage').then((m) => ({
     default: m.ShortcutsPage || (m as any).default,
-  }))
+  })),
 );
 const SettingsVault = lazy(() =>
   import('../../features/vault/SettingsVault').then((m) => ({
     default: m.SettingsVault || (m as any).default,
-  }))
+  })),
 );
 
 // System & Other
 const SystemLogsPage = lazy(() =>
   import('../../features/vault/SystemLogsPage').then((m) => ({
     default: m.SystemLogsPage || (m as any).default,
-  }))
+  })),
 );
 const DeviceSessionsPage = lazy(() =>
   import('../../features/vault/DeviceSessionsPage').then((m) => ({
     default: m.DeviceSessionsPage || (m as any).default,
-  }))
+  })),
 );
 const VaultEcosystemPage = lazy(() =>
   import('../../features/vault/VaultEcosystemPage').then((m) => ({
     default: m.VaultEcosystemPage || (m as any).default,
-  }))
+  })),
 );
 const LegalPage = lazy(() =>
   import('../../features/LegalPage').then((m) => ({
     default: m.LegalPage || (m as any).default,
-  }))
+  })),
 );
 const ContactPage = lazy(() =>
   import('../../features/ContactPage').then((m) => ({
     default: m.ContactPage || (m as any).default,
-  }))
+  })),
 );
 const NotFoundPage = lazy(() =>
   import('../../features/NotFoundPage').then((m) => ({
     default: m.NotFoundPage || (m as any).default,
-  }))
+  })),
 );
 
 type MaintenanceType = 'export' | 'import' | 'changeKey' | 'changePassword';
@@ -211,7 +211,7 @@ const formatTabLabel = (tab: TabId): string => TAB_LABELS[tab] || tab;
 const getAdjacentTab = (
   currentTab: TabId,
   direction: 'next' | 'prev',
-  sidebarPosition: 'left' | 'right'
+  sidebarPosition: 'left' | 'right',
 ): TabId => {
   const currentIndex = TAB_ORDER.indexOf(currentTab);
   const safeIndex = currentIndex >= 0 ? currentIndex : 0;
@@ -479,7 +479,7 @@ export function AppShell({
       setHeaderProfilePhoto(normalizeProfilePhotoUrl(profile.profilePhoto));
       setIsHeaderProfilePhotoBroken(false);
     },
-    [username]
+    [username],
   );
 
   const loadHeaderProfile = React.useCallback(async () => {
@@ -560,7 +560,7 @@ export function AppShell({
   const activeTabLabel = React.useMemo(() => formatTabLabel(activeTab), [activeTab]);
   const normalizedMobileOverlayOpacity = React.useMemo(
     () => Math.min(1, Math.max(0, mobileOverlayOpacity)),
-    [mobileOverlayOpacity]
+    [mobileOverlayOpacity],
   );
 
   const handleOpenProfileEditor = React.useCallback(() => {
@@ -620,7 +620,7 @@ export function AppShell({
           }}
           className={cn(
             'flex h-screen bg-bg text-text selection:bg-text selection:text-bg transition-colors duration-300 overflow-hidden relative',
-            sidebarPosition === 'right' && 'flex-row-reverse'
+            sidebarPosition === 'right' && 'flex-row-reverse',
           )}
           onTouchStart={handleMobileTouchStart}
           onTouchMove={handleMobileTouchMove}
@@ -631,7 +631,7 @@ export function AppShell({
             <div
               className={cn(
                 'fixed inset-y-0 z-30 w-8 lg:hidden',
-                sidebarPosition === 'right' ? 'right-0' : 'left-0'
+                sidebarPosition === 'right' ? 'right-0' : 'left-0',
               )}
               onTouchStart={handleMobileTouchStart}
               onTouchMove={handleMobileTouchMove}
@@ -647,7 +647,7 @@ export function AppShell({
               onClick={closeSidebar}
               className={cn(
                 'fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden',
-                !isSidebarOpen && !isSidebarDragging && 'pointer-events-none'
+                !isSidebarOpen && !isSidebarDragging && 'pointer-events-none',
               )}
               style={{ opacity: normalizedMobileOverlayOpacity }}
             />
@@ -667,7 +667,7 @@ export function AppShell({
                 ? 'translate-x-0 lg:w-64'
                 : sidebarPosition === 'right'
                   ? 'translate-x-full lg:translate-x-0 lg:w-20'
-                  : '-translate-x-full lg:translate-x-0 lg:w-20'
+                  : '-translate-x-full lg:translate-x-0 lg:w-20',
             )}
             style={mobileSidebarTransform ? { transform: mobileSidebarTransform } : undefined}
           />
@@ -728,9 +728,9 @@ export function AppShell({
                           ? 'overflow-hidden'
                           : cn(
                               maintenanceModal.isOpen ? 'overflow-hidden' : 'overflow-y-auto',
-                              'p-4 lg:p-4 xl:p-8 custom-scrollbar touch-pan-y'
+                              'p-4 lg:p-4 xl:p-8 custom-scrollbar touch-pan-y',
                             ),
-                        'max-w-[120rem]'
+                        'max-w-[120rem]',
                       )}
                     >
                       <Routes>

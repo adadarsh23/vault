@@ -930,9 +930,9 @@ export const PasswordManager: React.FC = () => {
             passwordItem.title.toLowerCase().includes(normalizedSearchQuery);
           const matchesFolder = currentFolder === null || passwordItem.folder === currentFolder;
           return matchesSearch && matchesFolder;
-        })
+        }),
       ),
-    [passwords, normalizedSearchQuery, currentFolder]
+    [passwords, normalizedSearchQuery, currentFolder],
   );
 
   const getFolderCount = (folder: string | null) => {
@@ -955,7 +955,7 @@ export const PasswordManager: React.FC = () => {
           password: newPassword,
           totpSecret: newTotpSecret.trim(),
         }),
-        masterKey
+        masterKey,
       );
 
       await addItem({

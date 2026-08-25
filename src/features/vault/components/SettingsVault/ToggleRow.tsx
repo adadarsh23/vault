@@ -31,7 +31,7 @@ export const ToggleRow: React.FC<ToggleRowProps> = ({
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
         isActive
           ? `${activeColor} border-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]`
-          : 'border-white/10 bg-white/10 hover:bg-white/15'
+          : 'border-white/10 bg-white/10 hover:bg-white/15',
       )}
       role="switch"
       aria-checked={isActive}
@@ -42,7 +42,7 @@ export const ToggleRow: React.FC<ToggleRowProps> = ({
         transition={{ type: 'spring', stiffness: 500, damping: 32 }}
         className={cn(
           'block h-5 w-5 rounded-full shadow-md',
-          isActive && activeColor === 'bg-text' ? 'bg-bg' : 'bg-white'
+          isActive && activeColor === 'bg-text' ? 'bg-bg' : 'bg-white',
         )}
       />
     </button>

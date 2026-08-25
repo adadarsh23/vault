@@ -31,7 +31,7 @@ export const MapPreview: React.FC<MapPreviewProps> = ({ lat, lng, height = '320p
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
       '_blank',
-      'noopener,noreferrer'
+      'noopener,noreferrer',
     );
   };
 
@@ -53,7 +53,7 @@ export const MapPreview: React.FC<MapPreviewProps> = ({ lat, lng, height = '320p
         src={src}
         className={cn(
           'w-full border-0 transition-opacity duration-300',
-          loaded ? 'opacity-100' : 'opacity-0'
+          loaded ? 'opacity-100' : 'opacity-0',
         )}
         style={{ height }}
         loading="lazy"

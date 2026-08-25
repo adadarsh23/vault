@@ -93,7 +93,7 @@ const DecryptedIdentityItem: React.FC<{
           parsed = {
             documentType: meta.documentType || 'Passport',
             fullName: meta.fullName || item.title || 'Decoy User',
-            documentNumber: meta.documentNumber || 'A12345678',
+            number: meta.number || meta.documentNumber || 'A12345678',
             issuingCountry: meta.issuingCountry || 'United States',
             issueDate: meta.issueDate || '2024-01-01',
             expiryDate: meta.expiryDate || '2034-01-01',
@@ -370,7 +370,7 @@ const DecryptedIdentityItem: React.FC<{
               {/* Document Banner Mock UI */}
               <div
                 className={`relative overflow-hidden p-4 rounded-2xl bg-gradient-to-br ${getDocColor(
-                  data.documentType
+                  data.documentType,
                 )} border shadow-lg text-white flex flex-col justify-between min-h-[165px] gap-3`}
               >
                 {/* Background decorative shine */}
@@ -567,7 +567,7 @@ export const IdentitiesVault: React.FC = () => {
           item.title.toLowerCase().includes(q) ||
           item.metadata?.fullName?.toLowerCase().includes(q) ||
           item.metadata?.documentType?.toLowerCase().includes(q) ||
-          item.metadata?.issuingCountry?.toLowerCase().includes(q)
+          item.metadata?.issuingCountry?.toLowerCase().includes(q),
       );
     }
     return result.sort((a, b) => {

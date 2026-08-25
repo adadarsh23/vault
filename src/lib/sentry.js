@@ -79,7 +79,10 @@ const redactSensitiveData = (input) => {
 
   for (const [key, value] of Object.entries(clone)) {
     const normalizedKey = key.toLowerCase();
-    if (SENSITIVE_KEYS.includes(normalizedKey) || SENSITIVE_KEYS.some((k) => normalizedKey.includes(k))) {
+    if (
+      SENSITIVE_KEYS.includes(normalizedKey) ||
+      SENSITIVE_KEYS.some((k) => normalizedKey.includes(k))
+    ) {
       clone[key] = '[Filtered]';
       continue;
     }

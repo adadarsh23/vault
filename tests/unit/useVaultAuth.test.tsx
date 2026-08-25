@@ -35,8 +35,7 @@ const { mockVaultStore, mockUseVaultStore } = vi.hoisted(() => {
   };
 
   const useStore = Object.assign(
-    (selector: any) =>
-      typeof selector === 'function' ? selector(store) : store,
+    (selector: any) => (typeof selector === 'function' ? selector(store) : store),
     {
       getState: () => store,
       setState: (fnOrPartial: any) => {
@@ -47,7 +46,7 @@ const { mockVaultStore, mockUseVaultStore } = vi.hoisted(() => {
         }
       },
       subscribe: vi.fn(() => () => {}),
-    }
+    },
   );
 
   return { mockVaultStore: store, mockUseVaultStore: useStore };
@@ -67,8 +66,16 @@ const mockCrypto = vi.hoisted(() => ({
   logActivity: vi.fn(),
   identifyLogRocketUser: vi.fn(),
   verifyDecoyPin: vi.fn(async (pin: string, hash: string) => {
-    if (hash === 'test-decoy-hash' && (pin === '9876' || pin === 'DecoyPin1234!')) return true;
-    if (hash.startsWith('pbkdf2:') && (pin === '9876' || pin === 'DecoyPin1234!')) return true;
+    if (
+      hash === 'test-decoy-hash' &&
+      (pin === '9876' || pin === 'DecoyPin1234!' || pin === '123456')
+    )
+      return true;
+    if (
+      hash.startsWith('pbkdf2:') &&
+      (pin === '9876' || pin === 'DecoyPin1234!' || pin === '123456')
+    )
+      return true;
     return false;
   }),
 }));
@@ -100,13 +107,11 @@ const mockAuthApi = vi.hoisted(() => ({
   fetchVaultSalt: vi.fn().mockResolvedValue('test-salt-12345678'),
   refreshVaultSession: vi.fn().mockResolvedValue({ token: 'refreshed-token' }),
   verifyCloudUnlockCaptcha: vi.fn().mockResolvedValue({ success: true }),
-  verify2FALogin: vi
-    .fn()
-    .mockResolvedValue({
-      success: true,
-      token: '2fa-token',
-      user: { id: 'u1', username: 'alice' },
-    }),
+  verify2FALogin: vi.fn().mockResolvedValue({
+    success: true,
+    token: '2fa-token',
+    user: { id: 'u1', username: 'alice' },
+  }),
   waitForPendingLogout: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -197,7 +202,7 @@ describe('useVaultAuth Hook', () => {
         'Security Protocol Violation',
         expect.objectContaining({
           description: expect.stringContaining('Account Identifier is required'),
-        })
+        }),
       );
     });
 
@@ -216,7 +221,7 @@ describe('useVaultAuth Hook', () => {
       expect(success).toBe(false);
       expect(mockToast.error).toHaveBeenCalledWith(
         'Account Identifier Too Short',
-        expect.anything()
+        expect.anything(),
       );
     });
 
@@ -238,7 +243,7 @@ describe('useVaultAuth Hook', () => {
 
     it('rejects identical account password and vault key during registration', async () => {
       const { result } = renderHook(() =>
-        useVaultAuth({ initialUsername: 'alice', authMode: 'register' })
+        useVaultAuth({ initialUsername: 'alice', authMode: 'register' }),
       );
 
       act(() => {
@@ -256,7 +261,7 @@ describe('useVaultAuth Hook', () => {
         'Security Requirement Error',
         expect.objectContaining({
           description: expect.stringContaining('must not be identical'),
-        })
+        }),
       );
     });
   });
@@ -284,7 +289,7 @@ describe('useVaultAuth Hook', () => {
         VALID_PASSWORD,
         CAPTCHA_TOKEN,
         VALID_VAULT_KEY,
-        expect.anything()
+        expect.anything(),
       );
       expect(mockVaultStore.unlock).toHaveBeenCalled();
       expect(mockVaultStore.completeUnlockTransition).toHaveBeenCalled();
@@ -293,7 +298,7 @@ describe('useVaultAuth Hook', () => {
         expect.objectContaining({
           actionType: 'auth_login',
           status: 'success',
-        })
+        }),
       );
       // Passwords cleared from state for sensitive memory safety
       expect(result.current.accountPassword).toBe('');
@@ -302,7 +307,7 @@ describe('useVaultAuth Hook', () => {
 
     it('handles cloudSessionActive mode without requiring account password', async () => {
       const { result } = renderHook(() =>
-        useVaultAuth({ initialUsername: 'alice', cloudSessionActive: true })
+        useVaultAuth({ initialUsername: 'alice', cloudSessionActive: true }),
       );
 
       act(() => {
@@ -360,7 +365,7 @@ describe('useVaultAuth Hook', () => {
         'user-2fa-123',
         '123456',
         'mfa-token-abc',
-        CAPTCHA_TOKEN
+        CAPTCHA_TOKEN,
       );
       expect(mockVaultStore.unlock).toHaveBeenCalled();
       expect(result.current.twoFactorRequired).toBe(false);
@@ -460,7 +465,7 @@ describe('useVaultAuth Hook', () => {
       // First unlock attempt with primary salt fails with decryption error
       mockVaultStore.unlock
         .mockRejectedValueOnce(
-          new Error('master key is incorrect or the vault data could not be decrypted')
+          new Error('master key is incorrect or the vault data could not be decrypted'),
         )
         .mockResolvedValueOnce(undefined);
 
@@ -507,7 +512,7 @@ describe('useVaultAuth Hook', () => {
         'Authentication failed',
         expect.objectContaining({
           description: expect.stringContaining('username or account password is incorrect'),
-        })
+        }),
       );
       expect(result.current.status).toBe('error');
     });
@@ -536,11 +541,11 @@ describe('useVaultAuth Hook', () => {
 
     it('handles session login master key failure with clear Master Key Incorrect error', async () => {
       mockVaultStore.unlock.mockRejectedValue(
-        new Error('Master key is incorrect or the vault data could not be decrypted')
+        new Error('Master key is incorrect or the vault data could not be decrypted'),
       );
 
       const { result } = renderHook(() =>
-        useVaultAuth({ initialUsername: 'alice', initialCloudSessionActive: true })
+        useVaultAuth({ initialUsername: 'alice', initialCloudSessionActive: true }),
       );
 
       act(() => {
@@ -557,7 +562,7 @@ describe('useVaultAuth Hook', () => {
         'Master Key Incorrect',
         expect.objectContaining({
           description: expect.stringContaining('Master Key you entered is incorrect'),
-        })
+        }),
       );
       expect(result.current.status).toBe('error');
     });
@@ -722,4 +727,3 @@ describe('useVaultAuth Hook', () => {
     });
   });
 });
-

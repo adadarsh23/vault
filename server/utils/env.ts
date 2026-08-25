@@ -48,7 +48,7 @@ export const validateRuntimeEnv = (): void => {
   if (process.env.NODE_ENV === 'production') {
     if (isMongoOptionalMode()) {
       throw new Error(
-        'SKIP_MONGO_CONNECT is not permitted in production. MongoDB must be configured and connected.'
+        'SKIP_MONGO_CONNECT is not permitted in production. MongoDB must be configured and connected.',
       );
     }
 
@@ -60,13 +60,13 @@ export const validateRuntimeEnv = (): void => {
 
     if (!trimEnv(process.env.TRUST_PROXY)) {
       logger.warn(
-        'TRUST_PROXY is not configured. Production defaults to 1 trusted proxy hop so rate limiting and audit IPs stay safer behind Render/Nginx.'
+        'TRUST_PROXY is not configured. Production defaults to 1 trusted proxy hop so rate limiting and audit IPs stay safer behind Render/Nginx.',
       );
     }
 
     if (trimEnv(process.env.TRUST_PROXY)?.toLowerCase() === 'true') {
       logger.warn(
-        'TRUST_PROXY=true is overly permissive for IP-based rate limiting. Prefer TRUST_PROXY=1 unless you intentionally trust more than one proxy hop.'
+        'TRUST_PROXY=true is overly permissive for IP-based rate limiting. Prefer TRUST_PROXY=1 unless you intentionally trust more than one proxy hop.',
       );
     }
 
@@ -80,21 +80,21 @@ export const validateRuntimeEnv = (): void => {
       trimEnv(process.env.REFRESH_COOKIE_SECURE)?.toLowerCase() === 'false'
     ) {
       logger.warn(
-        'REFRESH_COOKIE_SECURE should not be false when REFRESH_COOKIE_SAME_SITE=none, or browsers may reject the cookie.'
+        'REFRESH_COOKIE_SECURE should not be false when REFRESH_COOKIE_SAME_SITE=none, or browsers may reject the cookie.',
       );
     }
 
     const registrationProfileCaptureEnabled = trimEnv(
-      process.env.REGISTRATION_PROFILE_CAPTURE_ENABLED
+      process.env.REGISTRATION_PROFILE_CAPTURE_ENABLED,
     )?.toLowerCase();
     if (
       registrationProfileCaptureEnabled &&
       !['1', 'true', 'yes', 'on', '0', 'false', 'no', 'off'].includes(
-        registrationProfileCaptureEnabled
+        registrationProfileCaptureEnabled,
       )
     ) {
       logger.warn(
-        'REGISTRATION_PROFILE_CAPTURE_ENABLED is set to an unrecognized value. Use true/false so signup metadata capture is deterministic.'
+        'REGISTRATION_PROFILE_CAPTURE_ENABLED is set to an unrecognized value. Use true/false so signup metadata capture is deterministic.',
       );
     }
 
@@ -102,7 +102,7 @@ export const validateRuntimeEnv = (): void => {
       const value = trimEnv(process.env[key]);
       if (value && !value.includes('{ip}') && key !== 'IPGEOLOCATION_URL_TEMPLATE') {
         logger.warn(
-          `${key} should include the {ip} placeholder so IP-specific registration lookups resolve correctly.`
+          `${key} should include the {ip} placeholder so IP-specific registration lookups resolve correctly.`,
         );
       }
     }
@@ -112,7 +112,7 @@ export const validateRuntimeEnv = (): void => {
       !trimEnv(process.env.IPGEOLOCATION_URL_TEMPLATE)?.includes('{apiKey}')
     ) {
       logger.warn(
-        'IPGEOLOCATION_URL_TEMPLATE should include the {apiKey} placeholder so the configured API key can be injected.'
+        'IPGEOLOCATION_URL_TEMPLATE should include the {apiKey} placeholder so the configured API key can be injected.',
       );
     }
   }

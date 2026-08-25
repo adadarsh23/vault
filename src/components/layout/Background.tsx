@@ -175,7 +175,7 @@ function BackgroundComponent() {
         },
       },
     }),
-    [enableFX]
+    [enableFX],
   );
 
   return (

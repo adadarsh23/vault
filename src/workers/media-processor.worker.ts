@@ -118,8 +118,7 @@ export function stripJpegExifBinary(buffer: ArrayBuffer): ArrayBuffer {
     // APP13 (0xFFED: IPTC, Photoshop IRB)
     // APP14-APP15 (0xFFEE-0xFFEF: Adobe/Extended metadata)
     // COM (0xFFFE: User comment / caption text)
-    const isMetadataMarker =
-      (marker >= 0xffe1 && marker <= 0xffef) || marker === 0xfffe;
+    const isMetadataMarker = (marker >= 0xffe1 && marker <= 0xffef) || marker === 0xfffe;
 
     if (!isMetadataMarker) {
       pieces.push(new Uint8Array(buffer, offset - 2, 2 + length));
@@ -171,7 +170,7 @@ export function stripPngMetadataBinary(buffer: ArrayBuffer): ArrayBuffer {
       bytes[offset + 4],
       bytes[offset + 5],
       bytes[offset + 6],
-      bytes[offset + 7]
+      bytes[offset + 7],
     );
 
     const totalChunkLength = 12 + chunkLength;
@@ -221,7 +220,7 @@ export function stripWebpMetadataBinary(buffer: ArrayBuffer): ArrayBuffer {
       bytes[offset],
       bytes[offset + 1],
       bytes[offset + 2],
-      bytes[offset + 3]
+      bytes[offset + 3],
     );
     const chunkSize = view.getUint32(offset + 4, true);
     const paddedSize = chunkSize + (chunkSize % 2);
@@ -391,7 +390,7 @@ self.onmessage = async (event: MessageEvent<MediaProcessorRequest>) => {
 
     if (typeof OffscreenCanvas === 'undefined' || typeof createImageBitmap === 'undefined') {
       throw new Error(
-        'OffscreenCanvas or createImageBitmap is not supported in Web Worker environment'
+        'OffscreenCanvas or createImageBitmap is not supported in Web Worker environment',
       );
     }
 

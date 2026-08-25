@@ -71,7 +71,7 @@ describe('Controls & Shortcuts Integration Test Suite', () => {
       render(<ShortcutsCard />);
 
       const searchInput = screen.getByPlaceholderText(
-        /Search shortcuts by name/i
+        /Search shortcuts by name/i,
       ) as HTMLInputElement;
       fireEvent.change(searchInput, { target: { value: 'password' } });
 

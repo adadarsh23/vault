@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Compass, CheckCircle2, RotateCw, ShieldAlert, Sparkles } from 'lucide-react';
+import { Compass, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { cn } from '../../../../lib/utils';
 import { GyroLevelState } from './types';
 import { triggerHaptic } from './haptics';
@@ -24,7 +23,7 @@ export const GyroLevelerOverlay: React.FC<GyroLevelerOverlayProps> = ({
 
   const wasLevelRef = useRef(false);
   const smoothedRollRef = useRef(0);
-  const [manualTilt, setManualTilt] = useState<number | null>(null);
+  const [manualTilt, _setManualTilt] = useState<number | null>(null);
   const [needsPermissionGesture, setNeedsPermissionGesture] = useState(false);
 
   // Request sensor permissions on user gesture
@@ -106,8 +105,7 @@ export const GyroLevelerOverlay: React.FC<GyroLevelerOverlayProps> = ({
       const ay = acc.y;
       const az = acc.z ?? 0;
 
-      const orientationAngle =
-        window.screen.orientation?.angle ?? (window as any).orientation ?? 0;
+      const orientationAngle = window.screen.orientation?.angle ?? (window as any).orientation ?? 0;
 
       let angle = 0;
       if (orientationAngle === 90) {
@@ -128,8 +126,7 @@ export const GyroLevelerOverlay: React.FC<GyroLevelerOverlayProps> = ({
     const handleDeviceOrientation = (e: DeviceOrientationEvent) => {
       if (e.gamma === null || e.beta === null) return;
 
-      const orientationAngle =
-        window.screen.orientation?.angle ?? (window as any).orientation ?? 0;
+      const orientationAngle = window.screen.orientation?.angle ?? (window as any).orientation ?? 0;
 
       let roll = 0;
       let pitch = 0;
@@ -212,7 +209,7 @@ export const GyroLevelerOverlay: React.FC<GyroLevelerOverlayProps> = ({
             'w-14 sm:w-20 md:w-28 rounded-full transition-all duration-150',
             isLevel
               ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.85)] h-[1.5px]'
-              : 'bg-white/70 shadow-sm h-[1px]'
+              : 'bg-white/70 shadow-sm h-[1px]',
           )}
         />
 
@@ -222,7 +219,7 @@ export const GyroLevelerOverlay: React.FC<GyroLevelerOverlayProps> = ({
             'w-5 h-5 sm:w-6 sm:h-6 mx-2 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-150 shrink-0',
             isLevel
               ? 'border-emerald-400 bg-emerald-400/20 shadow-[0_0_12px_rgba(52,211,153,0.6)] scale-105'
-              : 'border-white/40 bg-black/20'
+              : 'border-white/40 bg-black/20',
           )}
         >
           <div
@@ -230,7 +227,7 @@ export const GyroLevelerOverlay: React.FC<GyroLevelerOverlayProps> = ({
               'w-1.5 h-1.5 rounded-full transition-all duration-150',
               isLevel
                 ? 'bg-emerald-300 shadow-[0_0_6px_rgba(52,211,153,1)] scale-110'
-                : 'bg-white/80'
+                : 'bg-white/80',
             )}
           />
         </div>
@@ -241,7 +238,7 @@ export const GyroLevelerOverlay: React.FC<GyroLevelerOverlayProps> = ({
             'w-14 sm:w-20 md:w-28 rounded-full transition-all duration-150',
             isLevel
               ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.85)] h-[1.5px]'
-              : 'bg-white/70 shadow-sm h-[1px]'
+              : 'bg-white/70 shadow-sm h-[1px]',
           )}
         />
       </div>
@@ -251,18 +248,20 @@ export const GyroLevelerOverlay: React.FC<GyroLevelerOverlayProps> = ({
         <Compass
           className={cn(
             'h-3 w-3 sm:h-3.5 sm:w-3.5 transition-colors shrink-0',
-            isLevel ? 'text-emerald-400 animate-pulse' : 'text-white/60'
+            isLevel ? 'text-emerald-400 animate-pulse' : 'text-white/60',
           )}
         />
         <span
           className={cn(
             'font-mono text-[10px] sm:text-xs font-bold tracking-tight tabular-nums',
-            isLevel ? 'text-emerald-400' : 'text-white/90'
+            isLevel ? 'text-emerald-400' : 'text-white/90',
           )}
         >
           {isLevel ? '0.0° LEVEL' : `${currentRoll > 0 ? '+' : ''}${currentRoll.toFixed(1)}°`}
         </span>
-        {isLevel && <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-400 shrink-0" />}
+        {isLevel && (
+          <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-400 shrink-0" />
+        )}
       </div>
     </div>
   );

@@ -124,7 +124,7 @@ export const PlaybackInsights: React.FC = () => {
   const totalErrors = useMemo(() => {
     return insights.errorStats.reduce(
       (acc, curr) => acc + (curr.count ?? 0) + (curr.errors ?? 0),
-      0
+      0,
     );
   }, [insights.errorStats]);
 
@@ -231,7 +231,7 @@ export const PlaybackInsights: React.FC = () => {
                         ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]'
                         : stabilityValue > 50
                           ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]'
-                          : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]'
+                          : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]',
                     )}
                   />
                 </div>
@@ -292,7 +292,7 @@ export const PlaybackInsights: React.FC = () => {
                 'font-black text-xs tabular-nums px-2 py-0.5 rounded-lg border',
                 totalErrors > 0
                   ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
-                  : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                  : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
               )}
             >
               {totalErrors} detected
@@ -311,7 +311,7 @@ export const PlaybackInsights: React.FC = () => {
                     ? 'text-emerald-400'
                     : avgLatency < 600
                       ? 'text-amber-400'
-                      : 'text-rose-400'
+                      : 'text-rose-400',
               )}
             >
               {avgLatency > 0 ? `${Math.round(avgLatency)}ms` : 'OPTIMAL'}

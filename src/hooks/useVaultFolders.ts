@@ -63,7 +63,7 @@ const extractFoldersForItemType = (payload: unknown, itemType: VaultItemType): s
 
 const updateFolderCache = (itemType: VaultItemType, folders: string[]) => {
   const unique = Array.from(
-    new Set(folders.map((name) => normalizeFolderName(name)).filter((name) => name.length > 0))
+    new Set(folders.map((name) => normalizeFolderName(name)).filter((name) => name.length > 0)),
   );
   FOLDER_FETCH_CACHE.set(itemType, unique);
 };
@@ -90,23 +90,23 @@ export const useVaultFolders = (itemType: VaultItemType) => {
 
       setSessionFolders((prev) => {
         const next = Array.from(
-          new Set([...prev, ...incoming.map((name) => normalizeFolderName(name))])
+          new Set([...prev, ...incoming.map((name) => normalizeFolderName(name))]),
         ).filter((name) => name.length > 0);
         updateFolderCache(itemType, next);
         return next;
       });
     },
-    [itemType]
+    [itemType],
   );
 
   const itemsOfType = useMemo(
     () => items.filter((item) => item.type === itemType),
-    [items, itemType]
+    [items, itemType],
   );
 
   const folders = useMemo(() => {
     const existingFolders = Array.from(
-      new Set(itemsOfType.map((i) => i.folder).filter(Boolean) as string[])
+      new Set(itemsOfType.map((i) => i.folder).filter(Boolean) as string[]),
     );
 
     const deduped = Array.from(new Set([...existingFolders, ...sessionFolders]));
@@ -246,7 +246,7 @@ export const useVaultFolders = (itemType: VaultItemType) => {
         folders.some(
           (folder) =>
             folder.toLowerCase() === newName.toLowerCase() &&
-            folder.toLowerCase() !== oldName.toLowerCase()
+            folder.toLowerCase() !== oldName.toLowerCase(),
         )
       ) {
         toast.error('A folder with this name already exists');
@@ -322,7 +322,7 @@ export const useVaultFolders = (itemType: VaultItemType) => {
       folders,
       isLoading,
       isDecoyMode,
-    ]
+    ],
   );
 
   const handleDeleteFolder = useCallback(
@@ -338,7 +338,7 @@ export const useVaultFolders = (itemType: VaultItemType) => {
         typeof window === 'undefined'
           ? true
           : window.confirm(
-              `Are you sure you want to delete "${folderName}"? Items will be moved to Uncategorized.`
+              `Are you sure you want to delete "${folderName}"? Items will be moved to Uncategorized.`,
             );
       if (!confirmed) return;
 
@@ -403,7 +403,7 @@ export const useVaultFolders = (itemType: VaultItemType) => {
         setIsLoading(false);
       }
     },
-    [itemsOfType, batchUpdateItems, currentFolder, itemType, syncLogs, isLoading, isDecoyMode]
+    [itemsOfType, batchUpdateItems, currentFolder, itemType, syncLogs, isLoading, isDecoyMode],
   );
 
   const handleMoveToFolder = useCallback(
@@ -425,7 +425,7 @@ export const useVaultFolders = (itemType: VaultItemType) => {
         try {
           await updateItem(itemId, { folder: normalizedFolderName || undefined });
           toast.success(
-            normalizedFolderName ? `Moved to ${normalizedFolderName}` : 'Moved to Uncategorized'
+            normalizedFolderName ? `Moved to ${normalizedFolderName}` : 'Moved to Uncategorized',
           );
 
           const destName = normalizedFolderName || 'Uncategorized';
@@ -452,7 +452,7 @@ export const useVaultFolders = (itemType: VaultItemType) => {
           toast.success(
             normalizedFolderName
               ? `Moved ${itemsToMove.length} items to ${normalizedFolderName}`
-              : `Moved ${itemsToMove.length} items to Uncategorized`
+              : `Moved ${itemsToMove.length} items to Uncategorized`,
           );
 
           const destName = normalizedFolderName || 'Uncategorized';
@@ -468,7 +468,7 @@ export const useVaultFolders = (itemType: VaultItemType) => {
         }
       }
     },
-    [items, itemsOfType, updateItem, batchUpdateItems, syncLogs]
+    [items, itemsOfType, updateItem, batchUpdateItems, syncLogs],
   );
 
   return {

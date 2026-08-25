@@ -8,7 +8,7 @@ type LogRocketClient = {
   identify: (userId: string, traits: Record<string, string>) => void;
   captureException: (
     error: Error,
-    options?: { tags?: Record<string, string | number | boolean> }
+    options?: { tags?: Record<string, string | number | boolean> },
   ) => void;
 };
 
@@ -148,7 +148,7 @@ export const identifyLogRocketUser = (
     username?: string;
     email?: string;
     name?: string;
-  }
+  },
 ) => {
   if (!isEnabled() || !initialized || !userId || !hasTelemetryConsent()) {
     return;

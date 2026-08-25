@@ -49,7 +49,7 @@ securityRouter.post(
       message: 'Verification code sent to registered email',
       expiresIn: 300, // 5 minutes
     });
-  })
+  }),
 );
 
 /**
@@ -74,7 +74,7 @@ securityRouter.get(
         platform: d.metadata.platform,
       })),
     });
-  })
+  }),
 );
 
 /**
@@ -98,7 +98,7 @@ securityRouter.post(
       success: true,
       message: 'Device verified and trusted',
     });
-  })
+  }),
 );
 
 /**
@@ -122,7 +122,7 @@ securityRouter.delete(
       success: true,
       message: 'Device removed',
     });
-  })
+  }),
 );
 
 /**
@@ -142,7 +142,7 @@ securityRouter.post(
       success: true,
       message: `Logged out from ${count} other devices`,
     });
-  })
+  }),
 );
 
 /**
@@ -165,7 +165,7 @@ securityRouter.get(
         typicalLoginHours: [],
       },
     });
-  })
+  }),
 );
 
 /**
@@ -184,7 +184,7 @@ securityRouter.get(
       twoFactorRequired: true,
       sessionTimeout: 3600, // seconds
     });
-  })
+  }),
 );
 
 /**
@@ -201,7 +201,7 @@ securityRouter.post(
       success: true,
       message: 'Settings updated',
     });
-  })
+  }),
 );
 
 /**
@@ -236,7 +236,7 @@ securityRouter.post(
       secret,
       message: 'Scan QR code with authenticator app',
     });
-  })
+  }),
 );
 
 /**
@@ -253,7 +253,7 @@ securityRouter.post(
       success: true,
       message: 'MFA enabled successfully',
     });
-  })
+  }),
 );
 
 /**
@@ -270,7 +270,7 @@ securityRouter.post(
       success: true,
       message: 'MFA disabled',
     });
-  })
+  }),
 );
 
 /**
@@ -284,7 +284,7 @@ securityRouter.get(
   asyncHandler(async (_req: Request, res: Response) => {
     const metrics = await securityDashboardService.getCurrentMetrics();
     res.json(metrics);
-  })
+  }),
 );
 
 /**
@@ -303,7 +303,7 @@ securityRouter.get(
       total: 0,
       limit,
     });
-  })
+  }),
 );
 
 /**
@@ -316,10 +316,10 @@ securityRouter.get(
   requireAdmin,
   asyncHandler(async (req: Request, res: Response) => {
     const incident = await securityDashboardService.getIncidentDetails(
-      getRouteParam(req.params.id)
+      getRouteParam(req.params.id),
     );
     res.json(incident);
-  })
+  }),
 );
 
 /**
@@ -336,14 +336,14 @@ securityRouter.patch(
     await securityDashboardService.updateIncidentStatus(
       getRouteParam(req.params.id),
       status as any,
-      notes
+      notes,
     );
 
     res.json({
       success: true,
       message: 'Incident updated',
     });
-  })
+  }),
 );
 
 /**
@@ -363,7 +363,7 @@ securityRouter.post(
       success: true,
       message: `Action applied: ${action}`,
     });
-  })
+  }),
 );
 
 /**
@@ -383,7 +383,7 @@ securityRouter.get(
     res.contentType('text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="security-report.csv"');
     res.send(report);
-  })
+  }),
 );
 
 export { securityRouter };

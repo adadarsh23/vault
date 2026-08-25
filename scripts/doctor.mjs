@@ -12,15 +12,15 @@ const addCheck = (category, title, status, details = '') => {
 // 1. Node.js Version Check
 const nodeVersion = process.version;
 const major = parseInt(nodeVersion.replace(/^v/, '').split('.')[0], 10);
-if (major >= 22) {
+if (major >= 18) {
   addCheck(
     'Runtime',
     `Node.js version (${nodeVersion})`,
     'PASS',
-    'Meets >= 22.0.0 engine requirement'
+    'Meets >= 18.0.0 engine requirement',
   );
 } else {
-  addCheck('Runtime', `Node.js version (${nodeVersion})`, 'FAIL', 'Requires Node.js >= 22.0.0');
+  addCheck('Runtime', `Node.js version (${nodeVersion})`, 'FAIL', 'Requires Node.js >= 18.0.0');
 }
 
 // 2. TypeScript Configs
@@ -55,7 +55,7 @@ if (fs.existsSync(envPath)) {
     'Environment',
     '.env file present',
     'WARN',
-    'No .env file found. Copy from .env.example if running full stack.'
+    'No .env file found. Copy from .env.example if running full stack.',
   );
 }
 
@@ -78,7 +78,7 @@ if (jwtSecret && jwtSecret.length >= 16) {
     'Security',
     'JWT_SECRET configured',
     'WARN',
-    'JWT_SECRET is unset in current environment'
+    'JWT_SECRET is unset in current environment',
   );
 }
 
@@ -105,7 +105,7 @@ for (const check of checks) {
   }
 
   console.log(
-    `${tag} ${check.category.padEnd(12)} : ${check.title} ${check.details ? `(${check.details})` : ''}`
+    `${tag} ${check.category.padEnd(12)} : ${check.title} ${check.details ? `(${check.details})` : ''}`,
   );
 }
 

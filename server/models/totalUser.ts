@@ -11,7 +11,7 @@ const totalUserSchema = new mongoose.Schema(
   {
     collection: 'total_users',
     versionKey: false,
-  }
+  },
 );
 
 totalUserSchema.index({ username: 1 }, { unique: true });

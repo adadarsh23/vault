@@ -112,7 +112,7 @@ describe('securityIntegration', () => {
         '/security/settings',
         expect.objectContaining({
           loginAlerts: false,
-        })
+        }),
       );
     });
   });

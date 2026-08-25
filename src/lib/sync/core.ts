@@ -31,7 +31,7 @@ type SyncRequestError = Error & {
 const createSyncRequestError = (
   context: string,
   message: string,
-  options: { status?: number; code?: string; retryAfterMs?: number } = {}
+  options: { status?: number; code?: string; retryAfterMs?: number } = {},
 ): SyncRequestError => {
   const error = new Error(`${context}: ${message}`) as SyncRequestError;
   if (typeof options.status === 'number') {
@@ -79,7 +79,7 @@ const computeRetryDelayMs = (attempt: number, retryAfterMs?: number): number => 
   if (typeof retryAfterMs === 'number') {
     return Math.max(
       BASE_RETRY_DELAY_MS,
-      Math.min(retryAfterMs + jitterMs, MAX_RETRY_AFTER_DELAY_MS)
+      Math.min(retryAfterMs + jitterMs, MAX_RETRY_AFTER_DELAY_MS),
     );
   }
 
@@ -156,7 +156,7 @@ const releaseWriteSlot = (): void => {
 export const runInSyncWriteQueue = async <T>(
   task: () => Promise<T>,
   key?: string,
-  maxParallel = DEFAULT_MAX_PARALLEL_SYNC_WRITES
+  maxParallel = DEFAULT_MAX_PARALLEL_SYNC_WRITES,
 ): Promise<T> => {
   const resolvedKey = key && key.trim() ? key.trim() : '__global__';
   const previousItemPromise = itemWriteQueues.get(resolvedKey) || Promise.resolve();
@@ -171,8 +171,8 @@ export const runInSyncWriteQueue = async <T>(
     resolvedKey,
     previousItemPromise.then(
       () => currentItemPromise,
-      () => currentItemPromise
-    )
+      () => currentItemPromise,
+    ),
   );
 
   try {
@@ -198,7 +198,7 @@ export const runInSyncWriteQueue = async <T>(
 export const runInParallelPool = async <T, R>(
   items: T[],
   worker: (item: T, index: number) => Promise<R>,
-  concurrency = DEFAULT_MAX_PARALLEL_SYNC_WRITES
+  concurrency = DEFAULT_MAX_PARALLEL_SYNC_WRITES,
 ): Promise<R[]> => {
   if (items.length === 0) return [];
   const results: R[] = new Array(items.length);
@@ -255,7 +255,7 @@ const resolveAuthHeaders = (headers?: Record<string, string>): Record<string, st
 const shouldRefreshForStatus = (status: number, errorCode?: string): boolean =>
   status === 401 &&
   ['INVALID_TOKEN', 'TOKEN_EXPIRED', 'AUTH_REQUIRED', 'INVALID_AUTH_HEADER'].includes(
-    errorCode || 'INVALID_TOKEN'
+    errorCode || 'INVALID_TOKEN',
   );
 
 const shouldClearSessionForRefreshError = (error: unknown): boolean => {
@@ -356,7 +356,7 @@ export const fetchWithRetry = async function fetchWithRetry(
   init: RequestInit,
   context: string,
   retries = MAX_RETRIES,
-  options: { silentStatuses?: number[]; allowAuthRefresh?: boolean } = {}
+  options: { silentStatuses?: number[]; allowAuthRefresh?: boolean } = {},
 ): Promise<Response> {
   const silentStatuses = new Set(options.silentStatuses || []);
   const allowAuthRefresh = options.allowAuthRefresh !== false;
@@ -469,7 +469,7 @@ export const ensureAuth = async (): Promise<void> => {
     await refreshAccessToken();
   } catch (cause) {
     const error = new Error(
-      'Authentication is required. Please unlock the vault again.'
+      'Authentication is required. Please unlock the vault again.',
     ) as Error & { code?: string; cause?: unknown };
     error.code = 'AUTH_REQUIRED';
     error.cause = cause;
@@ -478,7 +478,7 @@ export const ensureAuth = async (): Promise<void> => {
 
   if (!getAuthToken()) {
     const error = new Error(
-      'Authentication token is unavailable. Please unlock the vault again.'
+      'Authentication token is unavailable. Please unlock the vault again.',
     ) as Error & { code?: string };
     error.code = 'AUTH_TOKEN_MISSING';
     throw error;
@@ -513,7 +513,7 @@ export const uploadWithRetry = async (
   context: string,
   onProgress?: (progress: number) => void,
   retries = MAX_RETRIES,
-  allowAuthRefresh = true
+  allowAuthRefresh = true,
 ): Promise<void> => {
   const method = init.method || 'POST';
   const body = init.body;
@@ -591,8 +591,8 @@ export const uploadWithRetry = async (
           reject(
             createSyncRequestError(
               context,
-              'Upload payload type is not supported by XMLHttpRequest.'
-            )
+              'Upload payload type is not supported by XMLHttpRequest.',
+            ),
           );
         } else {
           xhr.send();

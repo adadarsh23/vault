@@ -26,7 +26,7 @@ export const LoadingScreen = memo(function LoadingScreen({
       className={cn(
         'flex w-full flex-col items-center justify-center gap-4 bg-bg text-center',
         fullscreen ? 'min-h-dvh' : 'h-full min-h-full',
-        className
+        className,
       )}
     >
       <motion.div

@@ -144,7 +144,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
   // ─────────────────────────────────────────────
   const nodeTemplates = useMemo(
     () => createNodes(itemCount, categoryStats),
-    [itemCount, categoryStats]
+    [itemCount, categoryStats],
   );
 
   const defaultPositions = useMemo(
@@ -153,7 +153,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         string,
         NodePosition
       >,
-    [nodeTemplates]
+    [nodeTemplates],
   );
 
   const [positions, setPositions] = useState<Record<string, NodePosition>>(() => {
@@ -308,7 +308,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       clearTimer(dragSuppressTimeoutRef);
       clearTimer(modalSuppressTimeoutRef);
     },
-    []
+    [],
   );
 
   // ─────────────────────────────────────────────
@@ -376,14 +376,14 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         ...n,
         ...(positions[n.id] ?? { x: n.x, y: n.y }),
       })),
-    [nodeTemplates, positions]
+    [nodeTemplates, positions],
   );
 
   const nodeMap = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
 
   const activeNode = useMemo(
     () => nodes.find((n) => n.id === activeNodeId) ?? null,
-    [nodes, activeNodeId]
+    [nodes, activeNodeId],
   );
 
   const { width: gsW, height: gsH } = graphSize;
@@ -410,7 +410,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
 
       setPositions((prev) => ({ ...prev, [nodeId]: { x, y } }));
     },
-    [positions, ndW, ndH, canvasPadding, motionPositions]
+    [positions, ndW, ndH, canvasPadding, motionPositions],
   );
 
   // ─────────────────────────────────────────────
@@ -421,7 +421,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       dragOriginRef.current[id] = positions[id];
       setIsDraggingNode(true);
     },
-    [positions]
+    [positions],
   );
 
   const handleDrag = useCallback(
@@ -432,7 +432,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         motionPos.y.set(info.offset.y);
       }
     },
-    [motionPositions]
+    [motionPositions],
   );
 
   const handleDragEnd = useCallback(
@@ -450,7 +450,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         }
       }, 120);
     },
-    [motionPositions, updateNodePositionFromOffset]
+    [motionPositions, updateNodePositionFromOffset],
   );
 
   // ─────────────────────────────────────────────
@@ -631,7 +631,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         wheelFrameRef.current = requestAnimationFrame(flushWheelZoom);
       }
     },
-    [flushWheelZoom]
+    [flushWheelZoom],
   );
 
   useEffect(() => {
@@ -667,7 +667,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         initialPinchScaleRef.current = scale;
       }
     },
-    [pan.x, pan.y, scale]
+    [pan.x, pan.y, scale],
   );
 
   const flushPanFrame = useCallback(() => {
@@ -709,17 +709,17 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         const pointers = Array.from(activePointersRef.current.values());
         const currentDist = Math.hypot(
           pointers[0].x - pointers[1].x,
-          pointers[0].y - pointers[1].y
+          pointers[0].y - pointers[1].y,
         );
         const newScale = clamp(
           initialPinchScaleRef.current * (currentDist / initialPinchDistRef.current),
           0.25,
-          4
+          4,
         );
         setScale(newScale);
       }
     },
-    [flushPanFrame, gsH, gsW, scale]
+    [flushPanFrame, gsH, gsW, scale],
   );
 
   const handlePointerUp = useCallback(
@@ -752,7 +752,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         }
       }
     },
-    [pan.x, pan.y]
+    [pan.x, pan.y],
   );
 
   // ─────────────────────────────────────────────
@@ -781,7 +781,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
         y: clamp(nextPanY, -gsH * scale * PAN_LIMIT, gsH * scale * PAN_LIMIT),
       });
     },
-    [gsW, gsH, scale, minimapW, minimapH, minimapScale]
+    [gsW, gsH, scale, minimapW, minimapH, minimapScale],
   );
 
   const handleMinimapPointerDown = useCallback(
@@ -791,7 +791,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       isMinimapPanning.current = true;
       handleUpdatePanFromMinimap(e);
     },
-    [handleUpdatePanFromMinimap]
+    [handleUpdatePanFromMinimap],
   );
 
   const handleMinimapPointerMove = useCallback(
@@ -800,7 +800,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       e.stopPropagation();
       handleUpdatePanFromMinimap(e);
     },
-    [handleUpdatePanFromMinimap]
+    [handleUpdatePanFromMinimap],
   );
 
   const handleMinimapPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -911,7 +911,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                   <div
                     className={cn(
                       'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold tracking-tight transition-colors sm:text-xs',
-                      healthStatus.className
+                      healthStatus.className,
                     )}
                     title={`Performance Score: ${performanceScore}/100`}
                   >
@@ -966,7 +966,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                           ? 'text-emerald-400'
                           : performance.fps >= 30
                             ? 'text-amber-400'
-                            : 'text-rose-400'
+                            : 'text-rose-400',
                       )}
                     />
                     {performance.fps} FPS
@@ -986,7 +986,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                             ? 'bg-emerald-500'
                             : performance.ping < 200
                               ? 'bg-amber-500'
-                              : 'bg-rose-500'
+                              : 'bg-rose-500',
                         )}
                       />
                       {performance.ping} ms
@@ -1141,8 +1141,8 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                       Math.min(
                         maxCurveControl,
                         Math.hypot(endJoin.x - startJoin.x, endJoin.y - startJoin.y) *
-                          EDGE_CURVE_CONTROL_DISTANCE
-                      )
+                          EDGE_CURVE_CONTROL_DISTANCE,
+                      ),
                     );
                     const cp1 = {
                       x: startJoin.x + start.normalX * controlDistance,
@@ -1215,7 +1215,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                     node,
                     { width: gsW, height: gsH },
                     nodeDimensions,
-                    canvasPadding
+                    canvasPadding,
                   );
 
                   const subtitleId = `${svgId}-${node.id}-subtitle`;
@@ -1260,7 +1260,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                       }}
                       className={cn(
                         'absolute cursor-grab active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-card-bg focus-visible:ring-text/30',
-                        isHighlighted && 'z-20'
+                        isHighlighted && 'z-20',
                       )}
                       style={{
                         left,
@@ -1276,7 +1276,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                           'group/node relative flex h-full flex-col overflow-hidden rounded-[1.1rem] border border-card-border bg-card-bg/90 p-2 sm:rounded-[1.4rem] sm:p-3 md:rounded-[1.55rem] md:p-4 shadow-[0_24px_60px_-32px_rgba(15,23,42,0.34)] backdrop-blur-2xl transition-all duration-300 hover:border-text/15 hover:shadow-[0_28px_70px_-34px_rgba(15,23,42,0.4)] ring-1 transform-gpu dark:border-white/10 dark:bg-black/50',
                           node.tone.ring,
                           isHighlighted &&
-                            'border-text/25 shadow-[0_30px_80px_-34px_rgba(15,23,42,0.52)] ring-2 ring-white/10'
+                            'border-text/25 shadow-[0_30px_80px_-34px_rgba(15,23,42,0.52)] ring-2 ring-white/10',
                         )}
                       >
                         {/* Colour glow */}
@@ -1299,13 +1299,13 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                                   'flex shrink-0 items-center justify-center rounded-lg border bg-card-bg/85 transition-all sm:rounded-xl',
                                   node.tone.softBg,
                                   node.tone.ring,
-                                  'h-6 w-6 sm:h-8 sm:w-8 md:h-9 md:w-9'
+                                  'h-6 w-6 sm:h-8 sm:w-8 md:h-9 md:w-9',
                                 )}
                               >
                                 <Icon
                                   className={cn(
                                     'h-3 w-3 sm:h-4 sm:w-4 md:h-[18px] md:w-[18px]',
-                                    node.tone.icon
+                                    node.tone.icon,
                                   )}
                                   aria-hidden="true"
                                 />
@@ -1431,7 +1431,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
                     node,
                     { width: gsW, height: gsH },
                     nodeDimensions,
-                    canvasPadding
+                    canvasPadding,
                   );
                   const isActive = node.id === focusedNode;
 

@@ -25,7 +25,7 @@ const JPEG_MARKER = 0xd8;
 const loadSharp = async (): Promise<SharpLike | null> => {
   try {
     const dynamicImport = new Function('moduleName', 'return import(moduleName)') as (
-      moduleName: string
+      moduleName: string,
     ) => Promise<{ default: SharpLike }>;
     const sharpModule = await dynamicImport('sharp');
     return sharpModule.default;

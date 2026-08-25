@@ -22,8 +22,8 @@ describe('ShortcutsCard & ShortcutsPage Component Test Suite', () => {
     expect(screen.getByRole('heading', { level: 1, name: /Controls & Shortcuts/i })).toBeTruthy();
     expect(
       screen.getByText(
-        'Keyboard and gesture shortcuts for fast, secure, and efficient vault navigation.'
-      )
+        'Keyboard and gesture shortcuts for fast, secure, and efficient vault navigation.',
+      ),
     ).toBeTruthy();
   });
 
@@ -63,7 +63,7 @@ describe('ShortcutsCard & ShortcutsPage Component Test Suite', () => {
     fireEvent.click(copyButton);
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      expect.stringContaining('--- VAULT CONTROLS & SHORTCUTS CHEAT SHEET ---')
+      expect.stringContaining('--- VAULT CONTROLS & SHORTCUTS CHEAT SHEET ---'),
     );
   });
 

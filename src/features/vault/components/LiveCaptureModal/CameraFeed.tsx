@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Loader2,
@@ -124,7 +124,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
     if (e.touches.length === 2 && zoomCapabilities?.supported) {
       const dist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
+        e.touches[0].clientY - e.touches[1].clientY,
       );
       touchStartDistRef.current = dist;
       touchStartZoomRef.current = zoomCapabilities.current;
@@ -140,12 +140,12 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
     ) {
       const currentDist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
+        e.touches[0].clientY - e.touches[1].clientY,
       );
       const scale = currentDist / touchStartDistRef.current;
       const targetZoom = Math.min(
         zoomCapabilities.max,
-        Math.max(zoomCapabilities.min, touchStartZoomRef.current * scale)
+        Math.max(zoomCapabilities.min, touchStartZoomRef.current * scale),
       );
       onZoomChange(targetZoom);
     }
@@ -240,7 +240,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
         <div
           onClick={handlePreviewClick}
           className={cn(
-            'relative h-full w-auto max-w-full overflow-hidden rounded-xl border border-white/10 bg-black md:rounded-2xl cursor-crosshair'
+            'relative h-full w-auto max-w-full overflow-hidden rounded-xl border border-white/10 bg-black md:rounded-2xl cursor-crosshair',
           )}
           style={{ aspectRatio: aspectRatioValue }}
         >
@@ -255,7 +255,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
               (cameraFacing === 'user') !== isHorizontallyFlipped && 'scale-x-[-1]',
               isInitializing || permissionError
                 ? 'opacity-0 scale-95 blur-xl'
-                : 'opacity-100 scale-100 blur-0'
+                : 'opacity-100 scale-100 blur-0',
             )}
           />
 
@@ -378,9 +378,11 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
                     ? 'bg-black/90 border-white/25 text-white ring-1 ring-white/15'
                     : 'bg-black/80 border-white/10 text-white/70',
                 // Responsive and collision-free positioning across devices and dual camera layouts
-                dualCamera?.enabled && dualCamera.pipPosition === 'top-left' && dualCamera.layout === 'pip'
+                dualCamera?.enabled &&
+                  dualCamera.pipPosition === 'top-left' &&
+                  dualCamera.layout === 'pip'
                   ? 'top-28 sm:top-36 left-2 sm:left-3'
-                  : 'top-2 sm:top-3 left-2 sm:left-3'
+                  : 'top-2 sm:top-3 left-2 sm:left-3',
               )}
               title={
                 isMuted
@@ -397,7 +399,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
                 <Volume2
                   className={cn(
                     'h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 transition-colors duration-100',
-                    avgAudioLevel > 0.03 ? 'text-white' : 'text-white/40'
+                    avgAudioLevel > 0.03 ? 'text-white' : 'text-white/40',
                   )}
                 />
               )}
@@ -427,7 +429,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
                               ? 'bg-white/85 opacity-90'
                               : avgAudioLevel > 0.03 || finalLevel > 0.05
                                 ? 'bg-white/60 opacity-75'
-                                : 'bg-white/25 opacity-40'
+                                : 'bg-white/25 opacity-40',
                         )}
                         style={{ height: `${height}px` }}
                       />
@@ -439,30 +441,39 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
           )}
 
           {/* Active Filter Pill Badge with Dedicated Icon */}
-          {activeFilter !== 'none' && !isInitializing && !permissionError && (() => {
-            const preset = getFilterPreset(activeFilter);
-            const Icon = preset.icon;
-            return (
-              <div
-                className={cn(
-                  'absolute z-30 flex items-center gap-1 sm:gap-1.5 rounded-full bg-black/75 px-2 sm:px-2.5 py-0.5 sm:py-1 backdrop-blur-xl border border-white/15 text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-lg pointer-events-none',
-                  dualCamera?.enabled && dualCamera.pipPosition === 'top-right' && dualCamera.layout === 'pip'
-                    ? 'top-28 sm:top-36 right-2 sm:right-3'
-                    : 'top-2 sm:top-3 right-2 sm:right-3'
-                )}
-              >
-                <Icon className={cn('h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0', preset.iconColor)} />
-                <span className="text-white/90 truncate max-w-[60px] sm:max-w-none">{preset.shortLabel}</span>
-              </div>
-            );
-          })()}
+          {activeFilter !== 'none' &&
+            !isInitializing &&
+            !permissionError &&
+            (() => {
+              const preset = getFilterPreset(activeFilter);
+              const Icon = preset.icon;
+              return (
+                <div
+                  className={cn(
+                    'absolute z-30 flex items-center gap-1 sm:gap-1.5 rounded-full bg-black/75 px-2 sm:px-2.5 py-0.5 sm:py-1 backdrop-blur-xl border border-white/15 text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-lg pointer-events-none',
+                    dualCamera?.enabled &&
+                      dualCamera.pipPosition === 'top-right' &&
+                      dualCamera.layout === 'pip'
+                      ? 'top-28 sm:top-36 right-2 sm:right-3'
+                      : 'top-2 sm:top-3 right-2 sm:right-3',
+                  )}
+                >
+                  <Icon className={cn('h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0', preset.iconColor)} />
+                  <span className="text-white/90 truncate max-w-[60px] sm:max-w-none">
+                    {preset.shortLabel}
+                  </span>
+                </div>
+              );
+            })()}
 
           {/* Zoom Control Pill Bar (when zoom supported) */}
           {zoomCapabilities?.supported && onZoomChange && !isInitializing && !permissionError && (
             <div className="absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-0.5 sm:gap-1 rounded-full bg-black/60 p-0.5 sm:p-1 backdrop-blur-xl border border-white/10 shadow-lg max-w-[90%]">
               <button
                 type="button"
-                onClick={() => onZoomChange(Math.max(zoomCapabilities.min, zoomCapabilities.current - 0.5))}
+                onClick={() =>
+                  onZoomChange(Math.max(zoomCapabilities.min, zoomCapabilities.current - 0.5))
+                }
                 className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-white/70 hover:bg-white/10 hover:text-white active:scale-90"
                 title="Zoom Out"
                 aria-label="Zoom Out"
@@ -482,7 +493,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
                       'flex h-5 min-w-5 sm:h-6 sm:min-w-6 items-center justify-center rounded-full px-1 sm:px-1.5 text-[9px] sm:text-[10px] font-black transition-all',
                       isSelected
                         ? 'bg-primary text-black shadow-md'
-                        : 'text-white/60 hover:bg-white/10 hover:text-white'
+                        : 'text-white/60 hover:bg-white/10 hover:text-white',
                     )}
                   >
                     {z}x
@@ -492,7 +503,9 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
 
               <button
                 type="button"
-                onClick={() => onZoomChange(Math.min(zoomCapabilities.max, zoomCapabilities.current + 0.5))}
+                onClick={() =>
+                  onZoomChange(Math.min(zoomCapabilities.max, zoomCapabilities.current + 0.5))
+                }
                 className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-white/70 hover:bg-white/10 hover:text-white active:scale-90"
                 title="Zoom In"
                 aria-label="Zoom In"

@@ -7,7 +7,7 @@ export const sendSuccess = <T>(
   res: express.Response,
   data: T,
   message = 'Operation successful',
-  status = 200
+  status = 200,
 ) => {
   return res.status(status).json({
     success: true,
@@ -24,7 +24,7 @@ export const sendRequestError = (
   req: express.Request,
   res: express.Response,
   status: number,
-  error: { code: string; message: string }
+  error: { code: string; message: string },
 ) => {
   const requestId = (req as any).requestId;
   return res.status(status).json({

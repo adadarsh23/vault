@@ -1,7 +1,7 @@
 {
   "requestedUrl": "http://127.0.0.1:4173/",
   "finalUrl": "http://127.0.0.1:4173/",
-  "fetchTime": "2026-08-18T10:44:41.665Z",
+  "fetchTime": "2026-08-25T18:47:52.765Z",
   "category": {
     "title": "SEO",
     "description": "These checks ensure that your page is following basic search engine optimization advice. There are many additional factors Lighthouse does not score here that may affect your search ranking, including performance on [Core Web Vitals](https://web.dev/explore/vitals). [Learn more about Google Search Essentials](https://support.google.com/webmasters/answer/35769).",
@@ -67,14 +67,14 @@
       }
     ],
     "id": "seo",
-    "score": 1
+    "score": 0.66
   },
   "audits": {
     "is-crawlable": {
       "id": "is-crawlable",
-      "title": "Page isn’t blocked from indexing",
+      "title": "Page is blocked from indexing",
       "description": "Search engines are unable to include your pages in search results if they don't have permission to crawl them. [Learn more about crawler directives](https://developer.chrome.com/docs/lighthouse/seo/is-crawlable/).",
-      "score": 1,
+      "score": 0,
       "scoreDisplayMode": "binary",
       "warnings": [],
       "details": {
@@ -86,7 +86,26 @@
             "label": "Blocking Directive Source"
           }
         ],
-        "items": []
+        "items": [
+          {
+            "source": {
+              "type": "node",
+              "lhId": "1-37-META",
+              "path": "1,HTML,0,HEAD,14,META",
+              "selector": "head > meta",
+              "boundingRect": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              },
+              "snippet": "<meta name=\"robots\" content=\"noindex, nofollow, noarchive, nosnippet, noimageindex\" />",
+              "nodeLabel": "head > meta"
+            }
+          }
+        ]
       }
     },
     "document-title": {

@@ -99,7 +99,7 @@ const encryptedActivityLogSchema = new mongoose.Schema(
   },
   {
     timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' },
-  }
+  },
 );
 
 /**
@@ -115,7 +115,7 @@ export type ActivityLogDocument = HydratedDocument<ActivityLogType>;
 
 export const getActivityLogModel = (
   username: string,
-  customConnection?: mongoose.Connection
+  customConnection?: mongoose.Connection,
 ): Model<ActivityLogType> => {
   if (!username || !username.trim()) {
     throw new Error('Username is required for isolated activity logs');
@@ -129,7 +129,7 @@ export const getActivityLogModel = (
     const model = customConnection.model(
       collectionName,
       encryptedActivityLogSchema,
-      collectionName
+      collectionName,
     );
     if (typeof model?.createIndexes === 'function') {
       model.createIndexes().catch(() => {});
@@ -143,7 +143,7 @@ export const getActivityLogModel = (
   const model = mongoose.model<ActivityLogType>(
     collectionName,
     encryptedActivityLogSchema,
-    collectionName
+    collectionName,
   );
   if (typeof model?.createIndexes === 'function') {
     model.createIndexes().catch(() => {});

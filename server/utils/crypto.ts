@@ -106,7 +106,7 @@ const deriveScryptKey = (
     p: number;
     keyLen: number;
     maxmem?: number;
-  }
+  },
 ): Promise<Buffer> =>
   new Promise((resolve, reject) => {
     crypto.scrypt(
@@ -125,7 +125,7 @@ const deriveScryptKey = (
           return;
         }
         resolve(derivedKey as Buffer);
-      }
+      },
     );
   });
 
@@ -153,7 +153,7 @@ export const hashPassword = async (plainTextPassword: string): Promise<string> =
  */
 export const comparePassword = async (
   plainTextPassword: string,
-  hashedPassword: string
+  hashedPassword: string,
 ): Promise<boolean> => {
   if (!plainTextPassword || !hashedPassword) {
     return false;
@@ -165,7 +165,7 @@ export const comparePassword = async (
   }
 
   const candidatePeppers = Array.from(
-    new Set([AUTH_PEPPER, 'default-pepper-for-dev-only', ''])
+    new Set([AUTH_PEPPER, 'default-pepper-for-dev-only', '']),
   ).filter((p): p is string => typeof p === 'string');
 
   try {
@@ -224,7 +224,7 @@ export const comparePassword = async (
       const derivedKey = await deriveScryptKey(
         plainTextPassword + pepper,
         salt,
-        LEGACY_SCRYPT_CONFIG
+        LEGACY_SCRYPT_CONFIG,
       );
       if (
         expectedBuffer.length === derivedKey.length &&
@@ -268,7 +268,7 @@ const getCandidateEncryptionKeys = (): Buffer[] => {
   // Previous rotation key candidates
   const prevHexKey = Buffer.from(
     'd7917034d236dd3d2127be2dfbc3d734aca6e655e8524a1758baf8bb747138de',
-    'hex'
+    'hex',
   );
   if (!keys.some((k) => k.equals(prevHexKey))) {
     keys.push(prevHexKey);
@@ -296,7 +296,7 @@ export const decryptText = (payload: EncryptedPayload): string => {
       const decipher = crypto.createDecipheriv(
         payload.algorithm || 'aes-256-gcm',
         key,
-        Buffer.from(payload.iv, 'base64')
+        Buffer.from(payload.iv, 'base64'),
       );
       decipher.setAuthTag(Buffer.from(payload.authTag, 'base64'));
 
@@ -378,7 +378,7 @@ const resolveEnvelopeKekRing = (): Map<string, Buffer> => {
     ring.size === 0
   ) {
     throw new Error(
-      'ENVELOPE_KEK (or KMS_ENVELOPE_KEK / ENVELOPE_KEK_RING_JSON) must be set in production.'
+      'ENVELOPE_KEK (or KMS_ENVELOPE_KEK / ENVELOPE_KEK_RING_JSON) must be set in production.',
     );
   }
   if (ring.size === 0) {
@@ -417,7 +417,7 @@ const decryptWithAlgorithm = (
   key: Buffer,
   algorithm: FileCipherAlgorithm,
   iv: Buffer,
-  authTag: Buffer
+  authTag: Buffer,
 ) => {
   const decipher = crypto.createDecipheriv(algorithm, key, iv) as crypto.DecipherGCM;
   decipher.setAuthTag(authTag);
@@ -426,7 +426,7 @@ const decryptWithAlgorithm = (
 
 export const encryptBufferEnvelope = (
   buffer: Buffer,
-  algorithm: FileCipherAlgorithm = FILE_ENCRYPTION_ALGORITHM
+  algorithm: FileCipherAlgorithm = FILE_ENCRYPTION_ALGORITHM,
 ): EncryptedEnvelopePayload => {
   const dek = crypto.randomBytes(32);
   const fileCipher = encryptWithAlgorithm(buffer, dek, algorithm);
@@ -452,7 +452,7 @@ export const decryptBufferEnvelope = (payload: EncryptedEnvelopePayload): Buffer
     kekForPayload,
     'aes-256-gcm',
     Buffer.from(payload.wrapIv, 'base64'),
-    Buffer.from(payload.wrapTag, 'base64')
+    Buffer.from(payload.wrapTag, 'base64'),
   );
 
   return decryptWithAlgorithm(
@@ -460,13 +460,13 @@ export const decryptBufferEnvelope = (payload: EncryptedEnvelopePayload): Buffer
     dek,
     payload.algorithm,
     Buffer.from(payload.iv, 'base64'),
-    Buffer.from(payload.authTag, 'base64')
+    Buffer.from(payload.authTag, 'base64'),
   );
 };
 
 export const rewrapEnvelopeDek = (
   payload: Omit<EncryptedEnvelopePayload, 'cipherText'> & { cipherText?: string },
-  targetKeyId = ENVELOPE_KEY_ID
+  targetKeyId = ENVELOPE_KEY_ID,
 ): Omit<EncryptedEnvelopePayload, 'cipherText'> & { cipherText?: string } => {
   const sourceKek = envelopeKekRing.get(payload.keyId);
   if (!sourceKek) {
@@ -481,7 +481,7 @@ export const rewrapEnvelopeDek = (
     sourceKek,
     'aes-256-gcm',
     Buffer.from(payload.wrapIv, 'base64'),
-    Buffer.from(payload.wrapTag, 'base64')
+    Buffer.from(payload.wrapTag, 'base64'),
   );
   const rewrapped = encryptWithAlgorithm(dek, targetKek, 'aes-256-gcm');
   return {
@@ -496,7 +496,7 @@ export const rewrapEnvelopeDek = (
 
 export const encryptBuffer = (
   buffer: Buffer,
-  masterKey?: string
+  masterKey?: string,
 ): { iv: string; tag: string; encryptedData: string } => {
   const iv = crypto.randomBytes(12);
   const keyBuffer = resolveBufferEncryptionKey(masterKey);
@@ -521,7 +521,7 @@ export const decryptBuffer = (
         algorithm?: 'aes-256-gcm';
         keyVersion?: 'v1';
       },
-  masterKey?: string
+  masterKey?: string,
 ): Buffer => {
   const keyBuffer = resolveBufferEncryptionKey(masterKey);
   const authTag = 'tag' in payload ? payload.tag : payload.authTag;
@@ -530,7 +530,7 @@ export const decryptBuffer = (
   const decipher = crypto.createDecipheriv(
     'aes-256-gcm',
     keyBuffer,
-    Buffer.from(payload.iv, encoding === 'hex' ? 'hex' : 'base64')
+    Buffer.from(payload.iv, encoding === 'hex' ? 'hex' : 'base64'),
   );
   decipher.setAuthTag(Buffer.from(authTag, encoding === 'hex' ? 'hex' : 'base64'));
 

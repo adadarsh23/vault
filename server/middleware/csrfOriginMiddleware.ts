@@ -18,7 +18,7 @@ const parseOrigin = (value: string | undefined): string | null => {
 export const requireTrustedBrowserOrigin = (
   req: express.Request,
   _res: express.Response,
-  next: express.NextFunction
+  next: express.NextFunction,
 ) => {
   const method = req.method.toUpperCase();
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {

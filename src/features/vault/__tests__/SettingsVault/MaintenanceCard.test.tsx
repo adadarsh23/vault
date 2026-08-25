@@ -157,7 +157,7 @@ describe('MaintenanceCard Component Test Suite', () => {
   it('triggers clearTrustedDeviceLabels callback when Reset device labels button inside More section is clicked', () => {
     const clearTrustedDeviceLabelsMock = vi.fn();
     render(
-      <MaintenanceCard {...defaultProps} clearTrustedDeviceLabels={clearTrustedDeviceLabelsMock} />
+      <MaintenanceCard {...defaultProps} clearTrustedDeviceLabels={clearTrustedDeviceLabelsMock} />,
     );
 
     const moreButton = screen.getByRole('button', { name: /toggle more maintenance options/i });

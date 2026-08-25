@@ -35,7 +35,7 @@ const SOURCE_EXTENSIONS = new Set([
 const runCommand = (command, args) => {
   const result = spawnSync(command, args, {
     encoding: 'utf8',
-    shell: process.platform === 'win32',
+    shell: false,
   });
 
   if (result.status !== 0) {
@@ -81,22 +81,46 @@ if (files.length === 0) {
   console.log(
     explicitFiles.length > 0
       ? 'No existing files were provided to resolve related tests.'
-      : 'No changed source files detected for related tests.'
+      : 'No changed source files detected for related tests.',
   );
   process.exit(0);
 }
 
-const vitestArgs = ['vitest', 'related', '--configLoader', 'native', '--pool', 'threads'];
+const localVitestBin = path.join(process.cwd(), 'node_modules', 'vitest', 'vitest.mjs');
+let command = process.execPath;
+let commandArgs = [localVitestBin, 'related', '--configLoader', 'native', '--pool', 'threads'];
 
-if (mode === 'run') {
-  vitestArgs.push('--run');
+if (!existsSync(localVitestBin)) {
+  const isWin = process.platform === 'win32';
+  if (isWin) {
+    command = 'cmd.exe';
+    commandArgs = [
+      '/d',
+      '/s',
+      '/c',
+      'npx',
+      'vitest',
+      'related',
+      '--configLoader',
+      'native',
+      '--pool',
+      'threads',
+    ];
+  } else {
+    command = 'npx';
+    commandArgs = ['vitest', 'related', '--configLoader', 'native', '--pool', 'threads'];
+  }
 }
 
-vitestArgs.push(...files);
+if (mode === 'run') {
+  commandArgs.push('--run');
+}
 
-const result = spawnSync('npx', vitestArgs, {
+commandArgs.push(...files);
+
+const result = spawnSync(command, commandArgs, {
   stdio: 'inherit',
-  shell: process.platform === 'win32',
+  shell: false,
 });
 
-process.exit(result.status ?? 1);
+process.exit(result.status ?? (result.error ? 1 : 0));

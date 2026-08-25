@@ -295,7 +295,7 @@ export const getMediaType = (item: VaultItem): 'photo' | 'video' | 'audio' | 'ot
 
   const titleExt = extractExtension(item.title);
   const fileExt = extractExtension(
-    metadata.fileName || metadata.originalName || metadata.name || (item as any).file?.fileName
+    metadata.fileName || metadata.originalName || metadata.name || (item as any).file?.fileName,
   );
   const explicitExt = (metadata.extension || '').toString().toLowerCase().replace(/^\./, '').trim();
 

@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MerkleIntegrityCard } from '../../components/SettingsVault/MerkleIntegrityCard';
 
@@ -10,11 +10,13 @@ const mockIntegrityStore = {
   totalLeaves: 4,
   treeDepth: 3,
   lastAuditAt: 1714000000000,
-  lastAuditStatus: 'clean' as const,
+  lastAuditStatus: 'clean' as 'clean' | 'corrupted' | 'idle',
   isAuditing: false,
   corruptedItems: [] as any[],
   fetchIntegrityStatus: vi.fn().mockResolvedValue(undefined),
-  rebuildLocalMerkleTree: vi.fn().mockResolvedValue('0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'),
+  rebuildLocalMerkleTree: vi
+    .fn()
+    .mockResolvedValue('0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'),
   auditIntegrity: vi.fn().mockResolvedValue(true),
   simulateBitFlipAttack: vi.fn().mockResolvedValue(undefined),
 };
@@ -34,8 +36,7 @@ vi.mock('../../../../store/integrityStore', () => ({
 }));
 
 vi.mock('../../../../store/vaultStore', () => ({
-  useVaultStore: (selector: (state: typeof mockVaultStore) => unknown) =>
-    selector(mockVaultStore),
+  useVaultStore: (selector: (state: typeof mockVaultStore) => unknown) => selector(mockVaultStore),
 }));
 
 vi.mock('sonner', () => ({
@@ -49,7 +50,8 @@ vi.mock('sonner', () => ({
 describe('MerkleIntegrityCard Component Test Suite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIntegrityStore.rootHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+    mockIntegrityStore.rootHash =
+      '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
     mockIntegrityStore.algorithm = 'blake3';
     mockIntegrityStore.totalLeaves = 4;
     mockIntegrityStore.treeDepth = 3;
@@ -65,14 +67,12 @@ describe('MerkleIntegrityCard Component Test Suite', () => {
     ];
   });
 
-  it('renders cryptographic Merkle Root information, algorithm badge, and metrics', () => {
+  it('renders cryptographic Merkle Root information and metrics', () => {
     render(<MerkleIntegrityCard />);
 
     expect(screen.getByText('Merkle Tree Cryptographic Integrity')).toBeTruthy();
     expect(screen.getByText('Active Cryptographic Merkle Root')).toBeTruthy();
     expect(screen.getByText('RFC 6962 Domain-Separated Commitment')).toBeTruthy();
-    expect(screen.getByText('Algorithm: BLAKE3')).toBeTruthy();
-    expect(screen.getByText('Immutable')).toBeTruthy();
     expect(screen.getByText(/0x1234567890abcdef/i)).toBeTruthy();
     expect(screen.getByText('4 items')).toBeTruthy();
     expect(screen.getByText('3 Levels')).toBeTruthy();
@@ -88,10 +88,12 @@ describe('MerkleIntegrityCard Component Test Suite', () => {
 
   it('copies Merkle Root to clipboard and shows copied feedback', async () => {
     const writeTextMock = vi.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, {
-      clipboard: {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
         writeText: writeTextMock,
       },
+      writable: true,
+      configurable: true,
     });
 
     render(<MerkleIntegrityCard />);

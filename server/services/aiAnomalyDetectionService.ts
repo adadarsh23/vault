@@ -52,7 +52,7 @@ class AIAnomalyDetectionService {
       lon: number;
     } | null,
     fingerprint: string,
-    _userAgent: string
+    _userAgent: string,
   ): Promise<AnomalyScore> {
     const profile = this.getOrCreateProfile(userId);
     const factors: string[] = [];
@@ -110,7 +110,7 @@ class AIAnomalyDetectionService {
     // 6. Failed login attempts (brute force detection)
     const now = Date.now();
     const recentFailures = profile.failedLoginAttempts.filter(
-      (f) => now - f.timestamp < 3600000 // Last hour
+      (f) => now - f.timestamp < 3600000, // Last hour
     );
 
     if (recentFailures.length > 5) {
@@ -140,7 +140,7 @@ class AIAnomalyDetectionService {
   async analyzeApiUsage(
     userId: string,
     endpoint: string,
-    responseTime: number
+    responseTime: number,
   ): Promise<{ riskScore: number; isAnomalous: boolean; reason?: string }> {
     const profile = this.getOrCreateProfile(userId);
 
@@ -199,7 +199,7 @@ class AIAnomalyDetectionService {
   async detectDataExfiltration(
     userId: string,
     itemIds: string[],
-    action: 'download' | 'export' | 'share'
+    action: 'download' | 'export' | 'share',
   ): Promise<{ riskScore: number; isAnomalous: boolean }> {
     const profile = this.getOrCreateProfile(userId);
     const now = Date.now();
@@ -250,7 +250,7 @@ class AIAnomalyDetectionService {
     // Clean old entries
     const oneHourAgo = Date.now() - 3600000;
     profile.failedLoginAttempts = profile.failedLoginAttempts.filter(
-      (f) => f.timestamp > oneHourAgo
+      (f) => f.timestamp > oneHourAgo,
     );
   }
 
@@ -299,7 +299,7 @@ class AIAnomalyDetectionService {
 
   private calculateDistance(
     loc1: { lat: number; lon: number },
-    loc2: { lat: number; lon: number }
+    loc2: { lat: number; lon: number },
   ): number {
     // Haversine formula
     const R = 6371; // km
@@ -333,7 +333,7 @@ class AIAnomalyDetectionService {
 
   private getRecommendation(
     riskScore: number,
-    factors: string[]
+    factors: string[],
   ): 'block' | 'challenge' | 'allow' | 'monitor' {
     if (riskScore >= this.HIGH_RISK_THRESHOLD) {
       // Check for critical factors

@@ -66,7 +66,7 @@ export const safeDecodeURIComponent = (value: string): string => {
 };
 
 export const resolvePayloadEncoding = (
-  payload: string | Buffer
+  payload: string | Buffer,
 ): 'utf-8' | 'binary-base64' | 'modern' => {
   if (Buffer.isBuffer(payload)) {
     return 'binary-base64';

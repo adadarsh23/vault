@@ -44,7 +44,7 @@ export const useAntiScreenshotAndShield = ({
       setShieldReason(active ? reason : null);
       shieldChangeCallbackRef.current?.(active);
     },
-    []
+    [],
   );
 
   const deactivateShield = useCallback(() => {
@@ -60,7 +60,7 @@ export const useAntiScreenshotAndShield = ({
         }, durationMs);
       }
     },
-    [setShieldState]
+    [setShieldState],
   );
 
   useEffect(() => {
@@ -113,7 +113,7 @@ export const useAntiScreenshotAndShield = ({
             '⚠️ Printing and PDF export are blocked for protected vault media.',
           {
             duration: 3500,
-          }
+          },
         );
         setTimeout(() => {
           setShieldState(false, null);

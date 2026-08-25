@@ -90,7 +90,7 @@ describe('Server Integrity Service & Merkle Tree', () => {
       const result = await integrityService.buildUserMerkleTree(
         '507f1f77bcf86cd799439011',
         'testuser',
-        'blake3'
+        'blake3',
       );
 
       expect(result.rootHash).toBeDefined();
@@ -125,7 +125,7 @@ describe('Server Integrity Service & Merkle Tree', () => {
         '507f1f77bcf86cd799439011',
         'testuser',
         '127.0.0.1',
-        'blake3'
+        'blake3',
       );
 
       expect(auditResult.status).toBe('corrupted');

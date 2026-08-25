@@ -68,7 +68,7 @@ describe('activity log cloud sync', () => {
             },
           },
         ],
-      })
+      }),
     );
 
     const logs = await downloadLogsFromCloud();

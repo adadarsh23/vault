@@ -252,7 +252,7 @@ const normalizeVaultItem = (item: VaultItem): VaultItem => {
 
   if (!(item.content instanceof Uint8Array) && typeof item.content !== 'string') {
     throw new Error(
-      `Vault item "${normalizedId}" has invalid content. Expected string or Uint8Array.`
+      `Vault item "${normalizedId}" has invalid content. Expected string or Uint8Array.`,
     );
   }
 

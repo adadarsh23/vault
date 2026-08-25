@@ -57,7 +57,7 @@ export const GlobalNavigator: React.FC<GlobalNavigatorProps> = ({
           title="Previous (Arrow Left)"
           className={cn(
             'absolute left-1 sm:left-2 md:left-3 top-1/2 -translate-y-1/2 z-40 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-transparent hover:bg-white/15 active:bg-white/25 text-white/70 hover:text-white transition-all active:scale-95 disabled:opacity-0 pointer-events-auto select-none',
-            className
+            className,
           )}
         >
           <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]" />
@@ -71,7 +71,7 @@ export const GlobalNavigator: React.FC<GlobalNavigatorProps> = ({
           title="Next (Arrow Right)"
           className={cn(
             'absolute right-1 sm:right-2 md:right-3 top-1/2 -translate-y-1/2 z-40 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-transparent hover:bg-white/15 active:bg-white/25 text-white/70 hover:text-white transition-all active:scale-95 disabled:opacity-0 pointer-events-auto select-none',
-            className
+            className,
           )}
         >
           <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]" />

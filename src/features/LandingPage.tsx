@@ -6,13 +6,13 @@ import { Input } from '../components/ui/Input';
 const Background = lazy(() =>
   import('../components/layout/Background').then((module) => ({
     default: module.Background || (module as any).default,
-  }))
+  })),
 );
 
 const Footer = lazy(() =>
   import('../components/layout/Footer').then((module) => ({
     default: module.Footer || (module as any).default,
-  }))
+  })),
 );
 
 // Pure function — no React closure, safe to define outside component
@@ -44,7 +44,7 @@ interface LandingPageProps {
   /** Optional — when provided, renders the Save Profile button and popup */
   onSaveProfile?: (
     profileName: string,
-    profilePhoto: string
+    profilePhoto: string,
   ) => Promise<{ saved: boolean; errorMessage?: string }>;
   /** Optional — mirrors the isSavingProfile loading state from parent */
   isSavingProfile?: boolean;
@@ -72,7 +72,7 @@ export function LandingPage({
   // Memoize — avoids re-running URL parse on every render cycle
   const isPhotoInputValid = useMemo(
     () => isValidProfilePhotoInput(profilePhotoInput),
-    [profilePhotoInput]
+    [profilePhotoInput],
   );
 
   // Reset broken-image flag whenever user changes the photo input
@@ -84,7 +84,7 @@ export function LandingPage({
     if (!onSaveProfile) return;
     const result = await onSaveProfile(
       profileNameInput.trim() || 'none',
-      profilePhotoInput.trim() || 'none'
+      profilePhotoInput.trim() || 'none',
     );
     if (result.saved) {
       setProfileSaveError(null);
@@ -109,7 +109,7 @@ export function LandingPage({
         () => {
           setShowDecorativeEffects(true);
         },
-        { timeout: 1200 }
+        { timeout: 1200 },
       );
       return () => {
         if (typeof idleWindow.cancelIdleCallback === 'function') {

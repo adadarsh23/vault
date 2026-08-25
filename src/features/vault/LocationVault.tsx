@@ -149,17 +149,17 @@ const LocationVaultInternal: React.FC = () => {
           query.length > 0 || currentFolder === null || item.folder === currentFolder;
 
         return matchesSearch && matchesFolder;
-      })
+      }),
     );
   }, [locations, debouncedSearchQuery, currentFolder]);
 
   const selectedItem = useMemo(
     () => locations.find((item) => item.id === selectedId) ?? null,
-    [locations, selectedId]
+    [locations, selectedId],
   );
   const selectedIndex = useMemo(
     () => filteredLocations.findIndex((item) => item.id === selectedId),
-    [filteredLocations, selectedId]
+    [filteredLocations, selectedId],
   );
   const hasPrevious = selectedIndex > 0;
   const hasNext = selectedIndex >= 0 && selectedIndex < filteredLocations.length - 1;
@@ -242,7 +242,7 @@ const LocationVaultInternal: React.FC = () => {
             'Accept-Language': 'en-US,en;q=0.9',
             'User-Agent': 'Vault-Location-Service/1.0',
           },
-        }
+        },
       );
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
@@ -262,7 +262,7 @@ const LocationVaultInternal: React.FC = () => {
     setIsFetchingAltitude(true);
     try {
       const response = await fetch(
-        `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`
+        `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`,
       );
       if (!response.ok) throw new Error('Elevation network error');
       const data = await response.json();
@@ -299,7 +299,7 @@ const LocationVaultInternal: React.FC = () => {
             enableHighAccuracy: true,
             timeout: 300000, // 5 minute
             maximumAge: 0,
-          }
+          },
         );
       });
 
@@ -407,7 +407,8 @@ const LocationVaultInternal: React.FC = () => {
   }, [masterKey, form, addItem, currentFolder]);
 
   const saveEditedLocation = useCallback(async () => {
-    if (!selectedId || (!masterKey && !useVaultStore.getState().isDecoyMode) || !selectedItem) return;
+    if (!selectedId || (!masterKey && !useVaultStore.getState().isDecoyMode) || !selectedItem)
+      return;
     const nextPayload = formToPayload(form);
     if (!nextPayload) {
       toast.error('Enter valid latitude and longitude values');
@@ -478,7 +479,7 @@ const LocationVaultInternal: React.FC = () => {
         toast.error('Failed to delete location');
       }
     },
-    [removeItem, resetEditor, selectedId, confirmDeleteId, filteredLocations]
+    [removeItem, resetEditor, selectedId, confirmDeleteId, filteredLocations],
   );
 
   const copyValue = useCallback(
@@ -502,7 +503,7 @@ const LocationVaultInternal: React.FC = () => {
         toast.error('Clipboard not supported or permission denied');
       }
     },
-    [selectedItem, payload]
+    [selectedItem, payload],
   );
 
   const startCreate = () => {

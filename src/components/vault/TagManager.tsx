@@ -156,7 +156,7 @@ export const TagBadge: React.FC<TagBadgeProps> = ({
             </mark>
           ) : (
             <span key={i}>{part.text}</span>
-          )
+          ),
         )}
       </span>
     );
@@ -169,7 +169,7 @@ export const TagBadge: React.FC<TagBadgeProps> = ({
         currentVariant.badge,
         currentSize.badge,
         onClick && !disabled && 'cursor-pointer active:scale-95',
-        className
+        className,
       )}
       onClick={onClick && !disabled ? () => onClick(tag) : undefined}
     >
@@ -187,7 +187,7 @@ export const TagBadge: React.FC<TagBadgeProps> = ({
           }}
           className={cn(
             'rounded-full p-0.5 transition-colors focus:outline-none focus:ring-1 focus:ring-white/20 shrink-0 ml-0.5',
-            currentVariant.removeBtn
+            currentVariant.removeBtn,
           )}
         >
           <X className={currentSize.icon} />
@@ -356,7 +356,7 @@ export const TagManager: React.FC<TagManagerProps> = ({
                 disabled={isSubmitting}
                 className={cn(
                   'rounded-full bg-white/[0.08] border border-white/20 text-text placeholder:text-text/30 pl-3.5 pr-2 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/20 transition-all font-medium',
-                  currentSize.input
+                  currentSize.input,
                 )}
                 autoFocus
               />
@@ -373,7 +373,7 @@ export const TagManager: React.FC<TagManagerProps> = ({
               }}
               className={cn(
                 'inline-flex items-center rounded-full border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/[0.08] hover:border-white/30 text-text/50 hover:text-text transition-all font-medium focus:outline-none focus:ring-1 focus:ring-white/20',
-                currentSize.button
+                currentSize.button,
               )}
             >
               <Plus className={currentSize.icon} />

@@ -5,12 +5,12 @@ import { createTrackedBlobUrl } from './blobRegistry';
 async function decryptBlock(
   cryptoKey: CryptoKey,
   iv: Uint8Array,
-  ciphertext: Uint8Array
+  ciphertext: Uint8Array,
 ): Promise<ArrayBuffer> {
   const ivBuffer = iv.buffer.slice(iv.byteOffset, iv.byteOffset + iv.byteLength);
   const cipherBuffer = ciphertext.buffer.slice(
     ciphertext.byteOffset,
-    ciphertext.byteOffset + ciphertext.byteLength
+    ciphertext.byteOffset + ciphertext.byteLength,
   );
 
   try {
@@ -21,7 +21,7 @@ async function decryptBlock(
         additionalData: AES_GCM_AAD.buffer as ArrayBuffer,
       },
       cryptoKey,
-      cipherBuffer as BufferSource
+      cipherBuffer as BufferSource,
     );
   } catch {
     return await crypto.subtle.decrypt(
@@ -30,7 +30,7 @@ async function decryptBlock(
         iv: ivBuffer as BufferSource,
       },
       cryptoKey,
-      cipherBuffer as BufferSource
+      cipherBuffer as BufferSource,
     );
   }
 }
@@ -42,7 +42,7 @@ async function decryptBlock(
  */
 export function createChunkedDecryptTransformStream(
   cryptoKey: CryptoKey,
-  initialIv?: Uint8Array
+  initialIv?: Uint8Array,
 ): TransformStream<Uint8Array, Uint8Array> {
   let iv: Uint8Array | null = initialIv || null;
   let isHeaderParsed = Boolean(initialIv);
@@ -119,7 +119,7 @@ export function createChunkedDecryptTransformStream(
  */
 export async function decryptStream(
   encryptedInput: ReadableStream<Uint8Array> | Blob,
-  secretKey: string | CryptoKey
+  secretKey: string | CryptoKey,
 ): Promise<ReadableStream<Uint8Array>> {
   const cryptoKey = await getOrCreateCryptoKey(secretKey);
   if (!cryptoKey) {
@@ -139,7 +139,7 @@ export async function decryptStream(
 export async function getDecryptStreamResponseUrl(
   encryptedInput: ReadableStream<Uint8Array> | Blob,
   secretKey: string | CryptoKey,
-  mimeType: string
+  mimeType: string,
 ): Promise<string> {
   const decryptedStream = await decryptStream(encryptedInput, secretKey);
 

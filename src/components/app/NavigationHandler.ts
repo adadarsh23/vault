@@ -111,7 +111,7 @@ export function useNavigationHandler() {
   /** Memoized active tab */
   const activeTab = useMemo(
     () => getTabFromPathname(location.pathname) ?? 'dashboard',
-    [location.pathname]
+    [location.pathname],
   );
 
   /** Core navigation */
@@ -136,11 +136,11 @@ export function useNavigationHandler() {
           },
           {
             replace: false,
-          }
+          },
         );
       });
     },
-    [navigate, location.pathname, location.hash]
+    [navigate, location.pathname, location.hash],
   );
 
   /** External-safe navigation (future-proof wrapper) */
@@ -154,7 +154,7 @@ export function useNavigationHandler() {
         }
       }
     },
-    [navigateToTab]
+    [navigateToTab],
   );
 
   /** Global navigation event handler */

@@ -94,7 +94,7 @@ export const MediaFilmstrip: React.FC<MediaFilmstripProps> = ({
                       'relative h-11 w-11 sm:h-14 sm:w-14 shrink-0 rounded-xl overflow-hidden border-2 transition-all cursor-pointer focus:outline-none',
                       isActive
                         ? 'border-blue-500 scale-105 shadow-[0_0_15px_rgba(59,130,246,0.6)] ring-2 ring-blue-400/40'
-                        : 'border-white/10 opacity-50 hover:opacity-100 hover:border-white/40'
+                        : 'border-white/10 opacity-50 hover:opacity-100 hover:border-white/40',
                     )}
                     title={item.title}
                   >

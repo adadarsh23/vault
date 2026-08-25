@@ -45,6 +45,6 @@ export const useAuthCookies = (): UseAuthCookiesApi => {
       persist,
       clear,
     }),
-    [clear, persist, read]
+    [clear, persist, read],
   );
 };

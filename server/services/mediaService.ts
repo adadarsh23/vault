@@ -14,7 +14,7 @@ export const mediaService = {
       (process.env.NODE_ENV === 'production'
         ? (() => {
             throw new Error(
-              'VAULT_ENCRYPTION_KEY must be configured for production media key derivation.'
+              'VAULT_ENCRYPTION_KEY must be configured for production media key derivation.',
             );
           })()
         : 'dev-only-streaming-secret-change-me');
@@ -66,7 +66,7 @@ export const mediaService = {
     sessionToken: string,
     variant: string,
     segmentCount: number,
-    duration: number
+    duration: number,
   ): Promise<string> {
     const keyUrl = this.getStreamingKeyUrl(itemId, sessionToken);
 

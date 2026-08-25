@@ -31,7 +31,7 @@ const normalizeRateLimitSegment = (value: unknown): string => {
 
 const masterKeyRateLimitWindowMs = toPositiveInteger(
   process.env.MASTER_KEY_RATE_LIMIT_WINDOW_MS,
-  15 * 60 * 1000
+  15 * 60 * 1000,
 );
 
 const createMasterKeyLimiter = (max: number, message: string, code: string) =>
@@ -52,27 +52,27 @@ const createMasterKeyLimiter = (max: number, message: string, code: string) =>
 const saveMasterKeyLimiter = createMasterKeyLimiter(
   toPositiveInteger(process.env.MASTER_KEY_SAVE_RATE_LIMIT_MAX, 10),
   'Too many master key save attempts. Please try again later.',
-  'TOO_MANY_MASTER_KEY_SAVE_ATTEMPTS'
+  'TOO_MANY_MASTER_KEY_SAVE_ATTEMPTS',
 );
 const retrieveMasterKeyLimiter = createMasterKeyLimiter(
   toPositiveInteger(process.env.MASTER_KEY_RETRIEVE_RATE_LIMIT_MAX, 40),
   'Too many master key retrieval attempts. Please try again later.',
-  'TOO_MANY_MASTER_KEY_RETRIEVE_ATTEMPTS'
+  'TOO_MANY_MASTER_KEY_RETRIEVE_ATTEMPTS',
 );
 const verifyMasterKeyLimiter = createMasterKeyLimiter(
   toPositiveInteger(process.env.MASTER_KEY_VERIFY_RATE_LIMIT_MAX, 20),
   'Too many master key verification attempts. Please try again later.',
-  'TOO_MANY_MASTER_KEY_VERIFY_ATTEMPTS'
+  'TOO_MANY_MASTER_KEY_VERIFY_ATTEMPTS',
 );
 const deleteMasterKeyLimiter = createMasterKeyLimiter(
   toPositiveInteger(process.env.MASTER_KEY_DELETE_RATE_LIMIT_MAX, 5),
   'Too many master key deletion attempts. Please try again later.',
-  'TOO_MANY_MASTER_KEY_DELETE_ATTEMPTS'
+  'TOO_MANY_MASTER_KEY_DELETE_ATTEMPTS',
 );
 const readMasterKeyAuditLimiter = createMasterKeyLimiter(
   toPositiveInteger(process.env.MASTER_KEY_AUDIT_RATE_LIMIT_MAX, 20),
   'Too many master key metadata requests. Please try again later.',
-  'TOO_MANY_MASTER_KEY_AUDIT_ATTEMPTS'
+  'TOO_MANY_MASTER_KEY_AUDIT_ATTEMPTS',
 );
 
 /**
@@ -114,7 +114,7 @@ masterKeyRouter.post(
   requireTrustedBrowserOrigin,
   requireAuth,
   saveMasterKeyLimiter,
-  asyncHandler(handleSaveMasterKey)
+  asyncHandler(handleSaveMasterKey),
 );
 
 /**
@@ -145,7 +145,7 @@ masterKeyRouter.get(
   '/retrieve',
   requireAuth,
   retrieveMasterKeyLimiter,
-  asyncHandler(handleRetrieveMasterKey)
+  asyncHandler(handleRetrieveMasterKey),
 );
 
 /**
@@ -171,7 +171,7 @@ masterKeyRouter.post(
   requireTrustedBrowserOrigin,
   requireAuth,
   verifyMasterKeyLimiter,
-  asyncHandler(handleVerifyMasterKey)
+  asyncHandler(handleVerifyMasterKey),
 );
 
 /**
@@ -183,7 +183,7 @@ masterKeyRouter.delete(
   requireTrustedBrowserOrigin,
   requireAuth,
   deleteMasterKeyLimiter,
-  asyncHandler(handleDeleteMasterKey)
+  asyncHandler(handleDeleteMasterKey),
 );
 
 /**
@@ -215,7 +215,7 @@ masterKeyRouter.get(
   '/metadata',
   requireAuth,
   readMasterKeyAuditLimiter,
-  asyncHandler(handleGetMasterKeyMetadata)
+  asyncHandler(handleGetMasterKeyMetadata),
 );
 
 /**
@@ -248,7 +248,7 @@ masterKeyRouter.get(
   '/full-data',
   requireAuth,
   readMasterKeyAuditLimiter,
-  asyncHandler(handleGetMasterKeyFullData)
+  asyncHandler(handleGetMasterKeyFullData),
 );
 
 export default masterKeyRouter;

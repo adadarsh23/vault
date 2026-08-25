@@ -21,7 +21,7 @@ describe('ThemeProvider & Theme Changing Animation', () => {
     const { getByText } = render(
       <ThemeProvider>
         <div>Content Inside ThemeProvider</div>
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     expect(getByText('Content Inside ThemeProvider')).toBeInTheDocument();
@@ -32,7 +32,7 @@ describe('ThemeProvider & Theme Changing Animation', () => {
     render(
       <ThemeProvider>
         <div>App Content</div>
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     expect(document.documentElement.classList.contains('dark')).toBe(true);
@@ -49,7 +49,7 @@ describe('ThemeProvider & Theme Changing Animation', () => {
     render(
       <ThemeProvider>
         <div>App Content</div>
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     expect(typeof window.__recordThemeToggleOrigin).toBe('function');
@@ -71,7 +71,7 @@ describe('ThemeProvider & Theme Changing Animation', () => {
     render(
       <ThemeProvider>
         <div>App Content</div>
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     act(() => {

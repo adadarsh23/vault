@@ -26,12 +26,12 @@ export const useGlobalItemNavigation = ({
       items
         .filter((item) => GLOBAL_NAVIGABLE_TYPES.includes(item.type))
         .sort((a, b) => toSafeTimestamp(b.updatedAt) - toSafeTimestamp(a.updatedAt)),
-    [items]
+    [items],
   );
 
   const currentIndex = useMemo(
     () => orderedItems.findIndex((item) => item.id === currentItemId),
-    [orderedItems, currentItemId]
+    [orderedItems, currentItemId],
   );
 
   const canPrevious = currentIndex > 0;
@@ -59,7 +59,7 @@ export const useGlobalItemNavigation = ({
         });
       }
     },
-    [localTypes, onSelectLocalItem, setTargetItemId]
+    [localTypes, onSelectLocalItem, setTargetItemId],
   );
 
   const goPrevious = useCallback(() => {

@@ -28,7 +28,7 @@ export function UnlockedVaultHost({ shouldReduceMotion }: { shouldReduceMotion: 
       autoLockDuration: state.preferences.autoLockDuration,
       isBlurOnTabHideEnabled: state.preferences.isBlurOnTabHideEnabled,
       isLockOnTabHideEnabled: state.preferences.isLockOnTabHideEnabled,
-    }))
+    })),
   );
 
   const navigation = useNavigationHandler();

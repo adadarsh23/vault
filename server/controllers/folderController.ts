@@ -92,7 +92,7 @@ const loadHydratedFolders = async (username: string, userId: string) => {
 
 export const initializeFoldersController = async (
   req: AuthenticatedRequest,
-  res: express.Response
+  res: express.Response,
 ) => {
   try {
     await initializeDefaultUserFolders(req.user.userId, req.user.username);
@@ -212,7 +212,7 @@ export const createFolderController = async (req: AuthenticatedRequest, res: exp
         itemType: canonicalItemType,
         parentId: targetParentId,
       },
-      { upsert: true, returnDocument: 'after' }
+      { upsert: true, returnDocument: 'after' },
     );
     if (!newFolder) {
       return res.status(500).json({

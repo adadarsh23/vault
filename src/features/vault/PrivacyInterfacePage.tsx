@@ -15,7 +15,7 @@ export const PrivacyInterfacePage = React.memo<PrivacyInterfacePageProps>(() => 
   const generatedCredentialLength = preferences.generatedCredentialLength;
 
   const [generatedLengthInput, setGeneratedLengthInput] = useState(
-    String(generatedCredentialLength)
+    String(generatedCredentialLength),
   );
 
   useEffect(() => {

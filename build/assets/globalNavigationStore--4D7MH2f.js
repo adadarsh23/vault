@@ -1,2 +1,0 @@
-import{m as t}from"./react-framework-CzxabSeC.js";var e=t(t=>({targetItemId:null,setTargetItemId:e=>t(t=>{const r=(t=>{if("string"!=typeof t)return null;const e=t.trim();if(!e)return null;const r=e.replace(/[\u0000-\u001f\u007f]/g,"");return r?r.slice(0,256):null})(e);return t.targetItemId===r?t:{targetItemId:r}}),clearTargetItemId:()=>t(t=>null===t.targetItemId?t:{targetItemId:null})}));export{e as t};
-//# sourceMappingURL=globalNavigationStore--4D7MH2f.js.map

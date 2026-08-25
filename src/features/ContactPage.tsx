@@ -58,7 +58,7 @@ export function ContactPage({}: ContactPageProps) {
     if (metaDesc) {
       metaDesc.setAttribute(
         'content',
-        'Get in touch with the Vault support team for security inquiries, technical support, or feature requests.'
+        'Get in touch with the Vault support team for security inquiries, technical support, or feature requests.',
       );
     }
 

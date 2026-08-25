@@ -66,7 +66,7 @@ export function revokeAllActiveBlobUrls(): number {
     try {
       window.dispatchEvent(new CustomEvent('vault:panic-lock'));
       window.dispatchEvent(
-        new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } })
+        new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } }),
       );
     } catch {
       /* ignore */

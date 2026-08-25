@@ -24,7 +24,7 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
       await Promise.race([
         connectToMongo(),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('MongoDB connection timeout')), 3000)
+          setTimeout(() => reject(new Error('MongoDB connection timeout')), 3000),
         ),
       ]);
       isMongoConnected = mongoose.connection.readyState === 1;
@@ -72,8 +72,8 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
       expect(
         cookies.some(
           (c) =>
-            c.toLowerCase().includes('refresh_token') || c.toLowerCase().includes('refreshtoken')
-        )
+            c.toLowerCase().includes('refresh_token') || c.toLowerCase().includes('refreshtoken'),
+        ),
       ).toBe(true);
       expect(cookies.some((c) => c.includes('HttpOnly'))).toBe(true);
 
@@ -159,8 +159,8 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
       expect(
         cookies.some(
           (c) =>
-            c.toLowerCase().includes('refresh_token') || c.toLowerCase().includes('refreshtoken')
-        )
+            c.toLowerCase().includes('refresh_token') || c.toLowerCase().includes('refreshtoken'),
+        ),
       ).toBe(true);
 
       // Verify RefreshToken collection document created with familyId
@@ -190,7 +190,7 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
 
       // Ensure error messages are identical to prevent user enumeration
       expect(nonExistentRes.body.message || nonExistentRes.body.error).toEqual(
-        wrongPasswordRes.body.message || wrongPasswordRes.body.error
+        wrongPasswordRes.body.message || wrongPasswordRes.body.error,
       );
     });
 
@@ -307,7 +307,7 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
 
       const expiredToken = createAccessToken(
         { sub: user._id.toString(), username: user.username, sessionId: 'expired-session' },
-        -10 // Expired 10 seconds ago
+        -10, // Expired 10 seconds ago
       );
 
       const res = await request.get('/api/auth/me').set('Authorization', `Bearer ${expiredToken}`);
@@ -348,8 +348,8 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
         cookies.some(
           (c) =>
             c.toLowerCase().includes('refresh_token=;') ||
-            c.toLowerCase().includes('refreshtoken=;')
-        )
+            c.toLowerCase().includes('refreshtoken=;'),
+        ),
       ).toBe(true);
     });
   });

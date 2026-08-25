@@ -38,7 +38,7 @@ const rawUriCandidates = getRawUriCandidates();
 
 if (rawUriCandidates.length === 0) {
   console.error(
-    '[FAIL] Missing MongoDB URI in environment variables (MONGODB_URI, MONGODB_URI_FALLBACK, MONGODB_URI_1, etc.).'
+    '[FAIL] Missing MongoDB URI in environment variables (MONGODB_URI, MONGODB_URI_FALLBACK, MONGODB_URI_1, etc.).',
   );
   process.exit(1);
 }
@@ -91,7 +91,7 @@ async function ping() {
 
   if (passedCount > 0) {
     console.log(
-      `\n[SUMMARY] ${passedCount}/${uriCandidates.length} cluster(s) active and responsive.`
+      `\n[SUMMARY] ${passedCount}/${uriCandidates.length} cluster(s) active and responsive.`,
     );
     process.exit(0);
   } else {

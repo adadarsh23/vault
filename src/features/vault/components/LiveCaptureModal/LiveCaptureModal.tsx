@@ -52,7 +52,7 @@ interface LiveCaptureModalProps {
   onCapture: (
     file: File,
     isEncrypted: boolean,
-    additionalMetadata?: Record<string, any>
+    additionalMetadata?: Record<string, any>,
   ) => void | Promise<void>;
   type: CaptureType;
 }
@@ -103,7 +103,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>(
-    () => defaultCameraFacing
+    () => defaultCameraFacing,
   );
   const [captureRatio, setCaptureRatio] = useState<CaptureRatio>(() => defaultCaptureRatio);
   const [captureQuality, setCaptureQuality] = useState<CaptureQuality>('high');
@@ -202,11 +202,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
     ? 'vault.liveCapture.settings.mobile.v3'
     : 'vault.liveCapture.settings.desktop.v3';
 
-  const getCaptureProfile = (
-    quality: CaptureQuality,
-    size: CaptureSize,
-    ratio: CaptureRatio
-  ) => {
+  const getCaptureProfile = (quality: CaptureQuality, size: CaptureSize, ratio: CaptureRatio) => {
     const qualityProfiles = {
       high: { photoJpegQuality: 0.95, frameRate: 30 },
       balanced: { photoJpegQuality: 0.88, frameRate: 24 },
@@ -246,8 +242,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
   // Synthesize audible countdown beeps
   const playBeep = useCallback((freq = 880, duration = 0.12) => {
     try {
-      const AudioContextClass =
-        (window as any).AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) return;
       const ctx = new AudioContextClass();
       const osc = ctx.createOscillator();
@@ -260,9 +255,12 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + duration);
-      setTimeout(() => {
-        ctx.close().catch(() => {});
-      }, (duration + 0.1) * 1000);
+      setTimeout(
+        () => {
+          ctx.close().catch(() => {});
+        },
+        (duration + 0.1) * 1000,
+      );
     } catch {
       /* ignore audio beep errors */
     }
@@ -373,7 +371,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
           timer: timerSeconds,
           filter: activeFilter,
           burst: burstCount,
-        })
+        }),
       );
     } catch (error) {
       logger.warn('Failed to persist live capture settings to local storage', {
@@ -485,11 +483,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
     }
 
     const loop = () => {
-      if (
-        dualCameraManagerRef.current &&
-        videoRef.current &&
-        compositeCanvasRef.current
-      ) {
+      if (dualCameraManagerRef.current && videoRef.current && compositeCanvasRef.current) {
         dualCameraManagerRef.current.renderComposite(
           compositeCanvasRef.current,
           videoRef.current,
@@ -498,7 +492,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
           dualCamera.isSwapped,
           cameraFacing,
           (cameraFacing === 'user') !== isHorizontallyFlipped,
-          getFilterCss(activeFilter)
+          getFilterCss(activeFilter),
         );
       }
       compositeRafRef.current = requestAnimationFrame(loop);
@@ -554,64 +548,67 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
   }, [recordingTime, isRecording]);
 
   // Speech-to-Text Recognition Setup with Hindi & English Compatibility
-  const startSpeechRecognition = useCallback((lang?: 'en-IN' | 'hi-IN') => {
-    const SpeechRecognitionClass =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognitionClass) {
-      toast.error('Speech recognition not supported in this browser');
-      return;
-    }
+  const startSpeechRecognition = useCallback(
+    (lang?: 'en-IN' | 'hi-IN') => {
+      const SpeechRecognitionClass =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognitionClass) {
+        toast.error('Speech recognition not supported in this browser');
+        return;
+      }
 
-    if (speechRecognitionRef.current) {
+      if (speechRecognitionRef.current) {
+        try {
+          speechRecognitionRef.current.stop();
+        } catch {}
+        speechRecognitionRef.current = null;
+      }
+
+      const selectedLang = lang || transcriptLang;
+
       try {
-        speechRecognitionRef.current.stop();
-      } catch {}
-      speechRecognitionRef.current = null;
-    }
+        const recognition = new SpeechRecognitionClass();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        // Compatible with Indian English / Hinglish (en-IN) and Hindi (hi-IN)
+        recognition.lang = selectedLang;
 
-    const selectedLang = lang || transcriptLang;
-
-    try {
-      const recognition = new SpeechRecognitionClass();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      // Compatible with Indian English / Hinglish (en-IN) and Hindi (hi-IN)
-      recognition.lang = selectedLang;
-
-      recognition.onresult = (event: any) => {
-        let finalTrans = '';
-        let interimTrans = '';
-        for (let i = 0; i < event.results.length; i++) {
-          const res = event.results[i];
-          if (res.isFinal) {
-            finalTrans += res[0].transcript + ' ';
-          } else {
-            interimTrans += res[0].transcript;
+        recognition.onresult = (event: any) => {
+          let finalTrans = '';
+          let interimTrans = '';
+          for (let i = 0; i < event.results.length; i++) {
+            const res = event.results[i];
+            if (res.isFinal) {
+              finalTrans += res[0].transcript + ' ';
+            } else {
+              interimTrans += res[0].transcript;
+            }
           }
-        }
-        const full = (finalTrans + interimTrans).trim();
-        if (full) {
-          setLiveTranscript(full);
-          transcriptRef.current = full;
-        }
-      };
+          const full = (finalTrans + interimTrans).trim();
+          if (full) {
+            setLiveTranscript(full);
+            transcriptRef.current = full;
+          }
+        };
 
-      recognition.onerror = (event: any) => {
-        logger.warn('Speech recognition error:', { error: event.error });
-      };
+        recognition.onerror = (event: any) => {
+          logger.warn('Speech recognition error:', { error: event.error });
+        };
 
-      recognition.start();
-      speechRecognitionRef.current = recognition;
-      setIsTranscribing(true);
-      toast.info(
-        selectedLang === 'hi-IN'
-          ? 'Live Transcription: हिन्दी Hindi (hi-IN)'
-          : 'Live Transcription: English / Hinglish (en-IN)'
-      );
-    } catch (err) {
-      logger.warn('Failed to start speech recognition', { err });
-    }
-  }, [transcriptLang]);
+        recognition.start();
+        speechRecognitionRef.current = recognition;
+        setIsTranscribing(true);
+        toast.info(
+          selectedLang === 'hi-IN'
+            ? 'Live Transcription: हिन्दी Hindi (hi-IN)'
+            : 'Live Transcription: English / Hinglish (en-IN)',
+        );
+      } catch (err) {
+        logger.warn('Failed to start speech recognition', { err });
+      }
+    },
+    [transcriptLang],
+  );
 
   const stopSpeechRecognition = useCallback(() => {
     if (speechRecognitionRef.current) {
@@ -657,8 +654,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
 
   const setupAudioAnalyser = (mediaStream: MediaStream) => {
     try {
-      const AudioContextClass =
-        (window as any).AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) return;
 
       if (audioSourceRef.current) {
@@ -686,7 +682,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
       if (!audioTrack) return;
 
       const audioContext = new AudioContextClass();
-      
+
       const tryResume = () => {
         if (audioContext && audioContext.state === 'suspended') {
           audioContext.resume().catch(() => {});
@@ -737,7 +733,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
           if (val > peak) peak = val;
         }
         const rms = Math.sqrt(sumSquares / timeData.length);
-        
+
         // Voice envelope: nonlinear boost with room noise floor subtraction
         const rawVolume = rms * 3.4 + peak * 1.8;
         const volume = Math.min(1, Math.pow(Math.max(0, rawVolume - 0.015) * 1.25, 0.75));
@@ -747,7 +743,10 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
         for (let i = 0; i < 12; i++) {
           const freqVal = (freqData[i] || 0) / 255;
           const harmonicFactor = 0.8 + Math.sin(i * 0.8) * 0.2;
-          const combined = Math.min(255, Math.round(Math.max(freqVal * 255 * 1.2, volume * 255 * harmonicFactor)));
+          const combined = Math.min(
+            255,
+            Math.round(Math.max(freqVal * 255 * 1.2, volume * 255 * harmonicFactor)),
+          );
           levels[i] = combined;
         }
 
@@ -775,13 +774,10 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
       }
 
       const profile = getCaptureProfile(captureQuality, captureSize, captureRatio);
-      const scaled = clampDimensions(
-        profile.width * profile.scale,
-        profile.height * profile.scale
-      );
+      const scaled = clampDimensions(profile.width * profile.scale, profile.height * profile.scale);
 
       const buildConstraints = (
-        preferredFacing?: 'user' | 'environment'
+        preferredFacing?: 'user' | 'environment',
       ): MediaStreamConstraints => ({
         video:
           type !== 'audio'
@@ -799,9 +795,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
         audio:
           type !== 'photo'
             ? {
-                ...(selectedAudioDeviceId
-                  ? { deviceId: { exact: selectedAudioDeviceId } }
-                  : {}),
+                ...(selectedAudioDeviceId ? { deviceId: { exact: selectedAudioDeviceId } } : {}),
                 echoCancellation: true,
                 noiseSuppression: true,
                 autoGainControl: true,
@@ -813,20 +807,14 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
       const constraintsCandidates =
         type === 'audio'
           ? [buildConstraints()]
-          : [
-              buildConstraints(cameraFacing),
-              buildConstraints(alternateFacing),
-              buildConstraints(),
-            ];
+          : [buildConstraints(cameraFacing), buildConstraints(alternateFacing), buildConstraints()];
 
       let newStream: MediaStream | null = null;
       let streamError: unknown = null;
 
       for (let i = 0; i < constraintsCandidates.length; i += 1) {
         try {
-          newStream = await navigator.mediaDevices.getUserMedia(
-            constraintsCandidates[i]
-          );
+          newStream = await navigator.mediaDevices.getUserMedia(constraintsCandidates[i]);
           if (i > 0) {
             logger.warn('Fell back to alternate media constraints', {
               attempt: i + 1,
@@ -909,10 +897,10 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
 
       if (isPermissionErr) {
         setPermissionError(
-          'Camera or microphone permission was dismissed or blocked. Click site settings icon in address bar to allow access, then click "RETRY PERMISSION".'
+          'Camera or microphone permission was dismissed or blocked. Click site settings icon in address bar to allow access, then click "RETRY PERMISSION".',
         );
         toast.error(
-          'Permission dismissed or denied. Please allow camera/mic access in browser settings.'
+          'Permission dismissed or denied. Please allow camera/mic access in browser settings.',
         );
       } else if (err?.name === 'NotFoundError') {
         setPermissionError('No camera or microphone device found on this system.');
@@ -1015,10 +1003,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
   const handleZoomChange = async (newZoom: number) => {
     const videoTrack = stream?.getVideoTracks()[0];
     if (!videoTrack || !zoomCapabilities.supported) return;
-    const clamped = Math.min(
-      zoomCapabilities.max,
-      Math.max(zoomCapabilities.min, newZoom)
-    );
+    const clamped = Math.min(zoomCapabilities.max, Math.max(zoomCapabilities.min, newZoom));
     try {
       await (videoTrack as any).applyConstraints({
         advanced: [{ zoom: clamped }],
@@ -1150,7 +1135,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
 
       const scaled = clampDimensions(
         sourceCropWidth * profile.scale,
-        sourceCropHeight * profile.scale
+        sourceCropHeight * profile.scale,
       );
       canvas.width = scaled.width;
       canvas.height = scaled.height;
@@ -1173,14 +1158,10 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
         0,
         0,
         canvas.width,
-        canvas.height
+        canvas.height,
       );
 
-      canvas.toBlob(
-        (blob) => resolve(blob),
-        'image/jpeg',
-        profile.photoJpegQuality
-      );
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', profile.photoJpegQuality);
     });
   };
 
@@ -1218,7 +1199,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
         dualCamera.isSwapped,
         cameraFacing,
         (cameraFacing === 'user') !== isHorizontallyFlipped,
-        getFilterCss(activeFilter)
+        getFilterCss(activeFilter),
       );
       if (blob) {
         setCapturedBlob(blob);
@@ -1561,7 +1542,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
   };
 
   const encryptBlob = async (
-    blob: Blob
+    blob: Blob,
   ): Promise<{
     blob: Blob;
     wasEncrypted: boolean;
@@ -1597,8 +1578,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
       filename = `photo_${timestamp}.jpg`;
     } else {
       const ext =
-        capturedBlob.type.split('/')[1]?.split(';')[0] ||
-        (type === 'video' ? 'mp4' : 'webm');
+        capturedBlob.type.split('/')[1]?.split(';')[0] || (type === 'video' ? 'mp4' : 'webm');
       const finalExt = ext === 'quicktime' ? 'mov' : ext;
       filename = `${type}_${timestamp}.${finalExt}`;
     }
@@ -1714,8 +1694,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
           e.preventDefault();
           triggerHaptic('light');
           setTimerSeconds((prev) => {
-            const next: TimerOption =
-              prev === 0 ? 3 : prev === 3 ? 5 : prev === 5 ? 10 : 0;
+            const next: TimerOption = prev === 0 ? 3 : prev === 3 ? 5 : prev === 5 ? 10 : 0;
             toast.info(`Timer: ${next > 0 ? `${next}s` : 'Off'}`);
             return next;
           });
@@ -1799,7 +1778,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
             'fixed inset-0 z-[200] flex bg-black',
             isMobileViewport
               ? 'items-stretch justify-stretch p-0'
-              : 'items-center justify-center p-4 sm:p-6 lg:p-8'
+              : 'items-center justify-center p-4 sm:p-6 lg:p-8',
           )}
         >
           <div
@@ -1808,7 +1787,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
               isMobileViewport
                 ? 'max-w-none border-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]'
                 : 'max-w-5xl md:h-[720px] md:max-h-[90vh] md:border',
-              !capturedBlob && !isMobileViewport && 'md:rounded-[32px]'
+              !capturedBlob && !isMobileViewport && 'md:rounded-[32px]',
             )}
           >
             {/* Top Navigation / Quick Action Bar */}
@@ -1825,8 +1804,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
               onCycleTimer={() =>
                 setTimerSeconds((prev) => {
                   triggerHaptic('light');
-                  const next: TimerOption =
-                    prev === 0 ? 3 : prev === 3 ? 5 : prev === 5 ? 10 : 0;
+                  const next: TimerOption = prev === 0 ? 3 : prev === 3 ? 5 : prev === 5 ? 10 : 0;
                   toast.info(`Timer: ${next > 0 ? `${next}s` : 'Off'}`);
                   return next;
                 })
@@ -2007,9 +1985,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
                             'top-left',
                           ];
                           const nextPos =
-                            positions[
-                              (positions.indexOf(prev.pipPosition) + 1) % positions.length
-                            ];
+                            positions[(positions.indexOf(prev.pipPosition) + 1) % positions.length];
                           return { ...prev, pipPosition: nextPos };
                         });
                       }}
@@ -2099,8 +2075,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
                 setCaptureRatio((prev) => {
                   triggerHaptic('light');
                   const currentIndex = CAPTURE_RATIOS.indexOf(prev);
-                  const next =
-                    CAPTURE_RATIOS[(currentIndex + 1) % CAPTURE_RATIOS.length];
+                  const next = CAPTURE_RATIOS[(currentIndex + 1) % CAPTURE_RATIOS.length];
                   toast.info(`Aspect ratio: ${next}`);
                   return next;
                 })
@@ -2111,7 +2086,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
                   const next: CaptureQuality =
                     prev === 'high' ? 'balanced' : prev === 'balanced' ? 'low' : 'high';
                   toast.info(
-                    `Quality: ${next === 'high' ? 'High' : next === 'balanced' ? 'Balanced' : 'Low'}`
+                    `Quality: ${next === 'high' ? 'High' : next === 'balanced' ? 'Balanced' : 'Low'}`,
                   );
                   return next;
                 })
@@ -2122,7 +2097,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
                   const next: CaptureSize =
                     prev === 'full' ? 'medium' : prev === 'medium' ? 'compact' : 'full';
                   toast.info(
-                    `Size: ${next === 'full' ? 'Full' : next === 'medium' ? 'Medium' : 'Compact'}`
+                    `Size: ${next === 'full' ? 'Full' : next === 'medium' ? 'Medium' : 'Compact'}`,
                   );
                   return next;
                 })

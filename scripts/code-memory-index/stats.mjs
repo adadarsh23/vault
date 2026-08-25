@@ -138,7 +138,7 @@ export const computeTrend = (current, previous) => {
     symbolCountDelta: (current.totals.symbolCount || 0) - (prevTotals.symbolCount || 0),
     importCountDelta: (current.totals.importCount || 0) - (prevTotals.importCount || 0),
     avgRiskPerFileDelta: Number(
-      ((current.quality.avgRiskPerFile || 0) - (previous.quality?.avgRiskPerFile || 0)).toFixed(2)
+      ((current.quality.avgRiskPerFile || 0) - (previous.quality?.avgRiskPerFile || 0)).toFixed(2),
     ),
   };
 };

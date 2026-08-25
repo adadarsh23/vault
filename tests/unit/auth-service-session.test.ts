@@ -17,7 +17,7 @@ describe('issueUserSession', () => {
 
   it('falls back to a safe device id when deviceId is missing', () => {
     const user = {
-      _id: { toString: () => 'user-1' },
+      _id: { toString: () => '507f1f77bcf86cd799439011' },
       username: 'alice',
       sessions: [],
     } as any;
@@ -34,7 +34,7 @@ describe('issueUserSession', () => {
 
   it('falls back to a safe device id when deviceId is blank', () => {
     const user = {
-      _id: { toString: () => 'user-1' },
+      _id: { toString: () => '507f1f77bcf86cd799439011' },
       username: 'alice',
       sessions: [],
     } as any;

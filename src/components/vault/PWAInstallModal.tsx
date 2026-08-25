@@ -92,7 +92,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
 
     const previouslyFocused = document.activeElement as HTMLElement | null;
     const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
 
     const first = focusable?.[0];
@@ -179,7 +179,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
         </div>
       ),
     }),
-    []
+    [],
   );
 
   const InstructionStep = ({

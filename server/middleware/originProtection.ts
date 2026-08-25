@@ -20,7 +20,7 @@ const LOCALHOST_IPS = ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
 export const originProtection = (
   req: express.Request,
   _res: express.Response,
-  next: express.NextFunction
+  next: express.NextFunction,
 ) => {
   const isProduction = process.env.NODE_ENV === 'production';
   const disableOriginProtection =
@@ -80,7 +80,7 @@ export const originProtection = (
     throw new AppError(
       403,
       'ORIGIN_PROTECTED',
-      'Direct access to origin server is prohibited. Please use the designated CDN endpoint.'
+      'Direct access to origin server is prohibited. Please use the designated CDN endpoint.',
     );
   }
 

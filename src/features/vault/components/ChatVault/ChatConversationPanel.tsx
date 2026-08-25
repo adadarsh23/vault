@@ -204,7 +204,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
         toast.error('Unable to copy link');
       }
     },
-    [clearCopiedAttachmentTimer]
+    [clearCopiedAttachmentTimer],
   );
 
   const handleMessageLongPressStart = React.useCallback(
@@ -214,7 +214,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
         setActiveReactionTrayMessageId(messageId);
       }, LONG_PRESS_REACTION_MS);
     },
-    [clearLongPressTimer, LONG_PRESS_REACTION_MS]
+    [clearLongPressTimer, LONG_PRESS_REACTION_MS],
   );
 
   React.useEffect(
@@ -222,7 +222,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
       clearLongPressTimer();
       clearCopiedAttachmentTimer();
     },
-    [clearCopiedAttachmentTimer, clearLongPressTimer]
+    [clearCopiedAttachmentTimer, clearLongPressTimer],
   );
 
   React.useEffect(() => {
@@ -333,7 +333,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
               element.scrollTop = element.scrollHeight;
               updateScrollButtons();
             }
-          }, 50)
+          }, 50),
         );
         timers.push(
           window.setTimeout(() => {
@@ -341,7 +341,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
               element.scrollTop = element.scrollHeight;
               updateScrollButtons();
             }
-          }, 150)
+          }, 150),
         );
         timers.push(
           window.setTimeout(() => {
@@ -349,7 +349,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
               element.scrollTop = element.scrollHeight;
               updateScrollButtons();
             }
-          }, 300)
+          }, 300),
         );
       });
 
@@ -507,7 +507,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                         'inline-flex items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
                         active
                           ? 'border-emerald-500/20 bg-emerald-500/10 text-text'
-                          : 'border-text/10 bg-bg/60 text-text/65 hover:text-text'
+                          : 'border-text/10 bg-bg/60 text-text/65 hover:text-text',
                       )}
                     >
                       <Icon className="h-3.5 w-3.5" />
@@ -573,9 +573,9 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                         [...messageAttachments, ...inferredAttachments]
                           .map((attachment) => getSafeExternalHref(attachment.url))
                           .filter(
-                            (href): href is string => typeof href === 'string' && isImageUrl(href)
-                          )
-                      )
+                            (href): href is string => typeof href === 'string' && isImageUrl(href),
+                          ),
+                      ),
                     );
 
                     return (
@@ -592,7 +592,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                           onMouseEnter={() => setActiveReactionTrayMessageId(message.id)}
                           onMouseLeave={() =>
                             setActiveReactionTrayMessageId((current) =>
-                              current === message.id ? null : current
+                              current === message.id ? null : current,
                             )
                           }
                           onTouchStart={() => handleMessageLongPressStart(message.id)}
@@ -606,7 +606,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                                 'relative min-w-0 rounded-2xl border px-3.5 py-3 shadow-[0_8px_24px_rgba(0,0,0,0.16)] transition-colors',
                                 isMine
                                   ? 'border-emerald-500/35 bg-gradient-to-br from-emerald-500/14 to-emerald-500/6 text-text'
-                                  : 'border-white/10 bg-white/[0.025] text-text'
+                                  : 'border-white/10 bg-white/[0.025] text-text',
                               )}
                             >
                               {!isMine && (
@@ -619,7 +619,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                                 message.text,
                                 isMine,
                                 'text-sm leading-relaxed',
-                                8
+                                8,
                               )}
 
                               {imageLinks.length > 0 && (
@@ -689,7 +689,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                                 'flex flex-wrap gap-1.5 transition-all duration-100',
                                 reactionTrayOpen
                                   ? 'max-h-40 opacity-100'
-                                  : 'max-h-0 overflow-hidden opacity-0 pointer-events-none md:group-hover:max-h-40 md:group-hover:opacity-100 md:group-hover:pointer-events-auto'
+                                  : 'max-h-0 overflow-hidden opacity-0 pointer-events-none md:group-hover:max-h-40 md:group-hover:opacity-100 md:group-hover:pointer-events-auto',
                               )}
                             >
                               {QUICK_REACTIONS.map((emoji) => {
@@ -714,7 +714,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                                       'hover:-translate-y-0.5 active:translate-y-0 active:shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_2px_7px_rgba(0,0,0,0.2)]',
                                       count > 0
                                         ? 'emoji-3d-chip-active border-emerald-400/35 bg-gradient-to-b from-emerald-400/25 to-emerald-500/10 text-fuchsia-400'
-                                        : 'border-text/15 bg-gradient-to-b from-white/14 to-white/[0.03] text-text/80 hover:from-white/20 hover:to-white/[0.06]'
+                                        : 'border-text/15 bg-gradient-to-b from-white/14 to-white/[0.03] text-text/80 hover:from-white/20 hover:to-white/[0.06]',
                                     )}
                                   >
                                     <span className="emoji-3d-glyph text-[13px] [filter:drop-shadow(0_1px_0_rgba(255,255,255,0.45))_drop-shadow(0_2px_3px_rgba(0,0,0,0.35))]">
@@ -745,7 +745,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                                       reply.text,
                                       isMine,
                                       'text-xs leading-relaxed',
-                                      4
+                                      4,
                                     )}
                                   </div>
                                 ))}
@@ -781,7 +781,7 @@ export const ChatConversationPanel: React.FC<ChatConversationPanelProps> = ({
                               onClick={() =>
                                 void copyLinkToClipboard(
                                   attachment.id,
-                                  attachment.url || attachment.label
+                                  attachment.url || attachment.label,
                                 )
                               }
                               className="inline-flex h-6 items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 text-[10px] font-semibold text-text/65 transition-colors hover:bg-white/10 hover:text-text"

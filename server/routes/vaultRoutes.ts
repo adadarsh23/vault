@@ -81,22 +81,22 @@ const strictUserLimiter = (windowMs: number, max: number, message: string) =>
 const signedUrlLimiter = strictUserLimiter(
   60 * 1000,
   Math.max(20, Number(process.env.SIGNED_URL_LIMIT_PER_MIN || 600)),
-  'Too many signed URL requests. Please retry shortly.'
+  'Too many signed URL requests. Please retry shortly.',
 );
 const multipartStartLimiter = strictUserLimiter(
   10 * 60 * 1000,
   Math.max(3, Number(process.env.MULTIPART_START_LIMIT_PER_10MIN || 20)),
-  'Too many upload sessions started. Please retry later.'
+  'Too many upload sessions started. Please retry later.',
 );
 const multipartPartLimiter = strictUserLimiter(
   60 * 1000,
   Math.max(30, Number(process.env.MULTIPART_PART_LIMIT_PER_MIN || 600)),
-  'Upload part rate limit exceeded. Slow down and retry.'
+  'Upload part rate limit exceeded. Slow down and retry.',
 );
 const multipartCompleteLimiter = strictUserLimiter(
   10 * 60 * 1000,
   Math.max(3, Number(process.env.MULTIPART_COMPLETE_LIMIT_PER_10MIN || 30)),
-  'Too many upload completion requests. Please retry later.'
+  'Too many upload completion requests. Please retry later.',
 );
 const multipartPartBodyLimitBytes =
   Math.max(5 * 1024 * 1024, Number(process.env.MULTIPART_PART_SIZE_BYTES || 8 * 1024 * 1024)) +
@@ -107,19 +107,19 @@ vaultRouter.post(
   '/legacy/:vaultId/items/:itemId',
   requireAuth,
   validateRequest(vaultLegacyRouteParamsValidation),
-  asyncHandler(upsertLegacyVaultItem)
+  asyncHandler(upsertLegacyVaultItem),
 );
 vaultRouter.get(
   '/legacy/:vaultId/items',
   requireAuth,
   validateRequest(vaultLegacyRouteParamsValidation),
-  asyncHandler(getLegacyVaultItems)
+  asyncHandler(getLegacyVaultItems),
 );
 vaultRouter.delete(
   '/legacy/:vaultId/items/:itemId',
   requireAuth,
   validateRequest(vaultLegacyRouteParamsValidation),
-  asyncHandler(removeLegacyVaultItem)
+  asyncHandler(removeLegacyVaultItem),
 );
 
 // Scoped Items (Modern)
@@ -128,19 +128,19 @@ vaultRouter.post(
   '/items/:itemId',
   requireAuth,
   validateRequest(vaultItemRouteParamsValidation),
-  asyncHandler(upsertScopedVaultItem)
+  asyncHandler(upsertScopedVaultItem),
 );
 vaultRouter.put(
   '/items/:itemId/pin',
   requireAuth,
   validateRequest(vaultItemRouteParamsValidation),
-  asyncHandler(toggleScopedVaultItemPin)
+  asyncHandler(toggleScopedVaultItemPin),
 );
 vaultRouter.delete(
   '/items/:itemId',
   requireAuth,
   validateRequest(vaultItemRouteParamsValidation),
-  asyncHandler(removeScopedVaultItem)
+  asyncHandler(removeScopedVaultItem),
 );
 
 // High Level Vault Sync
@@ -158,13 +158,13 @@ vaultRouter.get(
   '/activity',
   requireAuth,
   validateRequest(activityLogQueryValidation),
-  asyncHandler(getUserActivityLogsController)
+  asyncHandler(getUserActivityLogsController),
 );
 vaultRouter.post(
   '/activity',
   requireAuth,
   validateRequest(activityLogBodyValidation),
-  asyncHandler(saveUserActivityLog)
+  asyncHandler(saveUserActivityLog),
 );
 
 // Production Media & File Access (Note: Handled by Signed URL Tokens or Internal Session Check)
@@ -174,43 +174,43 @@ vaultRouter.get(
   requireAuth,
   signedUrlLimiter,
   validateRequest(vaultItemRouteParamsValidation),
-  asyncHandler(createSignedUrl)
+  asyncHandler(createSignedUrl),
 );
 vaultRouter.get(
   '/files/access/:itemId',
   resolveIdentity,
   validateRequest(vaultItemRouteParamsValidation),
-  asyncHandler(accessVaultFile)
+  asyncHandler(accessVaultFile),
 );
 vaultRouter.get(
   '/media/:itemId/hls',
   resolveIdentity,
   validateRequest(vaultItemRouteParamsValidation),
-  asyncHandler(getMediaPlaylist)
+  asyncHandler(getMediaPlaylist),
 );
 vaultRouter.get(
   '/media/:itemId/hls/:variant/playlist.m3u8',
   resolveIdentity,
   validateRequest(vaultItemRouteParamsValidation),
-  asyncHandler(getMediaPlaylist)
+  asyncHandler(getMediaPlaylist),
 );
 vaultRouter.get(
   '/media/segment/:itemId/:segment',
   validateRequest(vaultItemRouteParamsValidation),
-  asyncHandler(getMediaSegment)
+  asyncHandler(getMediaSegment),
 );
 vaultRouter.post(
   '/license/:itemId',
   requireAuth,
   validateRequest(vaultItemRouteParamsValidation),
-  asyncHandler(handleLicenseRequest)
+  asyncHandler(handleLicenseRequest),
 ); // NEW Secure License Server
 vaultRouter.get(
   '/media/key/:itemId',
   requireAuth,
   keyRateLimit,
   validateRequest(vaultItemRouteParamsValidation),
-  asyncHandler(handleLicenseRequest)
+  asyncHandler(handleLicenseRequest),
 ); // Deprecated - mapped to License Server
 vaultRouter.post('/media/events', requireAuth, asyncHandler(logPlaybackEvent));
 vaultRouter.get('/media/insights', requireAuth, asyncHandler(getPlaybackInsights));
@@ -218,19 +218,19 @@ vaultRouter.post(
   '/media/drm/widevine/:itemId',
   requireAuth,
   validateRequest(vaultItemRouteParamsValidation),
-  asyncHandler(handleWidevineLicense)
+  asyncHandler(handleWidevineLicense),
 );
 vaultRouter.post(
   '/media/drm/fairplay/:itemId',
   requireAuth,
   validateRequest(vaultItemRouteParamsValidation),
-  asyncHandler(handleFairPlayLicense)
+  asyncHandler(handleFairPlayLicense),
 );
 vaultRouter.get(
   '/media/drm/cenc/:itemId/:kid',
   requireAuth,
   validateRequest(vaultItemRouteParamsValidation),
-  asyncHandler(getCencKey)
+  asyncHandler(getCencKey),
 );
 
 // Category Upserts
@@ -239,7 +239,7 @@ vaultRouter.post(
   requireAuth,
   multipartStartLimiter,
   validateRequest(multipartStartBodyValidation),
-  asyncHandler(startMultipartUpload)
+  asyncHandler(startMultipartUpload),
 );
 vaultRouter.put(
   '/files/multipart/:uploadId/part/:partNumber',
@@ -247,14 +247,14 @@ vaultRouter.put(
   multipartPartLimiter,
   validateRequest(multipartRouteParamsValidation),
   express.raw({ type: 'application/octet-stream', limit: multipartPartBodyLimitBytes }),
-  asyncHandler(uploadMultipartPart)
+  asyncHandler(uploadMultipartPart),
 );
 vaultRouter.post(
   '/files/multipart/:uploadId/complete',
   requireAuth,
   multipartCompleteLimiter,
   validateRequest([...multipartRouteParamsValidation, ...multipartCompleteBodyValidation]),
-  asyncHandler(completeMultipartUpload)
+  asyncHandler(completeMultipartUpload),
 );
 
 // TUS Protocol Endpoints
@@ -267,7 +267,7 @@ vaultRouter.patch(
     type: ['application/offset+octet-stream', 'application/octet-stream'],
     limit: '500mb',
   }),
-  asyncHandler(uploadTusChunkController)
+  asyncHandler(uploadTusChunkController),
 );
 
 vaultRouter.post(
@@ -275,25 +275,25 @@ vaultRouter.post(
   requireAuth,
   validateRequest(vaultCategoryRouteParamsValidation),
   uploadVaultFileMiddleware,
-  asyncHandler(uploadVaultFile)
+  asyncHandler(uploadVaultFile),
 );
 vaultRouter.post(
   '/:category',
   requireAuth,
   validateRequest(vaultCategoryRouteParamsValidation),
-  asyncHandler(upsertVaultEntry)
+  asyncHandler(upsertVaultEntry),
 );
 vaultRouter.put(
   '/:category/:itemId',
   requireAuth,
   validateRequest([...vaultCategoryRouteParamsValidation, ...vaultItemRouteParamsValidation]),
-  asyncHandler(upsertVaultEntry)
+  asyncHandler(upsertVaultEntry),
 );
 vaultRouter.delete(
   '/:category/:itemId',
   requireAuth,
   validateRequest([...vaultCategoryRouteParamsValidation, ...vaultItemRouteParamsValidation]),
-  asyncHandler(deleteVaultEntry)
+  asyncHandler(deleteVaultEntry),
 );
 
 export const registerVaultRoutes = (app: express.Express): void => {

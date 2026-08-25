@@ -23,7 +23,7 @@ export function normalizeGeneratedCredentialLength(length: number | undefined | 
 
   return Math.min(
     Math.max(length, MIN_GENERATED_CREDENTIAL_LENGTH),
-    MAX_GENERATED_CREDENTIAL_LENGTH
+    MAX_GENERATED_CREDENTIAL_LENGTH,
   );
 }
 

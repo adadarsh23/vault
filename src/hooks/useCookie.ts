@@ -50,7 +50,7 @@ export const useCookie = (name: string, baseOptions?: CookieOptions): UseCookieA
         return false;
       }
     },
-    [baseOptions, name]
+    [baseOptions, name],
   );
 
   const update = useCallback(
@@ -69,7 +69,7 @@ export const useCookie = (name: string, baseOptions?: CookieOptions): UseCookieA
         return false;
       }
     },
-    [baseOptions, name]
+    [baseOptions, name],
   );
 
   const remove = useCallback(
@@ -85,7 +85,7 @@ export const useCookie = (name: string, baseOptions?: CookieOptions): UseCookieA
         return false;
       }
     },
-    [baseOptions, name]
+    [baseOptions, name],
   );
 
   const exists = useMemo(() => {
@@ -110,6 +110,6 @@ export const useCookie = (name: string, baseOptions?: CookieOptions): UseCookieA
       remove,
       refresh,
     }),
-    [exists, refresh, remove, set, update, value]
+    [exists, refresh, remove, set, update, value],
   );
 };

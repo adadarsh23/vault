@@ -10,16 +10,16 @@ const sentryMock = vi.hoisted(() => {
   const withScope = vi.fn((cb) =>
     cb({
       setTag: vi.fn(),
-    })
+    }),
   );
   const startSpanManual = vi.fn((_opts, cb) =>
     cb({
       setAttribute: vi.fn(),
       end: vi.fn(),
-    })
+    }),
   );
   const expressErrorHandler = vi.fn(
-    () => (_err: unknown, _req: unknown, _res: unknown, next: () => void) => next()
+    () => (_err: unknown, _req: unknown, _res: unknown, next: () => void) => next(),
   );
   const httpIntegration = vi.fn(() => ({ name: 'http' }));
   const expressIntegration = vi.fn(() => ({ name: 'express' }));

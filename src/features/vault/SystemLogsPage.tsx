@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/Button';
 const SystemLogsCard = lazy(() =>
   import('./components/SettingsVault/SystemLogsCard').then((module) => ({
     default: module.SystemLogsCard,
-  }))
+  })),
 );
 
 interface SystemLogsPageProps {

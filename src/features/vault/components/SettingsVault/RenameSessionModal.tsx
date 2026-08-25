@@ -91,4 +91,3 @@ export const RenameSessionModal: React.FC<RenameSessionModalProps> = ({
     </div>
   );
 };
-

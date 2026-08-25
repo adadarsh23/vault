@@ -1,103 +1,127 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <!-- Basic -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' 'unsafe-eval' blob: data: https://unpkg.com https://cdn.jsdelivr.net https://fastly.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://cdn.skypack.dev https://cdn.tailwindcss.com https://www.googletagmanager.com https://cdn.logr-in.com https://www.google.com https://*.google.com https://docs.google.com https://www.gstatic.com https://*.gstatic.com https://recaptcha.google.com https://www.recaptcha.net https://*.recaptcha.net https://challenges.cloudflare.com https://*.hcaptcha.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' blob: data: https:; media-src 'self' blob: data: https:; connect-src 'self' blob: data: https://nominatim.openstreetmap.org https://*.openstreetmap.org https://*.tile.openstreetmap.org https://api.open-meteo.com https://www.google.com https://*.google.com https://docs.google.com https://drive.google.com https://*.googleusercontent.com https://*.googleapis.com https://lh3.googleusercontent.com https://www.gstatic.com https://*.gstatic.com https://recaptcha.google.com https://www.recaptcha.net https://*.recaptcha.net https://challenges.cloudflare.com https://*.hcaptcha.com https://api.pwnedpasswords.com https://view.officeapps.live.com https://*.officeapps.live.com https://*.office.com https://*.office365.com https://*.live.com https://*.microsoft.com https://*.onedrive.live.com https://*.sharepoint.com https://*.1drv.ms https://*.msauth.net https://*.msftauth.net https://documentservices.adobe.com https://*.adobe.com https://*.documentcloud.adobe.com https://acrobat.adobe.com https://mozilla.github.io https://*.mozilla.org https://*.mozilla.net https://unpkg.com https://cdn.jsdelivr.net https://fastly.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://cdn.skypack.dev https://jspm.dev https://cdn.tailwindcss.com https://raw.githubusercontent.com https://*.githubusercontent.com https://*.github.com https://*.githubassets.com https://*.gitlab.com https://*.dropbox.com https://*.dropboxusercontent.com https://*.box.com https://*.box.net https://*.amazonaws.com https://*.cloudfront.net https://*.supabase.co https://*.firebaseio.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://stats.g.doubleclick.net https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.sentry.io https://*.logrocket.com https://*.logr-in.com; worker-src 'self' blob: data: https://unpkg.com https://cdn.jsdelivr.net https://fastly.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://cdn.skypack.dev; child-src 'self' blob: data: https://docs.google.com https://drive.google.com https://www.google.com https://*.google.com https://*.google.co.in https://*.googleusercontent.com https://*.googleapis.com https://lh3.googleusercontent.com https://view.officeapps.live.com https://*.officeapps.live.com https://*.office.com https://*.office365.com https://*.live.com https://*.microsoft.com https://*.onedrive.live.com https://*.sharepoint.com https://*.1drv.ms https://*.msauth.net https://*.msftauth.net https://documentservices.adobe.com https://*.adobe.com https://*.documentcloud.adobe.com https://acrobat.adobe.com https://mozilla.github.io https://*.mozilla.org https://*.mozilla.net https://www.gstatic.com https://*.gstatic.com https://recaptcha.google.com https://www.recaptcha.net https://*.recaptcha.net https://challenges.cloudflare.com https://*.hcaptcha.com https://nominatim.openstreetmap.org https://*.openstreetmap.org https://*.tile.openstreetmap.org https://api.open-meteo.com https://www.youtube.com https://*.youtube.com https://*.youtube-nocookie.com https://player.vimeo.com https://*.vimeo.com https://*.canva.com https://*.figma.com https://unpkg.com https://cdn.jsdelivr.net https://fastly.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://cdn.skypack.dev https://jspm.dev https://cdn.tailwindcss.com https://raw.githubusercontent.com https://*.githubusercontent.com https://*.github.com https://*.githubassets.com https://*.gitlab.com https://*.dropbox.com https://*.dropboxusercontent.com https://*.box.com https://*.box.net https://*.amazonaws.com https://*.cloudfront.net https://*.supabase.co https://*.firebaseio.com; frame-src 'self' blob: data: https://docs.google.com https://drive.google.com https://www.google.com https://*.google.com https://*.google.co.in https://*.googleusercontent.com https://*.googleapis.com https://lh3.googleusercontent.com https://view.officeapps.live.com https://*.officeapps.live.com https://*.office.com https://*.office365.com https://*.live.com https://*.microsoft.com https://*.onedrive.live.com https://*.sharepoint.com https://*.1drv.ms https://*.msauth.net https://*.msftauth.net https://documentservices.adobe.com https://*.adobe.com https://*.documentcloud.adobe.com https://acrobat.adobe.com https://mozilla.github.io https://*.mozilla.org https://*.mozilla.net https://www.gstatic.com https://*.gstatic.com https://recaptcha.google.com https://www.recaptcha.net https://*.recaptcha.net https://challenges.cloudflare.com https://*.hcaptcha.com https://nominatim.openstreetmap.org https://*.openstreetmap.org https://*.tile.openstreetmap.org https://api.open-meteo.com https://www.youtube.com https://*.youtube.com https://*.youtube-nocookie.com https://player.vimeo.com https://*.vimeo.com https://*.canva.com https://*.figma.com; object-src 'none';"
+    />
+    <title>Vault - Secure Storage</title>
+    <meta name="color-scheme" content="dark light" />
 
-<head>
-  <!-- Basic -->
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' 'unsafe-eval' blob: data: https://unpkg.com https://cdn.jsdelivr.net https://fastly.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://cdn.skypack.dev https://cdn.tailwindcss.com https://www.googletagmanager.com https://cdn.logr-in.com https://www.google.com https://*.google.com https://docs.google.com https://www.gstatic.com https://*.gstatic.com https://recaptcha.google.com https://www.recaptcha.net https://*.recaptcha.net https://challenges.cloudflare.com https://*.hcaptcha.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' blob: data: https:; media-src 'self' blob: data: https:; connect-src 'self' blob: data: https://nominatim.openstreetmap.org https://*.openstreetmap.org https://*.tile.openstreetmap.org https://api.open-meteo.com https://www.google.com https://*.google.com https://docs.google.com https://drive.google.com https://*.googleusercontent.com https://*.googleapis.com https://lh3.googleusercontent.com https://www.gstatic.com https://*.gstatic.com https://recaptcha.google.com https://www.recaptcha.net https://*.recaptcha.net https://challenges.cloudflare.com https://*.hcaptcha.com https://api.pwnedpasswords.com https://view.officeapps.live.com https://*.officeapps.live.com https://*.office.com https://*.office365.com https://*.live.com https://*.microsoft.com https://*.onedrive.live.com https://*.sharepoint.com https://*.1drv.ms https://*.msauth.net https://*.msftauth.net https://documentservices.adobe.com https://*.adobe.com https://*.documentcloud.adobe.com https://acrobat.adobe.com https://mozilla.github.io https://*.mozilla.org https://*.mozilla.net https://unpkg.com https://cdn.jsdelivr.net https://fastly.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://cdn.skypack.dev https://jspm.dev https://cdn.tailwindcss.com https://raw.githubusercontent.com https://*.githubusercontent.com https://*.github.com https://*.githubassets.com https://*.gitlab.com https://*.dropbox.com https://*.dropboxusercontent.com https://*.box.com https://*.box.net https://*.amazonaws.com https://*.cloudfront.net https://*.supabase.co https://*.firebaseio.com https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://stats.g.doubleclick.net https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.sentry.io https://*.logrocket.com https://*.logr-in.com; worker-src 'self' blob: data: https://unpkg.com https://cdn.jsdelivr.net https://fastly.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://cdn.skypack.dev; child-src 'self' blob: data: https://docs.google.com https://drive.google.com https://www.google.com https://*.google.com https://*.google.co.in https://*.googleusercontent.com https://*.googleapis.com https://lh3.googleusercontent.com https://view.officeapps.live.com https://*.officeapps.live.com https://*.office.com https://*.office365.com https://*.live.com https://*.microsoft.com https://*.onedrive.live.com https://*.sharepoint.com https://*.1drv.ms https://*.msauth.net https://*.msftauth.net https://documentservices.adobe.com https://*.adobe.com https://*.documentcloud.adobe.com https://acrobat.adobe.com https://mozilla.github.io https://*.mozilla.org https://*.mozilla.net https://www.gstatic.com https://*.gstatic.com https://recaptcha.google.com https://www.recaptcha.net https://*.recaptcha.net https://challenges.cloudflare.com https://*.hcaptcha.com https://nominatim.openstreetmap.org https://*.openstreetmap.org https://*.tile.openstreetmap.org https://api.open-meteo.com https://www.youtube.com https://*.youtube.com https://*.youtube-nocookie.com https://player.vimeo.com https://*.vimeo.com https://*.canva.com https://*.figma.com https://unpkg.com https://cdn.jsdelivr.net https://fastly.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://cdn.skypack.dev https://jspm.dev https://cdn.tailwindcss.com https://raw.githubusercontent.com https://*.githubusercontent.com https://*.github.com https://*.githubassets.com https://*.gitlab.com https://*.dropbox.com https://*.dropboxusercontent.com https://*.box.com https://*.box.net https://*.amazonaws.com https://*.cloudfront.net https://*.supabase.co https://*.firebaseio.com; frame-src 'self' blob: data: https://docs.google.com https://drive.google.com https://www.google.com https://*.google.com https://*.google.co.in https://*.googleusercontent.com https://*.googleapis.com https://lh3.googleusercontent.com https://view.officeapps.live.com https://*.officeapps.live.com https://*.office.com https://*.office365.com https://*.live.com https://*.microsoft.com https://*.onedrive.live.com https://*.sharepoint.com https://*.1drv.ms https://*.msauth.net https://*.msftauth.net https://documentservices.adobe.com https://*.adobe.com https://*.documentcloud.adobe.com https://acrobat.adobe.com https://mozilla.github.io https://*.mozilla.org https://*.mozilla.net https://www.gstatic.com https://*.gstatic.com https://recaptcha.google.com https://www.recaptcha.net https://*.recaptcha.net https://challenges.cloudflare.com https://*.hcaptcha.com https://nominatim.openstreetmap.org https://*.openstreetmap.org https://*.tile.openstreetmap.org https://api.open-meteo.com https://www.youtube.com https://*.youtube.com https://*.youtube-nocookie.com https://player.vimeo.com https://*.vimeo.com https://*.canva.com https://*.figma.com; object-src 'none';" />
-  <title>Vault - Secure Storage</title>
-  <meta name="color-scheme" content="dark light" />
+    <meta
+      name="description"
+      content="Secure encrypted vault for storing photos, videos, notes, and passwords with strong client-side encryption."
+    />
+    <meta
+      name="keywords"
+      content="vault, encryption, password-manager, secure-storage, privacy, encrypted files, private notes"
+    />
+    <meta name="author" content="Adarsh" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="application-name" content="Vault" />
+    <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
 
-  <meta name="description"
-    content="Securely store your files, notes, and sensitive data with end-to-end peace of mind." />
-  <meta name="keywords" content="vault, secure storage, end-to-end encryption, private notes, encrypted files" />
-  <meta name="author" content="Vault Team" />
-  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
-  <meta name="application-name" content="Vault" />
-  <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
+    <!-- Search Engine -->
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+    <link rel="canonical" href="%VITE_APP_PUBLIC_URL%" />
 
-  <!-- Search Engine -->
-  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
-  <link rel="canonical" href="%VITE_APP_PUBLIC_URL%" />
+    <!-- Compatibility -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="mobile-web-app-capable" content="yes" />
 
-  <!-- Compatibility -->
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="referrer" content="strict-origin-when-cross-origin" />
-  <meta name="mobile-web-app-capable" content="yes" />
+    <!-- Performance & DNS -->
+    <link rel="dns-prefetch" href="%VITE_DNS_PREFETCH_HOST%" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="%VITE_APP_PUBLIC_URL%" crossorigin />
 
-  <!-- Performance & DNS -->
-  <link rel="dns-prefetch" href="%VITE_DNS_PREFETCH_HOST%" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-  <link rel="dns-prefetch" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preconnect" href="%VITE_APP_PUBLIC_URL%" crossorigin />
+    <!-- Icons & PWA -->
+    <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/favicon.svg"
+      media="(prefers-color-scheme: light)"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/favicon-dark.svg"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/favicon.svg" color="#000000" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="apple-mobile-web-app-title" content="Vault" />
 
-  <!-- Icons & PWA -->
-  <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" media="(prefers-color-scheme: light)" />
-  <link rel="icon" type="image/svg+xml" href="/favicon-dark.svg" media="(prefers-color-scheme: dark)" />
-  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
-  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png" />
-  <link rel="mask-icon" href="/favicon.svg" color="#000000" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <meta name="apple-mobile-web-app-title" content="Vault" />
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileColor" content="#000000" />
+    <meta name="msapplication-TileImage" content="/web-app-manifest-192x192.png" />
+    <meta name="msapplication-config" content="none" />
 
-  <!-- Microsoft Tiles -->
-  <meta name="msapplication-TileColor" content="#000000" />
-  <meta name="msapplication-TileImage" content="/web-app-manifest-192x192.png" />
-  <meta name="msapplication-config" content="none" />
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="%VITE_APP_PUBLIC_URL%" />
+    <meta property="og:title" content="Vault - Secure Storage" />
+    <meta
+      property="og:description"
+      content="Securely store your files, notes, and sensitive data with end-to-end peace of mind."
+    />
+    <meta property="og:image" content="%VITE_APP_PUBLIC_URL%/web-app-manifest-512x512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="Vault - Secure Storage" />
+    <meta property="og:site_name" content="Vault" />
+    <meta property="og:locale" content="en_US" />
 
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="%VITE_APP_PUBLIC_URL%" />
-  <meta property="og:title" content="Vault - Secure Storage" />
-  <meta property="og:description"
-    content="Securely store your files, notes, and sensitive data with end-to-end peace of mind." />
-  <meta property="og:image" content="%VITE_APP_PUBLIC_URL%/web-app-manifest-512x512.png" />
-  <meta property="og:image:width" content="512" />
-  <meta property="og:image:height" content="512" />
-  <meta property="og:image:alt" content="Vault - Secure Storage" />
-  <meta property="og:site_name" content="Vault" />
-  <meta property="og:locale" content="en_US" />
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="%VITE_APP_PUBLIC_URL%" />
+    <meta name="twitter:title" content="Vault - Secure Storage" />
+    <meta
+      name="twitter:description"
+      content="Secure personal vault for storing files, notes, and sensitive data safely."
+    />
+    <meta name="twitter:image" content="%VITE_APP_PUBLIC_URL%/web-app-manifest-512x512.png" />
+    <meta name="twitter:image:alt" content="Vault - Secure Storage" />
 
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:url" content="%VITE_APP_PUBLIC_URL%" />
-  <meta name="twitter:title" content="Vault - Secure Storage" />
-  <meta name="twitter:description"
-    content="Secure personal vault for storing files, notes, and sensitive data safely." />
-  <meta name="twitter:image" content="%VITE_APP_PUBLIC_URL%/web-app-manifest-512x512.png" />
-  <meta name="twitter:image:alt" content="Vault - Secure Storage" />
-
-  <!-- iOS/PWA Specifics -->
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-touch-fullscreen" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <!-- <meta name="HandheldFriendly" content="True" />
+    <!-- iOS/PWA Specifics -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-touch-fullscreen" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- <meta name="HandheldFriendly" content="True" />
   <meta name="MobileOptimized" content="320" /> -->
 
-  <!-- Splash Screens (iOS) -->
-  <link rel="apple-touch-startup-image" href="/web-app-manifest-512x512.png" />
-  <link rel="fluid-icon" href="/favicon.svg" title="Vault" />
-</head>
+    <!-- Splash Screens (iOS) -->
+    <link rel="apple-touch-startup-image" href="/web-app-manifest-512x512.png" />
+    <link rel="fluid-icon" href="/favicon.svg" title="Vault" />
+  </head>
 
-<body>
-  <!-- No JS fallback -->
-  <noscript>
-    <strong>This app requires JavaScript to run properly.</strong>
-  </noscript>
+  <body>
+    <!-- No JS fallback -->
+    <noscript>
+      <strong>This app requires JavaScript to run properly.</strong>
+    </noscript>
 
-  <main>
-    <!-- React Root -->
-    <div id="root">
-      <div role="status" aria-live="polite" aria-busy="true" style="
+    <main>
+      <!-- React Root -->
+      <div id="root">
+        <div
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+          style="
             min-height: 100dvh;
             display: flex;
             flex-direction: column;
@@ -115,54 +139,64 @@
             color: rgba(255, 255, 255, 0.75);
             text-align: center;
             overflow: hidden;
-          ">
-        <svg aria-hidden="true" viewBox="0 0 24 24" style="
+          "
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            style="
               width: 40px;
               height: 40px;
               opacity: 0.55;
               animation: vault-root-spin 0.9s linear infinite;
-            ">
-          <path d="M21 12a9 9 0 1 1-6.219-8.56" fill="none" stroke="currentColor" stroke-width="1.5"
-            stroke-linecap="round" />
-        </svg>
-        <p style="
+            "
+          >
+            <path
+              d="M21 12a9 9 0 1 1-6.219-8.56"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+          <p
+            style="
               margin: 0;
               font-size: 14px;
               font-weight: 500;
               opacity: 0.8;
               animation: vault-root-pulse 1.2s ease-in-out infinite;
-            ">
-          Loading Vault...
-        </p>
+            "
+          >
+            Loading Vault...
+          </p>
+        </div>
       </div>
-    </div>
-  </main>
-  <div id="theme-transition-overlay"></div>
+    </main>
+    <div id="theme-transition-overlay"></div>
 
-  <style>
-    @keyframes vault-root-spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    @keyframes vault-root-pulse {
-
-      0%,
-      100% {
-        opacity: 0.45;
+    <style>
+      @keyframes vault-root-spin {
+        to {
+          transform: rotate(360deg);
+        }
       }
 
-      50% {
-        opacity: 0.9;
+      @keyframes vault-root-pulse {
+        0%,
+        100% {
+          opacity: 0.45;
+        }
+
+        50% {
+          opacity: 0.9;
+        }
       }
-    }
-  </style>
+    </style>
 
-  <script src="/vite-preload-shim.js"></script>
+    <script src="/vite-preload-shim.js"></script>
 
-  <!-- Main App -->
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-
+    <!-- Main App -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

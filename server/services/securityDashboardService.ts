@@ -161,7 +161,7 @@ class SecurityDashboardService {
         .lean()) as any[];
 
       const suspiciousActivities = recentIncidents.filter(
-        (i) => i.severity === 'high' || i.severity === 'critical'
+        (i) => i.severity === 'high' || i.severity === 'critical',
       ).length;
 
       // Calculate threat level
@@ -254,7 +254,7 @@ class SecurityDashboardService {
   async updateIncidentStatus(
     incidentId: string,
     status: 'open' | 'investigating' | 'mitigated' | 'resolved',
-    notes?: string
+    notes?: string,
   ): Promise<void> {
     const IncidentModel = mongoose.model('SecurityIncident');
 
@@ -264,7 +264,7 @@ class SecurityDashboardService {
         status,
         adminNotes: notes,
         updatedAt: new Date(),
-      }
+      },
     );
 
     logger.info(`[DASHBOARD] Incident status updated: ${incidentId} -> ${status}`);
@@ -276,7 +276,7 @@ class SecurityDashboardService {
   async applyManualAction(
     action: 'block_ip' | 'whitelist_ip' | 'logout_user' | 'disable_user',
     target: string,
-    durationHours?: number
+    durationHours?: number,
   ): Promise<void> {
     const hours = durationHours || 24;
 

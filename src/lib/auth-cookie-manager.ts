@@ -21,7 +21,7 @@ const AUTH_COOKIE_BASE: CookieOptions = {
 };
 
 const createCookieOptions = (
-  input: Pick<PersistAuthCookieInput, 'expiresAt' | 'maxAgeSeconds'>
+  input: Pick<PersistAuthCookieInput, 'expiresAt' | 'maxAgeSeconds'>,
 ): CookieOptions => ({
   ...AUTH_COOKIE_BASE,
   expires: input.expiresAt,

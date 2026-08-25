@@ -105,7 +105,7 @@ export const DecryptedMarkdown: React.FC<DecryptedMarkdownProps> = ({
 
   const htmlDocument = useMemo(
     () => (decrypted ? buildSanitizedHtmlDocument(decrypted) : ''),
-    [decrypted]
+    [decrypted],
   );
   const sanitizedMarkdown = useMemo(
     () =>
@@ -114,7 +114,7 @@ export const DecryptedMarkdown: React.FC<DecryptedMarkdownProps> = ({
             USE_PROFILES: { html: true },
           })
         : '',
-    [decrypted]
+    [decrypted],
   );
 
   if (error)

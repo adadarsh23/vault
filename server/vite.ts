@@ -105,7 +105,7 @@ const setStaticAssetHeaders = (res: Response, filePath: string): void => {
 };
 
 const resolvePreferredPrecompressedVariants = (
-  acceptEncodingHeader: string | string[] | undefined
+  acceptEncodingHeader: string | string[] | undefined,
 ): PrecompressedVariant[] => {
   if (!acceptEncodingHeader) {
     return [];
@@ -267,7 +267,7 @@ const setupProductionMiddleware = (app: Express): void => {
       setHeaders: (res, filePath) => {
         setStaticAssetHeaders(res, filePath);
       },
-    })
+    }),
   );
 
   // SPA fallback
@@ -310,7 +310,7 @@ const setupProductionMiddleware = (app: Express): void => {
 
 export const setupFrontendMiddleware = async (
   app: Express,
-  httpServer: HttpServer
+  httpServer: HttpServer,
 ): Promise<void> => {
   const isProduction = process.env.NODE_ENV === 'production';
 

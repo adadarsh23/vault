@@ -54,7 +54,7 @@ describe('chat vault utils', () => {
 
   it('deduplicates and stabilizes extracted links', () => {
     const first = extractAttachmentsFromText(
-      'See example.com/docs, then https://example.com/docs.'
+      'See example.com/docs, then https://example.com/docs.',
     );
     const second = extractAttachmentsFromText('Again: https://example.com/docs');
 

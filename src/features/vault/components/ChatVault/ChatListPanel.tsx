@@ -60,7 +60,7 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
     <aside
       className={cn(
         'w-full shrink-0 flex-col gap-4 border-r border-white/5 pr-0 transition-colors sm:gap-5 md:w-72 md:pr-4 lg:w-72 xl:w-80 xl:gap-6 xl:pr-6',
-        activeChatId ? 'hidden md:flex' : 'flex'
+        activeChatId ? 'hidden md:flex' : 'flex',
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -189,13 +189,13 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
                   'flex w-full cursor-pointer items-start gap-3 rounded-2xl border p-3 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-text/20 xl:gap-4 xl:p-4 touch-manipulation',
                   isActive
                     ? 'border-purple-500/20 bg-purple-500/5 shadow-[0_0_20px_rgba(168,85,247,0.05)]'
-                    : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10'
+                    : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10',
                 )}
               >
                 <div
                   className={cn(
                     'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-semibold transition-colors',
-                    isActive ? 'bg-purple-500/20 text-purple-400' : 'bg-white/5 text-text/20'
+                    isActive ? 'bg-purple-500/20 text-purple-400' : 'bg-white/5 text-text/20',
                   )}
                 >
                   {getAvatarLabel(displayTitle)}
@@ -206,7 +206,7 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
                     <p
                       className={cn(
                         'truncate text-sm font-semibold transition-colors',
-                        isActive ? 'text-text' : 'text-text/70'
+                        isActive ? 'text-text' : 'text-text/70',
                       )}
                     >
                       {displayTitle}
@@ -235,7 +235,7 @@ export const ChatListPanel: React.FC<ChatListPanelProps> = ({
                       'h-8 w-8 rounded-full transition-all',
                       chatItem.isPinned
                         ? 'text-purple-400 bg-purple-400/10 hover:bg-purple-400/20'
-                        : 'text-text/30 hover:text-text/80 hover:bg-white/10'
+                        : 'text-text/30 hover:text-text/80 hover:bg-white/10',
                     )}
                   >
                     {isPinning ? (

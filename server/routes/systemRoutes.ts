@@ -124,7 +124,7 @@ router.get('/logs', requireAuth, async (req, res) => {
     });
 
     const allUserLogs = Array.from(combinedMap.values()).sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     );
 
     const pageLogs = allUserLogs.slice(offset, offset + limit);

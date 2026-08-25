@@ -52,6 +52,6 @@ export const useThemeStore = create<ThemeState>()(
           theme: normalizeTheme(persistedTheme),
         };
       },
-    }
-  )
+    },
+  ),
 );

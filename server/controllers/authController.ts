@@ -51,7 +51,7 @@ const REFRESH_COOKIE_NAME = getRefreshCookieName();
 export const applyRefreshCookie = (
   req: express.Request,
   res: express.Response,
-  refreshToken: string
+  refreshToken: string,
 ) => {
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, buildRefreshCookieOptions(req));
 };
@@ -101,7 +101,7 @@ const toPublicAuthPayload = <
     message?: string;
   },
 >(
-  result: T
+  result: T,
 ) => {
   const { refreshToken: _refreshToken, ...publicResult } = result;
   return publicResult;
@@ -129,7 +129,7 @@ export const register = async (req: express.Request, res: express.Response) => {
   if (!identifier || !req.body?.password) {
     throw AppError.badRequest(
       'Username or email and password are required.',
-      'AUTH_MISSING_CREDENTIALS'
+      'AUTH_MISSING_CREDENTIALS',
     );
   }
 
@@ -176,7 +176,7 @@ export const register = async (req: express.Request, res: express.Response) => {
   if (typeof req.body?.masterKey !== 'string' || !req.body.masterKey.trim()) {
     throw AppError.badRequest(
       'Master key is required for registration.',
-      'AUTH_MISSING_MASTER_KEY'
+      'AUTH_MISSING_MASTER_KEY',
     );
   }
   const masterKey = req.body.masterKey.trim();
@@ -184,7 +184,7 @@ export const register = async (req: express.Request, res: express.Response) => {
   if (req.body.password && masterKey && req.body.password === masterKey) {
     throw AppError.badRequest(
       'Account password and master key must not be identical.',
-      'AUTH_SAME_CREDENTIALS'
+      'AUTH_SAME_CREDENTIALS',
     );
   }
 
@@ -236,7 +236,7 @@ export const login = async (req: express.Request, res: express.Response) => {
   if (!identifier || !req.body?.password) {
     throw AppError.badRequest(
       'Username or email and password are required.',
-      'AUTH_MISSING_CREDENTIALS'
+      'AUTH_MISSING_CREDENTIALS',
     );
   }
 
@@ -410,7 +410,7 @@ export const getMe = async (req: AuthenticatedRequest, res: express.Response) =>
         email: `${username}@example.com`,
         profileName: username,
       },
-      'User profile fetched successfully'
+      'User profile fetched successfully',
     );
   }
 
@@ -446,7 +446,7 @@ export const refreshSession = async (req: express.Request, res: express.Response
         sessionId,
         user: mockUser,
       },
-      'Session refreshed successfully'
+      'Session refreshed successfully',
     );
   }
 

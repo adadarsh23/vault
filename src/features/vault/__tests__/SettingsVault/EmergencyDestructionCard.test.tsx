@@ -16,7 +16,7 @@ describe('EmergencyDestructionCard Component Test Suite', () => {
         isDestroyingVault={false}
         onEmergencyClear={vi.fn()}
         onAbort={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByText('Emergency Destruction')).toBeTruthy();
@@ -34,7 +34,7 @@ describe('EmergencyDestructionCard Component Test Suite', () => {
         isDestroyingVault={false}
         onEmergencyClear={onEmergencyClearMock}
         onAbort={vi.fn()}
-      />
+      />,
     );
 
     const destroyButton = screen.getByRole('button', { name: /destroy vault data/i });
@@ -52,7 +52,7 @@ describe('EmergencyDestructionCard Component Test Suite', () => {
         isDestroyingVault={false}
         onEmergencyClear={onEmergencyClearMock}
         onAbort={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByText('Wait - Confirmation Required')).toBeTruthy();
@@ -73,7 +73,7 @@ describe('EmergencyDestructionCard Component Test Suite', () => {
         isDestroyingVault={false}
         onEmergencyClear={onEmergencyClearMock}
         onAbort={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByText('FINAL OVERRIDE')).toBeTruthy();
@@ -92,7 +92,7 @@ describe('EmergencyDestructionCard Component Test Suite', () => {
         isDestroyingVault={true}
         onEmergencyClear={vi.fn()}
         onAbort={vi.fn()}
-      />
+      />,
     );
 
     const destroyingButton = screen.getByRole('button', { name: /destroying vault data\.\.\./i });
@@ -111,7 +111,7 @@ describe('EmergencyDestructionCard Component Test Suite', () => {
         isDestroyingVault={false}
         onEmergencyClear={vi.fn()}
         onAbort={onAbortMock}
-      />
+      />,
     );
 
     const abortButton = screen.getByRole('button', { name: /abort and return to settings/i });

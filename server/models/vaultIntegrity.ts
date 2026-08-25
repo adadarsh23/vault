@@ -37,7 +37,7 @@ const MerkleAuditSchema = new Schema<MerkleAuditRecord>(
     corruptedItemIds: [{ type: String }],
     details: { type: Schema.Types.Mixed },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const VaultIntegritySchema = new Schema<VaultIntegrityDocument>(
@@ -56,10 +56,10 @@ const VaultIntegritySchema = new Schema<VaultIntegrityDocument>(
   {
     timestamps: true,
     collection: 'vault_integrities',
-  }
+  },
 );
 
 export const VaultIntegrity = mongoose.model<VaultIntegrityDocument>(
   'VaultIntegrity',
-  VaultIntegritySchema
+  VaultIntegritySchema,
 );

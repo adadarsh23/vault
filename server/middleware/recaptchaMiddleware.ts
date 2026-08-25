@@ -82,7 +82,7 @@ export const requireRecaptcha = (options: RequireRecaptchaOptions) => {
 
         throw AppError.forbidden(
           'Security verification failed for this origin.',
-          'CAPTCHA_HOSTNAME_MISMATCH'
+          'CAPTCHA_HOSTNAME_MISMATCH',
         );
       }
 
@@ -102,7 +102,7 @@ export const requireRecaptcha = (options: RequireRecaptchaOptions) => {
 
         throw AppError.forbidden(
           'Security verification does not match this action.',
-          'CAPTCHA_ACTION_MISMATCH'
+          'CAPTCHA_ACTION_MISMATCH',
         );
       }
 

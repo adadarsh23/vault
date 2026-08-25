@@ -176,7 +176,7 @@ export const retrieveMasterKeyFromCloud = async (): Promise<RetrieveMasterKeyRes
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     const data = (await response.json()) as RetrieveMasterKeyResponse;
@@ -196,7 +196,7 @@ export const retrieveMasterKeyFromCloud = async (): Promise<RetrieveMasterKeyRes
  * Verify master key hash with cloud
  */
 export const verifyMasterKeyHash = async (
-  masterKeyHash: string
+  masterKeyHash: string,
 ): Promise<VerifyMasterKeyResponse> => {
   try {
     const token = getAuthToken();

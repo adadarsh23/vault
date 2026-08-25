@@ -4,7 +4,7 @@ export const VAULT_BACKUP_MAGIC = new TextEncoder().encode('VAULT_BACKUP_V1\0');
 
 export const exportEncryptedBackup = async (
   json: string,
-  masterKey: string
+  masterKey: string,
 ): Promise<Uint8Array> => {
   const data = new TextEncoder().encode(json);
 
@@ -16,7 +16,7 @@ export const exportEncryptedBackup = async (
     keyBuf as any,
     { name: 'AES-GCM' },
     false,
-    ['encrypt']
+    ['encrypt'],
   );
 
   const ciphertext = await crypto.subtle.encrypt(
@@ -26,7 +26,7 @@ export const exportEncryptedBackup = async (
       additionalData: VAULT_BACKUP_MAGIC,
     },
     cryptoKey,
-    data
+    data,
   );
 
   const bundle = new Uint8Array(VAULT_BACKUP_MAGIC.length + iv.length + ciphertext.byteLength);
@@ -39,7 +39,7 @@ export const exportEncryptedBackup = async (
 
 export const importEncryptedBackup = async (
   bundle: Uint8Array,
-  masterKey: string
+  masterKey: string,
 ): Promise<string> => {
   const magicLength = VAULT_BACKUP_MAGIC.length;
 
@@ -64,7 +64,7 @@ export const importEncryptedBackup = async (
     keyBuf as any,
     { name: 'AES-GCM' },
     false,
-    ['decrypt']
+    ['decrypt'],
   );
 
   const decrypted = await crypto.subtle.decrypt(
@@ -74,7 +74,7 @@ export const importEncryptedBackup = async (
       additionalData: VAULT_BACKUP_MAGIC,
     },
     cryptoKey,
-    ciphertext
+    ciphertext,
   );
 
   return new TextDecoder().decode(decrypted);

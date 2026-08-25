@@ -8,7 +8,7 @@ export const verifyMasterKeyCaptcha = async (_req: express.Request, res: express
       verified: true,
       verifiedAt: new Date().toISOString(),
     },
-    'CAPTCHA verified for master key change.'
+    'CAPTCHA verified for master key change.',
   );
 };
 
@@ -19,6 +19,6 @@ export const verifyCloudUnlockCaptcha = async (_req: express.Request, res: expre
       verified: true,
       verifiedAt: new Date().toISOString(),
     },
-    'CAPTCHA verified for cloud vault unlock.'
+    'CAPTCHA verified for cloud vault unlock.',
   );
 };

@@ -26,7 +26,7 @@ function createWorker(): Worker | null {
 export async function generateThumbnailInWorker(
   file: File,
   maxWidth = 300,
-  maxHeight = 300
+  maxHeight = 300,
 ): Promise<Blob> {
   const worker = createWorker();
   if (!worker) {
@@ -115,7 +115,7 @@ export async function compressFileInWorker(
   file: File,
   quality = 0.8,
   maxWidth = 1920,
-  maxHeight = 1080
+  maxHeight = 1080,
 ): Promise<File> {
   const ext = (file.name.split('.').pop() || '').toLowerCase();
   const nonCompressableExtensions = new Set([
@@ -217,7 +217,7 @@ export async function compressFileInWorker(
 async function generateThumbnailMainThread(
   file: File,
   maxWidth: number,
-  maxHeight: number
+  maxHeight: number,
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -252,7 +252,7 @@ async function generateThumbnailMainThread(
           img.src = '';
         },
         'image/jpeg',
-        0.8
+        0.8,
       );
     };
 

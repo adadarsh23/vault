@@ -44,7 +44,7 @@ const createChunkUploadId = (): string => {
 };
 
 const isValidChunkSession = (
-  session: Partial<ChunkUploadSession>
+  session: Partial<ChunkUploadSession>,
 ): session is ChunkUploadSession => {
   if (!session || typeof session.uploadId !== 'string' || !session.uploadId.trim()) {
     return false;
@@ -211,7 +211,7 @@ export const uploadBinaryInChunks = async (
   body: Uint8Array,
   context: string,
   onProgress?: (progress: number) => void,
-  options?: { uploadKey?: string; notFoundRestartCount?: number }
+  options?: { uploadKey?: string; notFoundRestartCount?: number },
 ) => {
   const totalSize = body.byteLength;
   if (totalSize <= CHUNK_UPLOAD_THRESHOLD_BYTES) {
@@ -223,7 +223,7 @@ export const uploadBinaryInChunks = async (
         body: body as unknown as BodyInit,
       },
       context,
-      onProgress
+      onProgress,
     );
     return;
   }
@@ -259,7 +259,7 @@ export const uploadBinaryInChunks = async (
       // Keep session chunk size sticky across retries/resume to avoid restarting
       // uploads when network conditions fluctuate.
       const normalizedCompleted = Array.from({ length: expectedChunkCount }, (_, index) =>
-        Boolean(existingSession.completed[index])
+        Boolean(existingSession.completed[index]),
       );
       session = {
         ...existingSession,
@@ -273,7 +273,7 @@ export const uploadBinaryInChunks = async (
   const chunkCount = session.chunkCount;
   const chunkSize = session.chunkSize;
   const pendingIndexes = Array.from({ length: chunkCount }, (_, index) => index).filter(
-    (index) => !session.completed[index]
+    (index) => !session.completed[index],
   );
 
   let completedCount = session.completed.filter(Boolean).length;
@@ -310,7 +310,7 @@ export const uploadBinaryInChunks = async (
           body: chunk as unknown as BodyInit,
         },
         `${context} (chunk ${chunkIndex + 1}/${chunkCount})`,
-        undefined
+        undefined,
       );
 
       session.completed[chunkIndex] = true;

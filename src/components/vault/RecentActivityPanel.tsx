@@ -167,7 +167,7 @@ export const RecentActivityPanel: React.FC = () => {
       setIsPageChanging(true);
       setPage(nextPage);
     },
-    [currentPage, pageCount]
+    [currentPage, pageCount],
   );
 
   // Handle scroll to top on page change.

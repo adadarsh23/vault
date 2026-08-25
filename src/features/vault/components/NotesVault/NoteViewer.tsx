@@ -223,7 +223,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
     return items
       .filter(
         (item) =>
-          (item.type === 'photo' || item.type === 'document') && !attachmentIds.includes(item.id)
+          (item.type === 'photo' || item.type === 'document') && !attachmentIds.includes(item.id),
       )
       .filter((item) => item.title.toLowerCase().includes(queryLower));
   }, [items, attachmentIds, pickerSearch]);
@@ -425,7 +425,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                       <div
                         className={cn(
                           'p-4 md:p-6 xl:p-8 prose prose-invert max-w-none transition-colors prose-pre:bg-bg/50 prose-pre:border prose-pre:border-card-border',
-                          showHtmlPreview ? 'p-0' : ''
+                          showHtmlPreview ? 'p-0' : '',
                         )}
                       >
                         <DecryptedMarkdown
@@ -521,7 +521,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                               tasks (
                               {Math.round(
                                 (contentStats.completedCheckboxes / contentStats.totalCheckboxes) *
-                                  100
+                                  100,
                               )}
                               %)
                             </span>

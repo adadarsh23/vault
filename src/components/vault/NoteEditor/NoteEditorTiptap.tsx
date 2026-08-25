@@ -20,7 +20,7 @@ export const NoteEditorTiptap: React.FC<NoteEditorTiptapProps> = ({
       className={cn(
         'relative flex-1 overflow-y-auto bg-text/[0.02] p-8 focus:outline-none min-h-[400px]',
         lineWrap ? 'whitespace-pre-wrap' : 'whitespace-pre',
-        textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left'
+        textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left',
       )}
     >
       <EditorContent

@@ -56,7 +56,7 @@ interface ContactCardProps {
       phone: string;
       company: string;
       notes: string;
-    }
+    },
   ) => Promise<void>;
   onDelete: (id: string, title: string) => void;
   onTogglePin: (id: string) => void;
@@ -404,7 +404,7 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
         </Card>
       </motion.div>
     );
-  }
+  },
 );
 
 export const ContactsVault: React.FC = () => {
@@ -466,9 +466,9 @@ export const ContactsVault: React.FC = () => {
             contact.title.toLowerCase().includes(normalizedSearchQuery);
           const matchesFolder = currentFolder === null || contact.folder === currentFolder;
           return matchesSearch && matchesFolder;
-        })
+        }),
       ),
-    [contacts, normalizedSearchQuery, currentFolder]
+    [contacts, normalizedSearchQuery, currentFolder],
   );
 
   const getFolderCount = (folder: string | null) =>
@@ -504,7 +504,7 @@ export const ContactsVault: React.FC = () => {
           company: newCompany.trim(),
           notes: newNotes.trim(),
         }),
-        masterKey
+        masterKey,
       );
 
       await addItem({
@@ -539,7 +539,7 @@ export const ContactsVault: React.FC = () => {
       phone: string;
       company: string;
       notes: string;
-    }
+    },
   ) => {
     if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
 
@@ -563,7 +563,7 @@ export const ContactsVault: React.FC = () => {
           company: updates.company.trim(),
           notes: updates.notes.trim(),
         }),
-        masterKey
+        masterKey,
       );
 
       await updateItem(id, {

@@ -35,7 +35,7 @@ function signPow(val: number, exp: number): number {
 export function decodeBlurHash(
   blurHash: string,
   width: number = 16,
-  height: number = 16
+  height: number = 16,
 ): Uint8ClampedArray | null {
   if (!blurHash || blurHash.length < 6 || (blurHash.length - 6) % 2 !== 0) return null;
   for (let i = 0; i < blurHash.length; i++) {

@@ -72,7 +72,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
     const [isSavingProfile, setIsSavingProfile] = React.useState(false);
     const [isMigrating, setIsMigrating] = React.useState(false);
     const [destructionStage, setDestructionStage] = React.useState<'idle' | 'confirm' | 'final'>(
-      'idle'
+      'idle',
     );
     const [isPWAInstallModalOpen, setIsPWAInstallModalOpen] = React.useState(false);
 
@@ -104,12 +104,14 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
     const loadSessionState = React.useCallback(async () => {
       setIsSessionActionLoading(true);
       if (isDecoyMode) {
+        const nowIso = new Date().toISOString();
         const decoyProfile: AuthenticatedProfile = {
           id: 'decoy-user-id',
           username: username || 'alex_doe',
           profileName: 'Alex Doe',
           profilePhoto: 'none',
-          email: `${username || 'alex_doe'}@example.com`,
+          createdAt: nowIso,
+          updatedAt: nowIso,
           twoFactorEnabled: false,
           sessions: [
             {
@@ -140,7 +142,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
               profileName: nextProfile.profileName,
               profilePhoto: nextProfile.profilePhoto,
             },
-          })
+          }),
         );
       } catch (error: unknown) {
         setProfile(null);
@@ -158,7 +160,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
     const handleLockAllSessions = React.useCallback(async () => {
       if (
         !confirm(
-          'This will revoke every device session and lock this browser immediately. Continue?'
+          'This will revoke every device session and lock this browser immediately. Continue?',
         )
       ) {
         return;
@@ -222,18 +224,20 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
       async (profileName: string, profilePhoto: string) => {
         setIsSavingProfile(true);
         if (isDecoyMode) {
+          const nowIso = new Date().toISOString();
           setProfile((prev) =>
             prev
-              ? { ...prev, profileName, profilePhoto }
+              ? { ...prev, profileName, profilePhoto, updatedAt: nowIso }
               : {
                   id: 'decoy-user-id',
                   username: username || 'alex_doe',
                   profileName,
                   profilePhoto,
-                  email: `${username || 'alex_doe'}@example.com`,
+                  createdAt: nowIso,
+                  updatedAt: nowIso,
                   twoFactorEnabled: false,
                   sessions: [],
-                }
+                },
           );
           setIsSavingProfile(false);
           toast.success('Profile updated');
@@ -265,7 +269,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
           setIsSavingProfile(false);
         }
       },
-      [isDecoyMode, loadSessionState, username]
+      [isDecoyMode, loadSessionState, username],
     );
 
     return (
@@ -453,7 +457,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
         />
       </div>
     );
-  }
+  },
 );
 
 SettingsVault.displayName = 'SettingsVault';

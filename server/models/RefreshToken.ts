@@ -24,7 +24,7 @@ const refreshTokenSchema = new Schema<IRefreshToken>(
     userAgent: { type: String, default: 'unknown' },
     expiresAt: { type: Date, required: true, index: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const RefreshToken =

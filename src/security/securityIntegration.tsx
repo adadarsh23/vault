@@ -298,7 +298,7 @@ const normalizeSecuritySettings = (input: unknown): SecuritySettingsState => {
     ? candidate.mfaMethods
     : DEFAULT_SECURITY_SETTINGS.mfaMethods;
   const validMethods = methodCandidates.filter(
-    (method): method is MFAMethod => method === 'totp' || method === 'email' || method === 'fido2'
+    (method): method is MFAMethod => method === 'totp' || method === 'email' || method === 'fido2',
   );
 
   return {
@@ -390,7 +390,7 @@ export const useSecureRequest = () => {
         },
       };
     },
-    [fingerprint]
+    [fingerprint],
   );
 };
 
@@ -724,7 +724,7 @@ export const useSecurityInterceptor = () => {
         Object.assign(headers, buildSecurityHeaders(fingerprint));
         return config;
       },
-      (interceptorError) => Promise.reject(interceptorError)
+      (interceptorError) => Promise.reject(interceptorError),
     );
 
     return () => {

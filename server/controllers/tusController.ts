@@ -21,7 +21,7 @@ const MEMORY_ONLY_TUS_UPLOADS = resolveMemoryOnlyTusUploads();
 const MAX_TUS_FILE_SIZE = Math.max(1, Number(process.env.MAX_FILE_SIZE_MB || 4096) * 1024 * 1024);
 const TUS_SESSION_TTL_MS = Math.max(
   5 * 60 * 1000,
-  Number(process.env.TUS_SESSION_TTL_MS || 2 * 60 * 60 * 1000)
+  Number(process.env.TUS_SESSION_TTL_MS || 2 * 60 * 60 * 1000),
 );
 
 interface TusSession {
@@ -60,13 +60,13 @@ const tusCleanupInterval = setInterval(
   () => {
     void cleanupExpiredTusSessions();
   },
-  10 * 60 * 1000
+  10 * 60 * 1000,
 );
 tusCleanupInterval.unref();
 
 export const createTusUploadController = async (
   req: AuthenticatedRequest,
-  res: express.Response
+  res: express.Response,
 ) => {
   const userId = req.user.userId;
   const username = req.user.username;
@@ -76,7 +76,7 @@ export const createTusUploadController = async (
 
   const fileSize = parseInt(
     (Array.isArray(lengthHeader) ? lengthHeader[0] : lengthHeader) || '0',
-    10
+    10,
   );
   if (isNaN(fileSize) || fileSize <= 0) {
     throw AppError.badRequest('Missing or invalid Upload-Length header.', 'INVALID_TUS_LENGTH');
@@ -84,7 +84,7 @@ export const createTusUploadController = async (
   if (fileSize > MAX_TUS_FILE_SIZE) {
     throw AppError.badRequest(
       'TUS upload exceeds the configured file size limit.',
-      'FILE_TOO_LARGE'
+      'FILE_TOO_LARGE',
     );
   }
 
@@ -160,7 +160,7 @@ export const getTusOffsetController = async (req: AuthenticatedRequest, res: exp
 
 export const uploadTusChunkController = async (
   req: AuthenticatedRequest,
-  res: express.Response
+  res: express.Response,
 ) => {
   const uploadId = Array.isArray(req.params.uploadId)
     ? req.params.uploadId[0]
@@ -177,7 +177,7 @@ export const uploadTusChunkController = async (
   const offsetHeader = req.headers['upload-offset'];
   const reqOffset = parseInt(
     (Array.isArray(offsetHeader) ? offsetHeader[0] : offsetHeader) || '0',
-    10
+    10,
   );
 
   if (reqOffset !== session.offset) {
@@ -215,7 +215,7 @@ export const uploadTusChunkController = async (
 
 export const getTusSessionBuffer = async (
   uploadId: string,
-  userId?: string
+  userId?: string,
 ): Promise<Buffer | null> => {
   const session = tusSessions.get(uploadId);
   if (session) {

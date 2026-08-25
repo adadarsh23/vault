@@ -341,7 +341,7 @@ export const CommandPalette: React.FC = () => {
             </mark>
           ) : (
             part.text
-          )
+          ),
         )}
       </span>
     );
@@ -413,14 +413,14 @@ export const CommandPalette: React.FC = () => {
                               'w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left transition-all duration-150 relative group',
                               isSelected
                                 ? config.styles.selected
-                                : 'hover:bg-text/5 text-text/75 hover:text-text border-l-2 border-transparent'
+                                : 'hover:bg-text/5 text-text/75 hover:text-text border-l-2 border-transparent',
                             )}
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <div
                                 className={cn(
                                   'shrink-0 flex items-center justify-center h-8 w-8 rounded-lg transition-colors',
-                                  config.styles.iconBg
+                                  config.styles.iconBg,
                                 )}
                               >
                                 <IconComponent className={cn('h-4.5 w-4.5', config.styles.icon)} />
@@ -436,7 +436,7 @@ export const CommandPalette: React.FC = () => {
                                       {item.transcriptMatches && item.transcriptMatches.length > 0
                                         ? renderFuzzyHighlightedText(
                                             item.transcriptSnippet,
-                                            item.transcriptMatches
+                                            item.transcriptMatches,
                                           )
                                         : item.transcriptSnippet}
                                     </span>

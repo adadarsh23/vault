@@ -68,7 +68,7 @@ const CREDENTIAL_REQUIREMENTS_DETAIL = `must be ${MIN_GENERATED_CREDENTIAL_LENGT
 
 const isValidPassword = (value: string) => {
   return new RegExp(
-    `^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[^A-Za-z\\d])\\S{${MIN_GENERATED_CREDENTIAL_LENGTH},${MAX_GENERATED_CREDENTIAL_LENGTH}}$`
+    `^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[^A-Za-z\\d])\\S{${MIN_GENERATED_CREDENTIAL_LENGTH},${MAX_GENERATED_CREDENTIAL_LENGTH}}$`,
   ).test(value);
 };
 
@@ -108,7 +108,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
     }, [authMode, setAccountPassword, setVaultKey]);
 
     const generatedCredentialLength = useVaultStore(
-      (state) => state.preferences.generatedCredentialLength
+      (state) => state.preferences.generatedCredentialLength,
     );
     const [loading, setLoading] = useState(false);
     const [generationCooldownUntil, setGenerationCooldownUntil] = useState(0);
@@ -162,7 +162,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
         resetCaptchaChallenge();
         onAuthModeChange(newMode);
       },
-      [authMode, onAuthModeChange, resetCaptchaChallenge]
+      [authMode, onAuthModeChange, resetCaptchaChallenge],
     );
 
     const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim() || '';
@@ -245,12 +245,14 @@ export const VaultLoginForm: React.FC<Props> = memo(
     }, [authMode, cloudSessionActive, twoFactorRequired, username]);
     const validAccountPassword = useMemo(
       () =>
-        authMode === 'register' ? isValidPassword(accountPassword) : accountPassword.trim().length >= 1,
-      [accountPassword, authMode]
+        authMode === 'register'
+          ? isValidPassword(accountPassword)
+          : accountPassword.trim().length >= 1,
+      [accountPassword, authMode],
     );
     const validVaultKey = useMemo(
       () => (authMode === 'register' ? isValidPassword(vaultKey) : vaultKey.trim().length >= 1),
-      [vaultKey, authMode]
+      [vaultKey, authMode],
     );
     const validOtpToken = useMemo(() => {
       const normalized = otpToken.trim();
@@ -296,7 +298,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
       }
 
       const recentAttempts = generationAttemptTimestampsRef.current.filter(
-        (timestamp) => now - timestamp <= GENERATION_WINDOW_MS
+        (timestamp) => now - timestamp <= GENERATION_WINDOW_MS,
       );
 
       if (recentAttempts.length >= GENERATION_MAX_ATTEMPTS) {
@@ -318,7 +320,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
         canGenerateCredentials
           ? `Generate ${field}`
           : `${field} generation is available while creating an account`,
-      [canGenerateCredentials]
+      [canGenerateCredentials],
     );
 
     const handleGenerateKey = useCallback(() => {
@@ -409,7 +411,12 @@ export const VaultLoginForm: React.FC<Props> = memo(
         return false;
       }
 
-      if (!twoFactorRequired && !cloudSessionActive && authMode === 'register' && !validAccountPassword) {
+      if (
+        !twoFactorRequired &&
+        !cloudSessionActive &&
+        authMode === 'register' &&
+        !validAccountPassword
+      ) {
         toast.warning(`Account password ${CREDENTIAL_REQUIREMENTS_DETAIL}`);
         return false;
       }
@@ -556,7 +563,8 @@ export const VaultLoginForm: React.FC<Props> = memo(
           /too many attempts/i.test(msg)
         ) {
           toast.error('Too Many Attempts', {
-            description: 'Too many authentication attempts detected. Please wait a moment and try again.',
+            description:
+              'Too many authentication attempts detected. Please wait a moment and try again.',
           });
         } else if (
           apiError?.code === 'CAPTCHA_TOKEN_EXPIRED' ||
@@ -573,7 +581,8 @@ export const VaultLoginForm: React.FC<Props> = memo(
           /session.*expired/i.test(msg)
         ) {
           toast.error('Session Expired', {
-            description: 'Your saved cloud session has expired. Please sign in with your account password.',
+            description:
+              'Your saved cloud session has expired. Please sign in with your account password.',
           });
         } else if (
           apiError?.code === 'AUTH_WEAK_PASSWORD' ||
@@ -581,7 +590,8 @@ export const VaultLoginForm: React.FC<Props> = memo(
           /password must/i.test(msg)
         ) {
           toast.error('Password Requirements Not Met', {
-            description: 'Use 16-64 characters with uppercase, lowercase, number, and special character.',
+            description:
+              'Use 16-64 characters with uppercase, lowercase, number, and special character.',
           });
         } else if (
           apiError?.code === 'NETWORK_ERROR' ||
@@ -595,7 +605,14 @@ export const VaultLoginForm: React.FC<Props> = memo(
           handleError(error, twoFactorRequired ? '2FA Verification' : 'Vault Unlock');
         }
       },
-      [twoFactorRequired, requiresCaptcha, setCaptchaRejected, authMode, handleAuthModeSwitch, cloudSessionActive]
+      [
+        twoFactorRequired,
+        requiresCaptcha,
+        setCaptchaRejected,
+        authMode,
+        handleAuthModeSwitch,
+        cloudSessionActive,
+      ],
     );
 
     const handleUnlock = useCallback(async () => {
@@ -813,9 +830,15 @@ export const VaultLoginForm: React.FC<Props> = memo(
                           }
                         }}
                         className="w-full rounded-[1.1rem] border border-card-border bg-card-bg pl-12 pr-24 py-4 text-base md:text-lg outline-none transition-all placeholder:text-text/25 focus:border-white/20 focus:bg-card-bg/80 dark:border-white/10 dark:bg-black/30 aria-[invalid=true]:border-red-500/50"
-                        aria-invalid={authMode === 'register' && accountPassword.length > 0 && !validAccountPassword}
+                        aria-invalid={
+                          authMode === 'register' &&
+                          accountPassword.length > 0 &&
+                          !validAccountPassword
+                        }
                         aria-describedby={
-                          authMode === 'register' && accountPassword.length > 0 && !validAccountPassword
+                          authMode === 'register' &&
+                          accountPassword.length > 0 &&
+                          !validAccountPassword
                             ? 'account-password-error'
                             : undefined
                         }
@@ -858,17 +881,19 @@ export const VaultLoginForm: React.FC<Props> = memo(
                         </button>
                       </div>
                     </div>
-                    {authMode === 'register' && accountPassword.length > 0 && !validAccountPassword && (
-                      <motion.p
-                        id="account-password-error"
-                        role="alert"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="mt-2 text-xs text-red-400 pl-4"
-                      >
-                        {CREDENTIAL_REQUIREMENTS_HINT}
-                      </motion.p>
-                    )}
+                    {authMode === 'register' &&
+                      accountPassword.length > 0 &&
+                      !validAccountPassword && (
+                        <motion.p
+                          id="account-password-error"
+                          role="alert"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="mt-2 text-xs text-red-400 pl-4"
+                        >
+                          {CREDENTIAL_REQUIREMENTS_HINT}
+                        </motion.p>
+                      )}
                   </div>
                 )}
 
@@ -987,7 +1012,9 @@ export const VaultLoginForm: React.FC<Props> = memo(
                           }
                         }}
                         className="w-full rounded-[1.1rem] border border-card-border bg-card-bg pl-12 pr-24 py-4 text-base md:text-lg outline-none transition-all placeholder:text-text/25 focus:border-white/20 focus:bg-card-bg/80 dark:border-white/10 dark:bg-black/30 aria-[invalid=true]:border-red-500/50"
-                        aria-invalid={authMode === 'register' && vaultKey.length > 0 && !validVaultKey}
+                        aria-invalid={
+                          authMode === 'register' && vaultKey.length > 0 && !validVaultKey
+                        }
                         aria-describedby={
                           authMode === 'register' && vaultKey.length > 0 && !validVaultKey
                             ? 'master-key-error'
@@ -1106,7 +1133,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
         </Card>
       </motion.div>
     );
-  }
+  },
 );
 
 VaultLoginForm.displayName = 'VaultLoginForm';

@@ -33,7 +33,7 @@ export interface ActivityLogEntry {
  * @returns Saved activity log document
  */
 export const saveActivityLog = async (
-  entry: ActivityLogEntry
+  entry: ActivityLogEntry,
 ): Promise<ActivityLogDocument | null> => {
   try {
     const { userId, username, action, category, details = {} } = entry;
@@ -97,7 +97,7 @@ export const saveActivityLog = async (
         context: 'saveActivityLog',
         userId: entry.userId,
         action: entry.action,
-      }
+      },
     );
     throw error;
   }
@@ -154,7 +154,7 @@ export const getUserActivityLogs = async (
   username: string,
   limit = 100,
   skip = 0,
-  action?: ActivityAction
+  action?: ActivityAction,
 ): Promise<
   Array<{
     _id: string;
@@ -245,7 +245,7 @@ export const getActivityLogCount = async (userId: string, username: string): Pro
 export const getRecentActivityLogs = async (
   userId: string,
   username: string,
-  daysBack = 7
+  daysBack = 7,
 ): Promise<ActivityLogDocument[]> => {
   try {
     const cutoffDate = new Date();
@@ -271,7 +271,7 @@ export const getRecentActivityLogs = async (
         context: 'getRecentActivityLogs',
         userId,
         daysBack,
-      }
+      },
     );
     return [];
   }
@@ -289,7 +289,7 @@ export const getActivityLogsByAction = async (
   userId: string,
   username: string,
   action: ActivityAction,
-  limit = 100
+  limit = 100,
 ): Promise<ActivityLogDocument[]> => {
   try {
     const DynamicLogModel = getActivityLogModel(username);
@@ -312,7 +312,7 @@ export const getActivityLogsByAction = async (
         context: 'getActivityLogsByAction',
         userId,
         action,
-      }
+      },
     );
     return [];
   }
@@ -362,7 +362,7 @@ export const deleteUserActivityLogs = async (userId: string, username: string): 
         context: 'deleteUserActivityLogs',
         userId,
         deletedCount: result.deletedCount,
-      }
+      },
     );
 
     return result.deletedCount || 0;
@@ -383,7 +383,7 @@ export const deleteUserActivityLogs = async (userId: string, username: string): 
  */
 export const getSuspiciousActivity = async (
   userId: string,
-  username: string
+  username: string,
 ): Promise<ActivityLogDocument[]> => {
   try {
     const DynamicLogModel = getActivityLogModel(username);
@@ -421,7 +421,7 @@ export const getSuspiciousActivity = async (
       {
         context: 'getSuspiciousActivity',
         userId,
-      }
+      },
     );
     return [];
   }

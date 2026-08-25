@@ -352,7 +352,7 @@ export const ShortcutsCard: React.FC = () => {
 
   const handleCopyCheatSheet = useCallback(() => {
     const text = ALL_SHORTCUTS.map(
-      (sc) => `${sc.label}: [${sc.keys.join(' + ')}] - ${sc.description}`
+      (sc) => `${sc.label}: [${sc.keys.join(' + ')}] - ${sc.description}`,
     ).join('\n');
 
     if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {

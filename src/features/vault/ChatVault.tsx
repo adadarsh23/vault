@@ -65,7 +65,7 @@ export const ChatVault: React.FC = () => {
         removeItem: state.removeItem,
         togglePin: state.togglePin,
         pinningItemIds: state.pinningItemIds,
-      }))
+      })),
     );
 
   const [chatPayloads, setChatPayloads] = useState<Record<string, ChatConversation>>({});
@@ -180,7 +180,7 @@ export const ChatVault: React.FC = () => {
       }));
       markChatLoadSucceeded(item.id);
     },
-    [markChatLoadSucceeded, masterKey, updateItem]
+    [markChatLoadSucceeded, masterKey, updateItem],
   );
 
   const loadConversationForChat = useCallback(
@@ -195,17 +195,16 @@ export const ChatVault: React.FC = () => {
       if (!parsed && chatItem.metadata) {
         parsed = chatItem.metadata as any;
       }
-      const conversation =
-        toConversation(parsed) || {
-          participants: [username],
-          disappearingTimer: 'off',
-          messages: [],
-          updatedAt: Date.now(),
-        };
+      const conversation = toConversation(parsed) || {
+        participants: [username],
+        disappearingTimer: 'off',
+        messages: [],
+        updatedAt: Date.now(),
+      };
 
       return conversation;
     },
-    [masterKey, username]
+    [masterKey, username],
   );
 
   const loadChatById = useCallback(
@@ -246,14 +245,15 @@ export const ChatVault: React.FC = () => {
       loadingChatIds,
       markChatLoadFailed,
       markChatLoadSucceeded,
-    ]
+    ],
   );
 
   const loadNextChatBatch = useCallback(async () => {
-    if ((!masterKey && !useVaultStore.getState().isDecoyMode) || chatBatchInFlightRef.current) return;
+    if ((!masterKey && !useVaultStore.getState().isDecoyMode) || chatBatchInFlightRef.current)
+      return;
 
     const unloadedIndex = chats.findIndex(
-      (chatItem) => !chatPayloads[chatItem.id] && !failedChatIds.has(chatItem.id)
+      (chatItem) => !chatPayloads[chatItem.id] && !failedChatIds.has(chatItem.id),
     );
 
     if (unloadedIndex === -1) {
@@ -289,7 +289,7 @@ export const ChatVault: React.FC = () => {
           } catch (error) {
             markChatLoadFailed(chatItem.id, error, 'Failed to load this chat conversation');
           }
-        })
+        }),
       );
 
       setChatPayloads((previous) => ({
@@ -301,7 +301,7 @@ export const ChatVault: React.FC = () => {
         (c) =>
           !payloadEntries.some(([id]) => id === c.id) &&
           !chatPayloads[c.id] &&
-          !failedChatIds.has(c.id)
+          !failedChatIds.has(c.id),
       );
       setHasMoreChatPayloads(remainingUnloaded);
     } finally {
@@ -363,32 +363,32 @@ export const ChatVault: React.FC = () => {
 
   const visibleChats = useMemo(
     () => filteredChats.slice(0, visibleChatCount),
-    [filteredChats, visibleChatCount]
+    [filteredChats, visibleChatCount],
   );
 
   const hasMoreVisibleChats = visibleChatCount < filteredChats.length;
 
   const handleLoadMoreVisibleChats = useCallback(() => {
     setVisibleChatCount((previous) =>
-      Math.min(previous + CHAT_LIST_PAGE_SIZE, filteredChats.length)
+      Math.min(previous + CHAT_LIST_PAGE_SIZE, filteredChats.length),
     );
   }, [filteredChats.length]);
 
   const activeChatItem = useMemo(
     () => (activeChatId ? chatItemById.get(activeChatId) || null : null),
-    [activeChatId, chatItemById]
+    [activeChatId, chatItemById],
   );
 
   const activeConversation = useMemo(
     () => (activeChatId ? chatPayloads[activeChatId] || null : null),
-    [activeChatId, chatPayloads]
+    [activeChatId, chatPayloads],
   );
 
   useEffect(() => {
     if (!masterKey || !hasMoreChatPayloads || isLoadingChatBatch) return;
 
     const hasMissingPayload = visibleChats.some(
-      (chatItem) => !chatPayloads[chatItem.id] && !failedChatIds.has(chatItem.id)
+      (chatItem) => !chatPayloads[chatItem.id] && !failedChatIds.has(chatItem.id),
     );
     if (!hasMissingPayload) return;
 
@@ -599,7 +599,7 @@ export const ChatVault: React.FC = () => {
         toast.error(getErrorMessage(error, 'Failed to delete chat'));
       }
     },
-    [removeItem]
+    [removeItem],
   );
 
   const handleTogglePin = useCallback(
@@ -613,7 +613,7 @@ export const ChatVault: React.FC = () => {
         });
       }
     },
-    [togglePin]
+    [togglePin],
   );
 
   const handleSendMessage = useCallback(async () => {
@@ -666,7 +666,7 @@ export const ChatVault: React.FC = () => {
     const sentConversation: ChatConversation = {
       ...nextConversation,
       messages: nextConversation.messages.map((entry) =>
-        entry.id === message.id ? { ...entry, status: 'sent' } : entry
+        entry.id === message.id ? { ...entry, status: 'sent' } : entry,
       ),
     };
 
@@ -696,7 +696,7 @@ export const ChatVault: React.FC = () => {
           [activeChatItem.id]: {
             ...currentConversation,
             messages: currentConversation.messages.map((entry) =>
-              entry.id === message.id ? { ...entry, status: 'failed' } : entry
+              entry.id === message.id ? { ...entry, status: 'failed' } : entry,
             ),
           },
         };
@@ -739,7 +739,7 @@ export const ChatVault: React.FC = () => {
         toast.error(getErrorMessage(error, 'Failed to update timer'));
       }
     },
-    [activeChatItem, activeConversation, persistConversation]
+    [activeChatItem, activeConversation, persistConversation],
   );
 
   const handleToggleReaction = useCallback(
@@ -796,7 +796,7 @@ export const ChatVault: React.FC = () => {
         setBusyMessageId(null);
       }
     },
-    [activeChatItem, activeConversation, busyMessageId, persistConversation, username]
+    [activeChatItem, activeConversation, busyMessageId, persistConversation, username],
   );
 
   const attachmentList = useMemo(() => {
@@ -827,7 +827,7 @@ export const ChatVault: React.FC = () => {
 
       void loadChatById(chatId);
     },
-    [loadChatById]
+    [loadChatById],
   );
 
   return (

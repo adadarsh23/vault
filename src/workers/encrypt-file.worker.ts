@@ -102,7 +102,7 @@ const parseRequest = (data: unknown): EncryptFileWorkerRequest => {
 const postFailure = (
   requestId: string | undefined,
   code: EncryptFileWorkerErrorCode,
-  error: string
+  error: string,
 ) => {
   const payload: EncryptFileWorkerResponseFailure = {
     ok: false,
@@ -145,7 +145,7 @@ workerScope.onmessage = async (event: MessageEvent<unknown>) => {
     if (!crypto?.subtle?.encrypt || !crypto?.subtle?.importKey) {
       throw new WorkerProtocolError(
         'UNSUPPORTED_CRYPTO',
-        'WebCrypto AES-GCM APIs are unavailable in this environment.'
+        'WebCrypto AES-GCM APIs are unavailable in this environment.',
       );
     }
 
@@ -160,7 +160,7 @@ workerScope.onmessage = async (event: MessageEvent<unknown>) => {
       if (keyBuf.length !== KEY_BYTE_LENGTH) {
         throw new WorkerProtocolError(
           'INVALID_SECRET_KEY',
-          `Invalid key length: expected ${KEY_BYTE_LENGTH} bytes.`
+          `Invalid key length: expected ${KEY_BYTE_LENGTH} bytes.`,
         );
       }
 
@@ -184,7 +184,7 @@ workerScope.onmessage = async (event: MessageEvent<unknown>) => {
       dekAesBytes,
       { name: 'AES-GCM' },
       false,
-      ['encrypt']
+      ['encrypt'],
     );
 
     // 3. Layer 1 (Inner): Encrypt File Buffer with AES-256-GCM
@@ -196,7 +196,7 @@ workerScope.onmessage = async (event: MessageEvent<unknown>) => {
         additionalData: Uint8Array.from(AES_GCM_AAD),
       },
       dekCryptoKey,
-      fileBuffer
+      fileBuffer,
     );
     const aesCipherBytes = new Uint8Array(fileAesCiphertext);
 
@@ -208,7 +208,7 @@ workerScope.onmessage = async (event: MessageEvent<unknown>) => {
       CHACHA_AAD,
       null,
       fileChaChaNonce,
-      dekChaChaBytes
+      dekChaChaBytes,
     );
 
     // Shred intermediate AES ciphertext
@@ -223,7 +223,7 @@ workerScope.onmessage = async (event: MessageEvent<unknown>) => {
         additionalData: Uint8Array.from(CASCADE_DEK_AAD),
       },
       kekCryptoKey,
-      dekBytes.buffer
+      dekBytes.buffer,
     );
 
     // Secure zero-out DEK buffer
@@ -239,7 +239,7 @@ workerScope.onmessage = async (event: MessageEvent<unknown>) => {
         encDekBytes.length +
         fileAesIv.length +
         fileChaChaNonce.length +
-        encFileBytes.length
+        encFileBytes.length,
     );
     let offset = 0;
     bundle.set(ENVELOPE_MAGIC_CASCADE, offset);

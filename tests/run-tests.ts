@@ -32,7 +32,7 @@ addTest('master Key check validates the correct key and rejects the wrong key', 
   const wrongKey = await deriveKey('WrongKey123!', 'alice-vault-pqc-salt');
   const payload = await createVaultKeyCheckPayload(
     correctKey,
-    new Date('2026-03-22T00:00:00.000Z')
+    new Date('2026-03-22T00:00:00.000Z'),
   );
 
   assert.equal(await validateVaultKeyCheckPayload(payload, correctKey), true);
@@ -101,7 +101,7 @@ addTest(
 
     const rotated = await reencryptVaultItemContent(item, oldKey, newKey);
     assert.notEqual(rotated, encrypted);
-  }
+  },
 );
 
 addTest(
@@ -128,10 +128,10 @@ addTest(
       assert.ok(err instanceof Error);
       assert.ok(
         err.message.includes('Integrity check failed') || err.message.includes('Note 3'),
-        `Unexpected message: ${err.message}`
+        `Unexpected message: ${err.message}`,
       );
     }
-  }
+  },
 );
 
 // ---------------------------------------------------------------------------
@@ -187,12 +187,12 @@ addTest(
       'raw',
       new Uint8Array(
         Array.from(atob((newKey as string).replace(/-/g, '+').replace(/_/g, '/')), (c) =>
-          c.charCodeAt(0)
-        )
+          c.charCodeAt(0),
+        ),
       ).buffer,
       { name: 'AES-GCM' },
       false,
-      ['decrypt']
+      ['decrypt'],
     );
     const iv = (rotated as Uint8Array).slice(0, 12);
     const data = (rotated as Uint8Array).slice(12);
@@ -204,11 +204,11 @@ addTest(
           additionalData: AES_GCM_AAD.buffer,
         },
         newCryptoKey,
-        new Uint8Array(data).buffer
-      )
+        new Uint8Array(data).buffer,
+      ),
     );
     assert.deepEqual(decrypted, rawBytes);
-  }
+  },
 );
 
 addTest('reencryptVaultItemContent throws for invalid content format', async () => {
@@ -232,7 +232,7 @@ addTest('reencryptVaultItemContent throws for invalid content format', async () 
     assert.ok(err instanceof Error);
     assert.ok(
       err.message.includes('Invalid content format') || err.message.includes('bad item'),
-      `Unexpected message: ${err.message}`
+      `Unexpected message: ${err.message}`,
     );
   }
 });

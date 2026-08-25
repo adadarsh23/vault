@@ -193,7 +193,7 @@ export const getNodePixelPosition = (
   node: NodePosition,
   graphSize: GraphSize,
   dims: NodeDimensions,
-  padding = 0
+  padding = 0,
 ) => {
   const safeWidth = Math.max(graphSize.width - dims.width - padding * 2, 1);
   const safeHeight = Math.max(graphSize.height - dims.height - padding * 2, 1);
@@ -209,7 +209,7 @@ export const getNodeEdgeAnchors = (
   to: NodePosition,
   graphSize: GraphSize,
   dims: NodeDimensions,
-  padding: number
+  padding: number,
 ) => {
   const fromPos = getNodePixelPosition(from, graphSize, dims, padding);
   const toPos = getNodePixelPosition(to, graphSize, dims, padding);
@@ -282,11 +282,11 @@ export const getNodeEdgeAnchors = (
 
 export const createNodes = (
   itemCount: number,
-  categoryStats: VaultCategoryStats
+  categoryStats: VaultCategoryStats,
 ): DiagramNode[] => {
   const totalByStats = Object.values(categoryStats).reduce((sum, value) => sum + value, 0);
   const activeTypes = (Object.keys(categoryStats) as Array<keyof VaultCategoryStats>).filter(
-    (key) => categoryStats[key] > 0
+    (key) => categoryStats[key] > 0,
   );
   const dominantType = activeTypes.sort((a, b) => categoryStats[b] - categoryStats[a])[0];
 

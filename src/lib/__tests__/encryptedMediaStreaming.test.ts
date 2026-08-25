@@ -14,7 +14,7 @@ describe('Encrypted Media Streaming & TUS Upload Pipeline', () => {
 
   it('should initialize TransformStream for chunk-by-chunk stream decryption', async () => {
     const rawData = new TextEncoder().encode(
-      'Hello world, testing encrypted streaming video/audio chunks!'
+      'Hello world, testing encrypted streaming video/audio chunks!',
     );
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {

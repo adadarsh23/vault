@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 
 const args = process.argv.slice(2);
 const viteArgs = ['build'];
@@ -26,13 +27,27 @@ const env = {
   ...envOverrides,
 };
 
-const isWin = process.platform === 'win32';
-const npxCmd = isWin ? 'npx.cmd' : 'npx';
+const root = process.cwd();
+const localViteBin = path.join(root, 'node_modules', 'vite', 'bin', 'vite.js');
 
-const result = spawnSync(npxCmd, ['vite', ...viteArgs], {
+let command = process.execPath;
+let commandArgs = [localViteBin, ...viteArgs];
+
+if (!existsSync(localViteBin)) {
+  const isWin = process.platform === 'win32';
+  if (isWin) {
+    command = 'cmd.exe';
+    commandArgs = ['/d', '/s', '/c', 'npx', 'vite', ...viteArgs];
+  } else {
+    command = 'npx';
+    commandArgs = ['vite', ...viteArgs];
+  }
+}
+
+const result = spawnSync(command, commandArgs, {
   stdio: 'inherit',
   env,
-  shell: isWin,
+  shell: false,
 });
 
-process.exit(result.status ?? 1);
+process.exit(result.status ?? (result.error ? 1 : 0));

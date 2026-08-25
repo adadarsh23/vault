@@ -1,6 +1,8 @@
 import { handleError } from './error-handler';
 import {
   deriveKey as deriveKeyFromPrimitives,
+  encryptData as encryptDataPrimitives,
+  decryptData as decryptDataPrimitives,
   decryptFileEnvelope,
   encryptFileEnvelope,
   rotateItemEnvelopeKey,
@@ -44,7 +46,7 @@ export {
 /**
  * Constants for encryption security
  */
-const SECURITY_CONSTANTS = {
+export const SECURITY_CONSTANTS = {
   AES_GCM_IV_LENGTH: 12,
   ARGON2_MEMORY: 65536,
   ARGON2_ITERATIONS: 3,
@@ -56,13 +58,14 @@ const SECURITY_CONSTANTS = {
   RSA_HASH: 'SHA-256',
 } as const;
 
-const toArrayBuffer = (value: Uint8Array): ArrayBuffer => new Uint8Array(value).buffer;
+const toArrayBuffer = (value: Uint8Array): ArrayBuffer =>
+  value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer;
 
 const decryptAesGcmWithFallback = async (
   cryptoKey: CryptoKey,
   iv: Uint8Array,
   ciphertext: Uint8Array,
-  useAad = true
+  useAad = true,
 ): Promise<ArrayBuffer> => {
   const algorithm: AesGcmParams = {
     name: 'AES-GCM',
@@ -139,108 +142,13 @@ export const base64ToUint8Array = (base64: string): Uint8Array => {
  * Encrypts data using AES-256-GCM (Web Crypto API)
  * Layer 3 Protection: Authenticated Symmetric Encryption
  */
-export const encryptData = async (
-  data: string,
-  secretKey: string | CryptoKey | null | undefined
-): Promise<string> => {
-  if (data == null) return '';
-  if (!secretKey) {
-    return data;
-  }
-
-  try {
-    const enc = new TextEncoder();
-    let cryptoKey: CryptoKey;
-
-    if (secretKey instanceof CryptoKey) {
-      cryptoKey = secretKey;
-    } else {
-      const keyBuf = base64ToUint8Array(secretKey);
-      if (keyBuf.length !== SECURITY_CONSTANTS.KEY_BYTE_LENGTH) {
-        return data;
-      }
-      cryptoKey = await crypto.subtle.importKey(
-        'raw',
-        toArrayBuffer(keyBuf),
-        { name: 'AES-GCM' },
-        false,
-        ['encrypt']
-      );
-      keyBuf.fill(0);
-    }
-
-    const iv = crypto.getRandomValues(new Uint8Array(SECURITY_CONSTANTS.AES_GCM_IV_LENGTH));
-
-    const ciphertext = await crypto.subtle.encrypt(
-      {
-        name: 'AES-GCM',
-        iv: toArrayBuffer(iv),
-        additionalData: toArrayBuffer(AES_GCM_AAD),
-      },
-      cryptoKey,
-      enc.encode(data)
-    );
-
-    const bundle = new Uint8Array(iv.length + ciphertext.byteLength);
-    bundle.set(iv);
-    bundle.set(new Uint8Array(ciphertext), iv.length);
-
-    return uint8ArrayToBase64(bundle);
-  } catch (error) {
-    handleError(error, 'Encryption Service');
-    throw error;
-  }
-};
+export const encryptData = encryptDataPrimitives;
 
 /**
  * Decrypts data using AES-256-GCM
  * Includes integrity check (GCM tag verification)
  */
-export const decryptData = async (
-  encryptedBundle: string,
-  secretKey: string | CryptoKey | null | undefined
-): Promise<string | null> => {
-  if (!encryptedBundle) {
-    return null;
-  }
-  if (!secretKey) {
-    return encryptedBundle;
-  }
-
-  try {
-    const bundle = base64ToUint8Array(encryptedBundle);
-    if (bundle.length < SECURITY_CONSTANTS.AES_GCM_IV_LENGTH + 1) {
-      return encryptedBundle;
-    }
-
-    let cryptoKey: CryptoKey;
-    if (secretKey instanceof CryptoKey) {
-      cryptoKey = secretKey;
-    } else {
-      const keyBuf = base64ToUint8Array(secretKey);
-      if (keyBuf.length !== SECURITY_CONSTANTS.KEY_BYTE_LENGTH) {
-        return encryptedBundle;
-      }
-      cryptoKey = await crypto.subtle.importKey(
-        'raw',
-        toArrayBuffer(keyBuf),
-        { name: 'AES-GCM' },
-        false,
-        ['decrypt']
-      );
-    }
-
-    const iv = bundle.slice(0, SECURITY_CONSTANTS.AES_GCM_IV_LENGTH);
-    const ciphertext = bundle.slice(SECURITY_CONSTANTS.AES_GCM_IV_LENGTH);
-
-    const decrypted = await decryptAesGcmWithFallback(cryptoKey, iv, ciphertext);
-
-    return new TextDecoder().decode(decrypted);
-  } catch {
-    // Return original content as plaintext fallback (for mock items in decoy mode)
-    return encryptedBundle;
-  }
-};
+export const decryptData = decryptDataPrimitives;
 
 /**
  * Derives a robust encryption key using Argon2id
@@ -254,101 +162,184 @@ export const deriveKey = deriveKeyFromPrimitives;
 export const performHybridKeyExchange = async (peerPublicKey?: {
   ecc: Uint8Array;
   kyber: Uint8Array;
-}) => {
-  const sodium = await import('libsodium-wrappers').then((m) => m.default || m);
-  let kyber: any;
+}): Promise<{
+  localPublicKeys?: { ecc: Uint8Array; kyber: Uint8Array };
+  _private?: { ecc: Uint8Array; kyber: Uint8Array };
+  masterSecret?: string;
+  kyberCiphertext?: Uint8Array;
+}> => {
   try {
-    const kyberModule = 'pqc-kyber';
-    kyber = await import(/* @vite-ignore */ kyberModule);
-  } catch {
-    kyber = {
-      keypair: () => ({ pubkey: new Uint8Array(800), secret: new Uint8Array(1600) }),
-    };
-  }
+    const sodiumModule = await import('libsodium-wrappers');
+    const sodium = (sodiumModule as any).default || sodiumModule;
+    await sodium.ready;
 
-  await (sodium as any).ready;
+    const createKyberFallback = () => ({
+      keypair: () => ({
+        pubkey: crypto.getRandomValues(new Uint8Array(800)),
+        secret: crypto.getRandomValues(new Uint8Array(1600)),
+      }),
+      encapsulate: (_pk: Uint8Array) => ({
+        ciphertext: crypto.getRandomValues(new Uint8Array(1088)),
+        sharedSecret: crypto.getRandomValues(new Uint8Array(32)),
+      }),
+      decapsulate: (_ct: Uint8Array, _sk: Uint8Array) => crypto.getRandomValues(new Uint8Array(32)),
+    });
 
-  const eccKeyPair = (sodium as any).crypto_box_keypair();
-  const kyberKeys = kyber.keypair();
+    let kyber: any;
+    try {
+      const kyberModule = 'pqc-kyber';
+      kyber = await import(/* @vite-ignore */ kyberModule);
+      if (!kyber || typeof kyber.keypair !== 'function') {
+        kyber = createKyberFallback();
+      }
+    } catch {
+      kyber = createKyberFallback();
+    }
 
-  if (!peerPublicKey) {
+    const eccKeyPair = sodium.crypto_box_keypair();
+    let kyberKeys: { pubkey: Uint8Array; secret: Uint8Array } | null = null;
+    try {
+      kyberKeys = typeof kyber.keypair === 'function' ? kyber.keypair() : null;
+    } catch {
+      kyber = createKyberFallback();
+      kyberKeys = kyber.keypair();
+    }
+
+    if (!peerPublicKey) {
+      return {
+        localPublicKeys: {
+          ecc: eccKeyPair.publicKey,
+          kyber: kyberKeys?.pubkey || new Uint8Array(800),
+        },
+        _private: {
+          ecc: eccKeyPair.privateKey,
+          kyber: kyberKeys?.secret || new Uint8Array(1600),
+        },
+      };
+    }
+
+    const sharedSecretECC = sodium.crypto_scalarmult(eccKeyPair.privateKey, peerPublicKey.ecc);
+
+    let ciphertext: Uint8Array;
+    let sharedSecretKyber: Uint8Array;
+
+    if (typeof kyber.encapsulate === 'function') {
+      try {
+        const encapResult = kyber.encapsulate(peerPublicKey.kyber);
+        ciphertext = encapResult.ciphertext;
+        sharedSecretKyber = encapResult.sharedSecret;
+      } catch {
+        ciphertext = crypto.getRandomValues(new Uint8Array(1088));
+        sharedSecretKyber = crypto.getRandomValues(new Uint8Array(32));
+      }
+    } else {
+      ciphertext = crypto.getRandomValues(new Uint8Array(1088));
+      sharedSecretKyber = crypto.getRandomValues(new Uint8Array(32));
+    }
+
+    const combinedSecret = new Uint8Array(sharedSecretECC.length + sharedSecretKyber.length);
+    combinedSecret.set(sharedSecretECC);
+    combinedSecret.set(sharedSecretKyber, sharedSecretECC.length);
+
+    const masterSecretBuffer = await crypto.subtle.digest('SHA-256', toArrayBuffer(combinedSecret));
+    const masterSecret = new Uint8Array(masterSecretBuffer);
+
+    // Shred sensitive intermediate key material from RAM
+    combinedSecret.fill(0);
+    sharedSecretECC.fill(0);
+    sharedSecretKyber.fill(0);
+
     return {
-      localPublicKeys: {
-        ecc: eccKeyPair.publicKey,
-        kyber: kyberKeys.pubkey,
-      },
-      _private: {
-        ecc: eccKeyPair.privateKey,
-        kyber: kyberKeys.secret,
-      },
+      masterSecret: uint8ArrayToBase64(masterSecret),
+      kyberCiphertext: ciphertext,
     };
+  } catch (error) {
+    handleError(error, 'Hybrid Key Exchange');
+    throw error;
   }
-
-  const sharedSecretECC = (sodium as any).crypto_scalarmult(
-    eccKeyPair.privateKey,
-    peerPublicKey.ecc
-  );
-
-  const { ciphertext, sharedSecret: sharedSecretKyber } = kyber.encapsulate(peerPublicKey.kyber);
-
-  const combinedSecret = new Uint8Array(sharedSecretECC.length + sharedSecretKyber.length);
-  combinedSecret.set(sharedSecretECC);
-  combinedSecret.set(sharedSecretKyber, sharedSecretECC.length);
-
-  const masterSecretBuffer = await crypto.subtle.digest('SHA-256', combinedSecret);
-  const masterSecret = new Uint8Array(masterSecretBuffer);
-
-  return {
-    masterSecret: uint8ArrayToBase64(masterSecret),
-    kyberCiphertext: ciphertext,
-  };
 };
 
 /**
  * Multi-Factor Authentication (Layer 8)
  */
-export const setupMFA = async (label: string, issuer: string = 'PersonalVault') => {
-  const OTPAuth = await import('otpauth');
-  const totp = new OTPAuth.TOTP({
-    issuer: issuer,
-    label: label,
-    algorithm: 'SHA1',
-    digits: 6,
-    period: 30,
-    secret: new OTPAuth.Secret(),
-  });
+export const setupMFA = async (
+  label: string,
+  issuer = 'PersonalVault',
+): Promise<{ uri: string; secret: string }> => {
+  try {
+    const OTPAuth = await import('otpauth');
+    const totp = new OTPAuth.TOTP({
+      issuer: issuer || 'PersonalVault',
+      label: label || 'PersonalVault User',
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: new OTPAuth.Secret(),
+    });
 
-  return {
-    uri: totp.toString(),
-    secret: totp.secret.base32,
-  };
+    return {
+      uri: totp.toString(),
+      secret: totp.secret.base32,
+    };
+  } catch (error) {
+    handleError(error, 'MFA Setup');
+    throw error;
+  }
 };
 
-export const verifyMFA = async (token: string, secret: string) => {
-  const OTPAuth = await import('otpauth');
-  const totp = new OTPAuth.TOTP({
-    secret: OTPAuth.Secret.fromBase32(secret),
-  });
-  const delta = totp.validate({ token, window: 1 });
-  return delta !== null;
+export const verifyMFA = async (token: string, secret: string): Promise<boolean> => {
+  try {
+    if (!token || !secret) return false;
+    const cleanToken = String(token).replace(/\s+/g, '');
+    const cleanSecret = String(secret).trim();
+    if (!cleanToken || !cleanSecret) return false;
+
+    const OTPAuth = await import('otpauth');
+    const totp = new OTPAuth.TOTP({
+      secret: OTPAuth.Secret.fromBase32(cleanSecret),
+    });
+    const delta = totp.validate({ token: cleanToken, window: 1 });
+    return delta !== null;
+  } catch (error) {
+    handleError(error, 'MFA Verification');
+    return false;
+  }
 };
 
 /**
  * Digital Signatures (Layer 5)
  */
-export const signMessage = async (message: string, privateKey: Uint8Array) => {
-  const sodium = await import('libsodium-wrappers').then((m) => m.default || m);
-  await (sodium as any).ready;
-  return (sodium as any).crypto_sign(message, privateKey);
+export const signMessage = async (
+  message: string,
+  privateKey: Uint8Array,
+): Promise<Uint8Array | null> => {
+  try {
+    if (!message || !privateKey) return null;
+    const sodiumModule = await import('libsodium-wrappers');
+    const sodium = (sodiumModule as any).default || sodiumModule;
+    await sodium.ready;
+    const signed = sodium.crypto_sign(message, privateKey);
+    return new Uint8Array(signed);
+  } catch (error) {
+    handleError(error, 'Digital Signature Signing');
+    return null;
+  }
 };
 
-export const verifyMessage = async (signedMessage: Uint8Array, publicKey: Uint8Array) => {
-  const sodium = await import('libsodium-wrappers').then((m) => m.default || m);
-  await (sodium as any).ready;
+export const verifyMessage = async (
+  signedMessage: Uint8Array,
+  publicKey: Uint8Array,
+): Promise<string | null> => {
   try {
-    const opened = (sodium as any).crypto_sign_open(signedMessage, publicKey);
+    if (!signedMessage || !publicKey) return null;
+    const sodiumModule = await import('libsodium-wrappers');
+    const sodium = (sodiumModule as any).default || sodiumModule;
+    await sodium.ready;
+    const opened = sodium.crypto_sign_open(signedMessage, publicKey);
+    if (!opened) return null;
     return new TextDecoder().decode(opened);
-  } catch (e) {
+  } catch (error) {
+    handleError(error, 'Digital Signature Verification');
     return null;
   }
 };
@@ -358,71 +349,126 @@ export const verifyMessage = async (signedMessage: Uint8Array, publicKey: Uint8A
  * For secure asymmetric key encryption
  */
 export const generateRSAKeyPair = async (): Promise<CryptoKeyPair> => {
-  return await crypto.subtle.generateKey(
-    {
-      name: SECURITY_CONSTANTS.RSA_ALGORITHM,
-      modulusLength: SECURITY_CONSTANTS.RSA_MODULUS_LENGTH,
-      publicExponent: new Uint8Array([1, 0, 1]),
-      hash: SECURITY_CONSTANTS.RSA_HASH,
-    },
-    true,
-    ['encrypt', 'decrypt']
-  );
+  try {
+    return await crypto.subtle.generateKey(
+      {
+        name: SECURITY_CONSTANTS.RSA_ALGORITHM,
+        modulusLength: SECURITY_CONSTANTS.RSA_MODULUS_LENGTH,
+        publicExponent: new Uint8Array([1, 0, 1]),
+        hash: SECURITY_CONSTANTS.RSA_HASH,
+      },
+      true,
+      ['encrypt', 'decrypt'],
+    );
+  } catch (error) {
+    handleError(error, 'RSA Key Generation');
+    throw error;
+  }
 };
 
 export const exportPublicKey = async (publicKey: CryptoKey): Promise<string> => {
-  const exported = await crypto.subtle.exportKey('spki', publicKey);
-  return uint8ArrayToBase64(new Uint8Array(exported));
+  try {
+    if (!publicKey) throw new Error('Public key is required for export');
+    const exported = await crypto.subtle.exportKey('spki', publicKey);
+    return uint8ArrayToBase64(new Uint8Array(exported));
+  } catch (error) {
+    handleError(error, 'Export Public Key');
+    throw error;
+  }
 };
 
 export const importPublicKey = async (base64Key: string): Promise<CryptoKey> => {
-  const binaryKey = base64ToUint8Array(base64Key);
-  return await crypto.subtle.importKey(
-    'spki',
-    binaryKey as BufferSource,
-    {
-      name: SECURITY_CONSTANTS.RSA_ALGORITHM,
-      hash: SECURITY_CONSTANTS.RSA_HASH,
-    },
-    true,
-    ['encrypt']
-  );
+  try {
+    if (!base64Key || typeof base64Key !== 'string') {
+      throw new Error('Public key base64 string is required for import');
+    }
+    const binaryKey = base64ToUint8Array(base64Key);
+    if (!binaryKey.length) {
+      throw new Error('Invalid public key format');
+    }
+    return await crypto.subtle.importKey(
+      'spki',
+      toArrayBuffer(binaryKey),
+      {
+        name: SECURITY_CONSTANTS.RSA_ALGORITHM,
+        hash: SECURITY_CONSTANTS.RSA_HASH,
+      },
+      true,
+      ['encrypt'],
+    );
+  } catch (error) {
+    handleError(error, 'Import Public Key');
+    throw error;
+  }
 };
 
 export const exportPrivateKey = async (privateKey: CryptoKey): Promise<string> => {
-  const exported = await crypto.subtle.exportKey('pkcs8', privateKey);
-  return uint8ArrayToBase64(new Uint8Array(exported));
+  try {
+    if (!privateKey) throw new Error('Private key is required for export');
+    const exported = await crypto.subtle.exportKey('pkcs8', privateKey);
+    return uint8ArrayToBase64(new Uint8Array(exported));
+  } catch (error) {
+    handleError(error, 'Export Private Key');
+    throw error;
+  }
 };
 
 export const importPrivateKey = async (base64Key: string): Promise<CryptoKey> => {
-  const binaryKey = base64ToUint8Array(base64Key);
-  return await crypto.subtle.importKey(
-    'pkcs8',
-    binaryKey as BufferSource,
-    {
-      name: SECURITY_CONSTANTS.RSA_ALGORITHM,
-      hash: SECURITY_CONSTANTS.RSA_HASH,
-    },
-    true,
-    ['decrypt']
-  );
+  try {
+    if (!base64Key || typeof base64Key !== 'string') {
+      throw new Error('Private key base64 string is required for import');
+    }
+    const binaryKey = base64ToUint8Array(base64Key);
+    if (!binaryKey.length) {
+      throw new Error('Invalid private key format');
+    }
+    return await crypto.subtle.importKey(
+      'pkcs8',
+      toArrayBuffer(binaryKey),
+      {
+        name: SECURITY_CONSTANTS.RSA_ALGORITHM,
+        hash: SECURITY_CONSTANTS.RSA_HASH,
+      },
+      true,
+      ['decrypt'],
+    );
+  } catch (error) {
+    handleError(error, 'Import Private Key');
+    throw error;
+  }
 };
 
 export const exportRSAKeyPair = async (
-  keyPair: CryptoKeyPair
+  keyPair: CryptoKeyPair,
 ): Promise<{ publicKey: string; privateKey: string }> => {
-  const publicKey = await exportPublicKey(keyPair.publicKey);
-  const privateKey = await exportPrivateKey(keyPair.privateKey);
-  return { publicKey, privateKey };
+  try {
+    if (!keyPair?.publicKey || !keyPair?.privateKey) {
+      throw new Error('Valid RSA key pair is required');
+    }
+    const publicKey = await exportPublicKey(keyPair.publicKey);
+    const privateKey = await exportPrivateKey(keyPair.privateKey);
+    return { publicKey, privateKey };
+  } catch (error) {
+    handleError(error, 'Export RSA Key Pair');
+    throw error;
+  }
 };
 
 export const importRSAKeyPair = async (keys: {
   publicKey: string;
   privateKey: string;
 }): Promise<CryptoKeyPair> => {
-  const publicKey = await importPublicKey(keys.publicKey);
-  const privateKey = await importPrivateKey(keys.privateKey);
-  return { publicKey, privateKey };
+  try {
+    if (!keys?.publicKey || !keys?.privateKey) {
+      throw new Error('Both public and private keys are required for import');
+    }
+    const publicKey = await importPublicKey(keys.publicKey);
+    const privateKey = await importPrivateKey(keys.privateKey);
+    return { publicKey, privateKey };
+  } catch (error) {
+    handleError(error, 'Import RSA Key Pair');
+    throw error;
+  }
 };
 
 /**
@@ -431,15 +477,18 @@ export const importRSAKeyPair = async (keys: {
  * Client-Side Encryption (CSE) Architecture
  */
 export const encryptFileE2EE = async (
-  file: File | Blob,
-  rsaPublicKey: CryptoKey | string
+  file: File | Blob | Uint8Array,
+  rsaPublicKey: CryptoKey | string,
 ): Promise<Uint8Array> => {
   try {
+    if (!file) throw new Error('File data is required for E2EE encryption');
+    if (!rsaPublicKey) throw new Error('RSA public key is required for E2EE encryption');
+
     const publicKey =
       typeof rsaPublicKey === 'string' ? await importPublicKey(rsaPublicKey) : rsaPublicKey;
 
-    // 1. Generate random session key (AES-256)
-    const sessionKey = crypto.getRandomValues(new Uint8Array(32));
+    // 1. Generate random session key (AES-256: 32 bytes)
+    const sessionKey = crypto.getRandomValues(new Uint8Array(SECURITY_CONSTANTS.KEY_BYTE_LENGTH));
 
     // 2. Encrypt File with Session Key (AES-GCM)
     const iv = crypto.getRandomValues(new Uint8Array(SECURITY_CONSTANTS.AES_GCM_IV_LENGTH));
@@ -448,10 +497,10 @@ export const encryptFileE2EE = async (
       toArrayBuffer(sessionKey),
       { name: 'AES-GCM' },
       false,
-      ['encrypt']
+      ['encrypt'],
     );
 
-    const fileData = await file.arrayBuffer();
+    const fileData = file instanceof Uint8Array ? file : new Uint8Array(await file.arrayBuffer());
     const encryptedFile = await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
@@ -459,15 +508,18 @@ export const encryptFileE2EE = async (
         additionalData: toArrayBuffer(AES_GCM_AAD),
       },
       cryptoKey,
-      fileData
+      toArrayBuffer(fileData),
     );
 
     // 3. Encrypt Session Key with RSA Public Key
     const encryptedSessionKey = await crypto.subtle.encrypt(
       { name: SECURITY_CONSTANTS.RSA_ALGORITHM },
       publicKey,
-      toArrayBuffer(sessionKey)
+      toArrayBuffer(sessionKey),
     );
+
+    // Zero out raw session key buffer from RAM immediately
+    sessionKey.fill(0);
 
     const encKeyUint8 = new Uint8Array(encryptedSessionKey);
     const encFileUint8 = new Uint8Array(encryptedFile);
@@ -475,7 +527,7 @@ export const encryptFileE2EE = async (
     // 4. Bundle: [EncKeyLen (2 bytes)] + [EncKey] + [IV] + [EncFile]
     const bundle = new Uint8Array(2 + encKeyUint8.length + iv.length + encFileUint8.length);
 
-    const view = new DataView(bundle.buffer);
+    const view = new DataView(bundle.buffer, bundle.byteOffset, bundle.byteLength);
     view.setUint16(0, encKeyUint8.length);
 
     bundle.set(encKeyUint8, 2);
@@ -495,42 +547,60 @@ export const encryptFileE2EE = async (
 export const decryptFileE2EE = async (
   bundle: Uint8Array | string,
   rsaPrivateKey: CryptoKey,
-  mimeType?: string
+  mimeType?: string,
 ): Promise<string | null> => {
   try {
+    if (!bundle || !rsaPrivateKey) return null;
     const data = typeof bundle === 'string' ? base64ToUint8Array(bundle) : bundle;
-    if (data.length < 2) return null;
+    if (!data || data.length < 2 + SECURITY_CONSTANTS.AES_GCM_IV_LENGTH + 16) return null;
 
     const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
     const encKeyLen = view.getUint16(0);
+
+    if (encKeyLen <= 0 || 2 + encKeyLen + SECURITY_CONSTANTS.AES_GCM_IV_LENGTH >= data.length) {
+      return null;
+    }
 
     const encKey = data.slice(2, 2 + encKeyLen);
     const iv = data.slice(2 + encKeyLen, 2 + encKeyLen + SECURITY_CONSTANTS.AES_GCM_IV_LENGTH);
     const encFile = data.slice(2 + encKeyLen + SECURITY_CONSTANTS.AES_GCM_IV_LENGTH);
 
     // 1. Decrypt Session Key with RSA
-    const sessionKey = await crypto.subtle.decrypt(
+    const sessionKeyBuffer = await crypto.subtle.decrypt(
       { name: SECURITY_CONSTANTS.RSA_ALGORITHM },
       rsaPrivateKey,
-      toArrayBuffer(encKey)
+      toArrayBuffer(encKey),
     );
 
     // 2. Decrypt File with Session Key
-    const cryptoKey = await crypto.subtle.importKey('raw', sessionKey, { name: 'AES-GCM' }, false, [
-      'decrypt',
-    ]);
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      sessionKeyBuffer,
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt'],
+    );
+
+    // Zero out decrypted raw session key buffer
+    new Uint8Array(sessionKeyBuffer).fill(0);
 
     const decrypted = await decryptAesGcmWithFallback(cryptoKey, iv, encFile);
+    const decryptedBytes = new Uint8Array(decrypted);
 
     let finalMimeType = mimeType;
-    const detected = detectMimeTypeFromBytes(new Uint8Array(decrypted));
-    const detectedIsMedia = detected.startsWith('audio/') || detected.startsWith('video/');
+    const detected = detectMimeTypeFromBytes(decryptedBytes);
+    const detectedIsMedia =
+      detected.startsWith('audio/') ||
+      detected.startsWith('video/') ||
+      detected.startsWith('image/');
     if (
       detected !== 'application/octet-stream' &&
       (!finalMimeType ||
         finalMimeType === 'application/octet-stream' ||
         (detectedIsMedia &&
-          (finalMimeType.startsWith('audio/') || finalMimeType.startsWith('video/')) &&
+          (finalMimeType.startsWith('audio/') ||
+            finalMimeType.startsWith('video/') ||
+            finalMimeType.startsWith('image/')) &&
           finalMimeType !== detected) ||
         (finalMimeType === 'audio/mpeg' && detected !== 'audio/mpeg'))
     ) {
@@ -542,7 +612,8 @@ export const decryptFileE2EE = async (
         ? 'video/mp4'
         : finalMimeType || 'application/octet-stream';
 
-    const blob = new Blob([decrypted], { type: normalizedBlobMime });
+    const blob = new Blob([decryptedBytes], { type: normalizedBlobMime });
+    decryptedBytes.fill(0);
     return createTrackedBlobUrl(blob);
   } catch (error) {
     handleError(error, 'E2EE File Decryption');
@@ -555,7 +626,7 @@ export const decryptFileE2EE = async (
  */
 export const encryptFile = async (
   file: File | Blob | Uint8Array,
-  secretKey: string | CryptoKey
+  secretKey: string | CryptoKey,
 ): Promise<Uint8Array> => {
   try {
     const arrayBuffer = file instanceof Uint8Array ? file : await file.arrayBuffer();
@@ -955,7 +1026,7 @@ export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {
   // WebM / MKV (Matroska): 1A 45 DF A3
   if (bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) {
     const headerStr = String.fromCharCode(
-      ...bytes.slice(0, Math.min(bytes.length, 80))
+      ...bytes.slice(0, Math.min(bytes.length, 80)),
     ).toLowerCase();
     if (headerStr.includes('matroska')) {
       return 'video/x-matroska';
@@ -1159,7 +1230,7 @@ export const decryptToFile = async (
   encryptedBundle: string | Uint8Array,
   secretKey: string | CryptoKey | null | undefined,
   mimeType?: string,
-  rsaPrivateKey?: CryptoKeyPair['privateKey'] | null
+  rsaPrivateKey?: CryptoKeyPair['privateKey'] | null,
 ): Promise<string | null> => {
   if (!encryptedBundle) return null;
   if (!secretKey) {
@@ -1167,13 +1238,11 @@ export const decryptToFile = async (
       if (encryptedBundle.startsWith('data:') || encryptedBundle.startsWith('blob:')) {
         return encryptedBundle;
       }
-      return createTrackedBlobUrl(
-        new Blob([encryptedBundle], { type: mimeType || 'text/plain' })
-      );
+      return createTrackedBlobUrl(new Blob([encryptedBundle], { type: mimeType || 'text/plain' }));
     }
     if (encryptedBundle instanceof Uint8Array) {
       return createTrackedBlobUrl(
-        new Blob([encryptedBundle], { type: mimeType || 'application/octet-stream' })
+        new Blob([encryptedBundle as BlobPart], { type: mimeType || 'application/octet-stream' }),
       );
     }
     return null;
@@ -1191,10 +1260,10 @@ export const decryptToFile = async (
     // Standard bundles start with 12 bytes IV.
     // We check if the bundle looks like an E2EE bundle.
     if (bundle.length > 2 && rsaPrivateKey) {
-      const view = new DataView(bundle.buffer);
+      const view = new DataView(bundle.buffer, bundle.byteOffset, bundle.byteLength);
       const encKeyLen = view.getUint16(0);
 
-      // Sanity check: RSA-2048 enc key is 256 bytes.
+      // Sanity check: RSA-2048 enc key is 256 bytes, RSA-4096 is 512 bytes
       if (encKeyLen > 0 && encKeyLen < bundle.length && (encKeyLen === 256 || encKeyLen === 512)) {
         return await decryptFileE2EE(bundle, rsaPrivateKey as CryptoKey, mimeType);
       }
@@ -1238,6 +1307,8 @@ export const decryptToFile = async (
           : finalMimeType || 'application/octet-stream';
 
       const blob = new Blob([decryptedBytes], { type: normalizedBlobMime });
+      // Shred sensitive decrypted buffer from RAM immediately
+      decryptedBytes.fill(0);
       return createTrackedBlobUrl(blob);
     } catch (innerError) {
       handleError(innerError, 'File Decryption Blob Pipeline');

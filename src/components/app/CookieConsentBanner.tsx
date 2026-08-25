@@ -29,7 +29,7 @@ const checkCookieSupport = (): boolean => {
 
 export const CookieConsentBanner = () => {
   const [consentState, setConsentState] = useState<CookieConsentState>(() =>
-    readCookieConsentState()
+    readCookieConsentState(),
   );
   const [cookieSupported] = useState<boolean>(() => checkCookieSupport());
 

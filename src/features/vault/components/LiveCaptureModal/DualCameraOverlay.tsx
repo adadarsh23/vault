@@ -1,13 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import {
-  PictureInPicture2,
-  ArrowLeftRight,
-  Columns,
-  Rows,
-  Maximize2,
-  Move,
-} from 'lucide-react';
+import { PictureInPicture2, ArrowLeftRight, Columns, Rows, Move } from 'lucide-react';
 import { cn } from '../../../../lib/utils';
 import { DualCameraLayout, PipPosition } from './types';
 import { triggerHaptic } from './haptics';
@@ -56,7 +48,7 @@ export const DualCameraOverlay: React.FC<DualCameraOverlayProps> = ({
             pipPosition === 'top-right' && 'top-3 right-3',
             pipPosition === 'top-left' && 'top-3 left-3',
             pipPosition === 'bottom-right' && 'bottom-16 right-3',
-            pipPosition === 'bottom-left' && 'bottom-16 left-3'
+            pipPosition === 'bottom-left' && 'bottom-16 left-3',
           )}
         >
           {/* Secondary Video Feed */}
@@ -67,14 +59,16 @@ export const DualCameraOverlay: React.FC<DualCameraOverlayProps> = ({
             muted
             className={cn(
               'w-full h-full object-cover pointer-events-none',
-              isSubFront && 'scale-x-[-1]'
+              isSubFront && 'scale-x-[-1]',
             )}
           />
 
           {/* Quick Corner Reposition & Swap Indicator */}
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 pointer-events-none">
             <Move className="h-4 w-4 text-white drop-shadow-md" />
-            <span className="text-[9px] font-black text-white uppercase tracking-wider">Tap Move</span>
+            <span className="text-[9px] font-black text-white uppercase tracking-wider">
+              Tap Move
+            </span>
           </div>
 
           <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[8px] font-black text-white/80 uppercase">
@@ -111,7 +105,9 @@ export const DualCameraOverlay: React.FC<DualCameraOverlayProps> = ({
           {layout === 'pip' && <PictureInPicture2 className="h-3 w-3" />}
           {layout === 'split-horizontal' && <Columns className="h-3 w-3" />}
           {layout === 'split-vertical' && <Rows className="h-3 w-3" />}
-          <span>{layout === 'pip' ? 'PiP' : layout === 'split-horizontal' ? 'Split H' : 'Split V'}</span>
+          <span>
+            {layout === 'pip' ? 'PiP' : layout === 'split-horizontal' ? 'Split H' : 'Split V'}
+          </span>
         </button>
       </div>
     </div>

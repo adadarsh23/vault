@@ -293,7 +293,12 @@ export const authenticateUser = async (input: AuthInput) => {
           // ignore
         }
       }
-      if (!storedMasterKey && user.meta?.masterKey && typeof user.meta.masterKey === 'object' && 'cipherText' in (user.meta.masterKey as any)) {
+      if (
+        !storedMasterKey &&
+        user.meta?.masterKey &&
+        typeof user.meta.masterKey === 'object' &&
+        'cipherText' in (user.meta.masterKey as any)
+      ) {
         try {
           storedMasterKey = decryptText(user.meta.masterKey as any);
         } catch {
@@ -303,7 +308,7 @@ export const authenticateUser = async (input: AuthInput) => {
 
       let isValidPassword = false;
       const candidatePasswords = [password, password?.trim()].filter(
-        (p): p is string => Boolean(p) && typeof p === 'string'
+        (p): p is string => Boolean(p) && typeof p === 'string',
       );
 
       if (storedHash) {
@@ -513,7 +518,7 @@ export const revokeCurrentSession = async (refreshToken: string): Promise<{ revo
  * @throws {AppError} If no sessions match the target criteria
  */
 export const revokeAuthenticatedSessions = async (
-  input: SessionRevokeInput
+  input: SessionRevokeInput,
 ): Promise<{
   revokedCount: number;
   sessions: Array<Record<string, unknown>>;
@@ -528,7 +533,7 @@ export const revokeAuthenticatedSessions = async (
         throw new AppError(
           400,
           'SESSION_TARGET_REQUIRED',
-          'Provide sessionId, deviceId, or revokeAllOther=true.'
+          'Provide sessionId, deviceId, or revokeAllOther=true.',
         );
       }
 
@@ -563,7 +568,7 @@ export const revokeAuthenticatedSessions = async (
         throw new AppError(
           404,
           'SESSION_NOT_FOUND',
-          'No matching active device session was found.'
+          'No matching active device session was found.',
         );
       }
 
@@ -603,7 +608,7 @@ export const revokeAuthenticatedSessions = async (
  * @throws {AppError} If current password is incorrect or new password is same
  */
 export const changeAuthenticatedPassword = async (
-  input: PasswordChangeInput
+  input: PasswordChangeInput,
 ): Promise<{ updated: boolean }> => {
   const currentPassword = sanitizePassword(input.currentPassword);
   const password = sanitizePassword(input.newPassword);
@@ -639,7 +644,7 @@ export const changeAuthenticatedPassword = async (
         throw new AppError(
           400,
           'PASSWORD_UNCHANGED',
-          'New password must be different from the current password.'
+          'New password must be different from the current password.',
         );
       }
 
@@ -678,7 +683,7 @@ export const getAuthenticatedUserProfile = async (userId: string, currentSession
 export const renameDeviceSession = async (
   userId: string,
   deviceId: string,
-  deviceName: string
+  deviceName: string,
 ): Promise<{ success: boolean; sessions: Array<Record<string, unknown>> }> => {
   return retryLoadedUserMutation({
     mutationName: 'renameDeviceSession',

@@ -1,4 +1,4 @@
-import { DualCameraLayout, PipPosition, MediaDeviceInfoItem } from './types';
+import { DualCameraLayout, PipPosition } from './types';
 import { logger } from '../../../../lib/logger';
 
 export interface DualCameraManager {
@@ -6,7 +6,7 @@ export interface DualCameraManager {
   secondaryVideo: HTMLVideoElement;
   startSecondaryStream: (
     primaryFacing: 'user' | 'environment',
-    secondaryDeviceId?: string
+    secondaryDeviceId?: string,
   ) => Promise<MediaStream | null>;
   stopSecondaryStream: () => void;
   renderComposite: (
@@ -17,7 +17,7 @@ export interface DualCameraManager {
     isSwapped: boolean,
     primaryFacing: 'user' | 'environment',
     isPrimaryFlipped: boolean,
-    filterCss?: string
+    filterCss?: string,
   ) => void;
   takeDualSnapshot: (
     primaryVideo: HTMLVideoElement,
@@ -27,7 +27,7 @@ export interface DualCameraManager {
     primaryFacing: 'user' | 'environment',
     isPrimaryFlipped: boolean,
     filterCss?: string,
-    quality?: number
+    quality?: number,
   ) => Promise<Blob | null>;
 }
 
@@ -40,7 +40,7 @@ export function createDualCameraManager(): DualCameraManager {
 
   const startSecondaryStream = async (
     primaryFacing: 'user' | 'environment',
-    secondaryDeviceId?: string
+    secondaryDeviceId?: string,
   ): Promise<MediaStream | null> => {
     stopSecondaryStream();
     if (!navigator.mediaDevices?.getUserMedia) return null;
@@ -80,7 +80,7 @@ export function createDualCameraManager(): DualCameraManager {
     isSwapped: boolean,
     primaryFacing: 'user' | 'environment',
     isPrimaryFlipped: boolean,
-    filterCss = 'none'
+    filterCss = 'none',
   ) => {
     const ctx = targetCanvas.getContext('2d');
     if (!ctx) return;
@@ -293,7 +293,7 @@ export function createDualCameraManager(): DualCameraManager {
     primaryFacing: 'user' | 'environment',
     isPrimaryFlipped: boolean,
     filterCss = 'none',
-    quality = 0.92
+    quality = 0.92,
   ): Promise<Blob | null> => {
     const canvas = document.createElement('canvas');
     canvas.width = primaryVideo.videoWidth || 1920;
@@ -307,7 +307,7 @@ export function createDualCameraManager(): DualCameraManager {
       isSwapped,
       primaryFacing,
       isPrimaryFlipped,
-      filterCss
+      filterCss,
     );
 
     return new Promise((resolve) => {

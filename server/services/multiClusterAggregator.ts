@@ -28,7 +28,7 @@ export interface LocatedUser {
 export const aggregateVaultItems = async (
   username: string,
   userId: string,
-  filter: Record<string, any> = {}
+  filter: Record<string, any> = {},
 ): Promise<AggregatedVaultItem[]> => {
   await multiClusterPool.initialize();
   const nodes = multiClusterPool.getHealthyNodes();
@@ -77,7 +77,7 @@ export const aggregateVaultItems = async (
         } else {
           // Compare update dates to pick the freshest version
           const existingDate = new Date(
-            existing.updatedAt || existing.clientUpdatedAt || 0
+            existing.updatedAt || existing.clientUpdatedAt || 0,
           ).getTime();
           const incomingDate = new Date(item.updatedAt || item.clientUpdatedAt || 0).getTime();
 
@@ -111,7 +111,7 @@ export const aggregateVaultItems = async (
 export const findVaultItemAcrossClusters = async (
   username: string,
   userId: string,
-  itemId: string
+  itemId: string,
 ): Promise<LocatedVaultItem | null> => {
   await multiClusterPool.initialize();
   const nodes = multiClusterPool.getHealthyNodes();
@@ -186,7 +186,7 @@ export const findVaultItemAcrossClusters = async (
 export const aggregateActivityLogs = async (
   username: string,
   userId: string,
-  limit = 100
+  limit = 100,
 ): Promise<ActivityLogType[]> => {
   await multiClusterPool.initialize();
   const nodes = multiClusterPool.getHealthyNodes();
@@ -225,7 +225,7 @@ export const aggregateActivityLogs = async (
 
   const merged = Array.from(logMap.values());
   merged.sort(
-    (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
   );
 
   return merged.slice(0, limit);
@@ -235,7 +235,7 @@ export const aggregateActivityLogs = async (
  * Finds user account across all clusters in priority order.
  */
 export const findUserAcrossClusters = async (
-  query: Record<string, any>
+  query: Record<string, any>,
 ): Promise<LocatedUser | null> => {
   await multiClusterPool.initialize();
   const nodes = multiClusterPool.getHealthyNodes();
@@ -274,7 +274,7 @@ export const mirrorUserToAllClusters = async (userDoc: any): Promise<void> => {
       await UserModel.findOneAndUpdate(
         { username: userObj.username },
         { $set: userObj },
-        { upsert: true, setDefaultsOnInsert: true }
+        { upsert: true, setDefaultsOnInsert: true },
       ).exec();
     } catch (err: any) {
       logger.warn(`[Aggregator] User mirror failed on node ${node.name}: ${err?.message}`);
@@ -291,7 +291,7 @@ export const deleteVaultItemAcrossClusters = async (
   username: string,
   userId: string,
   itemId: string,
-  hardDelete = false
+  hardDelete = false,
 ): Promise<number> => {
   await multiClusterPool.initialize();
   const nodes = multiClusterPool.getHealthyNodes();
@@ -306,7 +306,7 @@ export const deleteVaultItemAcrossClusters = async (
       } else {
         const res = await DynamicModel.updateOne(
           { userId, itemId },
-          { $set: { isDeleted: true, deletedAt: new Date(), updatedAt: new Date() } }
+          { $set: { isDeleted: true, deletedAt: new Date(), updatedAt: new Date() } },
         );
         return res.modifiedCount || 0;
       }

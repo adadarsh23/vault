@@ -63,7 +63,7 @@ class RequestFingerprintService {
   generateFingerprint(
     req: Request,
     userId?: string,
-    clientData?: Record<string, string>
+    clientData?: Record<string, string>,
   ): DeviceFingerprint {
     const signals = this.extractSignals(req, clientData);
     const fingerprintHash = this.hashSignals(signals);
@@ -102,7 +102,7 @@ class RequestFingerprintService {
     req: Request,
     _userId?: string,
     clientData?: Record<string, string>,
-    expectedFingerprintId?: string
+    expectedFingerprintId?: string,
   ): Promise<FingerprintValidation> {
     const currentSignals = this.extractSignals(req, clientData);
     const anomalies: string[] = [];
@@ -275,7 +275,7 @@ class RequestFingerprintService {
    */
   private extractSignals(
     req: Request,
-    clientData?: Record<string, string>
+    clientData?: Record<string, string>,
   ): DeviceFingerprint['metadata'] {
     const userAgent = req.get('user-agent') || '';
     const acceptLanguage = req.get('accept-language') || '';
@@ -308,7 +308,7 @@ class RequestFingerprintService {
    */
   private compareSignals(
     oldSignals: DeviceFingerprint['metadata'],
-    newSignals: DeviceFingerprint['metadata']
+    newSignals: DeviceFingerprint['metadata'],
   ): number {
     let differences = 0;
     const keys = new Set([...Object.keys(oldSignals), ...Object.keys(newSignals)]);

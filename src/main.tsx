@@ -11,6 +11,7 @@ import { logger } from './lib/logger.ts';
 import { captureLogRocketError, initLogRocket } from './lib/logrocket.ts';
 import { installGlobalFetchCsrfProtection } from './lib/csrf.ts';
 import { initTouchDragDrop } from './lib/vaultDragDrop.ts';
+import { bindGlobalErrorHandlers, initSentry, trackRouteNavigation } from './lib/sentry.js';
 
 let trackRouteNavigationWhenReady:
   ((location: { pathname: string; search?: string; hash?: string }) => void) | null = null;
@@ -18,7 +19,7 @@ let trackRouteNavigationWhenReady:
 const runWhenIdle = (cb: () => void) => {
   if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
     (window as Window & { requestIdleCallback: (fn: () => void) => number }).requestIdleCallback(
-      cb
+      cb,
     );
     return;
   }
@@ -56,19 +57,13 @@ runWhenIdle(() => {
     return;
   }
 
-  void import('./lib/sentry.js')
-    .then((module) => {
-      try {
-        module.initSentry();
-        module.bindGlobalErrorHandlers();
-        trackRouteNavigationWhenReady = module.trackRouteNavigation;
-      } catch (error) {
-        logger.warn('Sentry init skipped due to runtime bootstrap failure', { error });
-      }
-    })
-    .catch((error) => {
-      logger.warn('Sentry bundle could not be loaded; continuing without it.', { error });
-    });
+  try {
+    initSentry();
+    bindGlobalErrorHandlers();
+    trackRouteNavigationWhenReady = trackRouteNavigation;
+  } catch (error) {
+    logger.warn('Sentry init skipped due to runtime bootstrap failure', { error });
+  }
 });
 
 function RouteChangeTracker() {
@@ -132,5 +127,5 @@ createRoot(document.getElementById('root')!).render(
         </ThemeProvider>
       </BrowserRouter>
     </AppErrorBoundary>
-  </StrictMode>
+  </StrictMode>,
 );

@@ -13,7 +13,7 @@ import {
  */
 export const getSignedUrl = async (
   itemId: string,
-  action: 'view' | 'download' | 'stream' = 'view'
+  action: 'view' | 'download' | 'stream' = 'view',
 ): Promise<string> => {
   if (itemId.startsWith('decoy-')) {
     try {
@@ -36,14 +36,14 @@ export const getSignedUrl = async (
   const response = await fetchWithRetry(
     `${API_BASE_URL}/api/vault/files/signed-url/${encodeURIComponent(itemId)}?${query.toString()}`,
     { method: 'GET', headers: getAuthHeaders() },
-    'Getting Signed URL'
+    'Getting Signed URL',
   );
   const data = await response.json();
   const baseSignedUrl = typeof data?.data?.url === 'string' ? data.data.url.trim() : '';
 
   if (!baseSignedUrl) {
     const err = new Error(
-      'The server did not return a preview URL. This item may be encrypted-only (not a server file).'
+      'The server did not return a preview URL. This item may be encrypted-only (not a server file).',
     );
     (err as Error & { code?: string }).code = 'SIGNED_URL_EMPTY';
     throw err;
@@ -74,13 +74,13 @@ export const getHlsPlaylistUrl = async (itemId: string): Promise<string> => {
   const response = await fetchWithRetry(
     `${API_BASE_URL}/api/vault/files/signed-url/${encodeURIComponent(itemId)}?${query.toString()}`,
     { method: 'GET', headers: getAuthHeaders() },
-    'Getting HLS Signed URL'
+    'Getting HLS Signed URL',
   );
   const data = await response.json();
   const baseSignedUrl = typeof data?.data?.url === 'string' ? data.data.url.trim() : '';
   if (!baseSignedUrl) {
     const err = new Error(
-      'Could not start streaming: the server did not return a valid media URL.'
+      'Could not start streaming: the server did not return a valid media URL.',
     );
     (err as Error & { code?: string }).code = 'HLS_SIGNED_URL_EMPTY';
     throw err;
@@ -90,13 +90,13 @@ export const getHlsPlaylistUrl = async (itemId: string): Promise<string> => {
   const signedUrlObj = resolveSignedUrl(
     baseSignedUrl,
     'Getting HLS Signed URL',
-    'HLS_SIGNED_URL_INVALID'
+    'HLS_SIGNED_URL_INVALID',
   );
 
   // Create the final HLS URL based on our API_BASE_URL
   const finalUrl = new URL(
     `/api/vault/media/${encodeURIComponent(itemId)}/hls`,
-    API_BASE_URL || resolveRuntimeOrigin()
+    API_BASE_URL || resolveRuntimeOrigin(),
   );
 
   // Copy all params (token, expires, sid, dev, etc.)
@@ -124,7 +124,7 @@ export const getPlaybackInsights = async (): Promise<{
   const response = await fetchWithRetry(
     `${API_BASE_URL}/api/vault/media/insights`,
     { method: 'GET', headers: getAuthHeaders() },
-    'Getting Playback Insights'
+    'Getting Playback Insights',
   );
   const data = await response.json();
   return data.data;

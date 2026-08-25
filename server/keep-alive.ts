@@ -20,7 +20,7 @@ export interface KeepAliveState {
 export function startKeepAlive(
   url: string | undefined,
   intervalMinutes = 13,
-  options: KeepAliveOptions = {}
+  options: KeepAliveOptions = {},
 ): KeepAliveState {
   const serviceSuffix = options.serviceId ? ` for service ${options.serviceId}` : '';
   const isEnabled = options.enabled ?? process.env.NODE_ENV === 'production';
@@ -41,7 +41,7 @@ export function startKeepAlive(
   const client = targetUrl.protocol === 'http:' ? http : https;
 
   console.log(
-    `[Keep-Alive] Initializing self-ping for ${targetUrl.toString()} every ${intervalMinutes} minutes${serviceSuffix}...`
+    `[Keep-Alive] Initializing self-ping for ${targetUrl.toString()} every ${intervalMinutes} minutes${serviceSuffix}...`,
   );
 
   const ping = () => {

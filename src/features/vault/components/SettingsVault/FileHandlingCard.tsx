@@ -174,7 +174,7 @@ export const FileHandlingCard: React.FC<FileHandlingCardProps> = memo(
         </div> */}
       </CardContent>
     </Card>
-  )
+  ),
 );
 
 FileHandlingCard.displayName = 'FileHandlingCard';

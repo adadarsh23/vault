@@ -69,8 +69,8 @@ const normalizeVaultItemIds = (value: string | string[]): string[] => {
       new Set(
         value
           .map((id) => (typeof id === 'string' ? normalizeVaultItemId(id) : null))
-          .filter((id): id is string => id !== null)
-      )
+          .filter((id): id is string => id !== null),
+      ),
     );
     return deduped;
   }
@@ -89,7 +89,7 @@ const safeGetData = (dataTransfer: DragDataTransferLike, format: string): string
 
 const dragTypesContain = (
   types: DataTransfer['types'] | undefined,
-  expectedType: string
+  expectedType: string,
 ): boolean => {
   if (!types) {
     return false;
@@ -106,7 +106,7 @@ export const clearDraggedVaultItem = () => {
 
 export const setDraggedVaultItems = (
   event: DragEventLike,
-  itemIdOrIds: string | string[]
+  itemIdOrIds: string | string[],
 ): boolean => {
   const normalizedIds = normalizeVaultItemIds(itemIdOrIds);
   if (normalizedIds.length === 0) {
@@ -119,7 +119,7 @@ export const setDraggedVaultItems = (
     window.dispatchEvent(
       new CustomEvent('vault-drag-start', {
         detail: { itemIds: normalizedIds, count: normalizedIds.length },
-      })
+      }),
     );
   }
 
@@ -146,7 +146,7 @@ export const setDraggedVaultItems = (
 
 export const setDraggedVaultItem = (
   event: DragEventLike,
-  itemIdOrIds: string | string[]
+  itemIdOrIds: string | string[],
 ): boolean => {
   return setDraggedVaultItems(event, itemIdOrIds);
 };

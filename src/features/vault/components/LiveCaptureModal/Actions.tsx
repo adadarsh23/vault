@@ -7,7 +7,6 @@ import {
   Square,
   Pause,
   Play,
-  Info,
   Camera,
   User,
   FlipHorizontal,
@@ -64,7 +63,7 @@ export const Actions: React.FC<ActionsProps> = ({
   isEncrypting,
   isRecording,
   isPaused = false,
-  isInfoEnabled,
+  isInfoEnabled: _isInfoEnabled,
   onRetake,
   onSave,
   onTakePhoto,
@@ -73,7 +72,7 @@ export const Actions: React.FC<ActionsProps> = ({
   onTogglePause,
   onTakeSnapshot,
   burstCount = 1,
-  onToggleInfo,
+  onToggleInfo: _onToggleInfo,
   onToggleCamera,
   onToggleHorizontalFlip,
   cameraFacing,
@@ -130,7 +129,7 @@ export const Actions: React.FC<ActionsProps> = ({
             className={cn(
               'group relative h-11 sm:h-12 flex-[1.4] overflow-hidden rounded-2xl px-4 sm:px-8 text-black transition-all active:scale-95 shadow-xl',
               isSuccess ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-primary shadow-primary/20',
-              (isSaving || isSuccess) && 'cursor-not-allowed opacity-80'
+              (isSaving || isSuccess) && 'cursor-not-allowed opacity-80',
             )}
           >
             <div className="relative z-10 flex items-center justify-center gap-2">
@@ -181,7 +180,7 @@ export const Actions: React.FC<ActionsProps> = ({
                   disabled={disableCaptureTuning}
                   className={cn(
                     'h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/80 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200 active:scale-90',
-                    'text-primary border-primary/20 bg-primary/10'
+                    'text-primary border-primary/20 bg-primary/10',
                   )}
                   title={`Aspect ratio: ${captureRatio}`}
                   aria-label={`Aspect ratio: ${captureRatio}`}
@@ -201,7 +200,7 @@ export const Actions: React.FC<ActionsProps> = ({
                       ? 'text-sky-300 border-sky-400/30 bg-sky-500/10'
                       : captureSize === 'medium'
                         ? 'text-violet-300 border-violet-400/30 bg-violet-500/10'
-                        : 'text-white/70'
+                        : 'text-white/70',
                   )}
                   title={`Size: ${sizeLabel}`}
                   aria-label={`Capture size: ${sizeLabel}`}
@@ -220,14 +219,14 @@ export const Actions: React.FC<ActionsProps> = ({
                       'group relative flex h-14 w-14 sm:h-15 sm:w-15 md:h-16 md:w-16 items-center justify-center rounded-full border-[4px] sm:border-[5px] transition-all hover:scale-105 active:scale-95 shadow-2xl shrink-0',
                       burstCount > 1
                         ? 'border-amber-400 shadow-amber-400/20'
-                        : 'border-white shadow-white/10'
+                        : 'border-white shadow-white/10',
                     )}
                     aria-label={burstCount > 1 ? `Take ${burstCount} Burst Photos` : 'Take Photo'}
                   >
                     <div
                       className={cn(
                         'h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 rounded-full group-hover:scale-90 transition-transform shadow-inner',
-                        burstCount > 1 ? 'bg-amber-400' : 'bg-white'
+                        burstCount > 1 ? 'bg-amber-400' : 'bg-white',
                       )}
                     />
                     {burstCount > 1 && (
@@ -266,7 +265,7 @@ export const Actions: React.FC<ActionsProps> = ({
                             : 'border-red-500 shadow-red-500/30'
                           : isTimelapse
                             ? 'border-amber-300 shadow-amber-300/30'
-                            : 'border-white shadow-white/10'
+                            : 'border-white shadow-white/10',
                       )}
                       aria-label={isRecording ? 'Stop Recording' : 'Start Recording'}
                     >
@@ -276,7 +275,7 @@ export const Actions: React.FC<ActionsProps> = ({
                             'h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 rounded-sm',
                             isTimelapse
                               ? 'fill-amber-400 text-amber-400'
-                              : 'fill-red-500 text-red-500'
+                              : 'fill-red-500 text-red-500',
                           )}
                         />
                       ) : (
@@ -287,7 +286,7 @@ export const Actions: React.FC<ActionsProps> = ({
                               ? 'bg-amber-400'
                               : type === 'video'
                                 ? 'bg-red-500'
-                                : 'bg-primary'
+                                : 'bg-primary',
                           )}
                         />
                       )}
@@ -295,7 +294,7 @@ export const Actions: React.FC<ActionsProps> = ({
                         <div
                           className={cn(
                             'absolute -inset-3 rounded-full border animate-ping pointer-events-none',
-                            isTimelapse ? 'border-amber-400/40' : 'border-red-500/30'
+                            isTimelapse ? 'border-amber-400/40' : 'border-red-500/30',
                           )}
                         />
                       )}
@@ -312,7 +311,7 @@ export const Actions: React.FC<ActionsProps> = ({
                           'h-10 w-10 sm:h-11 sm:w-11 rounded-full border transition-all shadow-lg',
                           isPaused
                             ? 'bg-amber-500/20 border-amber-400 text-amber-300 hover:bg-amber-500/30'
-                            : 'bg-black/60 border-white/20 text-white hover:bg-white/10'
+                            : 'bg-black/60 border-white/20 text-white hover:bg-white/10',
                         )}
                         title={isPaused ? 'Resume Recording' : 'Pause Recording'}
                         aria-label={isPaused ? 'Resume Recording' : 'Pause Recording'}
@@ -342,7 +341,7 @@ export const Actions: React.FC<ActionsProps> = ({
                       ? 'text-emerald-300 border-emerald-400/30 bg-emerald-500/10'
                       : captureQuality === 'balanced'
                         ? 'text-yellow-300 border-yellow-400/30 bg-yellow-500/10'
-                        : 'text-white/70'
+                        : 'text-white/70',
                   )}
                   title={`Quality: ${qualityLabel}`}
                   aria-label={`Capture quality: ${qualityLabel}`}
@@ -358,7 +357,7 @@ export const Actions: React.FC<ActionsProps> = ({
                   disabled={isVideoRecording}
                   className={cn(
                     'h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full bg-black/40 text-white/60 border border-white/10 hover:bg-black/60 hover:text-white transition-transform duration-200',
-                    isHorizontallyFlipped && 'text-primary border-primary/20 bg-primary/10'
+                    isHorizontallyFlipped && 'text-primary border-primary/20 bg-primary/10',
                   )}
                   title={
                     isHorizontallyFlipped

@@ -137,7 +137,7 @@ const normalizeActivityEntry = (
     description: string;
     timestamp: number;
     isSynced: boolean;
-  }
+  },
 ): ActivityEntry => {
   const timestamp = normalizeTimestamp(value.timestamp, fallback.timestamp);
 
@@ -149,7 +149,7 @@ const normalizeActivityEntry = (
     userOrSessionId: sanitizeString(
       value.userOrSessionId,
       fallback.userOrSessionId,
-      MAX_IDENTIFIER_LENGTH
+      MAX_IDENTIFIER_LENGTH,
     ),
     sessionName: normalizeSessionName(value.sessionName),
     status: normalizeStatus(value.status ?? fallback.status),
@@ -160,7 +160,7 @@ const normalizeActivityEntry = (
 
 const pickPreferredEntry = (
   existing: ActivityEntry | undefined,
-  candidate: ActivityEntry
+  candidate: ActivityEntry,
 ): ActivityEntry => {
   if (!existing) {
     return candidate;
@@ -242,7 +242,7 @@ export const useActivityStore = create<ActivityState>((set) => ({
     const idSet = new Set(ids);
     set((state) => ({
       entries: state.entries.map((e) =>
-        idSet.has(e.id) && e.isSynced !== true ? { ...e, isSynced: true } : e
+        idSet.has(e.id) && e.isSynced !== true ? { ...e, isSynced: true } : e,
       ),
       count: state.entries.length,
     }));

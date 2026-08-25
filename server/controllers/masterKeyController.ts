@@ -23,7 +23,7 @@ const handleControllerError = (
   error: unknown,
   defaultCode: string,
   defaultMessage: string,
-  logContext: string
+  logContext: string,
 ) => {
   logger.error(`[MasterKeyController] Error in ${logContext}`, error);
 
@@ -138,7 +138,7 @@ const hasValidDerivationParams = (metadata: SaveMasterKeyRequest['metadata']) =>
  */
 export const handleSaveMasterKey = async (
   req: express.Request<{}, {}, SaveMasterKeyRequest>,
-  res: express.Response
+  res: express.Response,
 ) => {
   try {
     const userId = (req as any).user?.userId;
@@ -315,7 +315,7 @@ export const handleSaveMasterKey = async (
       error,
       'SAVE_FAILED',
       'Failed to save master key',
-      'handleSaveMasterKey'
+      'handleSaveMasterKey',
     );
   }
 };
@@ -387,7 +387,7 @@ export const handleRetrieveMasterKey = async (req: express.Request, res: express
       error,
       'RETRIEVE_FAILED',
       'Failed to retrieve master key',
-      'handleRetrieveMasterKey'
+      'handleRetrieveMasterKey',
     );
   }
 };
@@ -398,7 +398,7 @@ export const handleRetrieveMasterKey = async (req: express.Request, res: express
  */
 export const handleVerifyMasterKey = async (
   req: express.Request<{}, {}, VerifyMasterKeyRequest>,
-  res: express.Response
+  res: express.Response,
 ) => {
   try {
     const userId = (req as any).user?.userId;
@@ -452,7 +452,7 @@ export const handleVerifyMasterKey = async (
       error,
       'VERIFY_FAILED',
       'Failed to verify master key',
-      'handleVerifyMasterKey'
+      'handleVerifyMasterKey',
     );
   }
 };
@@ -503,7 +503,7 @@ export const handleDeleteMasterKey = async (req: express.Request, res: express.R
       error,
       'DELETE_FAILED',
       'Failed to delete master key',
-      'handleDeleteMasterKey'
+      'handleDeleteMasterKey',
     );
   }
 };
@@ -554,7 +554,7 @@ export const handleGetMasterKeyMetadata = async (req: express.Request, res: expr
       error,
       'GET_METADATA_FAILED',
       'Failed to get metadata',
-      'handleGetMasterKeyMetadata'
+      'handleGetMasterKeyMetadata',
     );
   }
 };
@@ -606,7 +606,7 @@ export const handleGetMasterKeyFullData = async (req: express.Request, res: expr
       error,
       'GET_FULLDATA_FAILED',
       'Failed to get full data',
-      'handleGetMasterKeyFullData'
+      'handleGetMasterKeyFullData',
     );
   }
 };

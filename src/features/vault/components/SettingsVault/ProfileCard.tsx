@@ -57,7 +57,7 @@ interface ProfileCardProps {
   isSavingProfile: boolean;
   onSaveProfile: (
     profileName: string,
-    profilePhoto: string
+    profilePhoto: string,
   ) => Promise<{ saved: boolean; errorMessage?: string }>;
   syncHealthLabel: string;
   lastSuccessfulSyncAt: number | string | null | undefined;
@@ -106,10 +106,10 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
     alt: string;
   } | null>(null);
   const [profileNameInput, setProfileNameInput] = React.useState(
-    savedProfileName === 'none' ? '' : savedProfileName
+    savedProfileName === 'none' ? '' : savedProfileName,
   );
   const [profilePhotoInput, setProfilePhotoInput] = React.useState(
-    savedProfilePhoto === 'none' ? '' : savedProfilePhoto
+    savedProfilePhoto === 'none' ? '' : savedProfilePhoto,
   );
   const [profileSaveError, setProfileSaveError] = React.useState<string | null>(null);
 
@@ -124,7 +124,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
       ).trim();
       onSaveProfile(activeName || accountName, avatarUrl);
     },
-    [onSaveProfile, profileNameInput, savedProfileName, accountName]
+    [onSaveProfile, profileNameInput, savedProfileName, accountName],
   );
 
   const fastAvatar = useFastAvatar({
@@ -140,7 +140,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   // Memoize — avoids re-running URL parse on every render cycle
   const isPhotoInputValid = React.useMemo(
     () => isValidProfilePhotoInput(profilePhotoInput),
-    [profilePhotoInput]
+    [profilePhotoInput],
   );
 
   const [isCardImageBroken, setIsCardImageBroken] = React.useState(false);
@@ -189,7 +189,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         bytes: mediaBreakdown?.other?.bytes || 0,
       },
     }),
-    [mediaBreakdown]
+    [mediaBreakdown],
   );
 
   const totalMediaBytes = React.useMemo(
@@ -198,7 +198,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
       safeMediaBreakdown.video.bytes +
       safeMediaBreakdown.audio.bytes +
       safeMediaBreakdown.other.bytes,
-    [safeMediaBreakdown]
+    [safeMediaBreakdown],
   );
 
   const totalMediaCount = React.useMemo(
@@ -207,7 +207,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
       safeMediaBreakdown.video.count +
       safeMediaBreakdown.audio.count +
       safeMediaBreakdown.other.count,
-    [safeMediaBreakdown]
+    [safeMediaBreakdown],
   );
 
   const photoPct =
@@ -817,7 +817,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                               };
                               reader.onerror = () => {
                                 setProfileSaveError(
-                                  'Failed to read the image file. Please try again.'
+                                  'Failed to read the image file. Please try again.',
                                 );
                               };
                               reader.readAsDataURL(file);
@@ -858,17 +858,21 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                   disabled={!isPhotoInputValid}
                   className="w-full min-[420px]:w-auto justify-center"
                   onClick={async () => {
-                    const result = await onSaveProfile(
-                      profileNameInput.trim() || 'none',
-                      profilePhotoInput.trim() || 'none'
-                    );
-                    if (result.saved) {
-                      setProfileSaveError(null);
-                      setShowProfilePopup(false);
-                      return;
-                    }
+                    try {
+                      const result = await onSaveProfile(
+                        profileNameInput.trim() || 'none',
+                        profilePhotoInput.trim() || 'none',
+                      );
+                      if (result?.saved) {
+                        setProfileSaveError(null);
+                        setShowProfilePopup(false);
+                        return;
+                      }
 
-                    setProfileSaveError(result.errorMessage || 'Failed to save.');
+                      setProfileSaveError(result?.errorMessage || 'Failed to save.');
+                    } catch (err: any) {
+                      setProfileSaveError(err?.message || 'Failed to save.');
+                    }
                   }}
                 >
                   Save Profile

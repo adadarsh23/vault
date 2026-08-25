@@ -13,5 +13,5 @@ export const useEditorFocus = (textareaRef: React.RefObject<HTMLTextAreaElement 
         textarea.scrollTop = preservedScrollTop;
       });
     },
-    [textareaRef]
+    [textareaRef],
   );

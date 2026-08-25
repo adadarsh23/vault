@@ -27,11 +27,14 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY package*.json ./
 RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
 
-# Copy server code and built static artifacts
+# Copy server code, TypeScript configs, and built static artifacts
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/server.ts ./server.ts
+COPY --from=builder /app/tsconfig*.json ./
+COPY --from=builder /app/metadata.json ./metadata.json
+COPY --from=builder /app/schemas ./schemas
 COPY --from=builder /app/overload.html ./overload.html
 
 # Set permissions for nodejs non-root execution

@@ -110,7 +110,7 @@ const serializeValue = (
   value: unknown,
   depth = 0,
   seen = new WeakSet<object>(),
-  keyHint?: string
+  keyHint?: string,
 ): unknown => {
   // Prevent deep recursion
   if (depth > MAX_DEPTH) {
@@ -210,7 +210,7 @@ const createPayload = (
   level: LogLevel,
   message: string,
   meta?: unknown,
-  extraMeta?: LogMeta
+  extraMeta?: LogMeta,
 ): LogPayload => {
   const mergedMeta: LogMeta = {};
 

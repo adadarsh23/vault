@@ -43,7 +43,7 @@ const intervalMinutes = Number(process.env.ATLAS_KEEPALIVE_MINUTES || 10);
 
 if (rawUriCandidates.length === 0) {
   console.error(
-    'Missing MongoDB URI. Set MONGODB_URI/MONGO_URI and optionally MONGODB_URI_FALLBACK, MONGODB_URI_1, MONGODB_URI_2, etc.'
+    'Missing MongoDB URI. Set MONGODB_URI/MONGO_URI and optionally MONGODB_URI_FALLBACK, MONGODB_URI_1, MONGODB_URI_2, etc.',
   );
   process.exit(1);
 }
@@ -65,7 +65,7 @@ const uriCandidates = Array.from(uniqueMap.entries()).map(([uri, name]) => ({ na
 
 if (uriCandidates.length === 0) {
   console.error(
-    'No valid MongoDB URI found. URI must start with "mongodb://" or "mongodb+srv://".'
+    'No valid MongoDB URI found. URI must start with "mongodb://" or "mongodb+srv://".',
   );
   process.exit(1);
 }
@@ -109,16 +109,18 @@ async function pingAllClusters() {
   console.log(`\n[${startedAt}] Pinging all ${uriCandidates.length} MongoDB Atlas candidate(s)...`);
 
   const results = await Promise.allSettled(
-    uriCandidates.map((candidate) => pingSingleCluster(candidate))
+    uriCandidates.map((candidate) => pingSingleCluster(candidate)),
   );
 
   const summary = results.map((r, i) =>
-    r.status === 'fulfilled' ? r.value : { ok: false, name: uriCandidates[i].name, error: r.reason }
+    r.status === 'fulfilled'
+      ? r.value
+      : { ok: false, name: uriCandidates[i].name, error: r.reason },
   );
 
   const successCount = summary.filter((s) => s.ok).length;
   console.log(
-    `[${startedAt}] Atlas keep-alive cycle complete: ${successCount}/${uriCandidates.length} clusters responded.`
+    `[${startedAt}] Atlas keep-alive cycle complete: ${successCount}/${uriCandidates.length} clusters responded.`,
   );
 
   return successCount > 0;

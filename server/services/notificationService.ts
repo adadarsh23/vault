@@ -5,7 +5,7 @@ import { logger } from '../utils/logger.ts';
 
 export const migrateLegacyNotifications = async (
   userId: string,
-  username: string
+  username: string,
 ): Promise<void> => {
   try {
     const LegacyNotification = getLegacyNotificationModel();
@@ -35,7 +35,7 @@ export const createNotification = async (
   title: string,
   message: string,
   metadata: Record<string, any> = {},
-  username?: string
+  username?: string,
 ): Promise<any> => {
   try {
     let resolvedUsername = username;

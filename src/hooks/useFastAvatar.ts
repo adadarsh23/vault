@@ -242,9 +242,9 @@ export function useFastAvatar({
                 targetSize: 400,
                 quality: 0.78,
               },
-              [fileBuffer]
+              [fileBuffer],
             );
-          }
+          },
         );
 
         // Create Blob from zero-copy ArrayBuffer
@@ -359,7 +359,7 @@ export function useFastAvatar({
         }
       }
     },
-    [userId, state.avatarUrl, presignEndpoint, computeHash]
+    [userId, state.avatarUrl, presignEndpoint, computeHash],
   );
 
   return {

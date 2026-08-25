@@ -2,12 +2,20 @@
 
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { UniversalSyncWidget } from '../../src/components/vault/UniversalSyncWidget';
 import { useVaultStore } from '../../src/store/vaultStore';
 
 describe('UniversalSyncWidget', () => {
   const originalFetch = global.fetch;
+
+  const renderWidget = async () => {
+    let result: any;
+    await act(async () => {
+      result = render(<UniversalSyncWidget />);
+    });
+    return result;
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -72,27 +80,27 @@ describe('UniversalSyncWidget', () => {
     global.fetch = originalFetch;
   });
 
-  it('does not render when user is not signed in / vault is locked', () => {
+  it('does not render when user is not signed in / vault is locked', async () => {
     useVaultStore.setState({ isUnlocked: false, isVaultReady: false });
-    const { container } = render(<UniversalSyncWidget />);
+    const { container } = await renderWidget();
 
     expect(container.firstChild).toBeNull();
     expect(
       screen.queryByRole('button', {
         name: /universal cloud sync|cloud is synchronizing|cloud connection error/i,
-      })
+      }),
     ).not.toBeInTheDocument();
   });
 
-  it('does not render when isVaultReady is false', () => {
+  it('does not render when isVaultReady is false', async () => {
     useVaultStore.setState({ isUnlocked: true, isVaultReady: false });
-    const { container } = render(<UniversalSyncWidget />);
+    const { container } = await renderWidget();
 
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders the floating universal sync trigger capsule', () => {
-    render(<UniversalSyncWidget />);
+  it('renders the floating universal sync trigger capsule', async () => {
+    await renderWidget();
 
     const button = screen.getByRole('button', {
       name: /universal cloud sync|cloud is synchronizing|cloud connection error/i,
@@ -101,27 +109,31 @@ describe('UniversalSyncWidget', () => {
   });
 
   it('opens the sync center popover when clicked', async () => {
-    render(<UniversalSyncWidget />);
+    await renderWidget();
 
     const button = screen.getByRole('button', {
       name: /universal cloud sync|cloud is synchronizing|cloud connection error/i,
     });
-    fireEvent.click(button);
+    await act(async () => {
+      fireEvent.click(button);
+    });
 
     expect(
-      screen.getByRole('dialog', { name: /universal cloud sync center/i })
+      screen.getByRole('dialog', { name: /universal cloud sync center/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/Universal Sync Center/i)).toBeInTheDocument();
     expect(screen.getByText(/5 Total/i)).toBeInTheDocument();
   });
 
-  it('displays correct per-vault collection breakdown', () => {
-    render(<UniversalSyncWidget />);
+  it('displays correct per-vault collection breakdown', async () => {
+    await renderWidget();
 
     const button = screen.getByRole('button', {
       name: /universal cloud sync|cloud is synchronizing|cloud connection error/i,
     });
-    fireEvent.click(button);
+    await act(async () => {
+      fireEvent.click(button);
+    });
 
     expect(screen.getByText('Passwords')).toBeInTheDocument();
     expect(screen.getByText('Notes & Todos')).toBeInTheDocument();
@@ -130,7 +142,7 @@ describe('UniversalSyncWidget', () => {
     expect(screen.getByText('Contacts & IDs')).toBeInTheDocument();
   });
 
-  it('correctly maps all item types including chat, location, files, and custom types', () => {
+  it('correctly maps all item types including chat, location, files, and custom types', async () => {
     useVaultStore.setState({
       items: [
         { id: '1', title: 'P1', type: 'password', encryptedData: 'x', createdAt: 1, updatedAt: 1 },
@@ -150,43 +162,53 @@ describe('UniversalSyncWidget', () => {
       ],
     });
 
-    render(<UniversalSyncWidget />);
+    await renderWidget();
 
     const button = screen.getByRole('button', {
       name: /universal cloud sync|cloud is synchronizing|cloud connection error/i,
     });
-    fireEvent.click(button);
+    await act(async () => {
+      fireEvent.click(button);
+    });
 
     expect(screen.getByText(/7 Total/i)).toBeInTheDocument();
     expect(screen.getByText('Other Items')).toBeInTheDocument();
   });
 
   it('closes popover when pressing Escape key', async () => {
-    render(<UniversalSyncWidget />);
+    await renderWidget();
 
     const button = screen.getByRole('button', {
       name: /universal cloud sync|cloud is synchronizing|cloud connection error/i,
     });
-    fireEvent.click(button);
+    await act(async () => {
+      fireEvent.click(button);
+    });
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
 
-    fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+    });
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 
   it('closes popover when clicking close button', async () => {
-    render(<UniversalSyncWidget />);
+    await renderWidget();
 
     const button = screen.getByRole('button', {
       name: /universal cloud sync|cloud is synchronizing|cloud connection error/i,
     });
-    fireEvent.click(button);
+    await act(async () => {
+      fireEvent.click(button);
+    });
 
     const closeBtn = screen.getByLabelText(/close sync center/i);
-    fireEvent.click(closeBtn);
+    await act(async () => {
+      fireEvent.click(closeBtn);
+    });
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -197,15 +219,19 @@ describe('UniversalSyncWidget', () => {
     const fetchItemsMock = vi.fn().mockResolvedValue(undefined);
     useVaultStore.setState({ fetchItems: fetchItemsMock });
 
-    render(<UniversalSyncWidget />);
+    await renderWidget();
 
     const triggerBtn = screen.getByRole('button', {
       name: /universal cloud sync|cloud is synchronizing|cloud connection error/i,
     });
-    fireEvent.click(triggerBtn);
+    await act(async () => {
+      fireEvent.click(triggerBtn);
+    });
 
     const syncActionBtn = screen.getByRole('button', { name: /sync all vaults now/i });
-    fireEvent.click(syncActionBtn);
+    await act(async () => {
+      fireEvent.click(syncActionBtn);
+    });
 
     await waitFor(() => {
       expect(fetchItemsMock).toHaveBeenCalledWith('manual');
@@ -213,40 +239,46 @@ describe('UniversalSyncWidget', () => {
   });
 
   it('reacts dynamically to custom cloud health events', async () => {
-    render(<UniversalSyncWidget />);
+    await renderWidget();
 
-    window.dispatchEvent(
-      new CustomEvent('vault-cloud-health-status', {
-        detail: { status: 'connected', dbName: 'atlas_custom_cluster' },
-      })
-    );
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent('vault-cloud-health-status', {
+          detail: { status: 'connected', dbName: 'atlas_custom_cluster' },
+        }),
+      );
+    });
 
     const triggerBtn = screen.getByRole('button', {
       name: /universal cloud sync|cloud is synchronizing|cloud connection error/i,
     });
-    fireEvent.click(triggerBtn);
+    await act(async () => {
+      fireEvent.click(triggerBtn);
+    });
 
     await waitFor(() => {
       expect(screen.getByText(/MongoDB Atlas \(atlas_custom_cluster\)/i)).toBeInTheDocument();
     });
   });
 
-  it('displays syncing state when syncStatus is syncing', () => {
+  it('displays syncing state when syncStatus is syncing', async () => {
     useVaultStore.setState({ syncStatus: 'syncing' });
-    render(<UniversalSyncWidget />);
+    await renderWidget();
 
     const button = screen.getByRole('button', { name: /cloud is synchronizing/i });
     expect(button).toBeInTheDocument();
   });
 
-  it('displays error state when syncStatus is error', () => {
+  it('displays error state when syncStatus is error', async () => {
     useVaultStore.setState({ syncStatus: 'error', lastSyncError: 'Connection refused' });
-    render(<UniversalSyncWidget />);
+    await renderWidget();
 
     const button = screen.getByRole('button', { name: /cloud connection error/i });
     expect(button).toBeInTheDocument();
 
-    fireEvent.click(button);
+    await act(async () => {
+      fireEvent.click(button);
+    });
     expect(screen.getByText('Connection refused')).toBeInTheDocument();
   });
 });

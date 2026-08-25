@@ -76,6 +76,6 @@ export const requestGlobalItemNavigation = (item: VaultItem) => {
   window.dispatchEvent(
     new CustomEvent<VaultItem>(GLOBAL_NAVIGATION_EVENT, {
       detail: item,
-    })
+    }),
   );
 };

@@ -42,7 +42,7 @@ export const login2FA = async (req: Request, res: Response) => {
     logger.warn('MFA token verification failed during login', { userId, ip: getClientIp(req) });
     throw AppError.unauthorized(
       'Authentication session expired. Please sign in again.',
-      'MFA_TOKEN_INVALID'
+      'MFA_TOKEN_INVALID',
     );
   }
 
@@ -75,7 +75,7 @@ export const login2FA = async (req: Request, res: Response) => {
       user._id.toString(),
       'device_login',
       'New Device Login (2FA)',
-      `A new session was established on device "${deviceId || 'Web Client'}" from IP: ${ip} (2FA verified)`
+      `A new session was established on device "${deviceId || 'Web Client'}" from IP: ${ip} (2FA verified)`,
     );
   } catch (err) {
     logger.warn('Failed to create 2FA login notification', { error: err });
@@ -97,7 +97,7 @@ export const login2FA = async (req: Request, res: Response) => {
         meta: user.meta,
       },
     },
-    '2FA verification successful'
+    '2FA verification successful',
   );
 };
 

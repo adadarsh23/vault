@@ -72,7 +72,7 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({
             window.dispatchEvent(
               new CustomEvent('vault-cloud-health-status', {
                 detail: { status: 'connected', dbName: newDbName },
-              })
+              }),
             );
           }
         } else {
@@ -81,7 +81,7 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({
             window.dispatchEvent(
               new CustomEvent('vault-cloud-health-status', {
                 detail: { status: 'error', dbName: null },
-              })
+              }),
             );
           }
         }
@@ -91,7 +91,7 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({
           window.dispatchEvent(
             new CustomEvent('vault-cloud-health-status', {
               detail: { status: 'error', dbName: null },
-            })
+            }),
           );
         }
       }
@@ -101,7 +101,7 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({
         window.dispatchEvent(
           new CustomEvent('vault-cloud-health-status', {
             detail: { status: 'error', dbName: null },
-          })
+          }),
         );
       }
     } finally {
@@ -235,7 +235,7 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = ({
         status === 'error'
           ? 'bg-red-500/10 border-red-500/25'
           : 'bg-text/5 border-text/10 hover:border-text/20',
-        className
+        className,
       )}
     >
       <div className="relative shrink-0 flex items-center justify-center">

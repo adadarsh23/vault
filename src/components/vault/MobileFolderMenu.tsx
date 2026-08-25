@@ -31,7 +31,7 @@ export interface MobileFolderMenuProps {
   handleDeleteFolder?: (folderName: string) => void;
   handleMoveToFolder?: (
     itemId: string | string[],
-    folderName: string | null
+    folderName: string | null,
   ) => Promise<void> | void;
   title?: string;
   allItemLabel?: string;
@@ -171,7 +171,7 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                         !isDragging &&
                           (currentFolder === null
                             ? 'bg-text/10 text-text font-bold border-transparent'
-                            : 'text-text/60 hover:bg-white/5 border-transparent')
+                            : 'text-text/60 hover:bg-white/5 border-transparent'),
                       )}
                     >
                       {isAllItemsValidDropZone && !isAllItemsDropHover && (
@@ -233,7 +233,7 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                         !isDragging &&
                           (currentFolder === folder
                             ? 'bg-text/10 text-text font-bold border-transparent'
-                            : 'text-text/60 hover:bg-white/5 border-transparent')
+                            : 'text-text/60 hover:bg-white/5 border-transparent'),
                       )}
                     >
                       {isFolderValidDropZone && !isFolderDropHover && (
@@ -441,7 +441,7 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                           ? 'ring-2 ring-white border-white bg-white/30 text-white shadow-[0_0_20px_rgba(255,255,255,0.6)] scale-105'
                           : isAllSource
                             ? 'border-dashed border-white/25 bg-white/5 text-white/40'
-                            : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm'
+                            : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm',
                       )}
                     >
                       {allItemIcon && (
@@ -480,7 +480,7 @@ export const MobileFolderMenu: React.FC<MobileFolderMenuProps> = ({
                           ? 'ring-2 ring-white border-white bg-white/30 text-white shadow-[0_0_20px_rgba(255,255,255,0.6)] scale-105'
                           : isSource
                             ? 'border-dashed border-white/25 bg-white/5 text-white/40'
-                            : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm'
+                            : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm',
                       )}
                     >
                       <Folder className="h-3.5 w-3.5 shrink-0" />

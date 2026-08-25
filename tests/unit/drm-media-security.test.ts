@@ -7,7 +7,7 @@ vi.stubEnv('JWT_SECRET', 'test-jwt-secret-minimum-length-32-chars-for-test');
 vi.stubEnv('REFRESH_TOKEN_SECRET', 'test-refresh-secret-minimum-length-32-chars');
 vi.stubEnv(
   'VAULT_ENCRYPTION_KEY',
-  '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+  '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
 );
 vi.stubEnv('AUTH_PEPPER', 'test-auth-pepper');
 vi.stubEnv('CSRF_SECRET', 'test-csrf-secret');

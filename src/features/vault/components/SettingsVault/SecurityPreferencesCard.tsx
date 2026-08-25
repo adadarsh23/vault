@@ -60,7 +60,7 @@ export const SecurityPreferencesCard: React.FC<SecurityPreferencesCardProps> = m
         />
       </CardContent>
     </Card>
-  )
+  ),
 );
 
 SecurityPreferencesCard.displayName = 'SecurityPreferencesCard';

@@ -29,21 +29,21 @@ router.post(
   requireAuth,
   twoFactorLimiter,
   validate(twoFactorTokenSchema),
-  asyncHandler(twoFactorController.verifyAndEnable2FA)
+  asyncHandler(twoFactorController.verifyAndEnable2FA),
 );
 router.post(
   '/login',
   requireTrustedBrowserOrigin,
   twoFactorLimiter,
   validate(login2FASchema),
-  asyncHandler(twoFactorController.login2FA)
+  asyncHandler(twoFactorController.login2FA),
 );
 router.post(
   '/disable',
   requireAuth,
   twoFactorLimiter,
   validate(twoFactorTokenSchema),
-  asyncHandler(twoFactorController.disable2FA)
+  asyncHandler(twoFactorController.disable2FA),
 );
 
 export const twoFactorRouter = router;

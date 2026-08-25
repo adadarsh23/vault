@@ -432,7 +432,7 @@ const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
         </Card>
       </motion.div>
     );
-  }
+  },
 );
 
 export const SecretsVault: React.FC = () => {
@@ -495,9 +495,9 @@ export const SecretsVault: React.FC = () => {
             secret.title.toLowerCase().includes(normalizedSearchQuery);
           const matchesFolder = currentFolder === null || secret.folder === currentFolder;
           return matchesSearch && matchesFolder;
-        })
+        }),
       ),
-    [secrets, normalizedSearchQuery, currentFolder]
+    [secrets, normalizedSearchQuery, currentFolder],
   );
 
   const getFolderCount = (folder: string | null) => {
@@ -521,7 +521,7 @@ export const SecretsVault: React.FC = () => {
           value: trimmedValue,
           type: resolvedType,
         }),
-        masterKey
+        masterKey,
       );
 
       await addItem({
@@ -582,7 +582,7 @@ export const SecretsVault: React.FC = () => {
           type: currentData?.type ?? 'Other',
           value: trimmedValue,
         }),
-        masterKey
+        masterKey,
       );
 
       await updateItem(id, {

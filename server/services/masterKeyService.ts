@@ -45,7 +45,7 @@ const MASTER_KEY_HASH_HISTORY_LIMIT = 20;
  * Shows the encrypted payload structure without exposing sensitive details
  */
 const formatEncryptedMasterKeyForDisplay = (
-  encryptedKey: EncryptedMasterKeyPayload
+  encryptedKey: EncryptedMasterKeyPayload,
 ): Record<string, unknown> => {
   return {
     encryption: {
@@ -74,7 +74,7 @@ export const saveCloudMasterKey = async (
   userId: string,
   username: string,
   encryptedKey: EncryptedMasterKeyPayload,
-  options: SaveMasterKeyOptions
+  options: SaveMasterKeyOptions,
 ): Promise<MasterKeyDocument | null> => {
   try {
     logger.info(`[MasterKeyService] Saving encrypted master key for user: ${userId}`, {
@@ -181,7 +181,7 @@ export const saveCloudMasterKey = async (
       // Keep the canonical User document in sync so model hooks can archive
       // master-key history in users.history.masterKey.
       const userDoc = await User.findById(userId).select(
-        '+masterKey +meta.masterKey +meta.masterKeyHash'
+        '+masterKey +meta.masterKey +meta.masterKeyHash',
       );
       if (userDoc) {
         userDoc.masterKey = {
@@ -232,7 +232,7 @@ export const saveCloudMasterKey = async (
 export const getCloudMasterKey = async (
   userId: string,
   username: string,
-  deviceId: string
+  deviceId: string,
 ): Promise<EncryptedMasterKeyPayload | null> => {
   try {
     logger.info(`[MasterKeyService] Retrieving encrypted master key for user: ${userId}`, {
@@ -253,7 +253,7 @@ export const getCloudMasterKey = async (
         masterKeyHash: 1,
         'metadata.derivationParams': 1,
         'audit.accessCount': 1,
-      }
+      },
     );
 
     if (!masterKeyDoc) {
@@ -298,7 +298,7 @@ export const getCloudMasterKey = async (
 export const verifyMasterKeyHash = async (
   userId: string,
   username: string,
-  masterKeyHash: string
+  masterKeyHash: string,
 ): Promise<boolean> => {
   try {
     logger.debug(`[MasterKeyService] Verifying master key hash for user: ${userId}`, {
@@ -313,7 +313,7 @@ export const verifyMasterKeyHash = async (
     const MasterKey = getMasterKeyModel(username);
     const masterKeyDoc = await MasterKey.findOne(
       { userId, isActive: true, isDeleted: false },
-      { masterKeyHash: 1 }
+      { masterKeyHash: 1 },
     );
 
     if (!masterKeyDoc) {
@@ -371,7 +371,7 @@ export const deleteCloudMasterKey = async (userId: string, username: string): Pr
         isActive: false,
         isDeleted: true,
         deletedAt: new Date(),
-      }
+      },
     );
 
     const success = !!result;
@@ -383,7 +383,7 @@ export const deleteCloudMasterKey = async (userId: string, username: string): Pr
       {
         context: 'deleteCloudMasterKey',
         userId,
-      }
+      },
     );
 
     return success;
@@ -404,13 +404,13 @@ export const deleteCloudMasterKey = async (userId: string, username: string): Pr
  */
 export const getMasterKeyMetadata = async (
   userId: string,
-  username: string
+  username: string,
 ): Promise<{ metadata: any; audit: any; historyCount: number } | null> => {
   try {
     const MasterKey = getMasterKeyModel(username);
     const masterKeyDoc = await MasterKey.findOne(
       { userId, isActive: true, isDeleted: false },
-      { metadata: 1, audit: 1, masterKeyHashHistory: 1 }
+      { metadata: 1, audit: 1, masterKeyHashHistory: 1 },
     );
 
     if (!masterKeyDoc) {
@@ -431,7 +431,7 @@ export const getMasterKeyMetadata = async (
       {
         context: 'getMasterKeyMetadata',
         userId,
-      }
+      },
     );
     return null;
   }
@@ -446,7 +446,7 @@ export const getMasterKeyMetadata = async (
  */
 export const getMasterKeyFullData = async (
   userId: string,
-  username: string
+  username: string,
 ): Promise<{
   encryptedMasterKey: Record<string, unknown>;
   masterKeyHash: string;
@@ -473,7 +473,7 @@ export const getMasterKeyFullData = async (
         masterKeyHashHistory: 1,
         createdAt: 1,
         updatedAt: 1,
-      }
+      },
     );
 
     if (!masterKeyDoc) {
@@ -486,7 +486,7 @@ export const getMasterKeyFullData = async (
 
     const displayData = {
       encryptedMasterKey: formatEncryptedMasterKeyForDisplay(
-        masterKeyDoc.encryptedMasterKey as EncryptedMasterKeyPayload
+        masterKeyDoc.encryptedMasterKey as EncryptedMasterKeyPayload,
       ),
       masterKeyHashPreview: `${(masterKeyDoc.masterKeyHash as any).cipherText.substring(0, 20)}...`,
       metadata: masterKeyDoc.metadata,
@@ -512,7 +512,7 @@ export const getMasterKeyFullData = async (
       {
         context: 'getMasterKeyFullData',
         userId,
-      }
+      },
     );
     return null;
   }

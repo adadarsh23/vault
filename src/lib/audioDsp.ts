@@ -1,6 +1,6 @@
 /**
  * Web Audio API Voice Clarity & Noise Gate DSP Engine
- * 
+ *
  * Auto-reduces background fan noise, AC hum, electrical interference, and wind rumble
  * while boosting vocal presence, consonant crispness, and speech intelligibility for
  * crystal-clear audio memos and interview videos.
@@ -56,7 +56,8 @@ export const VOICE_CLARITY_PRESETS: Record<VoiceClarityPreset, VoiceClarityConfi
   },
   aggressive: {
     name: 'Heavy Noise Gate (Loud Fan & Wind)',
-    description: 'Maximum suppression for high-noise environments, strong fan whir, and outdoor wind.',
+    description:
+      'Maximum suppression for high-noise environments, strong fan whir, and outdoor wind.',
     highpassFreq: 120,
     notchFreq: 60,
     notchQ: 6.0,
@@ -144,7 +145,7 @@ export interface VoiceClarityChain {
 export function createVoiceClarityChain(
   audioContext: AudioContext,
   sourceNode: AudioNode,
-  initialPreset: VoiceClarityPreset = 'crystal'
+  initialPreset: VoiceClarityPreset = 'crystal',
 ): VoiceClarityChain {
   const highpassFilter = audioContext.createBiquadFilter();
   highpassFilter.type = 'highpass';
@@ -265,7 +266,7 @@ export interface FilteredStreamResult {
  */
 export function createFilteredMediaStream(
   originalStream: MediaStream,
-  preset: VoiceClarityPreset = 'crystal'
+  preset: VoiceClarityPreset = 'crystal',
 ): FilteredStreamResult | null {
   const AudioCtxClass =
     typeof window !== 'undefined'
@@ -327,7 +328,7 @@ export function createFilteredMediaStream(
  */
 export function attachVoiceClarityToMediaElement(
   mediaElement: HTMLMediaElement,
-  initialPreset: VoiceClarityPreset = 'crystal'
+  initialPreset: VoiceClarityPreset = 'crystal',
 ): { setPreset: (preset: VoiceClarityPreset) => void; destroy: () => void } | null {
   const AudioCtxClass =
     typeof window !== 'undefined'

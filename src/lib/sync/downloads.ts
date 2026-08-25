@@ -9,7 +9,7 @@ import { downloadAllFromResponseItems, parseJsonObject } from './itemCodec';
  * Downloads and decrypts settings from MongoDB.
  */
 export const downloadSettingsFromCloud = async (
-  masterKey: string | CryptoKey
+  masterKey: string | CryptoKey,
 ): Promise<any | null> => {
   try {
     const snapshot = await downloadVaultSnapshotFromCloud(masterKey);
@@ -28,7 +28,7 @@ export const deleteItemFromCloud = async (itemId: string, _masterKey: string | C
     await fetchWithRetry(
       `${API_BASE_URL}/api/vault/items/${itemId}`,
       { method: 'DELETE', headers: getAuthHeaders() },
-      'Cloud Delete Conflict'
+      'Cloud Delete Conflict',
     );
   } catch (error: any) {
     handleError(error, 'Cloud Delete Conflict');
@@ -50,7 +50,7 @@ export const downloadAllFromCloud = async (masterKey: string | CryptoKey): Promi
 };
 
 export const downloadVaultSnapshotFromCloud = async (
-  masterKey: string | CryptoKey
+  masterKey: string | CryptoKey,
 ): Promise<{
   items: VaultItem[];
   settings: Record<string, unknown> | null;
@@ -66,7 +66,7 @@ export const downloadVaultSnapshotFromCloud = async (
   const response = await fetchWithRetry(
     `${API_BASE_URL}/api/vault/items`,
     { method: 'GET', headers: getAuthHeaders() },
-    'Cloud Pulse Sync'
+    'Cloud Pulse Sync',
   );
 
   const responseBody = await response.json();
@@ -109,7 +109,7 @@ export const downloadVaultSnapshotFromCloud = async (
       (doc?.itemId === VAULT_KEY_CHECK_ITEM_ID ||
         doc?._id === VAULT_KEY_CHECK_ITEM_ID ||
         doc?.id === VAULT_KEY_CHECK_ITEM_ID) &&
-      typeof doc?.payload === 'string'
+      typeof doc?.payload === 'string',
   );
   const hasKeyCheck = Boolean(keyCheckDoc);
   const hasValidKeyCheck = keyCheckDoc
@@ -133,7 +133,7 @@ export const downloadVaultSnapshotFromCloud = async (
 
     if (isMismatchError) {
       logger.warn(
-        '[Sync] Key check verified master key, but corrupted item(s) exist. Recovering valid items.'
+        '[Sync] Key check verified master key, but corrupted item(s) exist. Recovering valid items.',
       );
       const recovered: VaultItem[] = [];
       for (const doc of docs) {
@@ -157,24 +157,24 @@ export const downloadVaultSnapshotFromCloud = async (
     .map((doc) => doc?.itemId || doc?.id || doc?._id)
     .filter(
       (
-        itemId
+        itemId,
       ): itemId is '__settings__' | '__logs__' | '__profile__' | typeof VAULT_KEY_CHECK_ITEM_ID =>
         typeof itemId === 'string' &&
         controlItemIdSet.has(
-          itemId as '__settings__' | '__logs__' | '__profile__' | typeof VAULT_KEY_CHECK_ITEM_ID
-        )
+          itemId as '__settings__' | '__logs__' | '__profile__' | typeof VAULT_KEY_CHECK_ITEM_ID,
+        ),
     );
   const decryptedControlIds = new Set(
     decryptedItems
       .map((item) => item.id)
       .filter(
         (
-          itemId
+          itemId,
         ): itemId is '__settings__' | '__logs__' | '__profile__' | typeof VAULT_KEY_CHECK_ITEM_ID =>
           controlItemIdSet.has(
-            itemId as '__settings__' | '__logs__' | '__profile__' | typeof VAULT_KEY_CHECK_ITEM_ID
-          )
-      )
+            itemId as '__settings__' | '__logs__' | '__profile__' | typeof VAULT_KEY_CHECK_ITEM_ID,
+          ),
+      ),
   );
 
   if (
@@ -211,7 +211,7 @@ export const downloadVaultSnapshotFromCloud = async (
         item.id !== '__settings__' &&
         item.id !== '__logs__' &&
         item.id !== '__profile__' &&
-        item.id !== VAULT_KEY_CHECK_ITEM_ID
+        item.id !== VAULT_KEY_CHECK_ITEM_ID,
     ),
     settings,
     logs,
@@ -221,12 +221,12 @@ export const downloadVaultSnapshotFromCloud = async (
 
 export const downloadLegacyVaultSnapshot = async (
   masterKey: string | CryptoKey,
-  vaultId: string
+  vaultId: string,
 ): Promise<VaultItem[]> => {
   const response = await fetchWithRetry(
     `${API_BASE_URL}/api/vault/legacy/${vaultId}/items`,
     { method: 'GET', headers: getAuthHeaders() },
-    'Legacy Vault Migration'
+    'Legacy Vault Migration',
   );
 
   const responseBody = await response.json();

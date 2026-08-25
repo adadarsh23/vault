@@ -17,6 +17,8 @@ export interface FuzzySearchResult {
   folderMatches: number[];
   typeMatches: number[];
   tagMatches: { tag: string; matches: number[] }[];
+  transcriptMatches?: number[];
+  transcriptSnippet?: string;
 }
 
 /**
@@ -40,7 +42,7 @@ export function fuzzyMatch(query: string, text: string): FuzzyResult | null {
 
   // Memoization table: memo[qIdx][tIdx] stores the best FuzzyResult or null
   const memo: (FuzzyResult | null)[][] = Array.from({ length: qLen }, () =>
-    Array(tLen).fill(undefined)
+    Array(tLen).fill(undefined),
   );
 
   function match(qIdx: number, tIdx: number): FuzzyResult | null {
@@ -162,7 +164,7 @@ export function getHighlightedParts(text: string, matches: number[]): TextPart[]
 export function getTranscriptSnippet(
   transcript: string,
   query: string,
-  maxLength = 80
+  maxLength = 80,
 ): { snippet: string; matches: number[] } {
   if (!transcript || !query) return { snippet: '', matches: [] };
 
@@ -200,7 +202,7 @@ export function getTranscriptSnippet(
 export function searchVaultItems(
   items: VaultItem[],
   query: string,
-  typeConfigs: Record<string, any>
+  typeConfigs: Record<string, any>,
 ): FuzzySearchResult[] {
   const trimmed = query.trim();
   if (!trimmed) {
@@ -297,9 +299,10 @@ export function searchVaultItems(
       const transcriptLower = transcript.toLowerCase();
       const actualQueryLower = actualQuery.toLowerCase();
       const directTranscriptIndex = transcriptLower.indexOf(actualQueryLower);
-      const transcriptFuzzy = directTranscriptIndex === -1 && transcript.length > 0
-        ? fuzzyMatch(actualQuery, transcript.slice(0, 300))
-        : null;
+      const transcriptFuzzy =
+        directTranscriptIndex === -1 && transcript.length > 0
+          ? fuzzyMatch(actualQuery, transcript.slice(0, 300))
+          : null;
 
       let transcriptScore = 0;
       let snippetData: { snippet: string; matches: number[] } | null = null;
@@ -314,11 +317,7 @@ export function searchVaultItems(
       }
 
       const hasMatch =
-        titleMatch ||
-        folderMatch ||
-        typeMatch ||
-        tagMatches.length > 0 ||
-        transcriptScore > 0;
+        titleMatch || folderMatch || typeMatch || tagMatches.length > 0 || transcriptScore > 0;
 
       if (hasMatch) {
         const scores: number[] = [];

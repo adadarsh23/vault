@@ -38,7 +38,7 @@ class AnomalyDetectionService {
           ip,
           count,
           threshold: this.THRESHOLDS.KEY_REQUESTS_MIN,
-        }
+        },
       );
     }
   }
@@ -82,7 +82,7 @@ class AnomalyDetectionService {
             ips: Array.from(ipSet),
             count,
             threshold: this.THRESHOLDS.UNIQUE_IPS_1H,
-          }
+          },
         );
       }
     }
@@ -146,7 +146,7 @@ class AnomalyDetectionService {
             'security_alert',
             `Security Threat: ${type}`,
             message,
-            metadata
+            metadata,
           );
         }
       } catch (err) {

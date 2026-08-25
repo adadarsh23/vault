@@ -97,7 +97,7 @@ export const RecaptchaField = ({
 
       const nextScale = Math.min(
         1,
-        Math.max(RECAPTCHA_MIN_SCALE, availableWidth / RECAPTCHA_WIDTH)
+        Math.max(RECAPTCHA_MIN_SCALE, availableWidth / RECAPTCHA_WIDTH),
       );
 
       setWidgetScale((current) => (Math.abs(current - nextScale) < 0.01 ? current : nextScale));
@@ -163,7 +163,7 @@ export const RecaptchaField = ({
       setWidgetState('ready');
       onChange(nextToken);
     },
-    [onChange]
+    [onChange],
   );
 
   const handleScriptLoad = useCallback(() => {
@@ -180,7 +180,7 @@ export const RecaptchaField = ({
       <div
         className={cn(
           'rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200',
-          className
+          className,
         )}
         role="alert"
       >
@@ -248,7 +248,7 @@ export const RecaptchaField = ({
               ? 'text-emerald-400'
               : hasErrorState || status === 'expired'
                 ? 'text-red-400'
-                : 'text-text/65'
+                : 'text-text/65',
           )}
           role="status"
           aria-live="polite"

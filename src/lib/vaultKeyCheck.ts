@@ -21,7 +21,7 @@ type VaultKeyCheckError = Error & {
 
 const createVaultKeyCheckError = (
   message: string,
-  code: VaultKeyCheckErrorCode
+  code: VaultKeyCheckErrorCode,
 ): VaultKeyCheckError => {
   const error = new Error(message) as VaultKeyCheckError;
   error.code = code;
@@ -74,21 +74,21 @@ const isVaultKeyCheckRecord = (value: unknown): value is VaultKeyCheckRecord => 
 
 export const createVaultKeyCheckPayload = async (
   masterKey: string | CryptoKey,
-  createdAt = new Date()
+  createdAt = new Date(),
 ): Promise<string> => {
   const keyToUse = typeof masterKey === 'string' ? masterKey.trim() : masterKey;
 
   if (!keyToUse) {
     throw createVaultKeyCheckError(
       'Master key is required for vault key check payload creation.',
-      'INVALID_MASTER_KEY'
+      'INVALID_MASTER_KEY',
     );
   }
 
   if (!(createdAt instanceof Date) || !Number.isFinite(createdAt.getTime())) {
     throw createVaultKeyCheckError(
       'createdAt must be a valid Date instance.',
-      'INVALID_CREATED_AT'
+      'INVALID_CREATED_AT',
     );
   }
 
@@ -98,13 +98,13 @@ export const createVaultKeyCheckPayload = async (
       version: VAULT_KEY_CHECK_VERSION,
       createdAt: createdAt.toISOString(),
     }),
-    keyToUse
+    keyToUse,
   );
 };
 
 export const validateVaultKeyCheckPayload = async (
   encryptedPayload: string,
-  masterKey: string | CryptoKey
+  masterKey: string | CryptoKey,
 ): Promise<boolean> => {
   const normalizedPayload = encryptedPayload.trim();
 

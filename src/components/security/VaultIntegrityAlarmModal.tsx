@@ -22,7 +22,7 @@ export const VaultIntegrityAlarmModal: React.FC = () => {
         dismissTamperAlarm();
       }
     },
-    [tamperAlarmActive, dismissTamperAlarm]
+    [tamperAlarmActive, dismissTamperAlarm],
   );
 
   useEffect(() => {
@@ -201,4 +201,3 @@ export const VaultIntegrityAlarmModal: React.FC = () => {
     </AnimatePresence>
   );
 };
-

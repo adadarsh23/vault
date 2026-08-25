@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  VOICE_CLARITY_PRESETS,
-  createVoiceClarityChain,
-  createFilteredMediaStream,
-  attachVoiceClarityToMediaElement,
-} from '../audioDsp';
+import { VOICE_CLARITY_PRESETS, createVoiceClarityChain } from '../audioDsp';
 
 describe('Voice Clarity & Noise Gate DSP Engine (Web Audio API)', () => {
   it('should have properly defined presets for noise reduction and clarity', () => {
@@ -86,29 +81,25 @@ describe('Voice Clarity & Noise Gate DSP Engine (Web Audio API)', () => {
       expect(chain.nodes.highpassFilter.frequency.setTargetAtTime).toHaveBeenCalledWith(
         85,
         0,
-        0.05
+        0.05,
       );
       expect(chain.nodes.notchFilter.frequency.setTargetAtTime).toHaveBeenCalledWith(60, 0, 0.05);
       expect(chain.nodes.fanPeakingFilter.frequency.setTargetAtTime).toHaveBeenCalledWith(
         260,
         0,
-        0.05
+        0.05,
       );
       expect(chain.nodes.vocalPresenceFilter.frequency.setTargetAtTime).toHaveBeenCalledWith(
         3200,
         0,
-        0.05
+        0.05,
       );
       expect(chain.nodes.hissShelfFilter.frequency.setTargetAtTime).toHaveBeenCalledWith(
         9000,
         0,
-        0.05
+        0.05,
       );
-      expect(chain.nodes.compressor.threshold.setTargetAtTime).toHaveBeenCalledWith(
-        -45,
-        0,
-        0.05
-      );
+      expect(chain.nodes.compressor.threshold.setTargetAtTime).toHaveBeenCalledWith(-45, 0, 0.05);
     });
 
     it('should dynamically update filter parameters when preset is changed', () => {
@@ -118,25 +109,17 @@ describe('Voice Clarity & Noise Gate DSP Engine (Web Audio API)', () => {
       expect(chain.nodes.highpassFilter.frequency.setTargetAtTime).toHaveBeenCalledWith(
         120,
         0,
-        0.05
+        0.05,
       );
-      expect(chain.nodes.fanPeakingFilter.gain.setTargetAtTime).toHaveBeenCalledWith(
-        -7.0,
-        0,
-        0.05
-      );
-      expect(chain.nodes.compressor.threshold.setTargetAtTime).toHaveBeenCalledWith(
-        -38,
-        0,
-        0.05
-      );
+      expect(chain.nodes.fanPeakingFilter.gain.setTargetAtTime).toHaveBeenCalledWith(-7.0, 0, 0.05);
+      expect(chain.nodes.compressor.threshold.setTargetAtTime).toHaveBeenCalledWith(-38, 0, 0.05);
       expect(chain.nodes.compressor.ratio.setTargetAtTime).toHaveBeenCalledWith(16, 0, 0.05);
 
       chain.setPreset('off');
       expect(chain.nodes.highpassFilter.frequency.setTargetAtTime).toHaveBeenCalledWith(
         10,
         0,
-        0.05
+        0.05,
       );
       expect(chain.nodes.fanPeakingFilter.gain.setTargetAtTime).toHaveBeenCalledWith(0, 0, 0.05);
       expect(chain.nodes.compressor.threshold.setTargetAtTime).toHaveBeenCalledWith(0, 0, 0.05);

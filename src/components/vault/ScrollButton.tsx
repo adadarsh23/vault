@@ -15,7 +15,7 @@ export const ScrollButton: React.FC<{
       e.stopPropagation();
       onClick();
     },
-    [onClick]
+    [onClick],
   );
 
   const handleTouchEnd = React.useCallback(
@@ -24,7 +24,7 @@ export const ScrollButton: React.FC<{
       e.stopPropagation();
       onClick();
     },
-    [onClick]
+    [onClick],
   );
 
   return (
@@ -41,7 +41,7 @@ export const ScrollButton: React.FC<{
           onTouchEnd={handleTouchEnd}
           className={cn(
             'absolute z-30 p-2 rounded-full bg-zinc-900/90 text-white/70 hover:text-white hover:bg-zinc-800 shadow-xl transition-colors border border-white/15 backdrop-blur-md touch-manipulation cursor-pointer select-none',
-            className
+            className,
           )}
         >
           <Icon className="h-4 w-4" />

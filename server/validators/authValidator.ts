@@ -12,7 +12,7 @@ const usernameSchema = z
   .max(64, 'Username must be at most 64 characters')
   .regex(
     USERNAME_PATTERN,
-    'Username can only include letters, numbers, dots, underscores, and hyphens'
+    'Username can only include letters, numbers, dots, underscores, and hyphens',
   );
 
 const passwordSchema = z
@@ -21,7 +21,7 @@ const passwordSchema = z
   .max(64, 'Password must be at most 64 characters')
   .regex(
     STRONG_PASSWORD_PATTERN,
-    'Password must include uppercase, lowercase, number, and special character, and cannot contain spaces'
+    'Password must include uppercase, lowercase, number, and special character, and cannot contain spaces',
   );
 
 const masterKeySchema = z
@@ -30,7 +30,7 @@ const masterKeySchema = z
   .max(64, 'Master Key must be at most 64 characters')
   .regex(
     STRONG_PASSWORD_PATTERN,
-    'Master Key must include uppercase, lowercase, number, and special character, and cannot contain spaces'
+    'Master Key must include uppercase, lowercase, number, and special character, and cannot contain spaces',
   );
 
 const deviceIdSchema = z.string().trim().min(1).max(128);
@@ -157,5 +157,5 @@ export const updateProfileSchema = z
     {
       message: 'At least one profile field is required.',
       path: ['profileName'],
-    }
+    },
   );

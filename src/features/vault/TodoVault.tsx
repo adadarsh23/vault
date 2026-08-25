@@ -176,7 +176,7 @@ const formatCategoryLabel = (value: string): string =>
     .replace(/\s+/g, ' ')
     .split(' ')
     .map((part) =>
-      part.length > 0 ? `${part.charAt(0).toUpperCase()}${part.slice(1).toLowerCase()}` : ''
+      part.length > 0 ? `${part.charAt(0).toUpperCase()}${part.slice(1).toLowerCase()}` : '',
     )
     .filter(Boolean)
     .join(' ');
@@ -513,7 +513,7 @@ export const TodoVault: React.FC = () => {
           } catch {
             nextFailures[item.id] = true;
           }
-        })
+        }),
       );
 
       if (!isMounted) return;
@@ -565,7 +565,7 @@ export const TodoVault: React.FC = () => {
 
   const activeCategoryKey = useMemo(
     () => (currentFolder ? normalizeCategoryKey(currentFolder) : 'all'),
-    [currentFolder]
+    [currentFolder],
   );
 
   const filteredTodos = useMemo(
@@ -588,14 +588,14 @@ export const TodoVault: React.FC = () => {
             currentFolder === null ||
             normalizeCategoryKey(item.folder) === normalizeCategoryKey(currentFolder);
           return matchesSearch && matchesFolder;
-        })
+        }),
       ),
-    [todos, todoPayloads, normalizedSearchQuery, currentFolder]
+    [todos, todoPayloads, normalizedSearchQuery, currentFolder],
   );
 
   const getFolderCount = (folder: string | null) =>
     todos.filter((todo) =>
-      folder === null ? true : normalizeCategoryKey(todo.folder) === normalizeCategoryKey(folder)
+      folder === null ? true : normalizeCategoryKey(todo.folder) === normalizeCategoryKey(folder),
     ).length;
 
   const resetCreateForm = () => {
@@ -609,14 +609,14 @@ export const TodoVault: React.FC = () => {
         ? prev.includes(itemId)
           ? prev
           : [...prev, itemId]
-        : prev.filter((id) => id !== itemId)
+        : prev.filter((id) => id !== itemId),
     );
   };
 
   const persistTodoPayload = async (
     item: VaultItem,
     payload: TodoPayload,
-    options?: { closeEditor?: boolean }
+    options?: { closeEditor?: boolean },
   ): Promise<boolean> => {
     if (!masterKey && !useVaultStore.getState().isDecoyMode) {
       toast.error('Unlock the vault before saving todos');

@@ -36,7 +36,7 @@ describe('vaultKeyCheck', () => {
         version: 1,
         createdAt: 'not-a-date',
       }),
-      key
+      key,
     );
 
     await expect(validateVaultKeyCheckPayload(malformedPayload, key)).resolves.toBe(false);
@@ -51,7 +51,7 @@ describe('vaultKeyCheck', () => {
         version: 1,
         createdAt: future,
       }),
-      key
+      key,
     );
 
     await expect(validateVaultKeyCheckPayload(malformedPayload, key)).resolves.toBe(false);

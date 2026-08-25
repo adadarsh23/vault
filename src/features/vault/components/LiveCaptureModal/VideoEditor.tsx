@@ -14,7 +14,8 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import { cn } from '../../../../lib/utils';
-import { CameraFilter, CAMERA_FILTERS, getFilterCss } from './filters';
+import { CAMERA_FILTERS, getFilterCss } from './filters';
+import { CameraFilter } from './types';
 import { triggerHaptic } from './haptics';
 import { toast } from 'sonner';
 
@@ -47,7 +48,7 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
   // Auto-scroll active filter into view
   useEffect(() => {
     if (activeFilterBtnRef.current && filterScrollRef.current) {
-      activeFilterBtnRef.current.scrollIntoView({
+      activeFilterBtnRef.current.scrollIntoView?.({
         behavior: 'smooth',
         inline: 'center',
         block: 'nearest',
@@ -64,7 +65,7 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
   const scrollFilters = (direction: 'left' | 'right') => {
     if (!filterScrollRef.current) return;
     const scrollAmount = direction === 'left' ? -220 : 220;
-    filterScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    filterScrollRef.current.scrollBy?.({ left: scrollAmount, behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -136,6 +137,7 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
     setProcessProgress(0);
     const toastId = toast.loading('Applying filter & rendering video...');
 
+    let audioCtx: AudioContext | null = null;
     try {
       sourceVideo.pause();
       setIsPlaying(false);
@@ -163,7 +165,6 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
         throw new Error('Canvas captureStream not supported in this browser');
       }
 
-      let audioCtx: AudioContext | null = null;
       // Add audio track from video if available
       try {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -177,8 +178,11 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
       } catch {
         // Fallback: try captureStream on video element directly
         try {
-          const vidStream = (sourceVideo as any).captureStream?.() || (sourceVideo as any).mozCaptureStream?.();
-          vidStream?.getAudioTracks()?.forEach((track: MediaStreamTrack) => canvasStream.addTrack(track));
+          const vidStream =
+            (sourceVideo as any).captureStream?.() || (sourceVideo as any).mozCaptureStream?.();
+          vidStream
+            ?.getAudioTracks()
+            ?.forEach((track: MediaStreamTrack) => canvasStream.addTrack(track));
         } catch {
           /* ignore audio capture fallback */
         }
@@ -188,8 +192,8 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
         initialBlob.type && MediaRecorder.isTypeSupported(initialBlob.type)
           ? initialBlob.type
           : MediaRecorder.isTypeSupported('video/mp4')
-          ? 'video/mp4'
-          : 'video/webm';
+            ? 'video/mp4'
+            : 'video/webm';
 
       const recorder = new MediaRecorder(canvasStream, { mimeType });
       const chunks: Blob[] = [];
@@ -239,7 +243,7 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
           -sourceVideo.videoWidth / 2,
           -sourceVideo.videoHeight / 2,
           sourceVideo.videoWidth,
-          sourceVideo.videoHeight
+          sourceVideo.videoHeight,
         );
         ctx.restore();
 
@@ -376,7 +380,7 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
                   'group flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border transition-all shrink-0 active:scale-95 select-none',
                   isSelected
                     ? 'bg-primary/20 border-primary/70 text-primary shadow-[0_0_12px_rgba(0,242,254,0.35)] ring-1 ring-primary/40'
-                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white hover:border-white/20'
+                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white hover:border-white/20',
                 )}
                 title={f.label}
                 aria-label={f.label}
@@ -384,12 +388,19 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
                 <div
                   className={cn(
                     'flex h-6 w-6 items-center justify-center rounded-full transition-transform group-hover:scale-110',
-                    isSelected ? 'bg-primary/20 text-primary' : 'bg-white/5'
+                    isSelected ? 'bg-primary/20 text-primary' : 'bg-white/5',
                   )}
                 >
-                  <IconComponent className={cn('h-3.5 w-3.5', isSelected ? f.iconColor : 'text-white/80')} />
+                  <IconComponent
+                    className={cn('h-3.5 w-3.5', isSelected ? f.iconColor : 'text-white/80')}
+                  />
                 </div>
-                <span className={cn('text-xs font-semibold tracking-wide whitespace-nowrap', isSelected ? 'text-white font-bold' : 'text-white/70')}>
+                <span
+                  className={cn(
+                    'text-xs font-semibold tracking-wide whitespace-nowrap',
+                    isSelected ? 'text-white font-bold' : 'text-white/70',
+                  )}
+                >
                   {f.shortLabel || f.label}
                 </span>
               </button>
@@ -440,7 +451,11 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
             title={isPlaying ? 'Pause' : 'Play'}
             aria-label={isPlaying ? 'Pause video' : 'Play video'}
           >
-            {isPlaying ? <Pause className="h-4 w-4 fill-white" /> : <Play className="h-4 w-4 fill-white" />}
+            {isPlaying ? (
+              <Pause className="h-4 w-4 fill-white" />
+            ) : (
+              <Play className="h-4 w-4 fill-white" />
+            )}
           </Button>
 
           {/* Mute Toggle */}
@@ -482,7 +497,7 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
               'h-9 w-9 rounded-full border transition-all active:scale-90',
               isFlipped
                 ? 'border-primary/60 bg-primary/20 text-primary'
-                : 'border-white/10 bg-black/40 text-white/80 hover:bg-white/10 hover:text-white'
+                : 'border-white/10 bg-black/40 text-white/80 hover:bg-white/10 hover:text-white',
             )}
             title="Flip Horizontal"
             aria-label="Flip horizontal"

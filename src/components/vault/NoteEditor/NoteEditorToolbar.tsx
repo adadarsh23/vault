@@ -124,7 +124,7 @@ type ThrottledFunction<T extends (...args: any[]) => void> = ((...args: Paramete
 
 const throttle = <T extends (...args: any[]) => void>(
   fn: T,
-  delay: number
+  delay: number,
 ): ThrottledFunction<T> => {
   let lastRun = 0;
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -169,10 +169,10 @@ const handleMenuNavigation = (
   event: React.KeyboardEvent<HTMLElement>,
   closeMenu: () => void,
   triggerRef: MenuTriggerRef,
-  direction: MenuDirection = 'vertical'
+  direction: MenuDirection = 'vertical',
 ) => {
   const menuItems = Array.from(
-    event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')
+    event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'),
   );
 
   if (event.key === 'Escape') {
@@ -231,7 +231,7 @@ const handleMenuNavigation = (
 const useOutsideClick = (
   refs: React.RefObject<HTMLElement | null>[],
   handler: () => void,
-  enabled: boolean
+  enabled: boolean,
 ) => {
   useEffect(() => {
     if (!enabled) return;
@@ -407,7 +407,7 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
     const [emojiScrollTop, setEmojiScrollTop] = useState(0);
     const emojiColumns = Math.max(
       1,
-      Math.floor(emojiPickerPosition.width / (EMOJI_CELL_SIZE + EMOJI_CELL_GAP))
+      Math.floor(emojiPickerPosition.width / (EMOJI_CELL_SIZE + EMOJI_CELL_GAP)),
     );
     const emojiRowHeight = EMOJI_CELL_SIZE + EMOJI_CELL_GAP;
     const emojiTotalRows = Math.ceil(visibleEmojiOptions.length / emojiColumns);
@@ -434,7 +434,7 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
             loadMoreEmojis();
           }
         }, 200),
-      [loadMoreEmojis]
+      [loadMoreEmojis],
     );
 
     const onEmojiGridScroll = useCallback(
@@ -444,7 +444,7 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
         const distanceFromBottom = grid.scrollHeight - grid.scrollTop - grid.clientHeight;
         handleEmojiGridScroll(distanceFromBottom);
       },
-      [handleEmojiGridScroll]
+      [handleEmojiGridScroll],
     );
 
     useEffect(() => {
@@ -483,21 +483,21 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
         setShowEmojiPicker(false);
         emojiButtonRef.current?.focus();
       },
-      [applyFormatting]
+      [applyFormatting],
     );
 
     const handleEmojiMenuKeyDown = useCallback(
       (event: React.KeyboardEvent<HTMLDivElement>) => {
         handleMenuNavigation(event, closeEmojiPicker, emojiButtonRef, 'grid');
       },
-      [closeEmojiPicker]
+      [closeEmojiPicker],
     );
 
     const handleMoreActionsMenuKeyDown = useCallback(
       (event: React.KeyboardEvent<HTMLDivElement>) => {
         handleMenuNavigation(event, closeMoreActions, moreActionsButtonRef);
       },
-      [closeMoreActions]
+      [closeMoreActions],
     );
 
     const handleFormatDocument = useCallback(() => {
@@ -586,7 +586,7 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         applyFormatting('color', e.target.value);
       },
-      [applyFormatting]
+      [applyFormatting],
     );
     const handleEmojiTriggerKeyDown = useCallback(
       (event: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -606,7 +606,7 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
           emojiButtons[0]?.focus();
         });
       },
-      [setShowMoreActions]
+      [setShowMoreActions],
     );
     const handleMoreActionsTriggerKeyDown = useCallback(
       (event: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -626,13 +626,13 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
           actionButtons[0]?.focus();
         });
       },
-      [setShowMoreActions]
+      [setShowMoreActions],
     );
 
     const emojiOutsideClickRefs = useMemo(() => [emojiButtonRef, emojiMenuRef], []);
     const moreActionsOutsideClickRefs = useMemo(
       () => [moreActionsButtonRef, moreActionsMenuRef],
-      []
+      [],
     );
 
     useOutsideClick(emojiOutsideClickRefs, closeEmojiPicker, showEmojiPicker);
@@ -712,25 +712,25 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
         const gap = 8;
         const pickerWidth = Math.max(
           isDesktop ? 170 : 110,
-          Math.min(isDesktop ? 220 : 170, viewportWidth - viewportPadding * 2)
+          Math.min(isDesktop ? 220 : 170, viewportWidth - viewportPadding * 2),
         );
         const availableAbove = rect.top - viewportTop - viewportPadding - gap;
         const availableBelow = viewportBottom - rect.bottom - viewportPadding - gap;
         const opensUp = availableAbove >= 160 || availableAbove > availableBelow;
         const maxHeight = Math.max(
           isDesktop ? 100 : 64,
-          Math.min(isDesktop ? 180 : 140, opensUp ? availableAbove : availableBelow)
+          Math.min(isDesktop ? 180 : 140, opensUp ? availableAbove : availableBelow),
         );
         const preferredLeft = isDesktop ? rect.left - pickerWidth - gap : rect.left;
         const left = Math.max(
           viewportLeft + viewportPadding,
-          Math.min(preferredLeft, viewportRight - pickerWidth - viewportPadding)
+          Math.min(preferredLeft, viewportRight - pickerWidth - viewportPadding),
         );
         const top = opensUp
           ? Math.max(viewportTop + viewportPadding, rect.top - maxHeight - gap)
           : Math.max(
               viewportTop + viewportPadding,
-              Math.min(rect.bottom + gap, viewportBottom - maxHeight - viewportPadding)
+              Math.min(rect.bottom + gap, viewportBottom - maxHeight - viewportPadding),
             );
 
         setEmojiPickerPosition({
@@ -1468,7 +1468,7 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
         </div>
       </div>
     );
-  }
+  },
 );
 
 NoteEditorToolbar.displayName = 'NoteEditorToolbar';

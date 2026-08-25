@@ -167,7 +167,7 @@ export const SystemLogsCard: React.FC = () => {
               prev.forEach((l) => map.set(l.id, l));
               (res.logs || []).forEach((l) => map.set(l.id, l));
               const sorted = Array.from(map.values()).sort(
-                (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+                (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
               );
               return sorted.slice(0, MAX_STREAM_LOGS);
             });
@@ -189,7 +189,7 @@ export const SystemLogsCard: React.FC = () => {
         }
       }
     },
-    [viewMode, page, limit, nextCursor]
+    [viewMode, page, limit, nextCursor],
   );
 
   // Initial and reactive load when page, limit, or viewMode changes
@@ -305,7 +305,7 @@ export const SystemLogsCard: React.FC = () => {
       },
       () => {
         toast.error('Failed to copy to clipboard');
-      }
+      },
     );
   };
 
@@ -360,7 +360,7 @@ export const SystemLogsCard: React.FC = () => {
             (l) =>
               `[${l.timestamp}] [${(l.level || 'info').toUpperCase()}] ${l.message}${
                 l.meta ? ` | Meta: ${JSON.stringify(l.meta)}` : ''
-              }`
+              }`,
           )
           .join('\n');
       }
@@ -665,7 +665,7 @@ export const SystemLogsCard: React.FC = () => {
                         {getIcon(log.level)}
                         <span
                           className={`px-1.5 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider border whitespace-nowrap ${getBadgeClass(
-                            log.level
+                            log.level,
                           )}`}
                         >
                           {log.level}

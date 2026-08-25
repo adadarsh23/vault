@@ -18,7 +18,7 @@ type TrustedTypesApi = {
   getPolicy?: (name: string) => TrustedTypesPolicy | undefined;
   createPolicy: (
     name: string,
-    rules: { createScriptURL: (input: string) => string }
+    rules: { createScriptURL: (input: string) => string },
   ) => TrustedTypesPolicy;
 };
 
@@ -32,13 +32,13 @@ type WindowWithTrustedTypes = Window &
 const LockedVaultHost = lazy(() =>
   import('./components/app/LockedVaultHost').then((module) => ({
     default: module.LockedVaultHost || (module as any).default,
-  }))
+  })),
 );
 
 const UnlockedVaultHost = lazy(() =>
   import('./components/app/UnlockedVaultHost').then((module) => ({
     default: module.UnlockedVaultHost || (module as any).default,
-  }))
+  })),
 );
 
 export default function App() {
@@ -50,7 +50,7 @@ export default function App() {
     useShallow((state) => ({
       isVaultReady: state.isVaultReady,
       isRefreshConfirmationEnabled: state.preferences.isRefreshConfirmationEnabled,
-    }))
+    })),
   );
 
   // Ensure latest Service Worker is active for production media streaming
@@ -69,7 +69,7 @@ export default function App() {
       navigator.serviceWorker
         .getRegistrations()
         .then((registrations) =>
-          Promise.all(registrations.map((registration) => registration.unregister()))
+          Promise.all(registrations.map((registration) => registration.unregister())),
         )
         .catch((error) => {
           logger.warn('Service worker cleanup failed in dev', { error });

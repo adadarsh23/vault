@@ -19,7 +19,7 @@ describe('Mobile & PWA Experience Component Test Suite', () => {
           needsManualInstall={false}
           canInstall={true}
           onInstallRequest={vi.fn()}
-        />
+        />,
       );
 
       expect(screen.getByText('Mobile Experience')).toBeTruthy();
@@ -36,7 +36,7 @@ describe('Mobile & PWA Experience Component Test Suite', () => {
           needsManualInstall={false}
           canInstall={true}
           onInstallRequest={onInstallRequestMock}
-        />
+        />,
       );
 
       const installButton = screen.getByRole('button', { name: /add to home screen/i });
@@ -55,7 +55,7 @@ describe('Mobile & PWA Experience Component Test Suite', () => {
           needsManualInstall={false}
           canInstall={false}
           onInstallRequest={onInstallRequestMock}
-        />
+        />,
       );
 
       const previewButton = screen.getByRole('button', { name: /live preview & widgets/i });
@@ -76,7 +76,7 @@ describe('Mobile & PWA Experience Component Test Suite', () => {
           onClose={onCloseMock}
           onInstall={onInstallMock}
           isInstalled={false}
-        />
+        />,
       );
 
       const installButton = screen.getByRole('button', { name: /install vault/i });
@@ -87,7 +87,7 @@ describe('Mobile & PWA Experience Component Test Suite', () => {
 
     it('disables "Install Vault" button when isInstalled is true', () => {
       render(
-        <PWAInstallModal isOpen={true} onClose={vi.fn()} onInstall={vi.fn()} isInstalled={true} />
+        <PWAInstallModal isOpen={true} onClose={vi.fn()} onInstall={vi.fn()} isInstalled={true} />,
       );
 
       const installedButton = screen.getByRole('button', { name: /already installed/i });
@@ -103,7 +103,7 @@ describe('Mobile & PWA Experience Component Test Suite', () => {
           onClose={onCloseMock}
           onInstall={vi.fn()}
           isInstalled={false}
-        />
+        />,
       );
 
       const maybeLaterButton = screen.getByRole('button', { name: /maybe later/i });
@@ -121,7 +121,7 @@ describe('Mobile & PWA Experience Component Test Suite', () => {
           onClose={onCloseMock}
           onInstall={vi.fn()}
           isInstalled={false}
-        />
+        />,
       );
 
       const closeButton = screen.getByRole('button', { name: /close modal/i });

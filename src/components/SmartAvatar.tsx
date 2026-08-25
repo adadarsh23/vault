@@ -98,7 +98,7 @@ export const SmartAvatar: React.FC<SmartAvatarProps> = React.memo(
 
     const clampedProgress = useMemo(
       () => Math.min(100, Math.max(0, uploadProgress ?? 0)),
-      [uploadProgress]
+      [uploadProgress],
     );
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,7 +145,7 @@ export const SmartAvatar: React.FC<SmartAvatarProps> = React.memo(
         className={cn(
           'relative inline-block select-none overflow-hidden rounded-full transition-transform active:scale-95 focus-within:ring-2 focus-within:ring-indigo-900 focus-within:ring-offset-2 focus-within:ring-offset-white',
           onFileSelect && 'cursor-pointer group',
-          className
+          className,
         )}
         style={{
           width: `${size}px`,
@@ -227,7 +227,7 @@ export const SmartAvatar: React.FC<SmartAvatarProps> = React.memo(
             onError={() => setImageError(true)}
             className={cn(
               'absolute inset-0 h-full w-full object-cover transition-opacity duration-300',
-              imageLoaded ? 'opacity-100' : 'opacity-0'
+              imageLoaded ? 'opacity-100' : 'opacity-0',
             )}
             style={{ width: `${size}px`, height: `${size}px`, aspectRatio: '1 / 1' }}
           />
@@ -321,5 +321,5 @@ export const SmartAvatar: React.FC<SmartAvatarProps> = React.memo(
         )}
       </div>
     );
-  }
+  },
 );

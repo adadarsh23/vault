@@ -37,7 +37,7 @@ export interface FolderSidebarProps {
   handleDeleteFolder: (folderName: string) => void;
   handleMoveToFolder?: (
     itemId: string | string[],
-    folderName: string | null
+    folderName: string | null,
   ) => Promise<void> | void;
 }
 
@@ -111,7 +111,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
       event.dataTransfer.dropEffect = 'move';
       setDropTarget(folder);
     },
-    [handleMoveToFolder, notes]
+    [handleMoveToFolder, notes],
   );
 
   const handleDrop = useCallback(
@@ -135,7 +135,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
         console.error('Move failed:', error);
       }
     },
-    [handleMoveToFolder, notes]
+    [handleMoveToFolder, notes],
   );
 
   /* -------------------- UI -------------------- */
@@ -194,7 +194,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                   !isDragging &&
                     (currentFolder === null
                       ? 'bg-text/10 text-text border-transparent font-bold'
-                      : 'text-text/60 hover:bg-text/5 border-transparent')
+                      : 'text-text/60 hover:bg-text/5 border-transparent'),
                 )}
               >
                 {isAllItemsValidDropZone && !isAllItemsDropHover && (
@@ -291,7 +291,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                       !isDragging &&
                         (isActive
                           ? 'bg-text/10 text-text border-transparent font-semibold'
-                          : 'text-text/60 hover:bg-text/5 border-transparent')
+                          : 'text-text/60 hover:bg-text/5 border-transparent'),
                     )}
                   >
                     {isFolderValidDropZone && !isFolderDropHover && (
@@ -439,7 +439,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                           ? 'ring-2 ring-white border-white bg-white/30 text-white shadow-[0_0_20px_rgba(255,255,255,0.6)] scale-105'
                           : isAllSource
                             ? 'border-dashed border-white/25 bg-white/5 text-white/40'
-                            : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm'
+                            : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm',
                       )}
                     >
                       <FileText className="h-3.5 w-3.5 shrink-0" />
@@ -474,7 +474,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                           ? 'ring-2 ring-white border-white bg-white/30 text-white shadow-[0_0_20px_rgba(255,255,255,0.6)] scale-105'
                           : isSource
                             ? 'border-dashed border-white/25 bg-white/5 text-white/40'
-                            : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm'
+                            : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm',
                       )}
                     >
                       <Folder className="h-3.5 w-3.5 shrink-0" />

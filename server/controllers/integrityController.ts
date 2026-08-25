@@ -11,7 +11,7 @@ const getUsername = (req: AuthenticatedRequest): string => req.user.username;
 
 export const getIntegrityStatusController = async (
   req: AuthenticatedRequest,
-  res: express.Response
+  res: express.Response,
 ) => {
   const status = await integrityService.getStatus(getUserId(req), getUsername(req));
   return sendSuccess(res, status, 'Merkle Tree integrity status fetched successfully');
@@ -19,7 +19,7 @@ export const getIntegrityStatusController = async (
 
 export const verifyVaultIntegrityController = async (
   req: AuthenticatedRequest,
-  res: express.Response
+  res: express.Response,
 ) => {
   const algorithm = (req.body?.algorithm || 'blake3') as HashAlgorithm;
   const ip = getClientIp(req);
@@ -31,19 +31,19 @@ export const verifyVaultIntegrityController = async (
     result.status === 'clean'
       ? 'Vault Merkle Tree integrity verified: 0 corruptions detected'
       : 'ALERT: Cryptographic corruption detected in vault items!',
-    result.status === 'clean' ? 200 : 409
+    result.status === 'clean' ? 200 : 409,
   );
 };
 
 export const getMerkleProofController = async (
   req: AuthenticatedRequest,
-  res: express.Response
+  res: express.Response,
 ) => {
   const itemId = Array.isArray(req.params.itemId) ? req.params.itemId[0] : req.params.itemId;
   if (!itemId) {
     throw AppError.badRequest(
       'Item ID is required for Merkle proof generation.',
-      'ITEM_ID_REQUIRED'
+      'ITEM_ID_REQUIRED',
     );
   }
 
@@ -52,7 +52,7 @@ export const getMerkleProofController = async (
     getUserId(req),
     getUsername(req),
     itemId,
-    algorithm
+    algorithm,
   );
 
   if (!proof) {
@@ -67,7 +67,7 @@ export const reportTamperController = async (req: AuthenticatedRequest, res: exp
   if (!itemId || !expectedHash || !actualHash) {
     throw AppError.badRequest(
       'Item ID, expectedHash, and actualHash are required.',
-      'TAMPER_PAYLOAD_INVALID'
+      'TAMPER_PAYLOAD_INVALID',
     );
   }
 
@@ -83,6 +83,6 @@ export const reportTamperController = async (req: AuthenticatedRequest, res: exp
     res,
     { acknowledged: true },
     'Tamper incident reported and alarm dispatched',
-    201
+    201,
   );
 };

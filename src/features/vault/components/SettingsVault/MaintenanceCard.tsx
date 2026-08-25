@@ -462,7 +462,7 @@ export const MaintenanceCard: React.FC<MaintenanceCardProps> = memo(
         </div>
       </SectionCard>
     );
-  }
+  },
 );
 
 MaintenanceCard.displayName = 'MaintenanceCard';

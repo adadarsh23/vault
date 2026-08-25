@@ -62,7 +62,7 @@ export const maskUri = (uri: string): string => {
 };
 
 export const discoverClusterTargets = (
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
 ): DiscoveredTarget[] => {
   const targets: DiscoveredTarget[] = [];
   const seenUris = new Set<string>();
@@ -106,7 +106,7 @@ export const discoverClusterTargets = (
       `backup_${num}`,
       `Backup ${num} (Cluster ${currentPriority})`,
       env[key],
-      currentPriority
+      currentPriority,
     );
     currentPriority += 1;
   }
@@ -198,7 +198,7 @@ class MultiClusterPoolManager {
         node.lastPingMs = Date.now() - start;
         node.lastCheckedAt = new Date();
         logger.warn(
-          `[MultiClusterPool] Node ${node.name} ping failed (${node.lastPingMs}ms): ${err?.message}`
+          `[MultiClusterPool] Node ${node.name} ping failed (${node.lastPingMs}ms): ${err?.message}`,
         );
       }
       return node;
@@ -249,7 +249,7 @@ class MultiClusterPoolManager {
 
   public getNodeByHost(host: string): ClusterNode | undefined {
     return Array.from(this.nodes.values()).find(
-      (node) => node.host.includes(host) || host.includes(node.host)
+      (node) => node.host.includes(host) || host.includes(node.host),
     );
   }
 

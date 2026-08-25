@@ -103,7 +103,7 @@ describe('SettingsVault Integrated Page Test Suite', { timeout: 15000 }, () => {
     render(
       <MemoryRouter>
         <SettingsVault onOpenMaintenance={onOpenMaintenanceMock} onNavigate={onNavigateMock} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));
@@ -119,7 +119,7 @@ describe('SettingsVault Integrated Page Test Suite', { timeout: 15000 }, () => {
     render(
       <MemoryRouter>
         <SettingsVault onOpenMaintenance={onOpenMaintenanceMock} onNavigate={onNavigateMock} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));
@@ -134,7 +134,7 @@ describe('SettingsVault Integrated Page Test Suite', { timeout: 15000 }, () => {
     render(
       <MemoryRouter>
         <SettingsVault onOpenMaintenance={onOpenMaintenanceMock} onNavigate={onNavigateMock} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));
@@ -149,7 +149,7 @@ describe('SettingsVault Integrated Page Test Suite', { timeout: 15000 }, () => {
     render(
       <MemoryRouter>
         <SettingsVault onOpenMaintenance={onOpenMaintenanceMock} onNavigate={onNavigateMock} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));
@@ -167,7 +167,7 @@ describe('SettingsVault Integrated Page Test Suite', { timeout: 15000 }, () => {
     render(
       <MemoryRouter>
         <SettingsVault onOpenMaintenance={onOpenMaintenanceMock} onNavigate={onNavigateMock} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));
@@ -204,7 +204,7 @@ describe('SettingsVault Integrated Page Test Suite', { timeout: 15000 }, () => {
     render(
       <MemoryRouter>
         <SettingsVault onOpenMaintenance={onOpenMaintenanceMock} onNavigate={onNavigateMock} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));
@@ -226,7 +226,7 @@ describe('SettingsVault Integrated Page Test Suite', { timeout: 15000 }, () => {
     render(
       <MemoryRouter>
         <SettingsVault onOpenMaintenance={onOpenMaintenanceMock} onNavigate={onNavigateMock} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));
@@ -245,7 +245,7 @@ describe('SettingsVault Integrated Page Test Suite', { timeout: 15000 }, () => {
       name: /final confirm: purge everything/i,
     });
     await waitFor(() =>
-      expect(screen.getByText('Phase 2: Final destruction override.')).toBeTruthy()
+      expect(screen.getByText('Phase 2: Final destruction override.')).toBeTruthy(),
     );
     await act(async () => {
       fireEvent.click(stage3Button);
@@ -263,7 +263,7 @@ describe('SettingsVault Integrated Page Test Suite', { timeout: 15000 }, () => {
     render(
       <MemoryRouter>
         <SettingsVault onOpenMaintenance={onOpenMaintenanceMock} onNavigate={onNavigateMock} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => expect(screen.getAllByText('John Doe').length).toBeGreaterThan(0));

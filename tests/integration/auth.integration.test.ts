@@ -180,13 +180,13 @@ describe('/api/auth endpoints', () => {
         password: 'SecureVaultPass2026!',
 
         deviceId: 'test-device',
-      })
+      }),
     );
   });
 
   it('POST /api/auth/login returns a structured 401 for invalid credentials', async () => {
     vaultServiceMocks.authenticateUser.mockRejectedValue(
-      new AppError(401, 'INVALID_CREDENTIALS', 'Invalid username or password.')
+      new AppError(401, 'INVALID_CREDENTIALS', 'Invalid username or password.'),
     );
 
     const app = createAuthTestApp();
@@ -244,7 +244,7 @@ describe('/api/auth endpoints', () => {
     expect(vaultServiceMocks.refreshAuthenticatedSession).toHaveBeenCalledWith(
       expect.objectContaining({
         refreshToken: 'refresh-token-1',
-      })
+      }),
     );
   });
 
@@ -260,7 +260,7 @@ describe('/api/auth endpoints', () => {
 
   it('POST /api/auth/refresh returns a structured generic 401 when refresh validation fails', async () => {
     vaultServiceMocks.refreshAuthenticatedSession.mockRejectedValue(
-      new AppError(401, 'INVALID_REFRESH_TOKEN', 'Refresh token is invalid or expired.')
+      new AppError(401, 'INVALID_REFRESH_TOKEN', 'Refresh token is invalid or expired.'),
     );
 
     const app = createAuthTestApp();
@@ -322,8 +322,8 @@ describe('/api/auth endpoints', () => {
       new AppError(
         400,
         'REGISTRATION_FAILED',
-        'Unable to create the account with the provided credentials.'
-      )
+        'Unable to create the account with the provided credentials.',
+      ),
     );
 
     const app = createAuthTestApp();
@@ -339,7 +339,7 @@ describe('/api/auth endpoints', () => {
     expect(response.body.success).toBe(false);
     expect(response.body.error.code).toBe('REGISTRATION_FAILED');
     expect(response.body.message).toBe(
-      'Unable to create the account with the provided credentials.'
+      'Unable to create the account with the provided credentials.',
     );
     expect(JSON.stringify(response.body).toLowerCase()).not.toContain('already exists');
   });

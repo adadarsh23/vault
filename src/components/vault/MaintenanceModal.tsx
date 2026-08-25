@@ -48,7 +48,7 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
   const { exportVaultData, importVaultData, changeMasterKey, preferences, fullLogout } =
     useVaultStore();
   const generatedCredentialLength = normalizeGeneratedCredentialLength(
-    preferences.generatedCredentialLength || 16
+    preferences.generatedCredentialLength || 16,
   );
   const [step, setStep] = useState(1);
   const [progress, setProgress] = useState(0);
@@ -138,7 +138,7 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
     }
 
     const recentAttempts = generationAttemptTimestampsRef.current.filter(
-      (timestamp) => now - timestamp <= GENERATION_WINDOW_MS
+      (timestamp) => now - timestamp <= GENERATION_WINDOW_MS,
     );
 
     if (recentAttempts.length >= GENERATION_MAX_ATTEMPTS) {

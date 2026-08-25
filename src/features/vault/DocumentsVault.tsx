@@ -106,7 +106,7 @@ const MARKDOWN_EXTENSIONS = new Set(['MD', 'MARKDOWN']);
 const PDF_EXTENSIONS = new Set(['PDF', 'FDF', 'XFDF']);
 const IMAGE_EXTENSIONS = new Set<string>(PHOTO_FILE_EXTENSIONS);
 const SUPPORTED_DOCUMENT_EXTENSIONS = new Set<string>(
-  DOCUMENT_FILE_EXTENSIONS as readonly string[]
+  DOCUMENT_FILE_EXTENSIONS as readonly string[],
 );
 
 const getCategoryIcon = (category: DocumentCategory, className = 'h-10 w-10') => {
@@ -246,7 +246,7 @@ const renderMarkdownPreview = (text: string) => {
             className="my-3 overflow-x-auto rounded-lg bg-black/40 p-3 font-mono text-xs text-cyan-300 border border-white/10"
           >
             {codeBuffer.join('\n')}
-          </pre>
+          </pre>,
         );
         codeBuffer = [];
         inCodeBlock = false;
@@ -268,25 +268,25 @@ const renderMarkdownPreview = (text: string) => {
           className="mt-4 mb-2 text-xl font-bold text-white border-b border-white/10 pb-1"
         >
           {line.replace('# ', '')}
-        </h1>
+        </h1>,
       );
     } else if (line.startsWith('## ')) {
       elements.push(
         <h2 key={idx} className="mt-3 mb-1 text-lg font-semibold text-white/90">
           {line.replace('## ', '')}
-        </h2>
+        </h2>,
       );
     } else if (line.startsWith('### ')) {
       elements.push(
         <h3 key={idx} className="mt-2 mb-1 text-base font-medium text-white/80">
           {line.replace('### ', '')}
-        </h3>
+        </h3>,
       );
     } else if (line.startsWith('- ') || line.startsWith('* ')) {
       elements.push(
         <li key={idx} className="ml-4 list-disc text-sm text-text/80 my-0.5">
           {line.substring(2)}
-        </li>
+        </li>,
       );
     } else if (line.startsWith('> ')) {
       elements.push(
@@ -295,7 +295,7 @@ const renderMarkdownPreview = (text: string) => {
           className="my-2 border-l-4 border-violet-500 bg-violet-500/10 px-3 py-1.5 text-sm italic text-text/80 rounded-r"
         >
           {line.substring(2)}
-        </blockquote>
+        </blockquote>,
       );
     } else if (line.trim() === '---' || line.trim() === '***') {
       elements.push(<hr key={idx} className="my-4 border-white/10" />);
@@ -303,7 +303,7 @@ const renderMarkdownPreview = (text: string) => {
       elements.push(
         <p key={idx} className="my-1.5 text-sm leading-relaxed text-text/80">
           {line}
-        </p>
+        </p>,
       );
     }
   });
@@ -357,7 +357,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
       item.content instanceof Uint8Array ? item.content.byteLength : 0,
       typeof item.content === 'string' ? item.content.length : 0,
       mimeType,
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -386,7 +386,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
           item,
           masterKey,
           effectiveMime,
-          rsaKeyPair?.privateKey
+          rsaKeyPair?.privateKey,
         );
         if (!result) {
           throw new Error('Could not decrypt document for preview.');
@@ -660,7 +660,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
                   'px-2 py-1 text-[10px] font-medium rounded-md transition-colors',
                   viewMode === 'formatted'
                     ? 'bg-violet-600 text-white'
-                    : 'text-white/60 hover:text-white'
+                    : 'text-white/60 hover:text-white',
                 )}
               >
                 Table
@@ -670,7 +670,9 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
                 onClick={() => setViewMode('raw')}
                 className={cn(
                   'px-2 py-1 text-[10px] font-medium rounded-md transition-colors',
-                  viewMode === 'raw' ? 'bg-violet-600 text-white' : 'text-white/60 hover:text-white'
+                  viewMode === 'raw'
+                    ? 'bg-violet-600 text-white'
+                    : 'text-white/60 hover:text-white',
                 )}
               >
                 Raw
@@ -778,7 +780,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
                   'px-2.5 py-1 text-[10px] font-medium rounded-md transition-colors',
                   viewMode === 'formatted'
                     ? 'bg-violet-600 text-white'
-                    : 'text-white/60 hover:text-white'
+                    : 'text-white/60 hover:text-white',
                 )}
               >
                 Preview
@@ -788,7 +790,9 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
                 onClick={() => setViewMode('raw')}
                 className={cn(
                   'px-2.5 py-1 text-[10px] font-medium rounded-md transition-colors',
-                  viewMode === 'raw' ? 'bg-violet-600 text-white' : 'text-white/60 hover:text-white'
+                  viewMode === 'raw'
+                    ? 'bg-violet-600 text-white'
+                    : 'text-white/60 hover:text-white',
                 )}
               >
                 Source
@@ -871,7 +875,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
                 'h-7 w-7 rounded-lg border transition-colors',
                 wrapLines
                   ? 'bg-violet-600/30 text-violet-300 border-violet-500/40'
-                  : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80 hover:text-white'
+                  : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80 hover:text-white',
               )}
               title={wrapLines ? 'Disable word wrap' : 'Enable word wrap'}
             >
@@ -913,7 +917,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
                     <td
                       className={cn(
                         'pl-3 pr-2 text-text/80 align-top font-mono leading-6',
-                        wrapLines ? 'whitespace-pre-wrap break-all' : 'whitespace-pre break-normal'
+                        wrapLines ? 'whitespace-pre-wrap break-all' : 'whitespace-pre break-normal',
                       )}
                     >
                       {line || ' '}
@@ -952,7 +956,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
         <div
           className={cn(
             'absolute -bottom-2 -right-2 rounded-xl px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border shadow-lg',
-            badgeClass
+            badgeClass,
           )}
         >
           {extension}
@@ -1015,7 +1019,7 @@ export const DocumentsVault: React.FC = () => {
   const setAllowRestrictedTypes = useVaultStore((state) => state.setAllowRestrictedTypes);
   const isPrintBlockingEnabled = useVaultStore((state) => state.preferences.isPrintBlockingEnabled);
   const isTabSwitchShieldEnabled = useVaultStore(
-    (state) => state.preferences.isTabSwitchShieldEnabled
+    (state) => state.preferences.isTabSwitchShieldEnabled,
   );
   const isPhotoExifStripped = useVaultStore((state) => state.preferences.isPhotoExifStripped);
 
@@ -1070,7 +1074,7 @@ export const DocumentsVault: React.FC = () => {
 
   const previewedDocument = useMemo(
     () => filteredItems.find((item) => item.id === previewItem) ?? null,
-    [filteredItems, previewItem]
+    [filteredItems, previewItem],
   );
 
   const currentPreviewIndex = useMemo(() => {
@@ -1216,7 +1220,7 @@ export const DocumentsVault: React.FC = () => {
     }
 
     const batchToastId = toast.loading(
-      total === 1 ? `Encrypting and uploading document...` : `Encrypting 0/${total} documents...`
+      total === 1 ? `Encrypting and uploading document...` : `Encrypting 0/${total} documents...`,
     );
 
     let completedCount = 0;
@@ -1317,7 +1321,7 @@ export const DocumentsVault: React.FC = () => {
           total === 1
             ? `Document uploaded securely`
             : `All ${successCount} documents uploaded securely`,
-          { id: batchToastId }
+          { id: batchToastId },
         );
       } else if (successCount > 0) {
         toast.warning(`Uploaded ${successCount} documents (${failedCount} failed).`, {
@@ -1482,7 +1486,7 @@ export const DocumentsVault: React.FC = () => {
                   <Card
                     className={cn(
                       'group relative border-white/5 bg-gradient-to-br from-white/[0.08] to-transparent backdrop-blur-md transition-all hover:border-white/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)]',
-                      moveMenuOpenId === item.id ? 'z-50' : 'z-10'
+                      moveMenuOpenId === item.id ? 'z-50' : 'z-10',
                     )}
                   >
                     <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
@@ -1498,7 +1502,7 @@ export const DocumentsVault: React.FC = () => {
                           <div
                             className={cn(
                               'absolute -bottom-1 -right-1 rounded-lg px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-tighter shadow-lg border',
-                              badgeStyle
+                              badgeStyle,
                             )}
                           >
                             {itemExt || 'DOC'}
@@ -1551,7 +1555,7 @@ export const DocumentsVault: React.FC = () => {
                               size="icon"
                               className={cn(
                                 'h-9 w-9 bg-white/5 hover:bg-white/10 text-white',
-                                moveMenuOpenId === item.id && 'bg-white/20'
+                                moveMenuOpenId === item.id && 'bg-white/20',
                               )}
                               onClick={() =>
                                 setMoveMenuOpenId(moveMenuOpenId === item.id ? null : item.id)
@@ -1643,7 +1647,7 @@ export const DocumentsVault: React.FC = () => {
                               'h-9 w-9 transition-all',
                               item.isPinned
                                 ? 'bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-400/30'
-                                : 'bg-white/5 hover:bg-white/10 text-white'
+                                : 'bg-white/5 hover:bg-white/10 text-white',
                             )}
                             onClick={() => void togglePin(item.id)}
                           >

@@ -93,7 +93,7 @@ export const useIntegrityStore = create<IntegrityState>((set, get) => ({
         (item.type === 'photo' ||
           item.type === 'video' ||
           item.type === 'file' ||
-          item.type === 'document')
+          item.type === 'document'),
     );
 
     const leafItems: MerkleLeafItem[] = [];
@@ -200,7 +200,7 @@ export const useIntegrityStore = create<IntegrityState>((set, get) => ({
   fetchItemProof: async (itemId: string) => {
     try {
       const { data } = await apiClient.get<any>(
-        `/vault/integrity/proof/${itemId}?algorithm=${get().algorithm}`
+        `/vault/integrity/proof/${itemId}?algorithm=${get().algorithm}`,
       );
       if (data?.success && data.data) {
         const proof = data.data as MerkleProof;

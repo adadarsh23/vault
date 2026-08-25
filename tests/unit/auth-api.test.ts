@@ -65,14 +65,14 @@ describe('authenticateVaultSession', () => {
       makeOkResponse({
         success: true,
         data: { token: 'token-1', user: { id: 'user-1', username: 'alice' } },
-      })
+      }),
     );
 
     const result = await authenticateVaultSession(
       'login',
       'alice',
       'AccountPass123!',
-      CAPTCHA_TOKEN
+      CAPTCHA_TOKEN,
     );
 
     expect(result.token).toBe('token-1');
@@ -80,7 +80,7 @@ describe('authenticateVaultSession', () => {
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/api/auth/login');
     expect(sessionMocks.setAuthToken).toHaveBeenCalledWith(
       'token-1',
-      expect.objectContaining({ rememberMe: false })
+      expect.objectContaining({ rememberMe: false }),
     );
     expect(sessionMocks.saveCloudSessionHint).toHaveBeenCalledWith('alice');
   });
@@ -90,7 +90,7 @@ describe('authenticateVaultSession', () => {
       makeOkResponse({
         success: true,
         data: { token: 'token-2', user: { id: 'user-2', username: 'carol' } },
-      })
+      }),
     );
 
     await authenticateVaultSession('register', 'carol', 'AccountPass123!', CAPTCHA_TOKEN);
@@ -104,7 +104,7 @@ describe('authenticateVaultSession', () => {
       makeOkResponse({
         success: true,
         data: { token: 'token-3', user: { id: 'user-3', username: 'bob' } },
-      })
+      }),
     );
 
     await authenticateVaultSession('login', 'bob', 'AccountPass123!', CAPTCHA_TOKEN);
@@ -118,7 +118,7 @@ describe('authenticateVaultSession', () => {
       makeOkResponse({
         success: true,
         data: { token: 'token-4', user: { id: 'u4', username: 'dave' } },
-      })
+      }),
     );
 
     await authenticateVaultSession(
@@ -126,7 +126,7 @@ describe('authenticateVaultSession', () => {
       'dave',
       'AccountPass123!',
       CAPTCHA_TOKEN,
-      'masterKeyValue'
+      'masterKeyValue',
     );
 
     const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string);
@@ -135,11 +135,11 @@ describe('authenticateVaultSession', () => {
 
   it('surfaces generic invalid-credential failures without probing account existence', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-      makeErrorResponse(401, 'INVALID_CREDENTIALS', 'Invalid username or password.')
+      makeErrorResponse(401, 'INVALID_CREDENTIALS', 'Invalid username or password.'),
     );
 
     await expect(
-      authenticateVaultSession('login', 'alice', 'SamePass123!', CAPTCHA_TOKEN)
+      authenticateVaultSession('login', 'alice', 'SamePass123!', CAPTCHA_TOKEN),
     ).rejects.toMatchObject({
       code: 'INVALID_CREDENTIALS',
       status: 401,
@@ -156,7 +156,7 @@ describe('authenticateVaultSession', () => {
     } as unknown as Response);
 
     const err = await authenticateVaultSession('login', 'alice', 'Pass123!', CAPTCHA_TOKEN).catch(
-      (e) => e
+      (e) => e,
     );
     expect(err.message).toMatch(/Authentication failed/i);
     expect(err.status).toBe(500);
@@ -166,7 +166,7 @@ describe('authenticateVaultSession', () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('socket hang up'));
 
     const err = await authenticateVaultSession('login', 'alice', 'Pass123!', CAPTCHA_TOKEN).catch(
-      (e) => e
+      (e) => e,
     );
     expect(err.message).toMatch(/Unable to reach the server/i);
     expect(err.code).toBe('NETWORK_ERROR');
@@ -174,11 +174,11 @@ describe('authenticateVaultSession', () => {
 
   it('throws when the server returns success:false', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-      makeOkResponse({ success: false, error: { code: 'SERVER_ERROR', message: 'Oops' } })
+      makeOkResponse({ success: false, error: { code: 'SERVER_ERROR', message: 'Oops' } }),
     );
 
     await expect(
-      authenticateVaultSession('login', 'alice', 'Pass123!', CAPTCHA_TOKEN)
+      authenticateVaultSession('login', 'alice', 'Pass123!', CAPTCHA_TOKEN),
     ).rejects.toThrow();
   });
 });
@@ -199,7 +199,7 @@ describe('refreshVaultSession', () => {
       makeOkResponse({
         success: true,
         data: { token: 'new-token', user: { id: 'u1', username: 'alice' } },
-      })
+      }),
     );
 
     const data = await refreshVaultSession();
@@ -207,13 +207,13 @@ describe('refreshVaultSession', () => {
     expect(data.token).toBe('new-token');
     expect(sessionMocks.setAuthToken).toHaveBeenCalledWith(
       'new-token',
-      expect.objectContaining({ rememberMe: true })
+      expect.objectContaining({ rememberMe: true }),
     );
   });
 
   it('throws when the refresh endpoint returns 401', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-      makeErrorResponse(401, 'SESSION_EXPIRED', 'Session expired.')
+      makeErrorResponse(401, 'SESSION_EXPIRED', 'Session expired.'),
     );
 
     const err = await refreshVaultSession().catch((e) => e);
@@ -226,7 +226,7 @@ describe('refreshVaultSession', () => {
       makeOkResponse({
         success: true,
         data: { user: { id: 'u1', username: 'alice' } },
-      })
+      }),
     );
 
     const err = await refreshVaultSession().catch((e) => e);
@@ -276,7 +276,7 @@ describe('revokeVaultDeviceSession', () => {
       makeOkResponse({
         success: true,
         data: { revokedCount: 2, sessions: [] },
-      })
+      }),
     );
 
     const result = await revokeVaultDeviceSession({ revokeAllOther: true });
@@ -285,7 +285,7 @@ describe('revokeVaultDeviceSession', () => {
 
   it('throws with the server error code on failure', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-      makeErrorResponse(403, 'UNAUTHORIZED', 'Not allowed.')
+      makeErrorResponse(403, 'UNAUTHORIZED', 'Not allowed.'),
     );
 
     const err = await revokeVaultDeviceSession({ sessionId: 'session-1' }).catch((e) => e);
@@ -305,7 +305,7 @@ describe('changeAccountPassword', () => {
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(
-        makeOkResponse({ success: true, data: { message: 'Password changed.' } })
+        makeOkResponse({ success: true, data: { message: 'Password changed.' } }),
       );
 
     await changeAccountPassword('OldPass123!', 'NewPass456!', CAPTCHA_TOKEN);
@@ -318,11 +318,11 @@ describe('changeAccountPassword', () => {
 
   it('throws on wrong-current-password error', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-      makeErrorResponse(401, 'INVALID_CREDENTIALS', 'Current password is incorrect.')
+      makeErrorResponse(401, 'INVALID_CREDENTIALS', 'Current password is incorrect.'),
     );
 
     const err = await changeAccountPassword('WrongOld!', 'NewPass456!', CAPTCHA_TOKEN).catch(
-      (e) => e
+      (e) => e,
     );
     expect(err.status).toBe(401);
   });
@@ -344,7 +344,7 @@ describe('getAuthenticatedProfile', () => {
       sessions: [],
     };
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-      makeOkResponse({ success: true, data: profile })
+      makeOkResponse({ success: true, data: profile }),
     );
 
     const result = await getAuthenticatedProfile();
@@ -354,7 +354,7 @@ describe('getAuthenticatedProfile', () => {
 
   it('throws when the profile fetch returns 401', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-      makeErrorResponse(401, 'UNAUTHORIZED', 'Not authenticated.')
+      makeErrorResponse(401, 'UNAUTHORIZED', 'Not authenticated.'),
     );
 
     const err = await getAuthenticatedProfile().catch((e) => e);
@@ -380,7 +380,7 @@ describe('updateAuthenticatedProfile', () => {
           profilePhoto: 'https://example.com/avatar.png',
           updatedAt: '2026-04-29T00:00:00.000Z',
         },
-      })
+      }),
     );
 
     const result = await updateAuthenticatedProfile({
@@ -404,7 +404,7 @@ describe('updateAuthenticatedProfile', () => {
           username: 'alice',
           updatedAt: '2026-04-29T00:00:00.000Z',
         },
-      })
+      }),
     );
 
     const err = await updateAuthenticatedProfile({ profileName: 'A' }).catch((e) => e);

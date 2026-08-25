@@ -111,7 +111,7 @@ export const SecurityLayers: React.FC<SecurityLayersProps> = memo(
               : Math.min(
                   ((Math.max(currentLayerIndex, 0) + 1) / safeLayers.length) *
                     MAX_PROGRESS_BEFORE_COMPLETION,
-                  COMPLETED_PROGRESS
+                  COMPLETED_PROGRESS,
                 );
 
     const activeLayer: SecurityLayer | undefined =
@@ -462,7 +462,7 @@ export const SecurityLayers: React.FC<SecurityLayersProps> = memo(
         </div>
       </div>
     );
-  }
+  },
 );
 
 SecurityLayers.displayName = 'SecurityLayers';

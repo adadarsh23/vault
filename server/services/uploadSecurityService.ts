@@ -56,16 +56,16 @@ const updateScanState = async (
   username: string,
   userId: string,
   itemId: string,
-  patch: Record<string, unknown>
+  patch: Record<string, unknown>,
 ) => {
   const model = getVaultItemModel(username);
   await model.updateOne(
     { userId, itemId },
     {
       $set: Object.fromEntries(
-        Object.entries(patch).map(([key, value]) => [`metadata.uploadSecurity.${key}`, value])
+        Object.entries(patch).map(([key, value]) => [`metadata.uploadSecurity.${key}`, value]),
       ),
-    }
+    },
   );
 };
 
@@ -93,7 +93,7 @@ const persistArtifactVerdict = async (input: {
         createdAt: now,
       },
     },
-    { upsert: true }
+    { upsert: true },
   );
 };
 

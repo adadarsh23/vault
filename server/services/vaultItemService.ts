@@ -7,7 +7,7 @@ import { encryptBuffer } from '../utils/crypto.ts';
 
 const MAX_TEXT_PAYLOAD_BYTES = Math.max(
   1_000_000,
-  Number(process.env.MAX_SCOPED_TEXT_PAYLOAD_BYTES || 4 * 1024 * 1024)
+  Number(process.env.MAX_SCOPED_TEXT_PAYLOAD_BYTES || 4 * 1024 * 1024),
 );
 
 const CATEGORY_ALIAS_MAP: Record<string, string> = {
@@ -186,7 +186,7 @@ export const saveEncryptedVaultItem = async (input: {
     if (payloadBytes > MAX_TEXT_PAYLOAD_BYTES) {
       throw AppError.badRequest(
         'Encrypted payload exceeds secure size limits.',
-        'PAYLOAD_TOO_LARGE'
+        'PAYLOAD_TOO_LARGE',
       );
     }
   }
@@ -234,7 +234,7 @@ export const saveEncryptedVaultItem = async (input: {
           updatedAt: new Date(),
           isDeleted: false,
         },
-        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
+        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
       );
     } catch (err: any) {
       const DynamicVaultModel = getVaultItemModel(input.username);
@@ -245,7 +245,7 @@ export const saveEncryptedVaultItem = async (input: {
             userId,
             itemId,
             error: err.message,
-          }
+          },
         );
 
         if (isSingleton) {
@@ -288,7 +288,7 @@ export const saveEncryptedVaultItem = async (input: {
             ipAddress: input.ipAddress,
             updatedAt: new Date(),
           },
-          { upsert: true, returnDocument: 'after' }
+          { upsert: true, returnDocument: 'after' },
         );
       }
       throw err;

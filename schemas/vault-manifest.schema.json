@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/adadarsh23/vault/main/schemas/vault-manifest.schema.json",
+  "title": "Vault Manifest Schema",
+  "description": "JSON Schema specification for Vault production configuration and security manifests.",
+  "type": "object",
+  "required": [
+    "name",
+    "displayName",
+    "version",
+    "schemaVersion",
+    "securityVersion",
+    "description",
+    "author",
+    "license",
+    "repository",
+    "keywords",
+    "application",
+    "security",
+    "storage",
+    "runtime"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "displayName": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "type": "integer"
+    },
+    "securityVersion": {
+      "type": "integer"
+    },
+    "description": {
+      "type": "string"
+    },
+    "author": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "website": { "type": "string" }
+      },
+      "required": ["name", "role", "website"]
+    },
+    "license": {
+      "type": "string"
+    },
+    "repository": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "url": { "type": "string" }
+      },
+      "required": ["type", "url"]
+    },
+    "homepage": {
+      "type": ["string", "null"]
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "application": {
+      "type": "object"
+    },
+    "security": {
+      "type": "object"
+    },
+    "storage": {
+      "type": "object"
+    },
+    "dataLifecycle": {
+      "type": "object"
+    },
+    "apiSecurity": {
+      "type": "object"
+    },
+    "securityHeaders": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "database": {
+      "type": "object"
+    },
+    "privacy": {
+      "type": "object"
+    },
+    "logging": {
+      "type": "object"
+    },
+    "observability": {
+      "type": "object"
+    },
+    "performance": {
+      "type": "object"
+    },
+    "runtime": {
+      "type": "object"
+    },
+    "deployment": {
+      "type": "object"
+    },
+    "testing": {
+      "type": "object"
+    },
+    "dependencySecurity": {
+      "type": "object"
+    },
+    "threatModel": {
+      "type": "object"
+    },
+    "compatibility": {
+      "type": "object"
+    },
+    "pwa": {
+      "type": "object"
+    },
+    "features": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "permissions": {
+      "type": "object"
+    },
+    "branding": {
+      "type": "object"
+    },
+    "maintainers": {
+      "type": "array"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  }
+}

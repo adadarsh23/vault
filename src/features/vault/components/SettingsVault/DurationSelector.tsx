@@ -24,6 +24,6 @@ export const DurationSelector = React.memo<DurationSelectorProps>(
         </button>
       ))}
     </div>
-  )
+  ),
 );
 DurationSelector.displayName = 'DurationSelector';

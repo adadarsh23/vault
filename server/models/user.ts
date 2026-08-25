@@ -35,7 +35,7 @@ const encryptedFieldSchema = new mongoose.Schema(
     salt: { type: String, default: null },
     keyVersion: { type: String, default: 'v1' },
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 /* ------------------ FILE ITEM ------------------ */
@@ -51,7 +51,7 @@ const fileItemSchema = new mongoose.Schema(
     ...timestampFields,
     ...softDeleteFields,
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 /* ------------------ NOTE ------------------ */
@@ -65,7 +65,7 @@ const noteSchema = new mongoose.Schema(
     ...timestampFields,
     ...softDeleteFields,
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 /* ------------------ PASSWORD ------------------ */
@@ -83,7 +83,7 @@ const passwordSchema = new mongoose.Schema(
     ...timestampFields,
     ...softDeleteFields,
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 /* ------------------ SECRET KEY ------------------ */
@@ -98,7 +98,7 @@ const secretKeySchema = new mongoose.Schema(
     ...timestampFields,
     ...softDeleteFields,
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 /* ------------------ LOGIN HISTORY ------------------ */
@@ -122,7 +122,7 @@ const loginHistorySchema = new mongoose.Schema(
       default: null,
     },
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 /* ------------------ ACTIVITY LOG ------------------ */
@@ -141,7 +141,7 @@ const activityLogSchema = new mongoose.Schema(
       default: {},
     },
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 /* ------------------ HISTORY ------------------ */
@@ -151,7 +151,7 @@ const passwordHistorySchema = new mongoose.Schema(
     hash: { type: mongoose.Schema.Types.Mixed, required: true },
     changedAt: { type: Date, default: Date.now },
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 const masterKeyHistorySchema = new mongoose.Schema(
@@ -160,7 +160,7 @@ const masterKeyHistorySchema = new mongoose.Schema(
     masterKeyHash: { type: encryptedFieldSchema, default: null },
     changedAt: { type: Date, default: Date.now },
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 /* ------------------ SESSION ------------------ */
@@ -197,7 +197,7 @@ const sessionSchema = new mongoose.Schema(
       default: null,
     },
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 const websiteMetadataSchema = new mongoose.Schema(
@@ -217,7 +217,7 @@ const websiteMetadataSchema = new mongoose.Schema(
     secChUaMobile: nullableTrimmedString,
     secChUaPlatform: nullableTrimmedString,
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 const registrationProviderSchema = new mongoose.Schema(
@@ -230,7 +230,7 @@ const registrationProviderSchema = new mongoose.Schema(
     responseKeys: { type: [String], default: [] },
     data: { type: mongoose.Schema.Types.Mixed, default: null },
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 const registrationProfileSchema = new mongoose.Schema(
@@ -260,7 +260,7 @@ const registrationProfileSchema = new mongoose.Schema(
     },
     error: { type: String, default: null },
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 const profileDetailsSchema = new mongoose.Schema(
@@ -268,7 +268,7 @@ const profileDetailsSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },
-  baseSchemaOptions
+  baseSchemaOptions,
 );
 
 const ENCRYPTED_PROFILE_VALUE_PREFIX = 'enc:v1:';
@@ -503,7 +503,7 @@ const userSchema = new mongoose.Schema(
       },
     },
     toObject: { virtuals: true, versionKey: false },
-  }
+  },
 );
 
 /* ------------------ VIRTUALS ------------------ */
@@ -568,7 +568,7 @@ function updateTimestamp(this: any, next?: Function) {
 }
 
 [fileItemSchema, noteSchema, passwordSchema, secretKeySchema].forEach((schema) =>
-  schema.pre('save' as any, updateTimestamp)
+  schema.pre('save' as any, updateTimestamp),
 );
 
 userSchema.pre('save', async function () {

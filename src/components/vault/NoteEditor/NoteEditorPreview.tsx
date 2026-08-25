@@ -209,7 +209,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
       setShowPreview,
       setShowHtmlPreview,
     },
-    ref
+    ref,
   ) => {
     const internalRef = useRef<HTMLDivElement>(null);
     useScrollRestoration(`note_preview_${noteId || 'default'}`, internalRef);
@@ -241,7 +241,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
           li: [...((defaultSchema.attributes?.li as string[]) || []), 'class'],
         },
       }),
-      []
+      [],
     );
 
     /* ---------------------------------------------------------------------- */
@@ -286,7 +286,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
         scrollToBottom,
         scrollToRatio,
       }),
-      [scrollToTop, scrollToBottom, scrollToRatio]
+      [scrollToTop, scrollToBottom, scrollToRatio],
     );
 
     /* ---------------------------------------------------------------------- */
@@ -314,7 +314,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
 
     const highlightedMarkdownContent = useMemo(
       () => deferredContent.replace(/==(.+?)==/g, '<mark>$1</mark>'),
-      [deferredContent]
+      [deferredContent],
     );
 
     /* ---------------------------------------------------------------------- */
@@ -355,7 +355,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
 
         setShowBottom(scrollHeight - scrollTop - clientHeight > 150);
       }, 120),
-      []
+      [],
     );
 
     /* ---------------------------------------------------------------------- */
@@ -385,7 +385,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
           'flex flex-col',
           'bg-bg/95 md:bg-black/10',
           'backdrop-blur-sm',
-          'overflow-hidden'
+          'overflow-hidden',
         )}
       >
         {/* HEADER */}
@@ -395,7 +395,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
             'flex items-center justify-between',
             'px-5 py-3',
             'border-b border-white/5',
-            'bg-white/[0.02]'
+            'bg-white/[0.02]',
           )}
         >
           <span className={cn('text-xs font-semibold', 'text-text/50', 'uppercase tracking-wide')}>
@@ -454,7 +454,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
           className={cn(
             'relative flex-1 overflow-y-auto',
             'scroll-smooth custom-scrollbar',
-            !showHtmlPreview && 'p-8 md:p-10'
+            !showHtmlPreview && 'p-8 md:p-10',
           )}
         >
           {showHtmlPreview ? (
@@ -481,7 +481,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
                 'prose-li:text-text/70',
                 'prose-strong:text-white',
                 'prose-code:text-white/90',
-                'pb-40'
+                'pb-40',
               )}
             >
               <ReactMarkdown
@@ -541,7 +541,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
                           if (typeof lineNumber === 'number' && lineNumber > 0) {
                             const toggledByLine = onToggleTaskByLine(
                               lineNumber,
-                              e.currentTarget.checked
+                              e.currentTarget.checked,
                             );
                             if (toggledByLine) return;
                           }
@@ -568,7 +568,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
                           lineWrap
                             ? 'whitespace-pre-wrap break-words'
                             : 'whitespace-pre overflow-x-auto',
-                          hasCheckedTask && 'text-text/45 line-through'
+                          hasCheckedTask && 'text-text/45 line-through',
                         )}
                       >
                         {children}
@@ -584,7 +584,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
         </div>
       </motion.div>
     );
-  }
+  },
 );
 
 NoteEditorPreviewBase.displayName = 'NoteEditorPreview';

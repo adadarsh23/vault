@@ -34,7 +34,7 @@ export const validateRequest = (validations: ValidationChain[]) => {
 
     const validationError = AppError.badRequest(
       'Input validation failed.',
-      'VALIDATION_ERROR'
+      'VALIDATION_ERROR',
     ) as AppError & { details?: ValidationIssue[] };
     validationError.details = details;
 

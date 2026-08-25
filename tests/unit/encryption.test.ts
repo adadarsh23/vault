@@ -23,6 +23,22 @@ import {
   AES_GCM_AAD,
   DEK_AAD,
   decryptToFile,
+  performHybridKeyExchange,
+  setupMFA,
+  verifyMFA,
+  signMessage,
+  verifyMessage,
+  generateRSAKeyPair,
+  exportPublicKey,
+  importPublicKey,
+  exportPrivateKey,
+  importPrivateKey,
+  exportRSAKeyPair,
+  importRSAKeyPair,
+  encryptFileE2EE,
+  decryptFileE2EE,
+  detectMimeTypeFromBytes,
+  SECURITY_CONSTANTS,
 } from '../../src/lib/encryption.ts';
 
 // ---------------------------------------------------------------------------
@@ -301,21 +317,21 @@ describe('Cascade Cipher (Dual-Engine: AES-256-GCM + ChaCha20-Poly1305)', () => 
       dekBytes,
       { name: 'AES-GCM' },
       false,
-      ['encrypt']
+      ['encrypt'],
     );
 
     const fileIv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
     const fileCiphertext = await crypto.subtle.encrypt(
       { name: 'AES-GCM', iv: fileIv, additionalData: AES_GCM_AAD },
       dekCryptoKey,
-      rawPlaintext
+      rawPlaintext,
     );
 
     const kekIv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
     const encryptedDek = await crypto.subtle.encrypt(
       { name: 'AES-GCM', iv: kekIv, additionalData: DEK_AAD },
       kekCryptoKey,
-      dekBytes
+      dekBytes,
     );
 
     const encDekBytes = new Uint8Array(encryptedDek);
@@ -326,7 +342,7 @@ describe('Cascade Cipher (Dual-Engine: AES-256-GCM + ChaCha20-Poly1305)', () => 
         kekIv.length +
         encDekBytes.length +
         fileIv.length +
-        encFileBytes.length
+        encFileBytes.length,
     );
     let offset = 0;
     legacyBundle.set(ENVELOPE_MAGIC_V2, offset);
@@ -428,5 +444,226 @@ describe('Aggressive RAM Key Shredder (Cold Boot Defense)', () => {
 
     expect(blobUrl).not.toBeNull();
     expect(typeof blobUrl).toBe('string');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Hybrid Key Exchange (X25519 + Kyber768)
+// ---------------------------------------------------------------------------
+
+describe('Hybrid Key Exchange (X25519 + Kyber768)', () => {
+  it('generates local public keys and private keys when called without peer key', async () => {
+    const keys = await performHybridKeyExchange();
+    expect(keys).toBeDefined();
+    expect(keys.localPublicKeys).toBeDefined();
+    expect(keys.localPublicKeys?.ecc).toBeInstanceOf(Uint8Array);
+    expect(keys.localPublicKeys?.kyber).toBeInstanceOf(Uint8Array);
+    expect(keys._private).toBeDefined();
+    expect(keys._private?.ecc).toBeInstanceOf(Uint8Array);
+    expect(keys._private?.kyber).toBeInstanceOf(Uint8Array);
+  });
+
+  it('completes hybrid key exchange and derives master secret when peer public key is provided', async () => {
+    const peer = await performHybridKeyExchange();
+    expect(peer.localPublicKeys).toBeDefined();
+
+    const exchange = await performHybridKeyExchange(peer.localPublicKeys);
+    expect(exchange).toBeDefined();
+    expect(exchange.masterSecret).toBeDefined();
+    expect(typeof exchange.masterSecret).toBe('string');
+    expect(exchange.kyberCiphertext).toBeInstanceOf(Uint8Array);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Multi-Factor Authentication (Layer 8 TOTP)
+// ---------------------------------------------------------------------------
+
+describe('Multi-Factor Authentication (TOTP)', () => {
+  it('generates valid MFA setup URI and base32 secret', async () => {
+    const mfa = await setupMFA('alice@vault.local', 'PersonalVault');
+    expect(mfa).toBeDefined();
+    expect(mfa.uri).toContain('otpauth://totp/');
+    expect(decodeURIComponent(mfa.uri)).toContain('alice@vault.local');
+    expect(mfa.secret).toBeDefined();
+    expect(typeof mfa.secret).toBe('string');
+    expect(mfa.secret.length).toBeGreaterThan(10);
+  });
+
+  it('verifies a valid generated TOTP token', async () => {
+    const mfa = await setupMFA('bob@vault.local', 'PersonalVault');
+    const OTPAuth = await import('otpauth');
+    const totp = new OTPAuth.TOTP({
+      secret: OTPAuth.Secret.fromBase32(mfa.secret),
+    });
+    const token = totp.generate();
+
+    const isValid = await verifyMFA(token, mfa.secret);
+    expect(isValid).toBe(true);
+  });
+
+  it('rejects invalid, empty, or wrong TOTP tokens', async () => {
+    const mfa = await setupMFA('charlie@vault.local', 'PersonalVault');
+    expect(await verifyMFA('000000', mfa.secret)).toBe(false);
+    expect(await verifyMFA('', mfa.secret)).toBe(false);
+    expect(await verifyMFA('123456', '')).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Digital Signatures (Ed25519)
+// ---------------------------------------------------------------------------
+
+describe('Digital Signatures (Ed25519)', () => {
+  it('signs a message and verifies its integrity with valid public key', async () => {
+    const sodiumModule = await import('libsodium-wrappers');
+    const sodium = sodiumModule.default || sodiumModule;
+    await sodium.ready;
+
+    const keypair = sodium.crypto_sign_keypair();
+    const message = 'Confidential Integrity Check 2026';
+
+    const signature = await signMessage(message, keypair.privateKey);
+    expect(signature).toBeInstanceOf(Uint8Array);
+
+    const verified = await verifyMessage(signature!, keypair.publicKey);
+    expect(verified).toBe(message);
+  });
+
+  it('returns null on invalid signature, tampered message, or null keys', async () => {
+    const sodiumModule = await import('libsodium-wrappers');
+    const sodium = sodiumModule.default || sodiumModule;
+    await sodium.ready;
+
+    const keypair = sodium.crypto_sign_keypair();
+    const wrongKeypair = sodium.crypto_sign_keypair();
+    const message = 'Valid Payload';
+
+    const signature = await signMessage(message, keypair.privateKey);
+    expect(signature).toBeDefined();
+
+    // Verify with wrong public key
+    const verifiedWrong = await verifyMessage(signature!, wrongKeypair.publicKey);
+    expect(verifiedWrong).toBeNull();
+
+    // Verify with null parameters
+    // @ts-expect-error test null argument
+    expect(await signMessage(null, keypair.privateKey)).toBeNull();
+    // @ts-expect-error test null argument
+    expect(await verifyMessage(null, keypair.publicKey)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// RSA-OAEP Key Management & E2EE File Encryption / Decryption
+// ---------------------------------------------------------------------------
+
+describe('RSA-OAEP Key Management and E2EE File Operations', () => {
+  it('generates RSA key pair and round-trips public/private export and import', async () => {
+    const keyPair = await generateRSAKeyPair();
+    expect(keyPair.publicKey).toBeDefined();
+    expect(keyPair.privateKey).toBeDefined();
+
+    const exported = await exportRSAKeyPair(keyPair);
+    expect(typeof exported.publicKey).toBe('string');
+    expect(typeof exported.privateKey).toBe('string');
+
+    const imported = await importRSAKeyPair(exported);
+    expect(imported.publicKey).toBeDefined();
+    expect(imported.privateKey).toBeDefined();
+  });
+
+  it('encrypts file with RSA public key (E2EE) and decrypts with RSA private key', async () => {
+    const keyPair = await generateRSAKeyPair();
+    const secretContent = 'Personal Vault E2EE Confidential Document';
+    const fileBytes = new TextEncoder().encode(secretContent);
+
+    const bundle = await encryptFileE2EE(fileBytes, keyPair.publicKey);
+    expect(bundle).toBeInstanceOf(Uint8Array);
+    expect(bundle.length).toBeGreaterThan(fileBytes.length);
+
+    const blobUrl = await decryptFileE2EE(bundle, keyPair.privateKey, 'text/plain');
+    expect(blobUrl).toBeDefined();
+    expect(typeof blobUrl).toBe('string');
+  });
+
+  it('decryptToFile seamlessly detects and decrypts E2EE bundles with RSA private key', async () => {
+    const keyPair = await generateRSAKeyPair();
+    const photoBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]); // PNG header
+
+    const e2eeBundle = await encryptFileE2EE(photoBytes, keyPair.publicKey);
+    const blobUrl = await decryptToFile(e2eeBundle, 'master-key', 'image/png', keyPair.privateKey);
+
+    expect(blobUrl).toBeDefined();
+    expect(typeof blobUrl).toBe('string');
+  });
+
+  it('returns null on invalid E2EE bundles or invalid keys', async () => {
+    const keyPair = await generateRSAKeyPair();
+    const badBundle = new Uint8Array([0x00, 0x02, 0x00, 0x00]);
+
+    const result = await decryptFileE2EE(badBundle, keyPair.privateKey);
+    expect(result).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Deep Magic Byte MIME Type Detection
+// ---------------------------------------------------------------------------
+
+describe('Deep Magic Byte MIME Type Detection (detectMimeTypeFromBytes)', () => {
+  it('detects images accurately', () => {
+    // PNG
+    expect(
+      detectMimeTypeFromBytes(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
+    ).toBe('image/png');
+    // JPEG
+    expect(detectMimeTypeFromBytes(new Uint8Array([0xff, 0xd8, 0xff, 0xe0]))).toBe('image/jpeg');
+    // GIF
+    expect(detectMimeTypeFromBytes(new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]))).toBe(
+      'image/gif',
+    );
+    // BMP
+    expect(detectMimeTypeFromBytes(new Uint8Array([0x42, 0x4d, 0x00, 0x00]))).toBe('image/bmp');
+    // WebP: RIFF....WEBP
+    const webpBytes = new Uint8Array([
+      0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+    ]);
+    expect(detectMimeTypeFromBytes(webpBytes)).toBe('image/webp');
+  });
+
+  it('detects documents and archives accurately', () => {
+    // PDF
+    expect(detectMimeTypeFromBytes(new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]))).toBe(
+      'application/pdf',
+    );
+    // 7z
+    expect(detectMimeTypeFromBytes(new Uint8Array([0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c]))).toBe(
+      'application/x-7z-compressed',
+    );
+    // ZIP
+    expect(detectMimeTypeFromBytes(new Uint8Array([0x50, 0x4b, 0x03, 0x04]))).toBe(
+      'application/zip',
+    );
+    // GZIP
+    expect(detectMimeTypeFromBytes(new Uint8Array([0x1f, 0x8b, 0x08, 0x00]))).toBe(
+      'application/gzip',
+    );
+  });
+
+  it('detects audio and video formats accurately', () => {
+    // MP3 ID3
+    expect(detectMimeTypeFromBytes(new Uint8Array([0x49, 0x44, 0x33, 0x03]))).toBe('audio/mpeg');
+    // FLAC
+    expect(detectMimeTypeFromBytes(new Uint8Array([0x66, 0x4c, 0x61, 0x43]))).toBe('audio/flac');
+    // OGG
+    expect(detectMimeTypeFromBytes(new Uint8Array([0x4f, 0x67, 0x67, 0x53]))).toBe('audio/ogg');
+  });
+
+  it('returns application/octet-stream for unknown bytes or short buffers', () => {
+    expect(detectMimeTypeFromBytes(new Uint8Array([0x00, 0x01]))).toBe('application/octet-stream');
+    expect(detectMimeTypeFromBytes(new Uint8Array([0x11, 0x22, 0x33, 0x44]))).toBe(
+      'application/octet-stream',
+    );
   });
 });

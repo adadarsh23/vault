@@ -552,7 +552,7 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
           item,
           masterKey,
           item.metadata?.mimeType,
-          rsaKeyPair?.privateKey
+          rsaKeyPair?.privateKey,
         );
 
         if (!isMounted) {
@@ -911,7 +911,7 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
                   'px-2 py-1 text-[10px] font-medium rounded-md transition-colors',
                   viewMode === 'formatted'
                     ? 'bg-violet-600 text-white'
-                    : 'text-white/60 hover:text-white'
+                    : 'text-white/60 hover:text-white',
                 )}
               >
                 Table
@@ -921,7 +921,9 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
                 onClick={() => setViewMode('raw')}
                 className={cn(
                   'px-2 py-1 text-[10px] font-medium rounded-md transition-colors',
-                  viewMode === 'raw' ? 'bg-violet-600 text-white' : 'text-white/60 hover:text-white'
+                  viewMode === 'raw'
+                    ? 'bg-violet-600 text-white'
+                    : 'text-white/60 hover:text-white',
                 )}
               >
                 Raw
@@ -1036,7 +1038,7 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
             <span
               className={cn(
                 'rounded-md px-2 py-0.5 text-[10px] font-bold uppercase border shrink-0',
-                badgeStyle
+                badgeStyle,
               )}
             >
               {extension || 'CODE'}
@@ -1073,7 +1075,7 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
                     'px-2 py-1 text-[10px] font-medium rounded-md transition-colors',
                     viewMode === 'formatted'
                       ? 'bg-violet-600 text-white'
-                      : 'text-white/60 hover:text-white'
+                      : 'text-white/60 hover:text-white',
                   )}
                 >
                   Doc
@@ -1085,7 +1087,7 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
                     'px-2 py-1 text-[10px] font-medium rounded-md transition-colors',
                     viewMode === 'raw'
                       ? 'bg-violet-600 text-white'
-                      : 'text-white/60 hover:text-white'
+                      : 'text-white/60 hover:text-white',
                   )}
                 >
                   Raw
@@ -1099,7 +1101,7 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
               onClick={() => setWordWrap(!wordWrap)}
               className={cn(
                 'h-7 w-7 text-white/80 hover:text-white rounded-lg border border-white/10',
-                wordWrap ? 'bg-violet-600/30 border-violet-500/40 text-violet-300' : 'bg-white/5'
+                wordWrap ? 'bg-violet-600/30 border-violet-500/40 text-violet-300' : 'bg-white/5',
               )}
               title={wordWrap ? 'Disable Word Wrap' : 'Enable Word Wrap'}
             >
@@ -1112,7 +1114,7 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
                 onClick={() => setFontSize('sm')}
                 className={cn(
                   'px-1.5 py-0.5 text-[10px] rounded transition-colors',
-                  fontSize === 'sm' ? 'bg-violet-600 text-white' : 'text-white/60 hover:text-white'
+                  fontSize === 'sm' ? 'bg-violet-600 text-white' : 'text-white/60 hover:text-white',
                 )}
               >
                 A
@@ -1124,7 +1126,7 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
                   'px-1.5 py-0.5 text-[10px] rounded transition-colors',
                   fontSize === 'base'
                     ? 'bg-violet-600 text-white'
-                    : 'text-white/60 hover:text-white'
+                    : 'text-white/60 hover:text-white',
                 )}
               >
                 A+
@@ -1202,7 +1204,7 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
                   <pre
                     className={cn(
                       'flex-1 font-mono text-emerald-300/90 overflow-x-auto m-0 p-0 bg-transparent border-none',
-                      wordWrap ? 'whitespace-pre-wrap break-all' : 'whitespace-pre'
+                      wordWrap ? 'whitespace-pre-wrap break-all' : 'whitespace-pre',
                     )}
                   >
                     {text || ' '}
@@ -1294,7 +1296,7 @@ export const OtherFilesVault: React.FC = () => {
   const masterKey = useVaultStore((state) => state.masterKey);
   const isPrintBlockingEnabled = useVaultStore((state) => state.preferences.isPrintBlockingEnabled);
   const isTabSwitchShieldEnabled = useVaultStore(
-    (state) => state.preferences.isTabSwitchShieldEnabled
+    (state) => state.preferences.isTabSwitchShieldEnabled,
   );
   const isPhotoExifStripped = useVaultStore((state) => state.preferences.isPhotoExifStripped);
 
@@ -1472,7 +1474,7 @@ export const OtherFilesVault: React.FC = () => {
     const batchToastId = toast.loading(
       total === 1
         ? `Encrypting ${validFiles[0].file.name}...`
-        : `Encrypting & uploading 0/${total} files...`
+        : `Encrypting & uploading 0/${total} files...`,
     );
 
     let completedCount = 0;
@@ -1555,10 +1557,10 @@ export const OtherFilesVault: React.FC = () => {
               throttledToastUpdate(`Uploading "${file.name}" (${progress}%)...`);
             } else {
               throttledToastUpdate(
-                `[${completedCount + 1}/${total}] Uploading "${file.name}" (${progress}%)...`
+                `[${completedCount + 1}/${total}] Uploading "${file.name}" (${progress}%)...`,
               );
             }
-          }
+          },
         );
 
         successCount++;
@@ -1601,7 +1603,7 @@ export const OtherFilesVault: React.FC = () => {
           total === 1
             ? `${validFiles[0].file.name} encrypted & saved securely`
             : `All ${successCount} files encrypted and saved to vault`,
-          { id: batchToastId }
+          { id: batchToastId },
         );
       } else if (successCount > 0) {
         toast.warning(`Uploaded ${successCount} files (${failedCount} failed).`, {
@@ -1756,7 +1758,7 @@ export const OtherFilesVault: React.FC = () => {
                   <Card
                     className={cn(
                       'group relative border-white/5 bg-gradient-to-br from-white/[0.08] to-transparent backdrop-blur-md transition-all hover:border-white/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)]',
-                      moveMenuOpenId === item.id ? 'z-50' : 'z-10'
+                      moveMenuOpenId === item.id ? 'z-50' : 'z-10',
                     )}
                   >
                     <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
@@ -1772,7 +1774,7 @@ export const OtherFilesVault: React.FC = () => {
                           <div
                             className={cn(
                               'absolute -bottom-1 -right-1 rounded-lg px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-tighter shadow-lg border',
-                              badgeStyle
+                              badgeStyle,
                             )}
                           >
                             {itemExt || 'FILE'}
@@ -1825,7 +1827,7 @@ export const OtherFilesVault: React.FC = () => {
                               size="icon"
                               className={cn(
                                 'h-9 w-9 bg-white/5 hover:bg-white/10 text-white',
-                                moveMenuOpenId === item.id && 'bg-white/20'
+                                moveMenuOpenId === item.id && 'bg-white/20',
                               )}
                               onClick={() =>
                                 setMoveMenuOpenId(moveMenuOpenId === item.id ? null : item.id)
@@ -1919,7 +1921,7 @@ export const OtherFilesVault: React.FC = () => {
                               'h-9 w-9 transition-all',
                               item.isPinned
                                 ? 'bg-slate-300/20 text-slate-300 hover:bg-slate-300/30 border border-slate-300/40'
-                                : 'bg-white/5 hover:bg-white/10 text-white'
+                                : 'bg-white/5 hover:bg-white/10 text-white',
                             )}
                             onClick={() => void togglePin(item.id)}
                             title={item.isPinned ? 'Unpin' : 'Pin'}

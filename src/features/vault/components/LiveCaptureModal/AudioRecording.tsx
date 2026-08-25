@@ -83,13 +83,13 @@ export const AudioRecording: React.FC<AudioRecordingProps> = ({
         <div
           className={cn(
             'absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,transparent_70%)] transition-opacity duration-1000',
-            isRecording && isWaveformEnabled ? 'opacity-100' : 'opacity-0'
+            isRecording && isWaveformEnabled ? 'opacity-100' : 'opacity-0',
           )}
         />
         <svg
           className={cn(
             'h-full w-full transition-opacity duration-1000',
-            isWaveformEnabled ? 'opacity-30' : 'opacity-0'
+            isWaveformEnabled ? 'opacity-30' : 'opacity-0',
           )}
           viewBox="0 0 1000 1000"
           preserveAspectRatio="xMidYMid slice"
@@ -147,7 +147,7 @@ export const AudioRecording: React.FC<AudioRecordingProps> = ({
                   ? {
                       scaleY: Math.max(
                         1,
-                        getAudioLevel(i, 60) * 80 + 10 * Math.sin(Date.now() / 1000 + bar.offset)
+                        getAudioLevel(i, 60) * 80 + 10 * Math.sin(Date.now() / 1000 + bar.offset),
                       ),
                       opacity: isRecording ? 0.4 : 0,
                     }
@@ -174,7 +174,7 @@ export const AudioRecording: React.FC<AudioRecordingProps> = ({
             'transition-all duration-1000 backdrop-blur-3xl border',
             isRecording
               ? 'bg-white/5 border-white/30 shadow-[0_0_80px_rgba(255,255,255,0.1)] scale-105 sm:scale-110 rotate-3'
-              : 'bg-white/[0.02] border-white/10 shadow-2xl rotate-0 hover:border-white/20'
+              : 'bg-white/[0.02] border-white/10 shadow-2xl rotate-0 hover:border-white/20',
           )}
         >
           <AnimatePresence>
@@ -237,7 +237,7 @@ export const AudioRecording: React.FC<AudioRecordingProps> = ({
                   'h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 transition-all duration-700',
                   isRecording
                     ? 'text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]'
-                    : 'text-white/10'
+                    : 'text-white/10',
                 )}
               />
             </motion.div>
@@ -267,7 +267,7 @@ export const AudioRecording: React.FC<AudioRecordingProps> = ({
                 'text-[9px] sm:text-[10px] md:text-xs font-black uppercase tracking-[0.4em] sm:tracking-[0.6em] transition-all duration-500 text-center px-4',
                 isRecording
                   ? 'text-white/80 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]'
-                  : 'text-white/20 animate-pulse'
+                  : 'text-white/20 animate-pulse',
               )}
             >
               {isRecording ? 'Transmitting Audio Data' : 'Click to establish link'}

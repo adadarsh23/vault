@@ -26,7 +26,7 @@ const SAFE_LEGACY_ID_PATTERN = /^[a-zA-Z0-9:_-]+$/;
 const LEGACY_RAW_LIMIT = `${Number(process.env.LEGACY_RAW_LIMIT_MB || process.env.MAX_FILE_SIZE_MB || 4096)}mb`;
 const MAX_SCOPED_TEXT_PAYLOAD_BYTES = Math.max(
   1_000_000,
-  Number(process.env.MAX_SCOPED_TEXT_PAYLOAD_BYTES || 4 * 1024 * 1024)
+  Number(process.env.MAX_SCOPED_TEXT_PAYLOAD_BYTES || 4 * 1024 * 1024),
 );
 const ALLOWED_SCOPED_CATEGORIES = new Set([
   'audio',
@@ -53,24 +53,24 @@ const ALLOWED_SCOPED_CATEGORIES = new Set([
 const CHUNK_UPLOAD_ROOT = path.join(process.cwd(), 'vault-tmp', 'chunk-uploads');
 const CHUNK_UPLOAD_TTL_MS = Math.max(
   60_000,
-  Number(process.env.CHUNK_UPLOAD_TTL_MS || 30 * 60 * 1000)
+  Number(process.env.CHUNK_UPLOAD_TTL_MS || 30 * 60 * 1000),
 );
 const CHUNK_UPLOAD_COMPLETION_MARKER_TTL_MS = Math.max(
   5 * 60 * 1000,
-  Number(process.env.CHUNK_UPLOAD_COMPLETION_MARKER_TTL_MS || 6 * 60 * 60 * 1000)
+  Number(process.env.CHUNK_UPLOAD_COMPLETION_MARKER_TTL_MS || 6 * 60 * 60 * 1000),
 );
 const CHUNK_UPLOAD_MAX_CHUNKS = Math.max(1, Number(process.env.CHUNK_UPLOAD_MAX_CHUNKS || 4096));
 const CHUNK_UPLOAD_MAX_PART_BYTES = Math.max(
   256 * 1024,
-  Number(process.env.CHUNK_UPLOAD_MAX_PART_BYTES || 12 * 1024 * 1024)
+  Number(process.env.CHUNK_UPLOAD_MAX_PART_BYTES || 12 * 1024 * 1024),
 );
 const LEGACY_MAX_FILE_SIZE_BYTES = Math.max(
   1,
-  Number(process.env.MAX_FILE_SIZE_MB || 4096) * 1024 * 1024
+  Number(process.env.MAX_FILE_SIZE_MB || 4096) * 1024 * 1024,
 );
 const CHUNK_ASSEMBLY_LOCK_STALE_MS = Math.max(
   5_000,
-  Number(process.env.CHUNK_ASSEMBLY_LOCK_STALE_MS || 2 * 60 * 1000)
+  Number(process.env.CHUNK_ASSEMBLY_LOCK_STALE_MS || 2 * 60 * 1000),
 );
 const CHUNK_COMPLETION_MARKER_PREFIX = 'completed-';
 
@@ -153,7 +153,7 @@ const cleanupExpiredChunkUploads = async (userChunkRoot: string) => {
       } catch (entryErr) {
         logger.debug('Per-entry error during chunk upload cleanup', { fullPath, error: entryErr });
       }
-    })
+    }),
   );
 };
 
@@ -163,13 +163,13 @@ const sanitizeMarkerSegment = (value: string) =>
 const getChunkCompletionMarkerPath = (userChunkRoot: string, uploadId: string, itemId: string) =>
   path.join(
     userChunkRoot,
-    `${CHUNK_COMPLETION_MARKER_PREFIX}${sanitizeMarkerSegment(uploadId)}-${sanitizeMarkerSegment(itemId)}.json`
+    `${CHUNK_COMPLETION_MARKER_PREFIX}${sanitizeMarkerSegment(uploadId)}-${sanitizeMarkerSegment(itemId)}.json`,
   );
 
 const wasChunkUploadCompleted = async (
   userChunkRoot: string,
   uploadId: string,
-  itemId: string
+  itemId: string,
 ): Promise<boolean> => {
   const markerPath = getChunkCompletionMarkerPath(userChunkRoot, uploadId, itemId);
   try {
@@ -193,7 +193,7 @@ const wasChunkUploadCompleted = async (
 const markChunkUploadCompleted = async (
   userChunkRoot: string,
   uploadId: string,
-  itemId: string
+  itemId: string,
 ) => {
   const markerPath = getChunkCompletionMarkerPath(userChunkRoot, uploadId, itemId);
   await fs.writeFile(markerPath, JSON.stringify({ uploadId, itemId, completedAt: Date.now() }));
@@ -222,7 +222,7 @@ const assertScopedCategory = (category: string) => {
 
 export const parseLegacyPayloadFromRequest = async (
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) => {
   let payload: unknown;
   let category = 'v2_items';
@@ -259,7 +259,7 @@ export const parseLegacyPayloadFromRequest = async (
         isTooLarge ? 'PAYLOAD_TOO_LARGE' : 'INVALID_PAYLOAD',
         isTooLarge
           ? `Binary upload exceeded limit (${LEGACY_RAW_LIMIT}).`
-          : 'Failed to parse binary upload payload.'
+          : 'Failed to parse binary upload payload.',
       );
     }
 
@@ -288,7 +288,7 @@ export const parseLegacyPayloadFromRequest = async (
       const chunkCount = Number.parseInt(String(req.headers['x-vault-chunk-count'] || '-1'), 10);
       const declaredTotalSize = Number.parseInt(
         String(req.headers['x-vault-total-size'] || '-1'),
-        10
+        10,
       );
 
       if (
@@ -308,7 +308,7 @@ export const parseLegacyPayloadFromRequest = async (
         throw new AppError(
           400,
           'INVALID_CHUNK_HEADERS',
-          'Invalid or unsupported total upload size.'
+          'Invalid or unsupported total upload size.',
         );
       }
       if (binaryPayload.length === 0 || binaryPayload.length > CHUNK_UPLOAD_MAX_PART_BYTES) {
@@ -320,7 +320,7 @@ export const parseLegacyPayloadFromRequest = async (
         throw new AppError(
           400,
           'INVALID_CHUNK_HASH',
-          'Chunk integrity hash is missing or invalid.'
+          'Chunk integrity hash is missing or invalid.',
         );
       }
 
@@ -403,7 +403,7 @@ export const parseLegacyPayloadFromRequest = async (
           throw new AppError(
             400,
             'CHUNK_SIZE_MISMATCH',
-            'Assembled chunk size does not match declared upload size.'
+            'Assembled chunk size does not match declared upload size.',
           );
         }
 
@@ -416,7 +416,7 @@ export const parseLegacyPayloadFromRequest = async (
             throw new AppError(
               400,
               'CHUNK_SIZE_MISMATCH',
-              `Chunk ${i} size changed during assembly.`
+              `Chunk ${i} size changed during assembly.`,
             );
           }
           chunk.copy(assembled, offset);
@@ -538,7 +538,7 @@ export const parseLegacyPayloadFromRequest = async (
       throw new AppError(
         413,
         'PAYLOAD_TOO_LARGE',
-        'Encrypted text payload exceeds secure size limits.'
+        'Encrypted text payload exceeds secure size limits.',
       );
     }
   }
@@ -608,7 +608,7 @@ export const upsertLegacyVaultItem = async (req: express.Request, res: express.R
     await markChunkUploadCompleted(
       chunkMeta.userChunkRoot,
       chunkMeta.uploadId,
-      chunkMeta.routeItemId
+      chunkMeta.routeItemId,
     );
   }
 
@@ -686,7 +686,7 @@ export const upsertScopedVaultItem = async (req: AuthenticatedRequest, res: expr
     await markChunkUploadCompleted(
       chunkMeta.userChunkRoot,
       chunkMeta.uploadId,
-      chunkMeta.routeItemId
+      chunkMeta.routeItemId,
     );
   }
 
@@ -710,7 +710,7 @@ export const removeScopedVaultItem = async (req: AuthenticatedRequest, res: expr
 
 export const toggleScopedVaultItemPin = async (
   req: AuthenticatedRequest,
-  res: express.Response
+  res: express.Response,
 ) => {
   const itemId = getRouteParam(req.params.itemId, 'itemId');
   if (typeof req.body?.isPinned !== 'boolean') {
@@ -722,7 +722,7 @@ export const toggleScopedVaultItemPin = async (
     req.user.userId,
     req.user.username,
     itemId,
-    isPinned
+    isPinned,
   );
 
   return res.json({ success: true, data });

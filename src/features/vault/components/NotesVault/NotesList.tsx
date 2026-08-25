@@ -111,7 +111,7 @@ export const NotesList: React.FC<NotesListProps> = ({
     <div
       className={cn(
         'w-full md:w-80 shrink-0 flex-col gap-6 border-r border-white/5 pr-6 transition-colors',
-        selectedNoteId ? 'hidden md:flex' : 'flex'
+        selectedNoteId ? 'hidden md:flex' : 'flex',
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -176,7 +176,7 @@ export const NotesList: React.FC<NotesListProps> = ({
                     'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all',
                     currentFolder === null
                       ? 'bg-text/10 text-text font-bold'
-                      : 'text-text/60 hover:bg-white/5'
+                      : 'text-text/60 hover:bg-white/5',
                   )}
                 >
                   <FilePlus className="h-5 w-5 shrink-0" />
@@ -192,7 +192,7 @@ export const NotesList: React.FC<NotesListProps> = ({
                         'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all border border-transparent',
                         currentFolder === folder
                           ? 'bg-text/10 text-text font-bold'
-                          : 'text-text/60 hover:bg-white/5'
+                          : 'text-text/60 hover:bg-white/5',
                       )}
                     >
                       <Folder className="h-5 w-5 shrink-0" />
@@ -449,7 +449,7 @@ export const NotesList: React.FC<NotesListProps> = ({
                     'h-8 w-8 rounded-full transition-all',
                     note.isPinned
                       ? 'text-yellow-400 bg-yellow-400/10 hover:bg-yellow-400/20'
-                      : 'text-text/30 hover:text-text/80 hover:bg-white/10'
+                      : 'text-text/30 hover:text-text/80 hover:bg-white/10',
                   )}
                   title={note.isPinned ? 'Unpin note' : 'Pin note'}
                 >

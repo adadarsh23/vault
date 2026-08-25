@@ -119,13 +119,13 @@ function encodeBlurHash(imageData: ImageData, componentX = 4, componentY = 3): s
   const maxVal = maxAc === 0 ? 1 : maxAc;
   for (const factor of ac) {
     const quantR = Math.floor(
-      Math.max(0, Math.min(18, Math.floor(signPow(factor[0] / maxVal, 0.5) * 9 + 9.5)))
+      Math.max(0, Math.min(18, Math.floor(signPow(factor[0] / maxVal, 0.5) * 9 + 9.5))),
     );
     const quantG = Math.floor(
-      Math.max(0, Math.min(18, Math.floor(signPow(factor[1] / maxVal, 0.5) * 9 + 9.5)))
+      Math.max(0, Math.min(18, Math.floor(signPow(factor[1] / maxVal, 0.5) * 9 + 9.5))),
     );
     const quantB = Math.floor(
-      Math.max(0, Math.min(18, Math.floor(signPow(factor[2] / maxVal, 0.5) * 9 + 9.5)))
+      Math.max(0, Math.min(18, Math.floor(signPow(factor[2] / maxVal, 0.5) * 9 + 9.5))),
     );
     const acValue = quantR * 19 * 19 + quantG * 19 + quantB;
     hash += encode83(acValue, 2);
@@ -139,7 +139,7 @@ function encodeBlurHash(imageData: ImageData, componentX = 4, componentY = 3): s
  */
 function validateMagicBytes(
   buffer: ArrayBuffer,
-  mimeType: string
+  mimeType: string,
 ): { valid: boolean; detectedFormat: string } {
   const bytes = new Uint8Array(buffer.slice(0, 32));
 

@@ -62,7 +62,7 @@ describe('SyncStorageCard Component Test Suite', () => {
     const retryFailedSyncMock = vi.fn().mockResolvedValue(undefined);
 
     const { rerender } = render(
-      <SyncStorageCard {...defaultProps} retryFailedSync={retryFailedSyncMock} />
+      <SyncStorageCard {...defaultProps} retryFailedSync={retryFailedSyncMock} />,
     );
 
     const retryDisabledButton = screen.getByRole('button', { name: /retry failed/i });
@@ -74,7 +74,7 @@ describe('SyncStorageCard Component Test Suite', () => {
         hasPendingSyncRetry={true}
         syncWithCloud={defaultProps.syncWithCloud}
         retryFailedSync={retryFailedSyncMock}
-      />
+      />,
     );
 
     const retryEnabledButton = screen.getByRole('button', { name: /retry failed/i });
@@ -103,7 +103,7 @@ describe('SyncStorageCard Component Test Suite', () => {
     const migrateLocalToCloudMock = vi.fn().mockResolvedValue(undefined);
 
     const { rerender } = render(
-      <SyncStorageCard {...defaultProps} migrateLocalToCloud={migrateLocalToCloudMock} />
+      <SyncStorageCard {...defaultProps} migrateLocalToCloud={migrateLocalToCloudMock} />,
     );
 
     const moreButton = screen.getByRole('button', { name: /toggle more sync options/i });
@@ -119,7 +119,7 @@ describe('SyncStorageCard Component Test Suite', () => {
         {...defaultProps}
         isMigrating={true}
         migrateLocalToCloud={migrateLocalToCloudMock}
-      />
+      />,
     );
 
     const moreButtonRerender = screen.getByRole('button', { name: /toggle more sync options/i });
@@ -159,7 +159,7 @@ describe('SyncStorageCard Component Test Suite', () => {
         {...defaultProps}
         isSyncingLogs={true}
         cancelActivityLogSync={cancelActivityLogSyncMock}
-      />
+      />,
     );
 
     const moreButton = screen.getByRole('button', { name: /toggle more sync options/i });

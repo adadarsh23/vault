@@ -10,7 +10,7 @@ type MetaConfig = {
 const upsertMetaContent = (
   selector: string,
   identifier: { type: 'name' | 'property'; value: string },
-  content: string
+  content: string,
 ) => {
   const root = document.head || document.documentElement;
   if (!root) return;
@@ -67,23 +67,23 @@ export const useDocumentMeta = ({ title, description, path = '/' }: MetaConfig) 
     upsertMetaContent(
       'meta[name="description"]',
       { type: 'name', value: 'description' },
-      description
+      description,
     );
     upsertMetaContent('meta[property="og:title"]', { type: 'property', value: 'og:title' }, title);
     upsertMetaContent(
       'meta[property="og:description"]',
       { type: 'property', value: 'og:description' },
-      description
+      description,
     );
     upsertMetaContent(
       'meta[name="twitter:title"]',
       { type: 'name', value: 'twitter:title' },
-      title
+      title,
     );
     upsertMetaContent(
       'meta[name="twitter:description"]',
       { type: 'name', value: 'twitter:description' },
-      description
+      description,
     );
 
     const canonicalUrl = toCanonicalUrl(path);
@@ -92,12 +92,12 @@ export const useDocumentMeta = ({ title, description, path = '/' }: MetaConfig) 
     upsertMetaContent(
       'meta[property="og:url"]',
       { type: 'property', value: 'og:url' },
-      canonicalUrl
+      canonicalUrl,
     );
     upsertMetaContent(
       'meta[name="twitter:url"]',
       { type: 'name', value: 'twitter:url' },
-      canonicalUrl
+      canonicalUrl,
     );
     upsertCanonicalLink(canonicalUrl);
   }, [description, path, title]);

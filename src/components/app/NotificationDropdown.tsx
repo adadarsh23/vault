@@ -214,7 +214,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                     'px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer',
                     activeTab === 'all'
                       ? 'bg-text/15 text-text font-semibold shadow-sm'
-                      : 'text-text/50 hover:text-text hover:bg-text/5'
+                      : 'text-text/50 hover:text-text hover:bg-text/5',
                   )}
                 >
                   All ({notifications.length})
@@ -229,7 +229,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                     'px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5',
                     activeTab === 'unread'
                       ? 'bg-text/15 text-text font-semibold shadow-sm'
-                      : 'text-text/50 hover:text-text hover:bg-text/5'
+                      : 'text-text/50 hover:text-text hover:bg-text/5',
                   )}
                 >
                   Unread ({unreadCount})
@@ -265,7 +265,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                     key={notification._id}
                     className={cn(
                       'group relative p-3.5 flex gap-3 transition-all cursor-pointer hover:bg-text/[0.04] active:bg-text/[0.07]',
-                      !notification.isRead ? 'bg-emerald-500/[0.04]' : ''
+                      !notification.isRead ? 'bg-emerald-500/[0.04]' : '',
                     )}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -281,7 +281,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                         <p
                           className={cn(
                             'text-xs font-semibold truncate',
-                            !notification.isRead ? 'text-text' : 'text-text/75'
+                            !notification.isRead ? 'text-text' : 'text-text/75',
                           )}
                         >
                           {notification.title}

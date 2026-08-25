@@ -1,7 +1,6 @@
 /* @vitest-environment jsdom */
 
-import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   classifyBarcodeContent,
@@ -34,7 +33,7 @@ describe('Advanced Camera & Recording Modes Suite', () => {
           isTimelapseEnabled={true}
           timelapseInterval={2}
           onToggleTimelapse={onToggleTimelapse}
-        />
+        />,
       );
 
       const timelapseBtn = screen.getByTitle(/Time-Lapse: 2s/i);
@@ -60,7 +59,7 @@ describe('Advanced Camera & Recording Modes Suite', () => {
           onToggleDualCamera={onToggleDual}
           burstCount={5}
           onCycleBurst={vi.fn()}
-        />
+        />,
       );
 
       const dualBtn = screen.getByLabelText(/Toggle Dual Camera Mode/i);
@@ -89,7 +88,7 @@ describe('Advanced Camera & Recording Modes Suite', () => {
           onCyclePipPosition={onCyclePip}
           onSwapCameras={onSwap}
           primaryFacing="user"
-        />
+        />,
       );
 
       expect(screen.getByText('PiP')).toBeTruthy();
@@ -116,7 +115,7 @@ describe('Advanced Camera & Recording Modes Suite', () => {
           onClose={vi.fn()}
           isGyroLevelerEnabled={true}
           onToggleGyroLeveler={onToggleGyro}
-        />
+        />,
       );
 
       const gyroBtn = screen.getByLabelText(/Toggle Gyroscopic Horizon Leveler/i);
@@ -156,14 +155,14 @@ describe('Advanced Camera & Recording Modes Suite', () => {
 
       // OTP Auth
       const otpRes = classifyBarcodeContent(
-        'otpauth://totp/Vault:alice@example.com?secret=JBSWY3DPEHPK3PXP'
+        'otpauth://totp/Vault:alice@example.com?secret=JBSWY3DPEHPK3PXP',
       );
       expect(otpRes.type).toBe('otp');
       expect(otpRes.title).toContain('2FA Authenticator');
 
       // Secret Key
       const secretRes = classifyBarcodeContent(
-        '0x4f35569a909ef4c34d092100868f000109012398492084923482390482039482'
+        '0x4f35569a909ef4c34d092100868f000109012398492084923482390482039482',
       );
       expect(secretRes.type).toBe('secret');
 
@@ -173,7 +172,10 @@ describe('Advanced Camera & Recording Modes Suite', () => {
     });
 
     it('formats and encrypts scanned barcode result into a Vault Note', async () => {
-      const mockKey = {} as CryptoKey;
+      const mockKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
+        'encrypt',
+        'decrypt',
+      ]);
       const mockAddItem = vi.fn().mockResolvedValue({ id: 'note-123' });
 
       const barcodeResult = {
@@ -190,7 +192,7 @@ describe('Advanced Camera & Recording Modes Suite', () => {
         expect.objectContaining({
           type: 'note',
           title: expect.stringContaining('QR: URL: example.com'),
-        })
+        }),
       );
     });
 
@@ -203,13 +205,7 @@ describe('Advanced Camera & Recording Modes Suite', () => {
       const onSaveNote = vi.fn();
       const videoRef = { current: document.createElement('video') };
 
-      render(
-        <QRScannerOverlay
-          enabled={true}
-          videoRef={videoRef}
-          onSaveToNote={onSaveNote}
-        />
-      );
+      render(<QRScannerOverlay enabled={true} videoRef={videoRef} onSaveToNote={onSaveNote} />);
 
       expect(screen.getByText(/Point at QR \/ Barcode/i)).toBeTruthy();
     });
@@ -274,7 +270,7 @@ describe('Advanced Camera & Recording Modes Suite', () => {
           audioLevels={[120, 150, 180, 200, 220, 255]}
           isMuted={false}
           onToggleMute={onToggleMute}
-        />
+        />,
       );
 
       const indicator = screen.getByRole('status');
@@ -301,7 +297,7 @@ describe('Advanced Camera & Recording Modes Suite', () => {
           audioLevels={[0, 0, 0, 0, 0, 0]}
           isMuted={true}
           onToggleMute={onToggleMute}
-        />
+        />,
       );
 
       const indicator = screen.getByRole('status');
@@ -325,7 +321,7 @@ describe('Advanced Camera & Recording Modes Suite', () => {
           captureRatio="16:9"
           type="photo"
           onFileSelect={vi.fn()}
-        />
+        />,
       );
 
       expect(screen.queryByRole('status')).toBeNull();
@@ -339,7 +335,7 @@ describe('Advanced Camera & Recording Modes Suite', () => {
           captureRatio="16:9"
           type="video"
           onFileSelect={vi.fn()}
-        />
+        />,
       );
 
       expect(screen.queryByRole('status')).toBeNull();
@@ -355,7 +351,7 @@ describe('Advanced Camera & Recording Modes Suite', () => {
           formatTime={(s) => `00:${s < 10 ? '0' : ''}${s}`}
           formatSize={(b) => `${(b / (1024 * 1024)).toFixed(1)} MB`}
           isPaused={false}
-        />
+        />,
       );
 
       expect(screen.getByText('REC')).toBeTruthy();
@@ -372,7 +368,7 @@ describe('Advanced Camera & Recording Modes Suite', () => {
           formatTime={(s) => `00:${s < 10 ? '0' : ''}${s}`}
           formatSize={(b) => `${(b / (1024 * 1024)).toFixed(1)} MB`}
           isPaused={true}
-        />
+        />,
       );
 
       expect(screen.getByText('PAUSED')).toBeTruthy();
@@ -397,7 +393,7 @@ describe('Advanced Camera & Recording Modes Suite', () => {
           isTranscribing={true}
           transcriptLang="hi-IN"
           liveTranscript="नमस्ते यह एक टेस्ट है"
-        />
+        />,
       );
 
       expect(screen.getByText('"नमस्ते यह एक टेस्ट है"')).toBeTruthy();
@@ -418,11 +414,10 @@ describe('Advanced Camera & Recording Modes Suite', () => {
           onFileSelect={vi.fn()}
           isTranscribing={false}
           liveTranscript="Hello world"
-        />
+        />,
       );
 
       expect(screen.queryByText('"Hello world"')).toBeNull();
     });
   });
 });
-

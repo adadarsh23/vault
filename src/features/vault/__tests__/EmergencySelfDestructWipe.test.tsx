@@ -24,28 +24,48 @@ vi.mock('../../../lib/storage', async () => {
   };
 });
 
-vi.mock('../../../lib/auth-session', () => ({
-  clearAuthToken: vi.fn(),
-  clearCloudSessionHint: vi.fn(),
-  clearRememberedVaultAccess: vi.fn(),
-  getDeviceId: vi.fn(() => 'test-device-id'),
-}));
+vi.mock('../../../lib/auth-session', async () => {
+  const actual = await vi.importActual<typeof import('../../../lib/auth-session')>(
+    '../../../lib/auth-session',
+  );
+  return {
+    ...actual,
+    clearAuthToken: vi.fn(),
+    clearCloudSessionHint: vi.fn(),
+    clearRememberedVaultAccess: vi.fn(),
+    getDeviceId: vi.fn(() => 'test-device-id'),
+  };
+});
 
-vi.mock('../../../lib/cryptoPrimitives', () => ({
-  clearCryptoKeyCache: vi.fn(),
-  deriveKey: vi.fn(),
-  base64ToUint8Array: vi.fn(),
-}));
+vi.mock('../../../lib/cryptoPrimitives', async () => {
+  const actual = await vi.importActual<typeof import('../../../lib/cryptoPrimitives')>(
+    '../../../lib/cryptoPrimitives',
+  );
+  return {
+    ...actual,
+    clearCryptoKeyCache: vi.fn(),
+  };
+});
 
-vi.mock('../../../lib/blobRegistry', () => ({
-  revokeAllActiveBlobUrls: vi.fn(),
-}));
+vi.mock('../../../lib/blobRegistry', async () => {
+  const actual = await vi.importActual<typeof import('../../../lib/blobRegistry')>(
+    '../../../lib/blobRegistry',
+  );
+  return {
+    ...actual,
+    revokeAllActiveBlobUrls: vi.fn(),
+  };
+});
 
-vi.mock('../../../lib/sync', () => ({
-  deleteItemFromCloud: vi.fn().mockResolvedValue(undefined),
-  downloadAllFromCloud: vi.fn().mockResolvedValue([]),
-  uploadLogsToCloud: vi.fn().mockResolvedValue(undefined),
-}));
+vi.mock('../../../lib/sync', async () => {
+  const actual = await vi.importActual<typeof import('../../../lib/sync')>('../../../lib/sync');
+  return {
+    ...actual,
+    deleteItemFromCloud: vi.fn().mockResolvedValue(undefined),
+    downloadAllFromCloud: vi.fn().mockResolvedValue([]),
+    uploadLogsToCloud: vi.fn().mockResolvedValue(undefined),
+  };
+});
 
 vi.mock('sonner', () => ({
   toast: {

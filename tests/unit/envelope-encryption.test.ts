@@ -62,13 +62,13 @@ describe('Envelope Encryption (DEK + KEK) & Rapid Key Rotation', () => {
       new TextEncoder().encode('01234567890123456789012345678901'),
       { name: 'AES-GCM' },
       false,
-      ['encrypt', 'decrypt']
+      ['encrypt', 'decrypt'],
     );
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const ct = await crypto.subtle.encrypt(
       { name: 'AES-GCM', iv },
       legacyCryptoKey,
-      new TextEncoder().encode(plaintext)
+      new TextEncoder().encode(plaintext),
     );
     const legacyBundle = new Uint8Array(12 + ct.byteLength);
     legacyBundle.set(iv);

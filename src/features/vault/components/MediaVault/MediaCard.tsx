@@ -94,7 +94,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
   const [dynamicAspectRatio, setDynamicAspectRatio] = useState<number | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [videoDuration] = useState<number | null>(
-    typeof item.metadata?.duration === 'number' ? item.metadata.duration : null
+    typeof item.metadata?.duration === 'number' ? item.metadata.duration : null,
   );
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -138,7 +138,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
   const formattedDuration = formatDuration(videoDuration);
   const sizeBytes = Number(
     item.metadata?.size ||
-      (typeof item.content === 'string' ? item.content.length : item.content?.byteLength || 0)
+      (typeof item.content === 'string' ? item.content.length : item.content?.byteLength || 0),
   );
   const fileExt = getFileExtension(item.title);
   const createdDateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '';
@@ -262,7 +262,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
         isChecked
           ? 'border-blue-500 ring-2 ring-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.35)]'
           : 'border-white/10 hover:border-white/30 hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.7)]',
-        isMoveOpen || isMenuOpen ? 'z-40' : 'z-10'
+        isMoveOpen || isMenuOpen ? 'z-40' : 'z-10',
       )}
       style={{
         aspectRatio: getComputedAspectRatio(),
@@ -304,7 +304,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
               ? 'opacity-70 group-hover:opacity-90'
               : isCompact
                 ? 'opacity-0 group-hover:opacity-60'
-                : 'opacity-70 sm:opacity-0 group-hover:opacity-100'
+                : 'opacity-70 sm:opacity-0 group-hover:opacity-100',
           )}
         />
       </div>
@@ -324,14 +324,14 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
               isCompact ? 'h-5 w-5' : 'h-6 w-6',
               isChecked
                 ? 'bg-blue-600 text-white border-blue-400'
-                : 'bg-black/70 text-transparent border-white/50 hover:border-white'
+                : 'bg-black/70 text-transparent border-white/50 hover:border-white',
             )}
             aria-label={`Select ${item.title}`}
           >
             <Check
               className={cn(
                 isCompact ? 'h-3 w-3' : 'h-3.5 w-3.5',
-                isChecked ? 'opacity-100' : 'opacity-0'
+                isChecked ? 'opacity-100' : 'opacity-0',
               )}
             />
           </button>
@@ -370,7 +370,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
               }}
               className={cn(
                 'rounded-lg hidden group-hover:flex items-center justify-center transition-all border border-white/40 bg-black/50 hover:bg-black/70 text-transparent hover:text-white/70 shadow-lg',
-                isCompact ? 'h-5 w-5' : 'h-6 w-6'
+                isCompact ? 'h-5 w-5' : 'h-6 w-6',
               )}
               title="Select item"
               aria-label="Select item"
@@ -399,7 +399,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
             isCompact ? 'h-6 w-6' : 'h-7 w-7',
             item.isPinned
               ? 'bg-amber-500/35 text-amber-300 border-amber-400/50 opacity-100'
-              : 'bg-black/60 text-white/80 border-white/20 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-black/80 hover:text-white'
+              : 'bg-black/60 text-white/80 border-white/20 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-black/80 hover:text-white',
           )}
         >
           {isCurrentlyPinning ? (
@@ -425,7 +425,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
               isCompact ? 'h-6 w-6' : 'h-7 w-7',
               isMenuOpen
                 ? 'bg-white/30 text-white opacity-100'
-                : 'bg-black/60 text-white/80 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-black/80 hover:text-white'
+                : 'bg-black/60 text-white/80 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-black/80 hover:text-white',
             )}
           >
             <MoreVertical className="h-3.5 w-3.5" />
@@ -772,7 +772,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
             'absolute bottom-0 inset-x-0 p-2 sm:p-2.5 md:p-3.5 flex flex-col justify-end gap-1 z-20 pointer-events-none',
             isLarge
               ? 'bg-gradient-to-t from-black/95 via-black/60 to-transparent pt-8 sm:pt-12'
-              : 'bg-gradient-to-t from-black/90 via-black/45 to-transparent pt-6 sm:pt-8'
+              : 'bg-gradient-to-t from-black/90 via-black/45 to-transparent pt-6 sm:pt-8',
           )}
         >
           <div className="flex items-end justify-between gap-1.5 sm:gap-2">
@@ -781,7 +781,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
               <span
                 className={cn(
                   'font-bold text-white drop-shadow-md truncate',
-                  isLarge ? 'text-sm sm:text-base' : 'text-[11px] sm:text-xs font-semibold'
+                  isLarge ? 'text-sm sm:text-base' : 'text-[11px] sm:text-xs font-semibold',
                 )}
                 title={item.title}
               >
@@ -803,14 +803,15 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
                     </span>
                   </>
                 )}
-                {item.metadata?.voiceClarityPreset && item.metadata.voiceClarityPreset !== 'off' && (
-                  <>
-                    <span className="opacity-40">•</span>
-                    <span className="text-cyan-300 font-medium flex items-center gap-0.5">
-                      <Sparkles className="h-2.5 w-2.5" /> DSP
-                    </span>
-                  </>
-                )}
+                {item.metadata?.voiceClarityPreset &&
+                  item.metadata.voiceClarityPreset !== 'off' && (
+                    <>
+                      <span className="opacity-40">•</span>
+                      <span className="text-cyan-300 font-medium flex items-center gap-0.5">
+                        <Sparkles className="h-2.5 w-2.5" /> DSP
+                      </span>
+                    </>
+                  )}
               </div>
               {item.metadata?.transcript && (
                 <div className="mt-1 flex items-center gap-1 text-[9px] sm:text-[10px] text-cyan-300 italic bg-black/50 px-1.5 py-0.5 rounded-md border border-cyan-500/20 backdrop-blur-sm max-w-full">
@@ -864,5 +865,5 @@ export const MediaCard = React.memo(
     prev.onTogglePin === next.onTogglePin &&
     prev.onOpenInspector === next.onOpenInspector &&
     prev.isPinning === next.isPinning &&
-    prev.pinningItemIds === next.pinningItemIds
+    prev.pinningItemIds === next.pinningItemIds,
 );

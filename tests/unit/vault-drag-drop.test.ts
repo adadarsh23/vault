@@ -16,7 +16,7 @@ type DragDataTransferLike = {
 
 const createDataTransferMock = (
   initialData: Record<string, string> = {},
-  configuredTypes?: string[]
+  configuredTypes?: string[],
 ): DragDataTransferLike => {
   const store = new Map(Object.entries(initialData));
 
@@ -84,7 +84,7 @@ describe('vaultDragDrop', () => {
       {
         'text/plain': 'legacy-id',
       },
-      ['application/x-my-vault-item', 'text/plain']
+      ['application/x-my-vault-item', 'text/plain'],
     );
 
     expect(getDraggedVaultItem({ dataTransfer: transfer })).toBe('legacy-id');

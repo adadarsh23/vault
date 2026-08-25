@@ -56,8 +56,7 @@ const emptyPayload = (): WifiPayload => ({
 const getWifiQrString = (payload?: Partial<WifiPayload> | null): string => {
   if (!payload) return '';
   const security = payload.security || 'WPA2/WPA3';
-  const securityType =
-    security === 'Open' ? 'nopass' : security === 'WEP' ? 'WEP' : 'WPA';
+  const securityType = security === 'Open' ? 'nopass' : security === 'WEP' ? 'WEP' : 'WPA';
   // Format: WIFI:S:SSID;T:WPA;P:PASSWORD;;
   // Escape special chars in SSID and Password
   const escapeString = (str?: unknown) => {
@@ -583,7 +582,7 @@ export const WifiVault: React.FC = () => {
       const q = searchQuery.toLowerCase();
       result = result.filter(
         (item) =>
-          item.title.toLowerCase().includes(q) || item.metadata?.ssid?.toLowerCase().includes(q)
+          item.title.toLowerCase().includes(q) || item.metadata?.ssid?.toLowerCase().includes(q),
       );
     }
     return result.sort((a, b) => {

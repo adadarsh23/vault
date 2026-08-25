@@ -56,7 +56,7 @@ const resolveConfiguredFallbackUris = (): string[] => {
 
   return rawList
     .filter((value): value is string =>
-      Boolean(value && (value.startsWith('mongodb://') || value.startsWith('mongodb+srv://')))
+      Boolean(value && (value.startsWith('mongodb://') || value.startsWith('mongodb+srv://'))),
     )
     .filter((value, idx, self) => self.indexOf(value) === idx);
 };
@@ -95,7 +95,7 @@ const isServerSelectionError = (error: unknown): boolean => {
     candidate?.name === 'MongooseServerSelectionError' ||
     String(candidate?.message || '').includes('MongooseServerSelectionError') ||
     String(candidate?.message || '').includes(
-      'Could not connect to any servers in your MongoDB Atlas cluster'
+      'Could not connect to any servers in your MongoDB Atlas cluster',
     )
   );
 };
@@ -214,7 +214,7 @@ export const switchToNextMongoUri = async (): Promise<boolean> => {
       }
       await connectWithUri(candidate);
       console.warn(
-        `Switched MongoDB connection to candidate #${index + 1} after storage failover.`
+        `Switched MongoDB connection to candidate #${index + 1} after storage failover.`,
       );
       return true;
     } catch (error) {
@@ -256,14 +256,14 @@ export const connectToMongo = async (): Promise<typeof mongoose> => {
           console.log(
             `Connected to MongoDB successfully${
               candidate === primaryUri ? '.' : ` using candidate #${index + 1}.`
-            }`
+            }`,
           );
           return connection;
         } catch (error) {
           lastError = error;
           const errMsg = error instanceof Error ? error.message : String(error);
           console.warn(
-            `[MONGO] Candidate #${index + 1} connection failed (${errMsg}). Trying next candidate...`
+            `[MONGO] Candidate #${index + 1} connection failed (${errMsg}). Trying next candidate...`,
           );
 
           if (candidate === primaryUri && isSrvResolutionError(error) && applyDnsRetryServers()) {
@@ -280,13 +280,13 @@ export const connectToMongo = async (): Promise<typeof mongoose> => {
 
       if (isSrvResolutionError(lastError)) {
         throw new Error(
-          `MongoDB Atlas SRV lookup failed. Configure MONGODB_URI_DIRECT with a direct Atlas replica-set URI using mongodb://, or repair DNS access to MongoDB Atlas. Local MongoDB fallback is disabled.`
+          `MongoDB Atlas SRV lookup failed. Configure MONGODB_URI_DIRECT with a direct Atlas replica-set URI using mongodb://, or repair DNS access to MongoDB Atlas. Local MongoDB fallback is disabled.`,
         );
       }
 
       if (isServerSelectionError(lastError)) {
         throw new Error(
-          `Failed to connect to MongoDB Atlas. Check Atlas Network Access/IP allowlisting and the configured direct or SRV Atlas URI. Local MongoDB fallback is disabled.`
+          `Failed to connect to MongoDB Atlas. Check Atlas Network Access/IP allowlisting and the configured direct or SRV Atlas URI. Local MongoDB fallback is disabled.`,
         );
       }
 

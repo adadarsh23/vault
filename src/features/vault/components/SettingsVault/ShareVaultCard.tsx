@@ -78,11 +78,11 @@ export const ShareVaultCard: React.FC = memo(() => {
   const shareTitle = 'Vault - Secure, end-to-end encrypted storage for your digital assets.';
   const compactQrLogoSettings = useMemo(
     () => getQrLogoSettings(200, resolvedTheme === 'dark'),
-    [resolvedTheme]
+    [resolvedTheme],
   );
   const previewQrLogoSettings = useMemo(
     () => getQrLogoSettings(420, resolvedTheme === 'dark'),
-    [resolvedTheme]
+    [resolvedTheme],
   );
 
   const handleCopyLink = useCallback(() => {
@@ -238,7 +238,7 @@ export const ShareVaultCard: React.FC = memo(() => {
         name: 'Email',
         icon: FaEnvelope,
         href: `mailto:?subject=${encodedTitle}&body=${encodeURIComponent(
-          `Check out Vault:\n\n${cleanUrl}`
+          `Check out Vault:\n\n${cleanUrl}`,
         )}`,
         hoverClass: 'hover:text-muted-foreground hover:scale-110',
         ariaLabel: 'Share via Email',

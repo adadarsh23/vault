@@ -19,7 +19,7 @@ class DrmPackagingService {
     itemId: string,
     userId: string,
     inputPath: string,
-    outputDir: string
+    outputDir: string,
   ): Promise<void> {
     await fs.mkdir(outputDir, { recursive: true });
 

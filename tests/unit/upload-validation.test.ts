@@ -8,8 +8,8 @@ describe('upload content validation', () => {
         'photo',
         'cat.jpg',
         'image/jpeg',
-        Buffer.from('definitely-not-a-jpeg')
-      )
+        Buffer.from('definitely-not-a-jpeg'),
+      ),
     ).toThrow();
   });
 
@@ -19,15 +19,15 @@ describe('upload content validation', () => {
         'video',
         'clip.mp4',
         'video/mp4',
-        Buffer.from('plain text and no ftyp signature')
-      )
+        Buffer.from('plain text and no ftyp signature'),
+      ),
     ).toThrow();
   });
 
   it('accepts valid jpeg signature for photo', () => {
     const minimalJpeg = Buffer.from([0xff, 0xd8, 0xff, 0xdb, 0x00, 0x43, 0x00]);
     expect(() =>
-      assertFileContentMatchesCategory('photo', 'ok.jpg', 'image/jpeg', minimalJpeg)
+      assertFileContentMatchesCategory('photo', 'ok.jpg', 'image/jpeg', minimalJpeg),
     ).not.toThrow();
   });
 
@@ -38,8 +38,8 @@ describe('upload content validation', () => {
         'photo',
         'test.png',
         'image/png',
-        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00])
-      )
+        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]),
+      ),
     ).not.toThrow();
 
     // GIF
@@ -48,8 +48,8 @@ describe('upload content validation', () => {
         'photo',
         'test.gif',
         'image/gif',
-        Buffer.from('GIF89a\x01\x00\x01\x00')
-      )
+        Buffer.from('GIF89a\x01\x00\x01\x00'),
+      ),
     ).not.toThrow();
 
     // BMP
@@ -58,8 +58,8 @@ describe('upload content validation', () => {
         'photo',
         'test.bmp',
         'image/bmp',
-        Buffer.from('BM\x00\x00\x00\x00')
-      )
+        Buffer.from('BM\x00\x00\x00\x00'),
+      ),
     ).not.toThrow();
 
     // WebP
@@ -68,8 +68,8 @@ describe('upload content validation', () => {
         'photo',
         'test.webp',
         'image/webp',
-        Buffer.from('RIFF\x00\x00\x00\x00WEBP\x00\x00')
-      )
+        Buffer.from('RIFF\x00\x00\x00\x00WEBP\x00\x00'),
+      ),
     ).not.toThrow();
 
     // SVG
@@ -78,8 +78,8 @@ describe('upload content validation', () => {
         'photo',
         'test.svg',
         'image/svg+xml',
-        Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"></svg>')
-      )
+        Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"></svg>'),
+      ),
     ).not.toThrow();
 
     // TIFF
@@ -88,8 +88,8 @@ describe('upload content validation', () => {
         'photo',
         'test.tiff',
         'image/tiff',
-        Buffer.from([0x49, 0x49, 0x2a, 0x00, 0x08, 0x00, 0x00, 0x00])
-      )
+        Buffer.from([0x49, 0x49, 0x2a, 0x00, 0x08, 0x00, 0x00, 0x00]),
+      ),
     ).not.toThrow();
 
     // PSD
@@ -98,8 +98,8 @@ describe('upload content validation', () => {
         'photo',
         'test.psd',
         'image/vnd.adobe.photoshop',
-        Buffer.from('8BPS\x00\x01\x00\x00\x00\x00\x00\x00')
-      )
+        Buffer.from('8BPS\x00\x01\x00\x00\x00\x00\x00\x00'),
+      ),
     ).not.toThrow();
 
     // ICO
@@ -108,8 +108,8 @@ describe('upload content validation', () => {
         'photo',
         'test.ico',
         'image/x-icon',
-        Buffer.from([0x00, 0x00, 0x01, 0x00, 0x01, 0x00])
-      )
+        Buffer.from([0x00, 0x00, 0x01, 0x00, 0x01, 0x00]),
+      ),
     ).not.toThrow();
 
     // Fuji RAW (RAF)
@@ -118,8 +118,8 @@ describe('upload content validation', () => {
         'photo',
         'test.raf',
         'image/x-fuji-raf',
-        Buffer.from('FUJIFILMCCD-RAW 0201')
-      )
+        Buffer.from('FUJIFILMCCD-RAW 0201'),
+      ),
     ).not.toThrow();
 
     // DDS
@@ -128,8 +128,8 @@ describe('upload content validation', () => {
         'photo',
         'test.dds',
         'image/vnd-ms.dds',
-        Buffer.from('DDS \x7c\x00\x00\x00')
-      )
+        Buffer.from('DDS \x7c\x00\x00\x00'),
+      ),
     ).not.toThrow();
 
     // EXR
@@ -138,8 +138,8 @@ describe('upload content validation', () => {
         'photo',
         'test.exr',
         'image/x-exr',
-        Buffer.from([0x76, 0x2f, 0x31, 0x01, 0x02, 0x00, 0x00, 0x00])
-      )
+        Buffer.from([0x76, 0x2f, 0x31, 0x01, 0x02, 0x00, 0x00, 0x00]),
+      ),
     ).not.toThrow();
 
     // Radiance HDR
@@ -148,8 +148,8 @@ describe('upload content validation', () => {
         'photo',
         'test.hdr',
         'image/vnd.radiance',
-        Buffer.from('#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n')
-      )
+        Buffer.from('#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n'),
+      ),
     ).not.toThrow();
 
     // Client Encrypted Cascade Cipher Envelope (VCAS01)
@@ -158,8 +158,8 @@ describe('upload content validation', () => {
         'photo',
         'secure_photo.enc',
         'image/jpeg',
-        Buffer.from([0x56, 0x43, 0x41, 0x53, 0x30, 0x31, 0x00, 0x01, 0x02, 0x03])
-      )
+        Buffer.from([0x56, 0x43, 0x41, 0x53, 0x30, 0x31, 0x00, 0x01, 0x02, 0x03]),
+      ),
     ).not.toThrow();
   });
 
@@ -170,8 +170,8 @@ describe('upload content validation', () => {
         'video',
         'test.mp4',
         'video/mp4',
-        Buffer.from([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d])
-      )
+        Buffer.from([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d]),
+      ),
     ).not.toThrow();
 
     // Modern MP4 with dash/iso5 brand
@@ -180,8 +180,8 @@ describe('upload content validation', () => {
         'video',
         'movie.mp4',
         'video/mp4',
-        Buffer.from([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x64, 0x61, 0x73, 0x68])
-      )
+        Buffer.from([0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x64, 0x61, 0x73, 0x68]),
+      ),
     ).not.toThrow();
 
     // WebM / MKV (EBML)
@@ -190,8 +190,8 @@ describe('upload content validation', () => {
         'video',
         'test.webm',
         'video/webm',
-        Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x9f, 0x42, 0x86, 0x81])
-      )
+        Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x9f, 0x42, 0x86, 0x81]),
+      ),
     ).not.toThrow();
 
     // AVI
@@ -200,8 +200,8 @@ describe('upload content validation', () => {
         'video',
         'test.avi',
         'video/x-msvideo',
-        Buffer.from('RIFF\x00\x00\x00\x00AVI LIST\x00\x00')
-      )
+        Buffer.from('RIFF\x00\x00\x00\x00AVI LIST\x00\x00'),
+      ),
     ).not.toThrow();
 
     // FLV
@@ -210,15 +210,15 @@ describe('upload content validation', () => {
         'video',
         'test.flv',
         'video/x-flv',
-        Buffer.from('FLV\x01\x05\x00\x00\x00\x09')
-      )
+        Buffer.from('FLV\x01\x05\x00\x00\x00\x09'),
+      ),
     ).not.toThrow();
 
     // MPEG-TS
     const tsBuffer = Buffer.alloc(188);
     tsBuffer[0] = 0x47;
     expect(() =>
-      assertFileContentMatchesCategory('video', 'test.ts', 'video/mp2t', tsBuffer)
+      assertFileContentMatchesCategory('video', 'test.ts', 'video/mp2t', tsBuffer),
     ).not.toThrow();
 
     // Encrypted Video Cascade Cipher Envelope (VCAS01)
@@ -227,8 +227,8 @@ describe('upload content validation', () => {
         'video',
         'secure_video.enc',
         'video/mp4',
-        Buffer.from([0x56, 0x43, 0x41, 0x53, 0x30, 0x31, 0xaa, 0xbb, 0xcc, 0xdd])
-      )
+        Buffer.from([0x56, 0x43, 0x41, 0x53, 0x30, 0x31, 0xaa, 0xbb, 0xcc, 0xdd]),
+      ),
     ).not.toThrow();
   });
 
@@ -239,8 +239,8 @@ describe('upload content validation', () => {
         'audio',
         'song.mp3',
         'audio/mpeg',
-        Buffer.from('ID3\x04\x00\x00\x00\x00\x00\x00')
-      )
+        Buffer.from('ID3\x04\x00\x00\x00\x00\x00\x00'),
+      ),
     ).not.toThrow();
 
     // WAV
@@ -249,8 +249,8 @@ describe('upload content validation', () => {
         'audio',
         'track.wav',
         'audio/wav',
-        Buffer.from('RIFF\x00\x00\x00\x00WAVEfmt ')
-      )
+        Buffer.from('RIFF\x00\x00\x00\x00WAVEfmt '),
+      ),
     ).not.toThrow();
 
     // FLAC
@@ -259,8 +259,8 @@ describe('upload content validation', () => {
         'audio',
         'track.flac',
         'audio/flac',
-        Buffer.from('fLaC\x00\x00\x00\x22')
-      )
+        Buffer.from('fLaC\x00\x00\x00\x22'),
+      ),
     ).not.toThrow();
 
     // Ogg Audio
@@ -269,8 +269,8 @@ describe('upload content validation', () => {
         'audio',
         'voice.ogg',
         'audio/ogg',
-        Buffer.from('OggS\x00\x02\x00\x00\x00\x00')
-      )
+        Buffer.from('OggS\x00\x02\x00\x00\x00\x00'),
+      ),
     ).not.toThrow();
 
     // Encrypted Audio Cascade Cipher Envelope (VCAS01)
@@ -279,8 +279,8 @@ describe('upload content validation', () => {
         'audio',
         'voice_memo.enc',
         'audio/mpeg',
-        Buffer.from([0x56, 0x43, 0x41, 0x53, 0x30, 0x31, 0x11, 0x22, 0x33, 0x44])
-      )
+        Buffer.from([0x56, 0x43, 0x41, 0x53, 0x30, 0x31, 0x11, 0x22, 0x33, 0x44]),
+      ),
     ).not.toThrow();
   });
 });

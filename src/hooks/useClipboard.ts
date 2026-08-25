@@ -114,7 +114,7 @@ export const useClipboard = () => {
         const normalizedSeconds = Number.isFinite(preferences.clipboardAutoClearDuration)
           ? Math.min(
               MAX_AUTO_CLEAR_SECONDS,
-              Math.max(1, Math.round(preferences.clipboardAutoClearDuration))
+              Math.max(1, Math.round(preferences.clipboardAutoClearDuration)),
             )
           : 30;
 
@@ -169,7 +169,7 @@ export const useClipboard = () => {
         }, normalizedSeconds * 1000);
       })();
     },
-    [preferences.isClipboardAutoClearEnabled, preferences.clipboardAutoClearDuration]
+    [preferences.isClipboardAutoClearEnabled, preferences.clipboardAutoClearDuration],
   );
 
   return { copy, copiedId };

@@ -17,7 +17,7 @@ import { getSignedUrl } from '../../../../lib/sync';
 
 interface SafeMediaProps {
   item: VaultItem;
-  masterKey: string | CryptoKey;
+  masterKey: string | CryptoKey | null;
   type: 'photo' | 'video';
   className?: string;
   isThumbnail?: boolean;
@@ -58,7 +58,7 @@ type IdleDeadlineLike = { timeRemaining: () => number; didTimeout: boolean };
 type WindowWithIdle = Window & {
   requestIdleCallback?: (
     callback: (deadline: IdleDeadlineLike) => void,
-    options?: { timeout: number }
+    options?: { timeout: number },
   ) => number;
   cancelIdleCallback?: (id: number) => void;
 };
@@ -71,12 +71,12 @@ const PREVIEW_REQUEST_TIMEOUT_MS = 60000;
 const withTimeout = async <T,>(
   promise: Promise<T>,
   timeoutMs: number,
-  timeoutErrorMessage: string
+  timeoutErrorMessage: string,
 ): Promise<T> => {
   return Promise.race<T>([
     promise,
     new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(timeoutErrorMessage)), timeoutMs)
+      setTimeout(() => reject(new Error(timeoutErrorMessage)), timeoutMs),
     ),
   ]);
 };
@@ -84,7 +84,7 @@ const withTimeout = async <T,>(
 const normalizePhotoPreviewUrl = async (
   sourceUrl: string,
   isHeicMime: boolean,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<string> => {
   if (!sourceUrl) {
     return sourceUrl;
@@ -154,7 +154,9 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
     const [thumbnailError, setThumbnailError] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [isNearViewport, setIsNearViewport] = useState(
-      !isThumbnail || (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+      !isThumbnail ||
+        (typeof globalThis !== 'undefined' &&
+          (globalThis as any).process?.env?.NODE_ENV === 'test'),
     );
     const [internalTouchRevealed, setInternalTouchRevealed] = useState(false);
     const managedBlobRef = useRef<string | null>(null);
@@ -214,14 +216,14 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
         item.content instanceof Uint8Array ? item.content.byteLength : 0,
         typeof item.content === 'string' ? item.content.length : 0,
         mimeType,
-      ]
+      ],
     );
 
     const isClientEncrypted =
       typeof item.metadata === 'object' && item.metadata !== null
         ? Boolean(
             (item.metadata as Record<string, unknown>).isE2EE === true ||
-            (item.metadata as Record<string, unknown>).clientEncrypted === true
+            (item.metadata as Record<string, unknown>).clientEncrypted === true,
           )
         : false;
     const hasServerFile = vaultItemHasServerFileReference(itemRef.current);
@@ -254,7 +256,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
             observer.disconnect();
           }
         },
-        { rootMargin: '320px 0px', threshold: 0.01 }
+        { rootMargin: '320px 0px', threshold: 0.01 },
       );
 
       observer.observe(target);
@@ -293,7 +295,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
               const directUrl = await withTimeout(
                 getSignedUrl(current.id, 'view'),
                 PREVIEW_REQUEST_TIMEOUT_MS,
-                'SIGNED_URL_TIMEOUT'
+                'SIGNED_URL_TIMEOUT',
               );
 
               if (cancelled) return;
@@ -307,7 +309,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
               const result = await withTimeout(
                 getSignedUrl(current.id, 'view'),
                 PREVIEW_REQUEST_TIMEOUT_MS,
-                'SIGNED_URL_TIMEOUT'
+                'SIGNED_URL_TIMEOUT',
               );
               if (!result) {
                 throw new Error('Preview unavailable for this file type');
@@ -316,7 +318,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
               const finalResultUrl = await normalizePhotoPreviewUrl(
                 result,
                 isHeicMime,
-                abortController.signal
+                abortController.signal,
               );
 
               // If normalizePhotoPreviewUrl created a new URL, we must revoke the original result to prevent a leak
@@ -341,10 +343,10 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
               current,
               masterKey,
               mimeType || undefined,
-              rsaKeyPair?.privateKey ?? undefined
+              rsaKeyPair?.privateKey ?? undefined,
             ),
             PREVIEW_REQUEST_TIMEOUT_MS,
-            'DECRYPT_PREVIEW_TIMEOUT'
+            'DECRYPT_PREVIEW_TIMEOUT',
           );
           if (!result) {
             throw new Error('Could not decrypt media for preview.');
@@ -377,7 +379,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
             const fallbackUrl = createTrackedBlobUrl(
               new Blob([new Uint8Array(itemRef.current.content)], {
                 type: mimeType || 'application/octet-stream',
-              })
+              }),
             );
             if (!cancelled) {
               setManagedBlob(fallbackUrl);
@@ -406,9 +408,13 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
           () => {
             void run();
           },
-          { timeout: 500 }
+          { timeout: 500 },
         );
-      } else if (isThumbnail && typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+      } else if (
+        isThumbnail &&
+        typeof globalThis !== 'undefined' &&
+        (globalThis as any).process?.env?.NODE_ENV === 'test'
+      ) {
         void run();
       } else if (isThumbnail) {
         const timeoutId = window.setTimeout(() => {
@@ -453,7 +459,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
       const ext = (item.title?.split('.').pop() || '').toUpperCase();
       if (isHeicMime) {
         setErrorMessage(
-          'HEIC preview is not supported in this browser. Use download to view or convert this file.'
+          'HEIC preview is not supported in this browser. Use download to view or convert this file.',
         );
         return;
       }
@@ -505,7 +511,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
       ];
       if (rawOrSpecialized.includes(ext)) {
         setErrorMessage(
-          `${ext} image is securely preserved. Download the file to view in full resolution.`
+          `${ext} image is securely preserved. Download the file to view in full resolution.`,
         );
         return;
       }
@@ -518,7 +524,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
       <div
         className={cn(
           'relative flex h-full w-full items-center justify-center overflow-hidden bg-black/40',
-          className
+          className,
         )}
       >
         {/* 1. Instant BlurHash Micro-placeholder or Deterministic Mesh */}
@@ -593,7 +599,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
           data-vault-shield="true"
           className={cn(
             'relative h-full w-full overflow-hidden select-none safe-media-container vault-print-protected',
-            isThumbnail ? '' : 'flex items-center justify-center'
+            isThumbnail ? '' : 'flex items-center justify-center',
           )}
           onContextMenu={(e) => e.preventDefault()}
           onPointerDown={() => setInternalTouchRevealed(true)}
@@ -615,7 +621,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
               isThumbnail ? 'pointer-events-none' : '',
               isBlurred
                 ? 'filter blur-2xl scale-110 select-none transition-all duration-300 group-hover:filter-none group-hover:blur-0 group-hover:scale-100 hover:filter-none hover:blur-0 hover:scale-100'
-                : 'filter-none blur-0 scale-100 transition-all duration-300'
+                : 'filter-none blur-0 scale-100 transition-all duration-300',
             )}
             alt={item.title || 'Vault image'}
             referrerPolicy="no-referrer"
@@ -641,7 +647,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
             <div
               className={cn(
                 'flex items-center justify-center bg-black/40 text-white/40',
-                className
+                className,
               )}
             >
               <Video className="w-8 h-8 opacity-60" />
@@ -665,7 +671,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
                 'pointer-events-none vault-print-protected',
                 isBlurred
                   ? 'filter blur-2xl scale-110 select-none transition-all duration-300 group-hover:filter-none group-hover:blur-0 group-hover:scale-100 hover:filter-none hover:blur-0 hover:scale-100'
-                  : 'filter-none blur-0 scale-100 transition-all duration-300'
+                  : 'filter-none blur-0 scale-100 transition-all duration-300',
               )}
               muted
               playsInline
@@ -698,7 +704,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
             isFloating
               ? 'pointer-events-auto'
               : 'w-full h-full max-w-full max-h-full overflow-hidden',
-            className
+            className,
           )}
         >
           <VideoPlayer
@@ -717,7 +723,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
             onClose={onClose}
             className={cn(
               'object-contain',
-              isFloating ? 'pointer-events-auto' : 'w-full h-full max-h-full max-w-full'
+              isFloating ? 'pointer-events-auto' : 'w-full h-full max-h-full max-w-full',
             )}
           />
         </div>
@@ -725,5 +731,5 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
     }
 
     return null;
-  }
+  },
 );

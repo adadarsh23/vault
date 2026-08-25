@@ -60,7 +60,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
         if (isTimeoutOrNetwork) {
           console.warn(
-            'Notification fetch deferred (service temporarily unavailable or network waking up).'
+            'Notification fetch deferred (service temporarily unavailable or network waking up).',
           );
         } else {
           console.error('Failed to fetch notifications:', error);

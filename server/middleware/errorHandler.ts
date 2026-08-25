@@ -12,7 +12,7 @@ export const errorHandler = (
   err: any,
   req: express.Request,
   res: express.Response,
-  _next: express.NextFunction
+  _next: express.NextFunction,
 ) => {
   if (res.headersSent) {
     return _next(err);

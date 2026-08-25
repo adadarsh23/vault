@@ -35,16 +35,7 @@ export type CameraFilter =
   | 'midnight-fog'
   | 'warm-espresso';
 
-export type CaptureRatio =
-  | '1:1'
-  | '4:5'
-  | '3:4'
-  | '4:3'
-  | '2:3'
-  | '3:2'
-  | '9:16'
-  | '16:9'
-  | '21:9';
+export type CaptureRatio = '1:1' | '4:5' | '3:4' | '4:3' | '2:3' | '3:2' | '9:16' | '16:9' | '21:9';
 export type CaptureQuality = 'high' | 'balanced' | 'low';
 export type CaptureSize = 'full' | 'medium' | 'compact';
 
@@ -189,5 +180,3 @@ export interface CaptureMetadata {
   hasVoiceClarity?: boolean;
   [key: string]: any;
 }
-
-

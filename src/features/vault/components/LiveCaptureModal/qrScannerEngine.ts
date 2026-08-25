@@ -38,8 +38,7 @@ export function classifyBarcodeContent(raw: string): {
       const url = new URL(trimmed);
       const secret = url.searchParams.get('secret') || '';
       const issuer =
-        url.searchParams.get('issuer') ||
-        url.pathname.split(':')[0].replace('//totp/', '');
+        url.searchParams.get('issuer') || url.pathname.split(':')[0].replace('//totp/', '');
       return {
         type: 'otp',
         title: `2FA Authenticator: ${issuer || 'OTP Key'}`,
@@ -334,7 +333,7 @@ interface FinderPattern extends Point {
 function findQRFinderPatterns(
   pixels: Uint8ClampedArray,
   width: number,
-  height: number
+  height: number,
 ): { points: Point[]; rawValue: string } | null {
   if (width < 30 || height < 30) return null;
 
@@ -478,8 +477,7 @@ function findQRFinderPatterns(
 
           // Cross product to find Top-Right vs Bottom-Left
           const cross =
-            (other1.x - tl.x) * (other2.y - tl.y) -
-            (other1.y - tl.y) * (other2.x - tl.x);
+            (other1.x - tl.x) * (other2.y - tl.y) - (other1.y - tl.y) * (other2.x - tl.x);
           const tr = cross > 0 ? other1 : other2;
           const bl = cross > 0 ? other2 : other1;
 
@@ -509,13 +507,13 @@ function findQRFinderPatterns(
         (1 - u) * (1 - v) * tl.x +
           u * (1 - v) * tr.x +
           (1 - u) * v * bl.x +
-          u * v * (tr.x + bl.x - tl.x)
+          u * v * (tr.x + bl.x - tl.x),
       );
       const py = Math.round(
         (1 - u) * (1 - v) * tl.y +
           u * (1 - v) * tr.y +
           (1 - u) * v * bl.y +
-          u * v * (tr.y + bl.y - tl.y)
+          u * v * (tr.y + bl.y - tl.y),
       );
 
       if (px >= 0 && px < width && py >= 0 && py < height) {
@@ -638,9 +636,7 @@ export class BarcodeScannerEngine {
     return true; // Always supported via pure-JS QR decoder fallback
   }
 
-  public async scanFrame(
-    videoElement: HTMLVideoElement
-  ): Promise<ScannedBarcodeResult | null> {
+  public async scanFrame(videoElement: HTMLVideoElement): Promise<ScannedBarcodeResult | null> {
     if (!videoElement || videoElement.readyState < 2) {
       return null;
     }
@@ -685,10 +681,7 @@ export class BarcodeScannerEngine {
       const targetW = Math.round(videoW * scale);
       const targetH = Math.round(videoH * scale);
 
-      if (
-        this.offscreenCanvas.width !== targetW ||
-        this.offscreenCanvas.height !== targetH
-      ) {
+      if (this.offscreenCanvas.width !== targetW || this.offscreenCanvas.height !== targetH) {
         this.offscreenCanvas.width = targetW;
         this.offscreenCanvas.height = targetH;
         this.offscreenCtx = this.offscreenCanvas.getContext('2d', {
@@ -698,13 +691,7 @@ export class BarcodeScannerEngine {
 
       if (!this.offscreenCtx) return null;
 
-      this.offscreenCtx.drawImage(
-        videoElement,
-        0,
-        0,
-        targetW,
-        targetH
-      );
+      this.offscreenCtx.drawImage(videoElement, 0, 0, targetW, targetH);
 
       const imgData = this.offscreenCtx.getImageData(0, 0, targetW, targetH);
       const result = findQRFinderPatterns(imgData.data, targetW, targetH);
@@ -744,8 +731,8 @@ export class BarcodeScannerEngine {
  */
 export async function saveBarcodeToEncryptedVaultNote(
   result: ScannedBarcodeResult,
-  masterKey: CryptoKey,
-  addItem: (item: any) => Promise<any>
+  masterKey: string | CryptoKey | null | undefined,
+  addItem: (item: any) => Promise<any>,
 ): Promise<string> {
   const timestampStr = new Date(result.timestamp).toLocaleString();
   const formatUpper = result.format.toUpperCase().replace('_', ' ');
@@ -789,4 +776,3 @@ ${result.rawValue}
 
   return newItem?.id || 'saved';
 }
-

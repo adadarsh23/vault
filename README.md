@@ -452,6 +452,13 @@ npm run verify
 
 ---
 
+## 📄 License & Author
+
+- **Author**: [Adarsh](https://github.com/adadarsh23)
+- **License**: [Personal / Proprietary](./LICENSE.md)
+
+---
+
 <p align="center">
   <sub>Built with ❤️ for privacy and zero-trust personal data security.</sub>
 </p>

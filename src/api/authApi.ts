@@ -67,7 +67,7 @@ export const authApi = {
     assertLoginCredentials(credentials);
     const { data } = await apiClient.post<ApiResponse<AuthSessionPayload>>(
       '/auth/login',
-      credentials
+      credentials,
     );
     return data;
   },
@@ -76,7 +76,7 @@ export const authApi = {
     assertRegisterPayload(userData);
     const { data } = await apiClient.post<ApiResponse<AuthSessionPayload>>(
       '/auth/register',
-      userData
+      userData,
     );
     return data;
   },

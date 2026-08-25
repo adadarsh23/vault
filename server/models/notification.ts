@@ -15,7 +15,7 @@ const notificationSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export type NotificationType = InferSchemaType<typeof notificationSchema>;
@@ -42,7 +42,7 @@ export const getNotificationModel = (username: string): Model<NotificationType> 
   const model = mongoose.model<NotificationType>(
     collectionName,
     notificationSchema,
-    collectionName
+    collectionName,
   );
   model.createIndexes().catch(() => {});
   return model;

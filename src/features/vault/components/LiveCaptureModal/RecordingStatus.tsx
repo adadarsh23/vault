@@ -36,7 +36,7 @@ export const RecordingStatus: React.FC<RecordingStatusProps> = ({
           'flex items-center gap-1.5 md:gap-2.5 rounded-full px-2.5 sm:px-3.5 py-1 md:py-1.5 backdrop-blur-3xl border shadow-xl transition-all',
           isPaused
             ? 'bg-black/75 border-amber-500/30 ring-1 ring-amber-500/20 text-amber-300'
-            : 'bg-black/75 border-red-500/30 ring-1 ring-red-500/20 text-white'
+            : 'bg-black/75 border-red-500/30 ring-1 ring-red-500/20 text-white',
         )}
       >
         {/* Status Badge */}
@@ -81,7 +81,7 @@ export const RecordingStatus: React.FC<RecordingStatusProps> = ({
           <span
             className={cn(
               'font-mono text-xs sm:text-sm font-black tracking-tight tabular-nums',
-              isPaused ? 'text-amber-200/80 animate-pulse' : 'text-white'
+              isPaused ? 'text-amber-200/80 animate-pulse' : 'text-white',
             )}
           >
             {formatTime(recordingTime)}
@@ -101,4 +101,3 @@ export const RecordingStatus: React.FC<RecordingStatusProps> = ({
     </motion.div>
   );
 };
-

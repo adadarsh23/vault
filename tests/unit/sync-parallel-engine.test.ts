@@ -68,7 +68,7 @@ describe('Parallel Sync Engine (Core & Pool)', () => {
     };
 
     const promises = Array.from({ length: 8 }, (_, i) =>
-      runInSyncWriteQueue(() => task(i), `item-${i}`, concurrencyLimit)
+      runInSyncWriteQueue(() => task(i), `item-${i}`, concurrencyLimit),
     );
 
     const results = await Promise.all(promises);
@@ -90,7 +90,7 @@ describe('Parallel Sync Engine (Core & Pool)', () => {
         currentConcurrency -= 1;
         return `val:${num * 2}:idx:${index}`;
       },
-      3
+      3,
     );
 
     expect(results).toEqual([

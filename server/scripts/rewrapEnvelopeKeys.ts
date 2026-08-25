@@ -26,8 +26,8 @@ const run = async () => {
         ...result,
       },
       null,
-      2
-    )
+      2,
+    ),
   );
   process.exit(0);
 };

@@ -4,7 +4,7 @@ export function trackEvent(
   action: string,
   category?: string,
   label?: string,
-  value?: number | string
+  value?: number | string,
 ): void;
 export function trackButtonClick(buttonName: string, location?: string): void;
 export function trackFeatureUsage(featureName: string, context?: string): void;

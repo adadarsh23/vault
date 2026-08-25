@@ -255,7 +255,7 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({ entr
         onClose();
       }
     },
-    [onClose]
+    [onClose],
   );
 
   // Focus trap and keyboard listener
@@ -270,7 +270,7 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({ entr
 
     const timer = setTimeout(() => {
       const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
       if (focusable && focusable.length > 0) {
         focusable[0]?.focus();

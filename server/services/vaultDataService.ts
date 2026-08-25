@@ -218,7 +218,7 @@ export const saveFileToVault = async (input: FileSaveInput) => {
 
       touchUser(user, updatedAt);
       (user as unknown as { markModified: (path: string) => void }).markModified(
-        `vault.${category}`
+        `vault.${category}`,
       );
       logAndEmit(user, 'FILE_UPLOAD', category, itemId, {
         ipAddress: input.ipAddress ?? 'unknown',
@@ -257,21 +257,21 @@ export const saveFileToVault = async (input: FileSaveInput) => {
  * @returns Save result or conflict response
  */
 export const saveEncryptedVaultItem = async (
-  input: EncryptedSaveInput
+  input: EncryptedSaveInput,
 ): Promise<SaveEncryptedVaultItemResult> => {
   const category = validateVaultCategory(input.category);
   if (!ENCRYPTED_CATEGORIES.has(category as EncryptedCategory)) {
     throw new AppError(
       400,
       'INVALID_CATEGORY',
-      'This endpoint only supports encrypted categories.'
+      'This endpoint only supports encrypted categories.',
     );
   }
   const encryptedCategory = category as EncryptedCategory;
 
   const itemId = sanitizeItemId(input.itemId) || randomUUID();
   const updatedAt = normalizeDate(
-    typeof input.payload.clientUpdatedAt === 'string' ? input.payload.clientUpdatedAt : undefined
+    typeof input.payload.clientUpdatedAt === 'string' ? input.payload.clientUpdatedAt : undefined,
   );
   return retryLoadedUserMutation<SaveEncryptedVaultItemResult>({
     mutationName: 'saveEncryptedVaultItem',
@@ -290,15 +290,15 @@ export const saveEncryptedVaultItem = async (
           'sync_conflict',
           'Sync Conflict Detected',
           `Conflict detected for item "${existingItem.title || 'Untitled'}" during sync. Server has a newer version.`,
-          { itemId, category: input.category }
+          { itemId, category: input.category },
         ).catch((err) =>
-          logger.warn('Failed to create sync conflict notification', { error: err })
+          logger.warn('Failed to create sync conflict notification', { error: err }),
         );
 
         return {
           result: buildConflictResponse(
             'A newer version already exists on the server.',
-            existingItem
+            existingItem,
           ),
           skipSave: true,
         };
@@ -314,7 +314,7 @@ export const saveEncryptedVaultItem = async (
         const content = sanitizeRequiredText(
           input.payload.content,
           'content',
-          CONFIG.maxNoteContentLength
+          CONFIG.maxNoteContentLength,
         );
         itemTitle = title;
         nextRecord = {
@@ -326,7 +326,7 @@ export const saveEncryptedVaultItem = async (
         const content = sanitizeRequiredText(
           input.payload.content,
           'content',
-          CONFIG.maxNoteContentLength
+          CONFIG.maxNoteContentLength,
         );
         itemTitle = title;
         nextRecord = {
@@ -338,7 +338,7 @@ export const saveEncryptedVaultItem = async (
         const content = sanitizeRequiredText(
           input.payload.content,
           'content',
-          CONFIG.maxNoteContentLength
+          CONFIG.maxNoteContentLength,
         );
         itemTitle = title;
         nextRecord = {
@@ -350,7 +350,7 @@ export const saveEncryptedVaultItem = async (
         const password = sanitizeRequiredText(
           input.payload.password,
           'password',
-          CONFIG.maxTextFieldLength
+          CONFIG.maxTextFieldLength,
         );
         itemTitle = label;
         nextRecord = {
@@ -358,12 +358,12 @@ export const saveEncryptedVaultItem = async (
           username: sanitizeOptionalText(
             input.payload.username,
             'username',
-            CONFIG.maxTextFieldLength
+            CONFIG.maxTextFieldLength,
           ),
           url: sanitizeOptionalUrl(input.payload.url),
           password: encryptText(password),
           notes: encryptOptionalText(
-            sanitizeOptionalText(input.payload.notes, 'notes', CONFIG.maxNoteContentLength)
+            sanitizeOptionalText(input.payload.notes, 'notes', CONFIG.maxNoteContentLength),
           ),
         };
       } else if (encryptedCategory === 'secret') {
@@ -376,7 +376,7 @@ export const saveEncryptedVaultItem = async (
           description: sanitizeOptionalText(
             input.payload.description,
             'description',
-            CONFIG.maxTextFieldLength
+            CONFIG.maxTextFieldLength,
           ),
         };
       } else if (encryptedCategory === 'location') {
@@ -384,7 +384,7 @@ export const saveEncryptedVaultItem = async (
         const content = sanitizeRequiredText(
           input.payload.content,
           'content',
-          CONFIG.maxNoteContentLength
+          CONFIG.maxNoteContentLength,
         );
         itemTitle = title;
         nextRecord = {
@@ -396,7 +396,7 @@ export const saveEncryptedVaultItem = async (
         const content = sanitizeRequiredText(
           input.payload.content,
           'content',
-          CONFIG.maxNoteContentLength
+          CONFIG.maxNoteContentLength,
         );
         itemTitle = title;
         nextRecord = {
@@ -423,7 +423,7 @@ export const saveEncryptedVaultItem = async (
 
       touchUser(user, updatedAt);
       (user as unknown as { markModified: (path: string) => void }).markModified(
-        `vault.${category}`
+        `vault.${category}`,
       );
       logAndEmit(user, isUpdate ? 'UPDATE_ITEM' : 'CREATE_ITEM', encryptedCategory, itemId, {
         ipAddress: input.ipAddress ?? 'unknown',
@@ -460,7 +460,7 @@ export const saveEncryptedVaultItem = async (
  * @throws {AppError} If item not found
  */
 export const deleteVaultItemByCategory = async (
-  input: DeleteInput
+  input: DeleteInput,
 ): Promise<DeleteVaultItemResult> => {
   const category = validateVaultCategory(input.category);
   const itemId = sanitizeItemId(input.itemId);

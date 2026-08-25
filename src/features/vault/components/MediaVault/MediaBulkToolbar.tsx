@@ -19,6 +19,7 @@ import { createZipBlob, triggerBlobDownload } from './mediaZipUtils';
 import { getVaultItemPreviewUrl } from '../../../../lib/filePreview';
 import { revokeBlobUrl } from '../../../../lib/blobRegistry';
 import { toast } from 'sonner';
+import { useVaultStore } from '../../../../store/vaultStore';
 
 interface MediaBulkToolbarProps {
   selectedIds: Set<string>;
@@ -87,7 +88,7 @@ export const MediaBulkToolbar: React.FC<MediaBulkToolbarProps> = ({
             item,
             masterKey,
             item.metadata?.mimeType,
-            rsaPrivateKey || undefined
+            rsaPrivateKey || undefined,
           );
 
           if (!previewUrl) continue;
@@ -195,7 +196,7 @@ export const MediaBulkToolbar: React.FC<MediaBulkToolbarProps> = ({
                 'flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors',
                 isMoveMenuOpen
                   ? 'bg-blue-500/30 text-blue-300'
-                  : 'text-white/80 hover:text-white hover:bg-white/10'
+                  : 'text-white/80 hover:text-white hover:bg-white/10',
               )}
               title="Move selected items to album"
             >

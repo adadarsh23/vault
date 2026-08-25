@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { safeWriteFileSync, safeWriteJsonSync } from './code-memory-index/file-system.mjs';
 
 const ROOT = process.cwd();
 const memoryDir = path.join(ROOT, '.memory');
@@ -258,9 +259,8 @@ document.getElementById('exportFiles').addEventListener('click', ()=>{
 });
 </script></body></html>`;
 
-fs.mkdirSync(memoryDir, { recursive: true });
-fs.writeFileSync(htmlPath, html.replace('__PAYLOAD__', JSON.stringify(payload)), 'utf8');
-fs.writeFileSync(dataPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+safeWriteFileSync(htmlPath, html.replace('__PAYLOAD__', JSON.stringify(payload)));
+safeWriteJsonSync(dataPath, payload, 2);
 const reportLines = [
   '# Code Memory Visual Report',
   '',
@@ -281,7 +281,7 @@ const reportLines = [
   `- Medium: ${payload.riskSummary.medium || 0}`,
   `- Low: ${payload.riskSummary.low || 0}`,
 ];
-fs.writeFileSync(reportPath, `${reportLines.join('\n')}\n`, 'utf8');
+safeWriteFileSync(reportPath, `${reportLines.join('\n')}\n`);
 console.log(
-  `Code memory visual created: ${htmlPath} | data=${dataPath} | report=${reportPath} | schema=${payload.schema} | files=${payload.files.length} | detail=${options.detailLevel}`
+  `Code memory visual created: ${htmlPath} | data=${dataPath} | report=${reportPath} | schema=${payload.schema} | files=${payload.files.length} | detail=${options.detailLevel}`,
 );

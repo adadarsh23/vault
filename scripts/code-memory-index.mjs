@@ -19,5 +19,5 @@ console.log(
     `changed=${index.changes.counts.changed}`,
     `riskCritical=${index.riskSummary.critical}`,
     `historyCount=${index.history?.historyCount || 0}`,
-  ].join(' | ')
+  ].join(' | '),
 );

@@ -57,7 +57,7 @@ const incidentSchema = new Schema<SecurityIncident>(
     ],
     adminNotes: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const IncidentModel = model<SecurityIncident>('SecurityIncident', incidentSchema);
@@ -190,7 +190,7 @@ class ThreatResponseService {
     userId: string,
     ip: string,
     endpoint: string,
-    requestsPerMinute: number
+    requestsPerMinute: number,
   ): Promise<void> {
     const baselineRequestsPerMinute = 10;
     const ratio = requestsPerMinute / baselineRequestsPerMinute;
@@ -232,7 +232,7 @@ class ThreatResponseService {
     userId: string,
     ip: string,
     itemCount: number,
-    dataSize: number
+    dataSize: number,
   ): Promise<void> {
     // Heuristics: Large bulk download/export is suspicious
     const itemThreshold = 500;
@@ -269,7 +269,7 @@ class ThreatResponseService {
     userId: string,
     ip: string,
     fileName: string,
-    reason: string
+    reason: string,
   ): Promise<void> {
     await this.processThreat({
       userId,
@@ -401,7 +401,7 @@ class ThreatResponseService {
    */
   private calculateSeverity(
     riskScore: number,
-    type: string
+    type: string,
   ): 'low' | 'medium' | 'high' | 'critical' {
     // Certain threat types are always high severity
     const criticalTypes = ['malware_upload', 'data_exfil'];

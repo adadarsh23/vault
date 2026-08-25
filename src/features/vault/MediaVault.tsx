@@ -13,10 +13,7 @@ import {
   PHOTO_FILE_INPUT_ACCEPT,
   VIDEO_FILE_INPUT_ACCEPT,
 } from '../../lib/fileHandling';
-import {
-  getVaultItemPreviewUrl,
-  vaultItemHasServerFileReference,
-} from '../../lib/filePreview';
+import { getVaultItemPreviewUrl, vaultItemHasServerFileReference } from '../../lib/filePreview';
 import { useVaultFolders } from '../../hooks/useVaultFolders';
 import { useVaultItems } from '../../hooks/useVaultItems';
 import { VaultLayout } from '../../components/layout/VaultLayout';
@@ -78,13 +75,13 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
   const isMediaAutoplayEnabled = useVaultStore((state) => state.preferences.isMediaAutoplayEnabled);
   const isLowDataModeEnabled = useVaultStore((state) => state.preferences.isLowDataModeEnabled);
   const isNetworkAwareAutoplayEnabled = useVaultStore(
-    (state) => state.preferences.isNetworkAwareAutoplayEnabled
+    (state) => state.preferences.isNetworkAwareAutoplayEnabled,
   );
   const isPerformanceHudEnabled = useVaultStore(
-    (state) => state.preferences.isPerformanceHudEnabled
+    (state) => state.preferences.isPerformanceHudEnabled,
   );
   const isLightweightPreviewModeEnabled = useVaultStore(
-    (state) => state.preferences.isLightweightPreviewModeEnabled
+    (state) => state.preferences.isLightweightPreviewModeEnabled,
   );
   const isPhotoExifStripped = useVaultStore((state) => state.preferences.isPhotoExifStripped);
 
@@ -182,7 +179,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
   // Apply filters and sorting
   const processedItems = useMemo(
     () => filterAndSortMedia(filteredItems, activeFilter, activeSort),
-    [filteredItems, activeFilter, activeSort]
+    [filteredItems, activeFilter, activeSort],
   );
 
   // Selection toggle logic (with Shift-Click range support)
@@ -220,7 +217,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
         return next;
       });
     },
-    [processedItems, isSelectionMode]
+    [processedItems, isSelectionMode],
   );
 
   const handleSelectAll = useCallback(() => {
@@ -259,7 +256,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
         await batchUpdateItems(updates);
         toast.success(
           `Moved ${selected.length} items to ${targetFolder || (type === 'photo' ? 'All Photos' : 'All Videos')}`,
-          { id: toastId }
+          { id: toastId },
         );
         logActivity({
           actionType: 'item_update',
@@ -272,7 +269,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
         toast.error('Failed to move items.', { id: toastId });
       }
     },
-    [selectedIds, batchUpdateItems, type, handleClearSelection]
+    [selectedIds, batchUpdateItems, type, handleClearSelection],
   );
 
   const handleBulkDelete = useCallback(async () => {
@@ -310,7 +307,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
       if (selected.length === 0) return;
 
       const toastId = toast.loading(
-        `${pinState ? 'Pinning' : 'Unpinning'} ${selected.length} items...`
+        `${pinState ? 'Pinning' : 'Unpinning'} ${selected.length} items...`,
       );
       try {
         const updates = selected.map((id) => ({
@@ -329,7 +326,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
         toast.error('Failed to update pin status.', { id: toastId });
       }
     },
-    [selectedIds, batchUpdateItems, handleClearSelection]
+    [selectedIds, batchUpdateItems, handleClearSelection],
   );
 
   const yieldToMainThread = useCallback(
@@ -341,7 +338,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
           setTimeout(resolve, 0);
         }
       }),
-    []
+    [],
   );
 
   const LARGE_MEDIA_DIRECT_UPLOAD_BYTES = 12 * 1024 * 1024;
@@ -374,7 +371,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
   const sha256Hex = useCallback(async (data: Uint8Array) => {
     const digestInput = data.buffer.slice(
       data.byteOffset,
-      data.byteOffset + data.byteLength
+      data.byteOffset + data.byteLength,
     ) as ArrayBuffer;
     const digest = await crypto.subtle.digest('SHA-256', digestInput);
     const uint8 = new Uint8Array(digest);
@@ -413,11 +410,11 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
       }
       return hasher.digest('hex');
     },
-    [yieldToMainThread]
+    [yieldToMainThread],
   );
 
   const supportedExtensions: string[] = Array.from(
-    type === 'photo' ? FILE_TYPE_SUPPORT.photo : FILE_TYPE_SUPPORT.video
+    type === 'photo' ? FILE_TYPE_SUPPORT.photo : FILE_TYPE_SUPPORT.video,
   );
 
   const isSupportedMediaFile = (file: File) => {
@@ -433,7 +430,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
 
   const previewedMedia = useMemo(
     () => processedItems.find((item) => item.id === activePreviewItem) ?? null,
-    [processedItems, activePreviewItem]
+    [processedItems, activePreviewItem],
   );
 
   const currentPreviewIndex = useMemo(() => {
@@ -612,7 +609,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     targetFolder: string | null,
     isAlreadyEncrypted = false,
     isLiveCapture = false,
-    additionalMetadata?: Record<string, any>
+    additionalMetadata?: Record<string, any>,
   ) => {
     if (!files.length) return;
     if (!masterKey && !useVaultStore.getState().isDecoyMode) {
@@ -631,7 +628,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
         const file = files[index];
         if (!isSupportedMediaFile(file)) {
           toast.error(
-            `This ${type} vault supports ${supportedExtensions.join(', ')} files. "${file.name}" was not uploaded.`
+            `This ${type} vault supports ${supportedExtensions.join(', ')} files. "${file.name}" was not uploaded.`,
           );
           failedCount++;
           continue;
@@ -667,7 +664,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
               }
 
               const initResponse = await vaultApi.startMultipartUpload({
-                category: type === 'photo' ? 'photo' : 'video',
+                category: 'video',
                 folder: fileTargetFolder || null,
                 fileName: file.name,
                 mimeType: normalizeMediaMimeType(file, type),
@@ -691,7 +688,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
                   ? multipartData.uploadedParts
                       .map((n: unknown) => Number(n))
                       .filter((n) => Number.isInteger(n) && n > 0)
-                  : []
+                  : [],
               );
               if (!uploadId) {
                 throw new Error('Multipart init did not return uploadId');
@@ -706,12 +703,12 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
               let completedParts = uploadedParts.size;
               let nextPartIndex = 0;
               const pendingPartIndexes = Array.from({ length: totalParts }, (_, i) => i).filter(
-                (i) => !uploadedParts.has(i + 1)
+                (i) => !uploadedParts.has(i + 1),
               );
               const updateProgress = () => {
                 const progress = Math.max(
                   0,
-                  Math.min(100, Math.round((completedParts / Math.max(totalParts, 1)) * 100))
+                  Math.min(100, Math.round((completedParts / Math.max(totalParts, 1)) * 100)),
                 );
                 toast.loading(`Uploading background ${index + 1}/${total}: ${progress}%...`, {
                   id: toastId,
@@ -732,7 +729,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
                     uploadId,
                     partZeroBased + 1,
                     chunkBuffer,
-                    chunkHash
+                    chunkHash,
                   );
                   completedParts += 1;
                   updateProgress();
@@ -742,7 +739,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
 
               const parallelWorkers = Math.max(
                 1,
-                Math.min(getMultipartParallelism(file.size), pendingPartIndexes.length || 1)
+                Math.min(getMultipartParallelism(file.size), pendingPartIndexes.length || 1),
               );
 
               await Promise.all(Array.from({ length: parallelWorkers }, () => partWorker()));
@@ -779,7 +776,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
               }
               toast.loading(
                 `Large upload optimization failed; using secure fallback upload ${index + 1}/${total}...`,
-                { id: toastId }
+                { id: toastId },
               );
             }
           }
@@ -854,7 +851,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
               toast.loading(`Finalizing ${index + 1}/${total}: ${progress}%...`, {
                 id: toastId,
               });
-            }
+            },
           );
           toast.success(`${file.name} uploaded & bound to Merkle Tree`, { id: toastId });
           successCount++;
@@ -898,7 +895,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
         status: 'success',
       });
     },
-    [removeItem, type]
+    [removeItem, type],
   );
 
   const handleDownload = async (item: VaultItem) => {
@@ -936,7 +933,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
         item,
         masterKey,
         item.metadata?.mimeType,
-        rsaKeyPair?.privateKey ?? undefined
+        rsaKeyPair?.privateKey ?? undefined,
       );
 
       if (!fileUrl) throw new Error('Decryption failed');
@@ -970,7 +967,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
         status: 'success',
       });
     },
-    [masterKey, type, openPreview]
+    [masterKey, type, openPreview],
   );
 
   return (

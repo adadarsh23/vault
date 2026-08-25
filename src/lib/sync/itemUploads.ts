@@ -11,7 +11,7 @@ import { toCloudCategory } from './itemCodec';
 export const uploadItemToCloud = async (
   item: VaultItem,
   masterKey: string | CryptoKey,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
 ) => {
   const syncContext = `Cloud Sync (${item.type || 'item'})`;
 
@@ -46,7 +46,6 @@ export const uploadItemToCloud = async (
         finalPayload = JSON.stringify({
           payload: `V2_MODERN:${encryptedMetadata}|${item.content}`,
           category,
-          folder: item.folder && String(item.folder).trim() ? String(item.folder).trim() : null,
         });
       }
 
@@ -75,7 +74,7 @@ export const uploadItemToCloud = async (
           finalPayload,
           syncContext,
           onProgress,
-          { uploadKey: `${item.id}:${finalPayload.byteLength}` }
+          { uploadKey: `${item.id}:${finalPayload.byteLength}` },
         );
       } else {
         await uploadWithRetry(
@@ -86,7 +85,7 @@ export const uploadItemToCloud = async (
             body: finalPayload,
           },
           syncContext,
-          onProgress
+          onProgress,
         );
       }
     }, item.id);

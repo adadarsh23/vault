@@ -28,7 +28,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
       placeholder,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeIndex, setActiveIndex] = useState(-1);
@@ -120,7 +120,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
         (h) =>
           h.toLowerCase().includes(trimmed) &&
           h.toLowerCase() !== trimmed &&
-          !filteredSuggestions.some((s) => s.toLowerCase() === h.toLowerCase())
+          !filteredSuggestions.some((s) => s.toLowerCase() === h.toLowerCase()),
       );
     }, [value, history, filteredSuggestions]);
 
@@ -197,7 +197,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
               </mark>
             ) : (
               <span key={i}>{part}</span>
-            )
+            ),
           )}
         </>
       );
@@ -251,7 +251,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                           onMouseEnter={() => setActiveIndex(idx)}
                           className={cn(
                             'flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer text-sm transition-all select-none',
-                            activeIndex === idx ? 'bg-text/5 text-text' : 'text-text/70'
+                            activeIndex === idx ? 'bg-text/5 text-text' : 'text-text/70',
                           )}
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
@@ -289,7 +289,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                           onMouseEnter={() => setActiveIndex(idx)}
                           className={cn(
                             'flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer text-sm transition-all select-none',
-                            activeIndex === idx ? 'bg-text/5 text-text' : 'text-text/70'
+                            activeIndex === idx ? 'bg-text/5 text-text' : 'text-text/70',
                           )}
                         >
                           <Search className="h-3.5 w-3.5 text-text/30 shrink-0" />
@@ -304,7 +304,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
         </AnimatePresence>
       </div>
     );
-  }
+  },
 );
 
 SearchInput.displayName = 'SearchInput';

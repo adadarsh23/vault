@@ -1,11 +1,4 @@
-export type HapticType =
-  | 'light'
-  | 'medium'
-  | 'heavy'
-  | 'tick'
-  | 'shutter'
-  | 'success'
-  | 'warning';
+export type HapticType = 'light' | 'medium' | 'heavy' | 'tick' | 'shutter' | 'success' | 'warning';
 
 export const triggerHaptic = (type: HapticType = 'light'): void => {
   if (typeof window === 'undefined' || !('vibrate' in navigator)) {

@@ -46,7 +46,7 @@ router.post('/read', requireAuth, async (req, res) => {
     const updated = await Notification.findOneAndUpdate(
       { _id: new mongoose.Types.ObjectId(id), userId },
       { isRead: true },
-      { new: true }
+      { new: true },
     );
     if (!updated) {
       throw AppError.notFound('Notification not found');

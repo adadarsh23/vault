@@ -38,7 +38,7 @@ const encryptedKeySchema = new mongoose.Schema(
       description: 'Version of the encryption key',
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const masterKeySchema = new mongoose.Schema(
@@ -72,7 +72,7 @@ const masterKeySchema = new mongoose.Schema(
             changedByIp: { type: String, default: null },
             changedByUserAgent: { type: String, default: null },
           },
-          { _id: false }
+          { _id: false },
         ),
       ],
       default: [],
@@ -115,7 +115,7 @@ const masterKeySchema = new mongoose.Schema(
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date, default: null },
   },
-  { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } }
+  { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } },
 );
 
 /**

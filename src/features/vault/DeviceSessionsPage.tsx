@@ -78,7 +78,7 @@ export const DeviceSessionsPage: React.FC<DeviceSessionsPageProps> = ({ onBack }
         toast.error('Failed to sync label to cloud, but saved locally.');
       }
     },
-    []
+    [],
   );
 
   const handleLockAllSessions = React.useCallback(async () => {
@@ -134,7 +134,7 @@ export const DeviceSessionsPage: React.FC<DeviceSessionsPageProps> = ({ onBack }
         setIsSessionActionLoading(false);
       }
     },
-    [loadSessionState, trustedDeviceLabels]
+    [loadSessionState, trustedDeviceLabels],
   );
 
   return (

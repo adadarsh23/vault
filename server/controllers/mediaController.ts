@@ -46,11 +46,11 @@ const keyCache = new Map<string, { key: Buffer; expires: number }>();
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 const MAX_KEY_CACHE_ENTRIES = Math.max(
   100,
-  toPositiveInt(process.env.MEDIA_KEY_CACHE_MAX_ENTRIES, 2000)
+  toPositiveInt(process.env.MEDIA_KEY_CACHE_MAX_ENTRIES, 2000),
 );
 const CACHE_SWEEP_INTERVAL_MS = Math.max(
   30_000,
-  toPositiveInt(process.env.MEDIA_CACHE_SWEEP_INTERVAL_MS, 60_000)
+  toPositiveInt(process.env.MEDIA_CACHE_SWEEP_INTERVAL_MS, 60_000),
 );
 
 const getSingleQueryValue = (value: unknown): string | undefined =>
@@ -63,7 +63,7 @@ export const findVaultItemFlexible = async (
   DynamicVaultModel: mongoose.Model<any>,
   userId: string,
   itemId: string,
-  username?: string
+  username?: string,
 ) => {
   if (!itemId || !userId) return null;
 
@@ -81,7 +81,7 @@ export const findVaultItemFlexible = async (
 
   const executeFindOne = async (
     model: mongoose.Model<any>,
-    conditions: Record<string, unknown>
+    conditions: Record<string, unknown>,
   ) => {
     const query = model.findOne(conditions);
     return typeof query?.exec === 'function' ? query.exec() : query;
@@ -264,7 +264,7 @@ const mimeMap: Record<string, string> = {
 const decryptGridFsPayload = (
   rawBuffer: Buffer,
   fileMetadata: Record<string, any> | undefined,
-  itemFile?: Record<string, any>
+  itemFile?: Record<string, any>,
 ): Buffer => {
   const envelope = fileMetadata?.encryption;
   if (
@@ -303,16 +303,16 @@ const decryptGridFsPayload = (
 const SIGNED_URL_WINDOW_MS = 60_000;
 const SIGNED_URL_MAX_PER_WINDOW = Math.max(
   10,
-  toPositiveInt(process.env.SIGNED_URL_MAX_PER_MINUTE, 600)
+  toPositiveInt(process.env.SIGNED_URL_MAX_PER_MINUTE, 600),
 );
 const signedUrlCounters = new Map<string, { count: number; resetAt: number }>();
 const MAX_SIGNED_URL_COUNTER_ENTRIES = Math.max(
   SIGNED_URL_MAX_PER_WINDOW,
-  toPositiveInt(process.env.SIGNED_URL_COUNTER_MAX_ENTRIES, 5000)
+  toPositiveInt(process.env.SIGNED_URL_COUNTER_MAX_ENTRIES, 5000),
 );
 const MAX_MEDIA_RANGE_BYTES = Math.max(
   256 * 1024,
-  toPositiveInt(process.env.MEDIA_MAX_RANGE_BYTES, 4 * 1024 * 1024)
+  toPositiveInt(process.env.MEDIA_MAX_RANGE_BYTES, 4 * 1024 * 1024),
 );
 
 const trimMapToMaxEntries = <T>(map: Map<string, T>, maxEntries: number): void => {
@@ -343,7 +343,7 @@ const purgeExpiredSignedUrlCounters = (now = Date.now()): void => {
 
 const parseSingleByteRange = (
   requestedRange: string,
-  fileSize: number
+  fileSize: number,
 ): { start: number; end: number } | null => {
   if (!requestedRange.startsWith('bytes=')) return null;
   const [rawStart, rawEnd] = requestedRange.slice('bytes='.length).split('-');
@@ -396,7 +396,7 @@ const enforceSignedUrlRateLimit = (userId: string) => {
   if (current.count >= SIGNED_URL_MAX_PER_WINDOW) {
     throw AppError.forbidden(
       'Signed URL rate limit exceeded. Please retry shortly.',
-      'SIGNED_URL_RATE_LIMIT'
+      'SIGNED_URL_RATE_LIMIT',
     );
   }
   current.count += 1;
@@ -423,12 +423,12 @@ const enforcePlaybackRequestContext = (req: express.Request) => {
     req.query.signature ||
     req.query.auth_token ||
     req.headers.authorization ||
-    req.get('authorization')
+    req.get('authorization'),
   );
   if (!hasToken && isLikelyBrowserNavigation(req)) {
     throw AppError.forbidden(
       'Direct navigation to media URLs is not allowed.',
-      'DIRECT_MEDIA_NAV_BLOCKED'
+      'DIRECT_MEDIA_NAV_BLOCKED',
     );
   }
 };
@@ -459,7 +459,7 @@ const setMediaCorsHeaders = (req: express.Request, res: express.Response) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.setHeader(
       'Access-Control-Allow-Headers',
-      'Authorization, Content-Type, Range, X-CSRF-Token, X-Device-Hash'
+      'Authorization, Content-Type, Range, X-CSRF-Token, X-Device-Hash',
     );
   } else if (originHeader || refererHeader) {
     const rawOrigin = originHeader || refererHeader;
@@ -507,7 +507,7 @@ const ensureUploadIsActive = (item: any) => {
   ) {
     throw AppError.forbidden(
       'File is quarantined or pending security scan.',
-      'FILE_QUARANTINED_OR_PENDING_SCAN'
+      'FILE_QUARANTINED_OR_PENDING_SCAN',
     );
   }
 };
@@ -521,7 +521,7 @@ const validateMediaAccess = async (
   req: express.Request,
   passedUserId: string | undefined,
   itemId: string,
-  action: string = 'stream'
+  action: string = 'stream',
 ) => {
   const q = req.query as any;
   const clientIp = getClientIp(req);
@@ -572,7 +572,7 @@ const validateMediaAccess = async (
       });
       throw AppError.unauthorized(
         'User identification required for secure media playback.',
-        'AUTH_REQUIRED'
+        'AUTH_REQUIRED',
       );
     }
 
@@ -580,7 +580,7 @@ const validateMediaAccess = async (
     if (resolvedUserId && candidateUserId !== resolvedUserId) {
       throw AppError.forbidden(
         'Signed media token does not match authenticated user.',
-        'USER_MISMATCH'
+        'USER_MISMATCH',
       );
     }
 
@@ -593,7 +593,7 @@ const validateMediaAccess = async (
     ) {
       throw AppError.forbidden(
         'Signed media token is not valid for this session.',
-        'SESSION_MISMATCH'
+        'SESSION_MISMATCH',
       );
     }
 
@@ -624,7 +624,7 @@ const validateMediaAccess = async (
     });
     throw AppError.unauthorized(
       'User identification required for secure media playback.',
-      'AUTH_REQUIRED'
+      'AUTH_REQUIRED',
     );
   }
 
@@ -695,7 +695,7 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
         STORAGE_ROOT,
         resolvedUserId.toString(),
         legacyCategory,
-        fileName
+        fileName,
       );
       if (fs.existsSync(legacyPath)) {
         filePath = legacyPath;
@@ -715,7 +715,7 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
     }
     const playlist = await mediaService.generateMasterPlaylist(
       itemId,
-      req.originalUrl.split('?')[1]
+      req.originalUrl.split('?')[1],
     );
     res.setHeader('Content-Type', 'application/x-mpegURL');
     return res.send(playlist);
@@ -824,7 +824,7 @@ export const getMediaSegment = async (req: express.Request, res: express.Respons
         STORAGE_ROOT,
         resolvedUserId.toString(),
         legacyCategory,
-        fileName
+        fileName,
       );
       if (fs.existsSync(legacyPath)) filePath = legacyPath;
     }
@@ -865,7 +865,7 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
     throw new AppError(
       503,
       'DB_UNAVAILABLE',
-      'Cloud media storage is temporarily unavailable. Please retry playback.'
+      'Cloud media storage is temporarily unavailable. Please retry playback.',
     );
   }
 
@@ -957,7 +957,7 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
   if (requestedAction === 'download') {
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${encodeURIComponent(fileName)}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
+      `attachment; filename="${encodeURIComponent(fileName)}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
     );
   }
 
@@ -999,7 +999,7 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
             res.status(206);
             res.setHeader(
               'Content-Range',
-              `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`
+              `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`,
             );
             res.setHeader('Content-Length', chunkSize.toString());
             const downloadStream = bucket.openDownloadStream(objectId, {
@@ -1175,7 +1175,7 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
           res.status(206);
           res.setHeader(
             'Content-Range',
-            `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`
+            `bytes ${parsedRange.start}-${parsedRange.end}/${fileSize}`,
           );
           res.setHeader('Content-Length', chunkSize.toString());
           const rangeStream = fs.createReadStream(resolvedFilePath, {
@@ -1369,6 +1369,6 @@ export const getPlaybackInsights = async (req: express.Request, res: express.Res
       resolutionStats,
       errorStats,
     },
-    'Playback insights aggregated successfully'
+    'Playback insights aggregated successfully',
   );
 };

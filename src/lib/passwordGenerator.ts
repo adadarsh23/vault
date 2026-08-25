@@ -254,7 +254,7 @@ const secureShuffle = (input: string): string => {
 export const generateSecurePassword = (length: number = PASSWORD_CONFIG.DEFAULT_LENGTH): string => {
   const actualLength = Math.max(
     PASSWORD_CONFIG.MIN_LENGTH,
-    Math.min(PASSWORD_CONFIG.MAX_LENGTH, length)
+    Math.min(PASSWORD_CONFIG.MAX_LENGTH, length),
   );
 
   const { UPPERCASE, LOWERCASE, NUMBERS, SYMBOLS } = PASSWORD_CONFIG.CHARSETS;

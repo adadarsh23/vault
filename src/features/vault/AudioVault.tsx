@@ -200,7 +200,7 @@ const SafeAudioPreview: React.FC<{
         fileSize={typeof item.metadata?.size === 'number' ? item.metadata.size : undefined}
         className={cn(
           'max-w-none border-none bg-transparent shadow-none backdrop-blur-none',
-          compact ? 'p-2' : 'p-6'
+          compact ? 'p-2' : 'p-6',
         )}
       />
       {item.metadata?.transcript && !compact && (
@@ -257,7 +257,7 @@ export const AudioVault: React.FC = () => {
   const masterKey = useVaultStore((state) => state.masterKey);
   const rsaKeyPair = useVaultStore((state) => state.rsaKeyPair);
   const isInlineMediaPreviewEnabled = useVaultStore(
-    (state) => state.preferences.isInlineMediaPreviewEnabled
+    (state) => state.preferences.isInlineMediaPreviewEnabled,
   );
   const isAudioWaveformEnabled = useVaultStore((state) => state.preferences.isAudioWaveformEnabled);
   const [isUploading, setIsUploading] = useState(false);
@@ -325,7 +325,7 @@ export const AudioVault: React.FC = () => {
 
   const previewedAudio = useMemo(
     () => filteredItems.find((item) => item.id === previewItem) ?? null,
-    [filteredItems, previewItem]
+    [filteredItems, previewItem],
   );
 
   const currentPreviewIndex = useMemo(() => {
@@ -338,7 +338,7 @@ export const AudioVault: React.FC = () => {
 
   const handleClosePreview = () => {
     window.dispatchEvent(
-      new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } })
+      new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } }),
     );
     setPreviewItem(null);
   };
@@ -346,7 +346,7 @@ export const AudioVault: React.FC = () => {
   const showPreviousAudio = () => {
     if (canPrevious) {
       window.dispatchEvent(
-        new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } })
+        new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } }),
       );
       setPreviewItem(filteredItems[currentPreviewIndex - 1].id);
     }
@@ -354,7 +354,7 @@ export const AudioVault: React.FC = () => {
   const showNextAudio = () => {
     if (canNext) {
       window.dispatchEvent(
-        new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } })
+        new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } }),
       );
       setPreviewItem(filteredItems[currentPreviewIndex + 1].id);
     }
@@ -427,7 +427,7 @@ export const AudioVault: React.FC = () => {
     targetFolder: string | null,
     isAlreadyEncrypted = false,
     isLiveCapture = false,
-    additionalMetadata?: Record<string, any>
+    additionalMetadata?: Record<string, any>,
   ) => {
     if (!files.length) return;
     if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
@@ -458,7 +458,7 @@ export const AudioVault: React.FC = () => {
     }
 
     const batchToastId = toast.loading(
-      total === 1 ? `Encrypting and uploading audio...` : `Uploading 0/${total} audio files...`
+      total === 1 ? `Encrypting and uploading audio...` : `Uploading 0/${total} audio files...`,
     );
 
     let completedCount = 0;
@@ -524,7 +524,7 @@ export const AudioVault: React.FC = () => {
         if (total > 1) {
           toast.loading(
             `Uploading ${completedCount}/${total} audio files (${Math.round((completedCount / total) * 100)}%)...`,
-            { id: batchToastId }
+            { id: batchToastId },
           );
         }
       }
@@ -548,7 +548,7 @@ export const AudioVault: React.FC = () => {
           total === 1
             ? `${validFiles[0].file.name} uploaded successfully`
             : `Successfully uploaded ${successCount} audio files`,
-          { id: batchToastId }
+          { id: batchToastId },
         );
       } else if (successCount > 0) {
         toast.warning(`Uploaded ${successCount} files, ${failedCount} failed`, {
@@ -576,7 +576,7 @@ export const AudioVault: React.FC = () => {
         item,
         masterKey,
         item.metadata?.mimeType,
-        rsaKeyPair?.privateKey ?? undefined
+        rsaKeyPair?.privateKey ?? undefined,
       );
       if (!fileUrl) throw new Error('Audio preview unavailable');
 
@@ -690,7 +690,7 @@ export const AudioVault: React.FC = () => {
                 // }}
                 className={cn(
                   'group relative rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-transparent backdrop-blur-md',
-                  moveMenuOpenId === item.id ? 'z-50' : 'z-10'
+                  moveMenuOpenId === item.id ? 'z-50' : 'z-10',
                 )}
                 title="Drag to a folder to move this audio file"
               >
@@ -730,12 +730,13 @@ export const AudioVault: React.FC = () => {
                             </span>
                           </span>
                         )}
-                        {item.metadata?.voiceClarityPreset && item.metadata.voiceClarityPreset !== 'off' && (
-                          <span className="flex items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-[10px] text-cyan-300 border border-cyan-500/20">
-                            <Sparkles className="h-2.5 w-2.5" />
-                            Voice DSP
-                          </span>
-                        )}
+                        {item.metadata?.voiceClarityPreset &&
+                          item.metadata.voiceClarityPreset !== 'off' && (
+                            <span className="flex items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-[10px] text-cyan-300 border border-cyan-500/20">
+                              <Sparkles className="h-2.5 w-2.5" />
+                              Voice DSP
+                            </span>
+                          )}
                         {item.metadata?.transcript && (
                           <span
                             className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-300 border border-emerald-500/20"
@@ -758,7 +759,7 @@ export const AudioVault: React.FC = () => {
                         size="icon"
                         className={cn(
                           'h-10 w-10 bg-white/5 hover:bg-white/10 text-white',
-                          moveMenuOpenId === item.id && 'bg-white/20'
+                          moveMenuOpenId === item.id && 'bg-white/20',
                         )}
                         onClick={() =>
                           setMoveMenuOpenId(moveMenuOpenId === item.id ? null : item.id)
@@ -884,7 +885,7 @@ export const AudioVault: React.FC = () => {
                         'h-10 w-10 transition-all',
                         item.isPinned
                           ? 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-400/30'
-                          : 'bg-white/5 hover:bg-white/10 text-white'
+                          : 'bg-white/5 hover:bg-white/10 text-white',
                       )}
                       onClick={() => void togglePin(item.id)}
                     >
@@ -989,7 +990,7 @@ export const AudioVault: React.FC = () => {
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/40">
                       <span>
                         {(((previewedAudio.metadata?.size || 0) as number) / (1024 * 1024)).toFixed(
-                          2
+                          2,
                         )}{' '}
                         MB
                       </span>
@@ -1027,7 +1028,7 @@ export const AudioVault: React.FC = () => {
                       'h-10 w-10 transition-all',
                       previewedAudio.isPinned
                         ? 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 border border-cyan-400/30'
-                        : 'bg-white/5 hover:bg-white/10 text-white'
+                        : 'bg-white/5 hover:bg-white/10 text-white',
                     )}
                     onClick={() => void togglePin(previewedAudio.id)}
                     title={previewedAudio.isPinned ? 'Unpin' : 'Pin'}

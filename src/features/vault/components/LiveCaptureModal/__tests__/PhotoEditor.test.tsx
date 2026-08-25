@@ -1,6 +1,5 @@
 /* @vitest-environment jsdom */
 
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PhotoEditor } from '../PhotoEditor';
@@ -24,7 +23,7 @@ describe('PhotoEditor Component Suite', () => {
         initialUrl={dummyUrl}
         onSave={onSave}
         onCancel={onCancel}
-      />
+      />,
     );
 
     // Verify all 32 filter preset buttons are present
@@ -50,7 +49,7 @@ describe('PhotoEditor Component Suite', () => {
         initialUrl={dummyUrl}
         onSave={onSave}
         onCancel={onCancel}
-      />
+      />,
     );
 
     const cancelBtn = screen.getByLabelText(/Cancel editing/i);
@@ -68,7 +67,7 @@ describe('PhotoEditor Component Suite', () => {
         initialUrl={dummyUrl}
         onSave={onSave}
         onCancel={onCancel}
-      />
+      />,
     );
 
     // Select Cyberpunk filter

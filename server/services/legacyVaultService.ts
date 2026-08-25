@@ -70,7 +70,7 @@ export const ensureLegacyIndexes = async () => {
             unique: true,
             name: 'vault_item_unique',
             partialFilterExpression: { vaultId: { $exists: true } },
-          }
+          },
         ),
         collection.createIndex({ vaultId: 1, updatedAt: -1 }, { name: 'vault_updated_lookup' }),
         collection.createIndex(
@@ -82,7 +82,7 @@ export const ensureLegacyIndexes = async () => {
               ownerType: { $exists: true },
               ownerId: { $exists: true },
             },
-          }
+          },
         ),
         collection.createIndex(
           { ownerType: 1, ownerId: 1, updatedAt: -1 },
@@ -92,7 +92,7 @@ export const ensureLegacyIndexes = async () => {
               ownerType: { $exists: true },
               ownerId: { $exists: true },
             },
-          }
+          },
         ),
       ]);
     })().catch((error) => {
@@ -269,7 +269,7 @@ export const ensureUserVaultCollections = async (username: string) => {
     throw new AppError(
       503,
       'VAULT_SETUP_FAILED',
-      'User vault setup failed. Please try registering again. If the problem persists, contact support.'
+      'User vault setup failed. Please try registering again. If the problem persists, contact support.',
     );
   }
 };
@@ -455,7 +455,7 @@ const downloadGridFsFileAsBase64 = async (gridFsId: string) => {
 };
 
 const getStoredFilePathFromMetadata = (
-  metadata: Record<string, unknown> | null | undefined
+  metadata: Record<string, unknown> | null | undefined,
 ): string | null => {
   return typeof metadata?.filePath === 'string' && metadata.filePath.startsWith('/')
     ? metadata.filePath
@@ -545,7 +545,7 @@ export const saveLegacyVaultItem = async (input: LegacySaveInput) => {
               updatedAt: new Date(),
             },
           },
-          { upsert: true }
+          { upsert: true },
         );
       } catch (err: any) {
         // Handle race condition: if it failed with duplicate key, retry once which should then succeed as an update
@@ -564,7 +564,7 @@ export const saveLegacyVaultItem = async (input: LegacySaveInput) => {
                 updatedAt: new Date(),
               },
             },
-            { upsert: true }
+            { upsert: true },
           );
         } else {
           throw err;
@@ -645,7 +645,7 @@ export const saveScopedVaultItem = async (input: ScopedSaveInput) => {
         title,
         metadata,
       },
-      binaryPayload
+      binaryPayload,
     );
     encoding = 'gridfs-binary';
     finalPayload = '';
@@ -774,7 +774,7 @@ export const saveScopedVaultItem = async (input: ScopedSaveInput) => {
           updatedAt: new Date(),
           isDeleted: false,
         },
-        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
+        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
       );
 
       // Cleanup old GridFS data ONLY if a NEW GridFS file was actually uploaded and replaced the old one
@@ -896,7 +896,7 @@ export const saveScopedVaultItem = async (input: ScopedSaveInput) => {
             updatedAt: new Date(),
             isDeleted: false,
           },
-          { upsert: true, returnDocument: 'after' }
+          { upsert: true, returnDocument: 'after' },
         );
       }
       throw err;
@@ -975,13 +975,13 @@ export const listScopedVaultItemsByUsername = async (userId: string, username: s
 export const deleteScopedVaultItemByUsername = async (
   userId: string,
   username: string,
-  itemId: string
+  itemId: string,
 ) => {
   const DynamicVaultModel = getVaultItemModel(username);
   const result = await DynamicVaultModel.findOneAndUpdate(
     { userId, itemId },
     { isDeleted: true, deletedAt: new Date() },
-    { returnDocument: 'after' }
+    { returnDocument: 'after' },
   );
   return !!result;
 };
@@ -995,7 +995,7 @@ export const rewrapGridFsEnvelopeKeys = async (input?: {
   const filesCollection = database.collection('vault_item_files.files');
   const cursor = filesCollection.find(
     { 'metadata.encryption.wrappedDek': { $exists: true } },
-    { projection: { _id: 1, metadata: 1 }, limit: input?.limit || 5000 }
+    { projection: { _id: 1, metadata: 1 }, limit: input?.limit || 5000 },
   );
   let scanned = 0;
   let updated = 0;
@@ -1016,7 +1016,7 @@ export const rewrapGridFsEnvelopeKeys = async (input?: {
         keyVersion: encryption.keyVersion,
         keyId: encryption.keyId,
       },
-      input?.targetKeyId
+      input?.targetKeyId,
     );
     if (input?.dryRun) {
       continue;
@@ -1031,7 +1031,7 @@ export const rewrapGridFsEnvelopeKeys = async (input?: {
           'metadata.encryption.keyVersion': next.keyVersion,
           'metadata.encryption.keyId': next.keyId,
         },
-      }
+      },
     );
     updated += 1;
   }
@@ -1047,14 +1047,14 @@ export const setScopedVaultItemPinByUsername = async (
   userId: string,
   username: string,
   itemId: string,
-  isPinned: boolean
+  isPinned: boolean,
 ) => {
   const DynamicVaultModel = getVaultItemModel(username);
   const pinnedAt = isPinned ? new Date() : null;
   const result = await DynamicVaultModel.findOneAndUpdate(
     { userId, itemId, isDeleted: false },
     { isPinned, pinnedAt, updatedAt: new Date() },
-    { returnDocument: 'after' }
+    { returnDocument: 'after' },
   );
 
   if (!result) {

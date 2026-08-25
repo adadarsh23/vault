@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'crypto';
+import mongoose from 'mongoose';
 import { User, UserDocument } from '../models/user.ts';
 import { RefreshToken } from '../models/RefreshToken.ts';
 import {
@@ -215,7 +216,7 @@ export const issueUserSession = (
     existingSessionId?: string;
     familyId?: string;
     deviceName?: string;
-  }
+  },
 ): {
   sessionId: string;
   familyId: string;
@@ -279,18 +280,21 @@ export const issueUserSession = (
   }
 
   // Create RefreshToken document in collection for lineage and breach containment tracking
-  RefreshToken.create({
-    userId: user._id,
-    familyId,
-    sessionId,
-    tokenHash: refreshTokenHash,
-    isRevoked: false,
-    ip: input.ipAddress ?? 'unknown',
-    userAgent: input.userAgent ?? 'unknown',
-    expiresAt,
-  }).catch((err) => {
-    logger.warn('Failed to save RefreshToken document in DB', { error: err });
-  });
+  const rawUserId = user._id?.toString ? user._id.toString() : String(user._id || '');
+  if (mongoose.Types.ObjectId.isValid(rawUserId)) {
+    RefreshToken.create({
+      userId: user._id,
+      familyId,
+      sessionId,
+      tokenHash: refreshTokenHash,
+      isRevoked: false,
+      ip: input.ipAddress ?? 'unknown',
+      userAgent: input.userAgent ?? 'unknown',
+      expiresAt,
+    }).catch((err) => {
+      logger.warn('Failed to save RefreshToken document in DB', { error: err });
+    });
+  }
 
   return { sessionId, familyId, accessToken, refreshToken, expiresAt };
 };
@@ -330,7 +334,8 @@ export const authenticateUser = async (input: {
 
   if (!user) {
     // Timing-attack prevention: perform dummy hash computation to prevent user enumeration
-    const DUMMY_HASH = '$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQAAAAAAAAAAA$dummyhashplaceholderstringfortimingprotection';
+    const DUMMY_HASH =
+      '$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQAAAAAAAAAAA$dummyhashplaceholderstringfortimingprotection';
     await comparePassword(input.password || 'dummypassword', DUMMY_HASH).catch(() => false);
     throw AppError.unauthorized('Invalid username or password.', 'INVALID_CREDENTIALS');
   }
@@ -367,7 +372,12 @@ export const authenticateUser = async (input: {
       // ignore
     }
   }
-  if (!storedMasterKey && user.meta?.masterKey && typeof user.meta.masterKey === 'object' && 'cipherText' in (user.meta.masterKey as any)) {
+  if (
+    !storedMasterKey &&
+    user.meta?.masterKey &&
+    typeof user.meta.masterKey === 'object' &&
+    'cipherText' in (user.meta.masterKey as any)
+  ) {
     try {
       storedMasterKey = decryptText(user.meta.masterKey as any);
     } catch {
@@ -377,7 +387,7 @@ export const authenticateUser = async (input: {
 
   let isValid = false;
   const candidatePasswords = [input.password, input.password?.trim()].filter(
-    (p): p is string => Boolean(p) && typeof p === 'string'
+    (p): p is string => Boolean(p) && typeof p === 'string',
   );
 
   // Check 1: Does input.password match stored account password hash?
@@ -402,7 +412,7 @@ export const authenticateUser = async (input: {
 
   // Check 3: If input.masterKey was provided, check if it matches account password or master key
   const candidateMasterKeys = [input.masterKey, input.masterKey?.trim()].filter(
-    (m): m is string => Boolean(m) && typeof m === 'string'
+    (m): m is string => Boolean(m) && typeof m === 'string',
   );
 
   if (!isValid && candidateMasterKeys.length > 0) {
@@ -508,7 +518,7 @@ export const authenticateUser = async (input: {
       user._id.toString(),
       'device_login',
       'New Device Login',
-      `A new login session was established on device "${deviceName}" from IP: ${ip}`
+      `A new login session was established on device "${deviceName}" from IP: ${ip}`,
     );
   } catch (err) {
     logger.warn('Failed to create login notification', { error: err });
@@ -568,7 +578,7 @@ export const registerUser = async (input: {
   if (input.password && masterKey && input.password === masterKey) {
     throw AppError.badRequest(
       'Account password and master key must not be identical.',
-      'AUTH_SAME_CREDENTIALS'
+      'AUTH_SAME_CREDENTIALS',
     );
   }
   const pqcSalt =

@@ -36,7 +36,7 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
 
   const currentSession = useMemo(
     () => sessions.find((session) => session.isCurrent) ?? null,
-    [sessions]
+    [sessions],
   );
   const currentDeviceId = currentSession?.deviceId ?? '';
   const canRenameCurrentSession = currentDeviceId.trim().length > 0;
@@ -53,7 +53,7 @@ export const SessionControlsCard: React.FC<SessionControlsCardProps> = ({
         setLoadingSessionId(null);
       }
     },
-    [onRevokeSession]
+    [onRevokeSession],
   );
 
   return (

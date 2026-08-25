@@ -1,11 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { safeWriteFileSync, safeWriteJsonSync } from './file-system.mjs';
 
 export const updateHistory = (index, historyDir, historyLimit) => {
   fs.mkdirSync(historyDir, { recursive: true });
   const stamp = index.generatedAt.replace(/[:.]/g, '-');
   const historyPath = path.join(historyDir, `code-index-${stamp}.json`);
-  fs.writeFileSync(historyPath, JSON.stringify(index, null, 2), 'utf8');
+  safeWriteJsonSync(historyPath, index, 2);
 
   const historyFiles = fs
     .readdirSync(historyDir)
@@ -14,7 +15,11 @@ export const updateHistory = (index, historyDir, historyLimit) => {
 
   while (historyFiles.length > historyLimit) {
     const oldest = historyFiles.shift();
-    fs.unlinkSync(path.join(historyDir, oldest));
+    try {
+      fs.unlinkSync(path.join(historyDir, oldest));
+    } catch {
+      // ignore
+    }
   }
 
   return { historyPath, historyCount: Math.min(historyLimit, historyFiles.length + 1) };
@@ -44,5 +49,5 @@ export const writeSummaryMarkdown = (index, summaryFile) => {
     `- Medium: ${index.riskSummary.medium}`,
     `- Low: ${index.riskSummary.low}`,
   ];
-  fs.writeFileSync(summaryFile, `${lines.join('\n')}\n`, 'utf8');
+  safeWriteFileSync(summaryFile, `${lines.join('\n')}\n`);
 };

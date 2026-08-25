@@ -108,7 +108,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   // Security & Privacy preferences
   const isPrintBlockingEnabled = useVaultStore((state) => state.preferences.isPrintBlockingEnabled);
   const isTabSwitchShieldEnabled = useVaultStore(
-    (state) => state.preferences.isTabSwitchShieldEnabled
+    (state) => state.preferences.isTabSwitchShieldEnabled,
   );
 
   // Anti-Screenshot, Print Blocking & Tab Switch Shield Hook
@@ -163,7 +163,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   const stopActiveMediaImmediately = useCallback(() => {
     try {
       window.dispatchEvent(
-        new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } })
+        new CustomEvent('vault-audio-play', { detail: { playerId: '__stop_all__' } }),
       );
     } catch {
       // Ignore
@@ -431,7 +431,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
     if (e.touches.length === 2) {
       const dist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
+        e.touches[0].clientY - e.touches[1].clientY,
       );
       initialTouchDistanceRef.current = dist;
       initialTouchScaleRef.current = zoomScale;
@@ -448,7 +448,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
     if (e.touches.length === 2 && initialTouchDistanceRef.current !== null) {
       const dist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
+        e.touches[0].clientY - e.touches[1].clientY,
       );
       const factor = dist / initialTouchDistanceRef.current;
       const nextScale = Math.min(Math.max(initialTouchScaleRef.current * factor, 1.0), 4.0);
@@ -505,7 +505,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
             'fixed inset-0 transition-colors duration-300 select-none overflow-hidden',
             isFloating
               ? 'z-[100] bg-transparent pointer-events-none'
-              : 'z-50 bg-black/95 backdrop-blur-2xl flex items-center justify-center'
+              : 'z-50 bg-black/95 backdrop-blur-2xl flex items-center justify-center',
           )}
           ref={modalRef}
           onClick={(e) => {
@@ -562,7 +562,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                       onClick={handleFlipH}
                       className={cn(
                         'h-7 w-7 rounded-full text-white/70 hover:text-white hover:bg-white/10',
-                        flipH && 'bg-blue-500/30 text-blue-300'
+                        flipH && 'bg-blue-500/30 text-blue-300',
                       )}
                       title="Flip Horizontal"
                     >
@@ -574,7 +574,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                       onClick={handleFlipV}
                       className={cn(
                         'h-7 w-7 rounded-full text-white/70 hover:text-white hover:bg-white/10',
-                        flipV && 'bg-blue-500/30 text-blue-300'
+                        flipV && 'bg-blue-500/30 text-blue-300',
                       )}
                       title="Flip Vertical"
                     >
@@ -593,7 +593,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                       'h-7 sm:h-8 rounded-full border px-2 sm:px-3 text-xs backdrop-blur-md flex items-center gap-1 sm:gap-1.5 transition-all',
                       isSlideshowActive
                         ? 'bg-blue-500/30 text-blue-300 border-blue-400/50 shadow-[0_0_15px_rgba(59,130,246,0.4)]'
-                        : 'bg-black/75 text-white/80 border-white/15 hover:bg-white/10 hover:text-white'
+                        : 'bg-black/75 text-white/80 border-white/15 hover:bg-white/10 hover:text-white',
                     )}
                     title={
                       isSlideshowActive ? 'Pause Slideshow (Space)' : 'Start Slideshow (Space)'
@@ -620,7 +620,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                       'h-7 w-7 sm:h-8 sm:w-8 rounded-full border backdrop-blur-md transition-all',
                       isFilmstripOpen
                         ? 'bg-blue-500/25 text-blue-300 border-blue-500/40'
-                        : 'bg-black/75 text-white/75 border-white/15 hover:bg-white/10 hover:text-white'
+                        : 'bg-black/75 text-white/75 border-white/15 hover:bg-white/10 hover:text-white',
                     )}
                     title={isFilmstripOpen ? 'Hide Filmstrip (F)' : 'Show Filmstrip (F)'}
                   >
@@ -637,7 +637,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                     'h-7 w-7 sm:h-8 sm:w-8 rounded-full border backdrop-blur-md transition-all',
                     isInspectorOpen
                       ? 'bg-blue-500/25 text-blue-300 border-blue-500/40'
-                      : 'bg-black/75 text-white/75 border-white/15 hover:bg-white/10 hover:text-white'
+                      : 'bg-black/75 text-white/75 border-white/15 hover:bg-white/10 hover:text-white',
                   )}
                   title="View EXIF & Vault Metadata (I)"
                 >
@@ -704,7 +704,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
               'relative flex items-center justify-center transition-all media-stage-protected vault-media-protected',
               isFloating
                 ? 'h-auto w-auto pointer-events-none'
-                : 'h-[100dvh] w-[100vw] px-2 sm:px-6 pt-14 sm:pt-16 pb-10 sm:pb-12 overflow-hidden'
+                : 'h-[100dvh] w-[100vw] px-2 sm:px-6 pt-14 sm:pt-16 pb-10 sm:pb-12 overflow-hidden',
             )}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
@@ -724,7 +724,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                 style={type === 'photo' ? transformStyle : undefined}
                 className={cn(
                   'relative flex items-center justify-center',
-                  isFloating ? 'pointer-events-auto' : 'max-w-full max-h-full w-full h-full'
+                  isFloating ? 'pointer-events-auto' : 'max-w-full max-h-full w-full h-full',
                 )}
               >
                 <ErrorBoundary
@@ -752,7 +752,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                         'object-contain rounded-xl shadow-2xl',
                         isFloating
                           ? 'pointer-events-auto'
-                          : 'max-w-[min(94vw,1440px)] max-h-[min(82vh,calc(100dvh-5.5rem))]'
+                          : 'max-w-[min(94vw,1440px)] max-h-[min(82vh,calc(100dvh-5.5rem))]',
                       )}
                     />
                   )}

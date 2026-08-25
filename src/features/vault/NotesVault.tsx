@@ -55,7 +55,7 @@ export const NotesVault: React.FC = () => {
           ...item,
           folder: item.folder ?? null,
         })),
-    [items]
+    [items],
   );
   const {
     folders,
@@ -115,19 +115,19 @@ export const NotesVault: React.FC = () => {
             note.folder === currentFolder;
 
           return matchesSearch && matchesFolder;
-        })
+        }),
       ),
-    [notes, normalizedSearchQuery, currentFolder]
+    [notes, normalizedSearchQuery, currentFolder],
   );
 
   const selectedNote = useMemo(
     () => notes.find((note) => note.id === selectedNoteId),
-    [notes, selectedNoteId]
+    [notes, selectedNoteId],
   );
 
   const selectedNoteIndex = useMemo(
     () => filteredNotes.findIndex((note) => note.id === selectedNoteId),
-    [filteredNotes, selectedNoteId]
+    [filteredNotes, selectedNoteId],
   );
   const hasPreviousNote = selectedNoteIndex > 0;
   const hasNextNote = selectedNoteIndex >= 0 && selectedNoteIndex < filteredNotes.length - 1;
@@ -192,7 +192,7 @@ export const NotesVault: React.FC = () => {
         throw error instanceof Error ? error : new Error('Failed to save note');
       }
     },
-    [selectedNoteId, masterKey, updateItem]
+    [selectedNoteId, masterKey, updateItem],
   );
 
   const handleDelete = async (id: string, title: string) => {

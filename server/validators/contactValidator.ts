@@ -38,14 +38,14 @@ export const contactSchema = z
       .max(64, 'Username must be 3 to 64 characters.')
       .regex(
         USERNAME_PATTERN,
-        'Username can only include letters, numbers, dots, underscores, and hyphens.'
+        'Username can only include letters, numbers, dots, underscores, and hyphens.',
       ),
     subject: z
       .string()
       .refine(
         (value): value is (typeof CONTACT_SUBJECTS)[number] =>
           CONTACT_SUBJECTS.includes(value as (typeof CONTACT_SUBJECTS)[number]),
-        'Please select a valid query category.'
+        'Please select a valid query category.',
       ),
     message: z
       .string()

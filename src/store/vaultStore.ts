@@ -161,18 +161,18 @@ interface VaultState {
   updatePreferences: (updates: Partial<SecurityPreferences>) => void;
   changeMasterKey: (
     newKey: string,
-    onProgress?: (done: number, total: number) => void
+    onProgress?: (done: number, total: number) => void,
   ) => Promise<void>;
   exportVaultData: (onProgress?: (done: number, total: number) => void) => Promise<string>;
   importVaultData: (
     items: unknown[],
-    onProgress?: (done: number, total: number) => void
+    onProgress?: (done: number, total: number) => void,
   ) => Promise<void>;
   fetchItems: (trigger?: SyncTrigger) => Promise<void>;
   addItem: (
     item: Omit<VaultItem, 'id' | 'createdAt' | 'updatedAt'>,
     onProgress?: (progress: number) => void,
-    options?: { source?: 'local' | 'cloud' }
+    options?: { source?: 'local' | 'cloud' },
   ) => Promise<VaultItem>;
   removeItem: (id: string) => Promise<void>;
   updateItem: (id: string, updates: Partial<VaultItem>) => Promise<void>;
@@ -244,7 +244,7 @@ const getInitialPreferences = (): SecurityPreferences => {
 };
 
 const sanitizePreferences = (
-  preferences?: Partial<SecurityPreferences>
+  preferences?: Partial<SecurityPreferences>,
 ): Partial<SecurityPreferences> => {
   if (!preferences) return {};
 
@@ -253,7 +253,7 @@ const sanitizePreferences = (
     ...(preferences.generatedCredentialLength !== undefined
       ? {
           generatedCredentialLength: normalizeGeneratedCredentialLength(
-            preferences.generatedCredentialLength
+            preferences.generatedCredentialLength,
           ),
         }
       : {}),
@@ -302,7 +302,7 @@ const maybeYieldToMainThread = async (total: number, threshold: number): Promise
 const reportProgress = (
   onProgress: ((done: number, total: number) => void) | undefined,
   done: number,
-  total: number
+  total: number,
 ) => {
   if (!onProgress) {
     return;
@@ -318,7 +318,7 @@ const reportProgress = (
 const mergeCloudWithLocalRuntimeItems = (
   localItems: VaultItem[],
   cloudItems: VaultItem[],
-  additionalLocalItems: VaultItem[] = []
+  additionalLocalItems: VaultItem[] = [],
 ): VaultItem[] => {
   const localMap = new Map<string, VaultItem>();
   for (const item of [...localItems, ...additionalLocalItems]) {
@@ -333,7 +333,7 @@ const mergeCloudWithLocalRuntimeItems = (
 
 const resolveActivityLoggingPreference = (
   snapshot: LoadedVaultSnapshot,
-  fallback: boolean
+  fallback: boolean,
 ): boolean => {
   const candidate = snapshot.settings?.preferences?.isActivityLoggingEnabled;
   return typeof candidate === 'boolean' ? candidate : fallback;
@@ -342,7 +342,7 @@ const resolveActivityLoggingPreference = (
 const buildSyncedSnapshotState = (
   state: VaultState,
   snapshot: LoadedVaultSnapshot,
-  options: { includeLocalRuntimeItems: boolean; additionalLocalItems?: VaultItem[]; now: number }
+  options: { includeLocalRuntimeItems: boolean; additionalLocalItems?: VaultItem[]; now: number },
 ) => {
   const nextPreferences = snapshot.settings?.preferences
     ? {
@@ -357,11 +357,14 @@ const buildSyncedSnapshotState = (
         localStorage.setItem('vault_decoy_pin_hash', nextPreferences.decoyPasswordHash);
         localStorage.setItem(
           'vault_decoy_enabled',
-          String(nextPreferences.isDecoyVaultEnabled ?? true)
+          String(nextPreferences.isDecoyVaultEnabled ?? true),
         );
         if (state.username) {
           const normUser = state.username.trim().toLowerCase();
-          localStorage.setItem(`vault_decoy_pin_hash_${normUser}`, nextPreferences.decoyPasswordHash);
+          localStorage.setItem(
+            `vault_decoy_pin_hash_${normUser}`,
+            nextPreferences.decoyPasswordHash,
+          );
         }
       } else if (snapshot.settings?.preferences && nextPreferences.isDecoyVaultEnabled === false) {
         localStorage.removeItem('vault_decoy_pin_hash');
@@ -377,7 +380,7 @@ const buildSyncedSnapshotState = (
       ? mergeCloudWithLocalRuntimeItems(
           state.items,
           snapshot.items,
-          options.additionalLocalItems || []
+          options.additionalLocalItems || [],
         )
       : mergeCloudWithLocalRuntimeItems([], snapshot.items, options.additionalLocalItems || []),
     preferences: nextPreferences,
@@ -393,7 +396,7 @@ const buildSyncedSnapshotState = (
 };
 
 const exportRsaKeysIfAvailable = async (
-  rsaKeyPair: CryptoKeyPair | null
+  rsaKeyPair: CryptoKeyPair | null,
 ): Promise<ExportedRsaKeys | undefined> => {
   if (!rsaKeyPair) {
     return undefined;
@@ -434,7 +437,7 @@ const queueSettingsSync = ({
 
 const hasPreferenceUpdates = (
   current: SecurityPreferences,
-  updates: Partial<SecurityPreferences>
+  updates: Partial<SecurityPreferences>,
 ): boolean => {
   for (const [key, value] of Object.entries(updates)) {
     const typedKey = key as keyof SecurityPreferences;
@@ -532,7 +535,7 @@ const loadVaultSnapshot = async (masterKey: CryptoKey): Promise<LoadedVaultSnaps
 const migrateLegacyVaultIfNeeded = async (
   masterKey: CryptoKey,
   vaultId: string,
-  existingItems: VaultItem[]
+  existingItems: VaultItem[],
 ) => {
   if (existingItems.length > 0) {
     return existingItems;
@@ -540,7 +543,7 @@ const migrateLegacyVaultIfNeeded = async (
 
   const legacyItems = await downloadLegacyVaultSnapshot(masterKey, vaultId).catch(() => []);
   const migratableItems = legacyItems.filter(
-    (item) => item.id !== '__settings__' && item.id !== '__logs__' && item.id !== '__profile__'
+    (item) => item.id !== '__settings__' && item.id !== '__logs__' && item.id !== '__profile__',
   );
 
   if (!migratableItems.length) {
@@ -1028,7 +1031,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         keyBuf as any,
         { name: 'AES-GCM' },
         false, // non-extractable
-        ['encrypt', 'decrypt']
+        ['encrypt', 'decrypt'],
       );
       keyBuf.fill(0);
 
@@ -1036,7 +1039,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       const migratedItems = await migrateLegacyVaultIfNeeded(
         cryptoKey,
         derivedVaultId,
-        initialSnapshot.items
+        initialSnapshot.items,
       );
       const snapshot =
         migratedItems === initialSnapshot.items
@@ -1089,17 +1092,17 @@ export const useVaultStore = create<VaultState>((set, get) => ({
               key,
               get().preferences,
               get().allowRestrictedTypes,
-              exported
+              exported,
             );
           }
 
           set({ rsaKeyPair: pair });
         })(),
-        'RSA Identity Sync'
+        'RSA Identity Sync',
       );
 
       setActivityLoggingEnabled(
-        resolveActivityLoggingPreference(snapshot, get().preferences.isActivityLoggingEnabled)
+        resolveActivityLoggingPreference(snapshot, get().preferences.isActivityLoggingEnabled),
       );
 
       logActivity({
@@ -1266,7 +1269,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         localStorage.setItem('vault_decoy_pin_hash', newPreferences.decoyPasswordHash);
         localStorage.setItem(
           'vault_decoy_enabled',
-          String(newPreferences.isDecoyVaultEnabled ?? true)
+          String(newPreferences.isDecoyVaultEnabled ?? true),
         );
       } catch {
         /* ignore */
@@ -1299,7 +1302,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     const { items, masterKey: oldMasterKey, username, isDecoyMode } = get();
     if (isDecoyMode) {
       toast.success(
-        'master Key rotation complete. Your encrypted data now requires the new master Key.'
+        'master Key rotation complete. Your encrypted data now requires the new master Key.',
       );
       logActivity({
         actionType: 'password_change',
@@ -1320,7 +1323,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       const credentialValidation = validatePassword(newKey);
       if (!credentialValidation.isValid) {
         throw new Error(
-          credentialValidation.error || 'Master key does not meet security requirements.'
+          credentialValidation.error || 'Master key does not meet security requirements.',
         );
       }
 
@@ -1367,11 +1370,11 @@ export const useVaultStore = create<VaultState>((set, get) => ({
             await maybeYieldToMainThread(total, KEY_ROTATION_YIELD_THRESHOLD);
           } catch (err: unknown) {
             throw new Error(
-              `Key rotation failed at "${item.title}": ${getErrorMessage(err, 'Unknown error')}`
+              `Key rotation failed at "${item.title}": ${getErrorMessage(err, 'Unknown error')}`,
             );
           }
         },
-        6
+        6,
       );
 
       // Re-encrypt settings for the new vault
@@ -1382,7 +1385,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         preferences,
         allowRestrictedTypes,
         exportedRsa,
-        { force: true }
+        { force: true },
       );
       await uploadKeyCheckToCloud(resolvedNewKey, { force: true });
 
@@ -1392,7 +1395,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         newKeyBuf as any,
         { name: 'AES-GCM' },
         false,
-        ['encrypt', 'decrypt']
+        ['encrypt', 'decrypt'],
       );
       newKeyBuf.fill(0);
 
@@ -1404,7 +1407,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       });
 
       toast.success(
-        'master Key rotation complete. Your encrypted data now requires the new master Key.'
+        'master Key rotation complete. Your encrypted data now requires the new master Key.',
       );
       logActivity({
         actionType: 'password_change',
@@ -1415,14 +1418,14 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       runInBackground(get().syncLogs(), 'Activity log sync');
       runInBackground(
         uploadProfileToCloud(username, resolvedNewKey, { force: true }),
-        'Profile sync'
+        'Profile sync',
       );
       runInBackground(
         revokeVaultDeviceSession({
           revokeAllOther: true,
           revokeCurrent: false,
         }),
-        'Session revoke after master key rotation'
+        'Session revoke after master key rotation',
       );
     } catch (error) {
       set({ isLoading: false });
@@ -1498,7 +1501,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   importVaultData: async (
     rawItems: unknown[],
-    onProgress?: (done: number, total: number) => void
+    onProgress?: (done: number, total: number) => void,
   ) => {
     const { masterKey } = get();
     if (!masterKey) return;
@@ -1538,7 +1541,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
           reportProgress(onProgress, completedCount, total);
           await maybeYieldToMainThread(total, IMPORT_YIELD_THRESHOLD);
         },
-        6
+        6,
       );
 
       await get().fetchItems();
@@ -1598,7 +1601,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       lastSyncError: null,
     });
     try {
-      const snapshot = await loadVaultSnapshot(masterKey);
+      const snapshot = await loadVaultSnapshot(masterKey!);
       const localItems = await loadLocalItemsFromDb().catch(() => []);
 
       const now = Date.now();
@@ -1607,11 +1610,11 @@ export const useVaultStore = create<VaultState>((set, get) => ({
           includeLocalRuntimeItems: true,
           additionalLocalItems: localItems,
           now,
-        })
+        }),
       );
 
       setActivityLoggingEnabled(
-        resolveActivityLoggingPreference(snapshot, get().preferences.isActivityLoggingEnabled)
+        resolveActivityLoggingPreference(snapshot, get().preferences.isActivityLoggingEnabled),
       );
 
       const itemCount = snapshot.items.length;
@@ -1698,11 +1701,11 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
       if (newItem.source === 'cloud') {
         try {
-          await uploadItemToCloud(newItem, masterKey, onProgress);
+          await uploadItemToCloud(newItem, masterKey!, onProgress);
         } catch (uploadErr) {
           console.warn(
             'Cloud upload failed, retaining item locally in IndexedDB as fallback:',
-            uploadErr
+            uploadErr,
           );
           newItem.source = 'local';
           await saveItem(newItem);
@@ -1727,7 +1730,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         .rebuildLocalMerkleTree(get().items)
         .catch(() => {});
       toast.success(
-        `${newItem.title} saved ${newItem.source === 'local' ? 'locally' : 'to cloud'}`
+        `${newItem.title} saved ${newItem.source === 'local' ? 'locally' : 'to cloud'}`,
       );
       logActivity({
         actionType: newItem.type === 'password' ? 'password_create' : 'file_upload',
@@ -1770,7 +1773,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       if (item?.source === 'local') {
         await deleteItem(id);
       } else {
-        await deleteItemFromCloud(id, masterKey).catch(() => {});
+        await deleteItemFromCloud(id, masterKey!).catch(() => {});
         await deleteItem(id);
       }
       set((state) => ({
@@ -1830,11 +1833,11 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
       if (updatedItem.source !== 'local') {
         try {
-          await uploadItemToCloud(updatedItem, masterKey);
+          await uploadItemToCloud(updatedItem, masterKey!);
         } catch (uploadErr) {
           console.warn(
             'Cloud upload failed during update, retained locally in IndexedDB:',
-            uploadErr
+            uploadErr,
           );
         }
       }
@@ -1912,7 +1915,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
                   ? new Date(responseData.updatedAt).getTime()
                   : i.updatedAt,
               }
-            : i
+            : i,
         ),
         pinningItemIds: state.pinningItemIds.filter((itemId) => itemId !== id),
       }));
@@ -1977,9 +1980,9 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       await runInParallelPool(
         currentBatch,
         async (item) => {
-          await uploadItemToCloud(item, masterKey);
+          await uploadItemToCloud(item, masterKey!);
         },
-        6
+        6,
       );
 
       set({ items: updatedItems, isLoading: false });
@@ -2009,7 +2012,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       const remoteLogs = (await downloadLogsFromCloud()) ?? [];
       const localLogs = useActivityStore.getState().entries;
       const mergedLogs = Array.from(
-        new Map([...remoteLogs, ...localLogs].map((entry) => [entry.id, entry])).values()
+        new Map([...remoteLogs, ...localLogs].map((entry) => [entry.id, entry])).values(),
       ).sort((a, b) => b.timestamp - a.timestamp);
 
       toast.loading(`Syncing ${mergedLogs.length} activity logs...`, {
@@ -2066,15 +2069,15 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      const cloudItems = await downloadAllFromCloud(masterKey);
+      const cloudItems = await downloadAllFromCloud(masterKey!);
 
       // Batch purge
       await Promise.allSettled([
-        ...cloudItems.map((item) => deleteItemFromCloud(item.id, masterKey)),
-        deleteItemFromCloud('__settings__', masterKey),
-        deleteItemFromCloud('__logs__', masterKey),
-        deleteItemFromCloud('__profile__', masterKey),
-        deleteItemFromCloud('__keycheck__', masterKey),
+        ...cloudItems.map((item) => deleteItemFromCloud(item.id, masterKey!)),
+        deleteItemFromCloud('__settings__', masterKey!),
+        deleteItemFromCloud('__logs__', masterKey!),
+        deleteItemFromCloud('__profile__', masterKey!),
+        deleteItemFromCloud('__keycheck__', masterKey!),
       ]);
       clearCloudSessionHint();
       clearRememberedVaultAccess();

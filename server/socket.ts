@@ -56,7 +56,7 @@ export const registerSocketHandlers = (httpServer: HttpServer): Server => {
           session.sessionId === payload.sessionId &&
           !session.revokedAt &&
           session.expiresAt instanceof Date &&
-          session.expiresAt.getTime() > Date.now()
+          session.expiresAt.getTime() > Date.now(),
       );
 
       if (!activeSession) {

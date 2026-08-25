@@ -22,7 +22,7 @@ const validateOptionalDeviceId = (value: unknown) => {
     throw new AppError(
       400,
       'INVALID_DEVICE_ID',
-      'Device identifier must be a non-empty string under 129 characters.'
+      'Device identifier must be a non-empty string under 129 characters.',
     );
   }
 };
@@ -30,7 +30,7 @@ const validateOptionalDeviceId = (value: unknown) => {
 export const validateAuthCredentials = (
   req: express.Request,
   _res: express.Response,
-  next: express.NextFunction
+  next: express.NextFunction,
 ) => {
   try {
     const body = ensureObjectBody(req.body, 'Request body must be a JSON object.');
@@ -45,7 +45,7 @@ export const validateAuthCredentials = (
       throw new AppError(
         400,
         'INVALID_USERNAME',
-        'Username must be 3 to 64 characters and use only letters, numbers, dots, underscores, or hyphens.'
+        'Username must be 3 to 64 characters and use only letters, numbers, dots, underscores, or hyphens.',
       );
     }
 
@@ -63,7 +63,7 @@ export const validateAuthCredentials = (
 export const validateRegistrationCredentials = (
   req: express.Request,
   _res: express.Response,
-  next: express.NextFunction
+  next: express.NextFunction,
 ) => {
   try {
     const body = ensureObjectBody(req.body, 'Request body must be a JSON object.');
@@ -78,7 +78,7 @@ export const validateRegistrationCredentials = (
       throw new AppError(
         400,
         'INVALID_USERNAME',
-        'Username must be 3 to 64 characters and use only letters, numbers, dots, underscores, or hyphens.'
+        'Username must be 3 to 64 characters and use only letters, numbers, dots, underscores, or hyphens.',
       );
     }
 
@@ -98,7 +98,7 @@ export const validateRegistrationCredentials = (
       throw new AppError(
         400,
         'INVALID_MASTER_KEY',
-        'Master Key must be between 16 and 64 characters.'
+        'Master Key must be between 16 and 64 characters.',
       );
     }
 
@@ -112,7 +112,7 @@ export const validateRegistrationCredentials = (
 export const validateChangePasswordRequest = (
   req: express.Request,
   _res: express.Response,
-  next: express.NextFunction
+  next: express.NextFunction,
 ) => {
   try {
     const body = ensureObjectBody(req.body, 'Request body must be a JSON object.');
@@ -121,7 +121,7 @@ export const validateChangePasswordRequest = (
       throw new AppError(
         400,
         'INVALID_PASSWORD',
-        'Current password must be at least 8 characters.'
+        'Current password must be at least 8 characters.',
       );
     }
 
@@ -138,7 +138,7 @@ export const validateChangePasswordRequest = (
 export const validateSessionRevokeRequest = (
   req: express.Request,
   _res: express.Response,
-  next: express.NextFunction
+  next: express.NextFunction,
 ) => {
   try {
     const body = ensureObjectBody(req.body, 'Request body must be a JSON object.');
@@ -151,7 +151,7 @@ export const validateSessionRevokeRequest = (
       throw new AppError(
         400,
         'SESSION_TARGET_REQUIRED',
-        'Provide sessionId, deviceId, or revokeAllOther=true.'
+        'Provide sessionId, deviceId, or revokeAllOther=true.',
       );
     }
 
@@ -159,7 +159,7 @@ export const validateSessionRevokeRequest = (
       throw new AppError(
         400,
         'INVALID_SESSION_ID',
-        'Session identifier must be a non-empty string.'
+        'Session identifier must be a non-empty string.',
       );
     }
 
@@ -171,7 +171,7 @@ export const validateSessionRevokeRequest = (
       throw new AppError(
         400,
         'INVALID_REVOKE_REQUEST',
-        'revokeCurrent=true must be paired with revokeAllOther=true.'
+        'revokeCurrent=true must be paired with revokeAllOther=true.',
       );
     }
 
@@ -184,7 +184,7 @@ export const validateSessionRevokeRequest = (
 export const validateContactRequest = (
   req: express.Request,
   _res: express.Response,
-  next: express.NextFunction
+  next: express.NextFunction,
 ) => {
   try {
     const body = ensureObjectBody(req.body, 'Request body must be a JSON object.');
@@ -210,7 +210,7 @@ export const validateContactRequest = (
       throw new AppError(
         400,
         'INVALID_USERNAME',
-        'Username must be 3 to 64 characters and use only letters, numbers, dots, underscores, or hyphens.'
+        'Username must be 3 to 64 characters and use only letters, numbers, dots, underscores, or hyphens.',
       );
     }
 
@@ -242,7 +242,7 @@ export const validateContactRequest = (
       throw new AppError(
         400,
         'CAPTCHA_TOKEN_MISSING',
-        'Complete the CAPTCHA challenge before submitting.'
+        'Complete the CAPTCHA challenge before submitting.',
       );
     }
 

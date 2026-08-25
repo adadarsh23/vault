@@ -75,7 +75,7 @@ export const StorageMetricsCard: React.FC<StorageMetricsCardProps> = memo(
         </div>
       </CardContent>
     </Card>
-  )
+  ),
 );
 
 StorageMetricsCard.displayName = 'StorageMetricsCard';

@@ -129,7 +129,7 @@ export function startTimelapseSession({
     const currentPaused = pauseStartTime ? now - pauseStartTime : 0;
     const realDurationSec = Math.max(
       0,
-      Math.floor((now - startTime - pausedElapsed - currentPaused) / 1000)
+      Math.floor((now - startTime - pausedElapsed - currentPaused) / 1000),
     );
     const outputDurationSec = Number((framesCaptured / 30).toFixed(1));
     const speedMultiplier = intervalSec * 30;
@@ -157,7 +157,7 @@ export function startTimelapseSession({
     const currentPaused = pauseStartTime ? now - pauseStartTime : 0;
     const realDurationSec = Math.max(
       0,
-      Math.floor((now - startTime - pausedElapsed - currentPaused) / 1000)
+      Math.floor((now - startTime - pausedElapsed - currentPaused) / 1000),
     );
     return {
       framesCaptured,
@@ -198,8 +198,7 @@ export function startTimelapseSession({
       return new Promise<Blob>((resolve, reject) => {
         mediaRecorder.onstop = () => {
           try {
-            const outputMime =
-              mediaRecorder.mimeType || mimeType || 'video/webm';
+            const outputMime = mediaRecorder.mimeType || mimeType || 'video/webm';
             const blob = new Blob(chunks, { type: outputMime });
             stream.getTracks().forEach((track) => track.stop());
             resolve(blob);

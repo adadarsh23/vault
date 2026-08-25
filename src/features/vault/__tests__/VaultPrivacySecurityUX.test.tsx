@@ -35,7 +35,7 @@ vi.mock('../../../lib/filePreview', () => ({
   getVaultItemPreviewRevision: vi.fn(() => 'rev-1'),
   getVaultItemPreviewUrl: vi.fn(
     () =>
-      new Promise((resolve) => setTimeout(() => resolve('blob:http://localhost/test-media'), 50))
+      new Promise((resolve) => setTimeout(() => resolve('blob:http://localhost/test-media'), 50)),
   ),
   vaultItemHasServerFileReference: vi.fn(() => false),
 }));
@@ -98,7 +98,7 @@ describe('Vault Privacy & Security UX', () => {
           headerProfileName="Test User"
           username="testuser"
           profileMonogram="T"
-        />
+        />,
       );
 
       const discreetButton = screen.getByLabelText(/Discreet Mode active/i);
@@ -127,7 +127,7 @@ describe('Vault Privacy & Security UX', () => {
       };
 
       const { container } = render(
-        <SafeMedia item={mockItem} masterKey="mock-key" type="photo" isThumbnail={true} />
+        <SafeMedia item={mockItem} masterKey="mock-key" type="photo" isThumbnail={true} />,
       );
 
       const img = await waitFor(() => {
@@ -162,7 +162,7 @@ describe('Vault Privacy & Security UX', () => {
       };
 
       const { container } = render(
-        <SafeMedia item={mockItem} masterKey="mock-key" type="photo" isThumbnail={true} />
+        <SafeMedia item={mockItem} masterKey="mock-key" type="photo" isThumbnail={true} />,
       );
 
       await waitFor(() => {
@@ -263,7 +263,7 @@ describe('Vault Privacy & Security UX', () => {
           headerProfileName="Test User"
           username="testuser"
           profileMonogram="T"
-        />
+        />,
       );
 
       const panicButton = screen.getByLabelText(/Instant Panic Lock/i);
@@ -370,7 +370,7 @@ describe('Vault Privacy & Security UX', () => {
           headerProfileName="Test User"
           username="testuser"
           profileMonogram="T"
-        />
+        />,
       );
 
       const headings = screen.getAllByRole('heading', { level: 1 });

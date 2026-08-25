@@ -22,7 +22,12 @@ import {
   createMultiItemDragImage,
   clearDraggedVaultItem,
 } from '../../../../lib/vaultDragDrop';
-import { GridDensity, groupMediaByTimeline, formatFileSize, getResolutionBadge } from './mediaUtils';
+import {
+  GridDensity,
+  groupMediaByTimeline,
+  formatFileSize,
+  getResolutionBadge,
+} from './mediaUtils';
 import { cn } from '../../../../lib/utils';
 import { useVaultStore } from '../../../../store/vaultStore';
 
@@ -103,7 +108,7 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
           setRenderedCount((prev) => Math.min(prev + ITEMS_PER_CHUNK, items.length));
         }
       },
-      { rootMargin: '400px 0px', threshold: 0.01 }
+      { rootMargin: '400px 0px', threshold: 0.01 },
     );
 
     observer.observe(sentinel);
@@ -216,7 +221,7 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
                     item.metadata?.size ||
                       (typeof item.content === 'string'
                         ? item.content.length
-                        : item.content?.byteLength || 0)
+                        : item.content?.byteLength || 0),
                   );
                   const isLive =
                     item.metadata?.isLiveCapture === true ||
@@ -238,12 +243,12 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
                           const dragLabel = type === 'photo' ? 'Photos' : 'Videos';
                           const previewElement = createMultiItemDragImage(
                             targetIds.length,
-                            dragLabel
+                            dragLabel,
                           );
                           event.dataTransfer.setDragImage(
                             previewElement.firstElementChild as Element,
                             70,
-                            45
+                            45,
                           );
                           setTimeout(() => previewElement.remove(), 0);
                         }
@@ -260,7 +265,7 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
                         'flex items-center gap-3 p-2 rounded-2xl border bg-black/20 backdrop-blur-md transition-all cursor-pointer select-none',
                         isChecked
                           ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/50'
-                          : 'border-white/10 hover:border-white/20'
+                          : 'border-white/10 hover:border-white/20',
                       )}
                     >
                       {/* Checkbox */}
@@ -274,7 +279,7 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
                           'h-6 w-6 rounded-lg flex items-center justify-center border transition-all shrink-0',
                           isChecked
                             ? 'bg-blue-600 text-white border-blue-400'
-                            : 'bg-black/40 text-transparent border-white/20'
+                            : 'bg-black/40 text-transparent border-white/20',
                         )}
                         aria-label={`Select ${item.title}`}
                       >
@@ -341,7 +346,7 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
                             'h-7 w-7 rounded-full transition-colors',
                             item.isPinned
                               ? 'text-amber-400 bg-amber-500/20'
-                              : 'text-white/60 hover:text-white hover:bg-white/10'
+                              : 'text-white/60 hover:text-white hover:bg-white/10',
                           )}
                           title={item.isPinned ? 'Unpin' : 'Pin'}
                         >
@@ -390,7 +395,7 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
                           item.metadata?.size ||
                             (typeof item.content === 'string'
                               ? item.content.length
-                              : item.content?.byteLength || 0)
+                              : item.content?.byteLength || 0),
                         );
                         const isLive =
                           item.metadata?.isLiveCapture === true ||
@@ -412,12 +417,12 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
                                 const dragLabel = type === 'photo' ? 'Photos' : 'Videos';
                                 const previewElement = createMultiItemDragImage(
                                   targetIds.length,
-                                  dragLabel
+                                  dragLabel,
                                 );
                                 event.dataTransfer.setDragImage(
                                   previewElement.firstElementChild as Element,
                                   70,
-                                  45
+                                  45,
                                 );
                                 setTimeout(() => previewElement.remove(), 0);
                               }
@@ -432,7 +437,7 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
                             }}
                             className={cn(
                               'transition-colors cursor-pointer hover:bg-white/[0.04]',
-                              isChecked && 'bg-blue-500/10'
+                              isChecked && 'bg-blue-500/10',
                             )}
                           >
                             <td
@@ -447,7 +452,7 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
                                   'h-5 w-5 rounded-md mx-auto flex items-center justify-center border transition-all',
                                   isChecked
                                     ? 'bg-blue-600 text-white border-blue-400'
-                                    : 'bg-black/40 text-transparent border-white/20 hover:border-white'
+                                    : 'bg-black/40 text-transparent border-white/20 hover:border-white',
                                 )}
                               >
                                 <Check
@@ -538,7 +543,7 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
                                     'h-7 w-7 rounded-full transition-colors',
                                     item.isPinned
                                       ? 'text-amber-400 bg-amber-500/20 hover:bg-amber-500/30'
-                                      : 'text-white/60 hover:text-white hover:bg-white/10'
+                                      : 'text-white/60 hover:text-white hover:bg-white/10',
                                   )}
                                   title={item.isPinned ? 'Unpin' : 'Pin'}
                                 >

@@ -125,7 +125,7 @@ export const toConversation = (value: unknown): ChatConversation | null => {
                   !!mention &&
                   typeof mention === 'object' &&
                   typeof mention.userId === 'string' &&
-                  (mention.username === undefined || typeof mention.username === 'string')
+                  (mention.username === undefined || typeof mention.username === 'string'),
               )
               .map((mention) => ({
                 userId: mention.userId,
@@ -138,7 +138,7 @@ export const toConversation = (value: unknown): ChatConversation | null => {
                 Object.entries(typedEntry.reactions).map(([emoji, users]) => [
                   emoji,
                   toStringArray(users),
-                ])
+                ]),
               )
             : {},
         reactionDetails: Array.isArray(typedEntry.reactionDetails)
@@ -148,7 +148,7 @@ export const toConversation = (value: unknown): ChatConversation | null => {
                   !!reaction &&
                   typeof reaction === 'object' &&
                   typeof reaction.emoji === 'string' &&
-                  Array.isArray(reaction.users)
+                  Array.isArray(reaction.users),
               )
               .map((reaction) => ({
                 emoji: reaction.emoji,
@@ -164,7 +164,7 @@ export const toConversation = (value: unknown): ChatConversation | null => {
                   isString(attachment.id) &&
                   isString(attachment.type) &&
                   isString(attachment.label) &&
-                  isString(attachment.url)
+                  isString(attachment.url),
               )
               .map((attachment) => ({
                 ...attachment,
@@ -341,7 +341,7 @@ export const renderMessageText = (
   text: string,
   isMine: boolean,
   sizeClass = 'text-sm',
-  truncateLines?: number
+  truncateLines?: number,
 ): ReactNode => {
   const parts: ReactNode[] = [];
   const matches = Array.from(text.matchAll(URL_PATTERN));
@@ -371,11 +371,11 @@ export const renderMessageText = (
             'underline decoration-dotted underline-offset-2 transition-colors',
             isMine
               ? 'text-fuchsia-400 hover:text-fuchsia-400'
-              : 'text-fuchsia-400 hover:text-fuchsia-400'
+              : 'text-fuchsia-400 hover:text-fuchsia-400',
           )}
         >
           {sanitizedUrl}
-        </a>
+        </a>,
       );
     } else {
       parts.push(token);

@@ -114,45 +114,45 @@ export const vaultApi = {
   upsertItem: async <TResponse = unknown>(
     category: string,
     itemId: string | undefined,
-    payload: unknown
+    payload: unknown,
   ): Promise<ApiResponse<TResponse>> => {
     const categorySegment = encodePathSegment(normalizeRequiredString(category, 'category'));
     if (itemId && itemId.trim().length > 0) {
       const itemIdSegment = encodePathSegment(normalizeRequiredString(itemId, 'itemId'));
       const { data } = await apiClient.put<ApiResponse<TResponse>>(
         `/vault/${categorySegment}/${itemIdSegment}`,
-        payload
+        payload,
       );
       return data;
     }
 
     const { data } = await apiClient.post<ApiResponse<TResponse>>(
       `/vault/${categorySegment}`,
-      payload
+      payload,
     );
     return data;
   },
 
   deleteItem: async (
     category: string,
-    itemId: string
+    itemId: string,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     const categorySegment = encodePathSegment(normalizeRequiredString(category, 'category'));
     const itemIdSegment = encodePathSegment(normalizeRequiredString(itemId, 'itemId'));
     const { data } = await apiClient.delete<ApiResponse<Record<string, unknown>>>(
-      `/vault/${categorySegment}/${itemIdSegment}`
+      `/vault/${categorySegment}/${itemIdSegment}`,
     );
     return data;
   },
 
   togglePin: async (
     itemId: string,
-    isPinned: boolean
+    isPinned: boolean,
   ): Promise<ApiResponse<TogglePinResponseData>> => {
     const itemIdSegment = encodePathSegment(normalizeRequiredString(itemId, 'itemId'));
     const { data } = await apiClient.put<ApiResponse<TogglePinResponseData>>(
       `/vault/items/${itemIdSegment}/pin`,
-      { isPinned }
+      { isPinned },
     );
     return data;
   },
@@ -160,7 +160,7 @@ export const vaultApi = {
   uploadFile: async <TResponse = unknown>(
     category: string,
     formData: FormData,
-    onUploadProgress?: (progressEvent: AxiosProgressEvent) => void
+    onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
   ): Promise<ApiResponse<TResponse>> => {
     const categorySegment = encodePathSegment(normalizeRequiredString(category, 'category'));
     const { data } = await apiClient.post<ApiResponse<TResponse>>(
@@ -169,13 +169,13 @@ export const vaultApi = {
       {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress,
-      }
+      },
     );
     return data;
   },
 
   startMultipartUpload: async (
-    payload: StartMultipartUploadPayload
+    payload: StartMultipartUploadPayload,
   ): Promise<ApiResponse<StartMultipartUploadResponseData>> => {
     const sanitizedPayload: StartMultipartUploadPayload = {
       category: normalizeMultipartCategory(payload.category),
@@ -197,7 +197,7 @@ export const vaultApi = {
 
     const { data } = await apiClient.post<ApiResponse<StartMultipartUploadResponseData>>(
       '/vault/files/multipart/start',
-      sanitizedPayload
+      sanitizedPayload,
     );
     return data;
   },
@@ -206,7 +206,7 @@ export const vaultApi = {
     uploadId: string,
     partNumber: number,
     chunk: Uint8Array,
-    chunkSha256: string
+    chunkSha256: string,
   ): Promise<ApiResponse<UploadMultipartPartResponseData>> => {
     const uploadIdSegment = encodePathSegment(normalizeRequiredString(uploadId, 'uploadId'));
     const normalizedPartNumber = normalizePositiveInteger(partNumber, 'partNumber');
@@ -225,14 +225,14 @@ export const vaultApi = {
           'Content-Type': 'application/octet-stream',
           'X-Part-SHA256': normalizedChunkHash,
         },
-      }
+      },
     );
     return data;
   },
 
   completeMultipartUpload: async <TResponse = Record<string, unknown>>(
     uploadId: string,
-    payload: CompleteMultipartUploadPayload
+    payload: CompleteMultipartUploadPayload,
   ): Promise<ApiResponse<TResponse>> => {
     const uploadIdSegment = encodePathSegment(normalizeRequiredString(uploadId, 'uploadId'));
 
@@ -247,7 +247,7 @@ export const vaultApi = {
 
     const { data } = await apiClient.post<ApiResponse<TResponse>>(
       `/vault/files/multipart/${uploadIdSegment}/complete`,
-      sanitizedPayload
+      sanitizedPayload,
     );
     return data;
   },
@@ -258,7 +258,7 @@ export const vaultApi = {
   },
 
   createFolder: async (
-    folderData: FolderCreatePayload
+    folderData: FolderCreatePayload,
   ): Promise<ApiResponse<VaultFolderRecord>> => {
     const sanitizedFolderData: FolderCreatePayload = {
       name: normalizeRequiredString(folderData.name, 'folderData.name'),
@@ -271,7 +271,7 @@ export const vaultApi = {
 
     const { data } = await apiClient.post<ApiResponse<VaultFolderRecord>>(
       '/vault/folders',
-      sanitizedFolderData
+      sanitizedFolderData,
     );
     return data;
   },
@@ -288,7 +288,7 @@ export const vaultApi = {
 
   createTusUpload: async (
     fileSize: number,
-    metadata: Record<string, string>
+    metadata: Record<string, string>,
   ): Promise<{ uploadId: string; location: string }> => {
     const encodedMetadata = Object.entries(metadata)
       .map(([k, v]) => `${k} ${btoa(v)}`)
@@ -303,7 +303,7 @@ export const vaultApi = {
           'Upload-Length': fileSize.toString(),
           'Upload-Metadata': encodedMetadata,
         },
-      }
+      },
     );
 
     const location = response.headers['location'] || response.headers['Location'] || '';
@@ -332,7 +332,7 @@ export const vaultApi = {
           'Upload-Offset': offset.toString(),
           'Content-Type': 'application/offset+octet-stream',
         },
-      }
+      },
     );
 
     const newOffsetHeader = response.headers['upload-offset'] || response.headers['Upload-Offset'];

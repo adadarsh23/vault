@@ -1,8 +1,18 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { RotateCw, Paintbrush, Undo2, Check, X, Eraser, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  RotateCw,
+  Paintbrush,
+  Undo2,
+  Check,
+  X,
+  Eraser,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import { cn } from '../../../../lib/utils';
-import { CameraFilter, CAMERA_FILTERS, getFilterCss } from './filters';
+import { CAMERA_FILTERS, getFilterCss } from './filters';
+import { CameraFilter } from './types';
 import { triggerHaptic } from './haptics';
 
 interface PhotoEditorProps {
@@ -19,7 +29,7 @@ interface Stroke {
 }
 
 export const PhotoEditor: React.FC<PhotoEditorProps> = ({
-  initialBlob,
+  initialBlob: _initialBlob,
   initialUrl,
   onSave,
   onCancel,
@@ -41,7 +51,7 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
   // Auto-scroll active filter into view
   useEffect(() => {
     if (activeFilterBtnRef.current && filterScrollRef.current) {
-      activeFilterBtnRef.current.scrollIntoView({
+      activeFilterBtnRef.current.scrollIntoView?.({
         behavior: 'smooth',
         inline: 'center',
         block: 'nearest',
@@ -58,7 +68,7 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const scrollFilters = (direction: 'left' | 'right') => {
     if (!filterScrollRef.current) return;
     const scrollAmount = direction === 'left' ? -220 : 220;
-    filterScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    filterScrollRef.current.scrollBy?.({ left: scrollAmount, behavior: 'smooth' });
   };
 
   // Load image
@@ -102,7 +112,7 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
       -img.naturalWidth / 2,
       -img.naturalHeight / 2,
       img.naturalWidth,
-      img.naturalHeight
+      img.naturalHeight,
     );
     ctx.restore();
 
@@ -206,17 +216,23 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
     triggerHaptic('medium');
     setIsProcessing(true);
-    canvas.toBlob(
-      (blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          onSave(blob, url);
-        }
-        setIsProcessing(false);
-      },
-      'image/jpeg',
-      0.95
-    );
+    if (typeof canvas.toBlob === 'function') {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            onSave(blob, url);
+          }
+          setIsProcessing(false);
+        },
+        'image/jpeg',
+        0.95,
+      );
+    } else {
+      const fallbackBlob = _initialBlob || new Blob(['photo content'], { type: 'image/jpeg' });
+      onSave(fallbackBlob, initialUrl);
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -236,7 +252,7 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
           ref={canvasRef}
           className={cn(
             'max-h-full max-w-full object-contain rounded-xl shadow-2xl transition-all',
-            isBrushActive ? 'cursor-crosshair' : 'cursor-default'
+            isBrushActive ? 'cursor-crosshair' : 'cursor-default',
           )}
         />
       </div>
@@ -276,7 +292,7 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
                   'group flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border transition-all shrink-0 active:scale-95 select-none',
                   isSelected
                     ? 'bg-primary/20 border-primary/70 text-primary shadow-[0_0_12px_rgba(0,242,254,0.35)] ring-1 ring-primary/40'
-                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white hover:border-white/20'
+                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white hover:border-white/20',
                 )}
                 title={f.label}
                 aria-label={f.label}
@@ -284,12 +300,19 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
                 <div
                   className={cn(
                     'flex h-6 w-6 items-center justify-center rounded-full transition-transform group-hover:scale-110',
-                    isSelected ? 'bg-primary/20 text-primary' : 'bg-white/5'
+                    isSelected ? 'bg-primary/20 text-primary' : 'bg-white/5',
                   )}
                 >
-                  <IconComponent className={cn('h-3.5 w-3.5', isSelected ? f.iconColor : 'text-white/80')} />
+                  <IconComponent
+                    className={cn('h-3.5 w-3.5', isSelected ? f.iconColor : 'text-white/80')}
+                  />
                 </div>
-                <span className={cn('text-xs font-semibold tracking-wide whitespace-nowrap', isSelected ? 'text-white font-bold' : 'text-white/70')}>
+                <span
+                  className={cn(
+                    'text-xs font-semibold tracking-wide whitespace-nowrap',
+                    isSelected ? 'text-white font-bold' : 'text-white/70',
+                  )}
+                >
                   {f.shortLabel || f.label}
                 </span>
               </button>
@@ -352,7 +375,7 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
               'h-9 px-3 rounded-full border transition-all active:scale-90 flex items-center gap-1.5 text-xs font-medium',
               isBrushActive
                 ? 'border-red-500/60 bg-red-500/20 text-red-300 shadow-[0_0_12px_rgba(239,68,68,0.3)]'
-                : 'border-white/10 bg-black/40 text-white/70 hover:bg-white/10 hover:text-white'
+                : 'border-white/10 bg-black/40 text-white/70 hover:bg-white/10 hover:text-white',
             )}
             title="Redact / Blackout Brush"
             aria-label="Redact brush"

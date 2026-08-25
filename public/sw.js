@@ -14,9 +14,9 @@ self.addEventListener('activate', (event) => {
       caches
         .keys()
         .then((keys) =>
-          Promise.all(keys.map((key) => (key === CACHE_NAME ? undefined : caches.delete(key))))
+          Promise.all(keys.map((key) => (key === CACHE_NAME ? undefined : caches.delete(key)))),
         ),
-    ])
+    ]),
   );
 });
 
@@ -64,6 +64,6 @@ self.addEventListener('fetch', (event) => {
 
         return networkResponse;
       });
-    })
+    }),
   );
 });

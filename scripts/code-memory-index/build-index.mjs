@@ -11,7 +11,7 @@ import {
   sha256,
   summarizeLines,
 } from './content-analysis.mjs';
-import { safeReadJson, walkFiles } from './file-system.mjs';
+import { safeReadJson, safeWriteJsonSync, walkFiles } from './file-system.mjs';
 import { writeSummaryMarkdown, updateHistory } from './output.mjs';
 import { createPathHelpers } from './path-utils.mjs';
 import {
@@ -162,7 +162,7 @@ export const buildIndex = ({ root, options, outputDir }) => {
         (a, b) =>
           b.keywordCounts.awaitCount +
           b.keywordCounts.asyncCount -
-          (a.keywordCounts.awaitCount + a.keywordCounts.asyncCount)
+          (a.keywordCounts.awaitCount + a.keywordCounts.asyncCount),
       )
       .slice(0, TOP_LIMIT),
   };
@@ -200,11 +200,11 @@ export const buildIndex = ({ root, options, outputDir }) => {
     recommendations.push('Large change volume detected: prioritize regression and smoke testing.');
   if (dependencyStats.totals.missingRelativeTargets > 0)
     recommendations.push(
-      'Relative imports with missing targets detected. Verify file extension resolution and alias settings.'
+      'Relative imports with missing targets detected. Verify file extension resolution and alias settings.',
     );
   if (riskSummary.critical > 0)
     recommendations.push(
-      'Critical-risk files found. Split large modules and reduce dependency concentration.'
+      'Critical-risk files found. Split large modules and reduce dependency concentration.',
     );
   if (quality.todoFilesRatio > 0.25)
     recommendations.push('TODO density is elevated. Plan cleanup to reduce maintenance debt.');
@@ -254,12 +254,9 @@ export const buildIndex = ({ root, options, outputDir }) => {
 
   index.trend = computeTrend(index, previousIndex);
 
-  fs.mkdirSync(outputDir, { recursive: true });
-  fs.writeFileSync(outputFile, `${JSON.stringify(index, null, 2)}\n`, 'utf8');
-
   const historyMeta = updateHistory(index, historyDir, options.historyLimit);
   index.history = historyMeta;
-  fs.writeFileSync(outputFile, `${JSON.stringify(index, null, 2)}\n`, 'utf8');
+  safeWriteJsonSync(outputFile, index, 2);
   writeSummaryMarkdown(index, summaryFile);
 
   return index;

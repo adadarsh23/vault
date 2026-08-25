@@ -47,7 +47,7 @@ describe('ActivityDetailsModal', () => {
 
     // Event summary description
     expect(
-      screen.getByText('Created new master password entry with 24-character entropy.')
+      screen.getByText('Created new master password entry with 24-character entropy.'),
     ).toBeInTheDocument();
 
     // Session and device info

@@ -13,7 +13,7 @@ export const processHlsAdaptive = async (
   userId: string,
   username: string,
   inputPath: string,
-  outputDir: string
+  outputDir: string,
 ): Promise<void> => {
   await fs.mkdir(outputDir, { recursive: true });
 

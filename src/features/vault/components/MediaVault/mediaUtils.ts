@@ -32,7 +32,7 @@ export const formatDuration = (seconds?: number | null): string => {
 
 export const getResolutionBadge = (
   width?: number,
-  height?: number
+  height?: number,
 ): '4K' | '2K' | 'HD' | 'SD' | null => {
   if (!width || !height) return null;
   const maxDim = Math.max(width, height);
@@ -59,7 +59,7 @@ export const formatFileSize = (bytes?: number): string => {
 
 export const getMediaDimensions = async (
   file: File,
-  type: 'photo' | 'video'
+  type: 'photo' | 'video',
 ): Promise<{ width: number; height: number; aspectRatio: number; duration?: number } | null> => {
   try {
     const objectUrl = URL.createObjectURL(file);
@@ -87,7 +87,7 @@ export const getMediaDimensions = async (
               reject(new Error('Failed to read image dimensions.'));
             };
             image.src = objectUrl;
-          }
+          },
         );
 
         return {
@@ -131,7 +131,7 @@ export const getMediaDimensions = async (
             });
           };
           video.src = objectUrl;
-        }
+        },
       );
 
       try {
@@ -350,7 +350,7 @@ const RAW_EXTENSIONS = new Set([
 export function filterAndSortMedia(
   items: VaultItem[],
   filter: MediaFilterType,
-  sort: MediaSortType
+  sort: MediaSortType,
 ): VaultItem[] {
   const now = Date.now();
   const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -418,22 +418,22 @@ export function filterAndSortMedia(
       case 'size-desc': {
         const sizeA = Number(
           a.metadata?.size ||
-            (typeof a.content === 'string' ? a.content.length : a.content?.byteLength || 0)
+            (typeof a.content === 'string' ? a.content.length : a.content?.byteLength || 0),
         );
         const sizeB = Number(
           b.metadata?.size ||
-            (typeof b.content === 'string' ? b.content.length : b.content?.byteLength || 0)
+            (typeof b.content === 'string' ? b.content.length : b.content?.byteLength || 0),
         );
         return sizeB - sizeA;
       }
       case 'size-asc': {
         const sizeA = Number(
           a.metadata?.size ||
-            (typeof a.content === 'string' ? a.content.length : a.content?.byteLength || 0)
+            (typeof a.content === 'string' ? a.content.length : a.content?.byteLength || 0),
         );
         const sizeB = Number(
           b.metadata?.size ||
-            (typeof b.content === 'string' ? b.content.length : b.content?.byteLength || 0)
+            (typeof b.content === 'string' ? b.content.length : b.content?.byteLength || 0),
         );
         return sizeA - sizeB;
       }

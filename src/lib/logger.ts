@@ -49,7 +49,7 @@ const sanitizeMetadata = (value: unknown, depth = 0): unknown => {
     Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
       key,
       redactKeys.has(key) ? '[REDACTED]' : sanitizeMetadata(entry, depth + 1),
-    ])
+    ]),
   );
 };
 

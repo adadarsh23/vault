@@ -35,7 +35,7 @@ const stubProdMinimums = () => {
   vi.stubEnv('REFRESH_TOKEN_SECRET', 'refresh-token-secret-32-chars-minimum-prod');
   vi.stubEnv(
     'VAULT_ENCRYPTION_KEY',
-    '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+    '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
   );
   vi.stubEnv('AUTH_PEPPER', 'test-auth-pepper');
   vi.stubEnv('CSRF_SECRET', 'test-csrf-secret');
@@ -61,7 +61,7 @@ describe('server environment validation', () => {
     vi.stubEnv('SKIP_MONGO_CONNECT', '');
 
     expect(() => validateRuntimeEnv()).toThrow(
-      /Missing required environment configuration: JWT_SECRET/
+      /Missing required environment configuration: JWT_SECRET/,
     );
   });
 
@@ -74,7 +74,7 @@ describe('server environment validation', () => {
     vi.stubEnv('SKIP_MONGO_CONNECT', '');
 
     expect(() => validateRuntimeEnv()).toThrow(
-      /Missing required environment configuration: MONGODB_URI, MONGODB_URL, or MONGO_URI/
+      /Missing required environment configuration: MONGODB_URI, MONGODB_URL, or MONGO_URI/,
     );
   });
 
@@ -143,7 +143,7 @@ describe('server environment validation', () => {
     vi.stubEnv('VITE_APP_PUBLIC_URL', '');
 
     expect(() => validateRuntimeEnv()).toThrow(
-      /Missing required environment configuration: CLIENT_URL, PUBLIC_URL, VITE_APP_PUBLIC_URL/
+      /Missing required environment configuration: CLIENT_URL, PUBLIC_URL, VITE_APP_PUBLIC_URL/,
     );
   });
 
@@ -163,7 +163,7 @@ describe('server environment validation', () => {
     vi.stubEnv('AUTH_PEPPER', '');
 
     expect(() => validateRuntimeEnv()).toThrow(
-      /Missing required environment configuration: REFRESH_TOKEN_SECRET, VAULT_ENCRYPTION_KEY, AUTH_PEPPER/
+      /Missing required environment configuration: REFRESH_TOKEN_SECRET, VAULT_ENCRYPTION_KEY, AUTH_PEPPER/,
     );
   });
 
@@ -174,7 +174,7 @@ describe('server environment validation', () => {
     validateRuntimeEnv();
 
     expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining('TRUST_PROXY is not configured')
+      expect.stringContaining('TRUST_PROXY is not configured'),
     );
   });
 
@@ -188,8 +188,8 @@ describe('server environment validation', () => {
 
     expect(logger.warn).toHaveBeenCalledWith(
       expect.stringContaining(
-        'REGISTRATION_PROFILE_CAPTURE_ENABLED is set to an unrecognized value'
-      )
+        'REGISTRATION_PROFILE_CAPTURE_ENABLED is set to an unrecognized value',
+      ),
     );
   });
 
@@ -222,7 +222,7 @@ describe('server environment validation', () => {
     validateRuntimeEnv();
 
     expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining('FREE_IP_API_URL_TEMPLATE should include the {ip} placeholder')
+      expect.stringContaining('FREE_IP_API_URL_TEMPLATE should include the {ip} placeholder'),
     );
   });
 

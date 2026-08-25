@@ -102,7 +102,7 @@ export function preloadFFmpeg(): void {
  * Loads the FFmpeg WebAssembly instance on-demand with caching.
  */
 export async function getFFmpegInstance(
-  onProgress?: (event: TranscodeProgressEvent) => void
+  onProgress?: (event: TranscodeProgressEvent) => void,
 ): Promise<any> {
   if (ffmpegInstance && ffmpegInstance.loaded) {
     return ffmpegInstance;
@@ -175,7 +175,7 @@ export async function transcodeVideoInBrowser(
   videoUrlOrBlob: string | Blob,
   inputFileName = 'input_video.mkv',
   onProgress?: (event: TranscodeProgressEvent) => void,
-  cacheKey?: string
+  cacheKey?: string,
 ): Promise<{ url: string; blob: Blob }> {
   // Check memory cache
   const key = cacheKey || (typeof videoUrlOrBlob === 'string' ? videoUrlOrBlob : inputFileName);

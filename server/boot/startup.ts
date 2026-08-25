@@ -57,7 +57,7 @@ export const renderStartupBanner = () => {
       `  ${colorize('Host', ansi.magenta)}     ${os.hostname()}`,
       `  ${colorize('Time', ansi.magenta)}     ${new Date().toISOString()}`,
       '',
-    ].join('\n')
+    ].join('\n'),
   );
 };
 
@@ -81,7 +81,7 @@ export const createBootAnimator = () => {
     if (!supportsAnimatedTerminal) return;
     const frame = bootFrames[frameIndex++ % bootFrames.length];
     safeWrite(
-      `\r  ${colorize(frame, ansi.cyan)} ${colorize(padRight(label, 28), ansi.bold)} ${colorize(detail, `${ansi.dim}${ansi.gray}`)}`
+      `\r  ${colorize(frame, ansi.cyan)} ${colorize(padRight(label, 28), ansi.bold)} ${colorize(detail, `${ansi.dim}${ansi.gray}`)}`,
     );
   };
 
@@ -167,7 +167,7 @@ export const renderStartupSummary = (input: {
     '',
     ...titleBox(
       colorize('VAULT SERVER IS LIVE', `${ansi.bold}${ansi.green}`),
-      colorize('FULL RUNTIME SNAPSHOT', `${ansi.dim}${ansi.gray}`)
+      colorize('FULL RUNTIME SNAPSHOT', `${ansi.dim}${ansi.gray}`),
     ),
     badge('UP', `Mongo ${dbStatus}`),
     badge('INFO', `Mode ${isProd ? 'PRODUCTION' : 'DEVELOPMENT'}`),
@@ -179,7 +179,7 @@ export const renderStartupSummary = (input: {
     section('Runtime'),
     kv(
       'Mode',
-      `${isProd ? 'PRODUCTION' : 'DEVELOPMENT'} (${isProd ? 'hardened' : 'developer-friendly'})`
+      `${isProd ? 'PRODUCTION' : 'DEVELOPMENT'} (${isProd ? 'hardened' : 'developer-friendly'})`,
     ),
     kv('Node', process.version),
     kv('PID', String(process.pid)),
@@ -198,15 +198,15 @@ export const renderStartupSummary = (input: {
     kv('Load Avg', loadAvg.map((n) => n.toFixed(2)).join(' / ')),
     kv(
       'Memory',
-      `RSS ${formatMemoryUsage(memory.rss)}  Heap ${formatMemoryUsage(memory.heapUsed)}`
+      `RSS ${formatMemoryUsage(memory.rss)}  Heap ${formatMemoryUsage(memory.heapUsed)}`,
     ),
     kv(
       'Heap',
-      `${formatMemoryUsage(memory.heapUsed)} / ${formatMemoryUsage(memory.heapTotal)} committed (${heapCommittedPercent.toFixed(1)}%)`
+      `${formatMemoryUsage(memory.heapUsed)} / ${formatMemoryUsage(memory.heapTotal)} committed (${heapCommittedPercent.toFixed(1)}%)`,
     ),
     kv(
       'Heap Limit',
-      `${formatMemoryUsage(memory.heapUsed)} / ${formatMemoryUsage(heapLimit)} (${heapLimitPercent.toFixed(1)}%)`
+      `${formatMemoryUsage(memory.heapUsed)} / ${formatMemoryUsage(heapLimit)} (${heapLimitPercent.toFixed(1)}%)`,
     ),
     kv('System RAM', `${freeMem} free / ${totalMem} total`),
     kv('Event Loop', formatEventLoopLag()),
@@ -228,7 +228,7 @@ export const renderStartupSummary = (input: {
           kv('EPM', `${input.runtimeMetrics.errorsPerMinute.toFixed(2)}/min`),
           kv(
             'Latency',
-            `avg ${Math.round(input.runtimeMetrics.avgLatencyMs)} ms  p95 ${Math.round(input.runtimeMetrics.p95LatencyMs)} ms`
+            `avg ${Math.round(input.runtimeMetrics.avgLatencyMs)} ms  p95 ${Math.round(input.runtimeMetrics.p95LatencyMs)} ms`,
           ),
           kv('Connections', `${input.runtimeMetrics.activeConnections} active`),
         ]
@@ -241,12 +241,12 @@ export const renderStartupSummary = (input: {
     kv('Origins', `${allowedOrigins.length} allowed`),
     kv(
       'Origin List',
-      truncate(allowedOrigins.length > 0 ? allowedOrigins.join(', ') : 'none', 220)
+      truncate(allowedOrigins.length > 0 ? allowedOrigins.join(', ') : 'none', 220),
     ),
     kv('JWT Secret', process.env.JWT_SECRET ? 'configured' : 'missing'),
     kv(
       'Refresh Secret',
-      process.env.REFRESH_TOKEN_SECRET ? 'configured' : 'fallback-to-jwt-or-missing'
+      process.env.REFRESH_TOKEN_SECRET ? 'configured' : 'fallback-to-jwt-or-missing',
     ),
     sectionEnd(),
     '',
@@ -291,7 +291,7 @@ export const startDevHeartbeat = (input: { port: number; requestCounter: () => n
   const interval = setInterval(() => {
     const memory = process.memoryUsage();
     log.info(
-      `  ${colorize('HEARTBEAT', ansi.magenta)} ${new Date().toISOString()} req:${input.requestCounter()} heap:${formatMemoryUsage(memory.heapUsed)} loop:${formatEventLoopLag()} db:${getDbStatusLabel(getDbStatus())} http://localhost:${input.port}`
+      `  ${colorize('HEARTBEAT', ansi.magenta)} ${new Date().toISOString()} req:${input.requestCounter()} heap:${formatMemoryUsage(memory.heapUsed)} loop:${formatEventLoopLag()} db:${getDbStatusLabel(getDbStatus())} http://localhost:${input.port}`,
     );
   }, 45_000);
   interval.unref();

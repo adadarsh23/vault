@@ -17,7 +17,7 @@ export interface ScrollRestorationOptions {
 export function useScrollRestoration(
   key: string,
   ref: RefObject<HTMLElement | null>,
-  options: ScrollRestorationOptions = {}
+  options: ScrollRestorationOptions = {},
 ) {
   const {
     enabled = true,

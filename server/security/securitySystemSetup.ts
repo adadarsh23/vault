@@ -31,7 +31,7 @@ let adaptiveRateLimiter: AdaptiveRateLimitService | null = null;
 export async function initializeSecuritySystem(
   app: Express,
   server: HTTPServer,
-  redisClient?: RedisLikeClient
+  redisClient?: RedisLikeClient,
 ): Promise<void> {
   logger.info('🔒 Initializing AI-powered security system...');
 
@@ -64,7 +64,7 @@ export async function initializeSecuritySystem(
     const rateLimitResult = await adaptiveRateLimiter!.checkRateLimit(
       identifier,
       category,
-      (req as any).user?.userId
+      (req as any).user?.userId,
     );
 
     res.set('RateLimit-Limit', rateLimitResult.action === 'block' ? '0' : '100');
@@ -105,7 +105,7 @@ export async function initializeSecuritySystem(
  */
 function startSecurityMonitoringTasks(
   _redisClient: RedisLikeClient | undefined,
-  io: SocketServer
+  io: SocketServer,
 ): void {
   // Refresh dashboard metrics every 30 seconds
   setInterval(async () => {

@@ -223,7 +223,9 @@ export const PrivacyInterfaceCard = React.memo<PrivacyInterfaceCardProps>(
                       localStorage.removeItem('vault_decoy_hash');
                       const activeUser = useVaultStore.getState().username;
                       if (activeUser) {
-                        localStorage.removeItem(`vault_decoy_pin_hash_${activeUser.trim().toLowerCase()}`);
+                        localStorage.removeItem(
+                          `vault_decoy_pin_hash_${activeUser.trim().toLowerCase()}`,
+                        );
                       }
                     }
                   } catch {
@@ -242,8 +244,9 @@ export const PrivacyInterfaceCard = React.memo<PrivacyInterfaceCardProps>(
                     </span>
                   </div>
                   <p className="mt-1 text-[11px] text-text/60">
-                    Set an alternate numeric PIN (4–12 digits, numbers only). When entered during unlock, an
-                    isolated decoy vault opens automatically with complete plausible deniability.
+                    Set an alternate numeric PIN (4–12 digits, numbers only). When entered during
+                    unlock, an isolated decoy vault opens automatically with complete plausible
+                    deniability.
                   </p>
 
                   <div className="mt-3 space-y-2.5">
@@ -293,7 +296,7 @@ export const PrivacyInterfaceCard = React.memo<PrivacyInterfaceCardProps>(
                           const trimmed = decoyPinInput.trim();
                           if (!trimmed || !/^\d{4,12}$/.test(trimmed)) {
                             toast.error(
-                              'Decoy PIN must contain only numbers (digits 0-9) and be between 4 and 12 digits long'
+                              'Decoy PIN must contain only numbers (digits 0-9) and be between 4 and 12 digits long',
                             );
                             return;
                           }
@@ -321,7 +324,7 @@ export const PrivacyInterfaceCard = React.memo<PrivacyInterfaceCardProps>(
                             toast.success(
                               preferences.decoyPasswordHash
                                 ? 'Decoy Duress PIN updated successfully'
-                                : 'Decoy Duress PIN configured with PBKDF2 protection'
+                                : 'Decoy Duress PIN configured with PBKDF2 protection',
                             );
                             setDecoyPinInput('');
                           } catch {
@@ -757,6 +760,6 @@ export const PrivacyInterfaceCard = React.memo<PrivacyInterfaceCardProps>(
         </div>
       </SectionCard>
     );
-  }
+  },
 );
 PrivacyInterfaceCard.displayName = 'PrivacyInterfaceCard';

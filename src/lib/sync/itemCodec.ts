@@ -51,7 +51,7 @@ export const toCloudCategory = (type: VaultItem['type']): string => {
 
 const normalizeItemType = (
   category: unknown,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): VaultItem['type'] => {
   const normalized = typeof category === 'string' ? category.trim() : 'file';
   switch (normalized.toLowerCase()) {
@@ -193,7 +193,7 @@ class VaultItemDecodeError extends Error {
 const decodeBase64Payload = (
   payload: string,
   itemId: string,
-  kind: 'binary' | 'payload' = 'payload'
+  kind: 'binary' | 'payload' = 'payload',
 ): Uint8Array => {
   try {
     if (typeof payload !== 'string' || !payload.trim()) {
@@ -214,7 +214,7 @@ const decodeBase64Payload = (
 
 export const downloadAllFromResponseItems = async (
   items: any[],
-  masterKey: string | CryptoKey
+  masterKey: string | CryptoKey,
 ): Promise<VaultItem[]> => {
   if (items.length === 0) return [];
 
@@ -447,7 +447,7 @@ export const downloadAllFromResponseItems = async (
           const metaObj = JSON.parse(decryptedPayload) as Partial<VaultItem>;
           const resolvedItemType = normalizeItemType(
             metaObj.type || doc?.category,
-            (metaObj.metadata || metadata) as Record<string, unknown>
+            (metaObj.metadata || metadata) as Record<string, unknown>,
           );
           const isMediaOrFileType =
             resolvedItemType === 'video' ||
@@ -516,7 +516,7 @@ export const downloadAllFromResponseItems = async (
             id: parsed.id || itemId,
             type: normalizeItemType(
               parsed.type || doc?.category,
-              (parsed.metadata || metadata) as Record<string, unknown>
+              (parsed.metadata || metadata) as Record<string, unknown>,
             ),
             title: parsed.title || title,
             content: parsed.content ?? decryptedPayload,
@@ -605,7 +605,7 @@ export const downloadAllFromResponseItems = async (
           ? error
           : new VaultItemDecodeError(
               itemId,
-              error instanceof Error ? error.message : 'Vault item decode failed.'
+              error instanceof Error ? error.message : 'Vault item decode failed.',
             );
       decodeFailures.push(decodeError);
       return null;
@@ -635,12 +635,12 @@ export const downloadAllFromResponseItems = async (
 
   if (decodeFailures.length > 0) {
     const hasVaultMismatchFailure = decodeFailures.some((failure) =>
-      failure.message.includes('metadata could not be decrypted')
+      failure.message.includes('metadata could not be decrypted'),
     );
 
     if (hasVaultMismatchFailure && allItems.length === 0) {
       throw new Error(
-        'This cloud vault does not match the currently unlocked master Key. Please log in with the correct vault or sync the matching account.'
+        'This cloud vault does not match the currently unlocked master Key. Please log in with the correct vault or sync the matching account.',
       );
     }
 

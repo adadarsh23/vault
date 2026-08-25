@@ -56,7 +56,7 @@ export interface RetrievedCloudMasterKey {
  */
 export const generateCloudProtectionKey = async (
   password: string,
-  salt: string
+  salt: string,
 ): Promise<string> => {
   try {
     if (!password || !salt) {
@@ -93,7 +93,7 @@ export const generateCloudProtectionKey = async (
 export const encryptMasterKeyForCloud = async (
   masterKey: string,
   cloudProtectionKey: string,
-  salt: string
+  salt: string,
 ): Promise<CloudMasterKeyPayload['encryptedMasterKey']> => {
   try {
     if (!masterKey || !cloudProtectionKey || !salt) {
@@ -136,7 +136,7 @@ export const decryptMasterKeyFromCloud = async (
     iv: string;
     authTag: string;
   },
-  cloudProtectionKey: string
+  cloudProtectionKey: string,
 ): Promise<string | null> => {
   try {
     if (!encryptedPayload || !cloudProtectionKey) {
@@ -198,7 +198,7 @@ export const prepareMasterKeyForCloud = async (
   masterKey: string,
   password: string,
   deviceId: string,
-  salt?: string
+  salt?: string,
 ): Promise<CloudMasterKeyPayload> => {
   try {
     if (!masterKey || !password || !deviceId) {
@@ -219,7 +219,7 @@ export const prepareMasterKeyForCloud = async (
     const encryptedMasterKey = await encryptMasterKeyForCloud(
       masterKey,
       cloudProtectionKey,
-      usedSalt
+      usedSalt,
     );
 
     // Create hash for verification
@@ -254,7 +254,7 @@ export const prepareMasterKeyForCloud = async (
  */
 export const recoverMasterKeyFromCloud = async (
   encryptedPayload: CloudMasterKeyPayload['encryptedMasterKey'],
-  password: string
+  password: string,
 ): Promise<string | null> => {
   try {
     if (!encryptedPayload || !password) {
@@ -267,7 +267,7 @@ export const recoverMasterKeyFromCloud = async (
     // Decrypt the master key
     const decryptedMasterKey = await decryptMasterKeyFromCloud(
       encryptedPayload,
-      cloudProtectionKey
+      cloudProtectionKey,
     );
 
     if (!decryptedMasterKey) {
@@ -290,7 +290,7 @@ export const recoverMasterKeyFromCloud = async (
  */
 export const verifyDecryptedMasterKey = async (
   decryptedMasterKey: string,
-  storedHash: string
+  storedHash: string,
 ): Promise<boolean> => {
   try {
     if (!decryptedMasterKey || !storedHash) {

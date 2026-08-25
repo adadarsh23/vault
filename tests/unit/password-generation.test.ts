@@ -84,7 +84,7 @@ describe('generateFormattedPassword', () => {
 describe('normalizeGeneratedCredentialLength', () => {
   it('falls back to the shared default length for NaN', () => {
     expect(normalizeGeneratedCredentialLength(Number.NaN)).toBe(
-      DEFAULT_GENERATED_CREDENTIAL_LENGTH
+      DEFAULT_GENERATED_CREDENTIAL_LENGTH,
     );
   });
 
@@ -113,10 +113,10 @@ describe('normalizeGeneratedCredentialLength', () => {
 
   it('passes through the exact boundary values', () => {
     expect(normalizeGeneratedCredentialLength(MIN_GENERATED_CREDENTIAL_LENGTH)).toBe(
-      MIN_GENERATED_CREDENTIAL_LENGTH
+      MIN_GENERATED_CREDENTIAL_LENGTH,
     );
     expect(normalizeGeneratedCredentialLength(MAX_GENERATED_CREDENTIAL_LENGTH)).toBe(
-      MAX_GENERATED_CREDENTIAL_LENGTH
+      MAX_GENERATED_CREDENTIAL_LENGTH,
     );
   });
 });

@@ -78,14 +78,14 @@ const normalizeNewPassword = (value: unknown): string => {
   if (value.length < MIN_PASSWORD_LENGTH || value.length > MAX_PASSWORD_LENGTH) {
     throw AppError.badRequest(
       `Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters.`,
-      'AUTH_WEAK_PASSWORD'
+      'AUTH_WEAK_PASSWORD',
     );
   }
 
   if (!STRONG_PASSWORD_PATTERN.test(value)) {
     throw AppError.badRequest(
       'Password must include uppercase, lowercase, number, and special character, and cannot contain spaces.',
-      'AUTH_WEAK_PASSWORD'
+      'AUTH_WEAK_PASSWORD',
     );
   }
 
@@ -144,7 +144,7 @@ const toTimestamp = (value: unknown): number | null => {
 
 const normalizeSessionEntries = (
   user: UserDocument,
-  options: { requireRefreshTokenHash?: boolean } = {}
+  options: { requireRefreshTokenHash?: boolean } = {},
 ): { removedInvalidSessions: number } => {
   const sessions = Array.isArray((user as any).sessions)
     ? ((user as any).sessions as Array<Record<string, unknown>>)
@@ -185,7 +185,7 @@ const normalizeSessionEntries = (
 
 const ensureUserState = (
   user: UserDocument,
-  options: { requireRefreshTokenHash?: boolean } = {}
+  options: { requireRefreshTokenHash?: boolean } = {},
 ): UserDocument => {
   if (!user.sessions) {
     (user as any).sessions = [];
@@ -231,21 +231,21 @@ const syncActiveDevices = (user: UserDocument) => {
             !session.revokedAt &&
             (toTimestamp(session.expiresAt) ?? 0) > now &&
             typeof session.deviceId === 'string' &&
-            session.deviceId.trim()
+            session.deviceId.trim(),
         )
-        .map((session: any) => session.deviceId)
-    )
+        .map((session: any) => session.deviceId),
+    ),
   );
 };
 
 const buildSessionSummaries = (user: UserDocument, currentSessionId?: string) =>
   (user.sessions || [])
     .filter(
-      (session: any) => !session.revokedAt && (toTimestamp(session.expiresAt) ?? 0) > Date.now()
+      (session: any) => !session.revokedAt && (toTimestamp(session.expiresAt) ?? 0) > Date.now(),
     )
     .sort(
       (left: any, right: any) =>
-        (toTimestamp(right.lastUsedAt) ?? 0) - (toTimestamp(left.lastUsedAt) ?? 0)
+        (toTimestamp(right.lastUsedAt) ?? 0) - (toTimestamp(left.lastUsedAt) ?? 0),
     )
     .map((session: any) => ({
       sessionId: session.sessionId,
@@ -264,7 +264,7 @@ const buildSessionSummaries = (user: UserDocument, currentSessionId?: string) =>
 const getUserOrThrow = async (
   userId: string,
   select?: string,
-  options: { requireRefreshTokenHash?: boolean } = {}
+  options: { requireRefreshTokenHash?: boolean } = {},
 ): Promise<UserDocument> => {
   const query = User.findById(userId);
   if (select) {
@@ -307,7 +307,7 @@ export const refreshAuthenticatedSession = async (input: {
   const isReuseAttack = Boolean(
     (existingTokenDoc && existingTokenDoc.isRevoked) ||
     (session && session.revokedAt) ||
-    (session && session.refreshTokenHash !== tokenHash)
+    (session && session.refreshTokenHash !== tokenHash),
   );
 
   if (isReuseAttack) {
@@ -334,7 +334,7 @@ export const refreshAuthenticatedSession = async (input: {
     throw new AppError(
       403,
       'TOKEN_REUSE_DETECTED',
-      'Token reuse detected. Session lineage revoked.'
+      'Token reuse detected. Session lineage revoked.',
     );
   }
 
@@ -420,7 +420,7 @@ export const revokeAuthenticatedSessions = async (input: {
   if (!input.revokeAllOther && !input.targetSessionId && !input.targetDeviceId) {
     throw AppError.badRequest(
       'Provide sessionId, deviceId, or revokeAllOther=true.',
-      'SESSION_TARGET_REQUIRED'
+      'SESSION_TARGET_REQUIRED',
     );
   }
 
@@ -478,7 +478,7 @@ export const changeAuthenticatedPassword = async (input: {
   if (currentPassword === nextPassword) {
     throw AppError.badRequest(
       'New password must be different from current password.',
-      'PASSWORD_UNCHANGED'
+      'PASSWORD_UNCHANGED',
     );
   }
 
@@ -512,7 +512,7 @@ export const changeAuthenticatedPassword = async (input: {
       if (decryptedMasterKey && decryptedMasterKey === nextPassword) {
         throw AppError.badRequest(
           'Account password and master key must not be identical.',
-          'AUTH_SAME_CREDENTIALS'
+          'AUTH_SAME_CREDENTIALS',
         );
       }
     } catch {
@@ -538,7 +538,7 @@ export const changeAuthenticatedPassword = async (input: {
       if (matchesMasterKey) {
         throw AppError.badRequest(
           'Account password and master key must not be identical.',
-          'AUTH_SAME_CREDENTIALS'
+          'AUTH_SAME_CREDENTIALS',
         );
       }
     }

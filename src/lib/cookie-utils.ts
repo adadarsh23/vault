@@ -139,7 +139,7 @@ const buildCookieString = (name: string, value: string, options?: CookieOptions)
     // This flag is preserved as intent-awareness for callers.
     if (import.meta.env.DEV) {
       console.warn(
-        `Cookie "${name}" requested httpOnly from frontend; this must be set by the backend Set-Cookie header.`
+        `Cookie "${name}" requested httpOnly from frontend; this must be set by the backend Set-Cookie header.`,
       );
     }
   }

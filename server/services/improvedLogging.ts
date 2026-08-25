@@ -24,7 +24,7 @@ export const logActivityAsync = async (
   action: string,
   category: string,
   itemId: string | null,
-  details: Record<string, unknown>
+  details: Record<string, unknown>,
 ): Promise<void> => {
   try {
     // Save to activity log collection (encrypted, one by one)
@@ -74,7 +74,7 @@ export const logAndEmitAsync = (
   action: string,
   category: string,
   itemId: string | null,
-  details: Record<string, unknown>
+  details: Record<string, unknown>,
 ): void => {
   const createdAt = new Date();
 
@@ -121,7 +121,7 @@ export const logFailedActivityAsync = async (
   category: string,
   errorCode: string,
   errorMessage: string,
-  details: Record<string, unknown>
+  details: Record<string, unknown>,
 ): Promise<void> => {
   try {
     await saveActivityLog({

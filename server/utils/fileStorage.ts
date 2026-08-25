@@ -504,7 +504,7 @@ const isLikelyVideoBinary = (buffer: Buffer): boolean => {
   // FLV
   if (containsAsciiAt(buffer, 0, 'FLV')) return true;
   // MPEG-TS
-  if (buffer[0] === 0x47 && (buffer.length < 188 || buffer[188] === 0x47)) return true;
+  if (buffer[0] === 0x47 && (buffer.length <= 188 || buffer[188] === 0x47)) return true;
   // MPEG-PS / VOB / MPG
   if (hasPrefix(buffer, [0x00, 0x00, 0x01, 0xba]) || hasPrefix(buffer, [0x00, 0x00, 0x01, 0xb3])) {
     return true;
@@ -561,7 +561,7 @@ export const assertFileContentMatchesCategory = (
   category: string,
   fileName: string,
   mimeType: string,
-  buffer: Buffer
+  buffer: Buffer,
 ): void => {
   const extension = getFileExtension(fileName);
   const normalizedMime = (mimeType || '').toLowerCase();

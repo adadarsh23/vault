@@ -74,12 +74,7 @@ const buildHelmetConfig = (): Parameters<typeof helmet>[0] => {
   const isProduction = process.env.NODE_ENV === 'production';
   const configuredOrigins = getAllowedCorsOrigins();
   const selfAndConfiguredOrigins = ["'self'", ...configuredOrigins];
-  const mediaAndImageSources = [
-    ...selfAndConfiguredOrigins,
-    'blob:',
-    'data:',
-    'https:',
-  ];
+  const mediaAndImageSources = [...selfAndConfiguredOrigins, 'blob:', 'data:', 'https:'];
 
   // Document & Office Viewers (Google Docs/Drive, Microsoft Office 365, Adobe, Mozilla PDF.js)
   const documentViewerSources = [
@@ -514,7 +509,7 @@ async function startServer() {
     if (skipMongoConnect) {
       phaseTimings.push({ name: 'MongoDB Init (skipped)', durationMs: 0 });
       logger.warn(
-        '[MONGO] SKIP_MONGO_CONNECT is enabled. Continuing startup without database connection.'
+        '[MONGO] SKIP_MONGO_CONNECT is enabled. Continuing startup without database connection.',
       );
     } else {
       startupAnimator.update('Connecting to MongoDB', 'Negotiating database session');
@@ -601,7 +596,7 @@ async function startServer() {
             'Upload-Offset',
           ],
           exposedHeaders: ['Location', 'Tus-Resumable', 'Upload-Offset', 'Upload-Length'],
-        })
+        }),
       );
       app.use(originProtection); // Enforce CDN-only access in production
       if (resolveCompressionEnabled()) {
@@ -774,7 +769,7 @@ async function startServer() {
     const port = await listenWithFallback(
       httpServer,
       '0.0.0.0',
-      resolvePort(process.env.PORT, 4000)
+      resolvePort(process.env.PORT, 4000),
     );
 
     // Finalize Startup
@@ -813,7 +808,7 @@ async function startServer() {
     // Graceful Shutdown
     const runShutdownPhase = async (
       phase: 'http_close' | 'mongo_disconnect' | 'socket_cleanup',
-      task: () => Promise<void> | void
+      task: () => Promise<void> | void,
     ) => {
       const startedAt = Date.now();
       logger.info('[SHUTDOWN] Phase started.', { phase });
@@ -889,7 +884,7 @@ async function startServer() {
   } catch (error) {
     startupAnimator.fail(
       'Startup failed',
-      error instanceof Error ? error.message : 'Unknown error'
+      error instanceof Error ? error.message : 'Unknown error',
     );
     logger.error('Failed to start server.', { error });
     exitProcess(1);

@@ -39,8 +39,7 @@ vi.mock('../../../store/integrityStore', () => ({
 }));
 
 vi.mock('../../../store/vaultStore', () => ({
-  useVaultStore: (selector: (state: typeof mockVaultStore) => unknown) =>
-    selector(mockVaultStore),
+  useVaultStore: (selector: (state: typeof mockVaultStore) => unknown) => selector(mockVaultStore),
 }));
 
 describe('VaultIntegrityAlarm Components (Modal & Banner)', () => {
@@ -117,7 +116,7 @@ describe('VaultIntegrityAlarm Components (Modal & Banner)', () => {
       fireEvent.click(detailsButton);
 
       expect(mockIntegrityStore.triggerTamperAlarm).toHaveBeenCalledWith(
-        mockIntegrityStore.lastAlarmPayload
+        mockIntegrityStore.lastAlarmPayload,
       );
     });
 

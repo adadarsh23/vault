@@ -1,5 +1,6 @@
 import { getDeviceId } from '../auth-session';
 import { logger } from '../logger';
+import { useActivityStore } from '../../store/activityStore';
 import { API_BASE_URL, fetchWithRetry, getAuthHeaders, runInParallelPool } from './core';
 
 const ACTIVITY_LOG_PAGE_SIZE = 1000;
@@ -52,7 +53,7 @@ export const uploadActivityLog = async (log: any): Promise<boolean> => {
           },
         }),
       },
-      'Activity Log Sync'
+      'Activity Log Sync',
     );
     return true;
   } catch (error) {
@@ -65,7 +66,7 @@ export const uploadActivityLog = async (log: any): Promise<boolean> => {
  * Syncs an array of logs to MongoDB via API using bounded parallel execution.
  */
 export const uploadLogsToCloud = async (logs: any[], concurrency = 4) => {
-  const { markAsSynced } = (await import('../../store/activityStore')).useActivityStore.getState();
+  const { markAsSynced } = useActivityStore.getState();
   const pendingLogs = logs.filter((log) => log.isSynced === false || log.isSynced === undefined);
   if (pendingLogs.length === 0) return;
 
@@ -79,7 +80,7 @@ export const uploadLogsToCloud = async (logs: any[], concurrency = 4) => {
         syncedIds.push(log.id);
       }
     },
-    concurrency
+    concurrency,
   );
 
   if (syncedIds.length > 0) {
@@ -99,7 +100,7 @@ export const downloadLogsFromCloud = async (): Promise<any[] | null> => {
       const response = await fetchWithRetry(
         `${API_BASE_URL}/api/vault/activity?limit=${ACTIVITY_LOG_PAGE_SIZE}&skip=${skip}`,
         { method: 'GET', headers: getAuthHeaders() },
-        'Logs Cloud Sync'
+        'Logs Cloud Sync',
       );
       const body = await response.json();
       const data = Array.isArray(body) ? body : body?.data;

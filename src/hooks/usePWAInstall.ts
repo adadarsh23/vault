@@ -22,7 +22,7 @@ const isStandaloneDisplayMode = (): boolean => {
       window.matchMedia?.('(display-mode: fullscreen)').matches;
 
     const legacyStandalone = Boolean(
-      (window.navigator as Navigator & { standalone?: boolean }).standalone
+      (window.navigator as Navigator & { standalone?: boolean }).standalone,
     );
 
     return Boolean(matchesStandalone || legacyStandalone);
@@ -63,7 +63,7 @@ export function usePWAInstall() {
   const [isReady, setIsReady] = useState(false);
   const [isStandalone, setIsStandalone] = useState(() => isStandaloneDisplayMode());
   const [isInstalled, setIsInstalled] = useState(
-    () => isStandaloneDisplayMode() || readPwaInstalledFlag()
+    () => isStandaloneDisplayMode() || readPwaInstalledFlag(),
   );
   const [isIOS, setIsIOS] = useState(false);
 

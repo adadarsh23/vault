@@ -65,7 +65,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         return 'error';
       }
       return 'connected';
-    }
+    },
   );
 
   React.useEffect(() => {
@@ -103,14 +103,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       className={cn(
         'relative flex h-14 sm:h-16 w-full items-center justify-between border-b border-sidebar-border bg-sidebar-bg/60 px-2 sm:px-4 lg:px-6 backdrop-blur-xl transition-all duration-200 select-none',
         showNotifications ? 'z-[100]' : 'z-40',
-        sidebarPosition === 'right' && 'flex-row-reverse'
+        sidebarPosition === 'right' && 'flex-row-reverse',
       )}
     >
       {/* Mobile Branding, Active Heading & Sidebar Toggle */}
       <div
         className={cn(
           'flex items-center gap-1.5 sm:gap-2.5 lg:hidden min-w-0 max-w-[48vw] sm:max-w-[55vw]',
-          sidebarPosition === 'right' && 'flex-row-reverse'
+          sidebarPosition === 'right' && 'flex-row-reverse',
         )}
       >
         <button
@@ -140,7 +140,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <div
         className={cn(
           'hidden lg:flex items-center gap-3 min-w-0',
-          sidebarPosition === 'right' && 'flex-row-reverse'
+          sidebarPosition === 'right' && 'flex-row-reverse',
         )}
       >
         <button
@@ -153,7 +153,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <PanelLeft
             className={cn(
               'h-5 w-5 text-text/80 transition-transform duration-200 hover:text-text',
-              sidebarPosition === 'right' && 'rotate-180'
+              sidebarPosition === 'right' && 'rotate-180',
             )}
           />
         </button>
@@ -166,14 +166,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <div
         className={cn(
           'flex items-center gap-1 sm:gap-1.5 md:gap-2 lg:gap-3 ml-auto min-w-0 shrink-0',
-          sidebarPosition === 'right' && 'flex-row-reverse mr-auto ml-0'
+          sidebarPosition === 'right' && 'flex-row-reverse mr-auto ml-0',
         )}
       >
         {/* Tablet Quick Tab Switcher Pill (shown on medium screens, hidden on phones) */}
         <div
           className={cn(
             'hidden md:flex lg:hidden items-center gap-0.5 text-xs font-medium text-text/60 max-w-[140px] truncate',
-            sidebarPosition === 'right' && 'flex-row-reverse'
+            sidebarPosition === 'right' && 'flex-row-reverse',
           )}
         >
           <button
@@ -236,7 +236,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             'relative flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 active:scale-95',
             isDiscreetMode
               ? 'border-amber-400/50 bg-amber-500/20 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.35)] hover:bg-amber-500/30 focus-visible:ring-amber-400/40'
-              : 'border-text/15 bg-text/5 text-text/80 hover:bg-text/10 hover:border-text/30 hover:text-text focus-visible:ring-text/25'
+              : 'border-text/15 bg-text/5 text-text/80 hover:bg-text/10 hover:border-text/30 hover:text-text focus-visible:ring-text/25',
           )}
           onClick={toggleDiscreetMode}
           aria-label={
@@ -327,7 +327,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               connectionStatus === 'connected' &&
                 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]',
               connectionStatus === 'error' && 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]',
-              connectionStatus === 'loading' && 'bg-amber-500 animate-pulse'
+              connectionStatus === 'loading' && 'bg-amber-500 animate-pulse',
             )}
             title={
               connectionStatus === 'connected'

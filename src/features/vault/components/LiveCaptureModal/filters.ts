@@ -33,40 +33,7 @@ import {
   CloudFog,
   Coffee,
 } from 'lucide-react';
-
-export type CameraFilter =
-  | 'none'
-  | 'document'
-  | 'noir'
-  | 'vivid'
-  | 'warm'
-  | 'cyberpunk'
-  | 'moe'
-  | 'sepia'
-  | 'cool'
-  | 'dramatic'
-  | 'emerald'
-  | 'sunset'
-  | 'vintage-film'
-  | 'cinema-teal'
-  | 'matte-black'
-  | 'lavender-dream'
-  | 'cyber-neon'
-  | 'desert-gold'
-  | 'arctic-frost'
-  | 'polaroid'
-  | 'infrared'
-  | 'night-vision'
-  | 'golden-hour'
-  | 'matrix-green'
-  | 'deep-ocean'
-  | 'ruby-noir'
-  | 'high-key-bw'
-  | 'pastel-bloom'
-  | 'chroma-synth'
-  | 'kodak-gold'
-  | 'midnight-fog'
-  | 'warm-espresso';
+import { CameraFilter } from './types';
 
 export interface FilterPreset {
   id: CameraFilter;
@@ -295,7 +262,8 @@ export const CAMERA_FILTERS: readonly FilterPreset[] = [
     label: 'Night Vision',
     shortLabel: 'NVG',
     description: 'Tactical green phosphor night vision with boosted low-light gain',
-    cssFilter: 'grayscale(100%) sepia(100%) hue-rotate(85deg) saturate(350%) brightness(125%) contrast(140%)',
+    cssFilter:
+      'grayscale(100%) sepia(100%) hue-rotate(85deg) saturate(350%) brightness(125%) contrast(140%)',
     badgeColor: 'bg-green-600/20 text-green-300 border-green-500/40',
     iconColor: 'text-green-300',
     icon: Scan,
@@ -335,7 +303,8 @@ export const CAMERA_FILTERS: readonly FilterPreset[] = [
     label: 'Ruby Noir',
     shortLabel: 'Ruby',
     description: 'High-contrast tactical darkroom monochrome with intense crimson red hue',
-    cssFilter: 'grayscale(100%) sepia(100%) hue-rotate(320deg) saturate(400%) contrast(145%) brightness(96%)',
+    cssFilter:
+      'grayscale(100%) sepia(100%) hue-rotate(320deg) saturate(400%) contrast(145%) brightness(96%)',
     badgeColor: 'bg-rose-700/20 text-rose-200 border-rose-600/40',
     iconColor: 'text-rose-400',
     icon: Gem,

@@ -106,7 +106,7 @@ export const UniversalSyncWidget: React.FC = () => {
             window.dispatchEvent(
               new CustomEvent('vault-cloud-health-status', {
                 detail: { status: 'connected', dbName: newDbName },
-              })
+              }),
             );
           }
         } else if (isMountedRef.current) {
@@ -340,7 +340,7 @@ export const UniversalSyncWidget: React.FC = () => {
                       ? 'bg-blue-500/10 text-blue-500'
                       : isError
                         ? 'bg-red-500/10 text-red-500'
-                        : 'bg-emerald-500/10 text-emerald-500'
+                        : 'bg-emerald-500/10 text-emerald-500',
                   )}
                 >
                   {isSyncing ? (
@@ -379,7 +379,7 @@ export const UniversalSyncWidget: React.FC = () => {
                   ? 'bg-blue-500/5 border-blue-500/20 text-blue-500'
                   : isError
                     ? 'bg-red-500/5 border-red-500/20 text-red-500'
-                    : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-600 dark:text-emerald-400',
               )}
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -390,7 +390,7 @@ export const UniversalSyncWidget: React.FC = () => {
                       ? 'bg-blue-500 animate-ping'
                       : isError
                         ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'
-                        : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]'
+                        : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]',
                   )}
                 />
                 <span className="truncate">
@@ -447,7 +447,7 @@ export const UniversalSyncWidget: React.FC = () => {
                   'flex-1 flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl text-xs font-semibold shadow-sm transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/20 touch-manipulation',
                   isSyncing
                     ? 'bg-text/10 text-text/40 cursor-not-allowed'
-                    : 'bg-text text-bg hover:opacity-90 cursor-pointer shadow-md'
+                    : 'bg-text text-bg hover:opacity-90 cursor-pointer shadow-md',
                 )}
               >
                 <RefreshCw className={cn('h-3.5 w-3.5 shrink-0', isSyncing && 'animate-spin')} />
@@ -472,7 +472,7 @@ export const UniversalSyncWidget: React.FC = () => {
               ? 'bg-sidebar-bg/95 border-red-500/30 text-red-500 hover:border-red-500/50 shadow-red-500/5'
               : isSyncing
                 ? 'bg-sidebar-bg/95 border-blue-500/30 text-blue-500 hover:border-blue-500/50 shadow-blue-500/5'
-                : 'bg-sidebar-bg/95 border-text/15 text-text/80 hover:text-text hover:border-text/30'
+                : 'bg-sidebar-bg/95 border-text/15 text-text/80 hover:text-text hover:border-text/30',
         )}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
@@ -503,7 +503,7 @@ export const UniversalSyncWidget: React.FC = () => {
             <Database
               className={cn(
                 'h-4 w-4 transition-colors',
-                isOpen ? 'text-bg' : 'text-text/70 group-hover:text-text'
+                isOpen ? 'text-bg' : 'text-text/70 group-hover:text-text',
               )}
             />
           )}
@@ -518,7 +518,7 @@ export const UniversalSyncWidget: React.FC = () => {
                   ? 'bg-blue-500 animate-ping'
                   : isError
                     ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]'
-                    : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]'
+                    : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]',
             )}
           />
         </div>
@@ -527,7 +527,7 @@ export const UniversalSyncWidget: React.FC = () => {
         <span
           className={cn(
             'text-xs font-semibold tracking-tight truncate max-w-[120px] hidden sm:inline-block',
-            isOpen ? 'text-bg' : 'text-text'
+            isOpen ? 'text-bg' : 'text-text',
           )}
         >
           {isSyncing ? 'Syncing...' : isError ? 'Offline' : 'All Synced'}
@@ -537,7 +537,7 @@ export const UniversalSyncWidget: React.FC = () => {
         <ChevronDown
           className={cn(
             'h-3.5 w-3.5 transition-transform duration-200 opacity-60 shrink-0',
-            isOpen ? 'rotate-180 text-bg opacity-100' : 'group-hover:opacity-100'
+            isOpen ? 'rotate-180 text-bg opacity-100' : 'group-hover:opacity-100',
           )}
         />
       </motion.button>

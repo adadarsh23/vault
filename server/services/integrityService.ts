@@ -56,7 +56,7 @@ class IntegrityService {
   async buildUserMerkleTree(
     userId: string,
     username: string,
-    algorithm: HashAlgorithm = 'blake3'
+    algorithm: HashAlgorithm = 'blake3',
   ): Promise<{ tree: MerkleTree; rootHash: string; leafItems: MerkleLeafItem[] }> {
     const DynamicVaultModel = getVaultItemModel(username);
     const rawItems = await DynamicVaultModel.find({
@@ -83,7 +83,7 @@ class IntegrityService {
       } else if (item.file?.filePath) {
         contentHash = await computeBufferHash(
           `${item.file.filePath}:${item.file.size || 0}`,
-          algorithm
+          algorithm,
         );
       } else {
         contentHash = await computeBufferHash(item.itemId, algorithm);
@@ -112,7 +112,7 @@ class IntegrityService {
         totalLeaves: tree.getLeafCount(),
         treeDepth: tree.getDepth(),
       },
-      { upsert: true, returnDocument: 'after' }
+      { upsert: true, returnDocument: 'after' },
     );
 
     return { tree, rootHash, leafItems };
@@ -160,7 +160,7 @@ class IntegrityService {
     userId: string,
     username: string,
     ip: string = '127.0.0.1',
-    algorithm: HashAlgorithm = 'blake3'
+    algorithm: HashAlgorithm = 'blake3',
   ): Promise<AuditResult> {
     const auditId = `audit_${randomUUID()}`;
     const DynamicVaultModel = getVaultItemModel(username);
@@ -257,7 +257,7 @@ class IntegrityService {
         '🚨 Cryptographic Tamper Alarm Triggered',
         `Silent bit-flip or data corruption was detected in ${corruptedItems.length} vault item(s). Instant containment protocol initiated.`,
         { corruptedItems, auditId, severity: 'critical' },
-        username
+        username,
       );
     }
 
@@ -294,7 +294,7 @@ class IntegrityService {
           },
         },
       },
-      { upsert: true }
+      { upsert: true },
     );
 
     return {
@@ -316,7 +316,7 @@ class IntegrityService {
     userId: string,
     username: string,
     itemId: string,
-    algorithm: HashAlgorithm = 'blake3'
+    algorithm: HashAlgorithm = 'blake3',
   ): Promise<MerkleProof | null> {
     const { tree } = await this.buildUserMerkleTree(userId, username, algorithm);
     return tree.generateProof(itemId);
@@ -334,7 +334,7 @@ class IntegrityService {
       expectedHash: string;
       actualHash: string;
       details?: Record<string, any>;
-    }
+    },
   ): Promise<void> {
     logger.warn(`[CLIENT REPORTED TAMPER] User ${username} item ${report.itemId}`, {
       userId,
@@ -365,7 +365,7 @@ class IntegrityService {
       '🚨 Client Bit-Flip Alarm Reported',
       `Client integrity verification failed for item ${report.itemId}. A bit-flip mismatch was reported.`,
       { report, severity: 'critical' },
-      username
+      username,
     );
   }
 }

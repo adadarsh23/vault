@@ -459,7 +459,7 @@ const createApiRequestError = (
     response?: Response;
     code?: string;
     cause?: unknown;
-  }
+  },
 ): ApiRequestError => {
   const error = new Error(readErrorMessage(input?.payload, fallbackMessage)) as ApiRequestError;
   error.status = input?.response?.status;
@@ -473,14 +473,14 @@ const createApiRequestError = (
 const fetchAuthJson = async (
   input: string,
   init: RequestInit,
-  fallbackMessage: string
+  fallbackMessage: string,
 ): Promise<{ response: Response; payload: AuthResponse | null }> =>
   fetchTypedAuthJson<LoginAuthData>(input, init, fallbackMessage);
 
 const fetchTypedAuthJson = async <TData>(
   input: string,
   init: RequestInit,
-  fallbackMessage: string
+  fallbackMessage: string,
 ): Promise<{ response: Response; payload: AuthResponse<TData> | null }> => {
   let response: Response;
   const requestMethod = (init.method || 'GET').toUpperCase();
@@ -542,7 +542,7 @@ export const fetchVaultSalt = async (username: string): Promise<string> => {
         ...DEFAULT_BROWSER_AUTH_HEADERS,
       },
     },
-    'Failed to fetch cryptographic salt.'
+    'Failed to fetch cryptographic salt.',
   );
 
   if (!payload?.success || typeof payload.data?.salt !== 'string') {
@@ -558,7 +558,7 @@ const sendAuthRequest = async (
   password: string,
   captchaToken: string,
   masterKey?: string,
-  pqcSalt?: string
+  pqcSalt?: string,
 ) => {
   const { response, payload } = await fetchAuthJson(
     `${API_BASE_URL}/api/auth${path}`,
@@ -578,7 +578,7 @@ const sendAuthRequest = async (
         captchaToken: normalizeCaptchaToken(captchaToken),
       }),
     },
-    'Authentication failed.'
+    'Authentication failed.',
   );
 
   if (!payload?.success) {
@@ -605,7 +605,7 @@ export const authenticateVaultSession = async (
   password: string,
   captchaToken: string,
   masterKey?: string,
-  options?: { rememberMe?: boolean; pqcSalt?: string }
+  options?: { rememberMe?: boolean; pqcSalt?: string },
 ) => {
   const data = await sendAuthRequest(
     mode === 'register' ? '/register' : '/login',
@@ -613,7 +613,7 @@ export const authenticateVaultSession = async (
     password,
     captchaToken,
     masterKey,
-    options?.pqcSalt
+    options?.pqcSalt,
   );
   if (data.token) {
     setAuthToken(data.token, {
@@ -630,7 +630,7 @@ export const authenticateVaultSession = async (
 
 export const checkExactUsername = async (
   username: string,
-  options?: { signal?: AbortSignal }
+  options?: { signal?: AbortSignal },
 ): Promise<UsernameExactMatchResponse> => {
   const { response, payload } = await fetchTypedAuthJson<UsernameExactMatchResponse>(
     `${API_BASE_URL}/api/auth/username-check?username=${encodeURIComponent(username)}`,
@@ -639,7 +639,7 @@ export const checkExactUsername = async (
       credentials: 'include',
       signal: options?.signal,
     },
-    'Username check failed.'
+    'Username check failed.',
   );
 
   if (!payload?.success || !payload.data) {
@@ -657,7 +657,7 @@ export const verify2FALogin = async (
   userId: string,
   token: string,
   mfaToken: string,
-  captchaToken: string
+  captchaToken: string,
 ) => {
   if (!mfaToken?.trim()) {
     throw createApiRequestError('Authentication session expired. Please sign in again.', {
@@ -682,7 +682,7 @@ export const verify2FALogin = async (
         captchaToken: captchaToken ? normalizeCaptchaToken(captchaToken) : undefined,
       }),
     },
-    '2FA verification failed.'
+    '2FA verification failed.',
   );
 
   if (!payload?.success) {
@@ -720,7 +720,7 @@ export const setup2FA = async (): Promise<TwoFactorSetupResponse> => {
         Authorization: `Bearer ${getAuthToken() || ''}`,
       },
     },
-    'Failed to initiate 2FA setup.'
+    'Failed to initiate 2FA setup.',
   );
 
   if (!payload?.success) {
@@ -753,7 +753,7 @@ export const verify2FASetup = async (token: string): Promise<TwoFactorVerifyResp
       },
       body: JSON.stringify({ token }),
     },
-    'Failed to verify 2FA OTP.'
+    'Failed to verify 2FA OTP.',
   );
 
   if (!payload?.success) {
@@ -783,7 +783,7 @@ export const disable2FA = async (token: string) => {
       },
       body: JSON.stringify({ token }),
     },
-    'Failed to disable 2FA.'
+    'Failed to disable 2FA.',
   );
 
   if (!payload?.success) {
@@ -806,7 +806,7 @@ export const refreshVaultSession = async () => {
           method: 'POST',
           credentials: 'include',
         },
-        'Session refresh failed.'
+        'Session refresh failed.',
       );
 
       if (!payload?.success || !payload.data?.token) {
@@ -939,7 +939,7 @@ export const revokeVaultDeviceSession = async (input: {
       },
       body: JSON.stringify(input),
     },
-    'Failed to revoke device session.'
+    'Failed to revoke device session.',
   );
 
   if (!payload?.success) {
@@ -967,7 +967,7 @@ export const revokeVaultDeviceSession = async (input: {
 export const changeAccountPassword = async (
   currentPassword: string,
   newPassword: string,
-  captchaToken: string
+  captchaToken: string,
 ) => {
   const { response, payload } = await fetchAuthJson(
     `${API_BASE_URL}/api/auth/change-password`,
@@ -984,7 +984,7 @@ export const changeAccountPassword = async (
         captchaToken: normalizeCaptchaToken(captchaToken),
       }),
     },
-    'Failed to update account password.'
+    'Failed to update account password.',
   );
 
   if (!payload?.success) {
@@ -1012,7 +1012,7 @@ export const verifyMasterKeyChangeCaptcha = async (captchaToken: string) => {
         captchaToken: normalizeCaptchaToken(captchaToken),
       }),
     },
-    'Failed to verify CAPTCHA challenge.'
+    'Failed to verify CAPTCHA challenge.',
   );
 
   if (!payload?.success) {
@@ -1039,7 +1039,7 @@ export const verifyCloudUnlockCaptcha = async (captchaToken: string) => {
         captchaToken: normalizeCaptchaToken(captchaToken),
       }),
     },
-    'Failed to verify CAPTCHA challenge.'
+    'Failed to verify CAPTCHA challenge.',
   );
 
   if (!payload?.success) {
@@ -1066,7 +1066,7 @@ export const getAuthenticatedProfile = async (): Promise<AuthenticatedProfile> =
           Authorization: `Bearer ${getAuthToken() || ''}`,
         },
       },
-      'Failed to load account sessions.'
+      'Failed to load account sessions.',
     );
     response = request.response;
     payload = request.payload;
@@ -1144,7 +1144,7 @@ export const updateAuthenticatedProfile = async (input: {
           },
           body: JSON.stringify(normalizedInput),
         },
-        'Failed to update profile.'
+        'Failed to update profile.',
       );
 
       if (
@@ -1190,7 +1190,7 @@ export const updateAuthenticatedProfile = async (input: {
         });
         const networkErr = createApiRequestError(
           'Profile saved locally. Changes will sync when the server is reachable.',
-          { code: 'SAVED_LOCALLY', cause }
+          { code: 'SAVED_LOCALLY', cause },
         );
         throw networkErr;
       }
@@ -1228,7 +1228,7 @@ export const updateAuthenticatedProfile = async (input: {
 
 export const renameVaultDeviceSession = async (
   deviceId: string,
-  deviceName: string
+  deviceName: string,
 ): Promise<DeviceRenameResponse> => {
   const { response, payload } = await fetchTypedAuthJson<DeviceRenameResponse>(
     `${API_BASE_URL}/api/auth/sessions/device-name`,
@@ -1242,7 +1242,7 @@ export const renameVaultDeviceSession = async (
       },
       body: JSON.stringify({ deviceId, deviceName }),
     },
-    'Failed to update device name.'
+    'Failed to update device name.',
   );
 
   if (!payload?.success) {

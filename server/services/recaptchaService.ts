@@ -40,7 +40,7 @@ const resolveRecaptchaSecret = (): string => {
     logger.error('[SECURITY] RECAPTCHA_SECRET_KEY is not configured.');
     throw AppError.internal(
       'Security verification is temporarily unavailable.',
-      'CAPTCHA_CONFIG_MISSING'
+      'CAPTCHA_CONFIG_MISSING',
     );
   }
   return secret;
@@ -95,7 +95,7 @@ export const readRecaptchaTokenFromBody = (rawValue: unknown): string => {
   if (typeof rawValue !== 'string') {
     throw AppError.badRequest(
       'CAPTCHA token is missing. Please complete the challenge.',
-      'CAPTCHA_TOKEN_MISSING'
+      'CAPTCHA_TOKEN_MISSING',
     );
   }
 
@@ -104,14 +104,14 @@ export const readRecaptchaTokenFromBody = (rawValue: unknown): string => {
   if (!token) {
     throw AppError.badRequest(
       'CAPTCHA token is missing. Please complete the challenge.',
-      'CAPTCHA_TOKEN_MISSING'
+      'CAPTCHA_TOKEN_MISSING',
     );
   }
 
   if (token.length < MIN_TOKEN_LENGTH || token.length > MAX_TOKEN_LENGTH) {
     throw AppError.badRequest(
       'CAPTCHA token is malformed. Please try again.',
-      'CAPTCHA_TOKEN_INVALID'
+      'CAPTCHA_TOKEN_INVALID',
     );
   }
 
@@ -201,7 +201,7 @@ export const verifyRecaptchaToken = async (input: {
 
   if (isDevEnvironment && input.token && input.token.length >= MIN_TOKEN_LENGTH) {
     logger.warn(
-      '[SECURITY] reCAPTCHA siteverify endpoints unreachable in local dev environment; allowing local verification fallback.'
+      '[SECURITY] reCAPTCHA siteverify endpoints unreachable in local dev environment; allowing local verification fallback.',
     );
     return {
       success: true,
@@ -215,6 +215,6 @@ export const verifyRecaptchaToken = async (input: {
   throw new AppError(
     503,
     'CAPTCHA_VERIFY_UNAVAILABLE',
-    'Security verification is temporarily unavailable. Please try again.'
+    'Security verification is temporarily unavailable. Please try again.',
   );
 };

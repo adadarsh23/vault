@@ -112,7 +112,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         (meta as HTMLMetaElement).content = themeColor;
       });
     },
-    [isBrowser]
+    [isBrowser],
   );
 
   // Calculate coordinates and max radius to cover all 4 screen corners on any device
@@ -193,7 +193,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }, 520);
       });
     },
-    [isBrowser, getOriginAndRadius, triggerThemeWave, updateAttributes]
+    [isBrowser, getOriginAndRadius, triggerThemeWave, updateAttributes],
   );
 
   // Animate theme change
@@ -255,7 +255,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
                 pseudoElement: '::view-transition-new(root)',
                 fill: 'forwards',
-              }
+              },
             );
 
             animation.finished.finally(() => {
@@ -275,7 +275,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateAttributes(isDark);
       }
     },
-    [isBrowser, getOriginAndRadius, runFallbackAnimation, triggerThemeWave, updateAttributes]
+    [isBrowser, getOriginAndRadius, runFallbackAnimation, triggerThemeWave, updateAttributes],
   );
 
   // Handle theme changes

@@ -27,15 +27,15 @@ const DEFAULT_MULTIPART_TMP_ROOT = path.join(process.cwd(), 'vault-tmp', 'multip
 const MULTIPART_ROOT = path.resolve(process.env.MULTIPART_TMP_ROOT || DEFAULT_MULTIPART_TMP_ROOT);
 const MULTIPART_PART_SIZE_BYTES = Math.max(
   5 * 1024 * 1024,
-  Number(process.env.MULTIPART_PART_SIZE_BYTES || 8 * 1024 * 1024)
+  Number(process.env.MULTIPART_PART_SIZE_BYTES || 8 * 1024 * 1024),
 );
 const MAX_ACTIVE_MULTIPART_SESSIONS_PER_USER = Math.max(
   1,
-  Number(process.env.MAX_ACTIVE_MULTIPART_SESSIONS_PER_USER || 4)
+  Number(process.env.MAX_ACTIVE_MULTIPART_SESSIONS_PER_USER || 4),
 );
 const MULTIPART_SESSION_TTL_MS = Math.max(
   5 * 60 * 1000,
-  Number(process.env.MULTIPART_SESSION_TTL_MS || 2 * 60 * 60 * 1000)
+  Number(process.env.MULTIPART_SESSION_TTL_MS || 2 * 60 * 60 * 1000),
 );
 const MULTIPART_MAX_FILE_SIZE_BYTES = maxUploadFileSizeBytes;
 const MULTIPART_MAX_PARTS = Math.max(1, Number(process.env.MULTIPART_MAX_PARTS || 2000));
@@ -100,7 +100,7 @@ const LARGE_UPLOAD_BYTES = 100 * 1024 * 1024;
 const recordUploadAnomaly = (
   userId: string,
   kind: 'invalid_type' | 'hash_mismatch' | 'rapid_large_upload',
-  context: Record<string, unknown> = {}
+  context: Record<string, unknown> = {},
 ) => {
   const now = Date.now();
   const state = uploadAnomalyCounters.get(userId);
@@ -234,17 +234,17 @@ const cleanupExpiredMultipartSessions = async (userId: string) => {
             {
               sessionFile,
               error: sessErr,
-            }
+            },
           );
           await safeRm(path.join(userDir, entry.name));
         }
-      })
+      }),
   );
 };
 
 const loadMultipartSession = async (
   userId: string,
-  uploadId: string
+  uploadId: string,
 ): Promise<MultipartSessionRecord | null> => {
   if (MEMORY_ONLY_MULTIPART_UPLOADS) {
     return multipartMemorySessions.get(multipartMemoryKey(userId, uploadId)) ?? null;
@@ -275,7 +275,7 @@ const saveMultipartSession = async (session: MultipartSessionRecord): Promise<vo
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(
     multipartSessionPath(session.userId, session.uploadId),
-    JSON.stringify(session)
+    JSON.stringify(session),
   );
 };
 
@@ -283,7 +283,7 @@ const mergeAndSaveMultipartPartMetadata = async (
   sessionOwnerUserId: string,
   uploadId: string,
   partNumber: number,
-  metadata: { size: number; sha256: string }
+  metadata: { size: number; sha256: string },
 ): Promise<MultipartSessionRecord> => {
   const latest = (await loadMultipartSession(sessionOwnerUserId, uploadId)) || null;
   if (!latest) {
@@ -305,7 +305,7 @@ const getMultipartPartCount = (session: MultipartSessionRecord): number =>
 
 const getExpectedMultipartPartSize = (
   session: MultipartSessionRecord,
-  partNumber: number
+  partNumber: number,
 ): number => {
   const partCount = getMultipartPartCount(session);
   if (partNumber < 1 || partNumber > partCount) {
@@ -326,14 +326,14 @@ const listActiveMultipartSessions = async (userId: string): Promise<MultipartSes
   const sessions = await Promise.all(
     entries
       .filter((entry) => entry.isDirectory())
-      .map((entry) => loadMultipartSession(userId, entry.name))
+      .map((entry) => loadMultipartSession(userId, entry.name)),
   );
   return sessions.filter((session): session is MultipartSessionRecord => Boolean(session));
 };
 
 const findMultipartSessionForIdentity = async (
   userId: string,
-  uploadId: string
+  uploadId: string,
 ): Promise<{ session: MultipartSessionRecord; sessionOwnerUserId: string } | null> => {
   const exact = await loadMultipartSession(userId, uploadId);
   if (exact) {
@@ -372,7 +372,7 @@ export const startMultipartUpload = async (req: AuthenticatedRequest, res: expre
   if (!extension) {
     throw AppError.badRequest(
       'File extension is required for multipart upload.',
-      'MISSING_FILE_EXTENSION'
+      'MISSING_FILE_EXTENSION',
     );
   }
   if (category === 'photo' && !(mimeType || '').toLowerCase().startsWith('image/')) {
@@ -411,7 +411,7 @@ export const startMultipartUpload = async (req: AuthenticatedRequest, res: expre
           partSize: existing.partSize,
           uploadedParts: Object.keys(existing.parts).map((part) => Number(part)),
         },
-        'Multipart upload resumed'
+        'Multipart upload resumed',
       );
     }
   }
@@ -420,7 +420,7 @@ export const startMultipartUpload = async (req: AuthenticatedRequest, res: expre
   if (activeSessions.length >= MAX_ACTIVE_MULTIPART_SESSIONS_PER_USER) {
     throw AppError.badRequest(
       'Too many active uploads. Complete or cancel existing uploads first.',
-      'TOO_MANY_ACTIVE_UPLOADS'
+      'TOO_MANY_ACTIVE_UPLOADS',
     );
   }
 
@@ -447,7 +447,7 @@ export const startMultipartUpload = async (req: AuthenticatedRequest, res: expre
   return sendSuccess(
     res,
     { uploadId, partSize: MULTIPART_PART_SIZE_BYTES, uploadedParts: [] },
-    'Multipart upload initialized'
+    'Multipart upload initialized',
   );
 };
 
@@ -492,12 +492,12 @@ export const uploadMultipartPart = async (req: AuthenticatedRequest, res: expres
   if (MEMORY_ONLY_MULTIPART_UPLOADS) {
     multipartMemoryParts.set(
       multipartPartMemoryKey(sessionOwnerUserId, uploadId, partNumber),
-      Buffer.from(partBuffer)
+      Buffer.from(partBuffer),
     );
   } else {
     const partFile = path.join(
       multipartPartsDir(sessionOwnerUserId, uploadId),
-      `${partNumber}.part`
+      `${partNumber}.part`,
     );
     await fs.mkdir(path.dirname(partFile), { recursive: true });
     await fs.writeFile(partFile, partBuffer);
@@ -506,12 +506,12 @@ export const uploadMultipartPart = async (req: AuthenticatedRequest, res: expres
     sessionOwnerUserId,
     uploadId,
     partNumber,
-    { size: partBuffer.length, sha256: computed }
+    { size: partBuffer.length, sha256: computed },
   );
   return sendSuccess(
     res,
     { uploadId, partNumber, uploadedParts: Object.keys(persisted.parts).length },
-    'Part uploaded'
+    'Part uploaded',
   );
 };
 
@@ -532,7 +532,7 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
   const uploadedPartNumbers = new Set(
     Object.keys(session.parts || {})
       .map((part) => Number.parseInt(part, 10))
-      .filter(Number.isFinite)
+      .filter(Number.isFinite),
   );
   if (uploadedPartNumbers.size < partCount) {
     throw AppError.badRequest('Upload is missing one or more parts.', 'MISSING_UPLOAD_PART');
@@ -545,7 +545,7 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
     let data: Buffer;
     if (MEMORY_ONLY_MULTIPART_UPLOADS) {
       const partData = multipartMemoryParts.get(
-        multipartPartMemoryKey(sessionOwnerUserId, uploadId, i)
+        multipartPartMemoryKey(sessionOwnerUserId, uploadId, i),
       );
       if (!partData) {
         throw AppError.badRequest(`Missing part ${i}.`, 'MISSING_UPLOAD_PART');
@@ -586,7 +586,7 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
       session.category,
       session.fileName,
       session.mimeType,
-      finalBuffer
+      finalBuffer,
     );
   }
 
@@ -631,7 +631,7 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
     res,
     { ...normalizedResult, uploadId, sha256: finalHash },
     'Multipart file uploaded to vault successfully',
-    201
+    201,
   );
 };
 
@@ -707,11 +707,11 @@ export const uploadVaultFile = async (req: AuthenticatedRequest, res: express.Re
       getUserId(req),
       getUsername(req),
       filePath,
-      outputDir
+      outputDir,
     ).catch((err) =>
       logger.error(`Background transcoding failed for ${(result as any).itemId}`, {
         err,
-      })
+      }),
     );
   }
 
@@ -741,7 +741,7 @@ export const upsertVaultEntry = async (req: AuthenticatedRequest, res: express.R
     res,
     result,
     `Vault entry ${itemId ? 'updated' : 'created'} successfully`,
-    itemId ? 200 : 201
+    itemId ? 200 : 201,
   );
 };
 
@@ -788,7 +788,7 @@ export const saveUserActivityLog = async (req: AuthenticatedRequest, res: expres
 
 export const getUserActivityLogsController = async (
   req: AuthenticatedRequest,
-  res: express.Response
+  res: express.Response,
 ) => {
   const limit = req.query.limit ? parseInt(req.query.limit as string) : 500;
   const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;

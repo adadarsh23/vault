@@ -36,7 +36,7 @@ describe('updateProfileSchema', () => {
     });
 
     expect(parsed.profilePhoto).toBe(
-      'http://localhost:4000/api/avatar/raw/6a6f318fc96229128b86b05f/9084394ec33895a6.avif'
+      'http://localhost:4000/api/avatar/raw/6a6f318fc96229128b86b05f/9084394ec33895a6.avif',
     );
   });
 

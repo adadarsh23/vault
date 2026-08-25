@@ -1,7 +1,7 @@
 {
   "name": "Vault - Secure Storage",
   "short_name": "Vault",
-  "description": "Securely store your files, notes, and sensitive data with end-to-end peace of mind.",
+  "description": "Secure encrypted vault for storing photos, videos, notes, and passwords with strong client-side encryption.",
   "start_url": ".",
   "id": "/",
   "scope": "/",

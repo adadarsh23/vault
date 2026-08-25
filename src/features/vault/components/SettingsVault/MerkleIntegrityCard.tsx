@@ -5,7 +5,6 @@ import {
   Check,
   RefreshCw,
   Zap,
-  CheckCircle2,
   ShieldCheck,
   Database,
   Layers,
@@ -25,7 +24,6 @@ import { SETTINGS_PANEL, SETTINGS_PANEL_SOFT } from './Utils';
 export const MerkleIntegrityCard: React.FC = memo(() => {
   const items = useVaultStore((state) => state.items);
   const rootHash = useIntegrityStore((state) => state.rootHash);
-  const algorithm = useIntegrityStore((state) => state.algorithm);
   const totalLeaves = useIntegrityStore((state) => state.totalLeaves);
   const treeDepth = useIntegrityStore((state) => state.treeDepth);
   const lastAuditAt = useIntegrityStore((state) => state.lastAuditAt);
@@ -186,15 +184,6 @@ export const MerkleIntegrityCard: React.FC = memo(() => {
                 </p>
               </div>
             </div>
-
-            {/* <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <span className="inline-flex items-center rounded-md bg-blue-500/10 dark:bg-blue-500/20 px-2 py-1 text-[11px] sm:text-xs font-bold text-blue-600 dark:text-blue-400 border border-blue-500/30">
-                Algorithm: {algorithm.toUpperCase()}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-1 text-[11px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> Immutable
-              </span>
-            </div> */}
           </div>
 
           {/* Root Hash Display Box */}

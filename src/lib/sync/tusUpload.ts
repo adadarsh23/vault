@@ -65,7 +65,7 @@ async function encryptChunk(chunkData: Uint8Array, cryptoKey: CryptoKey): Promis
       additionalData: AES_GCM_AAD.buffer as ArrayBuffer,
     },
     cryptoKey,
-    chunkData.buffer as ArrayBuffer
+    chunkData.buffer as ArrayBuffer,
   );
 
   const encrypted = new Uint8Array(iv.length + ciphertext.byteLength);
@@ -82,7 +82,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * Uses dual-pointer offset tracking to separate raw unencrypted file slicing from server encrypted bytes.
  */
 export async function uploadFileTus(
-  options: TusUploadOptions
+  options: TusUploadOptions,
 ): Promise<{ uploadId: string; location: string }> {
   const {
     file,

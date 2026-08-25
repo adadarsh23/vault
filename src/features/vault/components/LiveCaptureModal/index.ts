@@ -10,5 +10,3 @@ export * from './QRScannerOverlay';
 export * from './DualCameraOverlay';
 export * from './PhotoEditor';
 export * from './VideoEditor';
-
-

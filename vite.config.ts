@@ -35,7 +35,7 @@ const toNumber = (value: string | undefined, fallback: number): number => {
 
 const parseSourcemap = (
   value: string | undefined,
-  fallback: boolean | 'inline' | 'hidden'
+  fallback: boolean | 'inline' | 'hidden',
 ): boolean | 'inline' | 'hidden' => {
   if (value == null || value.trim() === '') {
     return fallback;
@@ -57,7 +57,7 @@ const parseSourcemap = (
 
 const parseMinify = (
   value: string | undefined,
-  fallback: boolean | 'terser' | 'esbuild' | 'oxc'
+  fallback: boolean | 'terser' | 'esbuild' | 'oxc',
 ): boolean | 'terser' | 'esbuild' | 'oxc' => {
   if (value == null || value.trim() === '') {
     return fallback;
@@ -259,36 +259,36 @@ const createSafePreloadDepsPlugin = () => ({
       // 1. Guard __vite__mapDeps parameter from throwing on non-array input
       output.code = output.code.replace(
         /__vite__mapDeps\s*=\s*\(([\w$]+)([^)]*)\)\s*=>\s*\1\.map\(/g,
-        '__vite__mapDeps=($1$2)=>(Array.isArray($1)?$1:[]).map('
+        '__vite__mapDeps=($1$2)=>(Array.isArray($1)?$1:[]).map(',
       );
 
       output.code = output.code.replace(
         /([\w$]+)\.map\(\s*([\w$]+)\s*=>\s*([\w$]+)\[\2\]\)/g,
-        '(Array.isArray($1)?$1:[]).map($2=>$3[$2])'
+        '(Array.isArray($1)?$1:[]).map($2=>$3[$2])',
       );
 
       // 2. Coerce any preload helper deps checks: if(i&&i.length>0) or if(t&&t.length>0) or if(deps&&deps.length>0)
       output.code = output.code.replace(
         /if\s*\(\s*([a-zA-Z0-9_$]+)\s*&&\s*\1\.length(?:\s*>\s*0)?\s*\)\s*\{/g,
-        'if(Array.isArray($1)&&$1.length>0){'
+        'if(Array.isArray($1)&&$1.length>0){',
       );
 
       // 3. Coerce any assignment like n = i.map(...) inside preload helper
       output.code = output.code.replace(
         /([a-zA-Z0-9_$]+)\s*=\s*([a-zA-Z0-9_$]+)\.map\(\s*([a-zA-Z0-9_$]+)\s*=>\s*\{/g,
-        '$1=(Array.isArray($2)?$2:[]).map($3=>{'
+        '$1=(Array.isArray($2)?$2:[]).map($3=>{',
       );
 
       // 4. Coerce Promise.all mapping inside preload helper
       output.code = output.code.replace(
         /Promise\.all\(\s*([a-zA-Z0-9_$]+)\.map\(/g,
-        'Promise.all((Array.isArray($1)?$1:[]).map('
+        'Promise.all((Array.isArray($1)?$1:[]).map(',
       );
 
       // 5. Coerce any r=o(t.map( or similar calls
       output.code = output.code.replace(
         /([a-zA-Z0-9_$]+)\s*=\s*([a-zA-Z0-9_$]+)\(\s*([a-zA-Z0-9_$]+)\.map\(/g,
-        '$1=$2((Array.isArray($3)?$3:[]).map('
+        '$1=$2((Array.isArray($3)?$3:[]).map(',
       );
     }
   },
@@ -380,7 +380,7 @@ export default defineConfig(({ mode, command }) => {
         env.VITE_SENTRY_RELEASE ||
           env.VITE_APP_RELEASE ||
           process.env.npm_package_version ||
-          '1.0.0'
+          '1.0.0',
       ),
       __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
       'import.meta.env.VITE_APP_PUBLIC_URL': JSON.stringify(normalizedPublicUrl),

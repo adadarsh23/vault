@@ -233,7 +233,7 @@ export const VaultDetailsPanel: React.FC<VaultDetailsPanelProps> = memo(
         </div>
       </CardContent>
     </Card>
-  )
+  ),
 );
 
 VaultDetailsPanel.displayName = 'VaultDetailsPanel';

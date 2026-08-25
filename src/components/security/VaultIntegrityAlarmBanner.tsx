@@ -16,7 +16,8 @@ export const VaultIntegrityAlarmBanner: React.FC = () => {
         <ShieldAlert className="h-4 w-4 shrink-0 text-rose-400 animate-pulse" />
         <span className="font-bold text-rose-300 shrink-0">CRITICAL TAMPER ALARM:</span>
         <span className="truncate text-rose-200/90">
-          Merkle Tree mismatch ({corruptedItems.length} corrupted item{corruptedItems.length === 1 ? '' : 's'}).
+          Merkle Tree mismatch ({corruptedItems.length} corrupted item
+          {corruptedItems.length === 1 ? '' : 's'}).
         </span>
       </div>
 
@@ -34,4 +35,3 @@ export const VaultIntegrityAlarmBanner: React.FC = () => {
     </div>
   );
 };
-

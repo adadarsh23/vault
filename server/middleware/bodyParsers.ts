@@ -36,8 +36,8 @@ export const installBodyParsers = (app: express.Express): void => {
             isTooLarge ? 'PAYLOAD_TOO_LARGE' : 'INVALID_JSON',
             isTooLarge
               ? 'Request payload exceeded the server limit.'
-              : 'Request body contains invalid JSON.'
-          )
+              : 'Request body contains invalid JSON.',
+          ),
         );
       }
       next();

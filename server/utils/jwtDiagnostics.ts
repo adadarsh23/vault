@@ -29,22 +29,22 @@ export const validateJwtSecrets = (): {
     errors.push('JWT_SECRET is required but not set');
   } else if (jwtSecret.length < 32) {
     errors.push(
-      `JWT_SECRET is too short (${jwtSecret.length} chars). Minimum recommended: 32 chars`
+      `JWT_SECRET is too short (${jwtSecret.length} chars). Minimum recommended: 32 chars`,
     );
   }
 
   // Check if REFRESH_TOKEN_SECRET is separate
   if (!refreshSecret) {
     warnings.push(
-      'REFRESH_TOKEN_SECRET is not set. Falling back to JWT_SECRET (reduces token isolation)'
+      'REFRESH_TOKEN_SECRET is not set. Falling back to JWT_SECRET (reduces token isolation)',
     );
   } else if (refreshSecret === jwtSecret) {
     warnings.push(
-      'REFRESH_TOKEN_SECRET equals JWT_SECRET. Consider using separate secrets for better security'
+      'REFRESH_TOKEN_SECRET equals JWT_SECRET. Consider using separate secrets for better security',
     );
   } else if (refreshSecret.length < 32) {
     errors.push(
-      `REFRESH_TOKEN_SECRET is too short (${refreshSecret.length} chars). Minimum recommended: 32 chars`
+      `REFRESH_TOKEN_SECRET is too short (${refreshSecret.length} chars). Minimum recommended: 32 chars`,
     );
   }
 
@@ -172,7 +172,7 @@ export const logJwtDiagnostics = (): void => {
  * Check if a token's signature was created with JWT_SECRET vs REFRESH_TOKEN_SECRET
  */
 export const diagnoseTokenSignature = (
-  token: string
+  token: string,
 ): {
   isValidAccessSecret: boolean;
   isValidRefreshSecret: boolean;

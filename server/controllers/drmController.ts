@@ -23,7 +23,7 @@ const validateLicensePolicy = async (
   userId: string,
   username: string,
   itemId: string,
-  deviceId?: string
+  deviceId?: string,
 ) => {
   // 1. Ownership & Existence Check
   const DynamicVaultModel = getVaultItemModel(username);
@@ -44,7 +44,7 @@ const validateLicensePolicy = async (
       });
       throw AppError.forbidden(
         'Playback not permitted on this device. Please sign in again.',
-        'DEVICE_UNAUTHORIZED'
+        'DEVICE_UNAUTHORIZED',
       );
     }
   }

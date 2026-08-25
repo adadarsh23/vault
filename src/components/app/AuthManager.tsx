@@ -19,27 +19,27 @@ import { logger } from '../../lib/logger';
 const LandingPage = lazy(() =>
   import('../../features/LandingPage').then((module) => ({
     default: module.LandingPage || (module as any).default,
-  }))
+  })),
 );
 const NotFoundPage = lazy(() =>
   import('../../features/NotFoundPage').then((module) => ({
     default: module.NotFoundPage || (module as any).default,
-  }))
+  })),
 );
 const AuthScreen = lazy(() =>
   import('../../features/auth/AuthScreen').then((module) => ({
     default: module.AuthScreen || (module as any).default,
-  }))
+  })),
 );
 const LegalPage = lazy(() =>
   import('../../features/LegalPage').then((module) => ({
     default: module.LegalPage || (module as any).default,
-  }))
+  })),
 );
 const ContactPage = lazy(() =>
   import('../../features/ContactPage').then((module) => ({
     default: module.ContactPage || (module as any).default,
-  }))
+  })),
 );
 
 const SESSION_RESTORE_TIMEOUT_MS = 12_000;
@@ -56,7 +56,7 @@ const safeTabPathValues = Array.isArray(TAB_PATH_VALUES) ? TAB_PATH_VALUES : [];
 const PROTECTED_ROUTE_PATHS = new Set<string>(
   safeTabPathValues
     .map(normalizePathname)
-    .filter((pathname) => !PUBLIC_AUTH_ROUTE_PATHS.has(pathname))
+    .filter((pathname) => !PUBLIC_AUTH_ROUTE_PATHS.has(pathname)),
 );
 
 const isProtectedRoutePath = (pathname: string): boolean =>
@@ -68,7 +68,7 @@ const normalizeUsername = (value?: string | null): string =>
 const withTimeout = async <T,>(
   promise: Promise<T>,
   timeoutMs: number,
-  timeoutMessage: string
+  timeoutMessage: string,
 ): Promise<T> => {
   let timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
 
@@ -145,7 +145,7 @@ export function useAuthManager() {
       const data = await withTimeout(
         refreshVaultSession(),
         SESSION_RESTORE_TIMEOUT_MS,
-        'Session restore timed out'
+        'Session restore timed out',
       );
 
       if (restoreAbortRef.current) return;

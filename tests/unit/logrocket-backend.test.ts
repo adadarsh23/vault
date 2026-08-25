@@ -83,7 +83,7 @@ describe('server logrocket integration', () => {
         method: 'GET',
         path: '/api/health',
         statusCode: 200,
-      })
+      }),
     );
   });
 

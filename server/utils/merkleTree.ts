@@ -52,7 +52,7 @@ const NODE_PREFIX = '01';
  */
 export const computeBufferHash = async (
   data: Buffer | Uint8Array | string,
-  algorithm: HashAlgorithm = 'blake3'
+  algorithm: HashAlgorithm = 'blake3',
 ): Promise<string> => {
   const buffer =
     typeof data === 'string'
@@ -81,7 +81,7 @@ export const computeBufferHash = async (
  */
 export const computeStreamHash = async (
   stream: NodeJS.ReadableStream,
-  algorithm: HashAlgorithm = 'blake3'
+  algorithm: HashAlgorithm = 'blake3',
 ): Promise<string> => {
   if (algorithm === 'sha512' || algorithm === 'sha256') {
     const hash = crypto.createHash(algorithm);
@@ -107,7 +107,7 @@ export const computeStreamHash = async (
  */
 export const computeLeafHash = async (
   item: MerkleLeafItem,
-  algorithm: HashAlgorithm = 'blake3'
+  algorithm: HashAlgorithm = 'blake3',
 ): Promise<string> => {
   const leafPayload = `${LEAF_PREFIX}:${item.itemId}:${item.category || 'photo'}:${item.hash}:${item.size || 0}`;
   return computeBufferHash(leafPayload, algorithm);
@@ -120,7 +120,7 @@ export const computeLeafHash = async (
 export const computeNodeHash = async (
   left: string,
   right: string,
-  algorithm: HashAlgorithm = 'blake3'
+  algorithm: HashAlgorithm = 'blake3',
 ): Promise<string> => {
   const nodePayload = `${NODE_PREFIX}:${left}:${right}`;
   return computeBufferHash(nodePayload, algorithm);
@@ -235,7 +235,7 @@ export class MerkleTree {
     leafHash: string,
     proof: MerkleProofStep[],
     expectedRoot: string,
-    algorithm: HashAlgorithm = 'blake3'
+    algorithm: HashAlgorithm = 'blake3',
   ): Promise<boolean> {
     if (!leafHash || !expectedRoot) return false;
     let currentHash = leafHash;

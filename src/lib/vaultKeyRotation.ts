@@ -23,7 +23,7 @@ type VaultKeyRotationError = Error & {
 const createRotationError = (
   message: string,
   code: VaultKeyRotationErrorCode,
-  cause?: unknown
+  cause?: unknown,
 ): VaultKeyRotationError => {
   const error = new Error(message) as VaultKeyRotationError;
   error.code = code;
@@ -54,7 +54,7 @@ const importAesKey = async (rawKey: string | CryptoKey, usages: KeyUsage[]): Pro
   if (typeof crypto === 'undefined' || !crypto.subtle) {
     throw createRotationError(
       'Secure cryptography is unavailable in this environment.',
-      'CRYPTO_UNAVAILABLE'
+      'CRYPTO_UNAVAILABLE',
     );
   }
 
@@ -62,7 +62,7 @@ const importAesKey = async (rawKey: string | CryptoKey, usages: KeyUsage[]): Pro
   if (!keyBytes || keyBytes.byteLength !== AES_KEY_LENGTH_BYTES) {
     throw createRotationError(
       'Invalid vault key material for key rotation.',
-      'INVALID_KEY_MATERIAL'
+      'INVALID_KEY_MATERIAL',
     );
   }
 
@@ -71,7 +71,7 @@ const importAesKey = async (rawKey: string | CryptoKey, usages: KeyUsage[]): Pro
     toArrayBuffer(keyBytes),
     { name: 'AES-GCM' },
     false,
-    usages
+    usages,
   );
 
   // Zero out raw key bytes after import
@@ -83,7 +83,7 @@ const importAesKey = async (rawKey: string | CryptoKey, usages: KeyUsage[]): Pro
 const decryptAesGcmWithFallback = async (
   cryptoKey: CryptoKey,
   iv: Uint8Array,
-  ciphertext: Uint8Array
+  ciphertext: Uint8Array,
 ): Promise<ArrayBuffer> => {
   try {
     return await crypto.subtle.decrypt(
@@ -93,13 +93,13 @@ const decryptAesGcmWithFallback = async (
         additionalData: toArrayBuffer(AES_GCM_AAD),
       },
       cryptoKey,
-      toArrayBuffer(ciphertext)
+      toArrayBuffer(ciphertext),
     );
   } catch {
     return await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: toArrayBuffer(iv) },
       cryptoKey,
-      toArrayBuffer(ciphertext)
+      toArrayBuffer(ciphertext),
     );
   }
 };
@@ -160,12 +160,12 @@ const looksLikeReadableMediaBytes = (bytes: Uint8Array): boolean => {
 export const reencryptVaultItemContent = async (
   item: ReencryptableVaultItem,
   oldKey: string | CryptoKey,
-  newKey: string | CryptoKey
+  newKey: string | CryptoKey,
 ): Promise<ReencryptableVaultItem['content']> => {
   if (!oldKey || !newKey) {
     throw createRotationError(
       'Old and new vault keys are required for key rotation.',
-      'INVALID_KEY_MATERIAL'
+      'INVALID_KEY_MATERIAL',
     );
   }
   if (oldKey === newKey) {
@@ -189,7 +189,7 @@ export const reencryptVaultItemContent = async (
           throw createRotationError(
             `Integrity check failed for "${itemTitle}"`,
             'INTEGRITY_CHECK_FAILED',
-            cause
+            cause,
           );
         }
         decrypted = toArrayBuffer(item.content);
@@ -208,7 +208,7 @@ export const reencryptVaultItemContent = async (
         additionalData: toArrayBuffer(AES_GCM_AAD),
       },
       newCryptoKey,
-      decrypted
+      decrypted,
     );
 
     const result = new Uint8Array(newIv.length + newEncrypted.byteLength);
@@ -243,7 +243,7 @@ export const reencryptVaultItemContent = async (
       throw createRotationError(
         `Integrity check failed for "${itemTitle}"`,
         'INTEGRITY_CHECK_FAILED',
-        cause
+        cause,
       );
     }
 
@@ -256,7 +256,7 @@ export const reencryptVaultItemContent = async (
         additionalData: toArrayBuffer(AES_GCM_AAD),
       },
       newCryptoKey,
-      decrypted
+      decrypted,
     );
 
     const result = new Uint8Array(newIv.length + newEncrypted.byteLength);

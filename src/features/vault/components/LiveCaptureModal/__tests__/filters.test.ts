@@ -1,12 +1,8 @@
 /* @vitest-environment jsdom */
 
 import { describe, it, expect } from 'vitest';
-import {
-  CAMERA_FILTERS,
-  getFilterPreset,
-  getFilterCss,
-  CameraFilter,
-} from '../filters';
+import { CAMERA_FILTERS, getFilterPreset, getFilterCss } from '../filters';
+import { CameraFilter } from '../types';
 
 describe('Live Camera & Media Filters Suite', () => {
   it('should include the Moe filter in CAMERA_FILTERS presets', () => {
@@ -16,7 +12,7 @@ describe('Live Camera & Media Filters Suite', () => {
     expect(moePreset?.shortLabel).toBe('Moe');
     expect(moePreset?.description).toContain('Soft pastel glow');
     expect(moePreset?.cssFilter).toBe(
-      'contrast(106%) brightness(108%) saturate(135%) sepia(10%) hue-rotate(345deg)'
+      'contrast(106%) brightness(108%) saturate(135%) sepia(10%) hue-rotate(345deg)',
     );
     expect(moePreset?.badgeColor).toContain('bg-rose-500/20');
     expect(moePreset?.iconColor).toBe('text-rose-400');
@@ -104,21 +100,19 @@ describe('Live Camera & Media Filters Suite', () => {
 
   it('should return correct CSS filter string from getFilterCss', () => {
     expect(getFilterCss('moe')).toBe(
-      'contrast(106%) brightness(108%) saturate(135%) sepia(10%) hue-rotate(345deg)'
+      'contrast(106%) brightness(108%) saturate(135%) sepia(10%) hue-rotate(345deg)',
     );
     expect(getFilterCss('golden-hour')).toBe(
-      'contrast(110%) brightness(112%) saturate(145%) sepia(24%) hue-rotate(355deg)'
+      'contrast(110%) brightness(112%) saturate(145%) sepia(24%) hue-rotate(355deg)',
     );
     expect(getFilterCss('matrix-green')).toBe(
-      'contrast(140%) brightness(106%) hue-rotate(95deg) saturate(240%)'
+      'contrast(140%) brightness(106%) hue-rotate(95deg) saturate(240%)',
     );
     expect(getFilterCss('ruby-noir')).toBe(
-      'grayscale(100%) sepia(100%) hue-rotate(320deg) saturate(400%) contrast(145%) brightness(96%)'
+      'grayscale(100%) sepia(100%) hue-rotate(320deg) saturate(400%) contrast(145%) brightness(96%)',
     );
     expect(getFilterCss('none')).toBe('none');
-    expect(getFilterCss('noir')).toBe(
-      'grayscale(100%) contrast(140%) brightness(90%)'
-    );
+    expect(getFilterCss('noir')).toBe('grayscale(100%) contrast(140%) brightness(90%)');
     expect(getFilterCss('non-existent' as CameraFilter)).toBe('none');
   });
 });

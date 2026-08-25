@@ -14,21 +14,18 @@ import {
   Keyboard,
   Info,
   Sparkles,
-  Layers,
   Images,
   PictureInPicture2,
   Subtitles,
   Compass,
   QrCode,
   FastForward,
-  Pipette,
   AudioLines,
 } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import { cn } from '../../../../lib/utils';
 import { CaptureType, TimerOption, CameraFilter, BurstOption } from './types';
 import { getFilterPreset } from './filters';
-
 
 interface HeaderProps {
   type: CaptureType;
@@ -113,7 +110,6 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const headingLabel = type === 'photo' ? 'Photo' : type === 'video' ? 'Video' : 'Audio';
 
-
   return (
     <div className="z-30 flex items-center justify-between p-2 px-2.5 sm:px-4 bg-zinc-950/90 border-b border-white/10 backdrop-blur-3xl shadow-lg gap-1.5 sm:gap-2">
       {/* Left: Type Indicator & Label */}
@@ -159,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({
                   'h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all shrink-0',
                   torchActive
                     ? 'border-amber-400/50 bg-amber-400/20 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.4)]'
-                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white',
                 )}
                 title={torchActive ? 'Turn off flashlight' : 'Turn on flashlight'}
                 aria-label="Toggle flashlight"
@@ -180,7 +176,7 @@ export const Header: React.FC<HeaderProps> = ({
                   'relative h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all shrink-0',
                   timerSeconds > 0
                     ? 'border-primary/50 bg-primary/20 text-primary shadow-[0_0_10px_rgba(0,242,254,0.3)]'
-                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white',
                 )}
                 title={`Self-Timer: ${timerSeconds > 0 ? `${timerSeconds}s` : 'Off'}`}
                 aria-label={`Timer ${timerSeconds > 0 ? `${timerSeconds} seconds` : 'Off'}`}
@@ -205,7 +201,7 @@ export const Header: React.FC<HeaderProps> = ({
                   'h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all shrink-0',
                   isGridEnabled
                     ? 'border-primary/50 bg-primary/20 text-primary'
-                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white',
                 )}
                 title={isGridEnabled ? 'Hide 3x3 Grid' : 'Show 3x3 Framing Grid'}
                 aria-label="Toggle 3x3 framing grid"
@@ -225,7 +221,7 @@ export const Header: React.FC<HeaderProps> = ({
                   'h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all shrink-0',
                   isMuted
                     ? 'border-red-500/50 bg-red-500/20 text-red-400'
-                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white',
                 )}
                 title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
                 aria-label="Toggle microphone mute"
@@ -266,28 +262,30 @@ export const Header: React.FC<HeaderProps> = ({
             )}
 
             {/* Live Camera Filters Chooser with Dynamic Active Icon */}
-            {type !== 'audio' && onOpenFilterPicker && (() => {
-              const activePreset = getFilterPreset(activeFilter);
-              const FilterIcon = activeFilter !== 'none' ? activePreset.icon : Sparkles;
-              return (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={onOpenFilterPicker}
-                  className={cn(
-                    'h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all active:scale-90 shrink-0',
-                    activeFilter !== 'none'
-                      ? 'border-primary/60 bg-primary/20 text-primary shadow-[0_0_10px_rgba(0,242,254,0.35)] ring-1 ring-primary/30'
-                      : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white'
-                  )}
-                  title={`Filter: ${activePreset.label}`}
-                  aria-label="Choose camera filter"
-                >
-                  <FilterIcon className="h-3.5 w-3.5" />
-                </Button>
-              );
-            })()}
+            {type !== 'audio' &&
+              onOpenFilterPicker &&
+              (() => {
+                const activePreset = getFilterPreset(activeFilter);
+                const FilterIcon = activeFilter !== 'none' ? activePreset.icon : Sparkles;
+                return (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={onOpenFilterPicker}
+                    className={cn(
+                      'h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all active:scale-90 shrink-0',
+                      activeFilter !== 'none'
+                        ? 'border-primary/60 bg-primary/20 text-primary shadow-[0_0_10px_rgba(0,242,254,0.35)] ring-1 ring-primary/30'
+                        : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white',
+                    )}
+                    title={`Filter: ${activePreset.label}`}
+                    aria-label="Choose camera filter"
+                  >
+                    <FilterIcon className="h-3.5 w-3.5" />
+                  </Button>
+                );
+              })()}
 
             {/* Burst Mode in Photo */}
             {type === 'photo' && onCycleBurst && (
@@ -300,7 +298,7 @@ export const Header: React.FC<HeaderProps> = ({
                   'relative h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all shrink-0',
                   burstCount > 1
                     ? 'border-amber-400/50 bg-amber-400/20 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.3)]'
-                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white',
                 )}
                 title={`Burst Mode: ${burstCount} shots`}
                 aria-label={`Burst shoot ${burstCount} photos`}
@@ -325,7 +323,7 @@ export const Header: React.FC<HeaderProps> = ({
                   'relative h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all shrink-0',
                   isTranscribing
                     ? 'border-emerald-400/50 bg-emerald-400/20 text-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.3)]'
-                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white',
                 )}
                 title={
                   isTranscribing
@@ -355,7 +353,7 @@ export const Header: React.FC<HeaderProps> = ({
                   'relative h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all active:scale-90 shrink-0',
                   voiceClarityPreset && voiceClarityPreset !== 'off'
                     ? 'border-cyan-400/60 bg-cyan-400/20 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.4)] ring-1 ring-cyan-400/30'
-                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white',
                 )}
                 title={`Voice Clarity & Noise Gate: ${voiceClarityPreset ? voiceClarityPreset.toUpperCase() : 'CRYSTAL'} (Fan & Hum Auto-Suppression)`}
                 aria-label="Toggle voice clarity filter preset"
@@ -376,7 +374,7 @@ export const Header: React.FC<HeaderProps> = ({
                   'relative h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all shrink-0',
                   isTimelapseEnabled
                     ? 'border-amber-400/60 bg-amber-400/20 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.35)]'
-                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white',
                 )}
                 title={`Time-Lapse: ${isTimelapseEnabled ? `${timelapseInterval}s / frame (${timelapseInterval * 30}x speed)` : 'Disabled'}`}
                 aria-label="Toggle Time-Lapse Recording Mode"
@@ -402,9 +400,13 @@ export const Header: React.FC<HeaderProps> = ({
                   'h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all shrink-0',
                   isDualCameraEnabled
                     ? 'border-sky-400/60 bg-sky-400/20 text-sky-300 shadow-[0_0_10px_rgba(56,189,248,0.35)]'
-                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white',
                 )}
-                title={isDualCameraEnabled ? 'Disable Dual Camera' : 'Enable Dual Camera (Picture-in-Picture / Split)'}
+                title={
+                  isDualCameraEnabled
+                    ? 'Disable Dual Camera'
+                    : 'Enable Dual Camera (Picture-in-Picture / Split)'
+                }
                 aria-label="Toggle Dual Camera Mode"
               >
                 <PictureInPicture2 className="h-3.5 w-3.5" />
@@ -422,9 +424,13 @@ export const Header: React.FC<HeaderProps> = ({
                   'h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all shrink-0',
                   isGyroLevelerEnabled
                     ? 'border-emerald-400/60 bg-emerald-400/20 text-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.35)]'
-                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white',
                 )}
-                title={isGyroLevelerEnabled ? 'Hide Gyro Horizon Leveler' : 'Show Gyroscopic Horizon Leveler'}
+                title={
+                  isGyroLevelerEnabled
+                    ? 'Hide Gyro Horizon Leveler'
+                    : 'Show Gyroscopic Horizon Leveler'
+                }
                 aria-label="Toggle Gyroscopic Horizon Leveler"
               >
                 <Compass className="h-3.5 w-3.5" />
@@ -442,9 +448,13 @@ export const Header: React.FC<HeaderProps> = ({
                   'h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all shrink-0',
                   isQRScannerEnabled
                     ? 'border-primary/60 bg-primary/20 text-primary shadow-[0_0_10px_rgba(0,242,254,0.35)]'
-                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white',
                 )}
-                title={isQRScannerEnabled ? 'Disable QR / Barcode Scanner' : 'Enable Instant QR & Barcode Scanner'}
+                title={
+                  isQRScannerEnabled
+                    ? 'Disable QR / Barcode Scanner'
+                    : 'Enable Instant QR & Barcode Scanner'
+                }
                 aria-label="Toggle QR and Barcode Scanner"
               >
                 <QrCode className="h-3.5 w-3.5" />
@@ -462,7 +472,7 @@ export const Header: React.FC<HeaderProps> = ({
                   'h-7 w-7 min-w-7 sm:h-8 sm:w-8 sm:min-w-8 rounded-full border transition-all shrink-0',
                   isInfoEnabled
                     ? 'border-primary/50 bg-primary/20 text-primary'
-                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white'
+                    : 'border-white/10 bg-black/40 text-white/60 hover:bg-white/10 hover:text-white',
                 )}
                 title="Toggle Security Info"
                 aria-label="Toggle security info overlay"
@@ -492,5 +502,3 @@ export const Header: React.FC<HeaderProps> = ({
     </div>
   );
 };
-
-

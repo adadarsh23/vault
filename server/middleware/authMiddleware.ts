@@ -118,7 +118,7 @@ const extractQueryAuthToken = (req: express.Request): string | undefined => {
 export const resolveIdentity = (
   req: express.Request,
   _res: express.Response,
-  next: express.NextFunction
+  next: express.NextFunction,
 ) => {
   const authHeader = req.get('Authorization')?.split(' ')[1];
   const token = authHeader || extractQueryAuthToken(req);
@@ -141,7 +141,7 @@ export const resolveIdentity = (
 export const requireAuth = async (
   req: express.Request,
   _res: express.Response,
-  next: express.NextFunction
+  next: express.NextFunction,
 ) => {
   const authHeader = req.get('authorization');
   let token: string | undefined;
@@ -227,7 +227,7 @@ export const requireAuth = async (
       });
       throw AppError.unauthorized(
         'This session has been revoked or expired. Please sign in again.',
-        'SESSION_REVOKED'
+        'SESSION_REVOKED',
       );
     }
 
@@ -291,7 +291,7 @@ export const requireAuth = async (
 export const requireAdmin = async (
   req: express.Request,
   _res: express.Response,
-  next: express.NextFunction
+  next: express.NextFunction,
 ) => {
   try {
     const authUser = (req as AuthenticatedRequest).user;

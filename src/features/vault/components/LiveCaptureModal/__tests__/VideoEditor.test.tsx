@@ -1,6 +1,5 @@
 /* @vitest-environment jsdom */
 
-import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { VideoEditor } from '../VideoEditor';
@@ -24,7 +23,7 @@ describe('VideoEditor Component Suite', () => {
         initialUrl={dummyUrl}
         onSave={onSave}
         onCancel={onCancel}
-      />
+      />,
     );
 
     // Verify all filter preset buttons are present
@@ -52,7 +51,7 @@ describe('VideoEditor Component Suite', () => {
         initialUrl={dummyUrl}
         onSave={onSave}
         onCancel={onCancel}
-      />
+      />,
     );
 
     const cancelBtn = screen.getByLabelText(/Cancel editing/i);
@@ -70,7 +69,7 @@ describe('VideoEditor Component Suite', () => {
         initialUrl={dummyUrl}
         onSave={onSave}
         onCancel={onCancel}
-      />
+      />,
     );
 
     // Select Noir filter

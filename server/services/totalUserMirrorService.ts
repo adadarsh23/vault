@@ -19,7 +19,7 @@ export const upsertTotalUserMirror = async (input: {
         upsert: true,
         new: true,
         setDefaultsOnInsert: true,
-      }
+      },
     ).exec();
   } catch (error) {
     const candidate = error as { code?: number };
@@ -33,7 +33,7 @@ export const upsertTotalUserMirror = async (input: {
             userId: input.userId,
             createdDate: input.createdDate,
           },
-        }
+        },
       ).exec();
       return;
     }

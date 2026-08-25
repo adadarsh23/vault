@@ -19,7 +19,7 @@ const resolveSignedUrlSecret = (): string => {
 const SIGNED_URL_EXPIRY_MINUTES = Math.max(15, Number(process.env.SIGNED_URL_EXPIRY_MINUTES || 60));
 const MAX_SIGNED_URL_EXPIRY_MINUTES = Math.max(
   60,
-  Number(process.env.MAX_SIGNED_URL_EXPIRY_MINUTES || 1440)
+  Number(process.env.MAX_SIGNED_URL_EXPIRY_MINUTES || 1440),
 );
 
 export interface SignedUrlOptions {
@@ -43,7 +43,7 @@ export const storageService = {
     userId: string,
     itemId: string,
     _fileName: string,
-    options: SignedUrlOptions = {}
+    options: SignedUrlOptions = {},
   ): string {
     const action = options.action || 'view';
     const actionTtl =
@@ -86,7 +86,7 @@ export const storageService = {
       sessionId?: string;
       deviceHash?: string;
       originalIp?: string;
-    }
+    },
   ): boolean {
     const now = Math.floor(Date.now() / 1000);
 
@@ -101,17 +101,11 @@ export const storageService = {
 
     const secret = resolveSignedUrlSecret();
     const payload = `${userId}:${itemId}:${input.action}:${input.expires}:${sid}:${device}`;
-    const expectedSignature = crypto
-      .createHmac('sha256', secret)
-      .update(payload)
-      .digest('hex');
+    const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
 
     // Also support fallback for legacy 'any' tokens
     const legacyPayload = `${userId}:${itemId}:${input.action}:${input.expires}:${sid}:any`;
-    const legacySignature = crypto
-      .createHmac('sha256', secret)
-      .update(legacyPayload)
-      .digest('hex');
+    const legacySignature = crypto.createHmac('sha256', secret).update(legacyPayload).digest('hex');
 
     // Check length first before using timingSafeEqual to avoid buffer length mismatch errors
     if (input.token.length !== expectedSignature.length) {

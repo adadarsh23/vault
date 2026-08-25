@@ -56,7 +56,7 @@ export const CONFIG = {
   maxTitleLength: Number.parseInt(process.env.MAX_TITLE_LENGTH?.trim() || '200', 10),
   maxNoteContentLength: Number.parseInt(
     process.env.MAX_NOTE_CONTENT_LENGTH?.trim() || '100000',
-    10
+    10,
   ),
   maxTextFieldLength: Number.parseInt(process.env.MAX_TEXT_FIELD_LENGTH?.trim() || '1000', 10),
   maxFileNameLength: Number.parseInt(process.env.MAX_FILE_NAME_LENGTH?.trim() || '255', 10),
@@ -64,7 +64,7 @@ export const CONFIG = {
   maxUserWriteRetries: Number.parseInt(process.env.MAX_USER_WRITE_RETRIES?.trim() || '3', 10),
   registrationProfileTimeoutMs: Number.parseInt(
     process.env.REGISTRATION_PROFILE_TIMEOUT_MS?.trim() || '10000',
-    10
+    10,
   ),
   ipGeolocationApiKey: process.env.IPGEOLOCATION_API_KEY?.trim(),
   freeIpApiUrlTemplate:
@@ -316,7 +316,7 @@ export const sanitizeUsername = (value: unknown): string => {
     throw new AppError(
       400,
       'INVALID_USERNAME',
-      'Username may only contain letters, numbers, dots, underscores, and hyphens.'
+      'Username may only contain letters, numbers, dots, underscores, and hyphens.',
     );
   }
 
@@ -341,7 +341,7 @@ export const sanitizePassword = (value: unknown): string => {
     throw new AppError(
       400,
       'INVALID_PASSWORD',
-      `Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters.`
+      `Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters.`,
     );
   }
 
@@ -349,7 +349,7 @@ export const sanitizePassword = (value: unknown): string => {
     throw new AppError(
       400,
       'INVALID_PASSWORD',
-      'Password must include uppercase, lowercase, number, and special character, and cannot contain spaces.'
+      'Password must include uppercase, lowercase, number, and special character, and cannot contain spaces.',
     );
   }
 
@@ -403,11 +403,11 @@ export const normalizeClientIp = (value?: string): string | null => {
  */
 export const buildRegistrationLookupUrl = (
   template: string,
-  replacements: Record<string, string>
+  replacements: Record<string, string>,
 ): string =>
   Object.entries(replacements).reduce(
     (url, [key, value]) => url.replaceAll(`{${key}}`, encodeURIComponent(value)),
-    template
+    template,
   );
 
 /**
@@ -465,7 +465,7 @@ export const isPrivateIp = (value: string | undefined): boolean => {
 };
 
 export const buildStoredRegistrationProfile = (
-  snapshot: RegistrationProfileSnapshot
+  snapshot: RegistrationProfileSnapshot,
 ): StoredRegistrationProfileSnapshot => {
   const rawData = asRegistrationProfileData(snapshot.data);
   const rawSources =
@@ -546,7 +546,7 @@ export const sanitizeItemId = (value: string | undefined): string | undefined =>
 export const sanitizeRequiredText = (
   value: unknown,
   fieldName: string,
-  maxLength = CONFIG.maxTextFieldLength
+  maxLength = CONFIG.maxTextFieldLength,
 ): string => {
   if (typeof value !== 'string') {
     throw new AppError(400, `INVALID_${fieldName.toUpperCase()}`, `${fieldName} is required.`);
@@ -561,7 +561,7 @@ export const sanitizeRequiredText = (
     throw new AppError(
       400,
       `INVALID_${fieldName.toUpperCase()}`,
-      `${fieldName} must be ${maxLength} characters or fewer.`
+      `${fieldName} must be ${maxLength} characters or fewer.`,
     );
   }
 
@@ -575,7 +575,7 @@ export const sanitizeRequiredText = (
 export const sanitizeOptionalText = (
   value: unknown,
   fieldName: string,
-  maxLength = CONFIG.maxTextFieldLength
+  maxLength = CONFIG.maxTextFieldLength,
 ): string => {
   if (typeof value !== 'string') {
     return '';
@@ -590,7 +590,7 @@ export const sanitizeOptionalText = (
     throw new AppError(
       400,
       `INVALID_${fieldName.toUpperCase()}`,
-      `${fieldName} must be ${maxLength} characters or fewer.`
+      `${fieldName} must be ${maxLength} characters or fewer.`,
     );
   }
 
@@ -667,7 +667,7 @@ export const normalizeDate = (value?: string): Date => {
  */
 export const isIncomingUpdateAllowed = (
   existingUpdatedAt: Date,
-  incomingUpdatedAt: Date
+  incomingUpdatedAt: Date,
 ): boolean => {
   return incomingUpdatedAt.getTime() >= existingUpdatedAt.getTime();
 };
@@ -793,10 +793,10 @@ export const syncActiveDevicesFromSessions = (user: UserStateDocument): void => 
           (session) =>
             !session.revokedAt &&
             session.expiresAt instanceof Date &&
-            session.expiresAt.getTime() > now
+            session.expiresAt.getTime() > now,
         )
-        .map((session) => session.deviceId)
-    )
+        .map((session) => session.deviceId),
+    ),
   ).slice(-CONFIG.maxActiveDevices) as never;
 };
 
@@ -813,7 +813,7 @@ export const buildSessionSummaries = (user: UserStateDocument, currentSessionId?
     .sort(
       (a, b) =>
         (b.lastUsedAt instanceof Date ? b.lastUsedAt.getTime() : 0) -
-        (a.lastUsedAt instanceof Date ? a.lastUsedAt.getTime() : 0)
+        (a.lastUsedAt instanceof Date ? a.lastUsedAt.getTime() : 0),
     )
     .map((session) => ({
       sessionId: session.sessionId,
@@ -840,7 +840,7 @@ export const issueUserSession = (
     userAgent?: string;
     existingSessionId?: string;
     deviceName?: string;
-  }
+  },
 ): {
   sessionId: string;
   accessToken: string;
@@ -1025,7 +1025,7 @@ export const logAndEmit = (
   action: string,
   category: string,
   itemId: string | null,
-  details: Record<string, unknown>
+  details: Record<string, unknown>,
 ): void => {
   const createdAt = new Date();
 
@@ -1099,14 +1099,14 @@ export const getUserStoredBytes = async (userId: string, username: string) => {
 export const enforceUserStorageQuota = async (
   userId: string,
   username: string,
-  incomingBytes: number
+  incomingBytes: number,
 ) => {
   const usedBytes = await getUserStoredBytes(userId, username);
   if (usedBytes + incomingBytes > USER_STORAGE_QUOTA_BYTES) {
     throw new AppError(
       413,
       'USER_STORAGE_QUOTA_EXCEEDED',
-      `Upload exceeds your storage quota of ${USER_STORAGE_QUOTA_MB}MB.`
+      `Upload exceeds your storage quota of ${USER_STORAGE_QUOTA_MB}MB.`,
     );
   }
 };
@@ -1117,7 +1117,7 @@ export const enforceUserStorageQuota = async (
  */
 export const getUserOrThrow = async (
   userId: string,
-  includePassword = false
+  includePassword = false,
 ): Promise<UserStateDocument> => {
   const query = User.findById(userId);
   if (includePassword) {
@@ -1166,7 +1166,7 @@ export const executeWithStorageFailover = async <T>(operation: () => Promise<T>)
       throw new AppError(
         507,
         'STORAGE_FULL',
-        'All configured MongoDB storage targets are full or unavailable. Add another Mongo URL or free storage space.'
+        'All configured MongoDB storage targets are full or unavailable. Add another Mongo URL or free storage space.',
       );
     }
 
@@ -1177,14 +1177,14 @@ export const executeWithStorageFailover = async <T>(operation: () => Promise<T>)
         throw new AppError(
           507,
           'STORAGE_FULL',
-          'MongoDB storage is full on the active and failover targets. Configure a working MONGODB_URI_1 / _2 / _3 or free Atlas storage.'
+          'MongoDB storage is full on the active and failover targets. Configure a working MONGODB_URI_1 / _2 / _3 or free Atlas storage.',
         );
       }
 
       throw new AppError(
         503,
         'DB_UNAVAILABLE',
-        'MongoDB failover target could not be reached. Check whether MONGODB_URI_1 / _2 / _3 are valid direct Atlas URIs.'
+        'MongoDB failover target could not be reached. Check whether MONGODB_URI_1 / _2 / _3 are valid direct Atlas URIs.',
       );
     }
   }
@@ -1205,7 +1205,7 @@ export const fetchProviderProfile = async (
     | 'ipinfo.io'
     | 'ipapi.co',
   url: string,
-  userAgent?: string
+  userAgent?: string,
 ): Promise<RegistrationProfileSnapshot> => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), CONFIG.registrationProfileTimeoutMs);
@@ -1295,7 +1295,7 @@ export const fetchProviderProfile = async (
 };
 
 export const fetchRegistrationProfile = async (
-  input: RegistrationProfileFetchInput
+  input: RegistrationProfileFetchInput,
 ): Promise<RegistrationProfileSnapshot> => {
   if (!isRegistrationProfileCaptureEnabled()) {
     return {
@@ -1318,7 +1318,7 @@ export const fetchRegistrationProfile = async (
             ip: normalizedClientIp,
           })
         : CONFIG.freeIpApiFallback,
-      ua
+      ua,
     ),
     fetchProviderProfile(
       'ipwhois.app',
@@ -1330,7 +1330,7 @@ export const fetchRegistrationProfile = async (
         : buildRegistrationLookupUrl(CONFIG.ipwhoisAppUrlFallback, {
             apiKey: CONFIG.ipwhoisAppApiKey || '',
           }),
-      ua
+      ua,
     ),
     fetchProviderProfile(
       'ip-api.com',
@@ -1339,7 +1339,7 @@ export const fetchRegistrationProfile = async (
             ip: normalizedClientIp,
           })
         : CONFIG.ipApiComUrlFallback,
-      ua
+      ua,
     ),
   ];
 
@@ -1354,8 +1354,8 @@ export const fetchRegistrationProfile = async (
               ip: normalizedClientIp,
             })
           : CONFIG.ipwhoisUrlFallback,
-        ua
-      )
+        ua,
+      ),
     );
   }
 
@@ -1371,8 +1371,8 @@ export const fetchRegistrationProfile = async (
           : buildRegistrationLookupUrl(CONFIG.iplocateIoUrlFallback, {
               apiKey: CONFIG.iplocateIoApiKey,
             }),
-        ua
-      )
+        ua,
+      ),
     );
   }
 
@@ -1388,8 +1388,8 @@ export const fetchRegistrationProfile = async (
           : buildRegistrationLookupUrl(CONFIG.ipgeolocationUrlFallback, {
               apiKey: CONFIG.ipGeolocationApiKey,
             }),
-        ua
-      )
+        ua,
+      ),
     );
   }
 
@@ -1402,8 +1402,8 @@ export const fetchRegistrationProfile = async (
               ip: normalizedClientIp,
             })
           : CONFIG.ipinfoIoUrlFallback,
-        ua
-      )
+        ua,
+      ),
     );
   }
 
@@ -1416,8 +1416,8 @@ export const fetchRegistrationProfile = async (
               ip: normalizedClientIp,
             })
           : CONFIG.ipapiCoUrlFallback,
-        ua
-      )
+        ua,
+      ),
     );
   }
 
@@ -1441,14 +1441,14 @@ export const fetchRegistrationProfile = async (
           error: result.error,
         },
       ];
-    })
+    }),
   );
 
   const successfulProviders = results.filter((result) => result.data);
   const latestFetchedAt = results.reduce(
     (latest, current) =>
       current.fetchedAt.getTime() > latest.getTime() ? current.fetchedAt : latest,
-    results[0]?.fetchedAt ?? new Date()
+    results[0]?.fetchedAt ?? new Date(),
   );
 
   const profileData = {
@@ -1483,7 +1483,7 @@ export const fetchRegistrationProfile = async (
 
 export const fetchRegistrationProfileWithTimeout = async (
   input: RegistrationProfileFetchInput,
-  timeoutMs = CONFIG.registrationProfileTimeoutMs
+  timeoutMs = CONFIG.registrationProfileTimeoutMs,
 ): Promise<RegistrationProfileSnapshot> => {
   try {
     return await Promise.race([
@@ -1491,8 +1491,8 @@ export const fetchRegistrationProfileWithTimeout = async (
       new Promise<RegistrationProfileSnapshot>((_, reject) =>
         setTimeout(
           () => reject(new Error('Registration profile fetch timed out after ' + timeoutMs + 'ms')),
-          timeoutMs
-        )
+          timeoutMs,
+        ),
       ),
     ]);
   } catch (error) {
@@ -1555,6 +1555,6 @@ export const retryLoadedUserMutation = async <T>(input: {
     : new AppError(
         409,
         'WRITE_CONFLICT',
-        'The request conflicted with another update. Please retry.'
+        'The request conflicted with another update. Please retry.',
       );
 };

@@ -1,18 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  QrCode,
-  Lock,
-  Copy,
-  ExternalLink,
-  Check,
-  X,
-  FileText,
-  Wifi,
-  Key,
-  ShieldCheck,
-  Zap,
-} from 'lucide-react';
+import { Lock, Copy, ExternalLink, Check, X, FileText, Wifi, Key, Zap } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import { cn } from '../../../../lib/utils';
 import { ScannedBarcodeResult, BarcodeContentType } from './types';
@@ -192,7 +180,7 @@ export const QRScannerOverlay: React.FC<QRScannerOverlayProps> = ({
                     'flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-bold border transition-all',
                     autoSave
                       ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
-                      : 'bg-white/5 border-white/10 text-white/50 hover:text-white'
+                      : 'bg-white/5 border-white/10 text-white/50 hover:text-white',
                   )}
                   title="Auto-save every scanned QR code directly into Vault"
                 >
@@ -229,7 +217,7 @@ export const QRScannerOverlay: React.FC<QRScannerOverlayProps> = ({
                   'flex-1 h-9 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-lg',
                   isSaved
                     ? 'bg-emerald-500 text-black shadow-emerald-500/20'
-                    : 'bg-primary text-black shadow-primary/20'
+                    : 'bg-primary text-black shadow-primary/20',
                 )}
               >
                 {isSaved ? (
@@ -267,7 +255,9 @@ export const QRScannerOverlay: React.FC<QRScannerOverlayProps> = ({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => window.open(currentResult.rawValue, '_blank', 'noopener,noreferrer')}
+                  onClick={() =>
+                    window.open(currentResult.rawValue, '_blank', 'noopener,noreferrer')
+                  }
                   className="h-9 px-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-sky-300 font-bold text-xs flex items-center gap-1.5"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />

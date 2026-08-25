@@ -9,14 +9,14 @@ const normalizeTitle = (value: unknown): string =>
 
 export const useVaultItems = (
   itemType: VaultItemType | VaultItemType[],
-  currentFolder: string | null
+  currentFolder: string | null,
 ) => {
   const items = useVaultStore((state) => state.items);
   const [searchQuery, setSearchQuery] = useState('');
 
   const types = useMemo(
     () => Array.from(new Set(Array.isArray(itemType) ? itemType : [itemType])),
-    [itemType]
+    [itemType],
   );
 
   const typedItems = useMemo(() => items.filter((i) => types.includes(i.type)), [items, types]);

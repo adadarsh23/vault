@@ -1,27 +1,35 @@
 # Code of Conduct
 
-Be respectful and constructive.
-Focus feedback on work, not people.
-Collaborate in good faith.
+We are committed to maintaining a respectful, inclusive, and constructive environment for everyone contributing to this project.
+
+## Expected Behavior
+
+- Be respectful and constructive.
+- Focus feedback on the work, not on individuals.
+- Collaborate in good faith.
+- Communicate clearly and professionally.
 
 ## Unacceptable Behavior
 
-- Harassment or personal attacks
-- Abusive language or disruption
-- Sharing private information without permission
+The following behavior is not acceptable:
+
+- Harassment, discrimination, or personal attacks.
+- Abusive, threatening, or disruptive language or behavior.
+- Sharing private or personal information without permission.
+- Deliberate disruption of project discussions, contributions, or community spaces.
 
 ## Scope
 
-Applies to all project spaces and community communication.
+This Code of Conduct applies to all project spaces and community communication, including issues, pull requests, discussions, and other project-related interactions.
 
 ## Reporting
 
-Report concerns privately to maintainers with relevant context.
+If you experience or witness unacceptable behavior, please report it privately to the project maintainers with as much relevant context as possible. Reports will be handled appropriately and as confidentially as reasonably possible.
 
 ## Enforcement
 
-Maintainers may issue warnings, temporary bans, or permanent bans.
+Maintainers are responsible for enforcing this Code of Conduct. Depending on the severity and circumstances of a violation, maintainers may issue a warning, temporarily restrict participation, or permanently ban participation from project spaces.
 
 ## Attribution
 
-Adapted from Contributor Covenant.
+Adapted from the [Contributor Covenant](https://www.contributor-covenant.org/).

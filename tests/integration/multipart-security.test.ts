@@ -40,7 +40,7 @@ describe('multipart security', () => {
     '/part/:uploadId/:partNumber',
     withAuth(),
     express.raw({ type: 'application/octet-stream', limit: '5mb' }),
-    uploadMultipartPart
+    uploadMultipartPart,
   );
   app.post('/complete/:uploadId', withAuth(), completeMultipartUpload);
   app.use(errorHandler);

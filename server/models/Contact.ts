@@ -140,7 +140,7 @@ const ContactSchema = new Schema<IContact>(
   {
     timestamps: true, // auto createdAt & updatedAt
     versionKey: false,
-  }
+  },
 );
 
 // ─────────────────────────────────────────────

@@ -123,7 +123,7 @@ export function useGestureController({
 
       setSidebarDragOffset(mode === 'close' ? 0 : null);
     },
-    [isSidebarOpen, resetSidebarGesture]
+    [isSidebarOpen, resetSidebarGesture],
   );
 
   /* ───────── Touch Move ───────── */
@@ -181,13 +181,13 @@ export function useGestureController({
         const edgeCompensation = clamp(
           MOBILE_SWIPE_EDGE_PX - gesture.startX,
           0,
-          MOBILE_SWIPE_EDGE_PX
+          MOBILE_SWIPE_EDGE_PX,
         );
 
         const revealedWidth = clamp(
           deltaX + edgeCompensation,
           0,
-          gesture.sidebarWidth + MOBILE_SWIPE_OVERSHOOT_PX
+          gesture.sidebarWidth + MOBILE_SWIPE_OVERSHOOT_PX,
         );
 
         const offset = clamp(gesture.sidebarWidth - revealedWidth, 0, gesture.sidebarWidth);
@@ -202,7 +202,7 @@ export function useGestureController({
         setSidebarDragOffset(clamp(offset, 0, gesture.sidebarWidth));
       }
     },
-    [resetSidebarGesture]
+    [resetSidebarGesture],
   );
 
   /* ───────── Touch End ───────── */

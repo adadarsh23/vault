@@ -2,7 +2,16 @@
 
 import { useRef, useState, useEffect, useCallback, memo, useId } from 'react';
 import { Button } from './Button';
-import { Play, Pause, Volume2, Volume1, VolumeX, RotateCcw, Download, AudioLines, Sparkles } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  Volume2,
+  Volume1,
+  VolumeX,
+  RotateCcw,
+  Download,
+  Sparkles,
+} from 'lucide-react';
 import { cn } from '../../lib/utils';
 import {
   attachVoiceClarityToMediaElement,
@@ -55,14 +64,14 @@ const CustomSlider = memo(
           onChange(percentage);
         });
       },
-      [onChange]
+      [onChange],
     );
 
     const handlePointerMove = useCallback(
       (e: PointerEvent) => {
         updateValue(e.clientX);
       },
-      [updateValue]
+      [updateValue],
     );
 
     const handlePointerUp = useCallback((e: PointerEvent) => {
@@ -161,13 +170,13 @@ const CustomSlider = memo(
         }
         className={cn(
           'relative w-full h-1.5 bg-white/10 rounded-full cursor-pointer group outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
-          className
+          className,
         )}
       >
         <div
           className={cn(
             'absolute top-0 left-0 h-full rounded-full shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300 ease-out',
-            activeColor
+            activeColor,
           )}
           style={{ width: `${value}%` }}
         />
@@ -177,7 +186,7 @@ const CustomSlider = memo(
         />
       </div>
     );
-  }
+  },
 );
 
 /* ---------------- AUDIO PLAYER ---------------- */
@@ -210,7 +219,10 @@ export const AudioPlayer = ({
   const [waveformPeaks, setWaveformPeaks] = useState<number[]>([]);
   const [isGeneratingWaveform, setIsGeneratingWaveform] = useState(false);
   const [voiceClarityPreset, setVoiceClarityPreset] = useState<VoiceClarityPreset>('off');
-  const dspControllerRef = useRef<{ setPreset: (p: VoiceClarityPreset) => void; destroy: () => void } | null>(null);
+  const dspControllerRef = useRef<{
+    setPreset: (p: VoiceClarityPreset) => void;
+    destroy: () => void;
+  } | null>(null);
 
   const toggleVoiceClarity = useCallback(() => {
     const audio = audioRef.current;
@@ -539,7 +551,7 @@ export const AudioPlayer = ({
         setCurrentTime(time);
       }
     },
-    [duration, hasError]
+    [duration, hasError],
   );
 
   const handleVolumeChange = useCallback((value: number) => {
@@ -613,13 +625,13 @@ export const AudioPlayer = ({
 
       const newTime = Math.min(
         Math.max(audio.currentTime + seconds, 0),
-        duration || audio.duration || 0
+        duration || audio.duration || 0,
       );
 
       audio.currentTime = newTime;
       setCurrentTime(newTime);
     },
-    [duration, isLive]
+    [duration, isLive],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -662,7 +674,7 @@ export const AudioPlayer = ({
       className={cn(
         'w-full max-w-md bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
         compact && 'p-4',
-        className
+        className,
       )}
     >
       <audio
@@ -690,7 +702,7 @@ export const AudioPlayer = ({
           <p
             className={cn(
               'text-[10px] uppercase tracking-wider font-semibold',
-              hasError ? 'text-amber-400 font-bold' : 'text-white/40'
+              hasError ? 'text-amber-400 font-bold' : 'text-white/40',
             )}
             aria-live={hasError ? 'assertive' : 'polite'}
           >
@@ -742,7 +754,7 @@ export const AudioPlayer = ({
                     key={i}
                     className={cn(
                       'flex-1 transition-all duration-300',
-                      isPlayed ? 'bg-primary' : 'bg-white/10'
+                      isPlayed ? 'bg-primary' : 'bg-white/10',
                     )}
                     style={{
                       height: `${Math.max(8, peak * 100)}%`,
@@ -758,7 +770,7 @@ export const AudioPlayer = ({
               onChange={handleSeek}
               className={cn(
                 'absolute top-1/2 -translate-y-1/2',
-                (hasError || !duration) && 'opacity-50 pointer-events-none'
+                (hasError || !duration) && 'opacity-50 pointer-events-none',
               )}
               ariaLabel="Seek audio"
               duration={duration}
@@ -805,13 +817,13 @@ export const AudioPlayer = ({
                 'flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md transition-all border',
                 voiceClarityPreset !== 'off'
                   ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
-                  : 'bg-white/5 text-white/50 border-white/10 hover:text-white hover:bg-white/10'
+                  : 'bg-white/5 text-white/50 border-white/10 hover:text-white hover:bg-white/10',
               )}
             >
               <Sparkles
                 className={cn(
                   'h-3 w-3',
-                  voiceClarityPreset !== 'off' ? 'text-cyan-400' : 'text-white/40'
+                  voiceClarityPreset !== 'off' ? 'text-cyan-400' : 'text-white/40',
                 )}
               />
               <span className="hidden sm:inline">
@@ -830,7 +842,7 @@ export const AudioPlayer = ({
               className={cn(
                 'h-14 w-14 rounded-full bg-primary text-black hover:scale-105 transition-transform shadow-xl shadow-primary/20 disabled:opacity-50 disabled:scale-100',
                 compact && 'h-10 w-10',
-                hasError && 'bg-amber-400 hover:bg-amber-300'
+                hasError && 'bg-amber-400 hover:bg-amber-300',
               )}
               size="icon"
             >
@@ -838,7 +850,7 @@ export const AudioPlayer = ({
                 <div
                   className={cn(
                     'h-6 w-6 border-2 border-black/20 border-t-black rounded-full animate-spin',
-                    compact && 'h-4 w-4'
+                    compact && 'h-4 w-4',
                   )}
                 />
               ) : isPlaying ? (

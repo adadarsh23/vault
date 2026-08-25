@@ -166,7 +166,7 @@ export const MaintenanceActionsCard: React.FC<MaintenanceActionsCardProps> = mem
         />
       </CardContent>
     </Card>
-  )
+  ),
 );
 
 MaintenanceActionsCard.displayName = 'MaintenanceActionsCard';

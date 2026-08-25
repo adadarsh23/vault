@@ -55,7 +55,7 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
   const componentId = useId();
   const markerNamespace = useMemo(
     () => `globe-${sanitizeCssIdentifier(componentId) || 'instance'}`,
-    [componentId]
+    [componentId],
   );
   const renderMarkers = useMemo<RenderMarker[]>(
     () =>
@@ -68,7 +68,7 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
           anchorId: `${markerNamespace}-${safeId}`,
         };
       }),
-    [markerNamespace, markers]
+    [markerNamespace, markers],
   );
   const cobeMarkers = useMemo(
     () =>
@@ -77,7 +77,7 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
         size: MARKER_SIZE,
         id: marker.anchorId,
       })),
-    [renderMarkers]
+    [renderMarkers],
   );
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -131,7 +131,7 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
       thetaOffsetRef.current = clamp(
         thetaOffsetRef.current + dragOffset.current.theta,
         -THETA_LIMIT,
-        THETA_LIMIT
+        THETA_LIMIT,
       );
       dragOffset.current = { phi: 0, theta: 0 };
     }
@@ -176,7 +176,7 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
       thetaOffsetRef.current = clamp(
         thetaOffsetRef.current + dragOffset.current.theta,
         -THETA_LIMIT,
-        THETA_LIMIT
+        THETA_LIMIT,
       );
       dragOffset.current = { phi: 0, theta: 0 };
     }
@@ -233,7 +233,7 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
           theta: clamp(
             BASE_THETA + thetaOffsetRef.current + dragOffset.current.theta,
             -THETA_LIMIT,
-            THETA_LIMIT
+            THETA_LIMIT,
           ),
         });
       }

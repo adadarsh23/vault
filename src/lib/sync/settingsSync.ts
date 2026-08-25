@@ -10,7 +10,7 @@ import { API_BASE_URL, fetchWithRetry, getAuthHeaders, MAX_RETRIES } from './cor
 export const uploadSettingsToCloud = async (
   settings: any,
   masterKey: string | CryptoKey,
-  options: { force?: boolean } = {}
+  options: { force?: boolean } = {},
 ) => {
   const force = options.force ?? true;
   try {
@@ -33,7 +33,7 @@ export const uploadSettingsToCloud = async (
       },
       'Settings Cloud Sync',
       MAX_RETRIES,
-      force ? {} : { silentStatuses: [409] }
+      force ? {} : { silentStatuses: [409] },
     );
   } catch (error) {
     const candidate = error as Error & { status?: number; code?: string };
@@ -54,7 +54,7 @@ export const uploadSettingsToCloud = async (
 
 export const uploadKeyCheckToCloud = async (
   masterKey: string | CryptoKey,
-  options: { force?: boolean } = {}
+  options: { force?: boolean } = {},
 ) => {
   try {
     const encryptedPayload = await createVaultKeyCheckPayload(masterKey);
@@ -76,7 +76,7 @@ export const uploadKeyCheckToCloud = async (
       },
       'master Key Check Sync',
       MAX_RETRIES,
-      options.force ? {} : { silentStatuses: [409] }
+      options.force ? {} : { silentStatuses: [409] },
     );
   } catch (error) {
     const candidate = error as Error & { status?: number; code?: string };
@@ -109,7 +109,7 @@ export const uploadKeyCheckToCloud = async (
 export const uploadProfileToCloud = async (
   username: string,
   masterKey: string | CryptoKey,
-  options: { force?: boolean } = {}
+  options: { force?: boolean } = {},
 ) => {
   try {
     const profile = { username, lastLogin: Date.now() };
@@ -132,7 +132,7 @@ export const uploadProfileToCloud = async (
       },
       'Profile Cloud Sync',
       MAX_RETRIES,
-      options.force ? {} : { silentStatuses: [409] }
+      options.force ? {} : { silentStatuses: [409] },
     );
   } catch (error) {
     const candidate = error as Error & { status?: number; code?: string };

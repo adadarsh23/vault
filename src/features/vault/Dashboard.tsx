@@ -82,7 +82,7 @@ const calculateSecurityScore = (items: VaultItem[], preferences: Preferences) =>
   let score = SECURITY_WEIGHTS.BASE_SCORE;
   score += Math.min(
     SECURITY_WEIGHTS.MAX_COMPLEXITY_BONUS,
-    items.length * SECURITY_WEIGHTS.POINTS_PER_ITEM
+    items.length * SECURITY_WEIGHTS.POINTS_PER_ITEM,
   );
   if (preferences.isAutoLockEnabled) score += SECURITY_WEIGHTS.AUTO_LOCK_BONUS;
   if (preferences.isClipboardAutoClearEnabled) score += SECURITY_WEIGHTS.CLIPBOARD_BONUS;
@@ -110,7 +110,7 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
       syncStatus: state.syncStatus,
       lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
       lastSyncError: state.lastSyncError,
-    }))
+    })),
   );
 
   const recentActivityCount = useActivityStore((state) => state.count);
@@ -277,14 +277,14 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
         color: string;
         count: number;
       }>,
-    [itemCounts]
+    [itemCounts],
   );
 
   // ── Derived: security score ───────────────────────────────────────────────
 
   const securityScore = React.useMemo(
     () => calculateSecurityScore(items, preferences),
-    [items, preferences]
+    [items, preferences],
   );
 
   // ── Derived: sync summary ─────────────────────────────────────────────────
@@ -339,7 +339,7 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
           active: preferences.isAutoLockEnabled,
         },
       ] as const,
-    [syncSummary, syncStatus, preferences]
+    [syncSummary, syncStatus, preferences],
   );
 
   // ── Derived: vault composition ────────────────────────────────────────────
@@ -350,7 +350,7 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
       { label: 'Other Files', count: itemCounts[ITEM_TYPES.FILE] },
       { label: 'Total Items', count: items.length },
     ],
-    [itemCounts]
+    [itemCounts],
   );
 
   // ── Render ────────────────────────────────────────────────────────────────

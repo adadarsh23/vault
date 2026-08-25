@@ -19,7 +19,7 @@ const mediaServiceMock = vi.hoisted(() => ({
   getStreamingKey: vi.fn(() => Buffer.from('mock_key_16_bytes')),
   getStreamingKeyUrl: vi.fn(
     (itemId: string, token: string) =>
-      `http://localhost:5173/api/vault/media/key/${itemId}?token=${token}`
+      `http://localhost:5173/api/vault/media/key/${itemId}?token=${token}`,
   ),
   generatePlaylist: vi.fn(() => '#EXTM3U\nvariant.m3u8'),
 }));

@@ -27,7 +27,7 @@ interface NoteEditorTextareaProps {
   handleScroll: (e: React.UIEvent<HTMLTextAreaElement>) => void;
   updateScrollVisibility: () => void;
   updateActiveLine: (
-    e: React.SyntheticEvent<HTMLTextAreaElement> | React.KeyboardEvent<HTMLTextAreaElement>
+    e: React.SyntheticEvent<HTMLTextAreaElement> | React.KeyboardEvent<HTMLTextAreaElement>,
   ) => void;
   lineWrap: boolean;
   textAlign: 'left' | 'center' | 'right';
@@ -144,7 +144,7 @@ export const NoteEditorTextarea = forwardRef<HTMLTextAreaElement, NoteEditorText
           gutterRef.current.scrollTop = e.currentTarget.scrollTop;
         }
       },
-      [gutterRef, handleScroll, updateScrollVisibility]
+      [gutterRef, handleScroll, updateScrollVisibility],
     );
 
     const handleChange = useCallback(
@@ -154,7 +154,7 @@ export const NoteEditorTextarea = forwardRef<HTMLTextAreaElement, NoteEditorText
         lastKnownEditorScrollTop = currentScroll;
         handleContentChange(e.target.value);
       },
-      [handleContentChange]
+      [handleContentChange],
     );
 
     const preserveScrollPosition = useCallback((scrollValue: number) => {
@@ -314,7 +314,7 @@ export const NoteEditorTextarea = forwardRef<HTMLTextAreaElement, NoteEditorText
         />
       </div>
     );
-  }
+  },
 );
 
 NoteEditorTextarea.displayName = 'NoteEditorTextarea';

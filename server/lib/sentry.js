@@ -48,6 +48,8 @@ const redactSensitiveData = (input) => {
     'encryptedmetadata',
   ];
 
+  const clone = Array.isArray(input) ? [...input] : { ...input };
+
   for (const [key, value] of Object.entries(clone)) {
     const normalizedKey = key.toLowerCase();
     if (hiddenKeys.includes(normalizedKey) || hiddenKeys.some((k) => normalizedKey.includes(k))) {
@@ -118,7 +120,7 @@ export const sentryTracingHandler = () => {
           span.end();
         });
         next();
-      }
+      },
     );
   };
 };

@@ -83,7 +83,7 @@ describe('Anti-Screenshot & Print Blocking Protection', () => {
           isTabSwitchShieldEnabled: true,
           isPrintBlockingEnabled: true,
           isViewingSensitiveMedia: true,
-        })
+        }),
       );
 
       expect(result.current.isShieldActive).toBe(false);
@@ -118,7 +118,7 @@ describe('Anti-Screenshot & Print Blocking Protection', () => {
           isTabSwitchShieldEnabled: true,
           isPrintBlockingEnabled: true,
           isViewingSensitiveMedia: true,
-        })
+        }),
       );
 
       expect(result.current.isShieldActive).toBe(false);
@@ -145,7 +145,7 @@ describe('Anti-Screenshot & Print Blocking Protection', () => {
           isTabSwitchShieldEnabled: true,
           isPrintBlockingEnabled: true,
           isViewingSensitiveMedia: true,
-        })
+        }),
       );
 
       const event = new KeyboardEvent('keydown', {
@@ -164,7 +164,7 @@ describe('Anti-Screenshot & Print Blocking Protection', () => {
       expect(preventDefaultSpy).toHaveBeenCalled();
       expect(toast.error).toHaveBeenCalledWith(
         expect.stringContaining('Printing and PDF export are blocked'),
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(result.current.isShieldActive).toBe(true);
     });
@@ -175,7 +175,7 @@ describe('Anti-Screenshot & Print Blocking Protection', () => {
           isTabSwitchShieldEnabled: true,
           isPrintBlockingEnabled: true,
           isViewingSensitiveMedia: true,
-        })
+        }),
       );
 
       const event = new KeyboardEvent('keydown', {
@@ -190,7 +190,7 @@ describe('Anti-Screenshot & Print Blocking Protection', () => {
 
       expect(toast.info).toHaveBeenCalledWith(
         expect.stringContaining('Security Shield activated against screen capture'),
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(result.current.isShieldActive).toBe(true);
     });
@@ -201,7 +201,7 @@ describe('Anti-Screenshot & Print Blocking Protection', () => {
           isTabSwitchShieldEnabled: false,
           isPrintBlockingEnabled: false,
           isViewingSensitiveMedia: true,
-        })
+        }),
       );
 
       // Simulate blur

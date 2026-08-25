@@ -12,7 +12,7 @@ export const listenWithFallback = async (
   httpServer: HttpServer,
   host: string,
   startPort: number,
-  maxAttempts = 10
+  maxAttempts = 10,
 ): Promise<number> => {
   let currentPort = startPort;
 

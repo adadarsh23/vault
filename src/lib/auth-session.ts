@@ -105,7 +105,7 @@ export const setAuthToken = (
     rememberMe?: boolean;
     expiresAt?: Date;
     maxAgeSeconds?: number;
-  }
+  },
 ) => {
   inMemoryAuthToken = token;
 
@@ -200,7 +200,7 @@ export const saveCloudSessionHint = (username: string) => {
       JSON.stringify({
         username: normalizedUsername,
         updatedAt: Date.now(),
-      })
+      }),
     );
     storage.removeItem(LEGACY_CLOUD_SESSION_HINT_KEY);
   } catch {

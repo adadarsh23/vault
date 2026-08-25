@@ -1,24 +1,9 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project are documented in GitHub Releases.
 
-The format is based on Keep a Changelog, and this project follows semantic
-versioning where practical.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+For the latest updates, release notes, and version details, please check:
 
-### Changed
-
-- Chat Vault UI now aligns with Notes Vault visual language while preserving existing chat behavior.
-  - Matched layout structure, spacing scale, card treatment, rounded surfaces, and section headers.
-  - Unified pill/button styling, list item appearance, empty-state presentation, and mobile controls.
-  - Kept chat data flow, encryption/storage paths, and interaction logic unchanged.
-
-## [1.0.0] - 2026-03-23
-
-### Added
-
-- Production-oriented package scripts and metadata in `package.json`
-- Stronger auth/session handling, including revoked-session enforcement
-- Registration metadata capture with multi-provider IP/profile lookups
-- Expanded Settings UI with profile, maintenance, session, and preview sections
+🔗 **[Latest GitHub Releases](https://github.com/adadarsh23/vault/releases)**

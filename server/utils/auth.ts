@@ -36,7 +36,7 @@ const parseKeyRing = (raw: string | undefined): Record<string, string> => {
     return Object.fromEntries(
       Object.entries(parsed)
         .filter(([keyId, key]) => Boolean(keyId && typeof key === 'string' && key.trim()))
-        .map(([keyId, key]) => [keyId, key.replace(/\\n/g, '\n')])
+        .map(([keyId, key]) => [keyId, key.replace(/\\n/g, '\n')]),
     );
   } catch {
     throw new Error('Invalid JSON in JWT key ring configuration.');
@@ -63,7 +63,7 @@ if (!JWT_SECRET && !hasEs256Keys) {
 }
 if (IS_PRODUCTION && REQUIRE_ES256_IN_PRODUCTION && !hasEs256Keys) {
   throw new Error(
-    'ES256 key ring must be configured in production when REQUIRE_ES256_IN_PRODUCTION is enabled.'
+    'ES256 key ring must be configured in production when REQUIRE_ES256_IN_PRODUCTION is enabled.',
   );
 }
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || JWT_SECRET;
@@ -87,7 +87,7 @@ const refreshVerificationKey = refreshEs256Enabled
   : REFRESH_TOKEN_SECRET || '';
 if (IS_PRODUCTION && REQUIRE_ES256_IN_PRODUCTION && !REFRESH_TOKEN_PRIVATE_KEY) {
   throw new Error(
-    'REFRESH_TOKEN_PRIVATE_KEY must be configured in production when REQUIRE_ES256_IN_PRODUCTION is enabled.'
+    'REFRESH_TOKEN_PRIVATE_KEY must be configured in production when REQUIRE_ES256_IN_PRODUCTION is enabled.',
   );
 }
 if (ES256_ENABLED && !publicKeyRing[JWT_ACTIVE_KID]) {
@@ -111,7 +111,7 @@ if (!['strict', 'lax', 'none'].includes(REFRESH_COOKIE_SAME_SITE)) {
 }
 if (REFRESH_COOKIE_SAME_SITE === 'none' && !REFRESH_COOKIE_SECURE && IS_PRODUCTION) {
   throw new Error(
-    'REFRESH_COOKIE_SECURE must be true when REFRESH_COOKIE_SAME_SITE is none in production.'
+    'REFRESH_COOKIE_SECURE must be true when REFRESH_COOKIE_SAME_SITE is none in production.',
   );
 }
 
@@ -157,7 +157,7 @@ export const createAccessToken = (payload: Omit<AccessTokenPayload, 'type'>): st
       type: 'access',
     },
     jwtSigningKey,
-    signOptions
+    signOptions,
   );
 };
 
@@ -178,7 +178,7 @@ export const createRefreshToken = (payload: Omit<RefreshTokenPayload, 'type'>): 
       type: 'refresh',
     },
     refreshSigningKey,
-    signOptions
+    signOptions,
   );
 };
 
@@ -198,7 +198,7 @@ export const createMfaToken = (payload: Omit<MfaTokenPayload, 'type'>): string =
       type: 'mfa',
     },
     jwtSigningKey,
-    signOptions
+    signOptions,
   );
 };
 

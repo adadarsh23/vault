@@ -66,7 +66,7 @@ const ensureFolder = async (
   username: string,
   name: string,
   itemType: string,
-  parentId: string | null
+  parentId: string | null,
 ) => {
   const Folder = getFolderModel(username);
   const nameHash = hashFolderName(name);
@@ -74,7 +74,7 @@ const ensureFolder = async (
   return await Folder.findOneAndUpdate(
     { userId, nameHash, itemType, parentId },
     { userId, username, name: encryptedName, nameHash, itemType, parentId },
-    { upsert: true, returnDocument: 'after' }
+    { upsert: true, returnDocument: 'after' },
   );
 };
 
@@ -82,7 +82,7 @@ const ensureFolderTree = async (
   userId: string,
   username: string,
   parentId: string,
-  definitions: FolderSeedDefinition[]
+  definitions: FolderSeedDefinition[],
 ) => {
   for (const definition of definitions) {
     const folder = await ensureFolder(
@@ -90,7 +90,7 @@ const ensureFolderTree = async (
       username,
       definition.name,
       definition.itemType,
-      parentId
+      parentId,
     );
 
     if (definition.children?.length) {
@@ -108,7 +108,7 @@ export const initializeDefaultUserFolders = async (userId: string, username: str
       username,
       username,
       'system',
-      rootFolder._id.toString()
+      rootFolder._id.toString(),
     );
 
     await ensureFolderTree(userId, username, userFolder._id.toString(), DEFAULT_FOLDER_TREE);

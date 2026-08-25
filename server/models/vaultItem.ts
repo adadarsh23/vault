@@ -79,7 +79,7 @@ const vaultItemSchema = new mongoose.Schema(
   {
     timestamps: true,
     collection: 'vault_items',
-  }
+  },
 );
 
 // Compound index for unique items per user
@@ -100,7 +100,7 @@ export type VaultItemDocument = mongoose.HydratedDocument<VaultItemType>;
  */
 export const getVaultItemModel = (
   username: string,
-  customConnection?: mongoose.Connection
+  customConnection?: mongoose.Connection,
 ): mongoose.Model<VaultItemType> => {
   if (!username || !username.trim()) {
     throw new Error('Username is required for isolated vault items');

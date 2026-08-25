@@ -5,7 +5,7 @@ export const TASK_LINE_REGEX = /^(\s*(?:[-*+]|\d+[.)])\s+)\[(?: |x|X)\](.*)$/;
 export const updateScrollVisibility = (
   ref: React.RefObject<HTMLElement | null>,
   topSetter: (show: boolean) => void,
-  bottomSetter?: (show: boolean) => void
+  bottomSetter?: (show: boolean) => void,
 ) => {
   if (ref.current) {
     const { scrollTop, scrollHeight, clientHeight } = ref.current;

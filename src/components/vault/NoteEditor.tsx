@@ -185,7 +185,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         setSaveStatus('error');
       }
     },
-    [onSave]
+    [onSave],
   );
 
   const handleContentChange = useCallback(
@@ -195,7 +195,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         titleRef.current === lastSavedRef.current.title &&
           newContent === lastSavedRef.current.content
           ? 'saved'
-          : 'dirty'
+          : 'dirty',
       );
       const saveVersion = ++saveVersionRef.current;
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
@@ -204,7 +204,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         handleAutoSave(titleRef.current, newContent).catch(() => {});
       }, 2000);
     },
-    [handleAutoSave]
+    [handleAutoSave],
   );
 
   const handleTitleChange = useCallback(
@@ -214,7 +214,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         newTitle === lastSavedRef.current.title &&
           contentRef.current === lastSavedRef.current.content
           ? 'saved'
-          : 'dirty'
+          : 'dirty',
       );
       const saveVersion = ++saveVersionRef.current;
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
@@ -223,7 +223,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         handleAutoSave(newTitle, contentRef.current).catch(() => {});
       }, 2000);
     },
-    [handleAutoSave]
+    [handleAutoSave],
   );
 
   // Undo/Redo mapped to Tiptap
@@ -307,7 +307,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
           break;
       }
     },
-    [editor]
+    [editor],
   );
 
   const handleCycleTextAlignment = useCallback(() => {
@@ -413,7 +413,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
     }
     printWindow.opener = null;
     printWindow.document.write(
-      `<!DOCTYPE html><html><head><title>${title || 'Note'}</title><style>body{font-family:system-ui,-apple-system,sans-serif;padding:24px;line-height:1.6;color:#111;max-width:800px;margin:0 auto;}h1{font-size:24px;margin-bottom:16px;border-bottom:1px solid #eee;padding-bottom:8px;}</style></head><body><h1>${title || 'Untitled Note'}</h1><div>${content}</div></body></html>`
+      `<!DOCTYPE html><html><head><title>${title || 'Note'}</title><style>body{font-family:system-ui,-apple-system,sans-serif;padding:24px;line-height:1.6;color:#111;max-width:800px;margin:0 auto;}h1{font-size:24px;margin-bottom:16px;border-bottom:1px solid #eee;padding-bottom:8px;}</style></head><body><h1>${title || 'Untitled Note'}</h1><div>${content}</div></body></html>`,
     );
     printWindow.document.close();
     printWindow.focus();
@@ -437,7 +437,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
     <div
       className={cn(
         'flex h-full flex-col overflow-hidden bg-card-bg/40 rounded-2xl border border-card-border/50 shadow-2xl backdrop-blur-sm transition-all duration-300',
-        isFullScreen ? 'fixed inset-4 z-[100] bg-bg/95 backdrop-blur-xl' : 'relative'
+        isFullScreen ? 'fixed inset-4 z-[100] bg-bg/95 backdrop-blur-xl' : 'relative',
       )}
     >
       <ErrorBoundary
@@ -553,13 +553,13 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         <div
           className={cn(
             'flex w-full overflow-hidden flex-1 relative',
-            showPreview || showHtmlPreview ? 'divide-x divide-white/10' : ''
+            showPreview || showHtmlPreview ? 'divide-x divide-white/10' : '',
           )}
         >
           <div
             className={cn(
               'relative flex flex-col min-w-0 transition-all duration-300',
-              showPreview || showHtmlPreview ? 'w-full md:w-1/2' : 'w-full'
+              showPreview || showHtmlPreview ? 'w-full md:w-1/2' : 'w-full',
             )}
           >
             <ErrorBoundary

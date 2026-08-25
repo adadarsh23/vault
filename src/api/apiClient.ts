@@ -114,7 +114,7 @@ const requestSessionRefresh = async (): Promise<RefreshSessionResult | null> => 
       const { data } = await axios.post<ApiResponse<RefreshSessionPayload>>(
         `${API_BASE_URL}/auth/refresh`,
         {},
-        config
+        config,
       );
 
       if (data.success && isNonEmptyString(data.data?.token)) {
@@ -184,7 +184,7 @@ apiClient.interceptors.request.use(
     });
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 /**
@@ -205,7 +205,7 @@ apiClient.interceptors.response.use(
         originalRequest.url.includes('/auth/salt') ||
         originalRequest.url.includes('/auth/username-check') ||
         originalRequest.url.includes('/auth/csrf-token') ||
-        originalRequest.url.includes('/2fa/login'))
+        originalRequest.url.includes('/2fa/login')),
     );
     const isAuthRefreshCall = Boolean(originalRequest?.url?.includes('/auth/refresh'));
 
@@ -273,7 +273,7 @@ apiClient.interceptors.response.use(
     const apiError = normalizeApiError(error);
 
     return Promise.reject(apiError);
-  }
+  },
 );
 
 export default apiClient;

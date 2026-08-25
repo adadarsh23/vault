@@ -29,8 +29,8 @@ describe('ShareVaultCard Component Test Suite', () => {
     expect(screen.getByText('Share Vault')).toBeTruthy();
     expect(
       screen.getByText(
-        /Help others secure their digital identity by sharing Vault with your network/i
-      )
+        /Help others secure their digital identity by sharing Vault with your network/i,
+      ),
     ).toBeTruthy();
   });
 

@@ -386,7 +386,7 @@ export const CustomSlider = ({
       tabIndex={0}
       className={cn(
         'group/slider relative w-full h-2 sm:h-1.5 rounded-full cursor-pointer touch-none outline-none focus-visible:ring-2 focus-visible:ring-primary/60 bg-white/20 overflow-visible transition-all duration-150',
-        className
+        className,
       )}
       onPointerEnter={() => setIsPointerInside(true)}
       onPointerLeave={() => {
@@ -446,7 +446,7 @@ export const CustomSlider = ({
       <div
         className={cn(
           'absolute z-[4] top-1/2 h-3.5 w-3.5 rounded-full bg-white shadow-lg ring-2 ring-primary/60 transition-transform hover:scale-125 active:scale-110',
-          thumbClassName
+          thumbClassName,
         )}
         style={{
           left: `${value}%`,
@@ -520,9 +520,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   allowFullscreen = true,
   allowSpeedChange = true,
   allowFloating = true,
-  allowFilters,
-  initialFilter,
-  onFilterChange,
+  allowFilters: _allowFilters,
+  initialFilter: _initialFilter,
+  onFilterChange: _onFilterChange,
   isFloating: controlledFloating,
   onToggleFloating,
   allowedMediaDomains = [],
@@ -666,7 +666,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           toast.success('Snapshot downloaded');
         },
         'image/jpeg',
-        0.95
+        0.95,
       );
     } catch (e) {
       toast.error('Could not capture frame');
@@ -691,7 +691,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const resumeKey = useMemo(() => `vault:video:resume:${itemId ?? activeSrc}`, [itemId, activeSrc]);
   const isSourceAllowed = useMemo(
     () => isAllowedMediaUrl(activeSrc, allowedMediaDomains),
-    [activeSrc, allowedMediaDomains]
+    [activeSrc, allowedMediaDomains],
   );
 
   const effectiveAspectRatio = useMemo(() => {
@@ -753,7 +753,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         });
       }
     },
-    [itemId]
+    [itemId],
   );
 
   useEffect(() => {
@@ -992,7 +992,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const progress = useMemo(
     () => (duration > 0 ? (currentTime / duration) * 100 : 0),
-    [currentTime, duration]
+    [currentTime, duration],
   );
 
   /* ---------------- CORE EVENTS & TRANSCODING ---------------- */
@@ -1012,7 +1012,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         (ev) => {
           setTranscodeProgress({ progress: ev.progress, message: ev.message });
         },
-        itemId || targetSource
+        itemId || targetSource,
       );
 
       if (managedFallbackBlobRef.current) {
@@ -1195,7 +1195,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       const safeDuration = finiteOrZero(duration);
       const safeCurrentTime = Math.min(
         safeDuration || Number.MAX_SAFE_INTEGER,
-        Math.max(0, finiteOrZero(currentTime))
+        Math.max(0, finiteOrZero(currentTime)),
       );
       if (Number.isFinite(safeCurrentTime)) {
         videoRef.current.currentTime = safeCurrentTime;
@@ -1230,7 +1230,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       setIsMuted(false);
       triggerHudBadge(
         <Volume2 className="w-7 h-7 text-white" />,
-        `${Math.round(restoredVol * 100)}%`
+        `${Math.round(restoredVol * 100)}%`,
       );
     } else {
       lastVolume.current = volume;
@@ -1259,7 +1259,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       setIsSpeedMenuOpen(false);
       triggerHudBadge(<Gauge className="w-7 h-7 text-white" />, `${speed}x`);
     },
-    [triggerHudBadge]
+    [triggerHudBadge],
   );
 
   const toggleLoop = useCallback(() => {
@@ -1274,7 +1274,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       ) : (
         <Repeat className="w-7 h-7 text-white/70" />
       ),
-      next ? 'Loop On' : 'Loop Off'
+      next ? 'Loop On' : 'Loop Off',
     );
   }, [isLooping, triggerHudBadge]);
 
@@ -1377,7 +1377,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
     triggerHudBadge(
       <Layers className="w-7 h-7 text-white" />,
-      next ? 'Mini Player' : 'Standard View'
+      next ? 'Mini Player' : 'Standard View',
     );
   }, [allowFloating, isFloating, onToggleFloating, triggerHudBadge]);
 
@@ -1705,7 +1705,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           ) : (
             <Volume1 className="w-7 h-7 text-white" />
           ),
-          `${nextVol}%`
+          `${nextVol}%`,
         );
         return;
       }
@@ -1766,7 +1766,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           : effectiveAspectRatio && !error
             ? 'w-full h-full max-w-full max-h-full'
             : 'w-full h-full min-h-[220px] sm:min-h-[300px] max-w-full max-h-full',
-        className
+        className,
       )}
       style={{
         aspectRatio:
@@ -1832,7 +1832,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         className={cn(
           'h-full w-full max-h-[min(82vh,calc(100dvh-5.5rem))] max-w-full object-contain transition-opacity duration-300',
           isMirrored ? 'scale-x-[-1]' : '',
-          isFloating ? 'pt-8 pb-1' : ''
+          isFloating ? 'pt-8 pb-1' : '',
         )}
         preload="auto"
         playsInline
@@ -1895,7 +1895,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             transition={{ duration: 0.25 }}
             className={cn(
               'absolute top-0 bottom-0 w-1/2 z-[25] flex flex-col items-center justify-center bg-white/15 backdrop-blur-xs pointer-events-none select-none',
-              skipRipple.side === 'left' ? 'left-0 rounded-r-[100px]' : 'right-0 rounded-l-[100px]'
+              skipRipple.side === 'left' ? 'left-0 rounded-r-[100px]' : 'right-0 rounded-l-[100px]',
             )}
           >
             <div className="flex flex-col items-center gap-1.5 text-white drop-shadow-2xl">
@@ -1941,7 +1941,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             transition={useLiteSkeleton ? { duration: 0 } : { duration: 0.3 }}
             className={cn(
               'absolute inset-0 z-[5] flex flex-col items-center justify-center bg-black/80 gap-3 text-white/70',
-              !useLiteSkeleton && 'backdrop-blur-sm'
+              !useLiteSkeleton && 'backdrop-blur-sm',
             )}
           >
             <Loader2 className={cn('h-8 w-8 text-white/80', !useLiteSkeleton && 'animate-spin')} />
@@ -2116,7 +2116,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
               'absolute bottom-0 left-0 right-0 z-[30] bg-gradient-to-t from-black/95 via-black/85 to-transparent backdrop-blur-md border-t border-white/10 select-none pointer-events-auto transition-all',
               isFloating
                 ? 'px-2 py-1.5'
-                : 'px-2 sm:px-4 pt-2.5 sm:pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] sm:pb-[calc(env(safe-area-inset-bottom,0px)+0.6rem)]'
+                : 'px-2 sm:px-4 pt-2.5 sm:pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] sm:pb-[calc(env(safe-area-inset-bottom,0px)+0.6rem)]',
             )}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
@@ -2168,21 +2168,21 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                   size="icon"
                   className={cn(
                     'shrink-0 rounded-lg bg-white/15 text-white hover:bg-white/25 active:scale-95 transition-all shadow-sm touch-manipulation',
-                    isFloating ? 'h-7 w-7' : 'h-8 w-8 sm:h-9 sm:w-9'
+                    isFloating ? 'h-7 w-7' : 'h-8 w-8 sm:h-9 sm:w-9',
                   )}
                 >
                   {isPlaying ? (
                     <Pause
                       className={cn(
                         isFloating ? 'w-3.5 h-3.5' : 'w-4 h-4 sm:w-4.5 sm:h-4.5',
-                        'fill-white'
+                        'fill-white',
                       )}
                     />
                   ) : (
                     <Play
                       className={cn(
                         isFloating ? 'w-3.5 h-3.5' : 'w-4 h-4 sm:w-4.5 sm:h-4.5',
-                        'fill-white'
+                        'fill-white',
                       )}
                     />
                   )}
@@ -2221,7 +2221,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                   size="icon"
                   className={cn(
                     'shrink-0 rounded-lg bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all touch-manipulation',
-                    isFloating ? 'h-7 w-7' : 'h-8 w-8 sm:h-9 sm:w-9'
+                    isFloating ? 'h-7 w-7' : 'h-8 w-8 sm:h-9 sm:w-9',
                   )}
                 >
                   {isMuted ? (
@@ -2292,7 +2292,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                         'h-8 px-1.5 sm:px-2 text-[10px] sm:text-xs font-semibold text-white active:scale-95 transition-all touch-manipulation min-w-[28px] sm:min-w-[32px] rounded-lg',
                         playbackSpeed !== 1
                           ? 'bg-primary/30 text-primary border border-primary/40'
-                          : 'bg-white/10 hover:bg-white/20'
+                          : 'bg-white/10 hover:bg-white/20',
                       )}
                     >
                       {playbackSpeed}x
@@ -2324,7 +2324,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                                   'px-2 py-1.5 rounded-lg text-xs font-medium transition-all text-center touch-manipulation',
                                   playbackSpeed === speed
                                     ? 'bg-primary text-primary-foreground font-bold shadow-md shadow-primary/20'
-                                    : 'bg-white/10 text-white hover:bg-white/20 active:scale-95'
+                                    : 'bg-white/10 text-white hover:bg-white/20 active:scale-95',
                                 )}
                               >
                                 {speed}x
@@ -2348,7 +2348,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       'h-8 w-8 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation',
                       isLooping
                         ? 'bg-primary/30 text-primary border border-primary/50'
-                        : 'bg-white/10 text-white hover:bg-white/20'
+                        : 'bg-white/10 text-white hover:bg-white/20',
                     )}
                   >
                     {isLooping ? (
@@ -2384,7 +2384,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                         ? abRepeat.pointB !== null
                           ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
                           : 'bg-amber-500/30 text-amber-300 border border-amber-500/50 animate-pulse'
-                        : 'bg-white/10 text-white hover:bg-white/20'
+                        : 'bg-white/10 text-white hover:bg-white/20',
                     )}
                   >
                     <Bookmark className="w-3.5 h-3.5" />
@@ -2429,7 +2429,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       'active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation',
                       isFloating
                         ? 'h-7 w-7 bg-primary/30 text-primary border border-primary/50'
-                        : 'h-8 w-8 bg-white/10 text-white hover:bg-white/20'
+                        : 'h-8 w-8 bg-white/10 text-white hover:bg-white/20',
                     )}
                   >
                     {isFloating ? (

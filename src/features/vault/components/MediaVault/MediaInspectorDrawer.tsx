@@ -74,7 +74,7 @@ export const MediaInspectorDrawer: React.FC<MediaInspectorDrawerProps> = ({
   const mimeType = item.metadata?.mimeType || (type === 'photo' ? 'image/jpeg' : 'video/mp4');
   const sizeBytes = Number(
     item.metadata?.size ||
-      (typeof item.content === 'string' ? item.content.length : item.content?.byteLength || 0)
+      (typeof item.content === 'string' ? item.content.length : item.content?.byteLength || 0),
   );
   const resBadge = getResolutionBadge(width, height);
 
@@ -268,7 +268,8 @@ export const MediaInspectorDrawer: React.FC<MediaInspectorDrawerProps> = ({
               {type === 'photo' && (
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-white/50 flex items-center gap-1.5">
-                    <ShieldCheck className="h-3.5 w-3.5 opacity-60 text-emerald-400" /> EXIF &amp; GPS
+                    <ShieldCheck className="h-3.5 w-3.5 opacity-60 text-emerald-400" /> EXIF &amp;
+                    GPS
                   </span>
                   <span className="font-medium text-emerald-400 text-[11px] flex items-center gap-1">
                     <ShieldCheck className="h-3 w-3 text-emerald-400" /> Sanitized (Anti-Tracking)
@@ -393,7 +394,10 @@ export const MediaInspectorDrawer: React.FC<MediaInspectorDrawerProps> = ({
               {item.metadata?.voiceClarityPreset && item.metadata.voiceClarityPreset !== 'off' && (
                 <div className="flex items-center gap-1.5 text-[10px] text-cyan-300/80 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20 w-fit">
                   <Sparkles className="h-3 w-3 text-cyan-400" />
-                  <span>Voice DSP: {String(item.metadata.voiceClarityPreset).toUpperCase()} (Fan & Hum Suppressed)</span>
+                  <span>
+                    Voice DSP: {String(item.metadata.voiceClarityPreset).toUpperCase()} (Fan & Hum
+                    Suppressed)
+                  </span>
                 </div>
               )}
 

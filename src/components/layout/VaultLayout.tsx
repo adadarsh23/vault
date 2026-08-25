@@ -129,7 +129,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
       if (!name || folders.some((f) => f !== oldName && f.toLowerCase() === normalized)) return;
       folderControls.onRename(oldName);
     },
-    [folderControls, folders]
+    [folderControls, folders],
   );
 
   const isCreateInvalid =
@@ -264,7 +264,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                   !isDragging &&
                     (currentFolder === null
                       ? 'bg-text/10 text-text border-transparent font-bold'
-                      : 'text-text/60 hover:bg-text/5 border-transparent')
+                      : 'text-text/60 hover:bg-text/5 border-transparent'),
                 )}
               >
                 {isAllItemsValidDropZone && !isAllItemsDropHover && (
@@ -368,7 +368,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                         !isDragging &&
                           (currentFolder === folder
                             ? 'bg-text/10 text-text border-transparent font-semibold'
-                            : 'text-text/60 hover:bg-text/5 border-transparent')
+                            : 'text-text/60 hover:bg-text/5 border-transparent'),
                       )}
                     >
                       {isFolderValidDropZone && !isFolderDropHover && (
@@ -407,7 +407,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                             'ml-auto text-[10px] font-bold transition-opacity',
                             currentFolder === folder
                               ? 'opacity-40'
-                              : 'opacity-40 group-hover:opacity-0'
+                              : 'opacity-40 group-hover:opacity-0',
                           )}
                         >
                           {getFolderCount(folder)}
@@ -611,7 +611,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                 placeholder={`Search ${itemTypeLabel}s...`}
                 className={cn(
                   'pl-9 h-9 sm:h-10 rounded-xl border-text/10 bg-text/[0.03] focus:bg-text/[0.06] transition-colors text-sm placeholder:text-text/30',
-                  searchInput && 'pr-9'
+                  searchInput && 'pr-9',
                 )}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
@@ -690,7 +690,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                 <div
                   className={cn(
                     'flex-1 overflow-y-auto p-4 space-y-1.5 transition-all duration-300',
-                    isDragging && 'space-y-2.5'
+                    isDragging && 'space-y-2.5',
                   )}
                 >
                   {/* All Items button */}
@@ -725,7 +725,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                           !isDragging &&
                             (currentFolder === null
                               ? 'bg-primary/10 text-text font-bold border-primary/20'
-                              : 'text-text/60 hover:bg-text/5 hover:text-text border-transparent')
+                              : 'text-text/60 hover:bg-text/5 hover:text-text border-transparent'),
                         )}
                       >
                         {isAllItemsValidDropZone && !isAllItemsDropHover && (
@@ -795,7 +795,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                           !isDragging &&
                             (currentFolder === folder
                               ? 'bg-primary/10 text-text font-bold border-primary/20'
-                              : 'text-text/60 hover:bg-text/5 hover:text-text border-transparent')
+                              : 'text-text/60 hover:bg-text/5 hover:text-text border-transparent'),
                         )}
                       >
                         {isFolderValidDropZone && !isFolderDropHover && (
@@ -1004,7 +1004,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                             ? 'ring-2 ring-white border-white bg-white/30 text-white shadow-[0_0_20px_rgba(255,255,255,0.6)] scale-105'
                             : isAllSource
                               ? 'border-dashed border-white/25 bg-white/5 text-white/40'
-                              : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm'
+                              : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm',
                         )}
                       >
                         <SidebarIcon className="h-3.5 w-3.5 shrink-0" />
@@ -1039,7 +1039,7 @@ export const VaultLayout: React.FC<VaultLayoutProps> = ({
                             ? 'ring-2 ring-white border-white bg-white/30 text-white shadow-[0_0_20px_rgba(255,255,255,0.6)] scale-105'
                             : isSource
                               ? 'border-dashed border-white/25 bg-white/5 text-white/40'
-                              : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm'
+                              : 'border-white/30 bg-white/10 text-white hover:border-white/60 shadow-sm',
                         )}
                       >
                         <Folder className="h-3.5 w-3.5 shrink-0" />

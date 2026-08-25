@@ -52,7 +52,7 @@ const NODE_PREFIX = '01';
  */
 export const computeBufferHash = async (
   data: Uint8Array | ArrayBuffer | string,
-  algorithm: HashAlgorithm = 'blake3'
+  algorithm: HashAlgorithm = 'blake3',
 ): Promise<string> => {
   const buffer =
     typeof data === 'string'
@@ -95,7 +95,7 @@ export const computeFileHashStreaming = async (
   file: File | Blob,
   algorithm: HashAlgorithm = 'blake3',
   chunkSize: number = 2 * 1024 * 1024,
-  onProgress?: (percent: number) => void
+  onProgress?: (percent: number) => void,
 ): Promise<string> => {
   if (file.size === 0) {
     return computeBufferHash(new Uint8Array(0), algorithm);
@@ -137,7 +137,7 @@ export const computeFileHashStreaming = async (
  */
 export const computeLeafHash = async (
   item: MerkleLeafItem,
-  algorithm: HashAlgorithm = 'blake3'
+  algorithm: HashAlgorithm = 'blake3',
 ): Promise<string> => {
   const leafPayload = `${LEAF_PREFIX}:${item.itemId}:${item.category || 'photo'}:${item.hash}:${item.size || 0}`;
   return computeBufferHash(leafPayload, algorithm);
@@ -150,7 +150,7 @@ export const computeLeafHash = async (
 export const computeNodeHash = async (
   left: string,
   right: string,
-  algorithm: HashAlgorithm = 'blake3'
+  algorithm: HashAlgorithm = 'blake3',
 ): Promise<string> => {
   const nodePayload = `${NODE_PREFIX}:${left}:${right}`;
   return computeBufferHash(nodePayload, algorithm);
@@ -285,7 +285,7 @@ export class MerkleTree {
     leafHash: string,
     proof: MerkleProofStep[],
     expectedRoot: string,
-    algorithm: HashAlgorithm = 'blake3'
+    algorithm: HashAlgorithm = 'blake3',
   ): Promise<boolean> {
     if (!leafHash || !expectedRoot) return false;
     let currentHash = leafHash;
@@ -322,7 +322,7 @@ export class MerkleTree {
 export const detectBitFlipCorruption = async (
   originalBuffer: Uint8Array,
   expectedHash: string,
-  algorithm: HashAlgorithm = 'blake3'
+  algorithm: HashAlgorithm = 'blake3',
 ): Promise<{
   isCorrupted: boolean;
   actualHash: string;
@@ -346,7 +346,7 @@ export const detectBitFlipCorruption = async (
 export const simulateBitFlip = (
   data: Uint8Array,
   bytePosition = 0,
-  bitPosition = 0
+  bitPosition = 0,
 ): Uint8Array => {
   const tampered = new Uint8Array(data);
   if (tampered.length === 0) return tampered;

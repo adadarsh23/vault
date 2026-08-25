@@ -29,7 +29,7 @@ export interface FolderSidebarProps {
   handleDeleteFolder: (folderName: string) => void;
   handleMoveToFolder?: (
     itemId: string | string[],
-    folderName: string | null
+    folderName: string | null,
   ) => Promise<void> | void;
   title?: string;
   allItemLabel?: string;
@@ -159,7 +159,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                 !isDragging &&
                   (currentFolder === null
                     ? 'bg-text/10 text-text border-transparent font-bold'
-                    : 'text-text/60 hover:bg-text/5 border-transparent')
+                    : 'text-text/60 hover:bg-text/5 border-transparent'),
               )}
             >
               {isAllItemsValidDropZone && !isAllItemsDropHover && (
@@ -261,7 +261,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
                     !isDragging &&
                       (currentFolder === folder
                         ? 'bg-text/10 text-text border-transparent font-semibold'
-                        : 'text-text/60 hover:bg-text/5 border-transparent')
+                        : 'text-text/60 hover:bg-text/5 border-transparent'),
                   )}
                 >
                   {isFolderValidDropZone && !isFolderDropHover && (

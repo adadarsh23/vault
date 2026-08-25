@@ -268,7 +268,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
     <Card
       className={cn(
         'overflow-hidden rounded-[2rem] border-card-border bg-card-bg shadow-sm dark:border-white/10 dark:bg-black',
-        className
+        className,
       )}
     >
       <CardHeader className="border-b border-card-border/80 bg-gradient-to-r from-text/[0.02] via-transparent to-text/[0.02]">
@@ -293,7 +293,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                   'h-8 w-full rounded-lg px-3 text-xs transition-all duration-300',
                   chartMode === 'bar'
                     ? 'bg-text text-bg shadow-[0_8px_24px_-16px_rgba(15,23,42,0.85)] hover:bg-text/90'
-                    : 'text-text/55 hover:bg-text/5 hover:text-text'
+                    : 'text-text/55 hover:bg-text/5 hover:text-text',
                 )}
                 onClick={() => setChartMode('bar')}
               >
@@ -307,7 +307,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                   'h-8 w-full rounded-lg px-3 text-xs transition-all duration-300',
                   chartMode === 'line'
                     ? 'bg-text text-bg shadow-[0_8px_24px_-16px_rgba(15,23,42,0.85)] hover:bg-text/90'
-                    : 'text-text/55 hover:bg-text/5 hover:text-text'
+                    : 'text-text/55 hover:bg-text/5 hover:text-text',
                 )}
                 onClick={() => setChartMode('line')}
               >
@@ -321,7 +321,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                   'h-8 w-full rounded-lg px-3 text-xs transition-all duration-300',
                   chartMode === 'pie'
                     ? 'bg-text text-bg shadow-[0_8px_24px_-16px_rgba(15,23,42,0.85)] hover:bg-text/90'
-                    : 'text-text/55 hover:bg-text/5 hover:text-text'
+                    : 'text-text/55 hover:bg-text/5 hover:text-text',
                 )}
                 onClick={() => setChartMode('pie')}
               >
@@ -340,7 +340,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                     'h-8 w-full rounded-lg px-3 text-xs transition-all duration-300',
                     rangeDays === option
                       ? 'bg-text text-bg shadow-[0_8px_24px_-16px_rgba(15,23,42,0.85)] hover:bg-text/90'
-                      : 'text-text/55 hover:bg-text/5 hover:text-text'
+                      : 'text-text/55 hover:bg-text/5 hover:text-text',
                   )}
                   onClick={() =>
                     startRangeTransition(() => {
@@ -368,13 +368,13 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
               'custom-scrollbar pb-2',
               chartMode === 'pie'
                 ? 'w-full overflow-x-hidden'
-                : 'overflow-x-auto overflow-y-visible'
+                : 'overflow-x-auto overflow-y-visible',
             )}
           >
             <div
               className={cn(
                 'relative overflow-visible',
-                chartMode === 'pie' ? 'w-full min-h-[288px]' : 'h-72 min-w-full'
+                chartMode === 'pie' ? 'w-full min-h-[288px]' : 'h-72 min-w-full',
               )}
               style={{
                 minWidth: chartMode !== 'pie' ? `${chartMinWidth}px` : undefined,
@@ -461,7 +461,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                             <span
                               className={cn(
                                 'text-xs font-semibold',
-                                averageDiff >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                                averageDiff >= 0 ? 'text-emerald-500' : 'text-rose-500',
                               )}
                             >
                               {Math.abs(averageDiff).toFixed(0)}%
@@ -483,7 +483,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                               <span
                                 className={cn(
                                   'text-xs font-semibold',
-                                  previousDiff >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                                  previousDiff >= 0 ? 'text-emerald-500' : 'text-rose-500',
                                 )}
                               >
                                 {Math.abs(previousDiff).toFixed(0)}%
@@ -656,7 +656,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                             'flex size-20 flex-col items-center justify-center rounded-full border p-2 text-center shadow-[0_16px_36px_rgba(0,0,0,0.35)] backdrop-blur-2xl transition-all duration-300 sm:size-24 md:size-28',
                             hoveredSliceId
                               ? 'border-text/30 bg-bg/95 dark:bg-black/90 shadow-[0_0_24px_rgba(255,255,255,0.15)]'
-                              : 'border-card-border/80 bg-bg/80 dark:bg-black/80'
+                              : 'border-card-border/80 bg-bg/80 dark:bg-black/80',
                           )}
                         >
                           <AnimatePresence mode="wait">
@@ -671,7 +671,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                               >
                                 <span
                                   className={cn(
-                                    'text-xl font-black sm:text-2xl md:text-3xl text-text'
+                                    'text-xl font-black sm:text-2xl md:text-3xl text-text',
                                   )}
                                 >
                                   {activeSliceInfo.value}
@@ -738,14 +738,14 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                                 ? 'border-text/30 bg-gradient-to-r from-text/[0.08] via-text/[0.04] to-transparent shadow-md'
                                 : isOtherHovered
                                   ? 'border-card-border/40 bg-text/[0.02] opacity-50'
-                                  : 'border-card-border/80 bg-gradient-to-r from-text/[0.04] to-transparent'
+                                  : 'border-card-border/80 bg-gradient-to-r from-text/[0.04] to-transparent',
                             )}
                           >
                             <div className="flex items-center gap-3">
                               <span
                                 className={cn(
                                   'h-3 w-3 shrink-0 rounded-full shadow-sm',
-                                  item.dotBg
+                                  item.dotBg,
                                 )}
                               />
                               <div>
@@ -767,7 +767,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                                 className={cn(
                                   'rounded-full px-2.5 py-0.5 text-xs font-bold shadow-xs',
                                   item.badgeBg,
-                                  item.badgeText
+                                  item.badgeText,
                                 )}
                               >
                                 {item.percent}%
@@ -890,7 +890,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                                   r={isHovered ? 8 : 5}
                                   className={cn(
                                     'fill-bg/90 stroke-text/20',
-                                    point.count === 0 && 'opacity-0'
+                                    point.count === 0 && 'opacity-0',
                                   )}
                                   strokeWidth="2"
                                   initial={{ scale: 0.8, opacity: 0 }}
@@ -969,7 +969,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                                 }}
                                 className={cn(
                                   'relative mx-auto w-full origin-bottom rounded-[1rem] border border-text/10 bg-gradient-to-t from-text via-text/80 to-text/55 shadow-[0_16px_35px_-20px_rgba(15,23,42,0.28)] transition-all duration-300',
-                                  isHovered && 'shadow-[0_24px_50px_-18px_rgba(15,23,42,0.42)]'
+                                  isHovered && 'shadow-[0_24px_50px_-18px_rgba(15,23,42,0.42)]',
                                 )}
                                 style={{
                                   maxWidth:
@@ -1007,7 +1007,7 @@ export const ItemActivityBarChart: React.FC<ItemActivityBarChartProps> = ({ item
                                 <div
                                   className={cn(
                                     'mx-auto h-full w-full rounded-[1rem] transition-colors duration-200',
-                                    isHovered ? 'bg-text/[0.06]' : 'bg-transparent'
+                                    isHovered ? 'bg-text/[0.06]' : 'bg-transparent',
                                   )}
                                 />
                               </motion.div>

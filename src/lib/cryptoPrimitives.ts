@@ -47,7 +47,7 @@ export const encryptChaCha20Poly1305 = async (
   plaintext: Uint8Array,
   key: Uint8Array,
   nonce?: Uint8Array,
-  aad?: Uint8Array
+  aad?: Uint8Array,
 ): Promise<{ ciphertext: Uint8Array; nonce: Uint8Array }> => {
   const sodium = await getSodium();
   const fileNonce = nonce || crypto.getRandomValues(new Uint8Array(CHACHA20_NONCE_LENGTH));
@@ -56,7 +56,7 @@ export const encryptChaCha20Poly1305 = async (
     aad || null,
     null,
     fileNonce,
-    key
+    key,
   );
   return { ciphertext: new Uint8Array(ciphertext), nonce: fileNonce };
 };
@@ -68,7 +68,7 @@ export const decryptChaCha20Poly1305 = async (
   ciphertext: Uint8Array,
   key: Uint8Array,
   nonce: Uint8Array,
-  aad?: Uint8Array
+  aad?: Uint8Array,
 ): Promise<Uint8Array> => {
   const sodium = await getSodium();
   try {
@@ -77,7 +77,7 @@ export const decryptChaCha20Poly1305 = async (
       ciphertext,
       aad || null,
       nonce,
-      key
+      key,
     );
     return new Uint8Array(decrypted);
   } catch {
@@ -87,7 +87,7 @@ export const decryptChaCha20Poly1305 = async (
       ciphertext,
       null,
       nonce,
-      key
+      key,
     );
     return new Uint8Array(decrypted);
   }
@@ -96,7 +96,7 @@ export const decryptChaCha20Poly1305 = async (
 const decryptAesGcmWithFallback = async (
   cryptoKey: CryptoKey,
   iv: Uint8Array,
-  ciphertext: Uint8Array
+  ciphertext: Uint8Array,
 ): Promise<ArrayBuffer> => {
   try {
     return await crypto.subtle.decrypt(
@@ -106,13 +106,13 @@ const decryptAesGcmWithFallback = async (
         additionalData: toArrayBuffer(AES_GCM_AAD),
       },
       cryptoKey,
-      toArrayBuffer(ciphertext)
+      toArrayBuffer(ciphertext),
     );
   } catch {
     return await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: toArrayBuffer(iv) },
       cryptoKey,
-      toArrayBuffer(ciphertext)
+      toArrayBuffer(ciphertext),
     );
   }
 };
@@ -228,7 +228,7 @@ const computeKeyHash = async (secretKey: string): Promise<string> => {
 };
 
 export const getOrCreateCryptoKey = async (
-  secretKey: string | CryptoKey
+  secretKey: string | CryptoKey,
 ): Promise<CryptoKey | null> => {
   touchCryptoKeyCache();
   if (secretKey instanceof CryptoKey) {
@@ -252,7 +252,7 @@ export const getOrCreateCryptoKey = async (
       toArrayBuffer(keyBuf),
       { name: 'AES-GCM' },
       false, // non-extractable
-      ['encrypt', 'decrypt']
+      ['encrypt', 'decrypt'],
     );
 
     // Secure zero-out of raw key buffer immediately after import
@@ -268,19 +268,26 @@ export const getOrCreateCryptoKey = async (
 
 export const encryptData = async (
   data: string,
-  secretKey: string | CryptoKey | null | undefined
+  secretKey: string | CryptoKey | null | undefined,
 ): Promise<string> => {
   touchCryptoKeyCache();
   if (data == null) return '';
-  if (!secretKey) {
+  if (secretKey === null || secretKey === undefined) {
     // In decoy mode without master key, return data directly without throwing
     return data;
+  }
+
+  if (typeof secretKey === 'string') {
+    const keyBuf = base64ToUint8Array(secretKey);
+    if (keyBuf.length !== KEY_BYTE_LENGTH) {
+      throw new Error('Invalid key length: key must be 32 bytes (256 bits)');
+    }
   }
 
   const enc = new TextEncoder();
   const cryptoKey = await getOrCreateCryptoKey(secretKey);
   if (!cryptoKey) {
-    return data;
+    throw new Error('Invalid encryption key');
   }
 
   const iv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
@@ -293,7 +300,7 @@ export const encryptData = async (
       additionalData: toArrayBuffer(AES_GCM_AAD),
     },
     cryptoKey,
-    toArrayBuffer(dataBytes)
+    toArrayBuffer(dataBytes),
   );
 
   // Secure zero-out of plaintext data buffer
@@ -307,22 +314,25 @@ export const encryptData = async (
 
 export const decryptData = async (
   encryptedBundle: string,
-  secretKey: string | CryptoKey | null | undefined
+  secretKey: string | CryptoKey | null | undefined,
 ): Promise<string | null> => {
   touchCryptoKeyCache();
   if (!encryptedBundle) {
     return null;
   }
 
-  // In decoy mode or when secretKey is null, return unencrypted plaintext directly
-  if (!secretKey) {
+  // In decoy mode or when secretKey is null/undefined, return unencrypted plaintext directly
+  if (secretKey === null || secretKey === undefined) {
     return encryptedBundle;
+  }
+  if (typeof secretKey === 'string' && !secretKey) {
+    return null;
   }
 
   try {
     const bundle = base64ToUint8Array(encryptedBundle);
     if (bundle.length < AES_GCM_IV_LENGTH + 1) {
-      return encryptedBundle;
+      return null;
     }
 
     const iv = bundle.slice(0, AES_GCM_IV_LENGTH);
@@ -330,7 +340,7 @@ export const decryptData = async (
 
     const cryptoKey = await getOrCreateCryptoKey(secretKey);
     if (!cryptoKey) {
-      return encryptedBundle;
+      return null;
     }
 
     const decrypted = await decryptAesGcmWithFallback(cryptoKey, iv, ciphertext);
@@ -341,8 +351,8 @@ export const decryptData = async (
 
     return decoded;
   } catch {
-    // If decryption fails, return original content as plaintext fallback
-    return encryptedBundle;
+    // If decryption fails, return null
+    return null;
   }
 };
 
@@ -427,14 +437,21 @@ export const deriveKey = async (password: string, salt: string): Promise<string>
   if (!password) throw new Error('Password required for key derivation');
   if (!salt || typeof salt !== 'string' || salt.trim().length < 8) {
     throw new Error(
-      'Secure cryptographic salt (at least 8 characters) is required for key derivation'
+      'Secure cryptographic salt (at least 8 characters) is required for key derivation',
     );
   }
 
   try {
     return await deriveKeyWithWorker(password, salt);
   } catch (workerErr) {
-    console.warn('[Crypto] Key derivation worker unavailable, using direct KDF:', workerErr);
+    const isTestRuntime =
+      import.meta.env?.MODE === 'test' ||
+      (typeof globalThis !== 'undefined' &&
+        (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env
+          ?.NODE_ENV === 'test');
+    if (!isTestRuntime) {
+      console.warn('[Crypto] Key derivation worker unavailable, using direct KDF:', workerErr);
+    }
     return await deriveKeyDirect(password, salt);
   }
 };
@@ -444,7 +461,7 @@ export const deriveKey = async (password: string, salt: string): Promise<string>
  */
 export const encryptFileEnvelope = async (
   data: Uint8Array | ArrayBuffer,
-  masterKey: string | CryptoKey
+  masterKey: string | CryptoKey,
 ): Promise<Uint8Array> => {
   touchCryptoKeyCache();
   const kekCryptoKey = await getOrCreateCryptoKey(masterKey);
@@ -462,7 +479,7 @@ export const encryptFileEnvelope = async (
     toArrayBuffer(dekAesBytes),
     { name: 'AES-GCM' },
     false,
-    ['encrypt', 'decrypt']
+    ['encrypt', 'decrypt'],
   );
 
   const rawData = data instanceof Uint8Array ? data : new Uint8Array(data);
@@ -476,7 +493,7 @@ export const encryptFileEnvelope = async (
       additionalData: toArrayBuffer(AES_GCM_AAD),
     },
     dekAesCryptoKey,
-    toArrayBuffer(rawData)
+    toArrayBuffer(rawData),
   );
   const aesCipherBytes = new Uint8Array(fileAesCiphertext);
 
@@ -486,7 +503,7 @@ export const encryptFileEnvelope = async (
     aesCipherBytes,
     dekChaChaBytes,
     fileChaChaNonce,
-    CHACHA_AAD
+    CHACHA_AAD,
   );
 
   // Shred intermediate AES ciphertext buffer
@@ -501,7 +518,7 @@ export const encryptFileEnvelope = async (
       additionalData: toArrayBuffer(CASCADE_DEK_AAD),
     },
     kekCryptoKey,
-    toArrayBuffer(dekBytes)
+    toArrayBuffer(dekBytes),
   );
 
   // Secure zero-out of plain DEK buffer immediately after encryption
@@ -516,7 +533,7 @@ export const encryptFileEnvelope = async (
       encDekBytes.length +
       fileAesIv.length +
       fileChaChaNonce.length +
-      cascadeCiphertext.length
+      cascadeCiphertext.length,
   );
   let offset = 0;
   bundle.set(ENVELOPE_MAGIC_CASCADE, offset);
@@ -539,7 +556,7 @@ export const encryptFileEnvelope = async (
  */
 export const decryptFileEnvelope = async (
   bundle: Uint8Array,
-  masterKey: string | CryptoKey
+  masterKey: string | CryptoKey,
 ): Promise<ArrayBuffer> => {
   touchCryptoKeyCache();
 
@@ -575,7 +592,7 @@ export const decryptFileEnvelope = async (
           additionalData: toArrayBuffer(CASCADE_DEK_AAD),
         },
         kekCryptoKey,
-        toArrayBuffer(encDekBytes)
+        toArrayBuffer(encDekBytes),
       );
     } catch {
       decryptedDekBuf = await crypto.subtle.decrypt(
@@ -585,7 +602,7 @@ export const decryptFileEnvelope = async (
           additionalData: toArrayBuffer(DEK_AAD),
         },
         kekCryptoKey,
-        toArrayBuffer(encDekBytes)
+        toArrayBuffer(encDekBytes),
       );
     }
 
@@ -602,7 +619,7 @@ export const decryptFileEnvelope = async (
         cascadeCiphertext,
         dekChaChaBytes,
         fileChaChaNonce,
-        CHACHA_AAD
+        CHACHA_AAD,
       );
 
       // Layer 2 (Inner): Decrypt with AES-256-GCM
@@ -611,13 +628,13 @@ export const decryptFileEnvelope = async (
         toArrayBuffer(dekAesBytes),
         { name: 'AES-GCM' },
         false,
-        ['decrypt']
+        ['decrypt'],
       );
 
       decryptedFileBuf = await decryptAesGcmWithFallback(
         dekAesCryptoKey,
         fileAesIv,
-        innerAesCiphertext
+        innerAesCiphertext,
       );
       return decryptedFileBuf;
     } finally {
@@ -656,7 +673,7 @@ export const decryptFileEnvelope = async (
         additionalData: toArrayBuffer(DEK_AAD),
       },
       kekCryptoKey,
-      toArrayBuffer(encDekBytes)
+      toArrayBuffer(encDekBytes),
     );
 
     const dekCryptoKey = await crypto.subtle.importKey(
@@ -664,7 +681,7 @@ export const decryptFileEnvelope = async (
       decryptedDekBuf,
       { name: 'AES-GCM' },
       false,
-      ['decrypt']
+      ['decrypt'],
     );
 
     // Secure zero-out DEK buffer
@@ -687,7 +704,7 @@ export const decryptFileEnvelope = async (
 export const rotateItemEnvelopeKey = async (
   bundle: Uint8Array,
   oldMasterKey: string | CryptoKey,
-  newMasterKey: string | CryptoKey
+  newMasterKey: string | CryptoKey,
 ): Promise<Uint8Array> => {
   touchCryptoKeyCache();
 
@@ -717,7 +734,7 @@ export const rotateItemEnvelopeKey = async (
           additionalData: toArrayBuffer(CASCADE_DEK_AAD),
         },
         oldKekCryptoKey,
-        toArrayBuffer(encDekBytes)
+        toArrayBuffer(encDekBytes),
       );
     } catch {
       decryptedDekBuf = await crypto.subtle.decrypt(
@@ -727,7 +744,7 @@ export const rotateItemEnvelopeKey = async (
           additionalData: toArrayBuffer(DEK_AAD),
         },
         oldKekCryptoKey,
-        toArrayBuffer(encDekBytes)
+        toArrayBuffer(encDekBytes),
       );
     }
 
@@ -739,7 +756,7 @@ export const rotateItemEnvelopeKey = async (
         additionalData: toArrayBuffer(CASCADE_DEK_AAD),
       },
       newKekCryptoKey,
-      decryptedDekBuf
+      decryptedDekBuf,
     );
 
     new Uint8Array(decryptedDekBuf).fill(0);
@@ -750,7 +767,7 @@ export const rotateItemEnvelopeKey = async (
       ENVELOPE_MAGIC_CASCADE.length +
         newKekIv.length +
         newEncDekBytes.length +
-        remainingPayload.length
+        remainingPayload.length,
     );
     let roffset = 0;
     rotatedBundle.set(ENVELOPE_MAGIC_CASCADE, roffset);
@@ -788,7 +805,7 @@ export const rotateItemEnvelopeKey = async (
         additionalData: toArrayBuffer(DEK_AAD),
       },
       oldKekCryptoKey,
-      toArrayBuffer(encDekBytes)
+      toArrayBuffer(encDekBytes),
     );
 
     const newKekIv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
@@ -799,7 +816,7 @@ export const rotateItemEnvelopeKey = async (
         additionalData: toArrayBuffer(DEK_AAD),
       },
       newKekCryptoKey,
-      decryptedDekBuf
+      decryptedDekBuf,
     );
 
     new Uint8Array(decryptedDekBuf).fill(0);
@@ -807,7 +824,7 @@ export const rotateItemEnvelopeKey = async (
     const newEncDekBytes = new Uint8Array(newEncryptedDek);
 
     const rotatedBundle = new Uint8Array(
-      ENVELOPE_MAGIC_V2.length + newKekIv.length + newEncDekBytes.length + remainingPayload.length
+      ENVELOPE_MAGIC_V2.length + newKekIv.length + newEncDekBytes.length + remainingPayload.length,
     );
     let roffset = 0;
     rotatedBundle.set(ENVELOPE_MAGIC_V2, roffset);
@@ -833,7 +850,7 @@ export const rotateItemEnvelopeKey = async (
 
 export const encryptFile = async (
   file: File | Blob | Uint8Array,
-  secretKey: string | CryptoKey
+  secretKey: string | CryptoKey,
 ): Promise<Uint8Array> => {
   const arrayBuffer = file instanceof Uint8Array ? file : await file.arrayBuffer();
   return encryptFileEnvelope(arrayBuffer, secretKey);
@@ -841,7 +858,7 @@ export const encryptFile = async (
 
 export const encryptFileInWorker = async (
   file: File | Blob,
-  secretKey: string | CryptoKey
+  secretKey: string | CryptoKey,
 ): Promise<Uint8Array> => {
   if (typeof Worker === 'undefined') {
     return encryptFile(file, secretKey);
@@ -877,7 +894,7 @@ export const encryptFileInWorker = async (
     if (import.meta.env.DEV) {
       console.warn(
         '[encryptFileInWorker] Worker failed, falling back to main-thread encryption:',
-        err
+        err,
       );
     }
     return encryptFile(file, secretKey);
@@ -938,14 +955,16 @@ export const reconstructKey = (shareABase64: string, shareBBase64: string): stri
  */
 export const hashDecoyPin = async (
   pin: string,
-  customSalt?: string
+  customSalt?: string,
 ): Promise<{ hash: string; salt: string }> => {
   if (!pin || typeof pin !== 'string') {
     throw new Error('PIN is required to generate duress hash');
   }
   const trimmed = pin.trim();
   if (!/^\d{4,12}$/.test(trimmed)) {
-    throw new Error('Decoy PIN must contain only numbers (digits 0-9) and be between 4 and 12 digits long');
+    throw new Error(
+      'Decoy PIN must contain only numbers (digits 0-9) and be between 4 and 12 digits long',
+    );
   }
   const enc = new TextEncoder();
   const salt =
@@ -958,7 +977,7 @@ export const hashDecoyPin = async (
     enc.encode(trimmed),
     { name: 'PBKDF2' },
     false,
-    ['deriveBits']
+    ['deriveBits'],
   );
   const derivedBits = await crypto.subtle.deriveBits(
     {
@@ -968,7 +987,7 @@ export const hashDecoyPin = async (
       hash: 'SHA-256',
     },
     keyMaterial,
-    256
+    256,
   );
   const hash = Array.from(new Uint8Array(derivedBits))
     .map((b) => b.toString(16).padStart(2, '0'))
@@ -1001,7 +1020,7 @@ export const timingSafeEqualStrings = (a: string, b: string): boolean => {
  */
 export const verifyDecoyPin = async (
   inputPin: string,
-  storedHashOrPayload: string
+  storedHashOrPayload: string,
 ): Promise<boolean> => {
   if (!storedHashOrPayload || !inputPin || typeof inputPin !== 'string') {
     return false;
@@ -1022,7 +1041,11 @@ export const verifyDecoyPin = async (
   }
 
   // 1. Direct plaintext match (only if clean payload is at least 4 chars and matches in constant time)
-  if (cleanPayload.length >= 4 && (timingSafeEqualStrings(cleanPayload, inputPin) || timingSafeEqualStrings(cleanPayload, trimmedPin))) {
+  if (
+    cleanPayload.length >= 4 &&
+    (timingSafeEqualStrings(cleanPayload, inputPin) ||
+      timingSafeEqualStrings(cleanPayload, trimmedPin))
+  ) {
     return true;
   }
 
@@ -1041,7 +1064,7 @@ export const verifyDecoyPin = async (
             enc.encode(candidatePin),
             { name: 'PBKDF2' },
             false,
-            ['deriveBits']
+            ['deriveBits'],
           );
 
           // Variant A: salt with vault-decoy prefix
@@ -1053,7 +1076,7 @@ export const verifyDecoyPin = async (
               hash: 'SHA-256',
             },
             keyMaterial,
-            256
+            256,
           );
           const derivedHash1 = Array.from(new Uint8Array(derivedBits1))
             .map((b) => b.toString(16).padStart(2, '0'))
@@ -1071,7 +1094,7 @@ export const verifyDecoyPin = async (
               hash: 'SHA-256',
             },
             keyMaterial,
-            256
+            256,
           );
           const derivedHash2 = Array.from(new Uint8Array(derivedBits2))
             .map((b) => b.toString(16).padStart(2, '0'))
@@ -1093,7 +1116,7 @@ export const verifyDecoyPin = async (
       // SHA-256 with vault-decoy-salt prefix
       const hashBuf1 = await crypto.subtle.digest(
         'SHA-256',
-        enc.encode(`vault-decoy-salt:${candidatePin}`)
+        enc.encode(`vault-decoy-salt:${candidatePin}`),
       );
       const legacyHash1 = Array.from(new Uint8Array(hashBuf1))
         .map((b) => b.toString(16).padStart(2, '0'))
@@ -1117,4 +1140,3 @@ export const verifyDecoyPin = async (
 
   return false;
 };
-

@@ -1,5 +1,2 @@
-.vscode/**
-.vscode-test/**
-.gitignore
 node_modules/**
-**/*.map
+.env

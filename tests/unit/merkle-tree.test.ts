@@ -131,7 +131,7 @@ describe('Merkle Tree Cryptographic Integrity Engine', () => {
         proof!.leafHash,
         proof!.proof,
         '0000000000000000000000000000000000000000000000000000000000000000',
-        'blake3'
+        'blake3',
       );
       expect(isInvalid).toBe(false);
     });
@@ -194,7 +194,7 @@ describe('Merkle Tree Cryptographic Integrity Engine', () => {
         proofFromTampered!.leafHash,
         proofFromTampered!.proof,
         originalRoot,
-        'blake3'
+        'blake3',
       );
       expect(verified).toBe(false);
     });
