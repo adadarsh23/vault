@@ -56,31 +56,11 @@ export const processHlsAdaptive = async (
 
   const ffmpegCmd = 'ffmpeg';
 
-  // 1. Forensic Invisible Spatial Watermarking
-  // We use multiple layers of near-invisible text (opacity 0.005 - 0.01)
-  // distributed across the frame. These are invisible to the eye but
-  // recoverable using luma/alpha thresholding on leaked footage.
-  const forensicText = `VID:${itemId}:UID:${userId}`;
-  const filters = [
-    `drawtext=text='${forensicText}':x=W*0.1:y=H*0.1:fontcolor=white@0.005:fontsize=10`,
-    `drawtext=text='${forensicText}':x=W*0.8:y=H*0.8:fontcolor=white@0.005:fontsize=10`,
-    `drawtext=text='${forensicText}':x=W*0.5:y=H*0.5:fontcolor=white@0.007:fontsize=8`,
-    `drawtext=text='${userId}':x=(W-tw)/2:y=(H-th)/2:fontcolor=white@0.003:fontsize=20`,
-  ].join(',');
-
   const args = [
     '-i',
     sourcePath,
     '-hls_key_info_file',
     keyInfoPath,
-    // Add Metadata Steganography: Embed User ID into the stream metadata
-    '-metadata',
-    `comment=ForensicID:${userId}`,
-    '-metadata',
-    `copyright=SecureVault:${itemId}`,
-    // Global filter for spatial invisible encoding
-    '-vf',
-    filters,
     // 144p
     '-s',
     '256x144',
@@ -179,7 +159,7 @@ export const processHlsAdaptive = async (
     path.join(outputDir, '1080p.m3u8'),
   ];
 
-  logger.info(`Starting ABR transcoding with Forensic Watermarking: ${itemId}`, { userId });
+  logger.info(`Starting ABR transcoding: ${itemId}`, { userId });
 
   const process = spawn(ffmpegCmd, args);
 

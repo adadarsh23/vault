@@ -98,9 +98,22 @@ const cloudUnlockCaptchaLimiterMax = toPositiveInteger(
 );
 
 const getAuthRateLimitKey = (req: express.Request) => {
-  const username = normalizeRateLimitKeySegment(req.body?.username);
+  const username = normalizeRateLimitKeySegment(req.body?.username || req.body?.email);
   return `${getClientIp(req)}:${req.path}:${username}`;
 };
+
+const ipAuthLimiter = rateLimit({
+  windowMs: authLimiterWindowMs,
+  max: authLimiterMax * 2,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:auth-ip-pool`,
+  message: {
+    success: false,
+    message: 'Too many authentication attempts from this IP address. Please try again later.',
+    error: { code: 'TOO_MANY_AUTH_ATTEMPTS' },
+  },
+});
 
 const authLimiter = rateLimit({
   windowMs: authLimiterWindowMs,
@@ -151,7 +164,7 @@ const changePasswordLimiter = rateLimit({
   message: {
     success: false,
     message: 'Too many password change attempts. Please try again later.',
-    error: { code: 'TOO_MANY_PASSWORD_CHANGE_ATTEMPTS' },
+    error: { code: 'TOO_MANY_CHANGE_PASSWORD_ATTEMPTS' },
   },
 });
 
@@ -174,7 +187,8 @@ const cloudUnlockCaptchaLimiter = rateLimit({
   max: cloudUnlockCaptchaLimiterMax,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => `${getClientIp(req)}:${req.path}`,
+  keyGenerator: (req) =>
+    `${getClientIp(req)}:${req.path}:${normalizeRateLimitKeySegment((req as any).user?.userId)}`,
   message: {
     success: false,
     message: 'Too many unlock verification attempts. Please try again later.',
@@ -186,6 +200,7 @@ const cloudUnlockCaptchaLimiter = rateLimit({
 authRouter.post(
   '/signup',
   requireTrustedBrowserOrigin,
+  ipAuthLimiter,
   authLimiter,
   validate(registerSchema),
   requireRecaptcha({ action: 'auth_register' }),
@@ -194,6 +209,7 @@ authRouter.post(
 authRouter.post(
   '/register',
   requireTrustedBrowserOrigin,
+  ipAuthLimiter,
   authLimiter,
   validate(registerSchema),
   requireRecaptcha({ action: 'auth_register' }),
@@ -202,6 +218,7 @@ authRouter.post(
 authRouter.post(
   '/login',
   requireTrustedBrowserOrigin,
+  ipAuthLimiter,
   authLimiter,
   validate(loginSchema),
   requireRecaptcha({ action: 'auth_login' }),

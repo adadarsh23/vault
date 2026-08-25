@@ -89,7 +89,11 @@ export const MerkleIntegrityCard: React.FC = memo(() => {
     const hashToCopy =
       rootHash || '0x0000000000000000000000000000000000000000000000000000000000000000';
     try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+      if (
+        typeof navigator !== 'undefined' &&
+        navigator.clipboard &&
+        navigator.clipboard.writeText
+      ) {
         await navigator.clipboard.writeText(hashToCopy);
       } else if (typeof document !== 'undefined') {
         const textarea = document.createElement('textarea');
@@ -183,14 +187,14 @@ export const MerkleIntegrityCard: React.FC = memo(() => {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {/* <div className="flex flex-wrap items-center gap-2 shrink-0">
               <span className="inline-flex items-center rounded-md bg-blue-500/10 dark:bg-blue-500/20 px-2 py-1 text-[11px] sm:text-xs font-bold text-blue-600 dark:text-blue-400 border border-blue-500/30">
                 Algorithm: {algorithm.toUpperCase()}
               </span>
               <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-1 text-[11px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                 <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> Immutable
               </span>
-            </div>
+            </div> */}
           </div>
 
           {/* Root Hash Display Box */}
@@ -361,11 +365,13 @@ export const MerkleIntegrityCard: React.FC = memo(() => {
             <div className="pt-2 border-t border-card-border/40 dark:border-white/5 space-y-2 text-[11px] sm:text-xs text-text/60 leading-relaxed animate-in fade-in duration-200">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="rounded-lg bg-black/5 dark:bg-black/30 p-2.5 space-y-1">
-                  <p className="font-semibold text-text text-[11px]">Domain Separation (RFC 6962)</p>
+                  <p className="font-semibold text-text text-[11px]">
+                    Domain Separation (RFC 6962)
+                  </p>
                   <p className="text-[10px] text-text/50">
                     Leaves hashed with <code className="text-emerald-500">0x00</code> prefix,
-                    intermediate nodes with <code className="text-emerald-500">0x01</code> to prevent
-                    second-preimage collision attacks.
+                    intermediate nodes with <code className="text-emerald-500">0x01</code> to
+                    prevent second-preimage collision attacks.
                   </p>
                 </div>
                 <div className="rounded-lg bg-black/5 dark:bg-black/30 p-2.5 space-y-1">
@@ -387,8 +393,8 @@ export const MerkleIntegrityCard: React.FC = memo(() => {
         {/* Action Controls Footer */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-card-border/40 dark:border-white/10 pt-4">
           <div className="text-xs text-text/60 leading-relaxed max-w-lg">
-            Every photo is hashed with <strong className="text-text font-semibold">BLAKE3</strong> and
-            bound into a Merkle cryptographic root. Modifying any single bit triggers an instant
+            Every photo is hashed with <strong className="text-text font-semibold">BLAKE3</strong>{' '}
+            and bound into a Merkle cryptographic root. Modifying any single bit triggers an instant
             vault-wide alarm.
           </div>
 
@@ -410,9 +416,7 @@ export const MerkleIntegrityCard: React.FC = memo(() => {
               disabled={isAuditing}
               className="flex items-center justify-center gap-1.5 text-xs w-full min-[480px]:w-auto"
             >
-              <RefreshCw
-                className={`h-3.5 w-3.5 shrink-0 ${isAuditing ? 'animate-spin' : ''}`}
-              />
+              <RefreshCw className={`h-3.5 w-3.5 shrink-0 ${isAuditing ? 'animate-spin' : ''}`} />
               <span>{isAuditing ? 'Auditing Vault...' : 'Audit Vault Integrity'}</span>
             </Button>
           </div>

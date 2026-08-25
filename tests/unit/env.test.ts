@@ -78,15 +78,23 @@ describe('server environment validation', () => {
     );
   });
 
-  it('does not throw when MONGODB_URI is missing but SKIP_MONGO_CONNECT is enabled', () => {
+  it('does not throw when MONGODB_URI is missing but SKIP_MONGO_CONNECT is enabled in development', () => {
     vi.stubEnv('JWT_SECRET', 'test-secret');
     vi.stubEnv('MONGODB_URI', '');
     vi.stubEnv('MONGODB_URL', '');
     vi.stubEnv('MONGO_URI', '');
     vi.stubEnv('MONGO_URL', '');
+    vi.stubEnv('NODE_ENV', 'development');
     vi.stubEnv('SKIP_MONGO_CONNECT', '1');
 
     expect(() => validateRuntimeEnv()).not.toThrow();
+  });
+
+  it('throws in production when SKIP_MONGO_CONNECT is enabled', () => {
+    stubProdMinimums();
+    vi.stubEnv('SKIP_MONGO_CONNECT', '1');
+
+    expect(() => validateRuntimeEnv()).toThrow(/SKIP_MONGO_CONNECT is not permitted in production/);
   });
 
   it('accepts MONGODB_URL as a valid fallback when MONGODB_URI is absent', () => {

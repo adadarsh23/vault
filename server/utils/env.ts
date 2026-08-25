@@ -46,6 +46,12 @@ export const validateRuntimeEnv = (): void => {
   }
 
   if (process.env.NODE_ENV === 'production') {
+    if (isMongoOptionalMode()) {
+      throw new Error(
+        'SKIP_MONGO_CONNECT is not permitted in production. MongoDB must be configured and connected.'
+      );
+    }
+
     for (const key of requiredInProduction) {
       if (!trimEnv(process.env[key])) {
         missingKeys.push(key);

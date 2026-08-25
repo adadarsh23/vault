@@ -78,6 +78,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   onSelectMedia,
   onFloatingChange,
 }) => {
+  const isDecoyMode = useVaultStore((state) => state.isDecoyMode);
   const [isClosing, setIsClosing] = useState(false);
   const closeRequestedRef = useRef(false);
 
@@ -734,7 +735,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                     </div>
                   }
                 >
-                  {masterKey && (
+                  {(masterKey || isDecoyMode) && (
                     <SafeMedia
                       item={previewedMedia}
                       masterKey={masterKey}

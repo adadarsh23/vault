@@ -74,6 +74,7 @@ export const useVaultFolders = (itemType: VaultItemType) => {
   const batchUpdateItems = useVaultStore((state) => state.batchUpdateItems);
   const syncLogs = useVaultStore((state) => state.syncLogs);
   const isUnlocked = useVaultStore((state) => state.isUnlocked);
+  const isDecoyMode = useVaultStore((state) => state.isDecoyMode);
 
   const [currentFolder, setCurrentFolder] = useState<string | null>(null);
   const [isAddingFolder, setIsAddingFolder] = useState(false);
@@ -113,9 +114,9 @@ export const useVaultFolders = (itemType: VaultItemType) => {
     return sortFoldersSavedFirst(deduped);
   }, [itemsOfType, sessionFolders]);
 
-  // Fetch folders on mount
+  // Fetch folders on mount (skip network call in isolated decoy mode)
   useEffect(() => {
-    if (!isUnlocked) return;
+    if (!isUnlocked || isDecoyMode) return;
     let cancelled = false;
 
     const cached = FOLDER_FETCH_CACHE.get(itemType);
@@ -186,6 +187,16 @@ export const useVaultFolders = (itemType: VaultItemType) => {
     setIsLoading(true);
     const toastId = toast.loading(`Creating folder...`);
 
+    if (isDecoyMode) {
+      mergeSessionFolders([name]);
+      setCurrentFolder(name);
+      setNewFolderName('');
+      setIsAddingFolder(false);
+      setIsLoading(false);
+      toast.success(`Folder "${name}" created`, { id: toastId });
+      return;
+    }
+
     try {
       await vaultApi.createFolder({ name, itemType });
       mergeSessionFolders([name]);
@@ -206,7 +217,7 @@ export const useVaultFolders = (itemType: VaultItemType) => {
     } finally {
       setIsLoading(false);
     }
-  }, [newFolderName, itemType, folders, syncLogs, mergeSessionFolders, isLoading]);
+  }, [newFolderName, itemType, folders, syncLogs, mergeSessionFolders, isLoading, isDecoyMode]);
 
   const handleRenameFolder = useCallback(
     async (oldName: string) => {
@@ -245,6 +256,24 @@ export const useVaultFolders = (itemType: VaultItemType) => {
       const itemsInFolder = itemsOfType.filter((i) => i.folder === oldName);
       const toastId = toast.loading(`Renaming folder...`);
       setIsLoading(true);
+
+      if (isDecoyMode) {
+        const batchUpdates = itemsInFolder.map((item) => ({
+          id: item.id,
+          updates: { folder: newName },
+        }));
+        await batchUpdateItems(batchUpdates);
+        setSessionFolders((prev) => {
+          const next = Array.from(new Set(prev.map((f) => (f === oldName ? newName : f))));
+          updateFolderCache(itemType, next);
+          return next;
+        });
+        if (currentFolder === oldName) setCurrentFolder(newName);
+        setEditingFolder(null);
+        setIsLoading(false);
+        toast.success(`Renamed to "${newName}"`, { id: toastId });
+        return;
+      }
 
       try {
         // 1. Create new folder
@@ -292,6 +321,7 @@ export const useVaultFolders = (itemType: VaultItemType) => {
       syncLogs,
       folders,
       isLoading,
+      isDecoyMode,
     ]
   );
 
@@ -315,6 +345,28 @@ export const useVaultFolders = (itemType: VaultItemType) => {
       const itemsInFolder = itemsOfType.filter((i) => i.folder === folderName);
       const toastId = toast.loading(`Removing folder...`);
       setIsLoading(true);
+
+      if (isDecoyMode) {
+        const batchUpdates = itemsInFolder.map((item) => ({
+          id: item.id,
+          updates: { folder: undefined },
+        }));
+
+        if (batchUpdates.length > 0) {
+          await batchUpdateItems(batchUpdates);
+        }
+
+        setSessionFolders((prev) => {
+          const next = prev.filter((f) => f !== folderName);
+          updateFolderCache(itemType, next);
+          return next;
+        });
+        if (currentFolder === folderName) setCurrentFolder(null);
+
+        setIsLoading(false);
+        toast.success(`Folder removed`, { id: toastId });
+        return;
+      }
 
       try {
         // Move items to uncategorized locally & sync
@@ -351,7 +403,7 @@ export const useVaultFolders = (itemType: VaultItemType) => {
         setIsLoading(false);
       }
     },
-    [itemsOfType, batchUpdateItems, currentFolder, itemType, syncLogs, isLoading]
+    [itemsOfType, batchUpdateItems, currentFolder, itemType, syncLogs, isLoading, isDecoyMode]
   );
 
   const handleMoveToFolder = useCallback(

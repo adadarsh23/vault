@@ -30,16 +30,6 @@ import { avatarRouter } from './server/routes/avatarRoutes.ts';
 import { integrityRouter } from './server/routes/integrityRoutes.ts';
 
 import { setupFrontendMiddleware } from './server/vite.ts';
-
-// Clean up duplicate plain LICENSE file if present
-const plainLicenseFile = path.join(process.cwd(), 'LICENSE');
-if (fs.existsSync(plainLicenseFile)) {
-  try {
-    fs.unlinkSync(plainLicenseFile);
-  } catch {
-    // ignore
-  }
-}
 import { installBodyParsers } from './server/middleware/bodyParsers.ts';
 import { installCsrfProtection } from './server/middleware/csrfProtection.ts';
 import { requireAuth } from './server/middleware/authMiddleware.ts';
@@ -84,33 +74,180 @@ const buildHelmetConfig = (): Parameters<typeof helmet>[0] => {
   const isProduction = process.env.NODE_ENV === 'production';
   const configuredOrigins = getAllowedCorsOrigins();
   const selfAndConfiguredOrigins = ["'self'", ...configuredOrigins];
-  const mediaAndImageSources = [...selfAndConfiguredOrigins, 'blob:', 'data:', 'https:'];
-  const connectSources = [
+  const mediaAndImageSources = [
     ...selfAndConfiguredOrigins,
     'blob:',
-    'wss:',
-    ...(isProduction ? [] : ['ws:']),
-    // Maps / geocoding / elevation
+    'data:',
+    'https:',
+  ];
+
+  // Document & Office Viewers (Google Docs/Drive, Microsoft Office 365, Adobe, Mozilla PDF.js)
+  const documentViewerSources = [
+    'https://docs.google.com',
+    'https://drive.google.com',
+    'https://*.google.com',
+    'https://*.google.co.in',
+    'https://*.googleusercontent.com',
+    'https://*.googleapis.com',
+    'https://lh3.googleusercontent.com',
+    'https://view.officeapps.live.com',
+    'https://*.officeapps.live.com',
+    'https://*.office.com',
+    'https://*.office365.com',
+    'https://*.live.com',
+    'https://*.microsoft.com',
+    'https://*.onedrive.live.com',
+    'https://*.sharepoint.com',
+    'https://*.1drv.ms',
+    'https://*.msauth.net',
+    'https://*.msftauth.net',
+    'https://documentservices.adobe.com',
+    'https://*.adobe.com',
+    'https://*.documentcloud.adobe.com',
+    'https://acrobat.adobe.com',
+    'https://mozilla.github.io',
+    'https://*.mozilla.org',
+    'https://*.mozilla.net',
+  ];
+
+  // Map & Geo Services
+  const mapSources = [
     'https://nominatim.openstreetmap.org',
+    'https://*.openstreetmap.org',
+    'https://*.tile.openstreetmap.org',
     'https://api.open-meteo.com',
-    // reCAPTCHA
+  ];
+
+  // Security, reCAPTCHA & Auth
+  const securityAndAuthSources = [
     'https://www.google.com',
+    'https://*.google.com',
     'https://www.gstatic.com',
+    'https://*.gstatic.com',
+    'https://recaptcha.google.com',
     'https://www.recaptcha.net',
-    // Password breach checking
+    'https://*.recaptcha.net',
+    'https://challenges.cloudflare.com',
+    'https://*.hcaptcha.com',
     'https://api.pwnedpasswords.com',
-    // Analytics / monitoring
+  ];
+
+  // CDNs, Web Workers, Packages, Cloud Storage & Syntax Highlighters
+  const cdnPackageSources = [
+    'https://unpkg.com',
+    'https://cdn.jsdelivr.net',
+    'https://fastly.jsdelivr.net',
+    'https://cdnjs.cloudflare.com',
+    'https://esm.sh',
+    'https://cdn.skypack.dev',
+    'https://jspm.dev',
+    'https://cdn.tailwindcss.com',
+    'https://raw.githubusercontent.com',
+    'https://*.githubusercontent.com',
+    'https://*.github.com',
+    'https://*.githubassets.com',
+    'https://*.gitlab.com',
+    'https://*.dropbox.com',
+    'https://*.dropboxusercontent.com',
+    'https://*.box.com',
+    'https://*.box.net',
+    'https://*.amazonaws.com',
+    'https://*.cloudfront.net',
+    'https://*.supabase.co',
+    'https://*.firebaseio.com',
+  ];
+
+  // Analytics & Monitoring
+  const telemetrySources = [
     'https://www.googletagmanager.com',
     'https://www.google-analytics.com',
     'https://region1.google-analytics.com',
     'https://stats.g.doubleclick.net',
     'https://*.ingest.sentry.io',
     'https://*.ingest.us.sentry.io',
+    'https://*.sentry.io',
     'https://*.logrocket.com',
     'https://*.logr-in.com',
-    // WebAssembly & FFmpeg CDN
+  ];
+
+  // Video & Embed Media Sources
+  const mediaEmbedSources = [
+    'https://www.youtube.com',
+    'https://*.youtube.com',
+    'https://*.youtube-nocookie.com',
+    'https://player.vimeo.com',
+    'https://*.vimeo.com',
+    'https://*.canva.com',
+    'https://*.figma.com',
+  ];
+
+  const connectSources = [
+    ...selfAndConfiguredOrigins,
+    'blob:',
+    'data:',
+    'wss:',
+    ...(isProduction ? [] : ['ws:']),
+    ...mapSources,
+    ...securityAndAuthSources,
+    ...documentViewerSources,
+    ...cdnPackageSources,
+    ...telemetrySources,
+  ];
+
+  const frameSources = [
+    "'self'",
+    'blob:',
+    'data:',
+    ...documentViewerSources,
+    ...securityAndAuthSources,
+    ...mapSources,
+    ...mediaEmbedSources,
+  ];
+
+  const childSources = [
+    "'self'",
+    'blob:',
+    'data:',
+    ...cdnPackageSources,
+    ...documentViewerSources,
+    ...securityAndAuthSources,
+    ...mapSources,
+    ...mediaEmbedSources,
+  ];
+
+  const workerSources = [
+    "'self'",
+    'blob:',
+    'data:',
     'https://unpkg.com',
     'https://cdn.jsdelivr.net',
+    'https://fastly.jsdelivr.net',
+    'https://cdnjs.cloudflare.com',
+    'https://esm.sh',
+    'https://cdn.skypack.dev',
+  ];
+
+  const scriptSources = [
+    'blob:',
+    'https://unpkg.com',
+    'https://cdn.jsdelivr.net',
+    'https://fastly.jsdelivr.net',
+    'https://cdnjs.cloudflare.com',
+    'https://esm.sh',
+    'https://cdn.skypack.dev',
+    'https://cdn.tailwindcss.com',
+    'https://www.googletagmanager.com',
+    'https://cdn.logr-in.com',
+    'https://www.google.com',
+    'https://*.google.com',
+    'https://docs.google.com',
+    'https://www.gstatic.com',
+    'https://*.gstatic.com',
+    'https://recaptcha.google.com',
+    'https://www.recaptcha.net',
+    'https://*.recaptcha.net',
+    'https://challenges.cloudflare.com',
+    'https://*.hcaptcha.com',
   ];
 
   return {
@@ -139,48 +276,30 @@ const buildHelmetConfig = (): Parameters<typeof helmet>[0] => {
         imgSrc: mediaAndImageSources,
         mediaSrc: mediaAndImageSources,
         scriptSrc: isProduction
-          ? [
-              "'self'",
-              "'wasm-unsafe-eval'",
-              'blob:',
-              'https://unpkg.com',
-              'https://cdn.jsdelivr.net',
-              'https://www.googletagmanager.com',
-              'https://cdn.logr-in.com',
-              'https://www.google.com',
-              'https://www.gstatic.com',
-              'https://www.recaptcha.net',
-            ]
-          : [
-              "'self'",
-              "'unsafe-inline'",
-              "'unsafe-eval'",
-              'blob:',
-              'https://unpkg.com',
-              'https://cdn.jsdelivr.net',
-              'https://www.googletagmanager.com',
-              'https://cdn.logr-in.com',
-              'https://www.google.com',
-              'https://www.gstatic.com',
-              'https://www.recaptcha.net',
-            ],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https:', 'https://fonts.googleapis.com'],
-        scriptSrcAttr: ["'unsafe-inline'"],
-        fontSrc: ["'self'", 'https:', 'data:', 'https://fonts.gstatic.com'],
-        frameSrc: [
+          ? ["'self'", "'wasm-unsafe-eval'", "'unsafe-eval'", ...scriptSources]
+          : ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", "'unsafe-eval'", ...scriptSources],
+        styleSrc: [
           "'self'",
-          'blob:',
-          'https://view.officeapps.live.com',
-          'https://*.google.com',
-          'https://*.google.co.in',
-          'https://recaptcha.google.com',
-          'https://www.recaptcha.net',
-          'https://www.openstreetmap.org',
+          "'unsafe-inline'",
+          'https:',
+          'https://fonts.googleapis.com',
+          'https://cdnjs.cloudflare.com',
+          'https://cdn.jsdelivr.net',
         ],
+        scriptSrcAttr: ["'none'"],
+        fontSrc: [
+          "'self'",
+          'https:',
+          'data:',
+          'https://fonts.gstatic.com',
+          'https://cdnjs.cloudflare.com',
+          'https://cdn.jsdelivr.net',
+        ],
+        frameSrc: frameSources,
         manifestSrc: ["'self'"],
-        workerSrc: ["'self'", 'blob:', 'https://unpkg.com', 'https://cdn.jsdelivr.net'],
-        childSrc: ["'self'", 'blob:'],
-        objectSrc: ["'self'", 'blob:'],
+        workerSrc: workerSources,
+        childSrc: childSources,
+        objectSrc: ["'none'"],
         ...(isProduction ? { upgradeInsecureRequests: [] as string[] } : {}),
       },
     },
@@ -250,6 +369,7 @@ const resolveEventLoopLagThresholdMs = (): number => {
   if (Number.isFinite(parsed) && parsed > 0) {
     return parsed;
   }
+
   return 1000;
 };
 
@@ -271,6 +391,9 @@ const resolveOverloadProtectionEnabled = (): boolean => {
 };
 
 const resolveSkipMongoConnect = (): boolean => {
+  if (process.env.NODE_ENV === 'production') {
+    return false;
+  }
   const raw = process.env.SKIP_MONGO_CONNECT?.trim().toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
 };

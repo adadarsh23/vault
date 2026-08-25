@@ -289,6 +289,29 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
     if (newKey !== confirmKey) return toast.error('Keys do not match');
     if (newKey === currentPassword)
       return toast.error('Master key and account password must not be identical');
+
+    const validation = validatePassword(newKey);
+    if (!validation.isValid)
+      return toast.error('Requirement Error', { description: validation.error });
+
+    const isDecoy = useVaultStore.getState().isDecoyMode;
+    if (isDecoy) {
+      setIsProcessing(true);
+      setStep(2);
+      setProgress(50);
+      await new Promise((r) => setTimeout(r, 400));
+      setProgress(100);
+      setStep(3);
+      toast.success('Master key changed successfully');
+      await new Promise((resolve) => window.setTimeout(resolve, SUCCESS_ANIMATION_DELAY_MS));
+      fullLogout({ skipServerLogout: true });
+      onClose();
+      toast.info('Please sign in again with your new master key.');
+      setIsProcessing(false);
+      setProgress(0);
+      return;
+    }
+
     if (!isCaptchaCompleted || !captchaToken)
       return toast.error('Please complete CAPTCHA before continuing.');
 
@@ -307,10 +330,6 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
       }
     }
 
-    const validation = validatePassword(newKey);
-    if (!validation.isValid)
-      return toast.error('Requirement Error', { description: validation.error });
-
     setIsProcessing(true);
     setStep(2);
     try {
@@ -318,12 +337,26 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
 
       const deviceId = getDeviceId();
       if (username && deviceId) {
-        const cloudPayload = await prepareMasterKeyForCloud(newKey, currentPassword, deviceId);
-        await saveMasterKeyToCloud({
-          ...cloudPayload,
-          password: currentPassword,
-          masterKey: newKey,
-        });
+        try {
+          const cloudPayload = await prepareMasterKeyForCloud(newKey, currentPassword, deviceId);
+          await saveMasterKeyToCloud({
+            ...cloudPayload,
+            password: currentPassword,
+            masterKey: newKey,
+          });
+        } catch (cloudErr: any) {
+          const code = typeof cloudErr?.code === 'string' ? cloudErr.code : '';
+          const msg = typeof cloudErr?.message === 'string' ? cloudErr.message.toLowerCase() : '';
+          if (
+            code === 'INVALID_CREDENTIALS' ||
+            code === 'AUTH_SAME_CREDENTIALS' ||
+            msg.includes('current password is incorrect') ||
+            msg.includes('must not be identical')
+          ) {
+            throw cloudErr;
+          }
+          console.warn('Cloud master key backup failed, continuing master key rotation:', cloudErr);
+        }
       }
 
       await changeMasterKey(newKey, (done, total) => setProgress(Math.round((done / total) * 100)));
@@ -361,6 +394,28 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
     if (newKey === currentPassword)
       return toast.error('New password must be different from current password');
 
+    const validation = validatePassword(newKey);
+    if (!validation.isValid)
+      return toast.error('Requirement Error', { description: validation.error });
+
+    const isDecoy = useVaultStore.getState().isDecoyMode;
+    if (isDecoy) {
+      setIsProcessing(true);
+      setStep(2);
+      setProgress(50);
+      await new Promise((r) => setTimeout(r, 400));
+      setProgress(100);
+      setStep(3);
+      toast.success('Account password changed successfully');
+      await new Promise((resolve) => window.setTimeout(resolve, SUCCESS_ANIMATION_DELAY_MS));
+      fullLogout({ skipServerLogout: true });
+      onClose();
+      toast.info('Please sign in again with your new account password.');
+      setIsProcessing(false);
+      setProgress(0);
+      return;
+    }
+
     const username = useVaultStore.getState().username;
     const activeVaultId = useVaultStore.getState().vaultId;
     if (username && activeVaultId) {
@@ -378,10 +433,6 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onCl
 
     if (!isCaptchaCompleted || !captchaToken)
       return toast.error('Please complete CAPTCHA before continuing.');
-
-    const validation = validatePassword(newKey);
-    if (!validation.isValid)
-      return toast.error('Requirement Error', { description: validation.error });
 
     setIsProcessing(true);
     setStep(2);

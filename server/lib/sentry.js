@@ -16,8 +16,37 @@ let initialized = false;
 
 const redactSensitiveData = (input) => {
   if (!input || typeof input !== 'object') return input;
-  const clone = Array.isArray(input) ? [...input] : { ...input };
-  const hiddenKeys = ['password', 'token', 'authorization', 'cookie', 'set-cookie'];
+  const hiddenKeys = [
+    'password',
+    'token',
+    'authorization',
+    'cookie',
+    'set-cookie',
+    'masterkey',
+    'secret',
+    'secretkey',
+    'privatekey',
+    'apikey',
+    'ciphertext',
+    'authtag',
+    'iv',
+    'payload',
+    'binarypayload',
+    'dek',
+    'kek',
+    'mnemonic',
+    'seedphrase',
+    'passphrase',
+    'pqcsalt',
+    'salt',
+    'totp',
+    'totpsecret',
+    'recoverycodes',
+    'backupcodes',
+    'twofactorsecret',
+    'twofactorcode',
+    'encryptedmetadata',
+  ];
 
   for (const [key, value] of Object.entries(clone)) {
     const normalizedKey = key.toLowerCase();

@@ -30,7 +30,7 @@ const MAX_DEPTH_TEXT = '[MaxDepthExceeded]';
 const CIRCULAR_REFERENCE_TEXT = '[CircularReference]';
 const URL_LIKE_KEYS = new Set(['path', 'url', 'originalurl', 'referer', 'referrer', 'location']);
 const SENSITIVE_QUERY_PARAM_PATTERN =
-  /([?&](?:auth_token|access_token|refresh_token|token|signature|sig|api_key|apikey)=)[^&#]*/gi;
+  /([?&](?:auth_token|access_token|refresh_token|token|signature|sig|api_key|apikey|uid|userId|sid|secret|key|email|username)=)[^&#]*/gi;
 
 const redactKeys = new Set([
   'password',
@@ -62,6 +62,21 @@ const redactKeys = new Set([
   'encryptedmetadata',
   'dek',
   'kek',
+  'uid',
+  'userid',
+  'sessionid',
+  'user',
+  'mnemonic',
+  'seedphrase',
+  'passphrase',
+  'pqcsalt',
+  'salt',
+  'totp',
+  'totpsecret',
+  'recoverycodes',
+  'backupcodes',
+  'twofactorsecret',
+  'twofactorcode',
 ]);
 
 // Ensure log directory exists once during startup

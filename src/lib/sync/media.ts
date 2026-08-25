@@ -15,6 +15,19 @@ export const getSignedUrl = async (
   itemId: string,
   action: 'view' | 'download' | 'stream' = 'view'
 ): Promise<string> => {
+  if (itemId.startsWith('decoy-')) {
+    try {
+      const { useVaultStore } = await import('../../store/vaultStore');
+      const item = useVaultStore.getState().items.find((i) => i.id === itemId);
+      if (item && typeof item.content === 'string') {
+        return item.content;
+      }
+    } catch {
+      // Fallback
+    }
+    return `data:text/plain;charset=utf-8,Decoy%20Item%20(${encodeURIComponent(itemId)})`;
+  }
+
   const deviceHash = hashFingerprint(getDeviceFingerprint());
   const query = new URLSearchParams({
     action,

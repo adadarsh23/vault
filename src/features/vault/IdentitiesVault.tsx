@@ -78,12 +78,16 @@ const DecryptedIdentityItem: React.FC<{
     const decrypt = async () => {
       try {
         const encryptedContent = getStringContent(item.content);
-        if (!encryptedContent) {
+        if (!encryptedContent && !item.metadata) {
           if (isMounted) setError(true);
           return;
         }
 
+        const decrypted = encryptedContent ? await decryptData(encryptedContent, masterKey) : '';
         let parsed = parseJsonSafely<IdentityPayload>(decrypted || '');
+        if (!parsed && typeof item.content === 'string') {
+          parsed = parseJsonSafely<IdentityPayload>(item.content);
+        }
         if (!parsed && item.metadata) {
           const meta = item.metadata as any;
           parsed = {

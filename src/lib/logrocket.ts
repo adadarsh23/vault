@@ -75,13 +75,31 @@ export const initLogRocket = (): boolean => {
             if (request.body && typeof request.body === 'string') {
               try {
                 const parsed = JSON.parse(request.body);
-                if (parsed.password) parsed.password = '[REDACTED]';
-                if (parsed.newPassword) parsed.newPassword = '[REDACTED]';
-                if (parsed.currentPassword) parsed.currentPassword = '[REDACTED]';
-                if (parsed.masterKey) parsed.masterKey = '[REDACTED]';
+                const sensitiveFields = [
+                  'password',
+                  'newPassword',
+                  'currentPassword',
+                  'masterKey',
+                  'token',
+                  'refreshToken',
+                  'accessToken',
+                  'dek',
+                  'kek',
+                  'secret',
+                  'privateKey',
+                  'pqcSalt',
+                  'ciphertext',
+                  'payload',
+                  'twoFactorCode',
+                  'totpCode',
+                  'recoveryCodes',
+                  'backupCodes',
+                ];
+                for (const field of sensitiveFields) {
+                  if (parsed[field] !== undefined) parsed[field] = '[REDACTED]';
+                }
                 request.body = JSON.stringify(parsed);
               } catch {
-                // If not JSON, avoid capturing raw body if sensitive
                 if (request.url?.includes('/auth/') || request.url?.includes('/vault/')) {
                   request.body = '[REDACTED]';
                 }
@@ -92,6 +110,20 @@ export const initLogRocket = (): boolean => {
           responseSanitizer: (response: any) => {
             if (response.headers) {
               delete response.headers['set-cookie'];
+            }
+            if (response.body && typeof response.body === 'string') {
+              try {
+                const parsed = JSON.parse(response.body);
+                if (parsed.token) parsed.token = '[REDACTED]';
+                if (parsed.accessToken) parsed.accessToken = '[REDACTED]';
+                if (parsed.refreshToken) parsed.refreshToken = '[REDACTED]';
+                if (parsed.masterKey) parsed.masterKey = '[REDACTED]';
+                if (parsed.data?.token) parsed.data.token = '[REDACTED]';
+                if (parsed.data?.accessToken) parsed.data.accessToken = '[REDACTED]';
+                response.body = JSON.stringify(parsed);
+              } catch {
+                // non-JSON response
+              }
             }
             return response;
           },

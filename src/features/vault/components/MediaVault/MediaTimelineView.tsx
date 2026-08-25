@@ -22,13 +22,9 @@ import {
   createMultiItemDragImage,
   clearDraggedVaultItem,
 } from '../../../../lib/vaultDragDrop';
-import {
-  GridDensity,
-  groupMediaByTimeline,
-  formatFileSize,
-  getResolutionBadge,
-} from './mediaUtils';
+import { GridDensity, groupMediaByTimeline, formatFileSize, getResolutionBadge } from './mediaUtils';
 import { cn } from '../../../../lib/utils';
+import { useVaultStore } from '../../../../store/vaultStore';
 
 interface MediaTimelineViewProps {
   items: VaultItem[];
@@ -75,6 +71,7 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
   pinningItemIds,
   lightweightPreviewMode,
 }) => {
+  const isDecoyMode = useVaultStore((state) => state.isDecoyMode);
   const [renderedCount, setRenderedCount] = useState(ITEMS_PER_CHUNK);
   const [activeDateBubble, setActiveDateBubble] = useState<string | null>(null);
   const [isScrubberVisible, setIsScrubberVisible] = useState(false);
@@ -288,7 +285,7 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
 
                       {/* Thumbnail */}
                       <div className="h-12 w-12 rounded-xl overflow-hidden border border-white/10 bg-black/40 relative shrink-0">
-                        {masterKey && (
+                        {(masterKey || isDecoyMode) && (
                           <SafeMedia
                             item={item}
                             masterKey={masterKey}
@@ -461,7 +458,7 @@ export const MediaTimelineView: React.FC<MediaTimelineViewProps> = ({
 
                             <td className="p-3">
                               <div className="h-10 w-10 rounded-lg overflow-hidden border border-white/10 bg-black/40 relative shrink-0">
-                                {masterKey && (
+                                {(masterKey || isDecoyMode) && (
                                   <SafeMedia
                                     item={item}
                                     masterKey={masterKey}

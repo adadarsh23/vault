@@ -406,8 +406,9 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
    */
   const handleUnlock = useCallback(
     async (captchaToken: string) => {
-      // Prevent double submissions
-      if (status === 'authenticating' || !vaultKey) return false;
+      // Prevent double submissions or empty credentials
+      const hasAnyCredential = Boolean(vaultKey?.trim() || accountPassword?.trim());
+      if (status === 'authenticating' || !hasAnyCredential) return false;
 
       if (statusCooldownTimerRef.current) {
         clearTimeout(statusCooldownTimerRef.current);
@@ -442,35 +443,69 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
       }
 
       // Check Decoy / Duress Mode FIRST before password policy check
-      const storedHashes = [
-        useVaultStore.getState().preferences.decoyPasswordHash,
-        typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_pin_hash') : null,
-        typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_password_hash') : null,
-        typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_hash') : null,
-        typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_pin') : null,
-        typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_password') : null,
-        typeof localStorage !== 'undefined' ? localStorage.getItem('decoy_pin_hash') : null,
-        typeof localStorage !== 'undefined' ? localStorage.getItem('decoyPasswordHash') : null,
-        typeof localStorage !== 'undefined' ? localStorage.getItem(`vault_decoy_pin_hash_${normalizedUsername}`) : null,
-      ].filter((h): h is string => Boolean(h && typeof h === 'string' && h.trim().length > 0));
+      const isDecoyVaultConfigured =
+        useVaultStore.getState().preferences.isDecoyVaultEnabled !== false &&
+        (typeof localStorage === 'undefined' || localStorage.getItem('vault_decoy_enabled') !== 'false');
 
-      for (const candidateHash of storedHashes) {
-        const isDecoyKeyMatch = vaultKey ? await verifyDecoyPin(vaultKey, candidateHash) : false;
-        const isDecoyPassMatch =
-          accountPassword ? await verifyDecoyPin(accountPassword, candidateHash) : false;
+      if (isDecoyVaultConfigured) {
+        const storedHashes = [
+          useVaultStore.getState().preferences.decoyPasswordHash,
+          typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_pin_hash') : null,
+          typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_password_hash') : null,
+          typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_hash') : null,
+          typeof localStorage !== 'undefined' ? localStorage.getItem('decoy_pin_hash') : null,
+          typeof localStorage !== 'undefined' ? localStorage.getItem('decoyPasswordHash') : null,
+          typeof localStorage !== 'undefined' ? localStorage.getItem(`vault_decoy_pin_hash_${normalizedUsername}`) : null,
+          typeof localStorage !== 'undefined' ? localStorage.getItem(`vault_decoy_hash_${normalizedUsername}`) : null,
+          typeof localStorage !== 'undefined' ? localStorage.getItem(`decoyPasswordHash_${normalizedUsername}`) : null,
+        ].filter(
+          (h): h is string =>
+            Boolean(
+              h &&
+                typeof h === 'string' &&
+                h.trim().length > 0 &&
+                h !== 'true' &&
+                h !== 'false' &&
+                h !== 'null' &&
+                h !== 'undefined'
+            )
+        );
 
-        if (isDecoyKeyMatch || isDecoyPassMatch) {
-          setAccountPassword('');
-          setVaultKey('');
-          pendingMasterKeyRef.current = null;
-          pendingVaultKeyRef.current = null;
-          setStatus('authenticating');
-          await useVaultStore.getState().unlockDecoyVault(normalizedUsername);
-          if (isComponentMounted.current) {
-            setStatus('success');
-            completeUnlockTransition();
+        if (storedHashes.length > 0) {
+          const candidateCredentials = Array.from(
+            new Set(
+              [vaultKey, accountPassword, vaultKey?.trim(), accountPassword?.trim()].filter(
+                (c): c is string => Boolean(c && typeof c === 'string' && c.length >= 4)
+              )
+            )
+          );
+
+          for (const candidateHash of storedHashes) {
+            for (const candidate of candidateCredentials) {
+              const isDecoyMatch = await verifyDecoyPin(candidate, candidateHash);
+              if (isDecoyMatch) {
+                setAccountPassword('');
+                setVaultKey('');
+                pendingMasterKeyRef.current = null;
+                pendingVaultKeyRef.current = null;
+                setStatus('authenticating');
+                for (let i = 0; i < securityLayers.length; i++) {
+                  if (!isComponentMounted.current) break;
+                  setCurrentLayer(i);
+                  await sleep(LAYER_UI_DELAY_MS);
+                }
+                await useVaultStore.getState().unlockDecoyVault(normalizedUsername);
+                if (isComponentMounted.current) {
+                  setCurrentLayer(securityLayers.length);
+                  setStatus('success');
+                  completeUnlockTransition();
+                  setSuccessCountdown(SUCCESS_COUNTDOWN_SECONDS);
+                }
+                resetFailedUnlockAttempts();
+                return true;
+              }
+            }
           }
-          return true;
         }
       }
 
@@ -647,12 +682,14 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
           const { preferences, emergencyLocalWipe } = useVaultStore.getState();
           const isBruteForceWipeEnabled = preferences.isBruteForceWipeEnabled !== false;
           const maxAttempts = preferences.maxFailedAttemptsBeforeWipe || 10;
+          const isMasterKeyCtx = credentialContext === 'master_key' || cloudSessionActive;
 
           if (!isBruteForceWipeEnabled) {
-            if (credentialContext === 'master_key') {
+            if (isMasterKeyCtx) {
               toast.error('Master Key Incorrect', {
-                description:
-                  'The account password is valid, but the Master Key is incorrect or cannot decrypt this vault.',
+                description: cloudSessionActive
+                  ? 'The Master Key you entered is incorrect or cannot decrypt this vault.'
+                  : 'The account password is valid, but the Master Key is incorrect or cannot decrypt this vault.',
               });
             } else {
               toast.error('Authentication failed', {
@@ -684,11 +721,10 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
             });
           } else {
             const remaining = maxAttempts - currentFailed;
-            const desc =
-              credentialContext === 'master_key'
-                ? `Master key incorrect (Attempt ${currentFailed} of ${maxAttempts}). Warning: ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before this device automatically shreds local vault keys.`
-                : `Invalid username or password (Attempt ${currentFailed} of ${maxAttempts}). Warning: ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before this device automatically shreds local vault keys.`;
-            toast.error('Authentication Failed', {
+            const desc = isMasterKeyCtx
+              ? `Master key incorrect (Attempt ${currentFailed} of ${maxAttempts}). Warning: ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before this device automatically shreds local vault keys.`
+              : `Invalid username or password (Attempt ${currentFailed} of ${maxAttempts}). Warning: ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before this device automatically shreds local vault keys.`;
+            toast.error(isMasterKeyCtx ? 'Master Key Incorrect' : 'Authentication Failed', {
               description: desc,
               duration: 6000,
             });

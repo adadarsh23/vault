@@ -13,7 +13,6 @@ import { useScrollRestoration } from '../../hooks/useScrollRestoration';
 import { Lock, X } from 'lucide-react';
 import { AppHeader } from './AppHeader';
 import { LoadingScreen } from './LoadingScreen';
-import { ForensicWatermark } from '../security/ForensicWatermark';
 import { VaultIntegrityAlarmModal } from '../security/VaultIntegrityAlarmModal';
 import { VaultIntegrityAlarmBanner } from '../security/VaultIntegrityAlarmBanner';
 
@@ -862,12 +861,6 @@ export function AppShell({
               loading="eager"
               decoding="async"
               className="max-h-[85vh] w-full rounded-2xl object-contain vault-print-protected"
-            />
-            <ForensicWatermark
-              opacity={0.15}
-              angle={-25}
-              density="standard"
-              classification="VAULT PROFILE // CONFIDENTIAL"
             />
           </div>
         </div>

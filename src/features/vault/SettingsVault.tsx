@@ -60,6 +60,8 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
     const syncConflictCount = useVaultStore((state) => state.syncConflictCount);
     const hasPendingSyncRetry = useVaultStore((state) => state.hasPendingSyncRetry);
 
+    const isDecoyMode = useVaultStore((state) => state.isDecoyMode);
+
     const { install, canInstall, isInstalled, isStandalone, needsManualInstall } = usePWAInstall();
 
     const [storageUsedBytes, setStorageUsedBytes] = React.useState(0);
@@ -101,6 +103,32 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
 
     const loadSessionState = React.useCallback(async () => {
       setIsSessionActionLoading(true);
+      if (isDecoyMode) {
+        const decoyProfile: AuthenticatedProfile = {
+          id: 'decoy-user-id',
+          username: username || 'alex_doe',
+          profileName: 'Alex Doe',
+          profilePhoto: 'none',
+          email: `${username || 'alex_doe'}@example.com`,
+          twoFactorEnabled: false,
+          sessions: [
+            {
+              sessionId: 'decoy-session-id',
+              deviceId: 'current-device',
+              deviceName: 'Web Client',
+              createdAt: new Date(Date.now() - 3600000).toISOString(),
+              lastUsedAt: new Date().toISOString(),
+              ipAddress: '127.0.0.1',
+              isCurrent: true,
+            } as any,
+          ],
+        };
+        setProfile(decoyProfile);
+        setSessionsCount(1);
+        setIsSessionActionLoading(false);
+        return;
+      }
+
       try {
         const nextProfile = await getAuthenticatedProfile();
         setProfile(nextProfile);
@@ -121,7 +149,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
       } finally {
         setIsSessionActionLoading(false);
       }
-    }, []);
+    }, [isDecoyMode, username]);
 
     React.useEffect(() => {
       void loadSessionState();
@@ -133,6 +161,13 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
           'This will revoke every device session and lock this browser immediately. Continue?'
         )
       ) {
+        return;
+      }
+
+      if (isDecoyMode) {
+        fullLogout();
+        setSessionsCount(0);
+        toast.success('All device sessions were locked');
         return;
       }
 
@@ -150,7 +185,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
       } finally {
         setIsSessionActionLoading(false);
       }
-    }, [fullLogout]);
+    }, [fullLogout, isDecoyMode]);
 
     const handleEmergencyClear = async () => {
       if (destructionStage === 'idle') {
@@ -186,6 +221,25 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
     const handleProfileSave = React.useCallback(
       async (profileName: string, profilePhoto: string) => {
         setIsSavingProfile(true);
+        if (isDecoyMode) {
+          setProfile((prev) =>
+            prev
+              ? { ...prev, profileName, profilePhoto }
+              : {
+                  id: 'decoy-user-id',
+                  username: username || 'alex_doe',
+                  profileName,
+                  profilePhoto,
+                  email: `${username || 'alex_doe'}@example.com`,
+                  twoFactorEnabled: false,
+                  sessions: [],
+                }
+          );
+          setIsSavingProfile(false);
+          toast.success('Profile updated');
+          return { saved: true as const };
+        }
+
         try {
           await updateAuthenticatedProfile({ profileName, profilePhoto });
           await loadSessionState();
@@ -211,7 +265,7 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
           setIsSavingProfile(false);
         }
       },
-      [loadSessionState]
+      [isDecoyMode, loadSessionState, username]
     );
 
     return (

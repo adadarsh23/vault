@@ -92,9 +92,16 @@ const normalizePhotoPreviewUrl = async (
 
   // Convert data URLs into Blob URLs to avoid giant in-memory strings in <img src>.
   if (sourceUrl.startsWith('data:')) {
-    const response = await fetch(sourceUrl, { signal });
-    const blob = await response.blob();
-    return createTrackedBlobUrl(blob);
+    try {
+      const response = await fetch(sourceUrl, { signal });
+      if (response.ok) {
+        const blob = await response.blob();
+        return createTrackedBlobUrl(blob);
+      }
+    } catch {
+      // Fallback: If fetch on data URL fails (e.g. unescaped SVG data URIs), return sourceUrl directly
+    }
+    return sourceUrl;
   }
 
   if (!isHeicMime) {

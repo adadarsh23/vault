@@ -76,6 +76,9 @@ describe('server sentry integration', () => {
         },
         data: {
           password: 'secret',
+          masterKey: 'vault-master-key-xyz',
+          dek: 'secret-dek',
+          ciphertext: '0123456789abcdef',
           nested: { token: 'abc' },
         },
       },
@@ -87,6 +90,9 @@ describe('server sentry integration', () => {
     expect(event.request.headers.authorization).toBe('[Filtered]');
     expect(event.request.headers.cookie).toBe('[Filtered]');
     expect(event.request.data.password).toBe('[Filtered]');
+    expect(event.request.data.masterKey).toBe('[Filtered]');
+    expect(event.request.data.dek).toBe('[Filtered]');
+    expect(event.request.data.ciphertext).toBe('[Filtered]');
     expect(event.request.data.nested.token).toBe('[Filtered]');
     expect(event.extra.refreshToken).toBe('[Filtered]');
   });

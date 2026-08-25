@@ -5,6 +5,7 @@ import { Button } from '../../../../components/ui/Button';
 import { VaultItem } from '../../../../lib/storage';
 import { SafeMedia } from './SafeMedia';
 import { cn } from '../../../../lib/utils';
+import { useVaultStore } from '../../../../store/vaultStore';
 
 interface MediaFilmstripProps {
   items: VaultItem[];
@@ -25,6 +26,7 @@ export const MediaFilmstrip: React.FC<MediaFilmstripProps> = ({
   onToggle,
   onSelect,
 }) => {
+  const isDecoyMode = useVaultStore((state) => state.isDecoyMode);
   const activeThumbnailRef = useRef<HTMLButtonElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -96,7 +98,7 @@ export const MediaFilmstrip: React.FC<MediaFilmstripProps> = ({
                     )}
                     title={item.title}
                   >
-                    {masterKey && (
+                    {(masterKey || isDecoyMode) && (
                       <SafeMedia
                         item={item}
                         masterKey={masterKey}

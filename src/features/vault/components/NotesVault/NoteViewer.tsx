@@ -20,6 +20,7 @@ import {
   Image,
   Loader2,
   Download,
+  ExternalLink,
   Paperclip,
   AlignLeft,
   BookOpen,
@@ -42,7 +43,6 @@ import { getStringContent } from '../../../../lib/vaultItemContent';
 import { DecryptedMarkdown } from '../../../../components/vault/DecryptedMarkdown';
 import { TagManager } from '../../../../components/vault/TagManager';
 import { useScrollRestoration } from '../../../../hooks/useScrollRestoration';
-import { ForensicWatermark } from '../../../../components/security/ForensicWatermark';
 
 const AttachmentCard: React.FC<{
   item: any;
@@ -733,16 +733,27 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
               <h3 className="text-sm font-bold text-text truncate">
                 {previewAttachmentItem.title}
               </h3>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 {previewUrl && (
-                  <a
-                    href={previewUrl}
-                    download={previewAttachmentItem.title}
-                    className="p-2 rounded-lg bg-text/5 hover:bg-text/10 text-text/75 hover:text-text transition-colors"
-                    title="Download File"
-                  >
-                    <Download className="h-4 w-4" />
-                  </a>
+                  <>
+                    <a
+                      href={previewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-lg bg-text/5 hover:bg-text/10 text-text/75 hover:text-text transition-colors"
+                      title="Open in new tab / full page"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                    <a
+                      href={previewUrl}
+                      download={previewAttachmentItem.title}
+                      className="p-2 rounded-lg bg-text/5 hover:bg-text/10 text-text/75 hover:text-text transition-colors"
+                      title="Download File"
+                    >
+                      <Download className="h-4 w-4" />
+                    </a>
+                  </>
                 )}
                 <button
                   onClick={closePreview}
@@ -766,12 +777,6 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                       src={previewUrl}
                       alt={previewAttachmentItem.title || 'Attachment preview'}
                       className="max-h-[60vh] max-w-full rounded-lg object-contain shadow-lg vault-print-protected"
-                    />
-                    <ForensicWatermark
-                      opacity={0.14}
-                      angle={-25}
-                      density="standard"
-                      classification="VAULT ATTACHMENT // CONFIDENTIAL"
                     />
                   </div>
                 ) : (

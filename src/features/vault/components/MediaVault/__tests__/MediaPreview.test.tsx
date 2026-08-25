@@ -81,21 +81,16 @@ describe('MediaPreview Component - Photo Vault Production Readiness', () => {
         ...useVaultStore.getState().preferences,
         isPrintBlockingEnabled: true,
         isTabSwitchShieldEnabled: true,
-        isForensicWatermarkEnabled: true,
       },
     });
   });
 
-  it('renders photo media without any watermark overlay', () => {
+  it('renders photo media preview correctly', () => {
     render(<MediaPreview {...defaultProps} />);
 
     // SafeMedia should be rendered
     expect(screen.getByTestId('safe-media')).toBeTruthy();
     expect(screen.getAllByText('Protected_Vacation.jpg').length).toBeGreaterThan(0);
-
-    // Forensic watermark overlay MUST NOT be present in Photo Vault preview
-    const watermark = screen.queryByTestId('forensic-watermark');
-    expect(watermark).toBeNull();
   });
 
   it('renders top action bar controls and handles close action', () => {

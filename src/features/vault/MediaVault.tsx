@@ -648,7 +648,10 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
           const fileTargetFolder = folderFromPath || targetFolder;
 
           const shouldUseDirectLargeUpload =
-            !isAlreadyEncrypted && type !== 'photo' && file.size >= LARGE_MEDIA_DIRECT_UPLOAD_BYTES;
+            !useVaultStore.getState().isDecoyMode &&
+            !isAlreadyEncrypted &&
+            type !== 'photo' &&
+            file.size >= LARGE_MEDIA_DIRECT_UPLOAD_BYTES;
 
           if (shouldUseDirectLargeUpload) {
             try {

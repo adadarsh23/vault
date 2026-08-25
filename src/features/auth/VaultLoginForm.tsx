@@ -430,6 +430,11 @@ export const VaultLoginForm: React.FC<Props> = memo(
         return false;
       }
 
+      if (!twoFactorRequired && cloudSessionActive && !vaultKey.trim()) {
+        toast.warning('Please enter your Master Key or Decoy PIN to unlock your vault.');
+        return false;
+      }
+
       if (
         !twoFactorRequired &&
         !cloudSessionActive &&
@@ -527,24 +532,70 @@ export const VaultLoginForm: React.FC<Props> = memo(
           /could not be decrypted/i.test(msg)
         ) {
           toast.error('Master Key Incorrect', {
-            description:
-              'The account password is valid, but the Master Key is incorrect or cannot decrypt this vault.',
+            description: cloudSessionActive
+              ? 'The Master Key you entered is incorrect or cannot decrypt this vault.'
+              : 'The account password is valid, but the Master Key is incorrect or cannot decrypt this vault.',
           });
         } else if (
           authMode === 'login' &&
           (apiError?.status === 401 ||
             apiError?.code === 'INVALID_CREDENTIALS' ||
-            /invalid username or password/i.test(msg))
+            /invalid username or password/i.test(msg) ||
+            /incorrect password/i.test(msg))
         ) {
           // Prevent username enumeration: return a uniform authentication error message
-          toast.error('Authentication Failed', {
-            description: 'Invalid username, password, or master key.',
+          toast.error(cloudSessionActive ? 'Master Key Incorrect' : 'Authentication Failed', {
+            description: cloudSessionActive
+              ? 'The Master Key you entered is incorrect or cannot decrypt this vault.'
+              : 'The username or account password is incorrect.',
+          });
+        } else if (
+          apiError?.code === 'TOO_MANY_AUTH_ATTEMPTS' ||
+          apiError?.code === 'RATE_LIMITED' ||
+          apiError?.status === 429 ||
+          /too many attempts/i.test(msg)
+        ) {
+          toast.error('Too Many Attempts', {
+            description: 'Too many authentication attempts detected. Please wait a moment and try again.',
+          });
+        } else if (
+          apiError?.code === 'CAPTCHA_TOKEN_EXPIRED' ||
+          apiError?.code === 'CAPTCHA_VERIFICATION_FAILED' ||
+          /captcha/i.test(msg)
+        ) {
+          toast.error('Security Verification Required', {
+            description: 'Please complete the CAPTCHA check to continue.',
+          });
+        } else if (
+          apiError?.code === 'SESSION_EXPIRED' ||
+          apiError?.code === 'SESSION_REFRESH_FAILED' ||
+          apiError?.code === 'INVALID_TOKEN' ||
+          /session.*expired/i.test(msg)
+        ) {
+          toast.error('Session Expired', {
+            description: 'Your saved cloud session has expired. Please sign in with your account password.',
+          });
+        } else if (
+          apiError?.code === 'AUTH_WEAK_PASSWORD' ||
+          apiError?.code === 'INVALID_PASSWORD' ||
+          /password must/i.test(msg)
+        ) {
+          toast.error('Password Requirements Not Met', {
+            description: 'Use 16-64 characters with uppercase, lowercase, number, and special character.',
+          });
+        } else if (
+          apiError?.code === 'NETWORK_ERROR' ||
+          /failed to fetch/i.test(msg) ||
+          /unable to reach/i.test(msg)
+        ) {
+          toast.error('Network Connection Issue', {
+            description: 'Could not connect to the server. Please check your internet connection.',
           });
         } else {
           handleError(error, twoFactorRequired ? '2FA Verification' : 'Vault Unlock');
         }
       },
-      [twoFactorRequired, requiresCaptcha, setCaptchaRejected, authMode, handleAuthModeSwitch]
+      [twoFactorRequired, requiresCaptcha, setCaptchaRejected, authMode, handleAuthModeSwitch, cloudSessionActive]
     );
 
     const handleUnlock = useCallback(async () => {

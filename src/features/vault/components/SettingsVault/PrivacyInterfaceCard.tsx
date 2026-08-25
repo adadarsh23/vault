@@ -25,6 +25,7 @@ import {
   MAX_GENERATED_CREDENTIAL_LENGTH,
 } from '../../../../lib/utils';
 import { hashDecoyPin } from '../../../../lib/cryptoPrimitives';
+import { useVaultStore } from '../../../../store/vaultStore';
 
 const AUTO_LOCK_OPTIONS = [1, 5, 10, 15, 30, 60];
 const CLIPBOARD_CLEAR_OPTIONS = [10, 15, 30, 45, 60];
@@ -116,12 +117,6 @@ export const PrivacyInterfaceCard = React.memo<PrivacyInterfaceCardProps>(
               description="Instantly blackout media previews on tab or app switch to prevent OS switcher snapshot leaks."
               checked={preferences.isTabSwitchShieldEnabled !== false}
               onChange={(value) => updatePreferences({ isTabSwitchShieldEnabled: value })}
-            />
-            <ToggleCard
-              title="Dynamic Forensic Watermark"
-              description="Render dynamic semi-transparent user ID + live timestamp stamp across media to trace camera leaks."
-              checked={preferences.isForensicWatermarkEnabled !== false}
-              onChange={(value) => updatePreferences({ isForensicWatermarkEnabled: value })}
             />
             <ToggleCard
               title="Lock vault on tab hide"
@@ -222,97 +217,166 @@ export const PrivacyInterfaceCard = React.memo<PrivacyInterfaceCardProps>(
                   updatePreferences({ isDecoyVaultEnabled: value });
                   try {
                     localStorage.setItem('vault_decoy_enabled', value ? 'true' : 'false');
+                    if (!value) {
+                      localStorage.removeItem('vault_decoy_pin_hash');
+                      localStorage.removeItem('vault_decoy_password_hash');
+                      localStorage.removeItem('vault_decoy_hash');
+                      const activeUser = useVaultStore.getState().username;
+                      if (activeUser) {
+                        localStorage.removeItem(`vault_decoy_pin_hash_${activeUser.trim().toLowerCase()}`);
+                      }
+                    }
                   } catch {
                     /* ignore */
                   }
                 }}
               />
               {preferences.isDecoyVaultEnabled && (
-                <div className="rounded-xl border border-card-border bg-card-bg p-3.5 shadow-sm transition-colors dark:border-white/10 dark:bg-black">
+                <div className="rounded-xl border border-card-border bg-card-bg p-4 shadow-sm transition-colors dark:border-white/10 dark:bg-black">
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/40">
-                      Duress PIN Setup
+                      Duress Decoy PIN
                     </p>
                     <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                      PBKDF2 Hardened
+                      PBKDF2 (100k rounds)
                     </span>
                   </div>
                   <p className="mt-1 text-[11px] text-text/60">
-                    Set an alternate password or numeric PIN. When entered during unlock, an isolated decoy vault opens automatically.
+                    Set an alternate numeric PIN (4–12 digits, numbers only). When entered during unlock, an
+                    isolated decoy vault opens automatically with complete plausible deniability.
                   </p>
-                  <div className="mt-2.5 flex items-center gap-2">
-                    <div className="relative flex-1">
-                      <input
-                        type={showDecoyPin ? 'text' : 'password'}
-                        placeholder="Enter decoy password or PIN (min 4 chars)"
-                        value={decoyPinInput}
-                        onChange={(e) => setDecoyPinInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            // Trigger save
-                            const saveBtn = document.getElementById('save-decoy-pin-btn');
-                            if (saveBtn) saveBtn.click();
+
+                  <div className="mt-3 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          type={showDecoyPin ? 'text' : 'password'}
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={12}
+                          placeholder={
+                            preferences.decoyPasswordHash
+                              ? 'Enter new 4–12 digit PIN to change'
+                              : 'Enter 4–12 digit PIN (numbers only)'
+                          }
+                          value={decoyPinInput}
+                          onChange={(e) =>
+                            setDecoyPinInput(e.target.value.replace(/\D/g, '').slice(0, 12))
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const saveBtn = document.getElementById('save-decoy-pin-btn');
+                              if (saveBtn) saveBtn.click();
+                            }
+                          }}
+                          className="h-9 w-full rounded-lg border border-card-border bg-bg pl-3 pr-8 text-xs text-text outline-none transition-colors focus:border-text/30"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowDecoyPin((prev) => !prev)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-text/40 transition-colors hover:text-text/70 focus:outline-none"
+                          title={showDecoyPin ? 'Hide PIN' : 'Reveal PIN'}
+                        >
+                          {showDecoyPin ? (
+                            <EyeOff className="h-3.5 w-3.5" />
+                          ) : (
+                            <Eye className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </div>
+                      <button
+                        id="save-decoy-pin-btn"
+                        type="button"
+                        disabled={isSavingDecoyPin || !decoyPinInput.trim()}
+                        onClick={async () => {
+                          const trimmed = decoyPinInput.trim();
+                          if (!trimmed || !/^\d{4,12}$/.test(trimmed)) {
+                            toast.error(
+                              'Decoy PIN must contain only numbers (digits 0-9) and be between 4 and 12 digits long'
+                            );
+                            return;
+                          }
+                          setIsSavingDecoyPin(true);
+                          try {
+                            const { hash } = await hashDecoyPin(trimmed);
+                            updatePreferences({
+                              isDecoyVaultEnabled: true,
+                              decoyPasswordHash: hash,
+                            });
+                            try {
+                              localStorage.setItem('vault_decoy_enabled', 'true');
+                              localStorage.setItem('vault_decoy_pin_hash', hash);
+                              localStorage.setItem('vault_decoy_password_hash', hash);
+                              localStorage.setItem('vault_decoy_hash', hash);
+                              const username = useVaultStore.getState().username;
+                              if (username) {
+                                const normUser = username.trim().toLowerCase();
+                                localStorage.setItem(`vault_decoy_pin_hash_${normUser}`, hash);
+                                localStorage.setItem(`vault_decoy_hash_${normUser}`, hash);
+                              }
+                            } catch {
+                              /* ignore storage limits/errors */
+                            }
+                            toast.success(
+                              preferences.decoyPasswordHash
+                                ? 'Decoy Duress PIN updated successfully'
+                                : 'Decoy Duress PIN configured with PBKDF2 protection'
+                            );
+                            setDecoyPinInput('');
+                          } catch {
+                            toast.error('Failed to save decoy PIN');
+                          } finally {
+                            setIsSavingDecoyPin(false);
                           }
                         }}
-                        className="h-9 w-full rounded-lg border border-card-border bg-bg pl-3 pr-8 text-xs text-text outline-none transition-colors focus:border-text/30"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowDecoyPin((prev) => !prev)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-text/40 transition-colors hover:text-text/70 focus:outline-none"
-                        title={showDecoyPin ? 'Hide PIN' : 'Reveal PIN'}
+                        className="h-9 rounded-lg bg-text px-3.5 text-xs font-semibold text-bg transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
                       >
-                        {showDecoyPin ? (
-                          <EyeOff className="h-3.5 w-3.5" />
-                        ) : (
-                          <Eye className="h-3.5 w-3.5" />
-                        )}
+                        {isSavingDecoyPin
+                          ? 'Saving...'
+                          : preferences.decoyPasswordHash
+                            ? 'Change PIN'
+                            : 'Set PIN'}
                       </button>
                     </div>
-                    <button
-                      id="save-decoy-pin-btn"
-                      type="button"
-                      disabled={isSavingDecoyPin}
-                      onClick={async () => {
-                        const trimmed = decoyPinInput.trim();
-                        if (!trimmed || trimmed.length < 4) {
-                          toast.error('Decoy PIN must be at least 4 characters');
-                          return;
-                        }
-                        setIsSavingDecoyPin(true);
-                        try {
-                          const { hash } = await hashDecoyPin(trimmed);
-                          updatePreferences({
-                            isDecoyVaultEnabled: true,
-                            decoyPasswordHash: hash,
-                          });
-                          try {
-                            localStorage.setItem('vault_decoy_enabled', 'true');
-                            localStorage.setItem('vault_decoy_pin_hash', hash);
-                            localStorage.setItem('vault_decoy_password_hash', hash);
-                            localStorage.setItem('vault_decoy_hash', hash);
-                          } catch {
-                            /* ignore storage limits/errors */
-                          }
-                          toast.success('Decoy Duress PIN configured with PBKDF2 protection');
-                          setDecoyPinInput('');
-                        } catch {
-                          toast.error('Failed to save decoy PIN');
-                        } finally {
-                          setIsSavingDecoyPin(false);
-                        }
-                      }}
-                      className="h-9 rounded-lg bg-text px-3.5 text-xs font-semibold text-bg transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
-                    >
-                      {isSavingDecoyPin ? 'Saving...' : 'Save PIN'}
-                    </button>
+
+                    {preferences.decoyPasswordHash && (
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                          Decoy duress PIN is active & ready
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updatePreferences({
+                              isDecoyVaultEnabled: false,
+                              decoyPasswordHash: undefined,
+                            });
+                            try {
+                              localStorage.removeItem('vault_decoy_pin_hash');
+                              localStorage.removeItem('vault_decoy_password_hash');
+                              localStorage.removeItem('vault_decoy_hash');
+                              localStorage.setItem('vault_decoy_enabled', 'false');
+                              const username = useVaultStore.getState().username;
+                              if (username) {
+                                const normUser = username.trim().toLowerCase();
+                                localStorage.removeItem(`vault_decoy_pin_hash_${normUser}`);
+                                localStorage.removeItem(`vault_decoy_hash_${normUser}`);
+                              }
+                            } catch {
+                              /* ignore */
+                            }
+                            setDecoyPinInput('');
+                            toast.info('Decoy PIN removed. Duress mode deactivated.');
+                          }}
+                          className="text-[11px] text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors"
+                        >
+                          Remove PIN
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <p className="mt-2 text-[11px] text-text/45">
-                    {preferences.decoyPasswordHash
-                      ? '✅ Decoy duress PIN is active and ready.'
-                      : '⚠️ Set a decoy PIN to activate duress protection.'}
-                  </p>
                 </div>
               )}
             </div>

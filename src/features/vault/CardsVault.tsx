@@ -348,18 +348,16 @@ const DecryptedCardItem: React.FC<{
     const decrypt = async () => {
       try {
         const encryptedContent = getStringContent(item.content);
-        if (!encryptedContent) {
+        if (!encryptedContent && !item.metadata) {
           if (isMounted) setError(true);
           return;
         }
 
-        const decrypted = await decryptData(encryptedContent, masterKey);
-        if (!decrypted || !isMounted) {
-          if (isMounted) setError(true);
-          return;
-        }
-
+        const decrypted = encryptedContent ? await decryptData(encryptedContent, masterKey) : '';
         let parsed = parseJsonSafely<CardPayload>(decrypted || '');
+        if (!parsed && typeof item.content === 'string') {
+          parsed = parseJsonSafely<CardPayload>(item.content);
+        }
         if (!parsed && item.metadata) {
           const meta = item.metadata as any;
           parsed = {
@@ -373,7 +371,7 @@ const DecryptedCardItem: React.FC<{
           };
         }
 
-        if (!parsed) {
+        if (!parsed || !isMounted) {
           if (isMounted) setError(true);
           return;
         }

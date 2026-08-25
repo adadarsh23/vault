@@ -533,6 +533,34 @@ describe('useVaultAuth Hook', () => {
       expect(success).toBe(false);
       expect(mockToast.error).toHaveBeenCalledWith('Too many attempts', expect.anything());
     });
+
+    it('handles session login master key failure with clear Master Key Incorrect error', async () => {
+      mockVaultStore.unlock.mockRejectedValue(
+        new Error('Master key is incorrect or the vault data could not be decrypted')
+      );
+
+      const { result } = renderHook(() =>
+        useVaultAuth({ initialUsername: 'alice', initialCloudSessionActive: true })
+      );
+
+      act(() => {
+        result.current.setVaultKey('WrongMasterKey123!');
+      });
+
+      let success: boolean = true;
+      await act(async () => {
+        success = await result.current.handleUnlock(CAPTCHA_TOKEN);
+      });
+
+      expect(success).toBe(false);
+      expect(mockToast.error).toHaveBeenCalledWith(
+        'Master Key Incorrect',
+        expect.objectContaining({
+          description: expect.stringContaining('Master Key you entered is incorrect'),
+        })
+      );
+      expect(result.current.status).toBe('error');
+    });
   });
 
   describe('Decoy / Duress Vault Mode', () => {
@@ -548,7 +576,7 @@ describe('useVaultAuth Hook', () => {
 
       act(() => {
         result.current.setAccountPassword(VALID_PASSWORD);
-        result.current.setVaultKey('DecoyPin1234!');
+        result.current.setVaultKey('123456');
       });
 
       let success: boolean = false;
@@ -589,6 +617,82 @@ describe('useVaultAuth Hook', () => {
       expect(success).toBe(true);
       expect(mockVaultStore.unlockDecoyVault).toHaveBeenCalledWith('alice');
       expect(mockVaultStore.completeUnlockTransition).toHaveBeenCalled();
+    });
+
+    it('unlocks isolated decoy vault when decoy PIN is entered in account password field with master key empty', async () => {
+      mockVaultStore.preferences = {
+        isDecoyVaultEnabled: true,
+        decoyPasswordHash: 'pbkdf2:100000:salt123:testhash',
+        isBruteForceWipeEnabled: false,
+        maxFailedAttemptsBeforeWipe: 10,
+      };
+
+      const { result } = renderHook(() => useVaultAuth({ initialUsername: 'alice' }));
+
+      act(() => {
+        result.current.setAccountPassword('9876');
+        result.current.setVaultKey('');
+      });
+
+      let success: boolean = false;
+      await act(async () => {
+        success = await result.current.handleUnlock(CAPTCHA_TOKEN);
+      });
+
+      expect(success).toBe(true);
+      expect(mockVaultStore.unlockDecoyVault).toHaveBeenCalledWith('alice');
+      expect(mockVaultStore.completeUnlockTransition).toHaveBeenCalled();
+    });
+
+    it('unlocks isolated decoy vault when decoy PIN hash is loaded from localStorage', async () => {
+      mockVaultStore.preferences = {
+        isDecoyVaultEnabled: true,
+        decoyPasswordHash: null,
+        isBruteForceWipeEnabled: false,
+        maxFailedAttemptsBeforeWipe: 10,
+      };
+
+      localStorage.setItem('vault_decoy_pin_hash_alice', 'pbkdf2:100000:salt123:testhash');
+
+      const { result } = renderHook(() => useVaultAuth({ initialUsername: 'alice' }));
+
+      act(() => {
+        result.current.setAccountPassword('123456');
+        result.current.setVaultKey('');
+      });
+
+      let success: boolean = false;
+      await act(async () => {
+        success = await result.current.handleUnlock(CAPTCHA_TOKEN);
+      });
+
+      expect(success).toBe(true);
+      expect(mockVaultStore.unlockDecoyVault).toHaveBeenCalledWith('alice');
+      localStorage.removeItem('vault_decoy_pin_hash_alice');
+    });
+
+    it('does not unlock decoy vault if decoy PIN does not match', async () => {
+      mockVaultStore.preferences = {
+        isDecoyVaultEnabled: true,
+        decoyPasswordHash: 'pbkdf2:100000:salt123:testhash',
+        isBruteForceWipeEnabled: false,
+        maxFailedAttemptsBeforeWipe: 10,
+      };
+
+      const { result } = renderHook(() => useVaultAuth({ initialUsername: 'alice' }));
+
+      act(() => {
+        result.current.setAccountPassword(VALID_PASSWORD);
+        result.current.setVaultKey('999999');
+      });
+
+      let success: boolean = false;
+      await act(async () => {
+        success = await result.current.handleUnlock(CAPTCHA_TOKEN);
+      });
+
+      expect(mockVaultStore.unlockDecoyVault).not.toHaveBeenCalled();
+      expect(mockAuthApi.authenticateVaultSession).toHaveBeenCalled();
     });
 
     it('proceeds with standard unlock when decoy mode is disabled even if decoy key is entered', async () => {

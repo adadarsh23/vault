@@ -329,6 +329,9 @@ export const authenticateUser = async (input: {
   }
 
   if (!user) {
+    // Timing-attack prevention: perform dummy hash computation to prevent user enumeration
+    const DUMMY_HASH = '$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQAAAAAAAAAAA$dummyhashplaceholderstringfortimingprotection';
+    await comparePassword(input.password || 'dummypassword', DUMMY_HASH).catch(() => false);
     throw AppError.unauthorized('Invalid username or password.', 'INVALID_CREDENTIALS');
   }
 

@@ -31,7 +31,6 @@ import {
   WrapText,
   ShieldAlert,
 } from 'lucide-react';
-import { ForensicWatermark } from '../../components/security/ForensicWatermark';
 import { useAntiScreenshotAndShield } from '../../hooks/useAntiScreenshotAndShield';
 import { toast } from 'sonner';
 import { useVaultStore } from '../../store/vaultStore';
@@ -537,24 +536,25 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
   if (isPdf) {
     return (
       <div className="flex h-full w-full flex-col bg-zinc-950 overflow-hidden">
-        <div className="flex items-center justify-between border-b border-white/10 bg-zinc-900/90 px-4 py-2.5 backdrop-blur-md">
+        <div className="flex items-center justify-between border-b border-white/10 bg-zinc-900/90 px-3 sm:px-4 py-2 sm:py-2.5 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <span className="rounded-md bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold uppercase text-rose-400 border border-rose-500/30">
+            <span className="rounded-md bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold uppercase text-rose-400 border border-rose-500/30 shrink-0">
               {extension || 'PDF'}
             </span>
             <span className="truncate text-xs font-semibold text-white/90" title={item.title}>
               {item.title}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <a
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-colors border border-white/10"
-              title="Open full page"
+              className="flex h-7 px-2 items-center gap-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-colors border border-white/10 text-[11px]"
+              title="Open full page / new tab"
             >
-              <Maximize2 className="h-3.5 w-3.5" />
+              <ExternalLink className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Open</span>
             </a>
             <Button
               size="icon"
@@ -567,8 +567,24 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
             </Button>
           </div>
         </div>
-        <div className="relative flex-1 w-full h-[calc(100%-45px)] bg-zinc-900">
-          <iframe src={url} title={item.title} className="h-full w-full border-none bg-white" />
+        <div className="relative flex-1 w-full min-h-0 bg-zinc-900 overflow-hidden flex flex-col">
+          <div className="sm:hidden flex items-center justify-between gap-2 bg-rose-950/40 border-b border-rose-500/20 px-3 py-1.5 text-[11px] text-rose-300">
+            <span className="truncate">Mobile device viewer:</span>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 shrink-0 rounded px-2 py-0.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-medium transition-colors border border-rose-500/30"
+            >
+              <ExternalLink className="h-3 w-3" /> Open Fullscreen
+            </a>
+          </div>
+          <iframe
+            src={url}
+            title={item.title}
+            className="flex-1 w-full h-full border-none bg-white"
+            scrolling="auto"
+          />
         </div>
       </div>
     );
@@ -836,6 +852,17 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
             </span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {url && (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-colors border border-white/10"
+                title="Open full page / new tab"
+              >
+                <Maximize2 className="h-3.5 w-3.5" />
+              </a>
+            )}
             <Button
               size="icon"
               variant="ghost"
@@ -989,9 +1016,6 @@ export const DocumentsVault: React.FC = () => {
   const isPrintBlockingEnabled = useVaultStore((state) => state.preferences.isPrintBlockingEnabled);
   const isTabSwitchShieldEnabled = useVaultStore(
     (state) => state.preferences.isTabSwitchShieldEnabled
-  );
-  const isForensicWatermarkEnabled = useVaultStore(
-    (state) => state.preferences.isForensicWatermarkEnabled
   );
   const isPhotoExifStripped = useVaultStore((state) => state.preferences.isPhotoExifStripped);
 
@@ -1736,16 +1760,6 @@ export const DocumentsVault: React.FC = () => {
                 masterKey={masterKey!}
                 onDownload={() => downloadFile(previewedDocument)}
               />
-
-              {/* Dynamic Forensic Watermark Overlay */}
-              {isForensicWatermarkEnabled !== false && (
-                <ForensicWatermark
-                  opacity={0.12}
-                  angle={-25}
-                  density="standard"
-                  classification="VAULT DOCUMENT // CONFIDENTIAL"
-                />
-              )}
 
               {/* Tab Switch Auto-Shield Overlay */}
               <AnimatePresence>

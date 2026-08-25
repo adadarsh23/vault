@@ -73,7 +73,6 @@ export interface SecurityPreferences {
   decoyPasswordHash?: string;
   isPrintBlockingEnabled: boolean;
   isTabSwitchShieldEnabled: boolean;
-  isForensicWatermarkEnabled: boolean;
   isBruteForceWipeEnabled: boolean;
   maxFailedAttemptsBeforeWipe: number;
 }
@@ -221,7 +220,6 @@ const DEFAULT_PREFERENCES: SecurityPreferences = {
   decoyPasswordHash: undefined,
   isPrintBlockingEnabled: true,
   isTabSwitchShieldEnabled: true,
-  isForensicWatermarkEnabled: true,
   isBruteForceWipeEnabled: true,
   maxFailedAttemptsBeforeWipe: 10,
 };
@@ -352,6 +350,27 @@ const buildSyncedSnapshotState = (
         ...sanitizePreferences(snapshot.settings.preferences),
       }
     : state.preferences;
+
+  if (typeof localStorage !== 'undefined') {
+    try {
+      if (nextPreferences.decoyPasswordHash) {
+        localStorage.setItem('vault_decoy_pin_hash', nextPreferences.decoyPasswordHash);
+        localStorage.setItem(
+          'vault_decoy_enabled',
+          String(nextPreferences.isDecoyVaultEnabled ?? true)
+        );
+        if (state.username) {
+          const normUser = state.username.trim().toLowerCase();
+          localStorage.setItem(`vault_decoy_pin_hash_${normUser}`, nextPreferences.decoyPasswordHash);
+        }
+      } else if (snapshot.settings?.preferences && nextPreferences.isDecoyVaultEnabled === false) {
+        localStorage.removeItem('vault_decoy_pin_hash');
+        localStorage.setItem('vault_decoy_enabled', 'false');
+      }
+    } catch {
+      /* ignore */
+    }
+  }
 
   return {
     items: options.includeLocalRuntimeItems
@@ -642,7 +661,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         type: 'photo',
         title: 'Alpine Peak.jpg',
         content:
-          'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect fill="%230f172a" width="800" height="600"/><path fill="%2338bdf8" opacity="0.4" d="M0 450 L300 200 L550 400 L800 250 L800 600 L0 600 Z"/><path fill="%230284c7" opacity="0.6" d="M0 500 L200 350 L450 480 L700 320 L800 400 L800 600 L0 600 Z"/><circle cx="650" cy="120" r="50" fill="%23facc15" opacity="0.8"/></svg>',
+          'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnMSIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwZjE3MmEiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMxZTI5M2IiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCBmaWxsPSJ1cmwoI2cxKSIgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiLz48cGF0aCBmaWxsPSIjMzhiZGY4IiBvcGFjaXR5PSIwLjUiIGQ9Ik0wIDQ1MCAzMDAgMjAwIEw1NTAgNDAwIEw4MDAgMjUwIEw4MDAgNjAwIEwwIDYwMCBaIi8+PHBhdGggZmlsbD0iIzAyODRjNyIgb3BhY2l0eT0iMC43IiBkPSJNMCA1MDAgTDIwMCAzNTAgTDQ1MCA0ODAgTDcwMCAzMjAgTDgwMCA0MDAgTDgwMCA2MDAgTDAgNjAwIFoiLz48Y2lyY2xlIGN4PSI2NTAiIGN5PSIxMjAiIHI9IjUwIiBmaWxsPSIjZmFjYzE1IiBvcGFjaXR5PSIwLjkiLz48L3N2Zz4=',
         folder: 'Wallpapers',
         createdAt: Date.now() - 86400000 * 3,
         updatedAt: Date.now() - 86400000 * 3,
@@ -661,7 +680,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         type: 'photo',
         title: 'Emerald Meadow.png',
         content:
-          'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect fill="%23064e3b" width="800" height="600"/><path fill="%2310b981" opacity="0.4" d="M0 600 L150 300 L300 600 L450 350 L600 600 L750 400 L800 500 L800 600 Z"/><circle cx="150" cy="150" r="40" fill="%23e2e8f0" opacity="0.4"/></svg>',
+          'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgODAwIDYwMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnMiIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwNjRlM2IiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMjJjMjIiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCBmaWxsPSJ1cmwoI2cyKSIgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiLz48cGF0aCBmaWxsPSIjMTBiOTgxIiBvcGFjaXR5PSIwLjUiIGQ9Ik0wIDYwMCAxNTAgMzAwIEwzMDAgNjAwIEw0NTAgMzUwIEw2MDAgNjAwIEw3NTAgNDAwIEw4MDAgNTAwIEw4MDAgNjAwIFoiLz48Y2lyY2xlIGN4PSIxNTAiIGN5PSIxNTAiIHI9IjQwIiBmaWxsPSIjZTJlOGYwIiBvcGFjaXR5PSIwLjYiLz48L3N2Zz4=',
         folder: 'Wallpapers',
         createdAt: Date.now() - 86400000 * 2,
         updatedAt: Date.now() - 86400000 * 2,
@@ -725,6 +744,252 @@ export const useVaultStore = create<VaultState>((set, get) => ({
           isE2EE: true,
         },
       },
+      {
+        id: 'decoy-password-1',
+        type: 'password',
+        title: 'Netflix Family',
+        content: JSON.stringify({
+          username: 'alex.doe@example.com',
+          password: 'DecoyPassword2026!',
+          website: 'https://netflix.com',
+          notes: 'Standard 4K family streaming profile',
+        }),
+        folder: 'Entertainment',
+        createdAt: Date.now() - 86400000 * 6,
+        updatedAt: Date.now() - 86400000 * 6,
+        metadata: {
+          username: 'alex.doe@example.com',
+          password: 'DecoyPassword2026!',
+          website: 'https://netflix.com',
+          notes: 'Standard 4K family streaming profile',
+          isE2EE: true,
+        },
+      },
+      {
+        id: 'decoy-password-2',
+        type: 'password',
+        title: 'Personal Outlook Mail',
+        content: JSON.stringify({
+          username: 'alex.personal@outlook.com',
+          password: 'OutlookSecurePass99$',
+          website: 'https://outlook.live.com',
+          notes: 'Secondary personal inbox',
+        }),
+        folder: 'Personal',
+        createdAt: Date.now() - 86400000 * 5,
+        updatedAt: Date.now() - 86400000 * 5,
+        metadata: {
+          username: 'alex.personal@outlook.com',
+          password: 'OutlookSecurePass99$',
+          website: 'https://outlook.live.com',
+          notes: 'Secondary personal inbox',
+          isE2EE: true,
+        },
+      },
+      {
+        id: 'decoy-card-1',
+        type: 'card',
+        title: 'Checking Debit Card',
+        content: JSON.stringify({
+          cardNumber: '•••• •••• •••• 4821',
+          expiryMonth: '09',
+          expiryYear: '29',
+          cvv: '742',
+          cardholderName: 'Alex Doe',
+          bankName: 'Apex Trust Bank',
+          cardType: 'visa',
+        }),
+        folder: 'Finance',
+        createdAt: Date.now() - 86400000 * 7,
+        updatedAt: Date.now() - 86400000 * 7,
+        metadata: {
+          cardNumber: '•••• •••• •••• 4821',
+          expiryMonth: '09',
+          expiryYear: '29',
+          cvv: '742',
+          cardholderName: 'Alex Doe',
+          bankName: 'Apex Trust Bank',
+          cardType: 'visa',
+          isE2EE: true,
+        },
+      },
+      {
+        id: 'decoy-identity-1',
+        type: 'identity',
+        title: 'Primary Passport Profile',
+        content: JSON.stringify({
+          documentType: 'Passport',
+          fullName: 'Alex Doe',
+          documentNumber: 'P89234190',
+          issuingCountry: 'United States',
+          issueDate: '2023-05-12',
+          expiryDate: '2033-05-12',
+          notes: 'Primary Travel Passport',
+        }),
+        folder: 'Personal',
+        createdAt: Date.now() - 86400000 * 8,
+        updatedAt: Date.now() - 86400000 * 8,
+        metadata: {
+          documentType: 'Passport',
+          fullName: 'Alex Doe',
+          documentNumber: 'P89234190',
+          issuingCountry: 'United States',
+          issueDate: '2023-05-12',
+          expiryDate: '2033-05-12',
+          notes: 'Primary Travel Passport',
+          isE2EE: true,
+        },
+      },
+      {
+        id: 'decoy-contact-1',
+        type: 'contact',
+        title: 'Sarah Doe (Emergency)',
+        content: JSON.stringify({
+          email: 'sarah.doe@example.com',
+          phone: '+1 (555) 234-5678',
+          company: 'Family Support',
+          notes: 'Primary emergency contact',
+        }),
+        folder: 'Personal',
+        createdAt: Date.now() - 86400000 * 9,
+        updatedAt: Date.now() - 86400000 * 9,
+        metadata: {
+          email: 'sarah.doe@example.com',
+          phone: '+1 (555) 234-5678',
+          company: 'Family Support',
+          notes: 'Primary emergency contact',
+          isE2EE: true,
+        },
+      },
+      {
+        id: 'decoy-location-1',
+        type: 'location',
+        title: 'Home Residence',
+        content: JSON.stringify({
+          latitude: 37.7749,
+          longitude: -122.4194,
+          address: '742 Evergreen Terrace, San Francisco, CA',
+        }),
+        folder: 'Personal',
+        createdAt: Date.now() - 86400000 * 10,
+        updatedAt: Date.now() - 86400000 * 10,
+        metadata: {
+          latitude: 37.7749,
+          longitude: -122.4194,
+          address: '742 Evergreen Terrace, San Francisco, CA',
+          isE2EE: true,
+        },
+      },
+      {
+        id: 'decoy-todo-1',
+        type: 'todo',
+        title: 'Finalize quarterly goals',
+        content: JSON.stringify({
+          task: 'Finalize quarterly goals',
+          description: 'Review sprint deliverables and archive completed project tasks.',
+          priority: 'medium',
+          completed: false,
+          dueDate: '2026-09-01',
+        }),
+        folder: 'Work',
+        createdAt: Date.now() - 86400000 * 2,
+        updatedAt: Date.now() - 86400000 * 2,
+        metadata: {
+          task: 'Finalize quarterly goals',
+          description: 'Review sprint deliverables and archive completed project tasks.',
+          priority: 'medium',
+          completed: false,
+          dueDate: '2026-09-01',
+          isE2EE: true,
+        },
+      },
+      {
+        id: 'decoy-chat-1',
+        type: 'chat',
+        title: 'Project Lead Workspace',
+        content: JSON.stringify({
+          participants: ['Alex Doe', 'Project Lead'],
+          disappearingTimer: 'off',
+          messages: [
+            {
+              id: 'decoy-msg-1',
+              sender: 'Project Lead',
+              text: 'Welcome to the project workspace! All documentation is synced.',
+              timestamp: Date.now() - 3600000 * 3,
+            },
+            {
+              id: 'decoy-msg-2',
+              sender: 'Alex Doe',
+              text: 'Thanks! Reviewing the onboarding notes now.',
+              timestamp: Date.now() - 3600000 * 2,
+            },
+          ],
+          updatedAt: Date.now() - 3600000 * 2,
+        }),
+        folder: 'Work',
+        createdAt: Date.now() - 86400000 * 3,
+        updatedAt: Date.now() - 3600000 * 2,
+        metadata: {
+          participants: ['Alex Doe', 'Project Lead'],
+          disappearingTimer: 'off',
+          updatedAt: Date.now() - 3600000 * 2,
+          isE2EE: true,
+        },
+      },
+      {
+        id: 'decoy-secret-1',
+        type: 'secret',
+        title: 'Demo Mapbox API Key',
+        content: JSON.stringify({
+          key: 'sk_live_demo_987213401928341092834',
+          value: 'sk_live_demo_987213401928341092834',
+          type: 'API Key',
+          service: 'Mapbox API Token',
+          notes: 'Read-only demo telemetry key',
+        }),
+        folder: 'Developer',
+        createdAt: Date.now() - 86400000 * 4,
+        updatedAt: Date.now() - 86400000 * 4,
+        metadata: {
+          key: 'sk_live_demo_987213401928341092834',
+          value: 'sk_live_demo_987213401928341092834',
+          type: 'API Key',
+          service: 'Mapbox API Token',
+          isE2EE: true,
+        },
+      },
+      {
+        id: 'decoy-audio-1',
+        type: 'audio',
+        title: 'Meeting Voice Memo.m4a',
+        content:
+          'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=',
+        folder: 'Recordings',
+        createdAt: Date.now() - 86400000 * 3,
+        updatedAt: Date.now() - 86400000 * 3,
+        metadata: {
+          mimeType: 'audio/m4a',
+          size: 512,
+          duration: 4.2,
+          isE2EE: true,
+        },
+      },
+      {
+        id: 'decoy-file-1',
+        type: 'file',
+        title: 'Product_Catalog_2026.pdf',
+        content:
+          'data:application/pdf;base64,JVBERi0xLjMKJcTl8uXrp/Og0MTGCjQgMCBvYmoKPDwKL0tpZHMgWzUgMCBSXQovQ291bnQgMQovVHlwZSAvUGFnZXMKPj4KZW5kb2JqCjUgMCBvYmoKPDwKL1BhcmVudCA0IDAgUgovQ29udGVudHMgNiAwIFIKL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjYgMCBvYmoKPDwKL0xlbmd0aCAwCj4+CnN0cmVhbQplbmRzdHJlYW0KZW5kb2JqCjEgMCBvYmoKPDwKL1BhZ2VzIDQgMCBSCi9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iagp4cmVmCjAgNwowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAxMzkgMDAwMDAgbiAKMDAwMDAwMDAxOSAwMDAwMCBuIAowMDAwMDAwMDczIDAwMDAwIG4gCjAwMDAwMDAxMTggMDAwMDAgbiAKdHJhaWxlcgo8PAovU2l6ZSA3Ci9Sb290IDEgMCBSCj4+CnN0YXJ0eHJlZgoxODQKJCVFT0YK',
+        folder: 'Documents',
+        createdAt: Date.now() - 86400000 * 5,
+        updatedAt: Date.now() - 86400000 * 5,
+        metadata: {
+          mimeType: 'application/pdf',
+          size: 1024,
+          extension: 'pdf',
+          isE2EE: true,
+        },
+      },
     ];
 
     set({
@@ -732,17 +997,17 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       isUnlocked: true,
       isVaultReady: true,
       isDecoyMode: true,
-      username: identity || 'Decoy User',
+      username: identity || 'alex_doe',
       masterKey: null,
-      vaultId: `decoy-${Date.now()}`,
+      vaultId: `v-${Date.now()}`,
       isLoading: false,
       syncStatus: 'success',
     });
 
     logActivity({
       actionType: 'auth_login',
-      itemName: 'Duress Session',
-      description: 'Decoy vault unlocked in duress isolation mode.',
+      itemName: 'Vault Session',
+      description: 'Vault unlocked successfully.',
       status: 'success',
     });
     toast.success(`Synced ${dummyItems.length} items`);

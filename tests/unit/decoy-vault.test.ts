@@ -5,18 +5,22 @@ import { hashDecoyPin, verifyDecoyPin } from '../../src/lib/cryptoPrimitives';
 import { useVaultStore } from '../../src/store/vaultStore';
 
 describe('Decoy Vault Cryptographic Primitives', () => {
-  it('generates a valid PBKDF2 hash payload with custom or random salt', async () => {
-    const pin = 'SecureDecoyPin99!';
-    const result = await hashDecoyPin(pin);
+  it('enforces numeric-only PIN policy in hashDecoyPin', async () => {
+    // Non-numeric should throw
+    await expect(hashDecoyPin('SecureDecoyPin99!')).rejects.toThrow(/only numbers/i);
+    await expect(hashDecoyPin('abc123')).rejects.toThrow(/only numbers/i);
+    await expect(hashDecoyPin('123')).rejects.toThrow(/between 4 and 12/i);
 
+    // Valid numeric PIN succeeds
+    const result = await hashDecoyPin('987654');
     expect(result).toHaveProperty('hash');
     expect(result).toHaveProperty('salt');
     expect(result.hash.startsWith('pbkdf2:100000:')).toBe(true);
     expect(result.salt.length).toBeGreaterThanOrEqual(16);
   });
 
-  it('successfully verifies a valid PIN against PBKDF2 hash', async () => {
-    const pin = 'DuressCode2026';
+  it('successfully verifies a valid numeric PIN against PBKDF2 hash', async () => {
+    const pin = '20261984';
     const { hash } = await hashDecoyPin(pin);
 
     const isValid = await verifyDecoyPin(pin, hash);
@@ -24,8 +28,8 @@ describe('Decoy Vault Cryptographic Primitives', () => {
   });
 
   it('rejects an invalid PIN against PBKDF2 hash', async () => {
-    const correctPin = 'CorrectPin123';
-    const wrongPin = 'WrongPin456';
+    const correctPin = '123456';
+    const wrongPin = '654321';
     const { hash } = await hashDecoyPin(correctPin);
 
     const isValid = await verifyDecoyPin(wrongPin, hash);
@@ -33,7 +37,7 @@ describe('Decoy Vault Cryptographic Primitives', () => {
   });
 
   it('supports backwards-compatible verification of legacy SHA-256 hashes', async () => {
-    const pin = 'LegacyDecoy123';
+    const pin = '987654';
     const enc = new TextEncoder().encode(`vault-decoy-salt:${pin}`);
     const hashBuf = await crypto.subtle.digest('SHA-256', enc);
     const legacyHash = Array.from(new Uint8Array(hashBuf))
@@ -43,7 +47,7 @@ describe('Decoy Vault Cryptographic Primitives', () => {
     const isValid = await verifyDecoyPin(pin, legacyHash);
     expect(isValid).toBe(true);
 
-    const isWrongValid = await verifyDecoyPin('IncorrectPin', legacyHash);
+    const isWrongValid = await verifyDecoyPin('112233', legacyHash);
     expect(isWrongValid).toBe(false);
   });
 

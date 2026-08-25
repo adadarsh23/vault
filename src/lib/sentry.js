@@ -41,6 +41,57 @@ const shouldDropDuplicate = (key) => {
   return now - lastSeenAt < 1200;
 };
 
+const SENSITIVE_KEYS = [
+  'password',
+  'token',
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'masterkey',
+  'secret',
+  'secretkey',
+  'privatekey',
+  'apikey',
+  'ciphertext',
+  'authtag',
+  'iv',
+  'payload',
+  'binarypayload',
+  'dek',
+  'kek',
+  'mnemonic',
+  'seedphrase',
+  'passphrase',
+  'pqcsalt',
+  'salt',
+  'totp',
+  'totpsecret',
+  'recoverycodes',
+  'backupcodes',
+  'twofactorsecret',
+  'twofactorcode',
+  'encryptedmetadata',
+];
+
+const redactSensitiveData = (input) => {
+  if (!input || typeof input !== 'object') return input;
+  const clone = Array.isArray(input) ? [...input] : { ...input };
+
+  for (const [key, value] of Object.entries(clone)) {
+    const normalizedKey = key.toLowerCase();
+    if (SENSITIVE_KEYS.includes(normalizedKey) || SENSITIVE_KEYS.some((k) => normalizedKey.includes(k))) {
+      clone[key] = '[Filtered]';
+      continue;
+    }
+
+    if (value && typeof value === 'object') {
+      clone[key] = redactSensitiveData(value);
+    }
+  }
+
+  return clone;
+};
+
 export const initSentry = (options = {}) => {
   if (!sentryEnabled || initialized || !isBrowser) return false;
 
@@ -74,11 +125,23 @@ export const initSentry = (options = {}) => {
           return null;
         }
       }
+      if (event.extra) {
+        event.extra = redactSensitiveData(event.extra);
+      }
+      if (event.breadcrumbs) {
+        event.breadcrumbs = event.breadcrumbs.map((b) => ({
+          ...b,
+          data: redactSensitiveData(b.data),
+        }));
+      }
       return event;
     },
     beforeBreadcrumb(breadcrumb) {
       if (breadcrumb.category === 'ui.click' && !breadcrumb.message) {
         return null;
+      }
+      if (breadcrumb.data) {
+        breadcrumb.data = redactSensitiveData(breadcrumb.data);
       }
       return breadcrumb;
     },

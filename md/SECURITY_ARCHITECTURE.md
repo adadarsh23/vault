@@ -75,15 +75,6 @@ This document outlines the multi-layered security stack implemented to ensure hi
 - **Defense**: This prevents "Origin Bypassing" where attackers try to hit the server's public IP to avoid CDN security rules (WAF/DDoS protection).
 - **Source**: [/server/middleware/originProtection.ts](file:///c:/code/vault/server/middleware/originProtection.ts)
 
-### Forensic Invisible Watermarking (Signal-Level Traceability)
-
-- **Implementation**: Multi-layer invisible spatial & metadata steganography.
-- **Spatial Encoding**: Instead of visible overlays, the system uses multiple high-transparency layers (`opacity: 0.003 - 0.007`) scattered across the frame. This makes the watermark **invisible to the human eye** while ensuring it is mathematically burned into the pixel data.
-- **Metadata Steganography**: Embeds the encrypted User ID and Item ID into the A/V bitstream's SEI and Global Metadata headers.
-- **Traceability**: Even if the video is cropped or filtered, the scattered spatial encoding allows for recovery of the identity via signal analysis (Luma/Alpha thresholding).
-- **Premium Experience**: Eliminates visual distractions for the user while providing professional-grade anti-piracy deterrence.
-- **Source**: [/server/services/transcodingService.ts](file:///c:/code/vault/server/services/transcodingService.ts)
-
 ### Frontend Security Deterrents (UX-Level)
 
 > [!NOTE]

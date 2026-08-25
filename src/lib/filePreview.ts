@@ -1024,8 +1024,9 @@ export const getVaultItemPreviewUrl = async (
   return null;
 };
 
-/** True when the item points at a server-side file (disk / signed URL pipeline). E2EE-only items return false. */
+/** True when the item points at a server-side file (disk / signed URL pipeline). E2EE-only items and decoy items return false. */
 export const vaultItemHasServerFileReference = (item: VaultItem): boolean =>
+  !item.id.startsWith('decoy-') &&
   normalizeMetadata(item.metadata)?.isE2EE !== true &&
   normalizeMetadata(item.metadata)?.clientEncrypted !== true &&
   getVaultItemFileUrl(item) !== null;

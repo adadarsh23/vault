@@ -21,6 +21,7 @@ import {
   Check,
   Search,
   Maximize2,
+  ExternalLink,
   ShieldCheck,
   Lock,
   WrapText,
@@ -40,7 +41,6 @@ import {
   Info,
   ShieldAlert,
 } from 'lucide-react';
-import { ForensicWatermark } from '../../components/security/ForensicWatermark';
 import { useAntiScreenshotAndShield } from '../../hooks/useAntiScreenshotAndShield';
 import { toast } from 'sonner';
 import { useVaultStore } from '../../store/vaultStore';
@@ -687,15 +687,16 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
               {item.title}
             </span>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <a
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-colors border border-white/10"
-              title="Open full page"
+              className="flex h-7 px-2 items-center gap-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-colors border border-white/10 text-[11px]"
+              title="Open full page / new tab"
             >
-              <Maximize2 className="h-3.5 w-3.5" />
+              <ExternalLink className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Open</span>
             </a>
             <Button
               size="icon"
@@ -708,8 +709,24 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
             </Button>
           </div>
         </div>
-        <div className="relative flex-1 w-full min-h-0 bg-zinc-900 overflow-hidden">
-          <iframe src={url} title={item.title} className="h-full w-full border-none bg-white" />
+        <div className="relative flex-1 w-full min-h-0 bg-zinc-900 overflow-hidden flex flex-col">
+          <div className="sm:hidden flex items-center justify-between gap-2 bg-rose-950/40 border-b border-rose-500/20 px-3 py-1.5 text-[11px] text-rose-300">
+            <span className="truncate">Mobile device viewer:</span>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 shrink-0 rounded px-2 py-0.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-medium transition-colors border border-rose-500/30"
+            >
+              <ExternalLink className="h-3 w-3" /> Open Fullscreen
+            </a>
+          </div>
+          <iframe
+            src={url}
+            title={item.title}
+            className="flex-1 w-full h-full border-none bg-white"
+            scrolling="auto"
+          />
         </div>
       </div>
     );
@@ -1114,6 +1131,18 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
               </button>
             </div>
 
+            {url && (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-colors border border-white/10"
+                title="Open full page / new tab"
+              >
+                <Maximize2 className="h-3.5 w-3.5" />
+              </a>
+            )}
+
             <Button
               size="icon"
               variant="ghost"
@@ -1266,9 +1295,6 @@ export const OtherFilesVault: React.FC = () => {
   const isPrintBlockingEnabled = useVaultStore((state) => state.preferences.isPrintBlockingEnabled);
   const isTabSwitchShieldEnabled = useVaultStore(
     (state) => state.preferences.isTabSwitchShieldEnabled
-  );
-  const isForensicWatermarkEnabled = useVaultStore(
-    (state) => state.preferences.isForensicWatermarkEnabled
   );
   const isPhotoExifStripped = useVaultStore((state) => state.preferences.isPhotoExifStripped);
 
@@ -2017,16 +2043,6 @@ export const OtherFilesVault: React.FC = () => {
                 masterKey={masterKey!}
                 onDownload={() => downloadFile(previewedFile)}
               />
-
-              {/* Dynamic Forensic Watermark Overlay */}
-              {isForensicWatermarkEnabled !== false && (
-                <ForensicWatermark
-                  opacity={0.12}
-                  angle={-25}
-                  density="standard"
-                  classification="VAULT FILE // CONFIDENTIAL"
-                />
-              )}
 
               {/* Tab Switch Auto-Shield Overlay */}
               <AnimatePresence>

@@ -71,28 +71,51 @@ const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
       const decrypt = async () => {
         try {
           const encryptedContent = getStringContent(item.content);
-          if (!encryptedContent) {
+          if (!encryptedContent && !item.metadata) {
             if (isMounted) setError(true);
             return;
           }
 
-          const decrypted = await decryptData(encryptedContent, masterKey);
-          let parsed = parseJsonSafely<SecretPayload>(decrypted || '');
-          if (!parsed && item.metadata) {
-            const meta = item.metadata as any;
-            parsed = {
-              value: meta.value || (typeof item.content === 'string' ? item.content : 'secret-key-123'),
-              type: meta.type || 'API Key',
-            };
+          const decrypted = encryptedContent ? await decryptData(encryptedContent, masterKey) : '';
+          let parsed = parseJsonSafely<any>(decrypted || '');
+          if (!parsed && typeof item.content === 'string') {
+            parsed = parseJsonSafely<any>(item.content);
           }
 
-          if (!parsed || typeof parsed.value !== 'string' || typeof parsed.type !== 'string') {
-            if (isMounted) setError(true);
-            return;
-          }
+          const meta = (item.metadata as any) || {};
+          const finalValue =
+            typeof parsed?.value === 'string'
+              ? parsed.value
+              : typeof parsed?.key === 'string'
+                ? parsed.key
+                : typeof meta.value === 'string'
+                  ? meta.value
+                  : typeof meta.key === 'string'
+                    ? meta.key
+                    : typeof decrypted === 'string' && decrypted.trim().length > 0
+                      ? decrypted
+                      : typeof item.content === 'string' && item.content.trim().length > 0
+                        ? item.content
+                        : '';
 
-          setData(parsed);
-          setEditValue(parsed.value);
+          const finalType =
+            typeof parsed?.type === 'string'
+              ? parsed.type
+              : typeof parsed?.service === 'string'
+                ? parsed.service
+                : typeof meta.type === 'string'
+                  ? meta.type
+                  : typeof meta.service === 'string'
+                    ? meta.service
+                    : 'API Key';
+
+          const resolvedPayload: SecretPayload = {
+            value: finalValue,
+            type: finalType,
+          };
+
+          setData(resolvedPayload);
+          setEditValue(finalValue);
         } catch (err) {
           console.error('Secret Decryption Error:', err);
           if (isMounted) setError(true);

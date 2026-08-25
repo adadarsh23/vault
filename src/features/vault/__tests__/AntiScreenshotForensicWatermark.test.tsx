@@ -1,9 +1,8 @@
 /* @vitest-environment jsdom */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act, renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { useVaultStore } from '../../../store/vaultStore';
-import { ForensicWatermark } from '../../../components/security/ForensicWatermark';
 import { useAntiScreenshotAndShield } from '../../../hooks/useAntiScreenshotAndShield';
 import { toast } from 'sonner';
 
@@ -27,7 +26,7 @@ vi.mock('../../../lib/auth-session', () => ({
   getDeviceId: vi.fn(() => 'test-device-87654321'),
 }));
 
-describe('Anti-Screenshot, Print Blocking & Dynamic Forensic Watermarking', () => {
+describe('Anti-Screenshot & Print Blocking Protection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useVaultStore.setState({
@@ -37,86 +36,43 @@ describe('Anti-Screenshot, Print Blocking & Dynamic Forensic Watermarking', () =
         ...useVaultStore.getState().preferences,
         isPrintBlockingEnabled: true,
         isTabSwitchShieldEnabled: true,
-        isForensicWatermarkEnabled: true,
       },
     });
   });
 
   describe('🔹 1. Security Preferences in VaultStore', () => {
-    it('initializes with anti-screenshot, tab-switch shield, and forensic watermark enabled by default', () => {
+    it('initializes with anti-screenshot and tab-switch shield enabled by default', () => {
       const prefs = useVaultStore.getState().preferences;
       expect(prefs.isPrintBlockingEnabled).toBe(true);
       expect(prefs.isTabSwitchShieldEnabled).toBe(true);
-      expect(prefs.isForensicWatermarkEnabled).toBe(true);
     });
 
-    it('allows toggling print blocking, tab-switch shield, and forensic watermark', () => {
+    it('allows toggling print blocking and tab-switch shield', () => {
       act(() => {
         useVaultStore.getState().updatePreferences({
           isPrintBlockingEnabled: false,
           isTabSwitchShieldEnabled: false,
-          isForensicWatermarkEnabled: false,
         });
       });
 
       let prefs = useVaultStore.getState().preferences;
       expect(prefs.isPrintBlockingEnabled).toBe(false);
       expect(prefs.isTabSwitchShieldEnabled).toBe(false);
-      expect(prefs.isForensicWatermarkEnabled).toBe(false);
 
       act(() => {
         useVaultStore.getState().updatePreferences({
           isPrintBlockingEnabled: true,
           isTabSwitchShieldEnabled: true,
-          isForensicWatermarkEnabled: true,
         });
       });
 
       prefs = useVaultStore.getState().preferences;
       expect(prefs.isPrintBlockingEnabled).toBe(true);
       expect(prefs.isTabSwitchShieldEnabled).toBe(true);
-      expect(prefs.isForensicWatermarkEnabled).toBe(true);
     });
   });
 
-  describe('🔹 2. Dynamic Forensic Watermarking (Anti-Leak Stamping)', () => {
-    it('renders SVG patterned watermark overlay with device and session identifiers', () => {
-      const { container } = render(
-        <ForensicWatermark
-          userId="user@vault.internal"
-          classification="CONFIDENTIAL CLASSIFIED"
-          opacity={0.15}
-        />
-      );
-
-      const watermark = screen.getByTestId('forensic-watermark');
-      expect(watermark).toBeDefined();
-      expect(watermark.style.opacity).toBe('0.15');
-
-      // Check SVG pattern rendering
-      const svg = container.querySelector('svg');
-      expect(svg).toBeDefined();
-
-      const pattern = container.querySelector('pattern');
-      expect(pattern).toBeDefined();
-
-      const textElements = container.querySelectorAll('text');
-      expect(textElements.length).toBeGreaterThanOrEqual(2);
-      expect(textElements[0].textContent).toContain('USER: user@vault.internal');
-
-      // Perimeter stamps
-      expect(container.textContent).toContain('LEAK-TRACE:');
-    });
-
-    it('renders custom text and timestamp when provided', () => {
-      const { container } = render(<ForensicWatermark customText="CUSTOM SECURITY STAMP" />);
-
-      const textElements = container.querySelectorAll('text');
-      expect(textElements[0].textContent).toContain('CUSTOM SECURITY STAMP');
-    });
-  });
-
-  describe('🔹 3. useAntiScreenshotAndShield Hook', () => {
+  describe('🔹 2. useAntiScreenshotAndShield Hook', () => {
     afterEach(() => {
       vi.restoreAllMocks();
     });

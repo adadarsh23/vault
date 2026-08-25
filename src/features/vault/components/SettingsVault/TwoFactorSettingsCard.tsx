@@ -19,6 +19,8 @@ import { setup2FA, verify2FASetup, disable2FA } from '../../../../lib/auth-api';
 import { toast } from 'sonner';
 import { handleError } from '../../../../lib/error-handler';
 
+import { useVaultStore } from '../../../../store/vaultStore';
+
 interface TwoFactorSettingsCardProps {
   twoFactorEnabled: boolean;
   onUpdate: () => void;
@@ -28,6 +30,7 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({
   twoFactorEnabled,
   onUpdate,
 }) => {
+  const isDecoyMode = useVaultStore((state) => state.isDecoyMode);
   const [isSettingUp, setIsSettingUp] = useState(false);
   const [isDisabling, setIsDisabling] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,6 +43,14 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({
   const handleStartSetup = async () => {
     try {
       setLoading(true);
+      if (isDecoyMode) {
+        setSecret('JBSWY3DPEHPK3PXP');
+        setQrCode(
+          'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iMTYwIiB2aWV3Qm94PSIwIDAgMTYwIDE2MCI+PHJlY3Qgd2lkdGg9IjE2MCIgaGVpZ2h0PSIxNjAiIGZpbGw9IiNmZmYiLz48cmVjdCB4PSIyMCIgeT0iMjAiIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiBmaWxsPSIjMDAwIi8+PC9zdmc+'
+        );
+        setIsSettingUp(true);
+        return;
+      }
       const data = await setup2FA();
       setQrCode(data.qrCodeUrl);
       setSecret(data.secret);
@@ -55,6 +66,24 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({
     if (!otpToken) return;
     try {
       setLoading(true);
+      if (isDecoyMode) {
+        const dummyCodes = [
+          '4f92a10b',
+          'c83d5e21',
+          '9b12f430',
+          'e74a89bc',
+          '3194dc82',
+          '82bf4109',
+          '5a91cd42',
+          '7ec309ba',
+          '1042f89c',
+          '6e81ab34',
+        ];
+        setBackupCodes(dummyCodes);
+        toast.success('2FA enabled successfully!');
+        onUpdate();
+        return;
+      }
       const data = await verify2FASetup(otpToken);
       setBackupCodes(data.backupCodes);
       toast.success('2FA enabled successfully!');
@@ -73,6 +102,13 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({
     }
     try {
       setLoading(true);
+      if (isDecoyMode) {
+        toast.success('2FA disabled');
+        setIsDisabling(false);
+        setOtpToken('');
+        onUpdate();
+        return;
+      }
       await disable2FA(otpToken);
       toast.success('2FA disabled');
       setIsDisabling(false);

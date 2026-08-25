@@ -31,6 +31,7 @@ import {
 import { ErrorBoundary } from './ErrorBoundary';
 import { cn } from '../../../../lib/utils';
 import { VaultItem } from '../../../../lib/storage';
+import { useVaultStore } from '../../../../store/vaultStore';
 import {
   GridDensity,
   formatDuration,
@@ -89,6 +90,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
   lightweightPreviewMode,
 }) => {
   const isCurrentlyPinning = isPinning || pinningItemIds.includes(item.id);
+  const isDecoyMode = useVaultStore((state) => state.isDecoyMode);
   const [dynamicAspectRatio, setDynamicAspectRatio] = useState<number | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [videoDuration] = useState<number | null>(
@@ -275,7 +277,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
             </div>
           }
         >
-          {masterKey && !(lightweightPreviewMode && type === 'video') && (
+          {(masterKey || isDecoyMode) && !(lightweightPreviewMode && type === 'video') && (
             <SafeMedia
               item={item}
               masterKey={masterKey}

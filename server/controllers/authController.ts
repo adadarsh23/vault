@@ -507,9 +507,6 @@ export const logout = async (req: express.Request, res: express.Response) => {
   }
 
   clearRefreshCookie(req, res);
-  // Hint browsers to clear cached auth-bound storage on explicit logout.
-  // Safe because this endpoint is an explicit user-triggered sign-out action.
-  res.setHeader('Clear-Site-Data', '"storage"');
   return sendSuccess(res, { loggedOut: true }, 'Logged out successfully');
 };
 

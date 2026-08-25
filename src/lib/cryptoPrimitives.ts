@@ -943,6 +943,10 @@ export const hashDecoyPin = async (
   if (!pin || typeof pin !== 'string') {
     throw new Error('PIN is required to generate duress hash');
   }
+  const trimmed = pin.trim();
+  if (!/^\d{4,12}$/.test(trimmed)) {
+    throw new Error('Decoy PIN must contain only numbers (digits 0-9) and be between 4 and 12 digits long');
+  }
   const enc = new TextEncoder();
   const salt =
     customSalt ||
@@ -951,7 +955,7 @@ export const hashDecoyPin = async (
       .join('');
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
-    enc.encode(pin),
+    enc.encode(trimmed),
     { name: 'PBKDF2' },
     false,
     ['deriveBits']
@@ -973,6 +977,25 @@ export const hashDecoyPin = async (
 };
 
 /**
+ * Constant-time string comparison to prevent timing attacks.
+ */
+export const timingSafeEqualStrings = (a: string, b: string): boolean => {
+  if (typeof a !== 'string' || typeof b !== 'string') {
+    return false;
+  }
+  const lenA = a.length;
+  const lenB = b.length;
+  let mismatch = lenA ^ lenB;
+  const maxLen = Math.max(lenA, lenB);
+  for (let i = 0; i < maxLen; i++) {
+    const charA = i < lenA ? a.charCodeAt(i) : 0;
+    const charB = i < lenB ? b.charCodeAt(i) : 0;
+    mismatch |= charA ^ charB;
+  }
+  return mismatch === 0;
+};
+
+/**
  * Verifies a candidate duress PIN against stored hash payload.
  * Supports modern PBKDF2 formats as well as legacy SHA-256 hashes and raw PINs for seamless backwards compatibility.
  */
@@ -987,12 +1010,19 @@ export const verifyDecoyPin = async (
   const trimmedPin = inputPin.trim();
   const cleanPayload = storedHashOrPayload.trim().replace(/^["']|["']$/g, '');
 
-  if (!cleanPayload || !trimmedPin) {
+  if (
+    !cleanPayload ||
+    !trimmedPin ||
+    cleanPayload === 'true' ||
+    cleanPayload === 'false' ||
+    cleanPayload === 'null' ||
+    cleanPayload === 'undefined'
+  ) {
     return false;
   }
 
-  // 1. Direct plaintext match (in case stored as raw PIN)
-  if (cleanPayload === inputPin || cleanPayload === trimmedPin) {
+  // 1. Direct plaintext match (only if clean payload is at least 4 chars and matches in constant time)
+  if (cleanPayload.length >= 4 && (timingSafeEqualStrings(cleanPayload, inputPin) || timingSafeEqualStrings(cleanPayload, trimmedPin))) {
     return true;
   }
 
@@ -1028,7 +1058,9 @@ export const verifyDecoyPin = async (
           const derivedHash1 = Array.from(new Uint8Array(derivedBits1))
             .map((b) => b.toString(16).padStart(2, '0'))
             .join('');
-          if (derivedHash1.toLowerCase() === expectedHash.toLowerCase()) return true;
+          if (timingSafeEqualStrings(derivedHash1.toLowerCase(), expectedHash.toLowerCase())) {
+            return true;
+          }
 
           // Variant B: salt without prefix
           const derivedBits2 = await crypto.subtle.deriveBits(
@@ -1044,7 +1076,9 @@ export const verifyDecoyPin = async (
           const derivedHash2 = Array.from(new Uint8Array(derivedBits2))
             .map((b) => b.toString(16).padStart(2, '0'))
             .join('');
-          if (derivedHash2.toLowerCase() === expectedHash.toLowerCase()) return true;
+          if (timingSafeEqualStrings(derivedHash2.toLowerCase(), expectedHash.toLowerCase())) {
+            return true;
+          }
         } catch (err) {
           console.error('[Decoy] PBKDF2 verification error:', err);
         }
@@ -1064,14 +1098,18 @@ export const verifyDecoyPin = async (
       const legacyHash1 = Array.from(new Uint8Array(hashBuf1))
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('');
-      if (legacyHash1.toLowerCase() === cleanPayload.toLowerCase()) return true;
+      if (timingSafeEqualStrings(legacyHash1.toLowerCase(), cleanPayload.toLowerCase())) {
+        return true;
+      }
 
       // SHA-256 without prefix
       const hashBuf2 = await crypto.subtle.digest('SHA-256', enc.encode(candidatePin));
       const legacyHash2 = Array.from(new Uint8Array(hashBuf2))
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('');
-      if (legacyHash2.toLowerCase() === cleanPayload.toLowerCase()) return true;
+      if (timingSafeEqualStrings(legacyHash2.toLowerCase(), cleanPayload.toLowerCase())) {
+        return true;
+      }
     }
   } catch (err) {
     console.error('[Decoy] Legacy SHA-256 verification error:', err);
