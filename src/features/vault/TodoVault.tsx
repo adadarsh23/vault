@@ -477,7 +477,7 @@ export const TodoVault: React.FC = () => {
   } = useVaultFolders('todo');
 
   useEffect(() => {
-    if (!masterKey) {
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
       setTodoPayloads({});
       setFailedTodoIds({});
       return;
@@ -493,18 +493,16 @@ export const TodoVault: React.FC = () => {
         todos.map(async (item) => {
           try {
             const encryptedContent = getStringContent(item.content);
-            if (!encryptedContent) {
-              nextFailures[item.id] = true;
-              return;
+            const decrypted = await decryptData(encryptedContent || '', masterKey);
+
+            let parsed = parseJsonSafely<unknown>(decrypted || '');
+            if (!parsed && item.metadata) {
+              parsed = item.metadata;
+            }
+            if (!parsed && typeof item.content === 'string') {
+              parsed = { task: item.title, description: item.content };
             }
 
-            const decrypted = await decryptData(encryptedContent, masterKey);
-            if (!decrypted) {
-              nextFailures[item.id] = true;
-              return;
-            }
-
-            const parsed = parseJsonSafely<unknown>(decrypted);
             const payload = normalizeTodoPayload(parsed, item.title);
             if (!payload) {
               nextFailures[item.id] = true;
@@ -620,7 +618,7 @@ export const TodoVault: React.FC = () => {
     payload: TodoPayload,
     options?: { closeEditor?: boolean }
   ): Promise<boolean> => {
-    if (!masterKey) {
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
       toast.error('Unlock the vault before saving todos');
       return false;
     }
@@ -663,7 +661,7 @@ export const TodoVault: React.FC = () => {
 
   const handleAddTodo = async () => {
     const task = newTodo.task.trim();
-    if (!masterKey) {
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
       toast.error('Unlock the vault before saving todos');
       return;
     }

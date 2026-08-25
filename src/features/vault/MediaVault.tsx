@@ -107,7 +107,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     } catch {
       // ignore
     }
-    return 'standard';
+    return 'large';
   });
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -615,7 +615,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     additionalMetadata?: Record<string, any>
   ) => {
     if (!files.length) return;
-    if (!masterKey) {
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
       toast.error('Encryption key missing');
       return;
     }
@@ -805,9 +805,13 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
           }
 
           await yieldToMainThread();
-          const encryptedData = isAlreadyEncrypted
-            ? new Uint8Array(await file.arrayBuffer())
-            : await encryptFileInWorker(uploadFileObj, masterKey);
+          const isDecoy = useVaultStore.getState().isDecoyMode;
+          let encryptedData: Uint8Array;
+          if (isDecoy || isAlreadyEncrypted || !masterKey) {
+            encryptedData = new Uint8Array(await file.arrayBuffer());
+          } else {
+            encryptedData = await encryptFileInWorker(uploadFileObj, masterKey);
+          }
 
           await yieldToMainThread();
           const dimensions = await getMediaDimensions(uploadFileObj, type);
@@ -895,7 +899,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
   );
 
   const handleDownload = async (item: VaultItem) => {
-    if (!masterKey) {
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
       toast.error('Encryption key missing');
       return;
     }
@@ -951,7 +955,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
 
   const handlePreview = useCallback(
     (id: string, title: string) => {
-      if (!masterKey) {
+      if (!masterKey && !useVaultStore.getState().isDecoyMode) {
         toast.error('Encryption key missing');
         return;
       }

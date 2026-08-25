@@ -145,7 +145,7 @@ export const NotesVault: React.FC = () => {
   };
 
   const handleCreateNote = async () => {
-    if (!masterKey) {
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
       toast.error('Unlock the vault before creating notes');
       return;
     }
@@ -178,7 +178,8 @@ export const NotesVault: React.FC = () => {
 
   const handleSave = useCallback(
     async (title: string, content: string) => {
-      if (!selectedNoteId || !masterKey) return;
+      if (!selectedNoteId) return;
+      if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
 
       try {
         const encrypted = await encryptData(content, masterKey);
@@ -207,7 +208,8 @@ export const NotesVault: React.FC = () => {
   };
 
   const startEditing = async () => {
-    if (!selectedNote || !masterKey) return;
+    if (!selectedNote) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
     try {
       setEditTitle(selectedNote.title);
       const encryptedContent = getStringContent(selectedNote.content);
@@ -231,7 +233,8 @@ export const NotesVault: React.FC = () => {
   };
 
   const handleCopy = async () => {
-    if (!selectedNote || !masterKey) return;
+    if (!selectedNote) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
     try {
       const encryptedContent = getStringContent(selectedNote.content);
       if (!encryptedContent) {

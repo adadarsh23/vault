@@ -243,8 +243,15 @@ export const VaultLoginForm: React.FC<Props> = memo(
         window.clearTimeout(timeoutId);
       };
     }, [authMode, cloudSessionActive, twoFactorRequired, username]);
-    const validAccountPassword = useMemo(() => isValidPassword(accountPassword), [accountPassword]);
-    const validVaultKey = useMemo(() => isValidPassword(vaultKey), [vaultKey]);
+    const validAccountPassword = useMemo(
+      () =>
+        authMode === 'register' ? isValidPassword(accountPassword) : accountPassword.trim().length >= 1,
+      [accountPassword, authMode]
+    );
+    const validVaultKey = useMemo(
+      () => (authMode === 'register' ? isValidPassword(vaultKey) : vaultKey.trim().length >= 1),
+      [vaultKey, authMode]
+    );
     const validOtpToken = useMemo(() => {
       const normalized = otpToken.trim();
       return /^\d{6}$/.test(normalized) || /^[a-zA-Z0-9]{8}$/.test(normalized);
@@ -254,12 +261,16 @@ export const VaultLoginForm: React.FC<Props> = memo(
         return validUsername && validOtpToken && (!requiresCaptcha || isCaptchaCompleted);
       }
 
+      const hasRequiredCredentials =
+        authMode === 'register'
+          ? validVaultKey && (cloudSessionActive || validAccountPassword)
+          : validVaultKey || validAccountPassword;
+
       return (
         validUsername &&
         (authMode !== 'register' || usernameCheckState !== 'taken') &&
         (authMode !== 'register' || usernameCheckState !== 'checking') &&
-        validVaultKey &&
-        (cloudSessionActive || validAccountPassword) &&
+        hasRequiredCredentials &&
         (!requiresCaptcha || isCaptchaCompleted)
       );
     }, [
@@ -398,13 +409,24 @@ export const VaultLoginForm: React.FC<Props> = memo(
         return false;
       }
 
-      if (!twoFactorRequired && !cloudSessionActive && !validAccountPassword) {
+      if (!twoFactorRequired && !cloudSessionActive && authMode === 'register' && !validAccountPassword) {
         toast.warning(`Account password ${CREDENTIAL_REQUIREMENTS_DETAIL}`);
         return false;
       }
 
-      if (!twoFactorRequired && !validVaultKey) {
+      if (!twoFactorRequired && authMode === 'register' && !validVaultKey) {
         toast.warning(`Master Key ${CREDENTIAL_REQUIREMENTS_DETAIL}`);
+        return false;
+      }
+
+      if (
+        !twoFactorRequired &&
+        !cloudSessionActive &&
+        authMode === 'login' &&
+        !accountPassword.trim() &&
+        !vaultKey.trim()
+      ) {
+        toast.warning('Please enter your Master Key, Account Password, or Decoy PIN.');
         return false;
       }
 
@@ -740,9 +762,9 @@ export const VaultLoginForm: React.FC<Props> = memo(
                           }
                         }}
                         className="w-full rounded-[1.1rem] border border-card-border bg-card-bg pl-12 pr-24 py-4 text-base md:text-lg outline-none transition-all placeholder:text-text/25 focus:border-white/20 focus:bg-card-bg/80 dark:border-white/10 dark:bg-black/30 aria-[invalid=true]:border-red-500/50"
-                        aria-invalid={accountPassword.length > 0 && !validAccountPassword}
+                        aria-invalid={authMode === 'register' && accountPassword.length > 0 && !validAccountPassword}
                         aria-describedby={
-                          accountPassword.length > 0 && !validAccountPassword
+                          authMode === 'register' && accountPassword.length > 0 && !validAccountPassword
                             ? 'account-password-error'
                             : undefined
                         }
@@ -785,7 +807,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
                         </button>
                       </div>
                     </div>
-                    {accountPassword.length > 0 && !validAccountPassword && (
+                    {authMode === 'register' && accountPassword.length > 0 && !validAccountPassword && (
                       <motion.p
                         id="account-password-error"
                         role="alert"
@@ -914,9 +936,11 @@ export const VaultLoginForm: React.FC<Props> = memo(
                           }
                         }}
                         className="w-full rounded-[1.1rem] border border-card-border bg-card-bg pl-12 pr-24 py-4 text-base md:text-lg outline-none transition-all placeholder:text-text/25 focus:border-white/20 focus:bg-card-bg/80 dark:border-white/10 dark:bg-black/30 aria-[invalid=true]:border-red-500/50"
-                        aria-invalid={vaultKey.length > 0 && !validVaultKey}
+                        aria-invalid={authMode === 'register' && vaultKey.length > 0 && !validVaultKey}
                         aria-describedby={
-                          vaultKey.length > 0 && !validVaultKey ? 'master-key-error' : undefined
+                          authMode === 'register' && vaultKey.length > 0 && !validVaultKey
+                            ? 'master-key-error'
+                            : undefined
                         }
                       />
 
@@ -955,7 +979,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
                         </button>
                       </div>
                     </div>
-                    {vaultKey.length > 0 && !validVaultKey && (
+                    {authMode === 'register' && vaultKey.length > 0 && !validVaultKey && (
                       <motion.p
                         id="master-key-error"
                         role="alert"

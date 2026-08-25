@@ -175,26 +175,40 @@ const LocationVaultInternal: React.FC = () => {
     let active = true;
 
     const decryptSelected = async () => {
-      if (!selectedItem || !masterKey) {
+      if (!selectedItem) {
+        if (active) setPayload(null);
+        return;
+      }
+      if (!masterKey && !useVaultStore.getState().isDecoyMode) {
         if (active) setPayload(null);
         return;
       }
 
       try {
         const encrypted = getStringContent(selectedItem.content);
-        if (!encrypted) throw new Error('Unsupported location data');
-        const decrypted = await decryptData(encrypted, masterKey);
+        const decrypted = await decryptData(encrypted || '', masterKey);
         if (!active || controller.signal.aborted) return;
 
-        if (!decrypted) throw new Error('Failed to decrypt location');
-        const parsed = JSON.parse(decrypted);
+        let parsed: LocationPayload | null = null;
+        try {
+          parsed = JSON.parse(decrypted || '');
+        } catch {
+          if (selectedItem.metadata) {
+            const meta = selectedItem.metadata as any;
+            parsed = {
+              latitude: typeof meta.latitude === 'number' ? meta.latitude : 0,
+              longitude: typeof meta.longitude === 'number' ? meta.longitude : 0,
+              address: meta.address || selectedItem.title || 'Location',
+            } as LocationPayload;
+          }
+        }
 
         if (
           !parsed ||
           typeof parsed.latitude !== 'number' ||
           typeof parsed.longitude !== 'number'
         ) {
-          throw new Error('Invalid location data format');
+          throw new Error('Invalid location schema');
         }
 
         if (!active) return;
@@ -341,7 +355,7 @@ const LocationVaultInternal: React.FC = () => {
   }, [fetchAddress, fetchAltitudeApi, isCreating, isEditing]);
 
   const saveNewLocation = useCallback(async () => {
-    if (!masterKey) {
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
       toast.error('Unlock the vault before saving locations');
       return;
     }
@@ -393,7 +407,7 @@ const LocationVaultInternal: React.FC = () => {
   }, [masterKey, form, addItem, currentFolder]);
 
   const saveEditedLocation = useCallback(async () => {
-    if (!selectedId || !masterKey || !selectedItem) return;
+    if (!selectedId || (!masterKey && !useVaultStore.getState().isDecoyMode) || !selectedItem) return;
     const nextPayload = formToPayload(form);
     if (!nextPayload) {
       toast.error('Enter valid latitude and longitude values');

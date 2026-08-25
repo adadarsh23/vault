@@ -66,11 +66,17 @@ const mockCrypto = vi.hoisted(() => ({
   uploadKeyCheckToCloud: vi.fn().mockResolvedValue(undefined),
   logActivity: vi.fn(),
   identifyLogRocketUser: vi.fn(),
+  verifyDecoyPin: vi.fn(async (pin: string, hash: string) => {
+    if (hash === 'test-decoy-hash' && (pin === '9876' || pin === 'DecoyPin1234!')) return true;
+    if (hash.startsWith('pbkdf2:') && (pin === '9876' || pin === 'DecoyPin1234!')) return true;
+    return false;
+  }),
 }));
 
 vi.mock('../../src/lib/cryptoPrimitives', () => ({
   deriveKey: mockCrypto.deriveKey,
   base64ToUint8Array: mockCrypto.base64ToUint8Array,
+  verifyDecoyPin: mockCrypto.verifyDecoyPin,
 }));
 
 vi.mock('../../src/lib/encryption', () => ({
@@ -528,4 +534,88 @@ describe('useVaultAuth Hook', () => {
       expect(mockToast.error).toHaveBeenCalledWith('Too many attempts', expect.anything());
     });
   });
+
+  describe('Decoy / Duress Vault Mode', () => {
+    it('unlocks isolated decoy vault when valid decoy PIN is entered and decoy mode is enabled', async () => {
+      mockVaultStore.preferences = {
+        isDecoyVaultEnabled: true,
+        decoyPasswordHash: 'pbkdf2:100000:salt123:testhash',
+        isBruteForceWipeEnabled: false,
+        maxFailedAttemptsBeforeWipe: 10,
+      };
+
+      const { result } = renderHook(() => useVaultAuth({ initialUsername: 'alice' }));
+
+      act(() => {
+        result.current.setAccountPassword(VALID_PASSWORD);
+        result.current.setVaultKey('DecoyPin1234!');
+      });
+
+      let success: boolean = false;
+      await act(async () => {
+        success = await result.current.handleUnlock(CAPTCHA_TOKEN);
+      });
+
+      expect(success).toBe(true);
+      expect(mockVaultStore.unlockDecoyVault).toHaveBeenCalledWith('alice');
+      expect(mockVaultStore.completeUnlockTransition).toHaveBeenCalled();
+      // Server auth is bypassed in decoy mode
+      expect(mockAuthApi.authenticateVaultSession).not.toHaveBeenCalled();
+      // Credentials cleared from memory
+      expect(result.current.accountPassword).toBe('');
+      expect(result.current.vaultKey).toBe('');
+    });
+
+    it('unlocks isolated decoy vault when a short 4-digit PIN (e.g. 9876) is entered', async () => {
+      mockVaultStore.preferences = {
+        isDecoyVaultEnabled: true,
+        decoyPasswordHash: 'pbkdf2:100000:salt123:testhash',
+        isBruteForceWipeEnabled: false,
+        maxFailedAttemptsBeforeWipe: 10,
+      };
+
+      const { result } = renderHook(() => useVaultAuth({ initialUsername: 'alice' }));
+
+      act(() => {
+        result.current.setAccountPassword('anyPassword');
+        result.current.setVaultKey('9876');
+      });
+
+      let success: boolean = false;
+      await act(async () => {
+        success = await result.current.handleUnlock(CAPTCHA_TOKEN);
+      });
+
+      expect(success).toBe(true);
+      expect(mockVaultStore.unlockDecoyVault).toHaveBeenCalledWith('alice');
+      expect(mockVaultStore.completeUnlockTransition).toHaveBeenCalled();
+    });
+
+    it('proceeds with standard unlock when decoy mode is disabled even if decoy key is entered', async () => {
+      mockVaultStore.preferences = {
+        isDecoyVaultEnabled: false,
+        decoyPasswordHash: 'pbkdf2:100000:salt123:testhash',
+        isBruteForceWipeEnabled: false,
+        maxFailedAttemptsBeforeWipe: 10,
+      };
+
+      const { result } = renderHook(() => useVaultAuth({ initialUsername: 'alice' }));
+
+      act(() => {
+        result.current.setAccountPassword(VALID_PASSWORD);
+        result.current.setVaultKey(VALID_VAULT_KEY);
+      });
+
+      let success: boolean = false;
+      await act(async () => {
+        success = await result.current.handleUnlock(CAPTCHA_TOKEN);
+      });
+
+      expect(success).toBe(true);
+      expect(mockVaultStore.unlockDecoyVault).not.toHaveBeenCalled();
+      expect(mockAuthApi.authenticateVaultSession).toHaveBeenCalled();
+      expect(mockVaultStore.unlock).toHaveBeenCalled();
+    });
+  });
 });
+

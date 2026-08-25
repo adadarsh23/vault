@@ -64,7 +64,7 @@ export const MediaBulkToolbar: React.FC<MediaBulkToolbarProps> = ({
   const shouldPin = pinnedCount < selectedCount;
 
   const handleDownloadZip = async () => {
-    if (!masterKey) {
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
       toast.error('Encryption key missing');
       return;
     }

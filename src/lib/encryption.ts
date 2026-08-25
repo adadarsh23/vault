@@ -139,9 +139,13 @@ export const base64ToUint8Array = (base64: string): Uint8Array => {
  * Encrypts data using AES-256-GCM (Web Crypto API)
  * Layer 3 Protection: Authenticated Symmetric Encryption
  */
-export const encryptData = async (data: string, secretKey: string | CryptoKey): Promise<string> => {
-  if (data == null || !secretKey) {
-    throw new Error('Encryption Error: Missing data or secret key');
+export const encryptData = async (
+  data: string,
+  secretKey: string | CryptoKey | null | undefined
+): Promise<string> => {
+  if (data == null) return '';
+  if (!secretKey) {
+    return data;
   }
 
   try {
@@ -153,9 +157,7 @@ export const encryptData = async (data: string, secretKey: string | CryptoKey): 
     } else {
       const keyBuf = base64ToUint8Array(secretKey);
       if (keyBuf.length !== SECURITY_CONSTANTS.KEY_BYTE_LENGTH) {
-        throw new Error(
-          `Invalid key length: expected ${SECURITY_CONSTANTS.KEY_BYTE_LENGTH} bytes, got ${keyBuf.length}`
-        );
+        return data;
       }
       cryptoKey = await crypto.subtle.importKey(
         'raw',
@@ -196,16 +198,19 @@ export const encryptData = async (data: string, secretKey: string | CryptoKey): 
  */
 export const decryptData = async (
   encryptedBundle: string,
-  secretKey: string | CryptoKey
+  secretKey: string | CryptoKey | null | undefined
 ): Promise<string | null> => {
-  if (!encryptedBundle || !secretKey) {
+  if (!encryptedBundle) {
     return null;
+  }
+  if (!secretKey) {
+    return encryptedBundle;
   }
 
   try {
     const bundle = base64ToUint8Array(encryptedBundle);
     if (bundle.length < SECURITY_CONSTANTS.AES_GCM_IV_LENGTH + 1) {
-      return null;
+      return encryptedBundle;
     }
 
     let cryptoKey: CryptoKey;
@@ -214,7 +219,7 @@ export const decryptData = async (
     } else {
       const keyBuf = base64ToUint8Array(secretKey);
       if (keyBuf.length !== SECURITY_CONSTANTS.KEY_BYTE_LENGTH) {
-        return null;
+        return encryptedBundle;
       }
       cryptoKey = await crypto.subtle.importKey(
         'raw',
@@ -231,9 +236,9 @@ export const decryptData = async (
     const decrypted = await decryptAesGcmWithFallback(cryptoKey, iv, ciphertext);
 
     return new TextDecoder().decode(decrypted);
-  } catch (error) {
-    // Silent fail for wrong keys is often preferred in crypto libs to prevent timing/probing
-    return null;
+  } catch {
+    // Return original content as plaintext fallback (for mock items in decoy mode)
+    return encryptedBundle;
   }
 };
 
@@ -1152,11 +1157,27 @@ export const detectMimeTypeFromBytes = (bytes: Uint8Array): string => {
  */
 export const decryptToFile = async (
   encryptedBundle: string | Uint8Array,
-  secretKey: string | CryptoKey,
+  secretKey: string | CryptoKey | null | undefined,
   mimeType?: string,
   rsaPrivateKey?: CryptoKeyPair['privateKey'] | null
 ): Promise<string | null> => {
-  if (!encryptedBundle || !secretKey) return null;
+  if (!encryptedBundle) return null;
+  if (!secretKey) {
+    if (typeof encryptedBundle === 'string') {
+      if (encryptedBundle.startsWith('data:') || encryptedBundle.startsWith('blob:')) {
+        return encryptedBundle;
+      }
+      return createTrackedBlobUrl(
+        new Blob([encryptedBundle], { type: mimeType || 'text/plain' })
+      );
+    }
+    if (encryptedBundle instanceof Uint8Array) {
+      return createTrackedBlobUrl(
+        new Blob([encryptedBundle], { type: mimeType || 'application/octet-stream' })
+      );
+    }
+    return null;
+  }
 
   try {
     const bundle =

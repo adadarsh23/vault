@@ -429,7 +429,8 @@ export const AudioVault: React.FC = () => {
     isLiveCapture = false,
     additionalMetadata?: Record<string, any>
   ) => {
-    if (!files.length || !masterKey) return;
+    if (!files.length) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
 
     setIsUploading(true);
     const validFiles: { file: File; targetFolder: string | null }[] = [];
@@ -480,9 +481,12 @@ export const AudioVault: React.FC = () => {
       const { file, targetFolder: itemFolder } = item;
       try {
         await yieldToMainThread();
-        const encryptedData = isAlreadyEncrypted
-          ? new Uint8Array(await file.arrayBuffer())
-          : await encryptFileInWorker(file, masterKey);
+        let encryptedData: Uint8Array;
+        if (useVaultStore.getState().isDecoyMode || isAlreadyEncrypted || !masterKey) {
+          encryptedData = new Uint8Array(await file.arrayBuffer());
+        } else {
+          encryptedData = await encryptFileInWorker(file, masterKey);
+        }
 
         await yieldToMainThread();
         const resolvedMimeType =
@@ -566,7 +570,7 @@ export const AudioVault: React.FC = () => {
   };
 
   const handleDownload = async (item: VaultItem) => {
-    if (!masterKey) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
     try {
       const fileUrl = await getVaultItemPreviewUrl(
         item,

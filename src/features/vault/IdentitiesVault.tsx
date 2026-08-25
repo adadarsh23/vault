@@ -83,13 +83,20 @@ const DecryptedIdentityItem: React.FC<{
           return;
         }
 
-        const decrypted = await decryptData(encryptedContent, masterKey);
-        if (!decrypted || !isMounted) {
-          if (isMounted) setError(true);
-          return;
+        let parsed = parseJsonSafely<IdentityPayload>(decrypted || '');
+        if (!parsed && item.metadata) {
+          const meta = item.metadata as any;
+          parsed = {
+            documentType: meta.documentType || 'Passport',
+            fullName: meta.fullName || item.title || 'Decoy User',
+            documentNumber: meta.documentNumber || 'A12345678',
+            issuingCountry: meta.issuingCountry || 'United States',
+            issueDate: meta.issueDate || '2024-01-01',
+            expiryDate: meta.expiryDate || '2034-01-01',
+            notes: meta.notes || '',
+          };
         }
 
-        const parsed = parseJsonSafely<IdentityPayload>(decrypted);
         if (!parsed) {
           if (isMounted) setError(true);
           return;
@@ -572,7 +579,7 @@ export const IdentitiesVault: React.FC = () => {
       newName.trim() ||
       `${formPayload.documentType} - ${formPayload.fullName}`.trim() ||
       'New Identity';
-    if (!masterKey) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
 
     setIsSaving(true);
     try {
@@ -601,7 +608,7 @@ export const IdentitiesVault: React.FC = () => {
   };
 
   const handleUpdateIdentity = async (id: string, name: string, payload: IdentityPayload) => {
-    if (!masterKey) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
     try {
       const encryptedContent = await encryptData(JSON.stringify(payload), masterKey);
       await updateItem(id, {

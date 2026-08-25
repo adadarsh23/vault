@@ -87,12 +87,17 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
           }
 
           const decrypted = await decryptData(encryptedContent, masterKey);
-          if (!decrypted || !isMounted) {
-            if (isMounted) setError(true);
-            return;
+          let parsed = parseJsonSafely<ContactPayload>(decrypted || '');
+          if (!parsed && item.metadata) {
+            const meta = item.metadata as any;
+            parsed = {
+              email: meta.email ?? '',
+              phone: meta.phone ?? '',
+              company: meta.company ?? '',
+              notes: meta.notes ?? '',
+            };
           }
 
-          const parsed = parseJsonSafely<ContactPayload>(decrypted);
           if (!parsed) {
             if (isMounted) setError(true);
             return;
@@ -481,7 +486,7 @@ export const ContactsVault: React.FC = () => {
     const trimmedName = newName.trim();
     const trimmedPhone = newPhone.trim();
 
-    if (!masterKey || !trimmedName) {
+    if ((!masterKey && !useVaultStore.getState().isDecoyMode) || !trimmedName) {
       toast.error('Contact name is required');
       return;
     }
@@ -536,7 +541,7 @@ export const ContactsVault: React.FC = () => {
       notes: string;
     }
   ) => {
-    if (!masterKey) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
 
     const trimmedName = updates.name.trim();
     if (!trimmedName) {

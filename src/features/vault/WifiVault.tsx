@@ -53,20 +53,25 @@ const emptyPayload = (): WifiPayload => ({
   notes: '',
 });
 
-const getWifiQrString = (payload: WifiPayload): string => {
+const getWifiQrString = (payload?: Partial<WifiPayload> | null): string => {
+  if (!payload) return '';
+  const security = payload.security || 'WPA2/WPA3';
   const securityType =
-    payload.security === 'Open' ? 'nopass' : payload.security === 'WEP' ? 'WEP' : 'WPA';
+    security === 'Open' ? 'nopass' : security === 'WEP' ? 'WEP' : 'WPA';
   // Format: WIFI:S:SSID;T:WPA;P:PASSWORD;;
   // Escape special chars in SSID and Password
-  const escapeString = (str: string) => {
+  const escapeString = (str?: unknown) => {
+    if (typeof str !== 'string') return '';
     return str
       .replace(/\\/g, '\\\\')
       .replace(/;/g, '\\;')
       .replace(/:/g, '\\:')
       .replace(/,/g, '\\,');
   };
-  const escapedSsid = escapeString(payload.ssid);
-  const escapedPassword = escapeString(payload.passwordKey);
+  const ssid = payload.ssid || '';
+  const password = payload.passwordKey || (payload as any).password || '';
+  const escapedSsid = escapeString(ssid);
+  const escapedPassword = escapeString(password);
   return `WIFI:S:${escapedSsid};T:${securityType};P:${escapedPassword};;`;
 };
 
@@ -103,7 +108,31 @@ const DecryptedWifiItem: React.FC<{
           return;
         }
 
-        const parsed = parseJsonSafely<WifiPayload>(decrypted);
+        let parsed = parseJsonSafely<WifiPayload>(decrypted || '');
+        if (parsed) {
+          parsed = {
+            ssid: parsed.ssid || item.title || 'Wi-Fi Network',
+            passwordKey: parsed.passwordKey || (parsed as any).password || '',
+            security: parsed.security || 'WPA2/WPA3',
+            notes: parsed.notes || '',
+          };
+        } else if (item.metadata) {
+          const meta = item.metadata as any;
+          parsed = {
+            ssid: meta.ssid || item.title || 'Wi-Fi Network',
+            passwordKey: meta.passwordKey || meta.password || '',
+            security: (meta.encryption || meta.security || 'WPA2/WPA3') as any,
+            notes: meta.notes || '',
+          };
+        } else {
+          parsed = {
+            ssid: item.title || 'Wi-Fi Network',
+            passwordKey: typeof item.content === 'string' ? item.content : '',
+            security: 'WPA2/WPA3',
+            notes: '',
+          };
+        }
+
         if (!parsed) {
           if (isMounted) setError(true);
           return;
@@ -567,7 +596,7 @@ export const WifiVault: React.FC = () => {
 
   const handleCreateWifi = async () => {
     const trimmedTitle = newName.trim() || formPayload.ssid.trim() || 'New Wi-Fi';
-    if (!masterKey) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
 
     setIsSaving(true);
     try {
@@ -595,7 +624,7 @@ export const WifiVault: React.FC = () => {
   };
 
   const handleUpdateWifi = async (id: string, name: string, payload: WifiPayload) => {
-    if (!masterKey) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
     try {
       const encryptedContent = await encryptData(JSON.stringify(payload), masterKey);
       await updateItem(id, {

@@ -1089,7 +1089,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
 
   // QR Code direct Vault Note save handler
   const handleSaveQRToNote = async (result: ScannedBarcodeResult) => {
-    if (!masterKey) {
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
       toast.error('Unlock vault before saving notes');
       return;
     }

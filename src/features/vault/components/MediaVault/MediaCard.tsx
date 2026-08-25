@@ -74,7 +74,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
   isSelectionMode = false,
   selectedIds,
   onToggleSelect,
-  density = 'standard',
+  density = 'large',
   moveMenuOpenId,
   folders,
   onPreview,

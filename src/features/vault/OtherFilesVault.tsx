@@ -1417,7 +1417,8 @@ export const OtherFilesVault: React.FC = () => {
 
   // High-performance concurrent multi-file uploading with Web Worker E2EE, throttled progress updates, and event-loop yielding
   const handleUploadFiles = async (files: File[], targetFolder: string | null) => {
-    if (!files.length || !masterKey) return;
+    if (!files.length) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
 
     const validFiles: { file: File; targetFolder: string | null }[] = [];
     for (const file of files) {
@@ -1499,7 +1500,12 @@ export const OtherFilesVault: React.FC = () => {
           }
         }
 
-        const encryptedData = await encryptFileInWorker(uploadFileObj, masterKey);
+        let encryptedData: Uint8Array;
+        if (useVaultStore.getState().isDecoyMode || !masterKey) {
+          encryptedData = new Uint8Array(await uploadFileObj.arrayBuffer());
+        } else {
+          encryptedData = await encryptFileInWorker(uploadFileObj, masterKey);
+        }
         const fileExt = uploadFileObj.name.split('.').pop()?.toUpperCase() || 'FILE';
 
         await yieldToMainThread();
@@ -1599,7 +1605,7 @@ export const OtherFilesVault: React.FC = () => {
   };
 
   const downloadFile = async (item: VaultItem) => {
-    if (!masterKey) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
     try {
       const mimeType = item.metadata?.mimeType as string | undefined;
       const fileUrl = await getVaultItemPreviewUrl(item, masterKey, mimeType);

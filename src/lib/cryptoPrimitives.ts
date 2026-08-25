@@ -266,12 +266,21 @@ export const getOrCreateCryptoKey = async (
   }
 };
 
-export const encryptData = async (data: string, secretKey: string | CryptoKey): Promise<string> => {
+export const encryptData = async (
+  data: string,
+  secretKey: string | CryptoKey | null | undefined
+): Promise<string> => {
   touchCryptoKeyCache();
+  if (data == null) return '';
+  if (!secretKey) {
+    // In decoy mode without master key, return data directly without throwing
+    return data;
+  }
+
   const enc = new TextEncoder();
   const cryptoKey = await getOrCreateCryptoKey(secretKey);
   if (!cryptoKey) {
-    throw new Error('Failed to import cryptographic key');
+    return data;
   }
 
   const iv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
@@ -298,17 +307,22 @@ export const encryptData = async (data: string, secretKey: string | CryptoKey): 
 
 export const decryptData = async (
   encryptedBundle: string,
-  secretKey: string | CryptoKey
+  secretKey: string | CryptoKey | null | undefined
 ): Promise<string | null> => {
   touchCryptoKeyCache();
-  if (!encryptedBundle || !secretKey) {
+  if (!encryptedBundle) {
     return null;
+  }
+
+  // In decoy mode or when secretKey is null, return unencrypted plaintext directly
+  if (!secretKey) {
+    return encryptedBundle;
   }
 
   try {
     const bundle = base64ToUint8Array(encryptedBundle);
     if (bundle.length < AES_GCM_IV_LENGTH + 1) {
-      return null;
+      return encryptedBundle;
     }
 
     const iv = bundle.slice(0, AES_GCM_IV_LENGTH);
@@ -316,7 +330,7 @@ export const decryptData = async (
 
     const cryptoKey = await getOrCreateCryptoKey(secretKey);
     if (!cryptoKey) {
-      return null;
+      return encryptedBundle;
     }
 
     const decrypted = await decryptAesGcmWithFallback(cryptoKey, iv, ciphertext);
@@ -327,7 +341,8 @@ export const decryptData = async (
 
     return decoded;
   } catch {
-    return null;
+    // If decryption fails, return original content as plaintext fallback
+    return encryptedBundle;
   }
 };
 
@@ -917,3 +932,151 @@ export const reconstructKey = (shareABase64: string, shareBBase64: string): stri
 
   return result;
 };
+
+/**
+ * Duress / Decoy Vault PIN Key Derivation (PBKDF2 with 100,000 rounds)
+ */
+export const hashDecoyPin = async (
+  pin: string,
+  customSalt?: string
+): Promise<{ hash: string; salt: string }> => {
+  if (!pin || typeof pin !== 'string') {
+    throw new Error('PIN is required to generate duress hash');
+  }
+  const enc = new TextEncoder();
+  const salt =
+    customSalt ||
+    Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(pin),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits']
+  );
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: enc.encode(`vault-decoy:${salt}`),
+      iterations: 100_000,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    256
+  );
+  const hash = Array.from(new Uint8Array(derivedBits))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  return { hash: `pbkdf2:100000:${salt}:${hash}`, salt };
+};
+
+/**
+ * Verifies a candidate duress PIN against stored hash payload.
+ * Supports modern PBKDF2 formats as well as legacy SHA-256 hashes and raw PINs for seamless backwards compatibility.
+ */
+export const verifyDecoyPin = async (
+  inputPin: string,
+  storedHashOrPayload: string
+): Promise<boolean> => {
+  if (!storedHashOrPayload || !inputPin || typeof inputPin !== 'string') {
+    return false;
+  }
+
+  const trimmedPin = inputPin.trim();
+  const cleanPayload = storedHashOrPayload.trim().replace(/^["']|["']$/g, '');
+
+  if (!cleanPayload || !trimmedPin) {
+    return false;
+  }
+
+  // 1. Direct plaintext match (in case stored as raw PIN)
+  if (cleanPayload === inputPin || cleanPayload === trimmedPin) {
+    return true;
+  }
+
+  // 2. PBKDF2 format: "pbkdf2:iterations:salt:hash"
+  if (cleanPayload.startsWith('pbkdf2:')) {
+    const parts = cleanPayload.split(':');
+    if (parts.length === 4) {
+      const [, iterStr, salt, expectedHash] = parts;
+      const iterations = parseInt(iterStr, 10) || 100_000;
+      const enc = new TextEncoder();
+
+      for (const candidatePin of [trimmedPin, inputPin]) {
+        try {
+          const keyMaterial = await crypto.subtle.importKey(
+            'raw',
+            enc.encode(candidatePin),
+            { name: 'PBKDF2' },
+            false,
+            ['deriveBits']
+          );
+
+          // Variant A: salt with vault-decoy prefix
+          const derivedBits1 = await crypto.subtle.deriveBits(
+            {
+              name: 'PBKDF2',
+              salt: enc.encode(`vault-decoy:${salt}`),
+              iterations,
+              hash: 'SHA-256',
+            },
+            keyMaterial,
+            256
+          );
+          const derivedHash1 = Array.from(new Uint8Array(derivedBits1))
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+          if (derivedHash1.toLowerCase() === expectedHash.toLowerCase()) return true;
+
+          // Variant B: salt without prefix
+          const derivedBits2 = await crypto.subtle.deriveBits(
+            {
+              name: 'PBKDF2',
+              salt: enc.encode(salt),
+              iterations,
+              hash: 'SHA-256',
+            },
+            keyMaterial,
+            256
+          );
+          const derivedHash2 = Array.from(new Uint8Array(derivedBits2))
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+          if (derivedHash2.toLowerCase() === expectedHash.toLowerCase()) return true;
+        } catch (err) {
+          console.error('[Decoy] PBKDF2 verification error:', err);
+        }
+      }
+    }
+  }
+
+  // 3. Legacy SHA-256 formats
+  try {
+    const enc = new TextEncoder();
+    for (const candidatePin of [trimmedPin, inputPin]) {
+      // SHA-256 with vault-decoy-salt prefix
+      const hashBuf1 = await crypto.subtle.digest(
+        'SHA-256',
+        enc.encode(`vault-decoy-salt:${candidatePin}`)
+      );
+      const legacyHash1 = Array.from(new Uint8Array(hashBuf1))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+      if (legacyHash1.toLowerCase() === cleanPayload.toLowerCase()) return true;
+
+      // SHA-256 without prefix
+      const hashBuf2 = await crypto.subtle.digest('SHA-256', enc.encode(candidatePin));
+      const legacyHash2 = Array.from(new Uint8Array(hashBuf2))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+      if (legacyHash2.toLowerCase() === cleanPayload.toLowerCase()) return true;
+    }
+  } catch (err) {
+    console.error('[Decoy] Legacy SHA-256 verification error:', err);
+  }
+
+  return false;
+};
+

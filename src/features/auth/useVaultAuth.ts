@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useVaultStore } from '../../store/vaultStore';
-import { base64ToUint8Array, deriveKey } from '../../lib/cryptoPrimitives';
+import { base64ToUint8Array, deriveKey, verifyDecoyPin } from '../../lib/cryptoPrimitives';
 import { performHybridKeyExchange } from '../../lib/encryption';
 import { handleError } from '../../lib/error-handler';
 import {
@@ -441,31 +441,86 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
         return false;
       }
 
+      // Check Decoy / Duress Mode FIRST before password policy check
+      const storedHashes = [
+        useVaultStore.getState().preferences.decoyPasswordHash,
+        typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_pin_hash') : null,
+        typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_password_hash') : null,
+        typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_hash') : null,
+        typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_pin') : null,
+        typeof localStorage !== 'undefined' ? localStorage.getItem('vault_decoy_password') : null,
+        typeof localStorage !== 'undefined' ? localStorage.getItem('decoy_pin_hash') : null,
+        typeof localStorage !== 'undefined' ? localStorage.getItem('decoyPasswordHash') : null,
+        typeof localStorage !== 'undefined' ? localStorage.getItem(`vault_decoy_pin_hash_${normalizedUsername}`) : null,
+      ].filter((h): h is string => Boolean(h && typeof h === 'string' && h.trim().length > 0));
+
+      for (const candidateHash of storedHashes) {
+        const isDecoyKeyMatch = vaultKey ? await verifyDecoyPin(vaultKey, candidateHash) : false;
+        const isDecoyPassMatch =
+          accountPassword ? await verifyDecoyPin(accountPassword, candidateHash) : false;
+
+        if (isDecoyKeyMatch || isDecoyPassMatch) {
+          setAccountPassword('');
+          setVaultKey('');
+          pendingMasterKeyRef.current = null;
+          pendingVaultKeyRef.current = null;
+          setStatus('authenticating');
+          await useVaultStore.getState().unlockDecoyVault(normalizedUsername);
+          if (isComponentMounted.current) {
+            setStatus('success');
+            completeUnlockTransition();
+          }
+          return true;
+        }
+      }
+
       // Input Validation for passwords
-      if (!cloudSessionActive) {
-        const authPasswordValidation = validatePassword(accountPassword);
-        if (!authPasswordValidation.isValid) {
+      if (authMode === 'register') {
+        if (!cloudSessionActive) {
+          const authPasswordValidation = validatePassword(accountPassword);
+          if (!authPasswordValidation.isValid) {
+            toast.error('Account Password Required', {
+              description: authPasswordValidation.error,
+            });
+            return false;
+          }
+        }
+
+        const vaultKeyValidation = validatePassword(vaultKey);
+        if (!vaultKeyValidation.isValid) {
+          toast.error('Security Protocol Violation', {
+            description: vaultKeyValidation.error,
+          });
+          return false;
+        }
+
+        if (accountPassword && vaultKey && accountPassword === vaultKey) {
+          toast.error('Security Requirement Error', {
+            description: 'Account password and Master Key must not be identical.',
+          });
+          return false;
+        }
+      } else {
+        // Sign-in mode requirements
+        const effectiveAccountPassword = accountPassword || vaultKey;
+        const effectiveVaultKey = vaultKey || accountPassword;
+
+        if (!cloudSessionActive && !effectiveAccountPassword) {
           toast.error('Account Password Required', {
-            description: authPasswordValidation.error,
+            description: 'Please enter your account password to sign in.',
+          });
+          return false;
+        }
+        if (!effectiveVaultKey) {
+          toast.error('Master Key Required', {
+            description: 'Please enter your Master Key to unlock your vault.',
           });
           return false;
         }
       }
 
-      const vaultKeyValidation = validatePassword(vaultKey);
-      if (!vaultKeyValidation.isValid) {
-        toast.error('Security Protocol Violation', {
-          description: vaultKeyValidation.error,
-        });
-        return false;
-      }
-
-      if (authMode === 'register' && accountPassword && vaultKey && accountPassword === vaultKey) {
-        toast.error('Security Requirement Error', {
-          description: 'Account password and Master Key must not be identical.',
-        });
-        return false;
-      }
+      const resolvedAccountPassword = accountPassword || vaultKey;
+      const resolvedVaultKey = vaultKey || accountPassword;
 
       setStatus('authenticating');
       setCurrentLayer(-1);
@@ -473,54 +528,25 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
       pendingVaultKeyRef.current = null;
 
       try {
-        const isDecoyEnabled =
-          useVaultStore.getState().preferences.isDecoyVaultEnabled ||
-          (typeof localStorage !== 'undefined' &&
-            localStorage.getItem('vault_decoy_enabled') === 'true');
-
-        if (isDecoyEnabled) {
-          const decoyHash =
-            useVaultStore.getState().preferences.decoyPasswordHash ||
-            (typeof localStorage !== 'undefined'
-              ? localStorage.getItem('vault_decoy_pin_hash')
-              : null);
-
-          if (decoyHash) {
-            const enc = new TextEncoder().encode(`vault-decoy-salt:${vaultKey}`);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', enc);
-            const inputHash = Array.from(new Uint8Array(hashBuffer))
-              .map((b) => b.toString(16).padStart(2, '0'))
-              .join('');
-
-            if (inputHash === decoyHash) {
-              await useVaultStore.getState().unlockDecoyVault(normalizedUsername);
-              if (isComponentMounted.current) {
-                setStatus('success');
-                completeUnlockTransition();
-              }
-              return true;
-            }
-          }
-        }
 
         // Prevent stale logout responses from clearing a newly-created session
         // while deriving the vault key in parallel.
         const [, masterKey] = await Promise.all([
           waitForPendingLogout(),
-          runSecurityVerification(vaultKey, normalizedUsername),
+          runSecurityVerification(resolvedVaultKey, normalizedUsername),
         ]);
 
         if (!isComponentMounted.current) return false;
 
-        const rawVaultKey = vaultKey;
+        const rawVaultKey = resolvedVaultKey;
 
         if (!cloudSessionActive) {
           const authData = await authenticateVaultSession(
             authMode,
             normalizedUsername,
-            accountPassword,
+            resolvedAccountPassword,
             captchaToken,
-            vaultKey,
+            resolvedVaultKey,
             { pqcSalt: activeSaltRef.current || undefined }
           );
 

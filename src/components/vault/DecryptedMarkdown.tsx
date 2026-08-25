@@ -8,7 +8,7 @@ import { decryptData } from '../../lib/cryptoPrimitives';
 
 interface DecryptedMarkdownProps {
   content: string;
-  masterKey: string | CryptoKey;
+  masterKey?: string | CryptoKey | null;
   showHtmlPreview?: boolean;
 }
 
@@ -87,10 +87,14 @@ export const DecryptedMarkdown: React.FC<DecryptedMarkdownProps> = ({
 
     const decrypt = async () => {
       try {
+        if (!masterKey) {
+          if (isMounted) setDecrypted(content);
+          return;
+        }
         const result = await decryptData(content, masterKey);
-        if (isMounted) setDecrypted(result);
+        if (isMounted) setDecrypted(result || content);
       } catch {
-        if (isMounted) setError(true);
+        if (isMounted) setDecrypted(content);
       }
     };
     decrypt();

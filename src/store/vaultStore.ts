@@ -226,6 +226,25 @@ const DEFAULT_PREFERENCES: SecurityPreferences = {
   maxFailedAttemptsBeforeWipe: 10,
 };
 
+const getInitialPreferences = (): SecurityPreferences => {
+  const base = { ...DEFAULT_PREFERENCES };
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const storedDecoyHash =
+        localStorage.getItem('vault_decoy_pin_hash') ||
+        localStorage.getItem('vault_decoy_password_hash');
+      const storedDecoyEnabled = localStorage.getItem('vault_decoy_enabled');
+      if (storedDecoyHash) {
+        base.decoyPasswordHash = storedDecoyHash;
+        base.isDecoyVaultEnabled = storedDecoyEnabled !== 'false';
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return base;
+};
+
 const sanitizePreferences = (
   preferences?: Partial<SecurityPreferences>
 ): Partial<SecurityPreferences> => {
@@ -602,7 +621,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   vaultId: null,
   isLoading: false,
   allowRestrictedTypes: false,
-  preferences: DEFAULT_PREFERENCES,
+  preferences: getInitialPreferences(),
   syncStatus: 'idle',
   lastSuccessfulSyncAt: null,
   lastSyncAttemptAt: null,
@@ -669,6 +688,43 @@ export const useVaultStore = create<VaultState>((set, get) => ({
           isE2EE: true,
         },
       },
+      {
+        id: 'decoy-wifi-1',
+        type: 'wifi',
+        title: 'Home Fiber Wi-Fi',
+        content: JSON.stringify({
+          ssid: 'Home_5G_Network',
+          security: 'WPA2/WPA3',
+          passwordKey: 'HomeNetworkSecure2026',
+          notes: 'Primary 5GHz router network',
+        }),
+        folder: 'Personal',
+        createdAt: Date.now() - 86400000 * 5,
+        updatedAt: Date.now() - 86400000 * 5,
+        metadata: {
+          ssid: 'Home_5G_Network',
+          encryption: 'WPA2/WPA3',
+          security: 'WPA2/WPA3',
+          password: 'HomeNetworkSecure2026',
+          passwordKey: 'HomeNetworkSecure2026',
+          isE2EE: true,
+        },
+      },
+      {
+        id: 'decoy-doc-1',
+        type: 'document',
+        title: 'Travel_Checklist_2026.md',
+        content:
+          '# Travel Checklist\n- Passport & IDs\n- Flight Boarding Passes\n- Hotel reservation vouchers\n- Portable chargers',
+        folder: 'Travel',
+        createdAt: Date.now() - 86400000 * 4,
+        updatedAt: Date.now() - 86400000 * 4,
+        metadata: {
+          mimeType: 'text/markdown',
+          size: 128,
+          isE2EE: true,
+        },
+      },
     ];
 
     set({
@@ -689,7 +745,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       description: 'Decoy vault unlocked in duress isolation mode.',
       status: 'success',
     });
-    toast.success('Synced 3 items');
+    toast.success(`Synced ${dummyItems.length} items`);
   },
 
   setDecoyMode: (enabled: boolean) => set({ isDecoyMode: enabled }),
@@ -940,6 +996,25 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       ...sanitizedUpdates,
     };
 
+    if (newPreferences.decoyPasswordHash) {
+      try {
+        localStorage.setItem('vault_decoy_pin_hash', newPreferences.decoyPasswordHash);
+        localStorage.setItem(
+          'vault_decoy_enabled',
+          String(newPreferences.isDecoyVaultEnabled ?? true)
+        );
+      } catch {
+        /* ignore */
+      }
+    } else if (sanitizedUpdates.isDecoyVaultEnabled === false) {
+      try {
+        localStorage.removeItem('vault_decoy_pin_hash');
+        localStorage.setItem('vault_decoy_enabled', 'false');
+      } catch {
+        /* ignore */
+      }
+    }
+
     setActivityLoggingEnabled(newPreferences.isActivityLoggingEnabled);
     set({ preferences: newPreferences });
 
@@ -956,7 +1031,20 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   changeMasterKey: async (newKey: string, onProgress?: (done: number, total: number) => void) => {
-    const { items, masterKey: oldMasterKey, username } = get();
+    const { items, masterKey: oldMasterKey, username, isDecoyMode } = get();
+    if (isDecoyMode) {
+      toast.success(
+        'master Key rotation complete. Your encrypted data now requires the new master Key.'
+      );
+      logActivity({
+        actionType: 'password_change',
+        itemName: 'master Key',
+        description: 'master Key rotated in isolated session',
+        status: 'success',
+      });
+      return;
+    }
+
     if (!oldMasterKey || !username) {
       handleError(new Error('Vault must be unlocked to change master key'), 'Key Rotation');
       return;
@@ -1220,13 +1308,23 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   fetchItems: async (trigger = 'background') => {
-    const { isUnlocked, masterKey } = get();
-    if (!isUnlocked || !masterKey) return;
+    const { isUnlocked, masterKey, isDecoyMode, items } = get();
+    if (!isUnlocked || (!masterKey && !isDecoyMode)) return;
 
     const toastCopy = getSyncToastCopy(trigger);
     const toastId = toast.loading(toastCopy.loadingTitle, {
       description: toastCopy.loadingDescription,
     });
+
+    if (isDecoyMode) {
+      setTimeout(() => {
+        toast.success(toastCopy.successTitle, {
+          id: toastId,
+          description: toastCopy.successDescription(items.length),
+        });
+      }, 300);
+      return;
+    }
 
     set({
       isLoading: true,
@@ -1287,8 +1385,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   addItem: async (itemData, onProgress, options?: { source?: 'local' | 'cloud' }) => {
-    const { isUnlocked, masterKey, username } = get();
-    if (!isUnlocked || !masterKey) {
+    const { isUnlocked, masterKey, username, isDecoyMode } = get();
+    if (!isUnlocked || (!masterKey && !isDecoyMode)) {
       const err = new Error('Vault must be unlocked');
       handleError(err, 'Add Item');
       throw err;
@@ -1305,13 +1403,28 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     const source = options?.source ?? CLOUD_SOURCE;
     const newItem: VaultItem = {
       ...itemData,
-      id: crypto.randomUUID(),
+      id: isDecoyMode ? `decoy-${crypto.randomUUID()}` : crypto.randomUUID(),
       title: normalizedTitle,
       username: username || undefined,
       source,
       createdAt: now,
       updatedAt: now,
     };
+
+    if (isDecoyMode) {
+      set((state) => ({
+        items: [newItem, ...state.items.filter((i) => i.id !== newItem.id)],
+        isLoading: false,
+      }));
+      toast.success(`${newItem.title} saved to cloud`);
+      logActivity({
+        actionType: newItem.type === 'password' ? 'password_create' : 'file_upload',
+        itemName: newItem.title,
+        description: `${newItem.type} added in isolated session`,
+        status: 'success',
+      });
+      return newItem;
+    }
 
     set({ isLoading: true });
     try {
@@ -1367,11 +1480,26 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   removeItem: async (id: string) => {
-    const { masterKey, items } = get();
-    if (!masterKey) return;
+    const { masterKey, items, isDecoyMode } = get();
+    if (!masterKey && !isDecoyMode) return;
 
     const item = items.find((i) => i.id === id);
     set({ isLoading: true });
+
+    if (isDecoyMode) {
+      set((state) => ({
+        items: state.items.filter((i) => i.id !== id),
+        isLoading: false,
+      }));
+      toast.success('Item removed');
+      logActivity({
+        actionType: 'item_delete',
+        itemName: item?.title || id,
+        description: 'Item removed from vault',
+        status: 'success',
+      });
+      return;
+    }
 
     try {
       if (item?.source === 'local') {
@@ -1403,9 +1531,9 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   updateItem: async (id, updates) => {
-    const { items, masterKey } = get();
+    const { items, masterKey, isDecoyMode } = get();
     const item = items.find((i) => i.id === id);
-    if (!item || !masterKey) return;
+    if (!item || (!masterKey && !isDecoyMode)) return;
 
     const updatedItem: VaultItem = {
       ...item,
@@ -1416,6 +1544,22 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     };
 
     set({ isLoading: true });
+
+    if (isDecoyMode) {
+      set((state) => ({
+        items: state.items.map((i) => (i.id === id ? updatedItem : i)),
+        isLoading: false,
+      }));
+      toast.success('Update saved');
+      logActivity({
+        actionType: item.type === 'password' ? 'password_change' : 'item_update',
+        itemName: updatedItem.title,
+        description: `${item.type} updated`,
+        status: 'success',
+      });
+      return;
+    }
+
     try {
       await saveItem(updatedItem);
 
@@ -1449,7 +1593,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   togglePin: async (id: string) => {
-    const { items, pinningItemIds } = get();
+    const { items, pinningItemIds, isDecoyMode } = get();
     if (pinningItemIds.includes(id)) return;
 
     const item = items.find((i) => i.id === id);
@@ -1470,6 +1614,13 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         ? state.pinningItemIds
         : [...state.pinningItemIds, id],
     }));
+
+    if (isDecoyMode) {
+      set((state) => ({
+        pinningItemIds: state.pinningItemIds.filter((itemId) => itemId !== id),
+      }));
+      return;
+    }
 
     try {
       const response = await vaultApi.togglePin(id, !wasPinned);
@@ -1520,24 +1671,30 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   batchUpdateItems: async (batchUpdates) => {
-    const { items, masterKey } = get();
-    if (!masterKey || batchUpdates.length === 0) return;
+    const { items, masterKey, isDecoyMode } = get();
+    if ((!masterKey && !isDecoyMode) || batchUpdates.length === 0) return;
 
     set({ isLoading: true });
     const now = Date.now();
 
-    try {
-      const updatedItems = items.map((item) => {
-        const update = batchUpdates.find((u) => u.id === item.id);
-        if (!update) return item;
-        return {
-          ...item,
-          ...update.updates,
-          source: update.updates.source || item.source || 'cloud',
-          updatedAt: now,
-        };
-      });
+    const updatedItems = items.map((item) => {
+      const update = batchUpdates.find((u) => u.id === item.id);
+      if (!update) return item;
+      return {
+        ...item,
+        ...update.updates,
+        source: update.updates.source || item.source || 'cloud',
+        updatedAt: now,
+      };
+    });
 
+    if (isDecoyMode) {
+      set({ items: updatedItems, isLoading: false });
+      toast.success(`Updated ${batchUpdates.length} items`);
+      return;
+    }
+
+    try {
       // Persist to local IndexedDB and upload all changed items to cloud in parallel
       const currentBatch = batchUpdates.map((u) => {
         const item = updatedItems.find((i) => i.id === u.id);
@@ -1570,8 +1727,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   syncLogs: async () => {
-    const { isUnlocked, masterKey, preferences } = get();
-    if (!isUnlocked || !masterKey || !preferences.isActivityLoggingEnabled) return;
+    const { isUnlocked, masterKey, preferences, isDecoyMode } = get();
+    if (!isUnlocked || isDecoyMode || !masterKey || !preferences.isActivityLoggingEnabled) return;
 
     if (get().isSyncingLogs) {
       set({ hasPendingLogSync: true });
@@ -1618,9 +1775,27 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   destroyAllData: async () => {
-    const { masterKey } = get();
-    if (!masterKey) {
+    const { masterKey, isDecoyMode } = get();
+    if (!masterKey && !isDecoyMode) {
       toast.error('Unlock vault first');
+      return;
+    }
+
+    if (isDecoyMode) {
+      set({
+        items: [],
+        isUnlocked: false,
+        isVaultReady: false,
+        isDecoyMode: false,
+        isLoading: false,
+      });
+      toast.success('ALL DATA PURGED');
+      logActivity({
+        actionType: 'item_delete',
+        itemName: 'Full Vault',
+        description: 'Decoy vault purged in isolated session',
+        status: 'success',
+      });
       return;
     }
 

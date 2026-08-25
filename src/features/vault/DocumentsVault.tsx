@@ -1144,7 +1144,8 @@ export const DocumentsVault: React.FC = () => {
 
   // High-performance, concurrent, leak-proof multi-file upload handler
   const handleUploadFiles = async (files: File[], targetFolder: string | null) => {
-    if (!files.length || !masterKey) return;
+    if (!files.length) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
 
     const harmfulTypes = ['.exe', '.dll', '.js', '.vbs', '.bat', '.cmd', '.sh', '.msi'];
 
@@ -1231,7 +1232,12 @@ export const DocumentsVault: React.FC = () => {
           }
         }
         await yieldToMainThread();
-        const encryptedData = await encryptFileInWorker(uploadFileObj, masterKey);
+        let encryptedData: Uint8Array;
+        if (useVaultStore.getState().isDecoyMode || !masterKey) {
+          encryptedData = new Uint8Array(await uploadFileObj.arrayBuffer());
+        } else {
+          encryptedData = await encryptFileInWorker(uploadFileObj, masterKey);
+        }
         await yieldToMainThread();
         const resolvedMimeType =
           uploadFileObj.type && uploadFileObj.type !== 'application/octet-stream'
@@ -1317,7 +1323,7 @@ export const DocumentsVault: React.FC = () => {
   };
 
   const downloadFile = async (item: VaultItem) => {
-    if (!masterKey) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
 
     try {
       const mimeType = item.metadata?.mimeType as string | undefined;

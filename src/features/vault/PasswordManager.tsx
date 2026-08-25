@@ -518,10 +518,17 @@ const DecryptedPasswordCard: React.FC<{
     let isMounted = true;
     const decrypt = async () => {
       try {
-        const decrypted = await decryptData(item.content, masterKey);
+        let decrypted = await decryptData(item.content, masterKey);
+        if (!decrypted && typeof item.content === 'string') {
+          decrypted = item.content;
+        }
         if (decrypted && isMounted) {
-          const parsed = JSON.parse(decrypted);
-          setData(parsed);
+          try {
+            const parsed = JSON.parse(decrypted);
+            setData(parsed);
+          } catch {
+            setData({ username: item.title, password: decrypted, totpSecret: '' });
+          }
         } else if (isMounted) {
           setError(true);
         }
@@ -933,7 +940,7 @@ export const PasswordManager: React.FC = () => {
   };
 
   const handleAdd = async () => {
-    if (!masterKey || !newSite || !newPassword) {
+    if ((!masterKey && !useVaultStore.getState().isDecoyMode) || !newSite || !newPassword) {
       toast.error('Please fill in all required fields');
       return;
     }

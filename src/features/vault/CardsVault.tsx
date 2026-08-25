@@ -359,7 +359,20 @@ const DecryptedCardItem: React.FC<{
           return;
         }
 
-        const parsed = parseJsonSafely<CardPayload>(decrypted);
+        let parsed = parseJsonSafely<CardPayload>(decrypted || '');
+        if (!parsed && item.metadata) {
+          const meta = item.metadata as any;
+          parsed = {
+            cardNumber: meta.cardNumber || '•••• •••• •••• 1234',
+            expiryMonth: meta.expiryMonth || '12',
+            expiryYear: meta.expiryYear || '28',
+            cvv: meta.cvv || '123',
+            cardholderName: meta.cardholderName || 'Decoy User',
+            bankName: meta.bankName || item.title || 'Standard Bank',
+            cardType: meta.cardType || 'visa',
+          };
+        }
+
         if (!parsed) {
           if (isMounted) setError(true);
           return;
@@ -875,7 +888,7 @@ export const CardsVault: React.FC = () => {
 
   const handleCreateCard = async () => {
     const trimmedTitle = newName.trim() || formPayload.bankName.trim() || 'New Card';
-    if (!masterKey) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
 
     setIsSaving(true);
     try {
@@ -904,7 +917,7 @@ export const CardsVault: React.FC = () => {
   };
 
   const handleUpdateCard = async (id: string, name: string, payload: CardPayload) => {
-    if (!masterKey) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
     try {
       const encryptedContent = await encryptData(JSON.stringify(payload), masterKey);
       await updateItem(id, {

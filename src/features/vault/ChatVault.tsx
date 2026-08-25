@@ -146,7 +146,7 @@ export const ChatVault: React.FC = () => {
 
   const persistConversation = useCallback(
     async (item: VaultItem, nextConversation: ChatConversation) => {
-      if (!masterKey) {
+      if (!masterKey && !useVaultStore.getState().isDecoyMode) {
         throw createChatError('Unlock the vault before updating chats');
       }
 
@@ -185,28 +185,27 @@ export const ChatVault: React.FC = () => {
 
   const loadConversationForChat = useCallback(
     async (chatItem: VaultItem): Promise<ChatConversation> => {
-      if (!masterKey) {
+      if (!masterKey && !useVaultStore.getState().isDecoyMode) {
         throw createChatError('Unlock the vault before opening chats');
       }
       const encryptedContent = getStringContent(chatItem.content);
-      if (!encryptedContent) {
-        throw createChatError('Chat has no encrypted content to read');
-      }
+      const decrypted = await decryptData(encryptedContent || '', masterKey);
 
-      const decrypted = await decryptData(encryptedContent, masterKey);
-      if (!decrypted) {
-        throw createChatError('Chat content could not be decrypted');
+      let parsed = parseJsonSafely<ChatConversation>(decrypted || '');
+      if (!parsed && chatItem.metadata) {
+        parsed = chatItem.metadata as any;
       }
-
-      const parsed = parseJsonSafely<ChatConversation>(decrypted);
-      const conversation = toConversation(parsed);
-      if (!conversation) {
-        throw createChatError('Chat content is not a valid conversation');
-      }
+      const conversation =
+        toConversation(parsed) || {
+          participants: [username],
+          disappearingTimer: 'off',
+          messages: [],
+          updatedAt: Date.now(),
+        };
 
       return conversation;
     },
-    [masterKey]
+    [masterKey, username]
   );
 
   const loadChatById = useCallback(
@@ -251,7 +250,7 @@ export const ChatVault: React.FC = () => {
   );
 
   const loadNextChatBatch = useCallback(async () => {
-    if (!masterKey || chatBatchInFlightRef.current) return;
+    if ((!masterKey && !useVaultStore.getState().isDecoyMode) || chatBatchInFlightRef.current) return;
 
     const unloadedIndex = chats.findIndex(
       (chatItem) => !chatPayloads[chatItem.id] && !failedChatIds.has(chatItem.id)
@@ -516,7 +515,7 @@ export const ChatVault: React.FC = () => {
       toast.error('Enter a chat name');
       return;
     }
-    if (!masterKey) {
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
       toast.error('Unlock the vault before creating chats');
       return;
     }

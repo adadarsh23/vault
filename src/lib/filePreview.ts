@@ -886,7 +886,7 @@ export const getVaultItemFileUrl = (item: VaultItem): string | null => {
 
 export const getVaultItemPreviewUrl = async (
   item: VaultItem,
-  masterKey: string | CryptoKey,
+  masterKey: string | CryptoKey | null | undefined,
   mimeType?: string,
   rsaPrivateKey?: CryptoKeyPair['privateKey'] | null
 ): Promise<string | null> => {
@@ -895,6 +895,27 @@ export const getVaultItemPreviewUrl = async (
   // 1. Direct in-memory blob: or data: URL
   if (typeof item.content === 'string' && isBlobOrDataUrl(item.content)) {
     return item.content;
+  }
+
+  // Handle unencrypted SVG or plaintext in decoy mode
+  if (typeof item.content === 'string' && item.content.startsWith('<svg')) {
+    return createTrackedBlobUrl(new Blob([item.content], { type: 'image/svg+xml' }));
+  }
+
+  if (!masterKey) {
+    if (typeof item.content === 'string') {
+      return createTrackedBlobUrl(
+        new Blob([item.content], { type: effectiveMimeType || 'text/plain' })
+      );
+    }
+    if (item.content instanceof Uint8Array) {
+      return createTrackedBlobUrl(
+        new Blob([new Uint8Array(item.content)], {
+          type: effectiveMimeType || 'application/octet-stream',
+        })
+      );
+    }
+    return null;
   }
 
   // 2. Direct in-memory Uint8Array

@@ -46,7 +46,7 @@ import { ForensicWatermark } from '../../../../components/security/ForensicWater
 
 const AttachmentCard: React.FC<{
   item: any;
-  masterKey: string | CryptoKey;
+  masterKey?: string | CryptoKey | null;
   onUnlink: (id: string) => void;
   onPreview: (item: any) => void;
 }> = ({ item, masterKey, onUnlink, onPreview }) => {
@@ -267,7 +267,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
 
     try {
       const mime = item.type === 'photo' ? 'image/jpeg' : 'text/plain';
-      const url = await getVaultItemPreviewUrl(item, masterKey!, mime);
+      const url = await getVaultItemPreviewUrl(item, masterKey, mime);
       setPreviewUrl(url);
     } catch (err) {
       console.error('Error generating preview', err);
@@ -412,7 +412,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                               <AttachmentCard
                                 key={item.id}
                                 item={item}
-                                masterKey={masterKey!}
+                                masterKey={masterKey}
                                 onUnlink={handleUnlinkAttachment}
                                 onPreview={handlePreviewAttachment}
                               />
@@ -430,7 +430,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
                       >
                         <DecryptedMarkdown
                           content={getStringContent(selectedNote.content) || ''}
-                          masterKey={masterKey!}
+                          masterKey={masterKey}
                           showHtmlPreview={showHtmlPreview}
                         />
                       </div>

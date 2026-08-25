@@ -77,12 +77,15 @@ const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
           }
 
           const decrypted = await decryptData(encryptedContent, masterKey);
-          if (!decrypted || !isMounted) {
-            if (isMounted) setError(true);
-            return;
+          let parsed = parseJsonSafely<SecretPayload>(decrypted || '');
+          if (!parsed && item.metadata) {
+            const meta = item.metadata as any;
+            parsed = {
+              value: meta.value || (typeof item.content === 'string' ? item.content : 'secret-key-123'),
+              type: meta.type || 'API Key',
+            };
           }
 
-          const parsed = parseJsonSafely<SecretPayload>(decrypted);
           if (!parsed || typeof parsed.value !== 'string' || typeof parsed.type !== 'string') {
             if (isMounted) setError(true);
             return;
@@ -483,7 +486,7 @@ export const SecretsVault: React.FC = () => {
     const trimmedValue = newValue.trim();
     const resolvedType = newType === 'Other' ? customType.trim() || 'Other' : newType;
 
-    if (!masterKey || !trimmedName || !trimmedValue) {
+    if ((!masterKey && !useVaultStore.getState().isDecoyMode) || !trimmedName || !trimmedValue) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -525,7 +528,7 @@ export const SecretsVault: React.FC = () => {
   };
 
   const handleUpdateItem = async (id: string, name: string, value: string) => {
-    if (!masterKey) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
 
     const trimmedName = name.trim();
     const trimmedValue = value.trim();
