@@ -100,7 +100,30 @@ export const ensureWindowsSystem32OnPath = () => {
   return updatedPath;
 };
 
+export const sanitizeNpmConfigEnv = (rawEnv = process.env) => {
+  const sanitized = { ...rawEnv };
+  for (const key of Object.keys(sanitized)) {
+    if (/^npm_config_global[-_]?ignore[-_]?file$/i.test(key)) {
+      delete sanitized[key];
+    }
+  }
+  return sanitized;
+};
+
+// Clean in-place on module load to prevent downstream warnings in npm/npx subprocesses
+for (const key of Object.keys(process.env)) {
+  if (/^npm_config_global[-_]?ignore[-_]?file$/i.test(key)) {
+    delete process.env[key];
+  }
+}
+
 export const runtimePath = ensureWindowsSystem32OnPath();
+
+export const getSanitizedProcessEnv = (extraEnv = {}) => ({
+  ...sanitizeNpmConfigEnv(process.env),
+  PATH: runtimePath,
+  ...extraEnv,
+});
 
 /**
  * Searches for a Chrome/Chromium executable across multiple platforms.
@@ -307,7 +330,7 @@ export const terminateProcessTree = (pid, platform = process.platform) => {
       execSync(`taskkill /pid ${pid} /T /F`, {
         stdio: 'ignore',
         windowsHide: true,
-        env: { ...process.env, PATH: runtimePath },
+        env: getSanitizedProcessEnv(),
       });
       return;
     } catch {
@@ -351,10 +374,7 @@ export const launchManagedChrome = async ({
     stdio: 'ignore',
     windowsHide: true,
     detached: process.platform !== 'win32',
-    env: {
-      ...process.env,
-      PATH: runtimePath,
-    },
+    env: getSanitizedProcessEnv(),
   });
 
   let exited = false;
@@ -433,18 +453,37 @@ export const resolveNpxRunner = () => {
   };
 };
 
-export const ensureProductionBuild = (workspaceRoot = process.cwd()) => {
+export const ensureProductionBuild = (workspaceRoot = process.cwd(), forceRebuild = false) => {
   const possibleBuildDirs = [
     path.join(workspaceRoot, 'build', 'index.html'),
     path.join(workspaceRoot, 'dist', 'index.html'),
   ];
 
-  const buildExists = possibleBuildDirs.some((p) => fs.existsSync(p));
-  if (buildExists) {
-    return true;
-  }
+  const existingBuildHtml = possibleBuildDirs.find((p) => fs.existsSync(p));
+  if (existingBuildHtml && !forceRebuild) {
+    const buildMtime = fs.statSync(existingBuildHtml).mtimeMs;
+    const sourceFilesToCheck = [
+      path.join(workspaceRoot, 'index.html'),
+      path.join(workspaceRoot, 'vite.config.ts'),
+      path.join(workspaceRoot, 'src', 'App.tsx'),
+      path.join(workspaceRoot, 'src', 'main.tsx'),
+      path.join(workspaceRoot, 'src', 'index.css'),
+    ];
+    const isStale = sourceFilesToCheck.some((src) => {
+      try {
+        return fs.existsSync(src) && fs.statSync(src).mtimeMs > buildMtime;
+      } catch {
+        return false;
+      }
+    });
 
-  console.log('⚡ Production build not found. Running build step before preview...');
+    if (!isStale) {
+      return true;
+    }
+    console.log('⚡ Source files modified since last build. Rebuilding production bundle...');
+  } else if (!existingBuildHtml) {
+    console.log('⚡ Production build not found. Running build step before preview...');
+  }
 
   const buildEnvScript = path.join(workspaceRoot, 'scripts', 'build-env.mjs');
   let result;
@@ -454,7 +493,7 @@ export const ensureProductionBuild = (workspaceRoot = process.cwd()) => {
       cwd: workspaceRoot,
       stdio: 'inherit',
       shell: false,
-      env: { ...process.env, PATH: runtimePath },
+      env: getSanitizedProcessEnv(),
     });
   } else {
     const isWin = process.platform === 'win32';
@@ -464,7 +503,7 @@ export const ensureProductionBuild = (workspaceRoot = process.cwd()) => {
       cwd: workspaceRoot,
       stdio: 'inherit',
       shell: false,
-      env: { ...process.env, PATH: runtimePath },
+      env: getSanitizedProcessEnv(),
     });
   }
 
@@ -1613,7 +1652,7 @@ export const run = async (customOptions = null) => {
           cwd: root,
           stdio: 'ignore',
           windowsHide: true,
-          env: { ...process.env, PATH: runtimePath },
+          env: getSanitizedProcessEnv(),
         },
       );
 
@@ -1682,7 +1721,7 @@ export const run = async (customOptions = null) => {
         cwd: root,
         stdio: options.quiet ? 'ignore' : 'inherit',
         ...runner.options,
-        env: { ...process.env, PATH: runtimePath },
+        env: getSanitizedProcessEnv(),
       });
 
       if (result.error && !options.quiet) {

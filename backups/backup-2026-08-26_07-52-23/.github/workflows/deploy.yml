@@ -1,0 +1,124 @@
+name: Build And Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      NODE_ENV: test
+      JWT_SECRET: ci-jwt-secret-for-testing-only-32bytes
+      REFRESH_TOKEN_SECRET: ci-refresh-secret-for-testing-only-32bytes
+      VAULT_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      AUTH_PEPPER: ci-auth-pepper-key-for-testing
+      CSRF_SECRET: ci-csrf-secret-key-32-chars-long
+      SIGNED_URL_SECRET: ci-signed-url-secret-32-chars-long
+      RECAPTCHA_SECRET_KEY: ci-recaptcha-test-secret-key
+      MONGODB_URI: ${{ secrets.MONGODB_URI || 'mongodb://127.0.0.1:27017/personal-vault' }}
+      SKIP_MONGO_CONNECT: '1'
+      CLIENT_URL: http://localhost:4000
+      PUBLIC_URL: http://localhost:4000
+      VITE_API_BASE_URL: http://localhost:4000
+      VITE_CSP_CONNECT_SRC: http://localhost:4000 ws://localhost:4000
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Verify environment
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${MONGODB_URI:-}" ]]; then
+            echo "::warning::Missing MONGODB_URI secret. Using local fallback URI for CI execution."
+            MONGODB_URI="mongodb://127.0.0.1:27017/personal-vault"
+            echo "MONGODB_URI=${MONGODB_URI}" >> "$GITHUB_ENV"
+          fi
+
+          echo "Environment validation successful."
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+
+      - name: Check formatting (optional)
+        continue-on-error: true
+        run: |
+          npm run format:check || echo "::warning::Formatting check identified unformatted files. Run 'npm run format' to auto-fix."
+
+      - name: Lint & Type Check
+        run: npm run lint
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Security Audit (advisory)
+        continue-on-error: true
+        run: npm audit --audit-level=high || true
+
+      - name: Build Application
+        run: npm run build
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: build
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Deployment Gate
+        run: |
+          echo "✅ All verification checks passed."
+          echo "Application is ready for deployment."
+
+      - name: Workflow Summary
+        if: success()
+        run: |
+          {
+            echo "## ✅ CI Pipeline Passed"
+            echo ""
+            echo "| Check | Status |"
+            echo "|------|--------|"
+            echo "| Install | ✅ |"
+            echo "| Type Check & Lint | ✅ |"
+            echo "| Tests | ✅ |"
+            echo "| Build | ✅ |"
+            echo "| Artifact | ✅ |"
+            echo ""
+            echo "Commit: \`$GITHUB_SHA\`"
+            echo "Branch: \`$GITHUB_REF_NAME\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Failure Summary
+        if: failure()
+        run: |
+          {
+            echo "## ❌ CI Pipeline Failed"
+            echo ""
+            echo "Review the workflow logs above to identify the failing step."
+          } >> "$GITHUB_STEP_SUMMARY"

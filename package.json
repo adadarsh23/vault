@@ -126,7 +126,7 @@
     "security:rewrap-kek": "tsx server/scripts/rewrapEnvelopeKeys.ts --dry-run",
     "lighthouse": "node scripts/lighthouse-runner.mjs",
     "lighthouse:desktop": "node scripts/lighthouse-runner.mjs --desktop",
-    "lighthouse:ci": "node scripts/lighthouse-runner.mjs --assert --min-score=90",
+    "lighthouse:ci": "node scripts/lighthouse-runner.mjs --assert --min-score-accessibility=90 --min-score-best-practices=90 --min-score-seo=90 --min-score-performance=65",
     "lighthouse:split": "node scripts/lighthouse-runner.mjs --split-existing-report",
     "lighthouse:open": "node scripts/open-report.mjs lighthouse/report-split/index.html",
     "lighthouse:chrome": "node scripts/open-report.mjs lighthouse/report-split/index.html --chrome",

@@ -33,6 +33,9 @@ import {
   removeTempDirectorySafely,
   cleanupStaleLighthouseTempDirectories,
   resolveNpxRunner,
+  ensureProductionBuild,
+  sanitizeNpmConfigEnv,
+  getSanitizedProcessEnv,
 } from '../../scripts/lighthouse-runner.mjs';
 
 describe('Lighthouse Runner Utility', () => {
@@ -591,6 +594,49 @@ describe('Lighthouse Runner Utility', () => {
       expect(typeof runner.command).toBe('string');
       expect(Array.isArray(runner.prefixArgs)).toBe(true);
       expect(runner.options.shell).toBe(false);
+    });
+  });
+
+  describe('ensureProductionBuild', () => {
+    it('returns true when build output exists and is up to date', () => {
+      const fakeBuildDir = path.join(tempRoot, 'build');
+      fs.mkdirSync(fakeBuildDir, { recursive: true });
+      fs.writeFileSync(path.join(fakeBuildDir, 'index.html'), '<html></html>', 'utf8');
+
+      const isReady = ensureProductionBuild(tempRoot);
+      expect(isReady).toBe(true);
+    });
+  });
+
+  describe('npm Environment Sanitization (sanitizeNpmConfigEnv & getSanitizedProcessEnv)', () => {
+    it('strips legacy or unrecognized npm config environment variables', () => {
+      const mockEnv = {
+        PATH: '/usr/bin',
+        NODE_ENV: 'test',
+        npm_config_global_ignore_file: 'C:\\Users\\user\\.gitignore',
+        npm_config_global_ignorefile: 'C:\\Users\\user\\.gitignore',
+        'npm_config_global-ignore-file': 'C:\\Users\\user\\.gitignore',
+        NPM_CONFIG_GLOBAL_IGNORE_FILE: 'C:\\Users\\user\\.gitignore',
+        npm_config_loglevel: 'warn',
+      };
+
+      const sanitized = sanitizeNpmConfigEnv(mockEnv);
+      expect(sanitized.PATH).toBe('/usr/bin');
+      expect(sanitized.NODE_ENV).toBe('test');
+      expect(sanitized.npm_config_loglevel).toBe('warn');
+      expect(sanitized.npm_config_global_ignore_file).toBeUndefined();
+      expect(sanitized.npm_config_global_ignorefile).toBeUndefined();
+      expect(sanitized['npm_config_global-ignore-file']).toBeUndefined();
+      expect(sanitized.NPM_CONFIG_GLOBAL_IGNORE_FILE).toBeUndefined();
+    });
+
+    it('returns sanitized process environment with PATH ensured', () => {
+      const env = getSanitizedProcessEnv({ EXTRA_VAR: '123' });
+      expect(env).toBeDefined();
+      expect(env.PATH).toBeDefined();
+      expect(env.EXTRA_VAR).toBe('123');
+      expect(env.npm_config_global_ignore_file).toBeUndefined();
+      expect(env.NPM_CONFIG_GLOBAL_IGNORE_FILE).toBeUndefined();
     });
   });
 });

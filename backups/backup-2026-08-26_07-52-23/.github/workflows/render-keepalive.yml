@@ -1,0 +1,123 @@
+name: Render Keepalive
+
+on:
+  schedule:
+    # Run every 14 minutes to prevent Render free-tier web services from spinning down
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: render-keepalive
+  cancel-in-progress: false
+
+jobs:
+  keepalive:
+    name: Keep Render Service Awake
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      RENDER_KEEPALIVE_URL: ${{ secrets.RENDER_KEEPALIVE_URL }}
+      HEALTH_ENDPOINT: /health
+
+    steps:
+      - name: Ping Render health endpoint
+        id: ping
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          RAW_URL="${RENDER_KEEPALIVE_URL:-}"
+          RAW_URL="$(echo "$RAW_URL" | tr -d '[:space:]')"
+
+          if [[ -z "$RAW_URL" ]]; then
+            echo "::notice title=Render Keepalive Skipped::Repository secret RENDER_KEEPALIVE_URL is not configured in GitHub repository secrets."
+            {
+              echo "## ℹ️ Render Keepalive Skipped"
+              echo ""
+              echo "Repository secret \`RENDER_KEEPALIVE_URL\` is not configured."
+              echo "To activate automated pings, configure \`RENDER_KEEPALIVE_URL\` under **Settings > Secrets and variables > Actions**."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # Ensure http(s) protocol prefix
+          if [[ "$RAW_URL" != http://* && "$RAW_URL" != https://* ]]; then
+            RAW_URL="https://${RAW_URL}"
+          fi
+
+          # Strip trailing slashes and any pre-existing health paths
+          CLEAN_URL="${RAW_URL%/}"
+          CLEAN_URL="${CLEAN_URL%/health}"
+          CLEAN_URL="${CLEAN_URL%/api/health}"
+          TARGET_URL="${CLEAN_URL}${HEALTH_ENDPOINT}"
+
+          echo "Checking health endpoint: $TARGET_URL"
+
+          HTTP_CODE=$(
+            curl \
+              --silent \
+              --show-error \
+              --location \
+              --connect-timeout 15 \
+              --max-time 60 \
+              --retry 3 \
+              --retry-delay 10 \
+              --retry-all-errors \
+              --write-out "%{http_code}" \
+              --output response.json \
+              --user-agent "GitHub-Actions-Render-Keepalive" \
+              "$TARGET_URL"
+          ) || {
+            CURL_EXIT=$?
+            echo "::error::Curl failed to reach $TARGET_URL (exit code: $CURL_EXIT)"
+            {
+              echo "## ❌ Render Keepalive Failed"
+              echo ""
+              echo "- Target: \`$TARGET_URL\`"
+              echo "- Error: Network connection or timeout error (curl code $CURL_EXIT)"
+              echo "- Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit "$CURL_EXIT"
+          }
+
+          echo "HTTP Response Code: $HTTP_CODE"
+
+          if [[ ! "$HTTP_CODE" =~ ^[0-9]+$ || "$HTTP_CODE" -lt 200 || "$HTTP_CODE" -ge 300 ]]; then
+            echo "::error::Health check returned non-2xx HTTP status: $HTTP_CODE"
+            if [[ -s response.json ]]; then
+              echo "Response payload:"
+              cat response.json
+            fi
+            {
+              echo "## ❌ Render Keepalive Failed"
+              echo ""
+              echo "- Target: \`$TARGET_URL\`"
+              echo "- HTTP Status: \`$HTTP_CODE\`"
+              echo "- Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+              if [[ -s response.json ]]; then
+                echo ""
+                echo '```json'
+                cat response.json | head -n 30
+                echo '```'
+              fi
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "✅ Health check succeeded with HTTP $HTTP_CODE"
+          if [[ -s response.json ]]; then
+            echo "Response payload:"
+            cat response.json
+          fi
+
+          {
+            echo "## ✅ Render Keepalive Succeeded"
+            echo ""
+            echo "- Target: \`$TARGET_URL\`"
+            echo "- HTTP Status: \`$HTTP_CODE\`"
+            echo "- Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          } >> "$GITHUB_STEP_SUMMARY"

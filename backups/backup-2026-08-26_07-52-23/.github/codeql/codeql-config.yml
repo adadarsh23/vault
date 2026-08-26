@@ -1,0 +1,17 @@
+name: 'Vault CodeQL Configuration'
+
+paths:
+  - 'src'
+  - 'server'
+  - 'scripts'
+
+paths-ignore:
+  - 'build'
+  - 'dist'
+  - 'coverage'
+  - 'lighthouse'
+  - 'logs'
+  - 'node_modules'
+  - '**/*.min.js'
+  - '**/*.map'
+  - '**/*.bundle.js'

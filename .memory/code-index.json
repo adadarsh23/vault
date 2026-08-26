@@ -1,8 +1,8 @@
 {
   "version": 5,
   "schema": "code-memory-index/v5",
-  "generatedAt": "2026-08-25T18:47:42.845Z",
-  "startedAt": "2026-08-25T18:47:42.360Z",
+  "generatedAt": "2026-08-26T02:22:01.152Z",
+  "startedAt": "2026-08-26T02:22:00.553Z",
   "root": "C:\\code\\vault",
   "options": {
     "maxFileSizeBytes": 1048576,
@@ -18,53 +18,53 @@
     "filesScanned": 537,
     "filesIndexed": 537,
     "filesSkipped": 0,
-    "bytesIndexed": 6763754,
-    "linesIndexed": 177214,
-    "codeLines": 155641,
-    "commentLines": 5221,
-    "blankLines": 16352,
-    "symbolCount": 3214,
-    "importCount": 2148,
-    "exportCount": 1473,
-    "tagCount": 111
+    "bytesIndexed": 7513620,
+    "linesIndexed": 192896,
+    "codeLines": 171311,
+    "commentLines": 5223,
+    "blankLines": 16362,
+    "symbolCount": 3216,
+    "importCount": 2150,
+    "exportCount": 1475,
+    "tagCount": 113
   },
   "quality": {
-    "commentDensity": 0.034,
-    "blankLineRatio": 0.092,
+    "commentDensity": 0.03,
+    "blankLineRatio": 0.085,
     "todoFilesRatio": 0.138,
     "avgSymbolsPerFile": 5.99,
     "avgImportsPerFile": 4,
-    "avgRiskPerFile": 21.71
+    "avgRiskPerFile": 21.74
   },
   "riskSummary": {
     "critical": 14,
-    "high": 51,
-    "medium": 82,
+    "high": 53,
+    "medium": 80,
     "low": 390
   },
   "extensionStats": [
     {
       "extension": ".ts",
       "files": 285,
-      "lines": 68326,
-      "bytes": 2050983,
+      "lines": 68393,
+      "bytes": 2053722,
       "symbols": 1884,
-      "riskScore": 5920
+      "riskScore": 5928
     },
     {
       "extension": ".tsx",
       "files": 179,
-      "lines": 72305,
-      "bytes": 2716418,
+      "lines": 72295,
+      "bytes": 2716141,
       "symbols": 1047,
-      "riskScore": 4212
+      "riskScore": 4211
     },
     {
       "extension": ".mjs",
       "files": 21,
-      "lines": 5948,
-      "bytes": 191253,
-      "symbols": 162,
+      "lines": 6008,
+      "bytes": 193201,
+      "symbols": 164,
       "riskScore": 459
     },
     {
@@ -78,10 +78,10 @@
     {
       "extension": ".json",
       "files": 11,
-      "lines": 19540,
-      "bytes": 911546,
+      "lines": 35099,
+      "bytes": 1545785,
       "symbols": 2,
-      "riskScore": 250
+      "riskScore": 264
     },
     {
       "extension": ".js",
@@ -94,8 +94,8 @@
     {
       "extension": ".html",
       "files": 6,
-      "lines": 4790,
-      "bytes": 650223,
+      "lines": 4796,
+      "bytes": 761440,
       "symbols": 59,
       "riskScore": 183
     },
@@ -147,7 +147,7 @@
     },
     {
       "tag": "TODO",
-      "count": 35
+      "count": 37
     },
     {
       "tag": "OPTIMIZE",
@@ -173,7 +173,7 @@
   "importTypeStats": [
     {
       "kind": "relative",
-      "count": 1293
+      "count": 1295
     },
     {
       "kind": "package",
@@ -190,11 +190,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 517285,
-        "hash": "ef634f01dfd025eaba6f425d5eead7669b8a5171758de7b5b81a3b30511f7a14",
+        "bytes": 836351,
+        "hash": "52a12082e596c6b029a5f4818068ff0250c17053125ecb99da25fab93efe6c35",
         "lines": {
-          "total": 11527,
-          "code": 11527,
+          "total": 19400,
+          "code": 19400,
           "comments": 0,
           "blanks": 0
         },
@@ -207,31 +207,32 @@
         ],
         "symbolCount": 1,
         "tags": [
-          "OPTIMIZE"
+          "OPTIMIZE",
+          "TODO"
         ],
-        "tagCount": 1,
+        "tagCount": 2,
         "keywordCounts": {
-          "asyncCount": 0,
+          "asyncCount": 2,
           "awaitCount": 0,
           "tryCount": 1,
           "catchCount": 0,
           "throwCount": 0,
-          "ifCount": 4,
+          "ifCount": 5,
           "switchCount": 0
         },
-        "complexityScore": 11545,
-        "updatedAt": "2026-08-25T18:41:34.212Z",
-        "riskScore": 37
+        "complexityScore": 19430,
+        "updatedAt": "2026-08-26T02:19:41.265Z",
+        "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 247202,
-        "hash": "279d8801ca87a1f411d32bb22bd21ea4bbab49cd8137ac99055e3257bc5ae773",
+        "bytes": 566424,
+        "hash": "8c9fe628140c8b78b777a436a9ea16235cc47e3d44d17a51384af6ac7fefedb0",
         "lines": {
-          "total": 3788,
-          "code": 3787,
+          "total": 11596,
+          "code": 11595,
           "comments": 0,
           "blanks": 1
         },
@@ -242,28 +243,29 @@
         "symbols": [],
         "symbolCount": 0,
         "tags": [
-          "OPTIMIZE"
+          "OPTIMIZE",
+          "TODO"
         ],
-        "tagCount": 1,
+        "tagCount": 2,
         "keywordCounts": {
-          "asyncCount": 0,
+          "asyncCount": 2,
           "awaitCount": 0,
           "tryCount": 1,
           "catchCount": 0,
           "throwCount": 0,
-          "ifCount": 1,
+          "ifCount": 2,
           "switchCount": 0
         },
-        "complexityScore": 3799,
-        "updatedAt": "2026-08-25T18:41:37.692Z",
-        "riskScore": 37
+        "complexityScore": 11619,
+        "updatedAt": "2026-08-26T02:19:43.887Z",
+        "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 576548,
-        "hash": "13239524ce8a264b337f81f0804fa1f205bbefa6869b05997aa6e5faeab4b738",
+        "bytes": 686803,
+        "hash": "5b83b52b1cdd89a385353ad7497d127317ee363df90516ac12bc61dba7aded9c",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -343,16 +345,16 @@
         ],
         "tagCount": 3,
         "keywordCounts": {
-          "asyncCount": 5,
+          "asyncCount": 7,
           "awaitCount": 4,
           "tryCount": 8,
           "catchCount": 7,
           "throwCount": 15,
-          "ifCount": 168,
+          "ifCount": 169,
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-25T18:41:34.206Z",
+        "updatedAt": "2026-08-26T02:19:41.257Z",
         "riskScore": 68
       },
       {
@@ -1178,37 +1180,187 @@
         "riskScore": 58
       },
       {
-        "path": "lighthouse/report-split/best-practices.json",
-        "extension": ".json",
-        "directory": "lighthouse/report-split",
-        "bytes": 63441,
-        "hash": "0674ef24617efe3dc75adb45f7897afe2005238f8d6c2b2e490fd8c40eb55d08",
+        "path": "scripts/lighthouse-runner.mjs",
+        "extension": ".mjs",
+        "directory": "scripts",
+        "bytes": 57453,
+        "hash": "d0da9212404fea22f8cab92fbdd1e3a83ffe4a87f61a7300e8eaf147b74bf092",
         "lines": {
-          "total": 1935,
-          "code": 1934,
-          "comments": 0,
-          "blanks": 1
+          "total": 1820,
+          "code": 1540,
+          "comments": 84,
+          "blanks": 196
         },
-        "imports": [],
-        "exports": [],
-        "importSpecifiers": [],
-        "importsDetailed": [],
-        "symbols": [],
-        "symbolCount": 0,
+        "imports": [
+          "import fs from 'node:fs';",
+          "import path from 'node:path';",
+          "import http from 'node:http';",
+          "import os from 'node:os';",
+          "import net from 'node:net';",
+          "import { execSync, spawn, spawnSync } from 'node:child_process';",
+          "import { fileURLToPath } from 'node:url';"
+        ],
+        "exports": [
+          "export const DEFAULT_URL = 'http://127.0.0.1:4173/';",
+          "export const DEFAULT_OUTPUT_PATH = './lighthouse/report';",
+          "export const DEFAULT_SPLIT_REPORT_DIR = './lighthouse/report-split';",
+          "export const DEFAULT_CATEGORIES = 'performance,accessibility,best-practices,seo';",
+          "export const DEFAULT_PREVIEW_HOST = '127.0.0.1';",
+          "export const DEFAULT_PREVIEW_PORT = 4173;",
+          "export const DEFAULT_TIMEOUT_MS = 30000;",
+          "export const DEFAULT_CHROME_FLAGS = [",
+          "export const FALLBACK_CHROME_FLAGS = [",
+          "export const CWV_THRESHOLDS = {",
+          "export const ensureWindowsSystem32OnPath = () => {",
+          "export const sanitizeNpmConfigEnv = (rawEnv = process.env) => {",
+          "export const runtimePath = ensureWindowsSystem32OnPath();",
+          "export const getSanitizedProcessEnv = (extraEnv = {}) => ({",
+          "export const resolveChromeExecutablePath = (",
+          "export const isSafeWorkspaceChild = (targetPath, workspaceRoot = process.cwd()) => {",
+          "export const removeTempDirectorySafely = (directoryPath, retries = 5, delayMs = 150) => {",
+          "export const cleanupStaleLighthouseTempDirectories = (tempRoot = os.tmpdir()) => {",
+          "export const getAvailablePort = (host = '127.0.0.1') =>",
+          "export const splitChromeFlags = (flags) => {",
+          "export const terminateProcessTree = (pid, platform = process.platform) => {",
+          "export const launchManagedChrome = async ({",
+          "export const resolveNpxRunner = () => {",
+          "export const ensureProductionBuild = (workspaceRoot = process.cwd(), forceRebuild = false) => {",
+          "export const waitForServer = (url, timeoutMs = 30000, attachedProcess = null) =>",
+          "export const escapeHtml = (value) =>",
+          "export const stripMarkdownLinks = (value) =>",
+          "export const slugify = (value) =>",
+          "export const scorePercent = (score) => {",
+          "export const scoreClass = (score) => {",
+          "export const scoreColor = (score) => {",
+          "export const scoreLabel = (audit) => {",
+          "export const formatDuration = (ms) => {",
+          "export const formatBytes = (bytes) => {",
+          "export const extractCoreWebVitals = (report) => {",
+          "export const extractOpportunities = (report) => {",
+          "export const evaluateAssertions = (report, assertions = {}) => {",
+          "export const renderPage = ({ title, body, subTitle = '' }) => `<!doctype html>",
+          "export const renderAuditTable = (rows) => {",
+          "export const renderOpportunitiesTable = (opportunities) => {",
+          "export const renderMetricsGrid = (cwv) => {",
+          "export const writeSplitReports = (options, report, workspaceRoot = process.cwd()) => {",
+          "export const parseArgs = (argv = process.argv.slice(2)) => {",
+          "export const printHelp = () => {",
+          "export const printTerminalReport = (report, assertionResult, options) => {",
+          "export const openReportFile = (filePath) => {",
+          "export const run = async (customOptions = null) => {"
+        ],
+        "importSpecifiers": [
+          "node:fs",
+          "node:path",
+          "node:http",
+          "node:os",
+          "node:net",
+          "node:child_process",
+          "node:url"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "node:fs",
+            "kind": "node_builtin",
+            "target": null
+          },
+          {
+            "specifier": "node:path",
+            "kind": "node_builtin",
+            "target": null
+          },
+          {
+            "specifier": "node:http",
+            "kind": "node_builtin",
+            "target": null
+          },
+          {
+            "specifier": "node:os",
+            "kind": "node_builtin",
+            "target": null
+          },
+          {
+            "specifier": "node:net",
+            "kind": "node_builtin",
+            "target": null
+          },
+          {
+            "specifier": "node:child_process",
+            "kind": "node_builtin",
+            "target": null
+          },
+          {
+            "specifier": "node:url",
+            "kind": "node_builtin",
+            "target": null
+          }
+        ],
+        "symbols": [
+          "ensureWindowsSystem32OnPath",
+          "sanitizeNpmConfigEnv",
+          "getSanitizedProcessEnv",
+          "resolveChromeExecutablePath",
+          "isSafeWorkspaceChild",
+          "removeTempDirectorySafely",
+          "cleanupStaleLighthouseTempDirectories",
+          "getAvailablePort",
+          "splitChromeFlags",
+          "terminateProcessTree",
+          "launchManagedChrome",
+          "stop",
+          "resolveNpxRunner",
+          "ensureProductionBuild",
+          "waitForServer",
+          "cleanup",
+          "tryRequest",
+          "retry",
+          "escapeHtml",
+          "stripMarkdownLinks",
+          "slugify",
+          "scorePercent",
+          "scoreClass",
+          "scoreColor",
+          "scoreLabel",
+          "formatDuration",
+          "formatBytes",
+          "extractCoreWebVitals",
+          "getMetric",
+          "extractOpportunities",
+          "evaluateAssertions",
+          "renderPage",
+          "renderAuditTable",
+          "renderOpportunitiesTable",
+          "renderMetricsGrid",
+          "writeSplitReports",
+          "auditRows",
+          "parseArgs",
+          "printHelp",
+          "printTerminalReport",
+          "printMetric",
+          "openReportFile",
+          "run",
+          "cleanupAll",
+          "handleInterrupt",
+          "resolveReportPath",
+          "hasValidReports",
+          "executeLighthouse",
+          "isDirectExecution"
+        ],
+        "symbolCount": 49,
         "tags": [],
         "tagCount": 0,
         "keywordCounts": {
-          "asyncCount": 0,
-          "awaitCount": 0,
-          "tryCount": 0,
-          "catchCount": 0,
-          "throwCount": 0,
-          "ifCount": 1,
+          "asyncCount": 5,
+          "awaitCount": 7,
+          "tryCount": 17,
+          "catchCount": 17,
+          "throwCount": 5,
+          "ifCount": 149,
           "switchCount": 0
         },
-        "complexityScore": 1934,
-        "updatedAt": "2026-08-25T18:41:37.700Z",
-        "riskScore": 30
+        "complexityScore": 1855,
+        "updatedAt": "2026-08-26T02:13:12.382Z",
+        "riskScore": 47
       },
       {
         "path": "src/features/vault/DocumentsVault.tsx",
@@ -1414,183 +1566,37 @@
         "riskScore": 58
       },
       {
-        "path": "scripts/lighthouse-runner.mjs",
-        "extension": ".mjs",
-        "directory": "scripts",
-        "bytes": 56142,
-        "hash": "e7e848604427791e7c34dc7fdb7d875f925e8b0822fa0e38ef03ab3afd9d7eab",
+        "path": "lighthouse/report-split/best-practices.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 59455,
+        "hash": "a5a0efc893d0397f1a8244086a542c2150cb6dfd7cc06c1bb0d56f2f7cddb682",
         "lines": {
-          "total": 1781,
-          "code": 1505,
-          "comments": 83,
-          "blanks": 193
+          "total": 1811,
+          "code": 1810,
+          "comments": 0,
+          "blanks": 1
         },
-        "imports": [
-          "import fs from 'node:fs';",
-          "import path from 'node:path';",
-          "import http from 'node:http';",
-          "import os from 'node:os';",
-          "import net from 'node:net';",
-          "import { execSync, spawn, spawnSync } from 'node:child_process';",
-          "import { fileURLToPath } from 'node:url';"
-        ],
-        "exports": [
-          "export const DEFAULT_URL = 'http://127.0.0.1:4173/';",
-          "export const DEFAULT_OUTPUT_PATH = './lighthouse/report';",
-          "export const DEFAULT_SPLIT_REPORT_DIR = './lighthouse/report-split';",
-          "export const DEFAULT_CATEGORIES = 'performance,accessibility,best-practices,seo';",
-          "export const DEFAULT_PREVIEW_HOST = '127.0.0.1';",
-          "export const DEFAULT_PREVIEW_PORT = 4173;",
-          "export const DEFAULT_TIMEOUT_MS = 30000;",
-          "export const DEFAULT_CHROME_FLAGS = [",
-          "export const FALLBACK_CHROME_FLAGS = [",
-          "export const CWV_THRESHOLDS = {",
-          "export const ensureWindowsSystem32OnPath = () => {",
-          "export const runtimePath = ensureWindowsSystem32OnPath();",
-          "export const resolveChromeExecutablePath = (",
-          "export const isSafeWorkspaceChild = (targetPath, workspaceRoot = process.cwd()) => {",
-          "export const removeTempDirectorySafely = (directoryPath, retries = 5, delayMs = 150) => {",
-          "export const cleanupStaleLighthouseTempDirectories = (tempRoot = os.tmpdir()) => {",
-          "export const getAvailablePort = (host = '127.0.0.1') =>",
-          "export const splitChromeFlags = (flags) => {",
-          "export const terminateProcessTree = (pid, platform = process.platform) => {",
-          "export const launchManagedChrome = async ({",
-          "export const resolveNpxRunner = () => {",
-          "export const ensureProductionBuild = (workspaceRoot = process.cwd()) => {",
-          "export const waitForServer = (url, timeoutMs = 30000, attachedProcess = null) =>",
-          "export const escapeHtml = (value) =>",
-          "export const stripMarkdownLinks = (value) =>",
-          "export const slugify = (value) =>",
-          "export const scorePercent = (score) => {",
-          "export const scoreClass = (score) => {",
-          "export const scoreColor = (score) => {",
-          "export const scoreLabel = (audit) => {",
-          "export const formatDuration = (ms) => {",
-          "export const formatBytes = (bytes) => {",
-          "export const extractCoreWebVitals = (report) => {",
-          "export const extractOpportunities = (report) => {",
-          "export const evaluateAssertions = (report, assertions = {}) => {",
-          "export const renderPage = ({ title, body, subTitle = '' }) => `<!doctype html>",
-          "export const renderAuditTable = (rows) => {",
-          "export const renderOpportunitiesTable = (opportunities) => {",
-          "export const renderMetricsGrid = (cwv) => {",
-          "export const writeSplitReports = (options, report, workspaceRoot = process.cwd()) => {",
-          "export const parseArgs = (argv = process.argv.slice(2)) => {",
-          "export const printHelp = () => {",
-          "export const printTerminalReport = (report, assertionResult, options) => {",
-          "export const openReportFile = (filePath) => {",
-          "export const run = async (customOptions = null) => {"
-        ],
-        "importSpecifiers": [
-          "node:fs",
-          "node:path",
-          "node:http",
-          "node:os",
-          "node:net",
-          "node:child_process",
-          "node:url"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "node:fs",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:path",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:http",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:os",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:net",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:child_process",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:url",
-            "kind": "node_builtin",
-            "target": null
-          }
-        ],
-        "symbols": [
-          "ensureWindowsSystem32OnPath",
-          "resolveChromeExecutablePath",
-          "isSafeWorkspaceChild",
-          "removeTempDirectorySafely",
-          "cleanupStaleLighthouseTempDirectories",
-          "getAvailablePort",
-          "splitChromeFlags",
-          "terminateProcessTree",
-          "launchManagedChrome",
-          "stop",
-          "resolveNpxRunner",
-          "ensureProductionBuild",
-          "waitForServer",
-          "cleanup",
-          "tryRequest",
-          "retry",
-          "escapeHtml",
-          "stripMarkdownLinks",
-          "slugify",
-          "scorePercent",
-          "scoreClass",
-          "scoreColor",
-          "scoreLabel",
-          "formatDuration",
-          "formatBytes",
-          "extractCoreWebVitals",
-          "getMetric",
-          "extractOpportunities",
-          "evaluateAssertions",
-          "renderPage",
-          "renderAuditTable",
-          "renderOpportunitiesTable",
-          "renderMetricsGrid",
-          "writeSplitReports",
-          "auditRows",
-          "parseArgs",
-          "printHelp",
-          "printTerminalReport",
-          "printMetric",
-          "openReportFile",
-          "run",
-          "cleanupAll",
-          "handleInterrupt",
-          "resolveReportPath",
-          "hasValidReports",
-          "executeLighthouse",
-          "isDirectExecution"
-        ],
-        "symbolCount": 47,
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [],
+        "symbolCount": 0,
         "tags": [],
         "tagCount": 0,
         "keywordCounts": {
-          "asyncCount": 5,
-          "awaitCount": 7,
-          "tryCount": 16,
-          "catchCount": 16,
-          "throwCount": 5,
-          "ifCount": 145,
+          "asyncCount": 0,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
           "switchCount": 0
         },
-        "complexityScore": 1808,
-        "updatedAt": "2026-08-25T18:39:41.805Z",
-        "riskScore": 47
+        "complexityScore": 1810,
+        "updatedAt": "2026-08-26T02:19:43.903Z",
+        "riskScore": 30
       },
       {
         "path": "server/services/vaultService.internal.ts",
@@ -3230,7 +3236,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "f11be4a7b8bb63185482e88b18c99a10d6724009edafae8f801c7852a39e1526",
+        "hash": "50a61b81ea619562e92f16bbe87dff546c5365a5439c6c143a9a6cda98b76a62",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -3257,7 +3263,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-25T18:41:37.692Z",
+        "updatedAt": "2026-08-26T02:19:43.903Z",
         "riskScore": 30
       },
       {
@@ -4557,11 +4563,49 @@
     ],
     "largestByBytes": [
       {
+        "path": "lighthouse/report.report.json",
+        "extension": ".json",
+        "directory": "lighthouse",
+        "bytes": 836351,
+        "hash": "52a12082e596c6b029a5f4818068ff0250c17053125ecb99da25fab93efe6c35",
+        "lines": {
+          "total": 19400,
+          "code": 19400,
+          "comments": 0,
+          "blanks": 0
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly"
+        ],
+        "symbolCount": 1,
+        "tags": [
+          "OPTIMIZE",
+          "TODO"
+        ],
+        "tagCount": 2,
+        "keywordCounts": {
+          "asyncCount": 2,
+          "awaitCount": 0,
+          "tryCount": 1,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 5,
+          "switchCount": 0
+        },
+        "complexityScore": 19430,
+        "updatedAt": "2026-08-26T02:19:41.265Z",
+        "riskScore": 44
+      },
+      {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 576548,
-        "hash": "13239524ce8a264b337f81f0804fa1f205bbefa6869b05997aa6e5faeab4b738",
+        "bytes": 686803,
+        "hash": "5b83b52b1cdd89a385353ad7497d127317ee363df90516ac12bc61dba7aded9c",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -4641,64 +4685,27 @@
         ],
         "tagCount": 3,
         "keywordCounts": {
-          "asyncCount": 5,
+          "asyncCount": 7,
           "awaitCount": 4,
           "tryCount": 8,
           "catchCount": 7,
           "throwCount": 15,
-          "ifCount": 168,
+          "ifCount": 169,
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-25T18:41:34.206Z",
+        "updatedAt": "2026-08-26T02:19:41.257Z",
         "riskScore": 68
-      },
-      {
-        "path": "lighthouse/report.report.json",
-        "extension": ".json",
-        "directory": "lighthouse",
-        "bytes": 517285,
-        "hash": "ef634f01dfd025eaba6f425d5eead7669b8a5171758de7b5b81a3b30511f7a14",
-        "lines": {
-          "total": 11527,
-          "code": 11527,
-          "comments": 0,
-          "blanks": 0
-        },
-        "imports": [],
-        "exports": [],
-        "importSpecifiers": [],
-        "importsDetailed": [],
-        "symbols": [
-          "correctly"
-        ],
-        "symbolCount": 1,
-        "tags": [
-          "OPTIMIZE"
-        ],
-        "tagCount": 1,
-        "keywordCounts": {
-          "asyncCount": 0,
-          "awaitCount": 0,
-          "tryCount": 1,
-          "catchCount": 0,
-          "throwCount": 0,
-          "ifCount": 4,
-          "switchCount": 0
-        },
-        "complexityScore": 11545,
-        "updatedAt": "2026-08-25T18:41:34.212Z",
-        "riskScore": 37
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 247202,
-        "hash": "279d8801ca87a1f411d32bb22bd21ea4bbab49cd8137ac99055e3257bc5ae773",
+        "bytes": 566424,
+        "hash": "8c9fe628140c8b78b777a436a9ea16235cc47e3d44d17a51384af6ac7fefedb0",
         "lines": {
-          "total": 3788,
-          "code": 3787,
+          "total": 11596,
+          "code": 11595,
           "comments": 0,
           "blanks": 1
         },
@@ -4709,21 +4716,22 @@
         "symbols": [],
         "symbolCount": 0,
         "tags": [
-          "OPTIMIZE"
+          "OPTIMIZE",
+          "TODO"
         ],
-        "tagCount": 1,
+        "tagCount": 2,
         "keywordCounts": {
-          "asyncCount": 0,
+          "asyncCount": 2,
           "awaitCount": 0,
           "tryCount": 1,
           "catchCount": 0,
           "throwCount": 0,
-          "ifCount": 1,
+          "ifCount": 2,
           "switchCount": 0
         },
-        "complexityScore": 3799,
-        "updatedAt": "2026-08-25T18:41:37.692Z",
-        "riskScore": 37
+        "complexityScore": 11619,
+        "updatedAt": "2026-08-26T02:19:43.887Z",
+        "riskScore": 44
       },
       {
         "path": "src/components/ui/video-player.tsx",
@@ -5751,39 +5759,6 @@
         "riskScore": 72
       },
       {
-        "path": "lighthouse/report-split/best-practices.json",
-        "extension": ".json",
-        "directory": "lighthouse/report-split",
-        "bytes": 63441,
-        "hash": "0674ef24617efe3dc75adb45f7897afe2005238f8d6c2b2e490fd8c40eb55d08",
-        "lines": {
-          "total": 1935,
-          "code": 1934,
-          "comments": 0,
-          "blanks": 1
-        },
-        "imports": [],
-        "exports": [],
-        "importSpecifiers": [],
-        "importsDetailed": [],
-        "symbols": [],
-        "symbolCount": 0,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 0,
-          "awaitCount": 0,
-          "tryCount": 0,
-          "catchCount": 0,
-          "throwCount": 0,
-          "ifCount": 1,
-          "switchCount": 0
-        },
-        "complexityScore": 1934,
-        "updatedAt": "2026-08-25T18:41:37.700Z",
-        "riskScore": 30
-      },
-      {
         "path": "src/features/vault/RealVaultEcosystemCard.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault",
@@ -5902,16 +5877,49 @@
         "riskScore": 46
       },
       {
+        "path": "lighthouse/report-split/best-practices.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 59455,
+        "hash": "a5a0efc893d0397f1a8244086a542c2150cb6dfd7cc06c1bb0d56f2f7cddb682",
+        "lines": {
+          "total": 1811,
+          "code": 1810,
+          "comments": 0,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [],
+        "symbolCount": 0,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 0,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 1810,
+        "updatedAt": "2026-08-26T02:19:43.903Z",
+        "riskScore": 30
+      },
+      {
         "path": "scripts/lighthouse-runner.mjs",
         "extension": ".mjs",
         "directory": "scripts",
-        "bytes": 56142,
-        "hash": "e7e848604427791e7c34dc7fdb7d875f925e8b0822fa0e38ef03ab3afd9d7eab",
+        "bytes": 57453,
+        "hash": "d0da9212404fea22f8cab92fbdd1e3a83ffe4a87f61a7300e8eaf147b74bf092",
         "lines": {
-          "total": 1781,
-          "code": 1505,
-          "comments": 83,
-          "blanks": 193
+          "total": 1820,
+          "code": 1540,
+          "comments": 84,
+          "blanks": 196
         },
         "imports": [
           "import fs from 'node:fs';",
@@ -5934,7 +5942,9 @@
           "export const FALLBACK_CHROME_FLAGS = [",
           "export const CWV_THRESHOLDS = {",
           "export const ensureWindowsSystem32OnPath = () => {",
+          "export const sanitizeNpmConfigEnv = (rawEnv = process.env) => {",
           "export const runtimePath = ensureWindowsSystem32OnPath();",
+          "export const getSanitizedProcessEnv = (extraEnv = {}) => ({",
           "export const resolveChromeExecutablePath = (",
           "export const isSafeWorkspaceChild = (targetPath, workspaceRoot = process.cwd()) => {",
           "export const removeTempDirectorySafely = (directoryPath, retries = 5, delayMs = 150) => {",
@@ -5944,7 +5954,7 @@
           "export const terminateProcessTree = (pid, platform = process.platform) => {",
           "export const launchManagedChrome = async ({",
           "export const resolveNpxRunner = () => {",
-          "export const ensureProductionBuild = (workspaceRoot = process.cwd()) => {",
+          "export const ensureProductionBuild = (workspaceRoot = process.cwd(), forceRebuild = false) => {",
           "export const waitForServer = (url, timeoutMs = 30000, attachedProcess = null) =>",
           "export const escapeHtml = (value) =>",
           "export const stripMarkdownLinks = (value) =>",
@@ -6017,6 +6027,8 @@
         ],
         "symbols": [
           "ensureWindowsSystem32OnPath",
+          "sanitizeNpmConfigEnv",
+          "getSanitizedProcessEnv",
           "resolveChromeExecutablePath",
           "isSafeWorkspaceChild",
           "removeTempDirectorySafely",
@@ -6064,20 +6076,20 @@
           "executeLighthouse",
           "isDirectExecution"
         ],
-        "symbolCount": 47,
+        "symbolCount": 49,
         "tags": [],
         "tagCount": 0,
         "keywordCounts": {
           "asyncCount": 5,
           "awaitCount": 7,
-          "tryCount": 16,
-          "catchCount": 16,
+          "tryCount": 17,
+          "catchCount": 17,
           "throwCount": 5,
-          "ifCount": 145,
+          "ifCount": 149,
           "switchCount": 0
         },
-        "complexityScore": 1808,
-        "updatedAt": "2026-08-25T18:39:41.805Z",
+        "complexityScore": 1855,
+        "updatedAt": "2026-08-26T02:13:12.382Z",
         "riskScore": 47
       },
       {
@@ -6562,7 +6574,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "f11be4a7b8bb63185482e88b18c99a10d6724009edafae8f801c7852a39e1526",
+        "hash": "50a61b81ea619562e92f16bbe87dff546c5365a5439c6c143a9a6cda98b76a62",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -6589,7 +6601,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-25T18:41:37.692Z",
+        "updatedAt": "2026-08-26T02:19:43.903Z",
         "riskScore": 30
       },
       {
@@ -9140,8 +9152,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 576548,
-        "hash": "13239524ce8a264b337f81f0804fa1f205bbefa6869b05997aa6e5faeab4b738",
+        "bytes": 686803,
+        "hash": "5b83b52b1cdd89a385353ad7497d127317ee363df90516ac12bc61dba7aded9c",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -9221,16 +9233,16 @@
         ],
         "tagCount": 3,
         "keywordCounts": {
-          "asyncCount": 5,
+          "asyncCount": 7,
           "awaitCount": 4,
           "tryCount": 8,
           "catchCount": 7,
           "throwCount": 15,
-          "ifCount": 168,
+          "ifCount": 169,
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-25T18:41:34.206Z",
+        "updatedAt": "2026-08-26T02:19:41.257Z",
         "riskScore": 68
       },
       {
@@ -9542,6 +9554,189 @@
         "riskScore": 52
       },
       {
+        "path": "scripts/lighthouse-runner.mjs",
+        "extension": ".mjs",
+        "directory": "scripts",
+        "bytes": 57453,
+        "hash": "d0da9212404fea22f8cab92fbdd1e3a83ffe4a87f61a7300e8eaf147b74bf092",
+        "lines": {
+          "total": 1820,
+          "code": 1540,
+          "comments": 84,
+          "blanks": 196
+        },
+        "imports": [
+          "import fs from 'node:fs';",
+          "import path from 'node:path';",
+          "import http from 'node:http';",
+          "import os from 'node:os';",
+          "import net from 'node:net';",
+          "import { execSync, spawn, spawnSync } from 'node:child_process';",
+          "import { fileURLToPath } from 'node:url';"
+        ],
+        "exports": [
+          "export const DEFAULT_URL = 'http://127.0.0.1:4173/';",
+          "export const DEFAULT_OUTPUT_PATH = './lighthouse/report';",
+          "export const DEFAULT_SPLIT_REPORT_DIR = './lighthouse/report-split';",
+          "export const DEFAULT_CATEGORIES = 'performance,accessibility,best-practices,seo';",
+          "export const DEFAULT_PREVIEW_HOST = '127.0.0.1';",
+          "export const DEFAULT_PREVIEW_PORT = 4173;",
+          "export const DEFAULT_TIMEOUT_MS = 30000;",
+          "export const DEFAULT_CHROME_FLAGS = [",
+          "export const FALLBACK_CHROME_FLAGS = [",
+          "export const CWV_THRESHOLDS = {",
+          "export const ensureWindowsSystem32OnPath = () => {",
+          "export const sanitizeNpmConfigEnv = (rawEnv = process.env) => {",
+          "export const runtimePath = ensureWindowsSystem32OnPath();",
+          "export const getSanitizedProcessEnv = (extraEnv = {}) => ({",
+          "export const resolveChromeExecutablePath = (",
+          "export const isSafeWorkspaceChild = (targetPath, workspaceRoot = process.cwd()) => {",
+          "export const removeTempDirectorySafely = (directoryPath, retries = 5, delayMs = 150) => {",
+          "export const cleanupStaleLighthouseTempDirectories = (tempRoot = os.tmpdir()) => {",
+          "export const getAvailablePort = (host = '127.0.0.1') =>",
+          "export const splitChromeFlags = (flags) => {",
+          "export const terminateProcessTree = (pid, platform = process.platform) => {",
+          "export const launchManagedChrome = async ({",
+          "export const resolveNpxRunner = () => {",
+          "export const ensureProductionBuild = (workspaceRoot = process.cwd(), forceRebuild = false) => {",
+          "export const waitForServer = (url, timeoutMs = 30000, attachedProcess = null) =>",
+          "export const escapeHtml = (value) =>",
+          "export const stripMarkdownLinks = (value) =>",
+          "export const slugify = (value) =>",
+          "export const scorePercent = (score) => {",
+          "export const scoreClass = (score) => {",
+          "export const scoreColor = (score) => {",
+          "export const scoreLabel = (audit) => {",
+          "export const formatDuration = (ms) => {",
+          "export const formatBytes = (bytes) => {",
+          "export const extractCoreWebVitals = (report) => {",
+          "export const extractOpportunities = (report) => {",
+          "export const evaluateAssertions = (report, assertions = {}) => {",
+          "export const renderPage = ({ title, body, subTitle = '' }) => `<!doctype html>",
+          "export const renderAuditTable = (rows) => {",
+          "export const renderOpportunitiesTable = (opportunities) => {",
+          "export const renderMetricsGrid = (cwv) => {",
+          "export const writeSplitReports = (options, report, workspaceRoot = process.cwd()) => {",
+          "export const parseArgs = (argv = process.argv.slice(2)) => {",
+          "export const printHelp = () => {",
+          "export const printTerminalReport = (report, assertionResult, options) => {",
+          "export const openReportFile = (filePath) => {",
+          "export const run = async (customOptions = null) => {"
+        ],
+        "importSpecifiers": [
+          "node:fs",
+          "node:path",
+          "node:http",
+          "node:os",
+          "node:net",
+          "node:child_process",
+          "node:url"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "node:fs",
+            "kind": "node_builtin",
+            "target": null
+          },
+          {
+            "specifier": "node:path",
+            "kind": "node_builtin",
+            "target": null
+          },
+          {
+            "specifier": "node:http",
+            "kind": "node_builtin",
+            "target": null
+          },
+          {
+            "specifier": "node:os",
+            "kind": "node_builtin",
+            "target": null
+          },
+          {
+            "specifier": "node:net",
+            "kind": "node_builtin",
+            "target": null
+          },
+          {
+            "specifier": "node:child_process",
+            "kind": "node_builtin",
+            "target": null
+          },
+          {
+            "specifier": "node:url",
+            "kind": "node_builtin",
+            "target": null
+          }
+        ],
+        "symbols": [
+          "ensureWindowsSystem32OnPath",
+          "sanitizeNpmConfigEnv",
+          "getSanitizedProcessEnv",
+          "resolveChromeExecutablePath",
+          "isSafeWorkspaceChild",
+          "removeTempDirectorySafely",
+          "cleanupStaleLighthouseTempDirectories",
+          "getAvailablePort",
+          "splitChromeFlags",
+          "terminateProcessTree",
+          "launchManagedChrome",
+          "stop",
+          "resolveNpxRunner",
+          "ensureProductionBuild",
+          "waitForServer",
+          "cleanup",
+          "tryRequest",
+          "retry",
+          "escapeHtml",
+          "stripMarkdownLinks",
+          "slugify",
+          "scorePercent",
+          "scoreClass",
+          "scoreColor",
+          "scoreLabel",
+          "formatDuration",
+          "formatBytes",
+          "extractCoreWebVitals",
+          "getMetric",
+          "extractOpportunities",
+          "evaluateAssertions",
+          "renderPage",
+          "renderAuditTable",
+          "renderOpportunitiesTable",
+          "renderMetricsGrid",
+          "writeSplitReports",
+          "auditRows",
+          "parseArgs",
+          "printHelp",
+          "printTerminalReport",
+          "printMetric",
+          "openReportFile",
+          "run",
+          "cleanupAll",
+          "handleInterrupt",
+          "resolveReportPath",
+          "hasValidReports",
+          "executeLighthouse",
+          "isDirectExecution"
+        ],
+        "symbolCount": 49,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 5,
+          "awaitCount": 7,
+          "tryCount": 17,
+          "catchCount": 17,
+          "throwCount": 5,
+          "ifCount": 149,
+          "switchCount": 0
+        },
+        "complexityScore": 1855,
+        "updatedAt": "2026-08-26T02:13:12.382Z",
+        "riskScore": 47
+      },
+      {
         "path": "src/features/vault/components/LiveCaptureModal/LiveCaptureModal.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault/components/LiveCaptureModal",
@@ -9792,185 +9987,6 @@
         "complexityScore": 2323,
         "updatedAt": "2026-08-25T15:14:01.102Z",
         "riskScore": 65
-      },
-      {
-        "path": "scripts/lighthouse-runner.mjs",
-        "extension": ".mjs",
-        "directory": "scripts",
-        "bytes": 56142,
-        "hash": "e7e848604427791e7c34dc7fdb7d875f925e8b0822fa0e38ef03ab3afd9d7eab",
-        "lines": {
-          "total": 1781,
-          "code": 1505,
-          "comments": 83,
-          "blanks": 193
-        },
-        "imports": [
-          "import fs from 'node:fs';",
-          "import path from 'node:path';",
-          "import http from 'node:http';",
-          "import os from 'node:os';",
-          "import net from 'node:net';",
-          "import { execSync, spawn, spawnSync } from 'node:child_process';",
-          "import { fileURLToPath } from 'node:url';"
-        ],
-        "exports": [
-          "export const DEFAULT_URL = 'http://127.0.0.1:4173/';",
-          "export const DEFAULT_OUTPUT_PATH = './lighthouse/report';",
-          "export const DEFAULT_SPLIT_REPORT_DIR = './lighthouse/report-split';",
-          "export const DEFAULT_CATEGORIES = 'performance,accessibility,best-practices,seo';",
-          "export const DEFAULT_PREVIEW_HOST = '127.0.0.1';",
-          "export const DEFAULT_PREVIEW_PORT = 4173;",
-          "export const DEFAULT_TIMEOUT_MS = 30000;",
-          "export const DEFAULT_CHROME_FLAGS = [",
-          "export const FALLBACK_CHROME_FLAGS = [",
-          "export const CWV_THRESHOLDS = {",
-          "export const ensureWindowsSystem32OnPath = () => {",
-          "export const runtimePath = ensureWindowsSystem32OnPath();",
-          "export const resolveChromeExecutablePath = (",
-          "export const isSafeWorkspaceChild = (targetPath, workspaceRoot = process.cwd()) => {",
-          "export const removeTempDirectorySafely = (directoryPath, retries = 5, delayMs = 150) => {",
-          "export const cleanupStaleLighthouseTempDirectories = (tempRoot = os.tmpdir()) => {",
-          "export const getAvailablePort = (host = '127.0.0.1') =>",
-          "export const splitChromeFlags = (flags) => {",
-          "export const terminateProcessTree = (pid, platform = process.platform) => {",
-          "export const launchManagedChrome = async ({",
-          "export const resolveNpxRunner = () => {",
-          "export const ensureProductionBuild = (workspaceRoot = process.cwd()) => {",
-          "export const waitForServer = (url, timeoutMs = 30000, attachedProcess = null) =>",
-          "export const escapeHtml = (value) =>",
-          "export const stripMarkdownLinks = (value) =>",
-          "export const slugify = (value) =>",
-          "export const scorePercent = (score) => {",
-          "export const scoreClass = (score) => {",
-          "export const scoreColor = (score) => {",
-          "export const scoreLabel = (audit) => {",
-          "export const formatDuration = (ms) => {",
-          "export const formatBytes = (bytes) => {",
-          "export const extractCoreWebVitals = (report) => {",
-          "export const extractOpportunities = (report) => {",
-          "export const evaluateAssertions = (report, assertions = {}) => {",
-          "export const renderPage = ({ title, body, subTitle = '' }) => `<!doctype html>",
-          "export const renderAuditTable = (rows) => {",
-          "export const renderOpportunitiesTable = (opportunities) => {",
-          "export const renderMetricsGrid = (cwv) => {",
-          "export const writeSplitReports = (options, report, workspaceRoot = process.cwd()) => {",
-          "export const parseArgs = (argv = process.argv.slice(2)) => {",
-          "export const printHelp = () => {",
-          "export const printTerminalReport = (report, assertionResult, options) => {",
-          "export const openReportFile = (filePath) => {",
-          "export const run = async (customOptions = null) => {"
-        ],
-        "importSpecifiers": [
-          "node:fs",
-          "node:path",
-          "node:http",
-          "node:os",
-          "node:net",
-          "node:child_process",
-          "node:url"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "node:fs",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:path",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:http",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:os",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:net",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:child_process",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "node:url",
-            "kind": "node_builtin",
-            "target": null
-          }
-        ],
-        "symbols": [
-          "ensureWindowsSystem32OnPath",
-          "resolveChromeExecutablePath",
-          "isSafeWorkspaceChild",
-          "removeTempDirectorySafely",
-          "cleanupStaleLighthouseTempDirectories",
-          "getAvailablePort",
-          "splitChromeFlags",
-          "terminateProcessTree",
-          "launchManagedChrome",
-          "stop",
-          "resolveNpxRunner",
-          "ensureProductionBuild",
-          "waitForServer",
-          "cleanup",
-          "tryRequest",
-          "retry",
-          "escapeHtml",
-          "stripMarkdownLinks",
-          "slugify",
-          "scorePercent",
-          "scoreClass",
-          "scoreColor",
-          "scoreLabel",
-          "formatDuration",
-          "formatBytes",
-          "extractCoreWebVitals",
-          "getMetric",
-          "extractOpportunities",
-          "evaluateAssertions",
-          "renderPage",
-          "renderAuditTable",
-          "renderOpportunitiesTable",
-          "renderMetricsGrid",
-          "writeSplitReports",
-          "auditRows",
-          "parseArgs",
-          "printHelp",
-          "printTerminalReport",
-          "printMetric",
-          "openReportFile",
-          "run",
-          "cleanupAll",
-          "handleInterrupt",
-          "resolveReportPath",
-          "hasValidReports",
-          "executeLighthouse",
-          "isDirectExecution"
-        ],
-        "symbolCount": 47,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 5,
-          "awaitCount": 7,
-          "tryCount": 16,
-          "catchCount": 16,
-          "throwCount": 5,
-          "ifCount": 145,
-          "switchCount": 0
-        },
-        "complexityScore": 1808,
-        "updatedAt": "2026-08-25T18:39:41.805Z",
-        "riskScore": 47
       },
       {
         "path": "src/lib/vaultDragDrop.ts",
@@ -13044,11 +13060,11 @@
         "path": "lighthouse/report.report.json",
         "extension": ".json",
         "directory": "lighthouse",
-        "bytes": 517285,
-        "hash": "ef634f01dfd025eaba6f425d5eead7669b8a5171758de7b5b81a3b30511f7a14",
+        "bytes": 836351,
+        "hash": "52a12082e596c6b029a5f4818068ff0250c17053125ecb99da25fab93efe6c35",
         "lines": {
-          "total": 11527,
-          "code": 11527,
+          "total": 19400,
+          "code": 19400,
           "comments": 0,
           "blanks": 0
         },
@@ -13061,31 +13077,32 @@
         ],
         "symbolCount": 1,
         "tags": [
-          "OPTIMIZE"
+          "OPTIMIZE",
+          "TODO"
         ],
-        "tagCount": 1,
+        "tagCount": 2,
         "keywordCounts": {
-          "asyncCount": 0,
+          "asyncCount": 2,
           "awaitCount": 0,
           "tryCount": 1,
           "catchCount": 0,
           "throwCount": 0,
-          "ifCount": 4,
+          "ifCount": 5,
           "switchCount": 0
         },
-        "complexityScore": 11545,
-        "updatedAt": "2026-08-25T18:41:34.212Z",
-        "riskScore": 37
+        "complexityScore": 19430,
+        "updatedAt": "2026-08-26T02:19:41.265Z",
+        "riskScore": 44
       },
       {
         "path": "lighthouse/report-split/performance.json",
         "extension": ".json",
         "directory": "lighthouse/report-split",
-        "bytes": 247202,
-        "hash": "279d8801ca87a1f411d32bb22bd21ea4bbab49cd8137ac99055e3257bc5ae773",
+        "bytes": 566424,
+        "hash": "8c9fe628140c8b78b777a436a9ea16235cc47e3d44d17a51384af6ac7fefedb0",
         "lines": {
-          "total": 3788,
-          "code": 3787,
+          "total": 11596,
+          "code": 11595,
           "comments": 0,
           "blanks": 1
         },
@@ -13096,28 +13113,29 @@
         "symbols": [],
         "symbolCount": 0,
         "tags": [
-          "OPTIMIZE"
+          "OPTIMIZE",
+          "TODO"
         ],
-        "tagCount": 1,
+        "tagCount": 2,
         "keywordCounts": {
-          "asyncCount": 0,
+          "asyncCount": 2,
           "awaitCount": 0,
           "tryCount": 1,
           "catchCount": 0,
           "throwCount": 0,
-          "ifCount": 1,
+          "ifCount": 2,
           "switchCount": 0
         },
-        "complexityScore": 3799,
-        "updatedAt": "2026-08-25T18:41:37.692Z",
-        "riskScore": 37
+        "complexityScore": 11619,
+        "updatedAt": "2026-08-26T02:19:43.887Z",
+        "riskScore": 44
       },
       {
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 576548,
-        "hash": "13239524ce8a264b337f81f0804fa1f205bbefa6869b05997aa6e5faeab4b738",
+        "bytes": 686803,
+        "hash": "5b83b52b1cdd89a385353ad7497d127317ee363df90516ac12bc61dba7aded9c",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -13197,16 +13215,16 @@
         ],
         "tagCount": 3,
         "keywordCounts": {
-          "asyncCount": 5,
+          "asyncCount": 7,
           "awaitCount": 4,
           "tryCount": 8,
           "catchCount": 7,
           "throwCount": 15,
-          "ifCount": 168,
+          "ifCount": 169,
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-25T18:41:34.206Z",
+        "updatedAt": "2026-08-26T02:19:41.257Z",
         "riskScore": 68
       },
       {
@@ -14032,39 +14050,6 @@
         "riskScore": 58
       },
       {
-        "path": "lighthouse/report-split/best-practices.json",
-        "extension": ".json",
-        "directory": "lighthouse/report-split",
-        "bytes": 63441,
-        "hash": "0674ef24617efe3dc75adb45f7897afe2005238f8d6c2b2e490fd8c40eb55d08",
-        "lines": {
-          "total": 1935,
-          "code": 1934,
-          "comments": 0,
-          "blanks": 1
-        },
-        "imports": [],
-        "exports": [],
-        "importSpecifiers": [],
-        "importsDetailed": [],
-        "symbols": [],
-        "symbolCount": 0,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 0,
-          "awaitCount": 0,
-          "tryCount": 0,
-          "catchCount": 0,
-          "throwCount": 0,
-          "ifCount": 1,
-          "switchCount": 0
-        },
-        "complexityScore": 1934,
-        "updatedAt": "2026-08-25T18:41:37.700Z",
-        "riskScore": 30
-      },
-      {
         "path": "src/features/vault/DocumentsVault.tsx",
         "extension": ".tsx",
         "directory": "src/features/vault",
@@ -14271,13 +14256,13 @@
         "path": "scripts/lighthouse-runner.mjs",
         "extension": ".mjs",
         "directory": "scripts",
-        "bytes": 56142,
-        "hash": "e7e848604427791e7c34dc7fdb7d875f925e8b0822fa0e38ef03ab3afd9d7eab",
+        "bytes": 57453,
+        "hash": "d0da9212404fea22f8cab92fbdd1e3a83ffe4a87f61a7300e8eaf147b74bf092",
         "lines": {
-          "total": 1781,
-          "code": 1505,
-          "comments": 83,
-          "blanks": 193
+          "total": 1820,
+          "code": 1540,
+          "comments": 84,
+          "blanks": 196
         },
         "imports": [
           "import fs from 'node:fs';",
@@ -14300,7 +14285,9 @@
           "export const FALLBACK_CHROME_FLAGS = [",
           "export const CWV_THRESHOLDS = {",
           "export const ensureWindowsSystem32OnPath = () => {",
+          "export const sanitizeNpmConfigEnv = (rawEnv = process.env) => {",
           "export const runtimePath = ensureWindowsSystem32OnPath();",
+          "export const getSanitizedProcessEnv = (extraEnv = {}) => ({",
           "export const resolveChromeExecutablePath = (",
           "export const isSafeWorkspaceChild = (targetPath, workspaceRoot = process.cwd()) => {",
           "export const removeTempDirectorySafely = (directoryPath, retries = 5, delayMs = 150) => {",
@@ -14310,7 +14297,7 @@
           "export const terminateProcessTree = (pid, platform = process.platform) => {",
           "export const launchManagedChrome = async ({",
           "export const resolveNpxRunner = () => {",
-          "export const ensureProductionBuild = (workspaceRoot = process.cwd()) => {",
+          "export const ensureProductionBuild = (workspaceRoot = process.cwd(), forceRebuild = false) => {",
           "export const waitForServer = (url, timeoutMs = 30000, attachedProcess = null) =>",
           "export const escapeHtml = (value) =>",
           "export const stripMarkdownLinks = (value) =>",
@@ -14383,6 +14370,8 @@
         ],
         "symbols": [
           "ensureWindowsSystem32OnPath",
+          "sanitizeNpmConfigEnv",
+          "getSanitizedProcessEnv",
           "resolveChromeExecutablePath",
           "isSafeWorkspaceChild",
           "removeTempDirectorySafely",
@@ -14430,21 +14419,54 @@
           "executeLighthouse",
           "isDirectExecution"
         ],
-        "symbolCount": 47,
+        "symbolCount": 49,
         "tags": [],
         "tagCount": 0,
         "keywordCounts": {
           "asyncCount": 5,
           "awaitCount": 7,
-          "tryCount": 16,
-          "catchCount": 16,
+          "tryCount": 17,
+          "catchCount": 17,
           "throwCount": 5,
-          "ifCount": 145,
+          "ifCount": 149,
           "switchCount": 0
         },
-        "complexityScore": 1808,
-        "updatedAt": "2026-08-25T18:39:41.805Z",
+        "complexityScore": 1855,
+        "updatedAt": "2026-08-26T02:13:12.382Z",
         "riskScore": 47
+      },
+      {
+        "path": "lighthouse/report-split/best-practices.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 59455,
+        "hash": "a5a0efc893d0397f1a8244086a542c2150cb6dfd7cc06c1bb0d56f2f7cddb682",
+        "lines": {
+          "total": 1811,
+          "code": 1810,
+          "comments": 0,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [],
+        "symbolCount": 0,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 0,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 1,
+          "switchCount": 0
+        },
+        "complexityScore": 1810,
+        "updatedAt": "2026-08-26T02:19:43.903Z",
+        "riskScore": 30
       },
       {
         "path": "server/services/vaultService.internal.ts",
@@ -16099,7 +16121,7 @@
         "extension": ".json",
         "directory": "lighthouse/report-split",
         "bytes": 50030,
-        "hash": "f11be4a7b8bb63185482e88b18c99a10d6724009edafae8f801c7852a39e1526",
+        "hash": "50a61b81ea619562e92f16bbe87dff546c5365a5439c6c143a9a6cda98b76a62",
         "lines": {
           "total": 1193,
           "code": 1192,
@@ -16126,7 +16148,7 @@
           "switchCount": 0
         },
         "complexityScore": 1198,
-        "updatedAt": "2026-08-25T18:41:37.692Z",
+        "updatedAt": "2026-08-26T02:19:43.903Z",
         "riskScore": 30
       },
       {
@@ -22309,6 +22331,137 @@
         "riskScore": 52
       },
       {
+        "path": "src/App.tsx",
+        "extension": ".tsx",
+        "directory": "src",
+        "bytes": 5566,
+        "hash": "34a5e1223a3d80d8e9261cf20094822780fa8b66112f2a328de674152e652c27",
+        "lines": {
+          "total": 164,
+          "code": 135,
+          "comments": 6,
+          "blanks": 23
+        },
+        "imports": [
+          "import { Suspense, lazy, useEffect } from 'react';",
+          "import { useShallow } from 'zustand/react/shallow';",
+          "import { Toaster } from './components/ui/Toaster';",
+          "import { ErrorBoundary } from './components/ui/ErrorBoundary';",
+          "import { ErrorFallback } from './components/ui/ErrorFallback';",
+          "import { LoadingScreen } from './components/app/LoadingScreen';",
+          "import { UniversalSyncWidget } from './components/vault/UniversalSyncWidget';",
+          "import { useVaultStore } from './store/vaultStore';",
+          "import { useMediaQuery } from './hooks/use-media-query';",
+          "import { logger } from './lib/logger';",
+          "import { useAnalyticsPageTracking } from './lib/telemetry';",
+          "import { LockedVaultHost } from './components/app/LockedVaultHost';"
+        ],
+        "exports": [
+          "export default function App() {"
+        ],
+        "importSpecifiers": [
+          "react",
+          "zustand/react/shallow",
+          "./components/ui/Toaster",
+          "./components/ui/ErrorBoundary",
+          "./components/ui/ErrorFallback",
+          "./components/app/LoadingScreen",
+          "./components/vault/UniversalSyncWidget",
+          "./store/vaultStore",
+          "./hooks/use-media-query",
+          "./lib/logger",
+          "./lib/telemetry",
+          "./components/app/LockedVaultHost"
+        ],
+        "importsDetailed": [
+          {
+            "specifier": "react",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "zustand/react/shallow",
+            "kind": "package",
+            "target": null
+          },
+          {
+            "specifier": "./components/ui/Toaster",
+            "kind": "relative",
+            "target": "src/components/ui/Toaster"
+          },
+          {
+            "specifier": "./components/ui/ErrorBoundary",
+            "kind": "relative",
+            "target": "src/components/ui/ErrorBoundary"
+          },
+          {
+            "specifier": "./components/ui/ErrorFallback",
+            "kind": "relative",
+            "target": "src/components/ui/ErrorFallback"
+          },
+          {
+            "specifier": "./components/app/LoadingScreen",
+            "kind": "relative",
+            "target": "src/components/app/LoadingScreen"
+          },
+          {
+            "specifier": "./components/vault/UniversalSyncWidget",
+            "kind": "relative",
+            "target": "src/components/vault/UniversalSyncWidget"
+          },
+          {
+            "specifier": "./store/vaultStore",
+            "kind": "relative",
+            "target": "src/store/vaultStore"
+          },
+          {
+            "specifier": "./hooks/use-media-query",
+            "kind": "relative",
+            "target": "src/hooks/use-media-query"
+          },
+          {
+            "specifier": "./lib/logger",
+            "kind": "relative",
+            "target": "src/lib/logger"
+          },
+          {
+            "specifier": "./lib/telemetry",
+            "kind": "relative",
+            "target": "src/lib/telemetry"
+          },
+          {
+            "specifier": "./components/app/LockedVaultHost",
+            "kind": "relative",
+            "target": "src/components/app/LockedVaultHost"
+          }
+        ],
+        "symbols": [
+          "TrustedTypesPolicy",
+          "TrustedTypesApi",
+          "WindowWithTrustedTypes",
+          "App",
+          "registerServiceWorker",
+          "trustedTypesApi",
+          "swUrl",
+          "handleBeforeUnload"
+        ],
+        "symbolCount": 8,
+        "tags": [],
+        "tagCount": 0,
+        "keywordCounts": {
+          "asyncCount": 0,
+          "awaitCount": 0,
+          "tryCount": 0,
+          "catchCount": 4,
+          "throwCount": 0,
+          "ifCount": 7,
+          "switchCount": 0
+        },
+        "complexityScore": 219,
+        "updatedAt": "2026-08-26T02:11:30.187Z",
+        "riskScore": 21
+      },
+      {
         "path": "src/features/auth/useVaultAuth.ts",
         "extension": ".ts",
         "directory": "src/features/auth",
@@ -22725,154 +22878,6 @@
         "complexityScore": 448,
         "updatedAt": "2026-08-25T15:14:02.405Z",
         "riskScore": 41
-      },
-      {
-        "path": "server/controllers/authController.ts",
-        "extension": ".ts",
-        "directory": "server/controllers",
-        "bytes": 18125,
-        "hash": "f75113e8bf57d36422e9251ea17250940b4938b523f52b1921f67e354d1c4f3a",
-        "lines": {
-          "total": 559,
-          "code": 502,
-          "comments": 3,
-          "blanks": 54
-        },
-        "imports": [
-          "import express from 'express';",
-          "import { User } from '../models/user.ts';",
-          "import crypto from 'node:crypto';",
-          "import { authenticateUser } from '../services/authService.ts'; // Updated path",
-          "import {",
-          "import { getExactUsernameMatch, registerUser } from '../services/vaultService.ts';",
-          "import { AuthenticatedRequest } from '../utils/requestTypes.ts';",
-          "import {",
-          "import { AppError } from '../utils/appError.ts';",
-          "import { getClientIp } from '../utils/requestIp.ts';",
-          "import { sendSuccess } from '../responses.ts';",
-          "import { anomalyDetectionService } from '../services/anomalyDetectionService.ts';",
-          "import { logger } from '../utils/logger.ts';"
-        ],
-        "exports": [
-          "export const applyRefreshCookie = (",
-          "export const register = async (req: express.Request, res: express.Response) => {",
-          "export const login = async (req: express.Request, res: express.Response) => {",
-          "export const checkUsername = async (req: express.Request, res: express.Response) => {",
-          "export const getSalt = async (req: express.Request, res: express.Response) => {",
-          "export const getMe = async (req: AuthenticatedRequest, res: express.Response) => {",
-          "export const refreshSession = async (req: express.Request, res: express.Response) => {",
-          "export const logout = async (req: express.Request, res: express.Response) => {",
-          "export const revokeSessions = async (req: AuthenticatedRequest, res: express.Response) => {",
-          "export const changePassword = async (req: AuthenticatedRequest, res: express.Response) => {",
-          "export const updateDeviceName = async (req: AuthenticatedRequest, res: express.Response) => {",
-          "export const updateProfile = async (req: AuthenticatedRequest, res: express.Response) => {"
-        ],
-        "importSpecifiers": [
-          "express",
-          "../models/user.ts",
-          "node:crypto",
-          "../services/authService.ts",
-          "../services/vaultService.ts",
-          "../utils/requestTypes.ts",
-          "../utils/appError.ts",
-          "../utils/requestIp.ts",
-          "../responses.ts",
-          "../services/anomalyDetectionService.ts",
-          "../utils/logger.ts"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "express",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../models/user.ts",
-            "kind": "relative",
-            "target": "server/models/user.ts"
-          },
-          {
-            "specifier": "node:crypto",
-            "kind": "node_builtin",
-            "target": null
-          },
-          {
-            "specifier": "../services/authService.ts",
-            "kind": "relative",
-            "target": "server/services/authService.ts"
-          },
-          {
-            "specifier": "../services/vaultService.ts",
-            "kind": "relative",
-            "target": "server/services/vaultService.ts"
-          },
-          {
-            "specifier": "../utils/requestTypes.ts",
-            "kind": "relative",
-            "target": "server/utils/requestTypes.ts"
-          },
-          {
-            "specifier": "../utils/appError.ts",
-            "kind": "relative",
-            "target": "server/utils/appError.ts"
-          },
-          {
-            "specifier": "../utils/requestIp.ts",
-            "kind": "relative",
-            "target": "server/utils/requestIp.ts"
-          },
-          {
-            "specifier": "../responses.ts",
-            "kind": "relative",
-            "target": "server/responses.ts"
-          },
-          {
-            "specifier": "../services/anomalyDetectionService.ts",
-            "kind": "relative",
-            "target": "server/services/anomalyDetectionService.ts"
-          },
-          {
-            "specifier": "../utils/logger.ts",
-            "kind": "relative",
-            "target": "server/utils/logger.ts"
-          }
-        ],
-        "symbols": [
-          "isTestRuntime",
-          "isMongoOptionalMode",
-          "applyRefreshCookie",
-          "clearRefreshCookie",
-          "isMongoConnectivityFailure",
-          "toOperationalAuthError",
-          "getWebsiteMetadata",
-          "register",
-          "username",
-          "login",
-          "checkUsername",
-          "getSalt",
-          "getMe",
-          "refreshSession",
-          "logout",
-          "revokeSessions",
-          "changePassword",
-          "updateDeviceName",
-          "updateProfile"
-        ],
-        "symbolCount": 19,
-        "tags": [],
-        "tagCount": 0,
-        "keywordCounts": {
-          "asyncCount": 11,
-          "awaitCount": 13,
-          "tryCount": 5,
-          "catchCount": 5,
-          "throwCount": 15,
-          "ifCount": 30,
-          "switchCount": 0
-        },
-        "complexityScore": 649,
-        "updatedAt": "2026-08-25T15:13:56.672Z",
-        "riskScore": 32
       }
     ],
     "mostTags": [
@@ -22974,8 +22979,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 576548,
-        "hash": "13239524ce8a264b337f81f0804fa1f205bbefa6869b05997aa6e5faeab4b738",
+        "bytes": 686803,
+        "hash": "5b83b52b1cdd89a385353ad7497d127317ee363df90516ac12bc61dba7aded9c",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -23055,16 +23060,16 @@
         ],
         "tagCount": 3,
         "keywordCounts": {
-          "asyncCount": 5,
+          "asyncCount": 7,
           "awaitCount": 4,
           "tryCount": 8,
           "catchCount": 7,
           "throwCount": 15,
-          "ifCount": 168,
+          "ifCount": 169,
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-25T18:41:34.206Z",
+        "updatedAt": "2026-08-26T02:19:41.257Z",
         "riskScore": 68
       },
       {
@@ -23104,6 +23109,80 @@
         "complexityScore": 345,
         "updatedAt": "2026-08-25T18:03:53.013Z",
         "riskScore": 36
+      },
+      {
+        "path": "lighthouse/report-split/performance.json",
+        "extension": ".json",
+        "directory": "lighthouse/report-split",
+        "bytes": 566424,
+        "hash": "8c9fe628140c8b78b777a436a9ea16235cc47e3d44d17a51384af6ac7fefedb0",
+        "lines": {
+          "total": 11596,
+          "code": 11595,
+          "comments": 0,
+          "blanks": 1
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [],
+        "symbolCount": 0,
+        "tags": [
+          "OPTIMIZE",
+          "TODO"
+        ],
+        "tagCount": 2,
+        "keywordCounts": {
+          "asyncCount": 2,
+          "awaitCount": 0,
+          "tryCount": 1,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 2,
+          "switchCount": 0
+        },
+        "complexityScore": 11619,
+        "updatedAt": "2026-08-26T02:19:43.887Z",
+        "riskScore": 44
+      },
+      {
+        "path": "lighthouse/report.report.json",
+        "extension": ".json",
+        "directory": "lighthouse",
+        "bytes": 836351,
+        "hash": "52a12082e596c6b029a5f4818068ff0250c17053125ecb99da25fab93efe6c35",
+        "lines": {
+          "total": 19400,
+          "code": 19400,
+          "comments": 0,
+          "blanks": 0
+        },
+        "imports": [],
+        "exports": [],
+        "importSpecifiers": [],
+        "importsDetailed": [],
+        "symbols": [
+          "correctly"
+        ],
+        "symbolCount": 1,
+        "tags": [
+          "OPTIMIZE",
+          "TODO"
+        ],
+        "tagCount": 2,
+        "keywordCounts": {
+          "asyncCount": 2,
+          "awaitCount": 0,
+          "tryCount": 1,
+          "catchCount": 0,
+          "throwCount": 0,
+          "ifCount": 5,
+          "switchCount": 0
+        },
+        "complexityScore": 19430,
+        "updatedAt": "2026-08-26T02:19:41.265Z",
+        "riskScore": 44
       },
       {
         "path": "md/FIXED_IT.md",
@@ -25575,101 +25654,6 @@
         "complexityScore": 284,
         "updatedAt": "2026-08-25T15:14:05.235Z",
         "riskScore": 30
-      },
-      {
-        "path": "tests/unit/vault-key-rotation.test.ts",
-        "extension": ".ts",
-        "directory": "tests/unit",
-        "bytes": 2589,
-        "hash": "33d7ec2c52e3db81f4c7e7a15273d16a245cdcc1d708d419a391dad1049a8abd",
-        "lines": {
-          "total": 78,
-          "code": 63,
-          "comments": 0,
-          "blanks": 15
-        },
-        "imports": [
-          "import { describe, expect, it } from 'vitest';",
-          "import { deriveKey, encryptData, encryptFile } from '../../src/lib/cryptoPrimitives.ts';",
-          "import { reencryptVaultItemContent } from '../../src/lib/vaultKeyRotation.ts';"
-        ],
-        "exports": [],
-        "importSpecifiers": [
-          "vitest",
-          "../../src/lib/cryptoPrimitives.ts",
-          "../../src/lib/vaultKeyRotation.ts"
-        ],
-        "importsDetailed": [
-          {
-            "specifier": "vitest",
-            "kind": "package",
-            "target": null
-          },
-          {
-            "specifier": "../../src/lib/cryptoPrimitives.ts",
-            "kind": "relative",
-            "target": "src/lib/cryptoPrimitives.ts"
-          },
-          {
-            "specifier": "../../src/lib/vaultKeyRotation.ts",
-            "kind": "relative",
-            "target": "src/lib/vaultKeyRotation.ts"
-          }
-        ],
-        "symbols": [],
-        "symbolCount": 0,
-        "tags": [
-          "NOTE",
-          "TODO"
-        ],
-        "tagCount": 2,
-        "keywordCounts": {
-          "asyncCount": 5,
-          "awaitCount": 16,
-          "tryCount": 0,
-          "catchCount": 0,
-          "throwCount": 0,
-          "ifCount": 0,
-          "switchCount": 0
-        },
-        "complexityScore": 96,
-        "updatedAt": "2026-08-25T15:14:05.308Z",
-        "riskScore": 26
-      },
-      {
-        "path": "lighthouse/report-split/performance.html",
-        "extension": ".html",
-        "directory": "lighthouse/report-split",
-        "bytes": 29528,
-        "hash": "34a7da7ad727027f4e27aa4aa7b2cac70090cb7e8d211ecfd7996e1b5594b766",
-        "lines": {
-          "total": 690,
-          "code": 685,
-          "comments": 1,
-          "blanks": 4
-        },
-        "imports": [],
-        "exports": [],
-        "importSpecifiers": [],
-        "importsDetailed": [],
-        "symbols": [],
-        "symbolCount": 0,
-        "tags": [
-          "OPTIMIZE"
-        ],
-        "tagCount": 1,
-        "keywordCounts": {
-          "asyncCount": 0,
-          "awaitCount": 0,
-          "tryCount": 0,
-          "catchCount": 0,
-          "throwCount": 0,
-          "ifCount": 1,
-          "switchCount": 0
-        },
-        "complexityScore": 697,
-        "updatedAt": "2026-08-25T18:41:37.692Z",
-        "riskScore": 37
       }
     ],
     "highestRisk": [
@@ -25868,8 +25852,8 @@
         "path": "lighthouse/report.report.html",
         "extension": ".html",
         "directory": "lighthouse",
-        "bytes": 576548,
-        "hash": "13239524ce8a264b337f81f0804fa1f205bbefa6869b05997aa6e5faeab4b738",
+        "bytes": 686803,
+        "hash": "5b83b52b1cdd89a385353ad7497d127317ee363df90516ac12bc61dba7aded9c",
         "lines": {
           "total": 2894,
           "code": 2382,
@@ -25949,16 +25933,16 @@
         ],
         "tagCount": 3,
         "keywordCounts": {
-          "asyncCount": 5,
+          "asyncCount": 7,
           "awaitCount": 4,
           "tryCount": 8,
           "catchCount": 7,
           "throwCount": 15,
-          "ifCount": 168,
+          "ifCount": 169,
           "switchCount": 13
         },
         "complexityScore": 2772,
-        "updatedAt": "2026-08-25T18:41:34.206Z",
+        "updatedAt": "2026-08-26T02:19:41.257Z",
         "riskScore": 68
       },
       {
@@ -29298,13 +29282,13 @@
         "path": "scripts/lighthouse-runner.mjs",
         "extension": ".mjs",
         "directory": "scripts",
-        "bytes": 56142,
-        "hash": "e7e848604427791e7c34dc7fdb7d875f925e8b0822fa0e38ef03ab3afd9d7eab",
+        "bytes": 57453,
+        "hash": "d0da9212404fea22f8cab92fbdd1e3a83ffe4a87f61a7300e8eaf147b74bf092",
         "lines": {
-          "total": 1781,
-          "code": 1505,
-          "comments": 83,
-          "blanks": 193
+          "total": 1820,
+          "code": 1540,
+          "comments": 84,
+          "blanks": 196
         },
         "imports": [
           "import fs from 'node:fs';",
@@ -29327,7 +29311,9 @@
           "export const FALLBACK_CHROME_FLAGS = [",
           "export const CWV_THRESHOLDS = {",
           "export const ensureWindowsSystem32OnPath = () => {",
+          "export const sanitizeNpmConfigEnv = (rawEnv = process.env) => {",
           "export const runtimePath = ensureWindowsSystem32OnPath();",
+          "export const getSanitizedProcessEnv = (extraEnv = {}) => ({",
           "export const resolveChromeExecutablePath = (",
           "export const isSafeWorkspaceChild = (targetPath, workspaceRoot = process.cwd()) => {",
           "export const removeTempDirectorySafely = (directoryPath, retries = 5, delayMs = 150) => {",
@@ -29337,7 +29323,7 @@
           "export const terminateProcessTree = (pid, platform = process.platform) => {",
           "export const launchManagedChrome = async ({",
           "export const resolveNpxRunner = () => {",
-          "export const ensureProductionBuild = (workspaceRoot = process.cwd()) => {",
+          "export const ensureProductionBuild = (workspaceRoot = process.cwd(), forceRebuild = false) => {",
           "export const waitForServer = (url, timeoutMs = 30000, attachedProcess = null) =>",
           "export const escapeHtml = (value) =>",
           "export const stripMarkdownLinks = (value) =>",
@@ -29410,6 +29396,8 @@
         ],
         "symbols": [
           "ensureWindowsSystem32OnPath",
+          "sanitizeNpmConfigEnv",
+          "getSanitizedProcessEnv",
           "resolveChromeExecutablePath",
           "isSafeWorkspaceChild",
           "removeTempDirectorySafely",
@@ -29457,20 +29445,20 @@
           "executeLighthouse",
           "isDirectExecution"
         ],
-        "symbolCount": 47,
+        "symbolCount": 49,
         "tags": [],
         "tagCount": 0,
         "keywordCounts": {
           "asyncCount": 5,
           "awaitCount": 7,
-          "tryCount": 16,
-          "catchCount": 16,
+          "tryCount": 17,
+          "catchCount": 17,
           "throwCount": 5,
-          "ifCount": 145,
+          "ifCount": 149,
           "switchCount": 0
         },
-        "complexityScore": 1808,
-        "updatedAt": "2026-08-25T18:39:41.805Z",
+        "complexityScore": 1855,
+        "updatedAt": "2026-08-26T02:13:12.382Z",
         "riskScore": 47
       },
       {
@@ -33471,6 +33459,10 @@
         "outDegree": 11
       },
       {
+        "path": "src/App.tsx",
+        "outDegree": 10
+      },
+      {
         "path": "src/features/auth/useVaultAuth.ts",
         "outDegree": 10
       },
@@ -33492,10 +33484,6 @@
       },
       {
         "path": "server/services/vaultDataService.ts",
-        "outDegree": 9
-      },
-      {
-        "path": "server/services/vaultService.internal.ts",
         "outDegree": 9
       }
     ],
@@ -33574,6 +33562,11 @@
         "from": "src/App.tsx",
         "target": "src/lib/telemetry",
         "specifier": "./lib/telemetry"
+      },
+      {
+        "from": "src/App.tsx",
+        "target": "src/components/app/LockedVaultHost",
+        "specifier": "./components/app/LockedVaultHost"
       },
       {
         "from": "src/components/app/AppHeader.tsx",
@@ -33689,6 +33682,11 @@
         "from": "src/components/app/AuthManager.tsx",
         "target": "src/lib/logger",
         "specifier": "../../lib/logger"
+      },
+      {
+        "from": "src/components/app/AuthManager.tsx",
+        "target": "src/features/LandingPage",
+        "specifier": "../../features/LandingPage"
       },
       {
         "from": "src/components/app/CookieConsentBanner.tsx",
@@ -36489,27 +36487,17 @@
         "from": "src/features/vault/IdentitiesVault.tsx",
         "target": "src/hooks/useClipboard",
         "specifier": "../../hooks/useClipboard"
-      },
-      {
-        "from": "src/features/vault/IdentitiesVault.tsx",
-        "target": "src/lib/vaultItemContent",
-        "specifier": "../../lib/vaultItemContent"
-      },
-      {
-        "from": "src/features/vault/IdentitiesVault.tsx",
-        "target": "src/lib/activity",
-        "specifier": "../../lib/activity"
       }
     ],
     "totals": {
       "filesWithInboundLinks": 30,
       "filesWithOutboundLinks": 30,
-      "missingRelativeTargets": 899
+      "missingRelativeTargets": 901
     }
   },
   "changes": {
     "hasPreviousIndex": true,
-    "previousGeneratedAt": "2026-08-25T18:38:11.110Z",
+    "previousGeneratedAt": "2026-08-26T02:03:45.621Z",
     "counts": {
       "added": 0,
       "removed": 0,
@@ -36520,146 +36508,146 @@
     "removed": [],
     "changed": [
       {
-        "path": "lighthouse/report-split/performance.json",
-        "previousHash": "0a90ea2f9bae4a7fb2cd78f3b0726348b7f870817fafc8edc928ab384c50ae02",
-        "currentHash": "279d8801ca87a1f411d32bb22bd21ea4bbab49cd8137ac99055e3257bc5ae773",
-        "previousLines": 11657,
-        "currentLines": 3788,
-        "deltaLines": -7869,
-        "deltaSymbols": 0
-      },
-      {
         "path": "lighthouse/report.report.json",
-        "previousHash": "08df01cd5fdd5cf887fd97cda7c16f66276d7030533ed8cd3bc4ae313b0a836d",
-        "currentHash": "ef634f01dfd025eaba6f425d5eead7669b8a5171758de7b5b81a3b30511f7a14",
-        "previousLines": 19330,
-        "currentLines": 11527,
-        "deltaLines": -7803,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "lighthouse/report-split/best-practices.json",
-        "previousHash": "23f478aaad98fb8b3df8b9db18814591b29387ca8d67705f3096c816b1365f81",
-        "currentHash": "0674ef24617efe3dc75adb45f7897afe2005238f8d6c2b2e490fd8c40eb55d08",
-        "previousLines": 1851,
-        "currentLines": 1935,
-        "deltaLines": 84,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "scripts/code-memory-index/file-system.mjs",
-        "previousHash": "f066c6ce15ab2f4dbc78e3d1fe95f3cd606b3a236cb82f8e1f2de2133b0f6be2",
-        "currentHash": "141cc2d92990da389fd1ad457160a242df8ea86c8f48707a6349e4ad9edfe830",
-        "previousLines": 54,
-        "currentLines": 107,
-        "deltaLines": 53,
-        "deltaSymbols": 2
-      },
-      {
-        "path": "scripts/lighthouse-runner.mjs",
-        "previousHash": "785186e96575bf52a5fa4b16a64078772989de9e3bad74aabcaaf915b69b85bb",
-        "currentHash": "e7e848604427791e7c34dc7fdb7d875f925e8b0822fa0e38ef03ab3afd9d7eab",
-        "previousLines": 1728,
-        "currentLines": 1781,
-        "deltaLines": 53,
-        "deltaSymbols": 1
-      },
-      {
-        "path": "lighthouse/report-split/seo.json",
-        "previousHash": "b2c1e45bb97f26185544ee03bc07333b3559bc305bfadd51ed69dfb7307119d0",
-        "currentHash": "30fc6a08ed041cec49d7c4775df35bd9adcdbbc2a852b17bc11c25ab74459936",
-        "previousLines": 261,
-        "currentLines": 240,
-        "deltaLines": -21,
-        "deltaSymbols": 0
-      },
-      {
-        "path": "scripts/vitest-related.mjs",
-        "previousHash": "64f2bb43723d434032439a654d01edad5a4387ce6ad3311c4e213492d3301526",
-        "currentHash": "f504d01ba95478d5b27acee9dd401d79af506367da21681afc51c2e72ef22499",
-        "previousLines": 111,
-        "currentLines": 127,
-        "deltaLines": 16,
+        "previousHash": "e4128b501f813be65606858421919e0329471891aad73199f3a55971eb45d278",
+        "currentHash": "52a12082e596c6b029a5f4818068ff0250c17053125ecb99da25fab93efe6c35",
+        "previousLines": 19320,
+        "currentLines": 19400,
+        "deltaLines": 80,
         "deltaSymbols": 0
       },
       {
         "path": "tests/unit/lighthouse-runner.test.ts",
-        "previousHash": "3fde6180d56e17df7a47d01ad6c45da746d78bb5f5548f7a719fab7c0b8e0b50",
-        "currentHash": "fc474d118dde2a42b1675b2ca8bf1b277a5c75b1d2821046b8feb493f8aae19f",
-        "previousLines": 586,
-        "currentLines": 597,
-        "deltaLines": 11,
+        "previousHash": "fc474d118dde2a42b1675b2ca8bf1b277a5c75b1d2821046b8feb493f8aae19f",
+        "currentHash": "b1fbb90007b06b473c3e8285388e866aa32d1a1617c1ffe7951c8d31a7727b86",
+        "previousLines": 597,
+        "currentLines": 643,
+        "deltaLines": 46,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "lighthouse/report-split/performance.json",
+        "previousHash": "9d4d0e2b43df68eb9ef35a5fa5facc8a0a4d193e9398141fb21270fccb30fedd",
+        "currentHash": "8c9fe628140c8b78b777a436a9ea16235cc47e3d44d17a51384af6ac7fefedb0",
+        "previousLines": 11638,
+        "currentLines": 11596,
+        "deltaLines": -42,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "lighthouse/report-split/best-practices.json",
+        "previousHash": "c4112fa8046f892e3e05a0bdbd194a2dffb0a48ddae436df7950c64ea8bc569f",
+        "currentHash": "a5a0efc893d0397f1a8244086a542c2150cb6dfd7cc06c1bb0d56f2f7cddb682",
+        "previousLines": 1851,
+        "currentLines": 1811,
+        "deltaLines": -40,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "scripts/lighthouse-runner.mjs",
+        "previousHash": "e7e848604427791e7c34dc7fdb7d875f925e8b0822fa0e38ef03ab3afd9d7eab",
+        "currentHash": "d0da9212404fea22f8cab92fbdd1e3a83ffe4a87f61a7300e8eaf147b74bf092",
+        "previousLines": 1781,
+        "currentLines": 1820,
+        "deltaLines": 39,
+        "deltaSymbols": 2
+      },
+      {
+        "path": "vite.config.ts",
+        "previousHash": "ab06caaaa08ea3984c65e3082d393cee0d741e10fe2aa926f0488b7359b2e310",
+        "currentHash": "4a877e536ce7066abde9782a56a210d56b747b414ac6bb0324a7eb5e918389b9",
+        "previousLines": 549,
+        "currentLines": 570,
+        "deltaLines": 21,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "lighthouse/report-split/seo.json",
+        "previousHash": "e11f4935aa1d8a9cea1c4a0c93e39160fe2e76c83357016d384fe37d1af55801",
+        "currentHash": "f2dc5a40c6015257d7fc164f3079931fe34e144159d6ccce8cee83e651307e6d",
+        "previousLines": 261,
+        "currentLines": 242,
+        "deltaLines": -19,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "scripts/doctor.mjs",
+        "previousHash": "ffa3f23be261d47949af1178ffe04e81cf12a3e2cc22134366ce6d7a42c7dcd0",
+        "currentHash": "520314b65d36f0d02a974d83ef77091280d4b493a4593d6ef690245f80e68617",
+        "previousLines": 120,
+        "currentLines": 135,
+        "deltaLines": 15,
         "deltaSymbols": 0
       },
       {
         "path": "lighthouse/report-split/seo.html",
         "previousHash": "3b3e97e24e0997ddcac35df7507a4839287ff196abb92d51f698dca0add558dd",
-        "currentHash": "dd7e9564b3b4ef856d5060cf6a9a6cb06c65751981296ea7fedad4b156a2566d",
+        "currentHash": "cda32030bc3986c23fc5c2f0a44eda5f84a0b5da48b4b0f4f424de052e32a5f4",
         "previousLines": 314,
-        "currentLines": 306,
-        "deltaLines": -8,
+        "currentLines": 304,
+        "deltaLines": -10,
+        "deltaSymbols": 0
+      },
+      {
+        "path": "lighthouse/report-split/performance.html",
+        "previousHash": "5e711ad749a8e71d77f6690b515bff7b87a0a6c6ca912e749bbcf143c7f48e28",
+        "currentHash": "99a0c6fb0fc4bac2528242b70b9c3e68354baac4ee6d08b2da43022b7f84eee3",
+        "previousLines": 690,
+        "currentLines": 698,
+        "deltaLines": 8,
         "deltaSymbols": 0
       },
       {
         "path": "scripts/build-env.mjs",
-        "previousHash": "18079049786e56100043cad9cd192e67e7c29c7f095c348812269225c9ee8aaa",
-        "currentHash": "27400ba9756bf22e60365d2a67206e8c981574e7865b5e98d412692289500d80",
-        "previousLines": 49,
-        "currentLines": 54,
-        "deltaLines": 5,
+        "previousHash": "27400ba9756bf22e60365d2a67206e8c981574e7865b5e98d412692289500d80",
+        "currentHash": "f354764384b9834db70640fba87bc9b05ba5469edc22b57983d9e87fe395702c",
+        "previousLines": 54,
+        "currentLines": 60,
+        "deltaLines": 6,
         "deltaSymbols": 0
       },
       {
-        "path": "scripts/code-memory-index/output.mjs",
-        "previousHash": "17f583474e7443c3f9d395b892796f0f3df2160d064b83bddec8fbbf65c5d108",
-        "currentHash": "d9e9a5c50cd491db61216e0be7f2cba3870e599b703ead85224c17913e79d520",
-        "previousLines": 49,
-        "currentLines": 54,
-        "deltaLines": 5,
+        "path": "src/components/app/AuthManager.tsx",
+        "previousHash": "a769df848981567a66384ca034c941e61e8e0e19026890084adf9136babfd941",
+        "currentHash": "b8395ddb8125be89e44c5cc6358942de110c5b7f1654928ff6dbdf106e9224e4",
+        "previousLines": 306,
+        "currentLines": 300,
+        "deltaLines": -6,
         "deltaSymbols": 0
       },
       {
-        "path": "scripts/code-memory-index/build-index.mjs",
-        "previousHash": "53a0c5ed59953a01f4b1ece452c6bda9b0e0c9ea18b8c6b5d56c31c50a40af74",
-        "currentHash": "9ec81ace84bd5aef8cfa8934124de0d869ea8e070c15d57dc57489fa98b23cf2",
-        "previousLines": 267,
-        "currentLines": 264,
-        "deltaLines": -3,
+        "path": "src/App.tsx",
+        "previousHash": "aa179268fe76307b1db200da7a966cf65fb9d5b19f9a225ad817e83d51888f44",
+        "currentHash": "34a5e1223a3d80d8e9261cf20094822780fa8b66112f2a328de674152e652c27",
+        "previousLines": 168,
+        "currentLines": 164,
+        "deltaLines": -4,
         "deltaSymbols": 0
       },
       {
         "path": "lighthouse/report-split/accessibility.json",
-        "previousHash": "692b7227a32f4549c19c19fa2a3d64eef7372522a4be44913cea8251fdb41242",
-        "currentHash": "f11be4a7b8bb63185482e88b18c99a10d6724009edafae8f801c7852a39e1526",
+        "previousHash": "8dd9f30b0f3fa066097d8013068f303c22bc4895d4a8f45a1c56493743e28db9",
+        "currentHash": "50a61b81ea619562e92f16bbe87dff546c5365a5439c6c143a9a6cda98b76a62",
         "previousLines": 1193,
         "currentLines": 1193,
         "deltaLines": 0,
         "deltaSymbols": 0
       },
       {
-        "path": "lighthouse/report-split/performance.html",
-        "previousHash": "203cbf64f2a116df1574dfa59ff94e01f36bdbad25e15adf904d1eb5d9c7d98f",
-        "currentHash": "34a7da7ad727027f4e27aa4aa7b2cac70090cb7e8d211ecfd7996e1b5594b766",
-        "previousLines": 690,
-        "currentLines": 690,
-        "deltaLines": 0,
-        "deltaSymbols": 0
-      },
-      {
         "path": "lighthouse/report.report.html",
-        "previousHash": "88529d1e4aee5cee0fe3cb52db22ffc33bd7d6a098b09c7131fe85e4da00b06a",
-        "currentHash": "13239524ce8a264b337f81f0804fa1f205bbefa6869b05997aa6e5faeab4b738",
+        "previousHash": "64311785708d36e0ab6ce9d9090bc8b721bc7d82ff4be777b50b448106c3155b",
+        "currentHash": "5b83b52b1cdd89a385353ad7497d127317ee363df90516ac12bc61dba7aded9c",
         "previousLines": 2894,
         "currentLines": 2894,
         "deltaLines": 0,
         "deltaSymbols": 0
       },
       {
-        "path": "scripts/code-memory-visual.mjs",
-        "previousHash": "57a1b291724c6e94c7665f77b8f466d695e6d71051055929712cf399c51c9033",
-        "currentHash": "13c262fa11f8b53925cf5781c8362e135e872e58dd31f7e8925009375d4b2206",
-        "previousLines": 288,
-        "currentLines": 288,
+        "path": "package.json",
+        "previousHash": "27da8f5591a7dca77adb24d4b8b0dc4b2feeb8890ebcb9a4793d9958df315f60",
+        "currentHash": "977f0fb63cbfb7619b12703b1777bc10049f1c241faabeacf6a46f23e55647e4",
+        "previousLines": 284,
+        "currentLines": 284,
         "deltaLines": 0,
         "deltaSymbols": 0
       }
@@ -36688,7 +36676,6 @@
       "md/SENTRY_INTEGRATION.md",
       "metadata.json",
       "overload.html",
-      "package.json",
       "public/dashboard.svg",
       "public/favicon-dark.svg",
       "public/favicon.svg",
@@ -36704,15 +36691,19 @@
       "scripts/clean.mjs",
       "scripts/code-memory-index.mjs",
       "scripts/code-memory-index/args.mjs",
+      "scripts/code-memory-index/build-index.mjs",
       "scripts/code-memory-index/constants.mjs",
       "scripts/code-memory-index/content-analysis.mjs",
+      "scripts/code-memory-index/file-system.mjs",
+      "scripts/code-memory-index/output.mjs",
       "scripts/code-memory-index/path-utils.mjs",
       "scripts/code-memory-index/stats.mjs",
+      "scripts/code-memory-visual.mjs",
       "scripts/db-ping.mjs",
-      "scripts/doctor.mjs",
       "scripts/env-check.mjs",
       "scripts/open-report.mjs",
       "scripts/run-push-gitbash.cjs",
+      "scripts/vitest-related.mjs",
       "scripts/zip-prod.mjs",
       "SECURITY.md",
       "server.ts",
@@ -36837,10 +36828,8 @@
       "src/api/securityApi.ts",
       "src/api/systemApi.ts",
       "src/api/vaultApi.ts",
-      "src/App.tsx",
       "src/components/app/AppHeader.tsx",
       "src/components/app/AppShell.tsx",
-      "src/components/app/AuthManager.tsx",
       "src/components/app/CookieConsentBanner.tsx",
       "src/components/app/EmergencyClaimPage.tsx",
       "src/components/app/GestureController.ts",
@@ -37163,8 +37152,7 @@
       "tests/unit/open-report.test.ts",
       "tests/unit/password-generation.test.ts",
       "tests/unit/password-generator-enhanced.test.ts",
-      "tests/unit/pinning.test.ts",
-      "tests/unit/privacy-interface-store.test.ts"
+      "tests/unit/pinning.test.ts"
     ]
   },
   "recommendations": [
@@ -37172,7 +37160,7 @@
     "Critical-risk files found. Split large modules and reduce dependency concentration."
   ],
   "diagnostics": {
-    "generatedInMs": 486,
+    "generatedInMs": 599,
     "skippedByReason": {},
     "topRiskPaths": [
       "src/store/vaultStore.ts",
@@ -37194,9 +37182,9 @@
       "src/features/vault/components/LiveCaptureModal/LiveCaptureModal.tsx",
       "src/store/vaultStore.ts",
       "src/features/vault/OtherFilesVault.tsx",
-      "lighthouse/report-split/best-practices.json",
       "src/features/vault/DocumentsVault.tsx",
-      "scripts/lighthouse-runner.mjs"
+      "scripts/lighthouse-runner.mjs",
+      "lighthouse/report-split/best-practices.json"
     ]
   },
   "dependencyEdges": [
@@ -40191,6 +40179,11 @@
       "kind": "relative"
     },
     {
+      "from": "src/App.tsx",
+      "to": "src/components/app/LockedVaultHost",
+      "kind": "relative"
+    },
+    {
       "from": "src/components/app/AppHeader.tsx",
       "to": "react",
       "kind": "package"
@@ -40338,6 +40331,11 @@
     {
       "from": "src/components/app/AuthManager.tsx",
       "to": "src/lib/logger",
+      "kind": "relative"
+    },
+    {
+      "from": "src/components/app/AuthManager.tsx",
+      "to": "src/features/LandingPage",
       "kind": "relative"
     },
     {
@@ -48299,7 +48297,7 @@
         "switchCount": 0
       },
       "complexityScore": 369,
-      "updatedAt": "2026-08-25T18:41:37.692Z",
+      "updatedAt": "2026-08-26T02:19:43.903Z",
       "riskScore": 22
     },
     {
@@ -48307,7 +48305,7 @@
       "extension": ".json",
       "directory": "lighthouse/report-split",
       "bytes": 50030,
-      "hash": "f11be4a7b8bb63185482e88b18c99a10d6724009edafae8f801c7852a39e1526",
+      "hash": "50a61b81ea619562e92f16bbe87dff546c5365a5439c6c143a9a6cda98b76a62",
       "lines": {
         "total": 1193,
         "code": 1192,
@@ -48334,7 +48332,7 @@
         "switchCount": 0
       },
       "complexityScore": 1198,
-      "updatedAt": "2026-08-25T18:41:37.692Z",
+      "updatedAt": "2026-08-26T02:19:43.903Z",
       "riskScore": 30
     },
     {
@@ -48367,18 +48365,18 @@
         "switchCount": 0
       },
       "complexityScore": 377,
-      "updatedAt": "2026-08-25T18:41:37.700Z",
+      "updatedAt": "2026-08-26T02:19:43.903Z",
       "riskScore": 22
     },
     {
       "path": "lighthouse/report-split/best-practices.json",
       "extension": ".json",
       "directory": "lighthouse/report-split",
-      "bytes": 63441,
-      "hash": "0674ef24617efe3dc75adb45f7897afe2005238f8d6c2b2e490fd8c40eb55d08",
+      "bytes": 59455,
+      "hash": "a5a0efc893d0397f1a8244086a542c2150cb6dfd7cc06c1bb0d56f2f7cddb682",
       "lines": {
-        "total": 1935,
-        "code": 1934,
+        "total": 1811,
+        "code": 1810,
         "comments": 0,
         "blanks": 1
       },
@@ -48399,19 +48397,19 @@
         "ifCount": 1,
         "switchCount": 0
       },
-      "complexityScore": 1934,
-      "updatedAt": "2026-08-25T18:41:37.700Z",
+      "complexityScore": 1810,
+      "updatedAt": "2026-08-26T02:19:43.903Z",
       "riskScore": 30
     },
     {
       "path": "lighthouse/report-split/performance.html",
       "extension": ".html",
       "directory": "lighthouse/report-split",
-      "bytes": 29528,
-      "hash": "34a7da7ad727027f4e27aa4aa7b2cac70090cb7e8d211ecfd7996e1b5594b766",
+      "bytes": 30194,
+      "hash": "99a0c6fb0fc4bac2528242b70b9c3e68354baac4ee6d08b2da43022b7f84eee3",
       "lines": {
-        "total": 690,
-        "code": 685,
+        "total": 698,
+        "code": 693,
         "comments": 1,
         "blanks": 4
       },
@@ -48434,19 +48432,19 @@
         "ifCount": 1,
         "switchCount": 0
       },
-      "complexityScore": 697,
-      "updatedAt": "2026-08-25T18:41:37.692Z",
+      "complexityScore": 705,
+      "updatedAt": "2026-08-26T02:19:43.903Z",
       "riskScore": 37
     },
     {
       "path": "lighthouse/report-split/performance.json",
       "extension": ".json",
       "directory": "lighthouse/report-split",
-      "bytes": 247202,
-      "hash": "279d8801ca87a1f411d32bb22bd21ea4bbab49cd8137ac99055e3257bc5ae773",
+      "bytes": 566424,
+      "hash": "8c9fe628140c8b78b777a436a9ea16235cc47e3d44d17a51384af6ac7fefedb0",
       "lines": {
-        "total": 3788,
-        "code": 3787,
+        "total": 11596,
+        "code": 11595,
         "comments": 0,
         "blanks": 1
       },
@@ -48457,31 +48455,32 @@
       "symbols": [],
       "symbolCount": 0,
       "tags": [
-        "OPTIMIZE"
+        "OPTIMIZE",
+        "TODO"
       ],
-      "tagCount": 1,
+      "tagCount": 2,
       "keywordCounts": {
-        "asyncCount": 0,
+        "asyncCount": 2,
         "awaitCount": 0,
         "tryCount": 1,
         "catchCount": 0,
         "throwCount": 0,
-        "ifCount": 1,
+        "ifCount": 2,
         "switchCount": 0
       },
-      "complexityScore": 3799,
-      "updatedAt": "2026-08-25T18:41:37.692Z",
-      "riskScore": 37
+      "complexityScore": 11619,
+      "updatedAt": "2026-08-26T02:19:43.887Z",
+      "riskScore": 44
     },
     {
       "path": "lighthouse/report-split/seo.html",
       "extension": ".html",
       "directory": "lighthouse/report-split",
-      "bytes": 9960,
-      "hash": "dd7e9564b3b4ef856d5060cf6a9a6cb06c65751981296ea7fedad4b156a2566d",
+      "bytes": 10256,
+      "hash": "cda32030bc3986c23fc5c2f0a44eda5f84a0b5da48b4b0f4f424de052e32a5f4",
       "lines": {
-        "total": 306,
-        "code": 299,
+        "total": 304,
+        "code": 297,
         "comments": 1,
         "blanks": 6
       },
@@ -48502,19 +48501,19 @@
         "ifCount": 2,
         "switchCount": 0
       },
-      "complexityScore": 299,
-      "updatedAt": "2026-08-25T18:41:37.700Z",
+      "complexityScore": 297,
+      "updatedAt": "2026-08-26T02:19:43.912Z",
       "riskScore": 22
     },
     {
       "path": "lighthouse/report-split/seo.json",
       "extension": ".json",
       "directory": "lighthouse/report-split",
-      "bytes": 8414,
-      "hash": "30fc6a08ed041cec49d7c4775df35bd9adcdbbc2a852b17bc11c25ab74459936",
+      "bytes": 8261,
+      "hash": "f2dc5a40c6015257d7fc164f3079931fe34e144159d6ccce8cee83e651307e6d",
       "lines": {
-        "total": 240,
-        "code": 239,
+        "total": 242,
+        "code": 241,
         "comments": 0,
         "blanks": 1
       },
@@ -48535,16 +48534,16 @@
         "ifCount": 2,
         "switchCount": 0
       },
-      "complexityScore": 239,
-      "updatedAt": "2026-08-25T18:41:37.700Z",
+      "complexityScore": 241,
+      "updatedAt": "2026-08-26T02:19:43.911Z",
       "riskScore": 16
     },
     {
       "path": "lighthouse/report.report.html",
       "extension": ".html",
       "directory": "lighthouse",
-      "bytes": 576548,
-      "hash": "13239524ce8a264b337f81f0804fa1f205bbefa6869b05997aa6e5faeab4b738",
+      "bytes": 686803,
+      "hash": "5b83b52b1cdd89a385353ad7497d127317ee363df90516ac12bc61dba7aded9c",
       "lines": {
         "total": 2894,
         "code": 2382,
@@ -48624,27 +48623,27 @@
       ],
       "tagCount": 3,
       "keywordCounts": {
-        "asyncCount": 5,
+        "asyncCount": 7,
         "awaitCount": 4,
         "tryCount": 8,
         "catchCount": 7,
         "throwCount": 15,
-        "ifCount": 168,
+        "ifCount": 169,
         "switchCount": 13
       },
       "complexityScore": 2772,
-      "updatedAt": "2026-08-25T18:41:34.206Z",
+      "updatedAt": "2026-08-26T02:19:41.257Z",
       "riskScore": 68
     },
     {
       "path": "lighthouse/report.report.json",
       "extension": ".json",
       "directory": "lighthouse",
-      "bytes": 517285,
-      "hash": "ef634f01dfd025eaba6f425d5eead7669b8a5171758de7b5b81a3b30511f7a14",
+      "bytes": 836351,
+      "hash": "52a12082e596c6b029a5f4818068ff0250c17053125ecb99da25fab93efe6c35",
       "lines": {
-        "total": 11527,
-        "code": 11527,
+        "total": 19400,
+        "code": 19400,
         "comments": 0,
         "blanks": 0
       },
@@ -48657,21 +48656,22 @@
       ],
       "symbolCount": 1,
       "tags": [
-        "OPTIMIZE"
+        "OPTIMIZE",
+        "TODO"
       ],
-      "tagCount": 1,
+      "tagCount": 2,
       "keywordCounts": {
-        "asyncCount": 0,
+        "asyncCount": 2,
         "awaitCount": 0,
         "tryCount": 1,
         "catchCount": 0,
         "throwCount": 0,
-        "ifCount": 4,
+        "ifCount": 5,
         "switchCount": 0
       },
-      "complexityScore": 11545,
-      "updatedAt": "2026-08-25T18:41:34.212Z",
-      "riskScore": 37
+      "complexityScore": 19430,
+      "updatedAt": "2026-08-26T02:19:41.265Z",
+      "riskScore": 44
     },
     {
       "path": "md/DEPLOYMENT_SECURITY_GUIDE.md",
@@ -49158,8 +49158,8 @@
       "path": "package.json",
       "extension": ".json",
       "directory": ".",
-      "bytes": 13382,
-      "hash": "27da8f5591a7dca77adb24d4b8b0dc4b2feeb8890ebcb9a4793d9958df315f60",
+      "bytes": 13472,
+      "hash": "977f0fb63cbfb7619b12703b1777bc10049f1c241faabeacf6a46f23e55647e4",
       "lines": {
         "total": 284,
         "code": 283,
@@ -49186,7 +49186,7 @@
         "switchCount": 0
       },
       "complexityScore": 295,
-      "updatedAt": "2026-08-25T17:28:18.564Z",
+      "updatedAt": "2026-08-26T02:17:14.064Z",
       "riskScore": 23
     },
     {
@@ -49724,13 +49724,13 @@
       "path": "scripts/build-env.mjs",
       "extension": ".mjs",
       "directory": "scripts",
-      "bytes": 1343,
-      "hash": "27400ba9756bf22e60365d2a67206e8c981574e7865b5e98d412692289500d80",
+      "bytes": 1471,
+      "hash": "f354764384b9834db70640fba87bc9b05ba5469edc22b57983d9e87fe395702c",
       "lines": {
-        "total": 54,
-        "code": 45,
+        "total": 60,
+        "code": 50,
         "comments": 0,
-        "blanks": 9
+        "blanks": 10
       },
       "imports": [
         "import { spawnSync } from 'node:child_process';",
@@ -49770,11 +49770,11 @@
         "tryCount": 0,
         "catchCount": 0,
         "throwCount": 0,
-        "ifCount": 7,
+        "ifCount": 8,
         "switchCount": 0
       },
-      "complexityScore": 54,
-      "updatedAt": "2026-08-25T18:39:48.668Z",
+      "complexityScore": 59,
+      "updatedAt": "2026-08-26T02:06:45.961Z",
       "riskScore": 12
     },
     {
@@ -50514,13 +50514,13 @@
       "path": "scripts/doctor.mjs",
       "extension": ".mjs",
       "directory": "scripts",
-      "bytes": 3442,
-      "hash": "ffa3f23be261d47949af1178ffe04e81cf12a3e2cc22134366ce6d7a42c7dcd0",
+      "bytes": 3951,
+      "hash": "520314b65d36f0d02a974d83ef77091280d4b493a4593d6ef690245f80e68617",
       "lines": {
-        "total": 120,
-        "code": 99,
-        "comments": 5,
-        "blanks": 16
+        "total": 135,
+        "code": 112,
+        "comments": 6,
+        "blanks": 17
       },
       "imports": [
         "import fs from 'node:fs';",
@@ -50562,11 +50562,11 @@
         "tryCount": 0,
         "catchCount": 0,
         "throwCount": 0,
-        "ifCount": 11,
+        "ifCount": 12,
         "switchCount": 0
       },
-      "complexityScore": 114,
-      "updatedAt": "2026-08-25T17:20:35.427Z",
+      "complexityScore": 127,
+      "updatedAt": "2026-08-26T02:06:51.486Z",
       "riskScore": 12
     },
     {
@@ -50632,13 +50632,13 @@
       "path": "scripts/lighthouse-runner.mjs",
       "extension": ".mjs",
       "directory": "scripts",
-      "bytes": 56142,
-      "hash": "e7e848604427791e7c34dc7fdb7d875f925e8b0822fa0e38ef03ab3afd9d7eab",
+      "bytes": 57453,
+      "hash": "d0da9212404fea22f8cab92fbdd1e3a83ffe4a87f61a7300e8eaf147b74bf092",
       "lines": {
-        "total": 1781,
-        "code": 1505,
-        "comments": 83,
-        "blanks": 193
+        "total": 1820,
+        "code": 1540,
+        "comments": 84,
+        "blanks": 196
       },
       "imports": [
         "import fs from 'node:fs';",
@@ -50661,7 +50661,9 @@
         "export const FALLBACK_CHROME_FLAGS = [",
         "export const CWV_THRESHOLDS = {",
         "export const ensureWindowsSystem32OnPath = () => {",
+        "export const sanitizeNpmConfigEnv = (rawEnv = process.env) => {",
         "export const runtimePath = ensureWindowsSystem32OnPath();",
+        "export const getSanitizedProcessEnv = (extraEnv = {}) => ({",
         "export const resolveChromeExecutablePath = (",
         "export const isSafeWorkspaceChild = (targetPath, workspaceRoot = process.cwd()) => {",
         "export const removeTempDirectorySafely = (directoryPath, retries = 5, delayMs = 150) => {",
@@ -50671,7 +50673,7 @@
         "export const terminateProcessTree = (pid, platform = process.platform) => {",
         "export const launchManagedChrome = async ({",
         "export const resolveNpxRunner = () => {",
-        "export const ensureProductionBuild = (workspaceRoot = process.cwd()) => {",
+        "export const ensureProductionBuild = (workspaceRoot = process.cwd(), forceRebuild = false) => {",
         "export const waitForServer = (url, timeoutMs = 30000, attachedProcess = null) =>",
         "export const escapeHtml = (value) =>",
         "export const stripMarkdownLinks = (value) =>",
@@ -50744,6 +50746,8 @@
       ],
       "symbols": [
         "ensureWindowsSystem32OnPath",
+        "sanitizeNpmConfigEnv",
+        "getSanitizedProcessEnv",
         "resolveChromeExecutablePath",
         "isSafeWorkspaceChild",
         "removeTempDirectorySafely",
@@ -50791,20 +50795,20 @@
         "executeLighthouse",
         "isDirectExecution"
       ],
-      "symbolCount": 47,
+      "symbolCount": 49,
       "tags": [],
       "tagCount": 0,
       "keywordCounts": {
         "asyncCount": 5,
         "awaitCount": 7,
-        "tryCount": 16,
-        "catchCount": 16,
+        "tryCount": 17,
+        "catchCount": 17,
         "throwCount": 5,
-        "ifCount": 145,
+        "ifCount": 149,
         "switchCount": 0
       },
-      "complexityScore": 1808,
-      "updatedAt": "2026-08-25T18:39:41.805Z",
+      "complexityScore": 1855,
+      "updatedAt": "2026-08-26T02:13:12.382Z",
       "riskScore": 47
     },
     {
@@ -60838,11 +60842,11 @@
       "path": "src/App.tsx",
       "extension": ".tsx",
       "directory": "src",
-      "bytes": 5672,
-      "hash": "aa179268fe76307b1db200da7a966cf65fb9d5b19f9a225ad817e83d51888f44",
+      "bytes": 5566,
+      "hash": "34a5e1223a3d80d8e9261cf20094822780fa8b66112f2a328de674152e652c27",
       "lines": {
-        "total": 168,
-        "code": 139,
+        "total": 164,
+        "code": 135,
         "comments": 6,
         "blanks": 23
       },
@@ -60857,7 +60861,8 @@
         "import { useVaultStore } from './store/vaultStore';",
         "import { useMediaQuery } from './hooks/use-media-query';",
         "import { logger } from './lib/logger';",
-        "import { useAnalyticsPageTracking } from './lib/telemetry';"
+        "import { useAnalyticsPageTracking } from './lib/telemetry';",
+        "import { LockedVaultHost } from './components/app/LockedVaultHost';"
       ],
       "exports": [
         "export default function App() {"
@@ -60873,7 +60878,8 @@
         "./store/vaultStore",
         "./hooks/use-media-query",
         "./lib/logger",
-        "./lib/telemetry"
+        "./lib/telemetry",
+        "./components/app/LockedVaultHost"
       ],
       "importsDetailed": [
         {
@@ -60930,6 +60936,11 @@
           "specifier": "./lib/telemetry",
           "kind": "relative",
           "target": "src/lib/telemetry"
+        },
+        {
+          "specifier": "./components/app/LockedVaultHost",
+          "kind": "relative",
+          "target": "src/components/app/LockedVaultHost"
         }
       ],
       "symbols": [
@@ -60954,8 +60965,8 @@
         "ifCount": 7,
         "switchCount": 0
       },
-      "complexityScore": 220,
-      "updatedAt": "2026-08-25T15:13:58.508Z",
+      "complexityScore": 219,
+      "updatedAt": "2026-08-26T02:11:30.187Z",
       "riskScore": 21
     },
     {
@@ -61216,11 +61227,11 @@
       "path": "src/components/app/AuthManager.tsx",
       "extension": ".tsx",
       "directory": "src/components/app",
-      "bytes": 8303,
-      "hash": "a769df848981567a66384ca034c941e61e8e0e19026890084adf9136babfd941",
+      "bytes": 8132,
+      "hash": "b8395ddb8125be89e44c5cc6358942de110c5b7f1654928ff6dbdf106e9224e4",
       "lines": {
-        "total": 306,
-        "code": 263,
+        "total": 300,
+        "code": 257,
         "comments": 0,
         "blanks": 43
       },
@@ -61233,7 +61244,8 @@
         "import { TAB_PATH_VALUES } from './NavigationHandler';",
         "import {",
         "import { logoutVaultSession, refreshVaultSession } from '../../lib/auth-api';",
-        "import { logger } from '../../lib/logger';"
+        "import { logger } from '../../lib/logger';",
+        "import { LandingPage } from '../../features/LandingPage';"
       ],
       "exports": [
         "export function useAuthManager() {",
@@ -61247,7 +61259,8 @@
         "./LoadingScreen",
         "./NavigationHandler",
         "../../lib/auth-api",
-        "../../lib/logger"
+        "../../lib/logger",
+        "../../features/LandingPage"
       ],
       "importsDetailed": [
         {
@@ -61289,6 +61302,11 @@
           "specifier": "../../lib/logger",
           "kind": "relative",
           "target": "src/lib/logger"
+        },
+        {
+          "specifier": "../../features/LandingPage",
+          "kind": "relative",
+          "target": "src/features/LandingPage"
         }
       ],
       "symbols": [
@@ -61312,9 +61330,9 @@
         "ifCount": 10,
         "switchCount": 0
       },
-      "complexityScore": 329,
-      "updatedAt": "2026-08-25T15:13:58.630Z",
-      "riskScore": 22
+      "complexityScore": 326,
+      "updatedAt": "2026-08-26T02:11:37.510Z",
+      "riskScore": 21
     },
     {
       "path": "src/components/app/CookieConsentBanner.tsx",
@@ -86048,13 +86066,13 @@
       "path": "tests/unit/lighthouse-runner.test.ts",
       "extension": ".ts",
       "directory": "tests/unit",
-      "bytes": 20596,
-      "hash": "fc474d118dde2a42b1675b2ca8bf1b277a5c75b1d2821046b8feb493f8aae19f",
+      "bytes": 22575,
+      "hash": "b1fbb90007b06b473c3e8285388e866aa32d1a1617c1ffe7951c8d31a7727b86",
       "lines": {
-        "total": 597,
-        "code": 538,
+        "total": 643,
+        "code": 579,
         "comments": 3,
-        "blanks": 56
+        "blanks": 61
       },
       "imports": [
         "import { afterEach, beforeEach, describe, expect, it } from 'vitest';",
@@ -86107,9 +86125,9 @@
         "ifCount": 2,
         "switchCount": 0
       },
-      "complexityScore": 562,
-      "updatedAt": "2026-08-25T18:40:18.653Z",
-      "riskScore": 29
+      "complexityScore": 603,
+      "updatedAt": "2026-08-26T02:13:28.122Z",
+      "riskScore": 37
     },
     {
       "path": "tests/unit/logrocket-backend.test.ts",
@@ -87726,11 +87744,11 @@
       "path": "vite.config.ts",
       "extension": ".ts",
       "directory": ".",
-      "bytes": 15228,
-      "hash": "ab06caaaa08ea3984c65e3082d393cee0d741e10fe2aa926f0488b7359b2e310",
+      "bytes": 15988,
+      "hash": "4a877e536ce7066abde9782a56a210d56b747b414ac6bb0324a7eb5e918389b9",
       "lines": {
-        "total": 549,
-        "code": 473,
+        "total": 570,
+        "code": 494,
         "comments": 12,
         "blanks": 64
       },
@@ -87829,11 +87847,11 @@
         "tryCount": 3,
         "catchCount": 3,
         "throwCount": 0,
-        "ifCount": 48,
+        "ifCount": 49,
         "switchCount": 0
       },
-      "complexityScore": 572,
-      "updatedAt": "2026-08-25T15:14:05.341Z",
+      "complexityScore": 593,
+      "updatedAt": "2026-08-26T02:17:08.115Z",
       "riskScore": 40
     },
     {
@@ -87914,13 +87932,13 @@
   ],
   "trend": {
     "filesIndexedDelta": 0,
-    "linesIndexedDelta": -15477,
-    "symbolCountDelta": 3,
+    "linesIndexedDelta": 94,
+    "symbolCountDelta": 2,
     "importCountDelta": 2,
-    "avgRiskPerFileDelta": -0.02
+    "avgRiskPerFileDelta": 0.01
   },
   "history": {
-    "historyPath": "C:\\code\\vault\\.memory\\history\\code-index-2026-08-25T18-47-42-845Z.json",
-    "historyCount": 13
+    "historyPath": "C:\\code\\vault\\.memory\\history\\code-index-2026-08-26T02-22-01-152Z.json",
+    "historyCount": 15
   }
 }

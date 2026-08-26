@@ -26,7 +26,7 @@
     <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
 
     <!-- Search Engine -->
-    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+    <meta name="robots" content="index, follow" />
     <link rel="canonical" href="%VITE_APP_PUBLIC_URL%" />
 
     <!-- Compatibility -->
@@ -194,7 +194,16 @@
       }
     </style>
 
-    <script src="/vite-preload-shim.js"></script>
+    <script>
+      if (typeof window.__VITE_PRELOAD__ !== 'function') {
+        window.__VITE_PRELOAD__ = (loader, _deps) => {
+          if (typeof loader === 'function') {
+            return loader();
+          }
+          return Promise.resolve(loader);
+        };
+      }
+    </script>
 
     <!-- Main App -->
     <script type="module" src="/src/main.tsx"></script>

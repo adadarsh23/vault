@@ -22,6 +22,8 @@ jobs:
     env:
       MONGODB_URI: ${{ secrets.MONGODB_URI }}
       MONGO_URI: ${{ secrets.MONGO_URI }}
+      MONGODB_URL: ${{ secrets.MONGODB_URL }}
+      MONGO_URL: ${{ secrets.MONGO_URL }}
       MONGODB_URI_FALLBACK: ${{ secrets.MONGODB_URI_FALLBACK }}
       MONGODB_URL_FALLBACK: ${{ secrets.MONGODB_URL_FALLBACK }}
       MONGODB_URI_1: ${{ secrets.MONGODB_URI_1 }}
@@ -48,36 +50,62 @@ jobs:
           cache: npm
 
       - name: Validate configuration
+        id: config-check
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -z "${MONGODB_URI:-}" && -z "${MONGO_URI:-}" ]]; then
-            echo "::error::Repository secret MONGODB_URI is missing."
-            exit 1
+
+          HAS_URI="false"
+          for candidate in \
+            "${MONGODB_URI:-}" "${MONGO_URI:-}" "${MONGODB_URL:-}" "${MONGO_URL:-}" \
+            "${MONGODB_URI_FALLBACK:-}" "${MONGODB_URL_FALLBACK:-}" "${MONGODB_URI_DIRECT:-}" \
+            "${MONGODB_URI_1:-}" "${MONGODB_URI_2:-}" "${MONGODB_URI_3:-}" "${MONGODB_URI_4:-}" \
+            "${MONGODB_URI_5:-}" "${MONGODB_URI_6:-}" "${MONGODB_URI_7:-}" "${MONGODB_URI_8:-}" \
+            "${MONGODB_URI_9:-}" "${MONGODB_URI_10:-}"; do
+            TRIMMED="$(echo "$candidate" | tr -d '[:space:]')"
+            if [[ "$TRIMMED" == mongodb://* || "$TRIMMED" == mongodb+srv://* ]]; then
+              HAS_URI="true"
+              break
+            fi
+          done
+
+          if [[ "$HAS_URI" != "true" ]]; then
+            echo "::notice title=Atlas Keepalive Skipped::No MongoDB connection URI configured in repository secrets."
+            echo "has_uri=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "## ℹ️ MongoDB Atlas Keepalive Skipped"
+              echo ""
+              echo "No MongoDB Atlas URI secrets were found."
+              echo "To activate Atlas cluster keepalive pings, configure \`MONGODB_URI\` in **Settings > Secrets and variables > Actions**."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Database URI configuration validated."
+            echo "has_uri=true" >> "$GITHUB_OUTPUT"
           fi
-          echo "Database URI configuration validated."
 
       - name: Install dependencies
+        if: steps.config-check.outputs.has_uri == 'true'
         shell: bash
         run: |
           set -euo pipefail
           npm ci --omit=dev
 
       - name: Ping All Atlas Clusters (Primary & Fallback)
+        if: steps.config-check.outputs.has_uri == 'true'
         shell: bash
         run: |
           set -euo pipefail
           npm run keepalive:once
 
       - name: Workflow summary
-        if: success()
+        if: steps.config-check.outputs.has_uri == 'true' && success()
         run: |
           {
-            echo "## ✅ MongoDB Atlas Keepalive"
+            echo "## ✅ MongoDB Atlas Keepalive Succeeded"
             echo ""
-            echo "- Status: All clusters pinged successfully"
+            echo "- Status: All configured clusters pinged successfully"
             echo "- Mode: Multi-cluster concurrent ping"
-            echo "- Time: $(date -u)"
+            echo "- Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Failure summary
@@ -86,5 +114,5 @@ jobs:
           {
             echo "## ❌ Atlas Keepalive Failed"
             echo ""
-            echo "Check the workflow logs for details."
+            echo "Check the workflow logs for connection or ping failure details."
           } >> "$GITHUB_STEP_SUMMARY"

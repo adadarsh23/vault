@@ -1,0 +1,121 @@
+# ==============================================================================
+# Vault Project - Git Attributes Configuration
+# ==============================================================================
+# Auto-detect text files and normalize line endings to LF across all platforms.
+* text=auto eol=lf
+
+# ------------------------------------------------------------------------------
+# 1. Vault Application Source Code (src/, server/, server.ts, tests/)
+# ------------------------------------------------------------------------------
+*.ts                        text eol=lf diff=typescript
+*.tsx                       text eol=lf diff=typescript
+*.js                        text eol=lf diff=javascript
+*.jsx                       text eol=lf diff=javascript
+*.mjs                       text eol=lf diff=javascript
+*.cjs                       text eol=lf diff=javascript
+*.d.ts                      text eol=lf diff=typescript
+
+# ------------------------------------------------------------------------------
+# 2. Frontend HTML & Styles (index.html, overload.html, Tailwind CSS)
+# ------------------------------------------------------------------------------
+*.html                      text eol=lf diff=html
+*.css                       text eol=lf diff=css
+*.postcss                   text eol=lf diff=css
+
+# ------------------------------------------------------------------------------
+# 3. Project Configuration & Schemas (tsconfig, vite, metadata, docker)
+# ------------------------------------------------------------------------------
+*.json                      text eol=lf
+*.json5                     text eol=lf
+*.jsonc                     text eol=lf
+*.webmanifest               text eol=lf
+*.yml                       text eol=lf
+*.yaml                      text eol=lf
+*.toml                      text eol=lf
+.env*                       text eol=lf
+.gitignore                  text eol=lf
+.gitattributes              text eol=lf
+.prettierrc*                text eol=lf
+.prettierignore             text eol=lf
+.vscodeignore               text eol=lf
+Dockerfile                  text eol=lf
+docker-compose*.yml         text eol=lf
+components.json             text eol=lf
+metadata.json               text eol=lf
+
+# ------------------------------------------------------------------------------
+# 4. Project Documentation (Root docs & md/ security architecture guides)
+# ------------------------------------------------------------------------------
+*.md                        text eol=lf diff=markdown
+*.markdown                  text eol=lf diff=markdown
+*.txt                       text eol=lf
+AUTHORS.md                  text eol=lf diff=markdown
+CHANGELOG.md                text eol=lf diff=markdown
+CODE_OF_CONDUCT.md          text eol=lf diff=markdown
+CONTRIBUTING.md             text eol=lf diff=markdown
+LICENSE.md                  text eol=lf diff=markdown
+README.md                   text eol=lf diff=markdown
+SECURITY.md                 text eol=lf diff=markdown
+md/*.md                     text eol=lf diff=markdown
+
+# ------------------------------------------------------------------------------
+# 5. Maintenance, CI & Helper Scripts (scripts/, root scripts)
+# ------------------------------------------------------------------------------
+*.sh                        text eol=lf
+*.bash                      text eol=lf
+*.ps1                       text eol=lf
+*.bat                       text eol=crlf
+*.cmd                       text eol=crlf
+push.sh                     text eol=lf
+verify_jwt_fix.sh           text eol=lf
+scripts/*.mjs               text eol=lf diff=javascript
+scripts/*.cjs               text eol=lf diff=javascript
+
+# ------------------------------------------------------------------------------
+# 6. Static Public Assets & Media (public/, build/)
+# ------------------------------------------------------------------------------
+*.png                       binary
+*.ico                       binary
+*.webp                      binary
+*.avif                      binary
+*.jpg                       binary
+*.jpeg                      binary
+*.gif                       binary
+*.svg                       text eol=lf
+
+# Audio & Video streaming assets (HLS / Shaka)
+*.mp3                       binary
+*.wav                       binary
+*.ogg                       binary
+*.m4a                       binary
+*.mp4                       binary
+*.webm                      binary
+
+# Fonts & WebAssembly (pqc-kyber, libsodium, ffmpeg)
+*.woff                      binary
+*.woff2                     binary
+*.ttf                       binary
+*.wasm                      binary
+*.node                      binary
+
+# ------------------------------------------------------------------------------
+# 7. Pre-compressed Production Bundles & Archives (Vite build outputs)
+# ------------------------------------------------------------------------------
+*.br                        binary
+*.gz                        binary
+*.zip                       binary
+*.tar                       binary
+
+# ------------------------------------------------------------------------------
+# 8. GitHub Linguist & Generated Reports Overrides
+# ------------------------------------------------------------------------------
+package-lock.json           binary linguist-generated=true
+*.map                       linguist-generated=true
+*.min.js                    linguist-generated=true
+*.min.css                   linguist-generated=true
+stats.html                  linguist-generated=true
+build/**                    linguist-generated=true
+coverage/**                 linguist-generated=true
+.memory/**                  linguist-generated=true
+logs/**                     linguist-generated=true
+vault-tmp/**                linguist-generated=true

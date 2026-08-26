@@ -16,11 +16,7 @@ import {
 import { logoutVaultSession, refreshVaultSession } from '../../lib/auth-api';
 import { logger } from '../../lib/logger';
 
-const LandingPage = lazy(() =>
-  import('../../features/LandingPage').then((module) => ({
-    default: module.LandingPage || (module as any).default,
-  })),
-);
+import { LandingPage } from '../../features/LandingPage';
 const NotFoundPage = lazy(() =>
   import('../../features/NotFoundPage').then((module) => ({
     default: module.NotFoundPage || (module as any).default,
@@ -248,9 +244,7 @@ export function AuthManager({
 
   const authEntryElement = showLanding ? (
     <div key="landing">
-      <Suspense fallback={<AuthRouteLoading />}>
-        <LandingPage onEnterVault={onEnterVault} />
-      </Suspense>
+      <LandingPage onEnterVault={onEnterVault} />
     </div>
   ) : (
     <div key="auth">

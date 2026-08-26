@@ -1,0 +1,354 @@
+{
+  "$schema": "./schemas/vault-manifest.schema.json",
+  "name": "vault",
+  "displayName": "Vault",
+  "version": "1.0.0",
+  "schemaVersion": 1,
+  "securityVersion": 1,
+  "description": "Secure encrypted vault for storing photos, videos, notes, documents, and passwords with client-side encryption.",
+
+  "author": {
+    "name": "Adarsh",
+    "role": "Developer",
+    "website": "https://github.com/adadarsh23"
+  },
+
+  "license": "UNLICENSED",
+
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adadarsh23/vault"
+  },
+
+  "homepage": null,
+
+  "keywords": [
+    "vault",
+    "encryption",
+    "password-manager",
+    "secure-storage",
+    "privacy",
+    "zero-knowledge",
+    "client-side-encryption"
+  ],
+
+  "application": {
+    "type": "secure-storage",
+    "platforms": ["web", "mobile"],
+    "pwa": true,
+    "production": true
+  },
+
+  "security": {
+    "model": {
+      "clientSideEncryption": true,
+      "zeroKnowledge": true,
+      "plaintextServerAccess": false
+    },
+
+    "cryptography": {
+      "contentEncryption": {
+        "algorithm": "AES-256-GCM",
+        "keyLengthBits": 256,
+        "authenticatedEncryption": true
+      },
+
+      "keyDerivation": {
+        "algorithm": "PBKDF2-SHA-256",
+        "iterations": 600000,
+        "saltLengthBytes": 32
+      },
+
+      "nonce": {
+        "algorithm": "random",
+        "lengthBytes": 12,
+        "neverReuse": true
+      },
+
+      "randomness": {
+        "provider": "Web Crypto API",
+        "cryptographicallySecure": true
+      },
+
+      "encryptionFormatVersion": 1
+    },
+
+    "keyManagement": {
+      "masterKey": {
+        "clientGenerated": true,
+        "storedPlaintext": false,
+        "exportable": false
+      },
+      "keyVersioning": true,
+      "keyRotation": true
+    },
+
+    "authentication": {
+      "methods": ["password", "totp", "passkey", "webauthn"],
+      "multiFactorAuthentication": true,
+      "passwordAuthentication": true
+    },
+
+    "passwordPolicy": {
+      "minimumLength": 12,
+      "maximumLength": 128,
+      "allowPasswordManagers": true,
+      "allowPassphrases": true
+    },
+
+    "sessionSecurity": {
+      "secureCookies": true,
+      "httpOnlyCookies": true,
+      "sameSite": "strict",
+      "sessionExpiration": true,
+      "sessionRevocation": true,
+      "concurrentSessionManagement": true
+    },
+
+    "accountProtection": {
+      "rateLimiting": true,
+      "bruteForceProtection": true,
+      "credentialStuffingProtection": true
+    },
+
+    "recovery": {
+      "enabled": true,
+      "backupCodes": true,
+      "recoveryKeys": true
+    }
+  },
+
+  "storage": {
+    "encryptionBeforeUpload": true,
+    "encryptionAtRest": true,
+    "encryptedFilenames": true,
+    "encryptedMetadata": true,
+    "contentIntegrityVerification": true,
+
+    "categories": ["photo", "video", "document", "note", "password", "other"],
+
+    "upload": {
+      "maxFileSizeMB": 100,
+      "multipart": true,
+      "resumable": true,
+      "fileTypeValidation": true,
+      "contentValidation": true
+    }
+  },
+
+  "dataLifecycle": {
+    "userExport": true,
+    "accountDeletion": true,
+    "itemDeletion": true,
+    "softDelete": false,
+    "retentionPolicy": true,
+    "backupRetentionDays": 30
+  },
+
+  "apiSecurity": {
+    "httpsRequired": true,
+    "tls": true,
+    "cors": true,
+    "csrfProtection": true,
+    "rateLimiting": true,
+    "requestValidation": true,
+    "inputSanitization": true,
+    "securityHeaders": true,
+    "requestSizeLimits": true
+  },
+
+  "securityHeaders": [
+    "Content-Security-Policy",
+    "Strict-Transport-Security",
+    "X-Content-Type-Options",
+    "Referrer-Policy",
+    "Permissions-Policy"
+  ],
+
+  "database": {
+    "type": "MongoDB",
+    "tlsRequired": true,
+    "applicationLevelEncryption": true,
+    "sensitiveFieldsEncrypted": true,
+    "credentialsFromEnvironment": true,
+
+    "backup": {
+      "enabled": true,
+      "retentionDays": 30,
+      "encrypted": true
+    }
+  },
+
+  "privacy": {
+    "dataCollection": "minimal",
+    "tracking": false,
+    "thirdPartyDataSharing": false,
+    "advertising": false,
+
+    "telemetry": {
+      "enabled": false
+    },
+
+    "analytics": {
+      "enabled": false
+    }
+  },
+
+  "logging": {
+    "enabled": true,
+    "structured": true,
+    "auditLogs": true,
+    "securityEvents": true,
+
+    "redaction": {
+      "enabled": true,
+      "redactPasswords": true,
+      "redactEncryptionKeys": true,
+      "redactTokens": true,
+      "redactRecoveryCodes": true,
+      "redactPlaintextContent": true
+    }
+  },
+
+  "observability": {
+    "healthCheck": "/health",
+    "readinessCheck": "/ready",
+    "metrics": true,
+    "errorTracking": true,
+    "performanceMonitoring": true
+  },
+
+  "performance": {
+    "maxUploadSizeMB": 100,
+    "recommendedMemoryMB": 512,
+    "compression": true,
+    "lazyLoading": true,
+    "streamingUploads": true,
+    "chunkedUploads": true,
+    "workerBasedEncryption": true
+  },
+
+  "runtime": {
+    "node": ">=18.20.0",
+    "environment": "production",
+    "runtime": "nodejs",
+    "https": true,
+    "gracefulShutdown": true
+  },
+
+  "deployment": {
+    "environment": "production",
+    "httpsRequired": true,
+    "healthChecks": true,
+    "gracefulShutdown": true,
+    "environmentSecrets": true,
+    "secretsInRepository": false
+  },
+
+  "testing": {
+    "unit": true,
+    "integration": true,
+    "e2e": true,
+    "security": true,
+    "authentication": true,
+    "encryption": true,
+    "upload": true,
+    "database": true
+  },
+
+  "dependencySecurity": {
+    "lockfileRequired": true,
+    "dependencyAudit": true,
+    "dependencyScanning": true,
+    "secretScanning": true,
+    "sast": true
+  },
+
+  "threatModel": {
+    "protectsAgainst": [
+      "Unauthorized database access",
+      "Stolen encrypted files",
+      "Network interception",
+      "Unauthorized account access",
+      "Database credential exposure"
+    ],
+
+    "outOfScope": [
+      "Compromised operating system",
+      "Compromised browser",
+      "Malicious browser extensions",
+      "Malware with access to decrypted memory",
+      "Compromised user device",
+      "User-disclosed authentication secrets"
+    ]
+  },
+
+  "compatibility": {
+    "browsers": {
+      "Chrome": ">=100",
+      "Firefox": ">=100",
+      "Edge": ">=100",
+      "Safari": ">=15"
+    },
+
+    "devices": ["desktop", "laptop", "tablet", "mobile"],
+
+    "requirements": {
+      "javascript": true,
+      "webCrypto": true,
+      "secureContext": true
+    }
+  },
+
+  "pwa": {
+    "enabled": true,
+    "installable": true,
+    "serviceWorker": true,
+    "offlineSupport": true
+  },
+
+  "features": [
+    "Encrypted file storage",
+    "Secure password manager",
+    "Private notes",
+    "Photo vault",
+    "Video vault",
+    "Document vault",
+    "Client-side encryption",
+    "Secure authentication",
+    "Multi-factor authentication",
+    "Passkeys",
+    "WebAuthn",
+    "TOTP",
+    "Backup codes",
+    "Session management",
+    "Audit logging",
+    "Account recovery",
+    "Data export",
+    "Account deletion"
+  ],
+
+  "permissions": {
+    "browser": [],
+    "device": []
+  },
+
+  "branding": {
+    "primary": "#000000",
+    "secondary": "#FFFFFF",
+    "favicon": "/favicon.svg",
+    "themeAware": true
+  },
+
+  "maintainers": [
+    {
+      "name": "Adarsh",
+      "github": "adadarsh23"
+    }
+  ],
+
+  "metadata": {
+    "createdAt": "2026-03-10",
+    "updatedAt": "2026-08-25"
+  }
+}

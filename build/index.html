@@ -26,7 +26,7 @@
     <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
 
     <!-- Search Engine -->
-    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+    <meta name="robots" content="index, follow" />
     <link rel="canonical" href="http://localhost:4000/" />
 
     <!-- Compatibility -->
@@ -106,7 +106,18 @@
     <!-- Splash Screens (iOS) -->
     <link rel="apple-touch-startup-image" href="/web-app-manifest-512x512.png" />
     <link rel="fluid-icon" href="/favicon.svg" title="Vault" />
-    <script type="module" crossorigin src="/assets/index-YGrJTCgw.js"></script>
+    <script type="module" crossorigin src="/assets/index-Dhw7-zOm.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-CxhCXM28.js">
+    <link rel="modulepreload" crossorigin href="/assets/2fa-qrcode-DY2dS1MT.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-framework-DYx7WwnD.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-D_TD8A25.js">
+    <link rel="modulepreload" crossorigin href="/assets/sonner-Bv1nNfgT.js">
+    <link rel="modulepreload" crossorigin href="/assets/icons-D1BazkYH.js">
+    <link rel="modulepreload" crossorigin href="/assets/csrf-Cr2aSgcP.js">
+    <link rel="modulepreload" crossorigin href="/assets/sentry-DUakKTW1.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-primitives-C1aYTx23.js">
+    <link rel="modulepreload" crossorigin href="/assets/crypto-core-BQPy6ZAF.js">
+    <link rel="modulepreload" crossorigin href="/assets/utils-C8apmhcJ.js">
     <link rel="stylesheet" crossorigin href="/assets/vendor-CWlGCPL-.css">
     <link rel="stylesheet" crossorigin href="/assets/index-BdHWUz1y.css">
   </head>
@@ -197,7 +208,16 @@
       }
     </style>
 
-    <script src="/vite-preload-shim.js"></script>
+    <script>
+      if (typeof window.__VITE_PRELOAD__ !== 'function') {
+        window.__VITE_PRELOAD__ = (loader, _deps) => {
+          if (typeof loader === 'function') {
+            return loader();
+          }
+          return Promise.resolve(loader);
+        };
+      }
+    </script>
 
     <!-- Main App -->
   </body>

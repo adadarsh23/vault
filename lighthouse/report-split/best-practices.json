@@ -1,7 +1,7 @@
 {
   "requestedUrl": "http://127.0.0.1:4173/",
   "finalUrl": "http://127.0.0.1:4173/",
-  "fetchTime": "2026-08-25T18:47:52.765Z",
+  "fetchTime": "2026-08-26T02:22:09.927Z",
   "category": {
     "title": "Best Practices",
     "supportedModes": [
@@ -603,6 +603,25 @@
           {
             "featureId": {
               "type": "link",
+              "text": "background-clip-text",
+              "url": "https://webstatus.dev/features/background-clip-text"
+            },
+            "displayStatus": {
+              "type": "baseline-status",
+              "status": "limited",
+              "displayString": "Limited Availability"
+            },
+            "source": {
+              "type": "source-location",
+              "url": "http://127.0.0.1:4173/",
+              "urlProvider": "network",
+              "line": -2,
+              "column": -2
+            }
+          },
+          {
+            "featureId": {
+              "type": "link",
               "text": "beforeunload",
               "url": "https://webstatus.dev/features/beforeunload"
             },
@@ -613,17 +632,17 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-YGrJTCgw.js",
+              "url": "http://127.0.0.1:4173/assets/index-Dhw7-zOm.js",
               "urlProvider": "network",
-              "line": 0,
-              "column": 155062
+              "line": 1,
+              "column": 181232
             }
           },
           {
             "featureId": {
               "type": "link",
-              "text": "background-clip-text",
-              "url": "https://webstatus.dev/features/background-clip-text"
+              "text": "beforeinstallprompt",
+              "url": "https://webstatus.dev/features/beforeinstallprompt"
             },
             "displayStatus": {
               "type": "baseline-status",
@@ -662,25 +681,6 @@
               "type": "link",
               "text": "accent-color",
               "url": "https://webstatus.dev/features/accent-color"
-            },
-            "displayStatus": {
-              "type": "baseline-status",
-              "status": "limited",
-              "displayString": "Limited Availability"
-            },
-            "source": {
-              "type": "source-location",
-              "url": "http://127.0.0.1:4173/",
-              "urlProvider": "network",
-              "line": -2,
-              "column": -2
-            }
-          },
-          {
-            "featureId": {
-              "type": "link",
-              "text": "beforeinstallprompt",
-              "url": "https://webstatus.dev/features/beforeinstallprompt"
             },
             "displayStatus": {
               "type": "baseline-status",
@@ -812,6 +812,25 @@
           {
             "featureId": {
               "type": "link",
+              "text": "backdrop-filter",
+              "url": "https://webstatus.dev/features/backdrop-filter"
+            },
+            "displayStatus": {
+              "type": "baseline-status",
+              "status": "low",
+              "displayString": "Newly Available (2024-09-16)"
+            },
+            "source": {
+              "type": "source-location",
+              "url": "http://127.0.0.1:4173/",
+              "urlProvider": "network",
+              "line": -2,
+              "column": -2
+            }
+          },
+          {
+            "featureId": {
+              "type": "link",
               "text": "view-transitions",
               "url": "https://webstatus.dev/features/view-transitions"
             },
@@ -822,10 +841,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-YGrJTCgw.js",
+              "url": "http://127.0.0.1:4173/assets/index-Dhw7-zOm.js",
               "urlProvider": "network",
-              "line": 0,
-              "column": 159672
+              "line": 1,
+              "column": 185842
             }
           },
           {
@@ -869,25 +888,6 @@
           {
             "featureId": {
               "type": "link",
-              "text": "backdrop-filter",
-              "url": "https://webstatus.dev/features/backdrop-filter"
-            },
-            "displayStatus": {
-              "type": "baseline-status",
-              "status": "low",
-              "displayString": "Newly Available (2024-09-16)"
-            },
-            "source": {
-              "type": "source-location",
-              "url": "http://127.0.0.1:4173/",
-              "urlProvider": "network",
-              "line": -2,
-              "column": -2
-            }
-          },
-          {
-            "featureId": {
-              "type": "link",
               "text": "js-modules",
               "url": "https://webstatus.dev/features/js-modules"
             },
@@ -902,6 +902,25 @@
               "urlProvider": "network",
               "line": -2,
               "column": -2
+            }
+          },
+          {
+            "featureId": {
+              "type": "link",
+              "text": "nullish-coalescing",
+              "url": "https://webstatus.dev/features/nullish-coalescing"
+            },
+            "displayStatus": {
+              "type": "baseline-status",
+              "status": "high",
+              "displayString": "Widely Available (2020-09-16)"
+            },
+            "source": {
+              "type": "source-location",
+              "url": "http://127.0.0.1:4173/",
+              "urlProvider": "network",
+              "line": 0,
+              "column": 0
             }
           },
           {
@@ -1078,25 +1097,6 @@
           {
             "featureId": {
               "type": "link",
-              "text": "nullish-coalescing",
-              "url": "https://webstatus.dev/features/nullish-coalescing"
-            },
-            "displayStatus": {
-              "type": "baseline-status",
-              "status": "high",
-              "displayString": "Widely Available (2020-09-16)"
-            },
-            "source": {
-              "type": "source-location",
-              "url": "http://127.0.0.1:4173/",
-              "urlProvider": "network",
-              "line": 0,
-              "column": 0
-            }
-          },
-          {
-            "featureId": {
-              "type": "link",
               "text": "viewport-unit-variants",
               "url": "https://webstatus.dev/features/viewport-unit-variants"
             },
@@ -1230,20 +1230,39 @@
           {
             "featureId": {
               "type": "link",
-              "text": "request-animation-frame",
-              "url": "https://webstatus.dev/features/request-animation-frame"
+              "text": "appearance",
+              "url": "https://webstatus.dev/features/appearance"
             },
             "displayStatus": {
               "type": "baseline-status",
               "status": "high",
-              "displayString": "Widely Available (2015-07-29)"
+              "displayString": "Widely Available (2022-03-14)"
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/motion-DnV0gyBn.js",
+              "url": "http://127.0.0.1:4173/",
               "urlProvider": "network",
-              "line": 0,
-              "column": 3548
+              "line": -2,
+              "column": -2
+            }
+          },
+          {
+            "featureId": {
+              "type": "link",
+              "text": "oklab",
+              "url": "https://webstatus.dev/features/oklab"
+            },
+            "displayStatus": {
+              "type": "baseline-status",
+              "status": "high",
+              "displayString": "Widely Available (2023-05-09)"
+            },
+            "source": {
+              "type": "source-location",
+              "url": "http://127.0.0.1:4173/",
+              "urlProvider": "network",
+              "line": -2,
+              "column": -2
             }
           },
           {
@@ -1259,10 +1278,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-YGrJTCgw.js",
+              "url": "http://127.0.0.1:4173/assets/index-Dhw7-zOm.js",
               "urlProvider": "network",
-              "line": 0,
-              "column": 159829
+              "line": 1,
+              "column": 185999
             }
           },
           {
@@ -1278,10 +1297,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-YGrJTCgw.js",
+              "url": "http://127.0.0.1:4173/assets/index-Dhw7-zOm.js",
               "urlProvider": "network",
-              "line": 0,
-              "column": 159829
+              "line": 1,
+              "column": 185999
             }
           },
           {
@@ -1313,25 +1332,6 @@
               "type": "baseline-status",
               "status": "high",
               "displayString": "Widely Available (2021-09-20)"
-            },
-            "source": {
-              "type": "source-location",
-              "url": "http://127.0.0.1:4173/",
-              "urlProvider": "network",
-              "line": -2,
-              "column": -2
-            }
-          },
-          {
-            "featureId": {
-              "type": "link",
-              "text": "appearance",
-              "url": "https://webstatus.dev/features/appearance"
-            },
-            "displayStatus": {
-              "type": "baseline-status",
-              "status": "high",
-              "displayString": "Widely Available (2022-03-14)"
             },
             "source": {
               "type": "source-location",
@@ -1439,20 +1439,20 @@
           {
             "featureId": {
               "type": "link",
-              "text": "oklab",
-              "url": "https://webstatus.dev/features/oklab"
+              "text": "request-animation-frame",
+              "url": "https://webstatus.dev/features/request-animation-frame"
             },
             "displayStatus": {
               "type": "baseline-status",
               "status": "high",
-              "displayString": "Widely Available (2023-05-09)"
+              "displayString": "Widely Available (2015-07-29)"
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/",
+              "url": "http://127.0.0.1:4173/assets/motion-DnV0gyBn.js",
               "urlProvider": "network",
-              "line": -2,
-              "column": -2
+              "line": 0,
+              "column": 3548
             }
           },
           {
@@ -1710,14 +1710,6 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/NavigationHandler-B9eqKWG_.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/NavigationHandler-B9eqKWG_.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": []
-            }
-          },
-          {
             "scriptUrl": "http://127.0.0.1:4173/assets/motion-DnV0gyBn.js",
             "sourceMapUrl": "http://127.0.0.1:4173/assets/motion-DnV0gyBn.js.map",
             "subItems": {
@@ -1734,32 +1726,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-Dwr0vjHT.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LockedVaultHost-Dwr0vjHT.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": []
-            }
-          },
-          {
-            "scriptUrl": "http://127.0.0.1:4173/assets/LandingPage-BZJTqXNi.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/LandingPage-BZJTqXNi.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": []
-            }
-          },
-          {
-            "scriptUrl": "http://127.0.0.1:4173/assets/Input-DdXO06ds.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/Input-DdXO06ds.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": []
-            }
-          },
-          {
-            "scriptUrl": "http://127.0.0.1:4173/assets/index-YGrJTCgw.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-YGrJTCgw.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/index-Dhw7-zOm.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-Dhw7-zOm.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1792,14 +1760,6 @@
           {
             "scriptUrl": "http://127.0.0.1:4173/assets/crypto-core-BQPy6ZAF.js",
             "sourceMapUrl": "http://127.0.0.1:4173/assets/crypto-core-BQPy6ZAF.js.map",
-            "subItems": {
-              "type": "subitems",
-              "items": []
-            }
-          },
-          {
-            "scriptUrl": "http://127.0.0.1:4173/assets/Button-BL6U9Pqs.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/Button-BL6U9Pqs.js.map",
             "subItems": {
               "type": "subitems",
               "items": []

@@ -82,6 +82,21 @@ if (jwtSecret && jwtSecret.length >= 16) {
   );
 }
 
+// 5. npm Configuration & Environment Check
+const strayNpmEnvVars = Object.keys(process.env).filter((key) =>
+  /^npm_config_global[-_]?ignore[-_]?file$/i.test(key),
+);
+if (strayNpmEnvVars.length === 0) {
+  addCheck('Toolchain', 'npm Environment Variables', 'PASS', 'Clean npm environment');
+} else {
+  addCheck(
+    'Toolchain',
+    'npm Environment Variables',
+    'WARN',
+    `Found invalid env var (${strayNpmEnvVars.join(', ')}). Remove via [Environment]::SetEnvironmentVariable() or reg delete`,
+  );
+}
+
 // Summary Output
 console.log('\n==========================================');
 console.log('       VAULT PROJECT HEALTH DOCTOR        ');

@@ -27,6 +27,12 @@ const env = {
   ...envOverrides,
 };
 
+for (const key of Object.keys(env)) {
+  if (/^npm_config_global[-_]?ignore[-_]?file$/i.test(key)) {
+    delete env[key];
+  }
+}
+
 const root = process.cwd();
 const localViteBin = path.join(root, 'node_modules', 'vite', 'bin', 'vite.js');
 

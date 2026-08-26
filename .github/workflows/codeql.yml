@@ -7,6 +7,7 @@ on:
     branches: ['main']
   schedule:
     - cron: '0 6 * * 1'
+  workflow_dispatch:
 
 permissions:
   actions: read
@@ -35,6 +36,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/codeql-config.yml
           queries: security-extended,security-and-quality
 
       - name: Perform CodeQL Analysis
@@ -42,7 +44,7 @@ jobs:
         continue-on-error: true
         with:
           category: '/language:${{ matrix.language }}'
-          output: '${{ github.workspace }}/results'
+          output: '${{ runner.temp }}/results'
           upload: 'never'
           upload-database: false
 
@@ -51,6 +53,6 @@ jobs:
         if: always()
         with:
           name: codeql-sarif-${{ matrix.language }}
-          path: '${{ github.workspace }}/results'
+          path: '${{ runner.temp }}/results'
           if-no-files-found: ignore
           retention-days: 7

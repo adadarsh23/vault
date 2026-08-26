@@ -471,7 +471,28 @@ export default defineConfig(({ mode, command }) => {
     build: {
       outDir: 'build',
       assetsDir: 'assets',
-      modulePreload: false,
+      modulePreload: {
+        polyfill: false,
+        resolveDependencies(_filename, deps, { hostType }) {
+          if (hostType === 'html') {
+            return deps.filter((dep) => {
+              const isHeavyLazyChunk =
+                dep.includes('particles') ||
+                dep.includes('motion') ||
+                dep.includes('3d') ||
+                dep.includes('video-players') ||
+                dep.includes('rich-text-editor') ||
+                dep.includes('emoji') ||
+                dep.includes('dnd-kit') ||
+                dep.includes('crypto-pqc') ||
+                dep.includes('image-processing') ||
+                dep.includes('markdown');
+              return !isHeavyLazyChunk;
+            });
+          }
+          return deps;
+        },
+      },
       sourcemap,
       minify,
       manifest: isProduction,

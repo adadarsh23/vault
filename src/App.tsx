@@ -29,11 +29,7 @@ type WindowWithTrustedTypes = Window &
     cancelIdleCallback?: (handle: number) => void;
   };
 
-const LockedVaultHost = lazy(() =>
-  import('./components/app/LockedVaultHost').then((module) => ({
-    default: module.LockedVaultHost || (module as any).default,
-  })),
-);
+import { LockedVaultHost } from './components/app/LockedVaultHost';
 
 const UnlockedVaultHost = lazy(() =>
   import('./components/app/UnlockedVaultHost').then((module) => ({
