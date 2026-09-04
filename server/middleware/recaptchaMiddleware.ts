@@ -17,9 +17,10 @@ export type RecaptchaProtectedAction =
   | 'contact_submit'
   | 'master_key_change';
 
-interface RequireRecaptchaOptions {
+export interface RequireRecaptchaOptions {
   action: RecaptchaProtectedAction;
   tokenField?: string;
+  optional?: boolean;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -35,6 +36,17 @@ export const requireRecaptcha = (options: RequireRecaptchaOptions) => {
     try {
       if (!isRecord(req.body)) {
         throw AppError.badRequest('Request body must be a JSON object.', 'INVALID_REQUEST_BODY');
+      }
+
+      const rawToken = req.body[tokenField];
+      const hasToken =
+        typeof rawToken === 'string'
+          ? rawToken.trim().length > 0
+          : rawToken !== undefined && rawToken !== null;
+
+      if (options.optional && !hasToken) {
+        delete req.body[tokenField];
+        return next();
       }
 
       const token = readRecaptchaTokenFromBody(req.body[tokenField]);

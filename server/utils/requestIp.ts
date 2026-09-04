@@ -72,16 +72,22 @@ const parseForwardedForHeader = (headerValue?: string): string | undefined => {
 };
 
 export const getClientIp = (req: express.Request): string => {
-  const trustProxy = req.app.get('trust proxy');
+  const trustProxy = typeof req.app?.get === 'function' ? req.app.get('trust proxy') : false;
 
   if (trustProxy) {
-    const forwardedFor = req.get('x-forwarded-for');
+    const forwardedFor =
+      typeof req.get === 'function'
+        ? req.get('x-forwarded-for')
+        : (req.headers?.['x-forwarded-for'] as string | undefined);
     const fromForwardedFor = parseForwardedForHeader(forwardedFor);
     if (fromForwardedFor) {
       return fromForwardedFor;
     }
 
-    const forwarded = req.get('forwarded');
+    const forwarded =
+      typeof req.get === 'function'
+        ? req.get('forwarded')
+        : (req.headers?.['forwarded'] as string | undefined);
     const fromForwarded = parseForwardedHeader(forwarded);
     if (fromForwarded) {
       return fromForwarded;

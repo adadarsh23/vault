@@ -592,9 +592,10 @@ export const VaultLoginForm: React.FC<Props> = memo(
               'Too many authentication attempts detected. Please wait a moment and try again.',
           });
         } else if (
-          apiError?.code === 'CAPTCHA_TOKEN_EXPIRED' ||
-          apiError?.code === 'CAPTCHA_VERIFICATION_FAILED' ||
-          /captcha/i.test(msg)
+          !twoFactorRequired &&
+          (apiError?.code === 'CAPTCHA_TOKEN_EXPIRED' ||
+            apiError?.code === 'CAPTCHA_VERIFICATION_FAILED' ||
+            /captcha/i.test(msg))
         ) {
           toast.error('Security Verification Required', {
             description: 'Please complete the CAPTCHA check to continue.',

@@ -35,7 +35,7 @@ router.post(
 router.post(
   '/login',
   requireTrustedBrowserOrigin,
-  requireRecaptcha({ action: 'auth_2fa_login' }),
+  requireRecaptcha({ action: 'auth_2fa_login', optional: true }),
   twoFactorLimiter,
   validate(login2FASchema),
   asyncHandler(twoFactorController.login2FA),

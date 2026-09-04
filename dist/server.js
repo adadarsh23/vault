@@ -7576,14 +7576,14 @@ var parseForwardedForHeader = (headerValue) => {
   return void 0;
 };
 var getClientIp = (req) => {
-  const trustProxy = req.app.get("trust proxy");
+  const trustProxy = typeof req.app?.get === "function" ? req.app.get("trust proxy") : false;
   if (trustProxy) {
-    const forwardedFor = req.get("x-forwarded-for");
+    const forwardedFor = typeof req.get === "function" ? req.get("x-forwarded-for") : req.headers?.["x-forwarded-for"];
     const fromForwardedFor = parseForwardedForHeader(forwardedFor);
     if (fromForwardedFor) {
       return fromForwardedFor;
     }
-    const forwarded = req.get("forwarded");
+    const forwarded = typeof req.get === "function" ? req.get("forwarded") : req.headers?.["forwarded"];
     const fromForwarded = parseForwardedHeader(forwarded);
     if (fromForwarded) {
       return fromForwarded;
@@ -11560,6 +11560,12 @@ var requireRecaptcha = (options) => {
       if (!isRecord(req.body)) {
         throw AppError.badRequest("Request body must be a JSON object.", "INVALID_REQUEST_BODY");
       }
+      const rawToken = req.body[tokenField];
+      const hasToken = typeof rawToken === "string" ? rawToken.trim().length > 0 : rawToken !== void 0 && rawToken !== null;
+      if (options.optional && !hasToken) {
+        delete req.body[tokenField];
+        return next();
+      }
       const token = readRecaptchaTokenFromBody(req.body[tokenField]);
       const verification = await verifyRecaptchaToken({
         token,
@@ -13750,7 +13756,7 @@ router3.post(
 router3.post(
   "/login",
   requireTrustedBrowserOrigin,
-  requireRecaptcha({ action: "auth_2fa_login" }),
+  requireRecaptcha({ action: "auth_2fa_login", optional: true }),
   twoFactorLimiter,
   validate(login2FASchema),
   asyncHandler(login2FA)
