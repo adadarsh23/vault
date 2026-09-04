@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accessibility - Lighthouse Report</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --panel-alt: #f1f5f9;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --pass: #10b981;
+      --pass-bg: #ecfdf5;
+      --warn: #f59e0b;
+      --warn-bg: #fffbeb;
+      --fail: #ef4444;
+      --fail-bg: #fef2f2;
+      --na: #94a3b8;
+      --accent: #3b82f6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b0f19;
+        --panel: #111827;
+        --panel-alt: #1f2937;
+        --text: #f9fafb;
+        --muted: #9ca3af;
+        --border: #374151;
+        --pass-bg: #064e3b;
+        --warn-bg: #78350f;
+        --fail-bg: #7f1d1d;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    main {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 64px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    h1, h2, h3 { line-height: 1.2; margin: 0; font-weight: 700; }
+    h1 { font-size: clamp(24px, 4vw, 36px); letter-spacing: -0.02em; }
+    h2 { font-size: 18px; margin-top: 32px; margin-bottom: 14px; }
+    .muted { color: var(--muted); }
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0 24px;
+    }
+    .nav-links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      background: var(--panel);
+      color: var(--text);
+      font-weight: 500;
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+    .nav-links a:hover {
+      background: var(--panel-alt);
+      border-color: var(--accent);
+      text-decoration: none;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      font-size: 20px;
+      font-weight: 800;
+      border: 3px solid currentColor;
+    }
+    .score-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid currentColor;
+    }
+    .pass { color: var(--pass); }
+    .warn { color: var(--warn); }
+    .fail { color: var(--fail); }
+    .na { color: var(--na); }
+    .table-container {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      background: var(--panel-alt);
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: var(--panel-alt); }
+    .audit-title { font-weight: 600; color: var(--text); }
+    .audit-description { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .badge-metric {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-metric.good { background: var(--pass-bg); color: var(--pass); }
+    .badge-metric.warn { background: var(--warn-bg); color: var(--warn); }
+    .badge-metric.poor { background: var(--fail-bg); color: var(--fail); }
+    .badge-metric.na { background: var(--panel-alt); color: var(--na); }
+    .cwv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin: 16px 0 28px;
+    }
+    .cwv-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+    .cwv-title { font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+    .cwv-value { font-size: 20px; font-weight: 800; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+          <div>
+            <p class="muted"><a href="./index.html">← Back to Overview</a></p>
+            <h1>Accessibility</h1>
+            <p class="muted">http://127.0.0.1:4173/</p>
+          </div>
+          <div class="score-badge pass">100</div>
+        </header>
+
+        <div class="nav-links">
+          <a href="./index.html">📊 Overview</a>
+          <a href="./accessibility.json">📄 Category JSON</a>
+          <a href="../report.report.html">🌐 Full HTML Report</a>
+          <a href="../report.report.json">💾 Full JSON Report</a>
+        </div>
+
+        
+        
+
+        <h2>Needs Attention (0)</h2>
+        <p class="muted" style="padding: 16px;">No audits in this section.</p>
+
+        <h2>Passed Audits (21)</h2>
+        <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Score</th>
+          <th>Audit</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody><tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">`[aria-*]` attributes match their roles</div>
+        <div class="audit-description">Each ARIA role supports a specific subset of aria-* attributes. Mismatching these invalidates the aria-* attributes. Learn how to match ARIA attributes to their roles.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">ARIA attributes are used as specified for the element&#39;s role</div>
+        <div class="audit-description">Some ARIA attributes are only allowed on an element under certain conditions. Learn more about conditional ARIA attributes.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Deprecated ARIA roles were not used</div>
+        <div class="audit-description">Deprecated ARIA roles may not be processed correctly by assistive technology. Learn more about deprecated ARIA roles.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">`[aria-hidden=&quot;true&quot;]` is not present on the document `&lt;body&gt;`</div>
+        <div class="audit-description">Assistive technologies, like screen readers, work inconsistently when aria-hidden=&quot;true&quot; is set on the document &lt;body&gt;. Learn how aria-hidden affects the document body.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">`[aria-hidden=&quot;true&quot;]` elements do not contain focusable descendents</div>
+        <div class="audit-description">Focusable descendents within an [aria-hidden=&quot;true&quot;] element prevent those interactive elements from being available to users of assistive technologies like screen readers. Learn how aria-hidden affects focusable elements.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Elements use only permitted ARIA attributes</div>
+        <div class="audit-description">Using ARIA attributes in roles where they are prohibited can mean that important information is not communicated to users of assistive technologies. Learn more about prohibited ARIA roles.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">`[role]`s have all required `[aria-*]` attributes</div>
+        <div class="audit-description">Some ARIA roles have required attributes that describe the state of the element to screen readers. Learn more about roles and required attributes.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">`[role]` values are valid</div>
+        <div class="audit-description">ARIA roles must have valid values in order to perform their intended accessibility functions. Learn more about valid ARIA roles.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">`[aria-*]` attributes have valid values</div>
+        <div class="audit-description">Assistive technologies, like screen readers, can&#39;t interpret ARIA attributes with invalid values. Learn more about valid values for ARIA attributes.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">`[aria-*]` attributes are valid and not misspelled</div>
+        <div class="audit-description">Assistive technologies, like screen readers, can&#39;t interpret ARIA attributes with invalid names. Learn more about valid ARIA attributes.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Buttons have an accessible name</div>
+        <div class="audit-description">When a button doesn&#39;t have an accessible name, screen readers announce it as &quot;button&quot;, making it unusable for users who rely on screen readers. Learn how to make buttons more accessible.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Background and foreground colors have a sufficient contrast ratio</div>
+        <div class="audit-description">Low-contrast text is difficult or impossible for many users to read. Learn how to provide sufficient color contrast.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Document has a `&lt;title&gt;` element</div>
+        <div class="audit-description">The title gives screen reader users an overview of the page, and search engine users rely on it heavily to determine if a page is relevant to their search. Learn more about document titles.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Heading elements appear in a sequentially-descending order</div>
+        <div class="audit-description">Properly ordered headings that do not skip levels convey the semantic structure of the page, making it easier to navigate and understand when using assistive technologies. Learn more about heading order.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">`&lt;html&gt;` element has a `[lang]` attribute</div>
+        <div class="audit-description">If a page doesn&#39;t specify a lang attribute, a screen reader assumes that the page is in the default language that the user chose when setting up the screen reader. If the page isn&#39;t actually in the default language, then the screen reader might not announce the page&#39;s text correctly. Learn more about the lang attribute.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">`&lt;html&gt;` element has a valid value for its `[lang]` attribute</div>
+        <div class="audit-description">Specifying a valid BCP 47 language helps screen readers announce text properly. Learn how to use the lang attribute.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Links have a discernible name</div>
+        <div class="audit-description">Link text (and alternate text for images, when used as links) that is discernible, unique, and focusable improves the navigation experience for screen reader users. Learn how to make links accessible.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">`[user-scalable=&quot;no&quot;]` is not used in the `&lt;meta name=&quot;viewport&quot;&gt;` element and the `[maximum-scale]` attribute is not less than 5.</div>
+        <div class="audit-description">Disabling zooming is problematic for users with low vision who rely on screen magnification to properly see the contents of a web page. Learn more about the viewport meta tag.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">No element has a `[tabindex]` value greater than 0</div>
+        <div class="audit-description">A value greater than 0 implies an explicit navigation ordering. Although technically valid, this often creates frustrating experiences for users who rely on assistive technologies. Learn more about the tabindex attribute.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Touch targets have sufficient size and spacing.</div>
+        <div class="audit-description">Touch targets with sufficient size and spacing help users who may have difficulty targeting small controls to activate the targets. Learn more about touch targets.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Document has a main landmark.</div>
+        <div class="audit-description">One main landmark helps screen reader users navigate a web page. Learn more about landmarks.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr></tbody>
+    </table>
+  </div>
+  </main>
+</body>
+</html>

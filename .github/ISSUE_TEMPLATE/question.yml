@@ -1,0 +1,42 @@
+name: '❓ Question / Support'
+description: 'Ask a question about using, configuring, or developing Vault'
+title: '[Question]: '
+labels: ['question', 'support']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question or need help setting up Vault?
+        Please make sure you have checked the [README](https://github.com/adadarsh23/vault#readme) and [Docker Guide](https://github.com/adadarsh23/vault/blob/main/DOCKER.md) first.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know or need assistance with?
+      placeholder: Describe what you are trying to do and where you are stuck...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic Area
+      options:
+        - 'Local Development Setup'
+        - 'Docker / Containerization'
+        - 'MongoDB Atlas Connection / Keepalive'
+        - 'Environment Variables & Configuration'
+        - 'Encryption & Cryptography Architecture'
+        - 'Production Deployment (Render / VPS)'
+        - 'Other'
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any relevant error messages, screenshots, or configuration details. (No private keys or credentials!)
+    validations:
+      required: false

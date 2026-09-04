@@ -1,0 +1,182 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_ENV: test
+  VITEST_POOL: forks
+  JWT_SECRET: ci-jwt-secret-for-testing-only-32bytes
+  REFRESH_TOKEN_SECRET: ci-refresh-secret-for-testing-only-32bytes
+  VAULT_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+  AUTH_PEPPER: ci-auth-pepper-key-for-testing
+  CSRF_SECRET: ci-csrf-secret-key-32-chars-long
+  SIGNED_URL_SECRET: ci-signed-url-secret-32-chars-long
+  RECAPTCHA_SECRET_KEY: ci-recaptcha-test-secret-key
+  MONGODB_URI: mongodb://127.0.0.1:27017/personal-vault
+  SKIP_MONGO_CONNECT: '1'
+  CLIENT_URL: http://localhost:4000
+  PUBLIC_URL: http://localhost:4000
+  VITE_API_BASE_URL: http://localhost:4000
+  VITE_CSP_CONNECT_SRC: http://localhost:4000 ws://localhost:4000
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Run environment doctor
+        run: npm run doctor
+
+      - name: Code formatting check
+        continue-on-error: true
+        run: npm run format:check || echo "::warning::Formatting check identified unformatted files. Run 'npm run format' locally."
+
+      - name: TypeScript type checking (Client & Server)
+        run: npm run typecheck:all
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint-and-typecheck
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Run test suite
+        run: npm test
+
+  build:
+    name: Build Client & Server
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint-and-typecheck
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Build client & server
+        run: npm run build:all
+
+      - name: Verify build artifacts
+        run: |
+          if [ ! -d "build" ]; then
+            echo "Error: Client build directory 'build/' not found"
+            exit 1
+          fi
+          if [ ! -d "dist" ]; then
+            echo "Error: Server build directory 'dist/' not found"
+            exit 1
+          fi
+          echo "Client and server builds verified successfully."
+
+      - name: Upload client build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-build
+          path: build
+          retention-days: 7
+
+      - name: Upload server build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-build
+          path: dist
+          retention-days: 7
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Audit dependencies
+        continue-on-error: true
+        run: npm audit --audit-level=high || true
+
+  ci-summary:
+    name: CI Status Summary
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, test, build, security-audit]
+    if: always()
+
+    steps:
+      - name: Generate summary
+        run: |
+          LINT_STATUS="${{ needs.lint-and-typecheck.result }}"
+          TEST_STATUS="${{ needs.test.result }}"
+          BUILD_STATUS="${{ needs.build.result }}"
+          AUDIT_STATUS="${{ needs.security-audit.result }}"
+
+          echo "## 🛡️ Vault CI Pipeline Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Stage | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Lint & Typecheck | $LINT_STATUS |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Tests | $TEST_STATUS |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Client & Server Build | $BUILD_STATUS |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Security Audit | $AUDIT_STATUS |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "$LINT_STATUS" == "success" && "$TEST_STATUS" == "success" && "$BUILD_STATUS" == "success" ]]; then
+            echo "### ✅ All primary CI checks passed!" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          else
+            echo "### ❌ One or more required CI checks failed. Check logs above." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi

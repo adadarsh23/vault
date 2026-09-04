@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Best Practices - Lighthouse Report</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --panel-alt: #f1f5f9;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --pass: #10b981;
+      --pass-bg: #ecfdf5;
+      --warn: #f59e0b;
+      --warn-bg: #fffbeb;
+      --fail: #ef4444;
+      --fail-bg: #fef2f2;
+      --na: #94a3b8;
+      --accent: #3b82f6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b0f19;
+        --panel: #111827;
+        --panel-alt: #1f2937;
+        --text: #f9fafb;
+        --muted: #9ca3af;
+        --border: #374151;
+        --pass-bg: #064e3b;
+        --warn-bg: #78350f;
+        --fail-bg: #7f1d1d;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    main {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 64px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    h1, h2, h3 { line-height: 1.2; margin: 0; font-weight: 700; }
+    h1 { font-size: clamp(24px, 4vw, 36px); letter-spacing: -0.02em; }
+    h2 { font-size: 18px; margin-top: 32px; margin-bottom: 14px; }
+    .muted { color: var(--muted); }
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0 24px;
+    }
+    .nav-links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      background: var(--panel);
+      color: var(--text);
+      font-weight: 500;
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+    .nav-links a:hover {
+      background: var(--panel-alt);
+      border-color: var(--accent);
+      text-decoration: none;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      font-size: 20px;
+      font-weight: 800;
+      border: 3px solid currentColor;
+    }
+    .score-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid currentColor;
+    }
+    .pass { color: var(--pass); }
+    .warn { color: var(--warn); }
+    .fail { color: var(--fail); }
+    .na { color: var(--na); }
+    .table-container {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      background: var(--panel-alt);
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: var(--panel-alt); }
+    .audit-title { font-weight: 600; color: var(--text); }
+    .audit-description { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .badge-metric {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-metric.good { background: var(--pass-bg); color: var(--pass); }
+    .badge-metric.warn { background: var(--warn-bg); color: var(--warn); }
+    .badge-metric.poor { background: var(--fail-bg); color: var(--fail); }
+    .badge-metric.na { background: var(--panel-alt); color: var(--na); }
+    .cwv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin: 16px 0 28px;
+    }
+    .cwv-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+    .cwv-title { font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+    .cwv-value { font-size: 20px; font-weight: 800; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+          <div>
+            <p class="muted"><a href="./index.html">← Back to Overview</a></p>
+            <h1>Best Practices</h1>
+            <p class="muted">http://127.0.0.1:4173/</p>
+          </div>
+          <div class="score-badge pass">100</div>
+        </header>
+
+        <div class="nav-links">
+          <a href="./index.html">📊 Overview</a>
+          <a href="./best-practices.json">📄 Category JSON</a>
+          <a href="../report.report.html">🌐 Full HTML Report</a>
+          <a href="../report.report.json">💾 Full JSON Report</a>
+        </div>
+
+        
+        
+
+        <h2>Needs Attention (0)</h2>
+        <p class="muted" style="padding: 16px;">No audits in this section.</p>
+
+        <h2>Passed Audits (19)</h2>
+        <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Score</th>
+          <th>Audit</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody><tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Uses HTTPS</div>
+        <div class="audit-description">All sites should be protected with HTTPS, even ones that don&#39;t handle sensitive data. This includes avoiding mixed content, where some resources are loaded over HTTP despite the initial request being served over HTTPS. HTTPS prevents intruders from tampering with or passively listening in on the communications between your app and your users, and is a prerequisite for HTTP/2 and many new web platform APIs. Learn more about HTTPS.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Avoids requesting the geolocation permission on page load</div>
+        <div class="audit-description">Users are mistrustful of or confused by sites that request their location without context. Consider tying the request to a user action instead. Learn more about the geolocation permission.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Avoids requesting the notification permission on page load</div>
+        <div class="audit-description">Users are mistrustful of or confused by sites that request to send notifications without context. Consider tying the request to user gestures instead. Learn more about responsibly getting permission for notifications.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">Info</span></td>
+      <td>
+        <div class="audit-title">Ensure CSP is effective against XSS attacks</div>
+        <div class="audit-description">A strong Content Security Policy (CSP) significantly reduces the risk of cross-site scripting (XSS) attacks. Learn how to use a CSP to prevent XSS</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">Info</span></td>
+      <td>
+        <div class="audit-title">Use a strong HSTS policy</div>
+        <div class="audit-description">Deployment of the HSTS header significantly reduces the risk of downgrading HTTP connections and eavesdropping attacks. A rollout in stages, starting with a low max-age is recommended. Learn more about using a strong HSTS policy.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">Info</span></td>
+      <td>
+        <div class="audit-title">Ensure proper origin isolation with COOP</div>
+        <div class="audit-description">The Cross-Origin-Opener-Policy (COOP) can be used to isolate the top-level window from other documents such as pop-ups. Learn more about deploying the COOP header.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">Info</span></td>
+      <td>
+        <div class="audit-title">Mitigate clickjacking with XFO or CSP</div>
+        <div class="audit-description">The X-Frame-Options (XFO) header or the frame-ancestors directive in the Content-Security-Policy (CSP) header control where a page can be embedded. These can mitigate clickjacking attacks by blocking some or all sites from embedding the page. Learn more about mitigating clickjacking.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">Info</span></td>
+      <td>
+        <div class="audit-title">Mitigate DOM-based XSS with Trusted Types</div>
+        <div class="audit-description">The require-trusted-types-for directive in the Content-Security-Policy (CSP) header instructs user agents to control the data passed to DOM XSS sink functions. Learn more about mitigating DOM-based XSS with Trusted Types.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Allows users to paste into input fields</div>
+        <div class="audit-description">Preventing input pasting is a bad practice for the UX, and weakens security by blocking password managers.Learn more about user-friendly input fields.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Displays images with correct aspect ratio</div>
+        <div class="audit-description">Image display dimensions should match natural aspect ratio. Learn more about image aspect ratio.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Serves images with appropriate resolution</div>
+        <div class="audit-description">Image natural dimensions should be proportional to the display size and the pixel ratio to maximize image clarity. Learn how to provide responsive images.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Page has the HTML doctype</div>
+        <div class="audit-description">Specifying a doctype prevents the browser from switching to quirks-mode. Learn more about the doctype declaration.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Properly defines charset</div>
+        <div class="audit-description">A character encoding declaration is required. It can be done with a &lt;meta&gt; tag in the first 1024 bytes of the HTML or in the Content-Type HTTP response header. Learn more about declaring the character encoding.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">Info</span></td>
+      <td>
+        <div class="audit-title">Baseline Features</div>
+        <div class="audit-description">Lists web features used on the page and their Baseline status as of 2026-05-01. Learn more about Baseline.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Avoids deprecated APIs</div>
+        <div class="audit-description">Deprecated APIs will eventually be removed from the browser. Learn more about deprecated APIs.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Avoids third-party cookies</div>
+        <div class="audit-description">Third-party cookies may be blocked in some contexts. Learn more about preparing for third-party cookie restrictions.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">No browser errors logged to the console</div>
+        <div class="audit-description">Errors logged to the console indicate unresolved problems. They can come from network request failures and other browser concerns. Learn more about this errors in console diagnostic audit</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Page has valid source maps</div>
+        <div class="audit-description">Source maps translate minified code to the original source code. This helps developers debug in production. In addition, Lighthouse is able to provide further insights. Consider deploying source maps to take advantage of these benefits. Learn more about source maps.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">No issues in the `Issues` panel in Chrome Devtools</div>
+        <div class="audit-description">Issues logged to the Issues panel in Chrome Devtools indicate unresolved problems. They can come from network request failures, insufficient security controls, and other browser concerns. Open up the Issues panel in Chrome DevTools for more details on each issue.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr></tbody>
+    </table>
+  </div>
+  </main>
+</body>
+</html>

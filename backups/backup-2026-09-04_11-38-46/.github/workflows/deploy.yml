@@ -1,0 +1,111 @@
+name: Production Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+jobs:
+  deploy:
+    name: Build & Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Verify TypeScript & Build
+        env:
+          NODE_ENV: production
+        run: |
+          npm run typecheck:all
+          npm run build:all
+
+      - name: Package Production Artifacts
+        env:
+          NODE_ENV: production
+        run: |
+          npm run zip:prod || {
+            echo "Standard packaging fallback..."
+            zip -r vault-production.zip build dist package.json package-lock.json overload.html
+          }
+
+      - name: Upload Production Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vault-production
+          path: vault-production.zip
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Trigger Render Deployment (if configured)
+        id: render-deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          HOOK_URL="${RENDER_DEPLOY_HOOK_URL:-}"
+          HOOK_URL="$(echo "$HOOK_URL" | tr -d '[:space:]')"
+
+          if [[ -z "$HOOK_URL" ]]; then
+            echo "::notice title=Render Deploy Skipped::RENDER_DEPLOY_HOOK_URL secret not configured. Skipping automated cloud deploy trigger."
+            echo "deployed=skipped" >> "$GITHUB_OUTPUT"
+            {
+              echo "## ℹ️ Automated Cloud Deployment Skipped"
+              echo "Repository secret \`RENDER_DEPLOY_HOOK_URL\` is not set."
+              echo "To enable zero-downtime deployment triggers, add your Render Deploy Hook URL to **Settings > Secrets > Actions**."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "Triggering deployment webhook on Render..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$HOOK_URL")
+          HTTP_BODY=$(echo "$RESPONSE" | sed '$d')
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+
+          if [[ "$HTTP_CODE" -ge 200 && "$HTTP_CODE" -lt 300 ]]; then
+            echo "✅ Render deployment hook triggered successfully (HTTP $HTTP_CODE)."
+            echo "deployed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "## 🚀 Production Deployment Triggered"
+              echo "Render deploy hook responded with HTTP \`$HTTP_CODE\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::Render deployment hook failed with HTTP $HTTP_CODE: $HTTP_BODY"
+            exit 1
+          fi
+
+      - name: Deployment Summary
+        if: success()
+        run: |
+          {
+            echo "### 📦 Build & Release Status"
+            echo ""
+            echo "| Item | Status |"
+            echo "|---|---|"
+            echo "| Git Commit | \`$GITHUB_SHA\` |"
+            echo "| Branch | \`$GITHUB_REF_NAME\` |"
+            echo "| Production Bundle | ✅ Uploaded |"
+            echo "| Status | Ready / Deployed |"
+          } >> "$GITHUB_STEP_SUMMARY"

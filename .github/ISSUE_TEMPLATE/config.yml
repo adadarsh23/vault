@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation & Setup
+    url: https://github.com/adadarsh23/vault#readme
+    about: Read the official documentation and guides for Vault.
+  - name: 🐳 Docker & Production Deployment
+    url: https://github.com/adadarsh23/vault/blob/main/DOCKER.md
+    about: Read instructions for running and deploying Vault in Docker.
+  - name: 🔐 Security Advisories
+    url: https://github.com/adadarsh23/vault/security/advisories/new
+    about: Privately report a security vulnerability or exploit.
+  - name: 🤝 Contribution Guide
+    url: https://github.com/adadarsh23/vault/blob/main/CONTRIBUTING.md
+    about: Learn how to set up development, branch, and contribute code.

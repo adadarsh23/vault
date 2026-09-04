@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "updatedAt": "2026-09-04T06:08:53.381Z",
+  "totalBackups": 1,
+  "backups": [
+    {
+      "folder": "backup-2026-09-04_11-38-46",
+      "createdAt": "2026-09-04T06:08:46.069Z",
+      "localCreatedAt": "2026-09-04 11:38:46",
+      "timestamp": 1788502126069,
+      "totalFiles": 1094,
+      "totalBytes": 68506862,
+      "formattedSize": "65.33 MB",
+      "path": "C:\\code\\vault\\backups\\backup-2026-09-04_11-38-46",
+      "gitCommit": "0b71137",
+      "status": "completed"
+    }
+  ]
+}

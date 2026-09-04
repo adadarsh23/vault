@@ -1,0 +1,91 @@
+name: Docker Build & Verification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '.dockerignore'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'server/**'
+      - 'src/**'
+      - '.github/workflows/docker.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '.dockerignore'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'server/**'
+      - 'src/**'
+      - '.github/workflows/docker.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-build:
+    name: Build & Verify Docker Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build production container image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: runner
+          load: true
+          tags: vault:ci-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify container image
+        run: |
+          echo "Inspecting built Docker image..."
+          docker image inspect vault:ci-test --format '{{.Config.WorkingDir}}'
+          docker image inspect vault:ci-test --format '{{.Config.Cmd}}'
+
+      - name: Test container healthcheck startup (dry run)
+        run: |
+          docker run --rm -d --name test-vault-container \
+            -e NODE_ENV=production \
+            -e PORT=4000 \
+            -e JWT_SECRET=test-ci-jwt-secret-32-chars-long \
+            -e REFRESH_TOKEN_SECRET=test-ci-refresh-secret-32-chars-long \
+            -e VAULT_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef \
+            -e AUTH_PEPPER=test-ci-auth-pepper-key-for-run \
+            -e MONGODB_URI="mongodb://127.0.0.1:27017/vault" \
+            -e SKIP_MONGO_CONNECT=1 \
+            vault:ci-test || true
+
+          sleep 5
+
+          echo "Container logs:"
+          docker logs test-vault-container || true
+          docker stop test-vault-container || true
+          docker rm test-vault-container || true
+
+      - name: Summary
+        run: |
+          {
+            echo "## 🐳 Docker Verification"
+            echo ""
+            echo "Multi-stage Docker build verified successfully for tag \`vault:ci-test\`."
+          } >> "$GITHUB_STEP_SUMMARY"

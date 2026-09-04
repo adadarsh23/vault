@@ -1,0 +1,112 @@
+name: '🐛 Bug Report'
+description: 'File a report to help us reproduce and fix a bug'
+title: '[Bug]: '
+labels: ['bug', 'triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report an issue!
+        Please make sure you have checked existing issues and the [troubleshooting guide](https://github.com/adadarsh23/vault#troubleshooting) before submitting.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe the problem clearly...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps explaining how to reproduce the issue.
+      placeholder: |
+        1. Navigate to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear description of what you expected to happen.
+      placeholder: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually occurred instead.
+      placeholder: What occurred instead?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Execution Environment
+      description: Where did this issue occur?
+      options:
+        - 'Local Development (npm run dev)'
+        - 'Docker Compose (docker compose up)'
+        - 'Standalone Docker Container'
+        - 'Production Deployment (Render / Cloud VPS)'
+        - 'Other'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - 'Windows'
+        - 'macOS'
+        - 'Linux (Ubuntu/Debian)'
+        - 'Linux (Other)'
+        - 'Docker / Alpine'
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser & Version
+      placeholder: 'e.g. Chrome 124, Firefox 125, Safari 17'
+    validations:
+      required: false
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js & npm Version
+      placeholder: 'e.g. Node v22.12.0, npm 10.9.0'
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs or Screenshots
+      description: Please paste any console logs or stack traces. **Never share passwords, private keys, or personal vault data!**
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Validation Checklist
+      options:
+        - label: 'I have searched existing issues to ensure this is not a duplicate.'
+          required: true
+        - label: 'I verified that no sensitive credentials, keys, or passwords are included in this report.'
+          required: true
