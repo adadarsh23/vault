@@ -183,7 +183,7 @@
     "@tiptap/extension-text-align": "^3.31.2",
     "@tiptap/pm": "^3.31.2",
     "@tiptap/react": "^3.31.2",
-    "@tiptap/starter-kit": "^3.31.2",
+    "@tiptap/starter-kit": "^3.31.3",
     "@tsparticles/engine": "^4.4.0",
     "@tsparticles/react": "^4.4.0",
     "@tsparticles/slim": "^4.4.0",
