@@ -216,7 +216,7 @@
     "libsodium-wrappers": "^0.8.4",
     "logrocket": "^12.3.0",
     "lucide-react": "^1.40.0",
-    "marked": "^18.0.11",
+    "marked": "^18.0.12",
     "mongodb": "^7.6.0",
     "mongoose": "^9.9.4",
     "morgan": "^1.12.0",
