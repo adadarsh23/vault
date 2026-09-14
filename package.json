@@ -174,7 +174,7 @@
     "@sentry/react": "^10.73.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tiptap/extension-highlight": "^3.31.2",
-    "@tiptap/extension-image": "^3.31.2",
+    "@tiptap/extension-image": "^3.31.3",
     "@tiptap/extension-link": "^3.31.2",
     "@tiptap/extension-table": "^3.31.2",
     "@tiptap/extension-table-cell": "^3.31.2",
