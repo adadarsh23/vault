@@ -12244,8 +12244,8 @@ var getCloudMasterKey = async (userId, username, deviceId) => {
       {
         encryptedMasterKey: 1,
         masterKeyHash: 1,
-        "metadata.derivationParams": 1,
-        "audit.accessCount": 1
+        metadata: 1,
+        audit: 1
       }
     );
     if (!masterKeyDoc) {
@@ -12255,15 +12255,16 @@ var getCloudMasterKey = async (userId, username, deviceId) => {
       });
       return null;
     }
+    const nextAccessCount = (masterKeyDoc?.audit?.accessCount || 0) + 1;
     await MasterKey.findByIdAndUpdate(masterKeyDoc._id, {
       "metadata.lastAccessedAt": /* @__PURE__ */ new Date(),
-      "audit.accessCount": (masterKeyDoc.audit?.accessCount || 0) + 1,
+      "audit.accessCount": nextAccessCount,
       "audit.lastAccessedByDeviceId": deviceId
     });
     logger.info(`[MasterKeyService] Master key retrieved successfully for user: ${userId}`, {
       context: "getCloudMasterKey",
       userId,
-      accessCount: (masterKeyDoc.audit?.accessCount || 0) + 1
+      accessCount: nextAccessCount
     });
     return masterKeyDoc.encryptedMasterKey;
   } catch (error) {
@@ -12286,7 +12287,7 @@ var verifyMasterKeyHash = async (userId, username, masterKeyHash) => {
     const MasterKey = getMasterKeyModel(username);
     const masterKeyDoc = await MasterKey.findOne(
       { userId, isActive: true, isDeleted: false },
-      { masterKeyHash: 1 }
+      { masterKeyHash: 1, audit: 1 }
     );
     if (!masterKeyDoc) {
       return false;
@@ -12294,8 +12295,9 @@ var verifyMasterKeyHash = async (userId, username, masterKeyHash) => {
     const storedHash = decryptText(masterKeyDoc.masterKeyHash);
     const isValid = await comparePassword(masterKeyHash, storedHash);
     if (!isValid) {
+      const nextFailedAttempts = (masterKeyDoc?.audit?.failedDecryptionAttempts || 0) + 1;
       await MasterKey.findByIdAndUpdate(masterKeyDoc._id, {
-        "audit.failedDecryptionAttempts": (masterKeyDoc.audit?.failedDecryptionAttempts || 0) + 1,
+        "audit.failedDecryptionAttempts": nextFailedAttempts,
         "audit.lastFailedAttempt": /* @__PURE__ */ new Date()
       });
       logger.warn(`[MasterKeyService] Master key hash verification failed for user: ${userId}`, {

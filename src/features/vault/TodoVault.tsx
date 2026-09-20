@@ -784,7 +784,7 @@ export const TodoVault: React.FC = () => {
         handleRenameFolder={handleRenameFolder}
         handleDeleteFolder={handleDeleteFolder}
         handleMoveToFolder={handleMoveToFolder}
-        title="Todo Lists"
+        title="Todo Categories"
         allItemLabel="All Todos"
         allItemIcon={<ListTodo className="h-4 w-4" />}
       />

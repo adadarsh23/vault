@@ -316,7 +316,7 @@ describe('SecurityLayers Component - Multi-Device Responsiveness and States', ()
     it('toggles all specifications with header inspection button', () => {
       render(<SecurityLayers layers={richLayers} currentLayer={0} />);
 
-      const inspectBtn = screen.getByRole('button', { name: /inspect specifications/i });
+      const inspectBtn = screen.getByRole('button', { name: /inspect (specifications|view)/i });
       expect(inspectBtn).toBeTruthy();
 
       // Toggle all on
@@ -329,7 +329,7 @@ describe('SecurityLayers Component - Multi-Device Responsiveness and States', ()
       // Toggle all off
       const compactBtn = screen.getByRole('button', { name: /compact view/i });
       fireEvent.click(compactBtn);
-      expect(screen.getByRole('button', { name: /inspect specifications/i })).toBeTruthy();
+      expect(screen.getByRole('button', { name: /inspect (specifications|view)/i })).toBeTruthy();
     });
 
     it('renders verified security summary list on success state', () => {

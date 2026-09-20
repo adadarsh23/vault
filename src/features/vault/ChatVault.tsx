@@ -849,7 +849,7 @@ export const ChatVault: React.FC = () => {
         handleRenameFolder={handleRenameFolder}
         handleDeleteFolder={handleDeleteFolder}
         handleMoveToFolder={handleMoveToFolder}
-        title="Chat folders"
+        title="Chat Categories"
         allItemLabel="All Chats"
         allItemIcon={<MessageSquareText className="h-4 w-4" />}
       />

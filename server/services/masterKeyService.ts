@@ -263,8 +263,8 @@ export const getCloudMasterKey = async (
       {
         encryptedMasterKey: 1,
         masterKeyHash: 1,
-        'metadata.derivationParams': 1,
-        'audit.accessCount': 1,
+        metadata: 1,
+        audit: 1,
       },
     );
 
@@ -276,17 +276,19 @@ export const getCloudMasterKey = async (
       return null;
     }
 
+    const nextAccessCount = (((masterKeyDoc as any)?.audit?.accessCount as number) || 0) + 1;
+
     // Update access tracking
     await MasterKey.findByIdAndUpdate(masterKeyDoc._id, {
       'metadata.lastAccessedAt': new Date(),
-      'audit.accessCount': ((masterKeyDoc.audit as any)?.accessCount || 0) + 1,
+      'audit.accessCount': nextAccessCount,
       'audit.lastAccessedByDeviceId': deviceId,
     });
 
     logger.info(`[MasterKeyService] Master key retrieved successfully for user: ${userId}`, {
       context: 'getCloudMasterKey',
       userId,
-      accessCount: ((masterKeyDoc.audit as any)?.accessCount || 0) + 1,
+      accessCount: nextAccessCount,
     });
 
     return masterKeyDoc.encryptedMasterKey;
@@ -325,7 +327,7 @@ export const verifyMasterKeyHash = async (
     const MasterKey = getMasterKeyModel(username);
     const masterKeyDoc = await MasterKey.findOne(
       { userId, isActive: true, isDeleted: false },
-      { masterKeyHash: 1 },
+      { masterKeyHash: 1, audit: 1 },
     );
 
     if (!masterKeyDoc) {
@@ -336,10 +338,12 @@ export const verifyMasterKeyHash = async (
     const isValid = await comparePassword(masterKeyHash, storedHash);
 
     if (!isValid) {
+      const nextFailedAttempts =
+        (((masterKeyDoc as any)?.audit?.failedDecryptionAttempts as number) || 0) + 1;
+
       // Track failed verification attempt
       await MasterKey.findByIdAndUpdate(masterKeyDoc._id, {
-        'audit.failedDecryptionAttempts':
-          ((masterKeyDoc.audit as any)?.failedDecryptionAttempts || 0) + 1,
+        'audit.failedDecryptionAttempts': nextFailedAttempts,
         'audit.lastFailedAttempt': new Date(),
       });
 

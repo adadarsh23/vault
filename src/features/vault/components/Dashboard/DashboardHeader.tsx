@@ -1,7 +1,18 @@
 import React from 'react';
-import { Lock, Zap, Fingerprint, ShieldCheck, Globe, RefreshCw, Cpu, Key } from 'lucide-react';
+import {
+  Lock,
+  Zap,
+  Fingerprint,
+  ShieldCheck,
+  Globe,
+  RefreshCw,
+  Cpu,
+  Key,
+  ChevronDown,
+} from 'lucide-react';
 import { Card, CardContent } from '../../../../components/ui/Card';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SECURITY_LAYERS } from '../../../auth/useVaultAuth';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -16,80 +27,74 @@ interface DashboardHeaderProps {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 export interface HealthMetric {
+  id?: string;
   label: string;
   value: string;
+  name?: string;
   status: string;
   icon: React.ComponentType<{ className?: string }>;
   specs?: string;
   standard?: string;
+  category?: string;
+  quantumSafe?: boolean;
+  description?: string;
+  details?: readonly string[] | string[];
 }
 
-const healthMetrics: HealthMetric[] = [
-  {
-    label: 'Layer 1: Key Derivation',
-    value: 'Argon2id (RFC 9106)',
-    status: 'Active',
-    specs: '64 MB RAM • 3 Iterations • 4 Parallel Lanes',
-    standard: 'RFC 9106',
-    icon: Fingerprint,
-  },
-  {
-    label: 'Layer 2: Key Exchange',
-    value: 'X25519 + Kyber768',
-    status: 'Quantum-Safe',
-    specs: 'Curve25519 ECDH + Kyber-768 (ML-KEM)',
-    standard: 'NIST FIPS 203',
-    icon: Zap,
-  },
-  {
-    label: 'Layer 3: Encryption',
-    value: 'Dual Cascade Cipher',
-    status: 'Cascaded',
-    specs: 'AES-256-GCM + ChaCha20-Poly1305 (VCAS01)',
-    standard: 'SP 800-38D • RFC 8439',
-    icon: Lock,
-  },
-  {
-    label: 'Layer 4: Communication',
-    value: 'RSA-OAEP + TLS 1.3',
-    status: 'Enforced',
-    specs: 'Zero-Knowledge CSE Envelope • Perfect Forward Secrecy',
-    standard: 'RFC 8017 • RFC 8446',
-    icon: Globe,
-  },
-  {
-    label: 'Layer 5: Verification',
-    value: 'Entropy + Ed25519',
-    status: 'Verified',
-    specs: 'Hardware Fingerprint (SHA-256) • Digital Signatures',
-    standard: 'RFC 8032',
-    icon: ShieldCheck,
-  },
-  {
-    label: 'Layer 6: Forward Secrecy',
-    value: '60s Inactivity Shredder',
-    status: 'Shielded',
-    specs: 'Automated RAM Watchdog • Buffer Zero-Fill (.fill(0))',
-    standard: 'Anti-Cold Boot',
-    icon: RefreshCw,
-  },
-  {
-    label: 'Layer 7: Key Storage',
-    value: 'Isolated Memory & Decoy',
-    status: 'Shielded',
-    specs: 'extractable: false • Duress Decoy PIN Shield',
-    standard: 'W3C WebCrypto',
-    icon: Cpu,
-  },
-  {
-    label: 'Layer 8: Multi-Factor',
-    value: 'WebAuthn Passkeys & TOTP',
-    status: 'Hardened',
-    specs: 'FIDO2 Biometrics • 6-Digit TOTP • Auto Emergency Wipe',
-    standard: 'RFC 6238 • FIDO2',
-    icon: Key,
-  },
-];
+const LAYER_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  'layer-kdf': Fingerprint,
+  'layer-exchange': Zap,
+  'layer-encryption': Lock,
+  'layer-transport': Globe,
+  'layer-verification': ShieldCheck,
+  'layer-pqc-fs': RefreshCw,
+  'layer-storage': Cpu,
+  'layer-mfa': Key,
+};
+
+const LAYER_STATUSES: Record<string, string> = {
+  'layer-kdf': 'Active',
+  'layer-exchange': 'Quantum-Safe',
+  'layer-encryption': 'Cascaded',
+  'layer-transport': 'Enforced',
+  'layer-verification': 'Verified',
+  'layer-pqc-fs': 'Shielded',
+  'layer-storage': 'Shielded',
+  'layer-mfa': 'Hardened',
+};
+
+const LAYER_DISPLAY_VALUES: Record<string, string> = {
+  'layer-kdf': 'Argon2id (RFC 9106)',
+  'layer-exchange': 'X25519 + Kyber768',
+  'layer-encryption': 'Dual Cascade Cipher',
+  'layer-transport': 'RSA-OAEP + TLS 1.3',
+  'layer-verification': 'Entropy + Ed25519',
+  'layer-pqc-fs': '60s Inactivity Shredder',
+  'layer-storage': 'Isolated Memory & Decoy',
+  'layer-mfa': 'WebAuthn Passkeys & TOTP',
+};
+
+export const healthMetrics: HealthMetric[] = SECURITY_LAYERS.map((layer, index) => {
+  const layerId = layer.id || `layer-${index + 1}`;
+  const icon = LAYER_ICONS[layerId] ?? Fingerprint;
+  const status = LAYER_STATUSES[layerId] ?? (layer.quantumSafe ? 'Quantum-Safe' : 'Active');
+  const value = LAYER_DISPLAY_VALUES[layerId] || layer.name;
+
+  return {
+    id: layerId,
+    label: layer.label || `Layer ${index + 1}`,
+    value,
+    name: layer.name,
+    status,
+    specs: layer.specs,
+    standard: layer.standard,
+    category: layer.category,
+    quantumSafe: layer.quantumSafe,
+    description: layer.description || layer.desc,
+    details: layer.details || [],
+    icon,
+  };
+});
 
 // ─── Animation Variants ───────────────────────────────────────────────────────
 
@@ -174,6 +179,41 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onOpenProfileCard,
 }) => {
   const [currentTime, setCurrentTime] = React.useState(new Date());
+  const [expandedLayers, setExpandedLayers] = React.useState<Record<string, boolean>>({});
+  const [showAllDetails, setShowAllDetails] = React.useState(false);
+
+  const toggleLayer = (id?: string) => {
+    if (!id) return;
+    if (showAllDetails) {
+      const nextState: Record<string, boolean> = {};
+      healthMetrics.forEach((m) => {
+        const mId = m.id || m.label;
+        nextState[mId] = mId !== id;
+      });
+      setShowAllDetails(false);
+      setExpandedLayers(nextState);
+    } else {
+      setExpandedLayers((prev) => ({
+        ...prev,
+        [id]: !prev[id],
+      }));
+    }
+  };
+
+  const handleToggleAll = () => {
+    if (showAllDetails) {
+      setShowAllDetails(false);
+      setExpandedLayers({});
+    } else {
+      setShowAllDetails(true);
+      const nextState: Record<string, boolean> = {};
+      healthMetrics.forEach((m) => {
+        const mId = m.id || m.label;
+        nextState[mId] = true;
+      });
+      setExpandedLayers(nextState);
+    }
+  };
 
   React.useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -325,22 +365,62 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             }}
             className="overflow-hidden"
           >
+            {/* Header / Inspection bar */}
+            <div className="mb-3 flex items-center justify-between px-1 pt-1">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-text/40 font-mono">
+                    {healthMetrics.length} Active Protocols
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleToggleAll}
+                  className="inline-flex items-center text-[10px] sm:text-[11px] font-semibold text-text/60 hover:text-text underline decoration-dotted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 rounded px-2.5 py-1 bg-card-bg/50 border border-card-border/60 hover:bg-card-bg/80"
+                >
+                  {showAllDetails ? 'Compact view' : 'Inspect view'}
+                </button>
+              </div>
+            </div>
+
             <motion.div
               initial="hidden"
               animate="show"
               variants={healthContainerVariants}
-              className="grid grid-cols-1 gap-4 pt-2 pb-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              className="grid grid-cols-1 items-start gap-4 pb-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             >
               {healthMetrics.map((metric) => {
                 const theme = getLayerStatusTheme(metric.status);
+                const layerKey = metric.id || metric.label;
+                const isExpanded = showAllDetails || Boolean(expandedLayers[layerKey]);
+                const hasDetails = Boolean(metric.details && metric.details.length > 0);
 
                 return (
                   <motion.div
-                    key={metric.label}
+                    key={layerKey}
                     variants={healthItemVariants}
                     exit={{ opacity: 0, transition: { duration: 0.16 } }}
                   >
-                    <Card className="overflow-hidden border-card-border/60 bg-card-bg/40 backdrop-blur-sm transition-colors hover:bg-card-bg/60">
+                    <Card
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
+                      onClick={() => toggleLayer(layerKey)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          toggleLayer(layerKey);
+                        }
+                      }}
+                      className={`group overflow-hidden border transition-all duration-200 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 ${
+                        isExpanded
+                          ? 'border-text/30 bg-card-bg/80 shadow-md ring-1 ring-text/10'
+                          : 'border-card-border/60 bg-card-bg/40 hover:bg-card-bg/60 hover:border-text/25'
+                      } backdrop-blur-sm`}
+                    >
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3.5">
                           <div
@@ -349,16 +429,34 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                             <metric.icon className={`h-5 w-5 transition-colors ${theme.icon}`} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-text/40 transition-colors truncate">
-                                {metric.label}
-                              </p>
-                              {metric.standard && (
-                                <span className="text-[8px] font-mono text-text/40 shrink-0">
-                                  {metric.standard}
-                                </span>
-                              )}
+                            <div className="flex items-center justify-between gap-1.5">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <p className="text-[10px] uppercase tracking-[0.15em] font-bold text-text/40 transition-colors truncate">
+                                  {metric.label}
+                                </p>
+                                {metric.quantumSafe && (
+                                  <span className="inline-flex items-center gap-0.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-1 py-0.2 text-[8px] font-semibold uppercase text-purple-400 shrink-0">
+                                    PQC
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {metric.standard && (
+                                  <span className="text-[8px] font-mono text-text/40 shrink-0">
+                                    {metric.standard}
+                                  </span>
+                                )}
+                                <ChevronDown
+                                  className={`h-3.5 w-3.5 text-text/35 transition-transform duration-200 shrink-0 ${
+                                    isExpanded
+                                      ? 'rotate-180 text-text/80'
+                                      : 'group-hover:text-text/65'
+                                  }`}
+                                  aria-hidden="true"
+                                />
+                              </div>
                             </div>
+
                             <div className="flex items-center gap-2 mt-0.5">
                               <p className="text-sm font-black text-text transition-colors truncate">
                                 {metric.value}
@@ -369,13 +467,76 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                                 {metric.status}
                               </span>
                             </div>
+
                             {metric.specs && (
-                              <p className="text-[10px] font-mono text-text/45 mt-1 truncate leading-tight">
+                              <p
+                                className={`text-[10px] font-mono text-text/45 mt-1 leading-tight ${
+                                  isExpanded ? 'break-words' : 'truncate'
+                                }`}
+                              >
                                 {metric.specs}
                               </p>
                             )}
                           </div>
                         </div>
+
+                        {/* Dropdown details panel */}
+                        <AnimatePresence initial={false}>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{
+                                opacity: 1,
+                                height: 'auto',
+                                transition: {
+                                  height: { duration: 0.25, ease: [0.22, 1, 0.36, 1] },
+                                  opacity: { duration: 0.2, delay: 0.05 },
+                                },
+                              }}
+                              exit={{
+                                opacity: 0,
+                                height: 0,
+                                transition: {
+                                  height: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+                                  opacity: { duration: 0.15 },
+                                },
+                              }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-3.5 pt-3 border-t border-card-border/60 w-full space-y-2">
+                                {metric.description && (
+                                  <p className="text-[11px] leading-relaxed text-text/60 break-words">
+                                    {metric.description}
+                                  </p>
+                                )}
+
+                                {metric.category && (
+                                  <div className="flex items-center gap-1 text-[9px] text-text/40 font-mono">
+                                    <span className="uppercase tracking-wider">
+                                      Protocol Category:
+                                    </span>
+                                    <span className="text-text/70">{metric.category}</span>
+                                  </div>
+                                )}
+
+                                {hasDetails && (
+                                  <div className="space-y-1.5 pt-1">
+                                    <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-text/45">
+                                      Cryptographic Specifications
+                                    </p>
+                                    <ul className="space-y-1 pl-3.5 text-[10px] leading-snug text-text/65 list-disc">
+                                      {metric.details?.map((detail, dIdx) => (
+                                        <li key={dIdx} className="break-words">
+                                          {detail}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </CardContent>
                     </Card>
                   </motion.div>

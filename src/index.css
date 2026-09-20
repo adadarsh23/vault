@@ -112,6 +112,8 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 /* Fix mobile scroll inside modals */
@@ -329,10 +331,13 @@ body {
   background-color: var(--bg);
   color: var(--text);
   overflow-x: hidden;
+  max-width: 100%;
 }
 
 #root {
   min-height: 100svh;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 img,

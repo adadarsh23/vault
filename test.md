@@ -9,40 +9,48 @@
   <a href="#13-drag--drop--deep-test-commands">Drag & Drop</a> •
   <a href="#19-complete-npm-script-reference-table">Full Reference Table</a> •
   <a href="#27-cross-platform-shell-execution--syntax-windows-powershell-cmd-bash-zsh">Cross-Platform Guide</a> •
-  <a href="#30-test-troubleshooting--common-errors--immediate-fixes">Troubleshooting</a>
+  <a href="#30-test-troubleshooting--common-errors--immediate-fixes">Troubleshooting</a> •
+  <a href="#31-stress-testing-repeat--race-condition-detection">Stress Testing</a> •
+  <a href="#33-local-ci-simulation--pre-commit--pre-push-workflows">CI Simulation</a>
 </p>
 
-Comprehensive cheat sheet and execution manual for **every** Vitest, standalone, and npm command across the Vault repository — covering **91 test files** (54 unit, 4 integration, 33 component/feature), **67 npm test scripts**, all build/clean/deploy pipelines, diagnostics, performance tooling, and cross-device verification procedures.
+Comprehensive cheat sheet and execution manual for **every** Vitest, standalone, and npm command across the Vault repository — covering **97 test files** (57 unit, 4 integration, 36 component/feature), **67 npm test scripts**, all build/clean/deploy pipelines, diagnostics, performance tooling, and cross-device verification procedures.
 
 ---
 
 ## ⚡ Quick Reference Cheat Sheet
 
-| Category / Target        | Command                      | Description                                     |
-| :----------------------- | :--------------------------- | :---------------------------------------------- |
-| **Default Safe Run**     | `npm test`                   | Single-worker Vitest run (`--maxWorkers 1`)     |
-| **Parallel Fast Run**    | `npm run test:run`           | Full suite across all CPU workers               |
-| **Full Runner + Lint**   | `npm run test:all`           | Lint + Vitest + custom crypto runner            |
-| **CI Strict Test**       | `npm run test:ci`            | Lint + Vitest --no-cache                        |
-| **Unit Tests**           | `npm run test:unit`          | All 54 unit tests in `tests/unit/`              |
-| **Integration Tests**    | `npm run test:integration`   | All 4 integration tests in `tests/integration/` |
-| **Client Source Tests**  | `npm run test:client`        | All 33 component and lib tests in `src/`        |
-| **Server Tests**         | `npm run test:server`        | Backend unit and integration                    |
-| **Component Tests**      | `npm run test:components`    | All React UI component specs (`*.test.tsx`)     |
-| **Cryptography Suite**   | `npm run test:crypto`        | AES-256-GCM, PQC Kyber, KDF & Key Rotation      |
-| **Authentication Suite** | `npm run test:auth`          | Login, Register, Session & Token Revocation     |
-| **Security Boundaries**  | `npm run test:security`      | Auth, Multipart, Streaming & UI Isolation       |
-| **Cloud Sync & Stores**  | `npm run test:sync`          | Delta sync, conflict handling & state integrity |
-| **Media & Streaming**    | `npm run test:media`         | HLS player, capture modal, video streaming      |
-| **Interactive UI**       | `npm run test:ui`            | Vitest browser dashboard GUI                    |
-| **Code Coverage**        | `npm run test:coverage:open` | Generate coverage and open in browser           |
-| **Watch Mode**           | `npm run test:watch`         | Auto re-run on file change                      |
-| **Fast Fail**            | `npm run test:fast`          | Stop on first failure                           |
-| **Heap Tracking**        | `npm run test:heap`          | Memory/heap usage per test file                 |
-| **Node Inspector**       | `npm run test:debug:brk`     | Attach Chrome DevTools or VS Code               |
-| **Quick Verify**         | `npm run verify:quick`       | Lint + Auth tests                               |
-| **Full CI Verify**       | `npm run verify:ci`          | Doctor + Lint + CI tests + Build                |
-| **Complete Audit**       | `npm run verify:full`        | Clean all + Doctor + Verify + All Tests         |
+| Category / Target        | Command                                                                                                  | Description                                     |
+| :----------------------- | :------------------------------------------------------------------------------------------------------- | :---------------------------------------------- |
+| **Default Safe Run**     | `npm test`                                                                                               | Single-worker Vitest run (`--maxWorkers 1`)     |
+| **Parallel Fast Run**    | `npm run test:run`                                                                                       | Full suite across all CPU workers               |
+| **Full Runner + Lint**   | `npm run test:all`                                                                                       | Lint + Vitest + custom crypto runner            |
+| **CI Strict Test**       | `npm run test:ci`                                                                                        | Lint + Vitest --no-cache                        |
+| **Unit Tests**           | `npm run test:unit`                                                                                      | All 57 unit tests in `tests/unit/`              |
+| **Integration Tests**    | `npm run test:integration`                                                                               | All 4 integration tests in `tests/integration/` |
+| **Client Source Tests**  | `npm run test:client`                                                                                    | All 36 component and lib tests in `src/`        |
+| **Server Tests**         | `npm run test:server`                                                                                    | Backend unit and integration                    |
+| **Component Tests**      | `npm run test:components`                                                                                | All React UI component specs (`*.test.tsx`)     |
+| **Cryptography Suite**   | `npm run test:crypto`                                                                                    | AES-256-GCM, PQC Kyber, KDF & Key Rotation      |
+| **Authentication Suite** | `npm run test:auth`                                                                                      | Login, Register, Session & Token Revocation     |
+| **Hardened 2FA & Bot**   | `npx vitest run tests/unit/recaptchaMiddleware.test.ts tests/unit/two-factor-hardening.test.ts`          | 2FA rate limits, password checks & reCAPTCHA    |
+| **Security Boundaries**  | `npm run test:security`                                                                                  | Auth, Multipart, Streaming & UI Isolation       |
+| **Cloud Sync & Stores**  | `npm run test:sync`                                                                                      | Delta sync, conflict handling & state integrity |
+| **Media & Streaming**    | `npm run test:media`                                                                                     | HLS player, capture modal, video streaming      |
+| **Mini-Player Suite**    | `npx vitest run src/components/ui/GlobalVideoMiniPlayer.test.tsx src/store/videoMiniPlayerStore.test.ts` | Picture-in-picture floating video & store       |
+| **Mobile PDF & Docs**    | `npx vitest run tests/unit/mobile-pdf-document-handling.test.tsx`                                        | Mobile PDF rendering, anti-screenshot shield    |
+| **Interactive UI**       | `npm run test:ui`                                                                                        | Vitest browser dashboard GUI                    |
+| **Code Coverage**        | `npm run test:coverage:open`                                                                             | Generate coverage and open in browser           |
+| **Watch Mode**           | `npm run test:watch`                                                                                     | Auto re-run on file change                      |
+| **Fast Fail**            | `npm run test:fast`                                                                                      | Stop on first failure                           |
+| **Heap Tracking**        | `npm run test:heap`                                                                                      | Memory/heap usage per test file                 |
+| **Node Inspector**       | `npm run test:debug:brk`                                                                                 | Attach Chrome DevTools or VS Code               |
+| **Typecheck Tests**      | `npx vitest typecheck`                                                                                   | Typecheck TypeScript test files                 |
+| **Stress Repeat**        | `npm run test:repeat 5`                                                                                  | Run test suite 5 times sequentially             |
+| **Quick Verify**         | `npm run verify:quick`                                                                                   | Lint + Auth tests                               |
+| **Full CI Verify**       | `npm run verify:ci`                                                                                      | Doctor + Lint + CI tests + Build                |
+| **Local CI Simulation**  | `$env:CI="true"; npm run verify:ci`                                                                      | Replay strict CI pipeline locally               |
+| **Complete Audit**       | `npm run verify:full`                                                                                    | Clean all + Doctor + Verify + All Tests         |
 
 ---
 
@@ -86,6 +94,10 @@ Comprehensive cheat sheet and execution manual for **every** Vitest, standalone,
 - [28. Passing Arguments to npm Test Scripts (-- Forwarding Guide)](#28-passing-arguments-to-npm-test-scripts---forwarding-guide)
 - [29. Interactive Vitest Watch Mode Controls](#29-interactive-vitest-watch-mode-controls)
 - [30. Test Troubleshooting — Common Errors & Immediate Fixes](#30-test-troubleshooting--common-errors--immediate-fixes)
+- [31. Stress Testing, Repeat & Race-Condition Detection](#31-stress-testing-repeat--race-condition-detection)
+- [32. Mock Registry Verification & Test Harness Diagnostics](#32-mock-registry-verification--test-harness-diagnostics)
+- [33. Local CI Simulation & Pre-Commit / Pre-Push Workflows](#33-local-ci-simulation--pre-commit--pre-push-workflows)
+- [34. Network, REST API & Supertest Backend Commands](#34-network-rest-api--supertest-backend-commands)
 
 ---
 
@@ -181,6 +193,12 @@ npx vitest run tests/unit/useVaultAuth.test.tsx
 
 # Session revoked modal UI behaviour
 npx vitest run tests/unit/session-revoked-modal.test.tsx
+
+# 2FA security hardening (disable 2FA password verification & playback insights)
+npx vitest run tests/unit/two-factor-hardening.test.ts
+
+# reCAPTCHA middleware (token validation, bot detection, optional 2FA flow bypass guard)
+npx vitest run tests/unit/recaptchaMiddleware.test.ts
 ```
 
 ### 1.4 Unit — Cloud Sync, Storage & Networking
@@ -285,6 +303,9 @@ npx vitest run tests/unit/universal-panic-lock-widget.test.tsx
 
 # Universal sync status widget
 npx vitest run tests/unit/universal-sync-widget.test.tsx
+
+# Mobile PDF & document handling (anti-screenshot shield, print blocking, iframe isolation)
+npx vitest run tests/unit/mobile-pdf-document-handling.test.tsx
 ```
 
 ### 1.6 Source — Components & Features (`src/`)
@@ -304,6 +325,12 @@ npx vitest run src/components/ui/audio-player.test.tsx
 
 # Video player component (HLS, Shaka, fallback)
 npx vitest run src/components/ui/video-player.test.tsx
+
+# Global video mini-player (floating picture-in-picture, minimize/restore, playback controls)
+npx vitest run src/components/ui/GlobalVideoMiniPlayer.test.tsx
+
+# Dashboard header (security health score, layer breakdown, profile card trigger)
+npx vitest run src/features/vault/components/Dashboard/DashboardHeader.test.tsx
 
 # Auth security layers (2FA, rate-limit, brute-force protection)
 npx vitest run src/features/auth/SecurityLayers.test.tsx
@@ -377,6 +404,9 @@ npx vitest run src/features/vault/components/MediaVault/__tests__/mediaZipUtils.
 ```bash
 # useFastAvatar hook (avatar cache, progressive load)
 npx vitest run src/hooks/__tests__/useFastAvatar.test.ts
+
+# Video mini-player Zustand store (active video, floating state, progress sync, tab routing)
+npx vitest run src/store/videoMiniPlayerStore.test.ts
 
 # Audio DSP processing (normalisation, noise gate, EQ)
 npx vitest run src/lib/__tests__/audioDsp.test.ts
@@ -646,6 +676,147 @@ npx vitest run tests/unit/env.test.ts tests/unit/fuzzy.test.ts tests/unit/apiCli
 npm run test:utils
 ```
 
+### Floating Video & Picture-in-Picture (PiP) Mini-Player Suite
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run src/components/ui/GlobalVideoMiniPlayer.test.tsx src/store/videoMiniPlayerStore.test.ts src/components/ui/video-player.test.tsx
+
+# Windows PowerShell
+npx vitest run `
+  src/components/ui/GlobalVideoMiniPlayer.test.tsx `
+  src/store/videoMiniPlayerStore.test.ts `
+  src/components/ui/video-player.test.tsx
+
+# Linux / macOS Bash & Zsh
+npx vitest run \
+  src/components/ui/GlobalVideoMiniPlayer.test.tsx \
+  src/store/videoMiniPlayerStore.test.ts \
+  src/components/ui/video-player.test.tsx
+```
+
+### Hardened 2FA, reCAPTCHA & Bot Defense Suite
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run tests/unit/recaptchaMiddleware.test.ts tests/unit/two-factor-hardening.test.ts tests/unit/auth-validator.test.ts tests/integration/auth-security.test.ts src/features/auth/SecurityLayers.test.tsx
+
+# Windows PowerShell
+npx vitest run `
+  tests/unit/recaptchaMiddleware.test.ts `
+  tests/unit/two-factor-hardening.test.ts `
+  tests/unit/auth-validator.test.ts `
+  tests/integration/auth-security.test.ts `
+  src/features/auth/SecurityLayers.test.tsx
+
+# Linux / macOS Bash & Zsh
+npx vitest run \
+  tests/unit/recaptchaMiddleware.test.ts \
+  tests/unit/two-factor-hardening.test.ts \
+  tests/unit/auth-validator.test.ts \
+  tests/integration/auth-security.test.ts \
+  src/features/auth/SecurityLayers.test.tsx
+```
+
+### Mobile PDF, Viewer & Anti-Screenshot Shield Suite
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run tests/unit/mobile-pdf-document-handling.test.tsx tests/unit/vault-item-content.test.ts
+
+# Windows PowerShell
+npx vitest run `
+  tests/unit/mobile-pdf-document-handling.test.tsx `
+  tests/unit/vault-item-content.test.ts
+
+# Linux / macOS Bash & Zsh
+npx vitest run \
+  tests/unit/mobile-pdf-document-handling.test.tsx \
+  tests/unit/vault-item-content.test.ts
+```
+
+### Dashboard, Header & Navigation Suite
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run src/features/vault/components/Dashboard/DashboardHeader.test.tsx src/features/vault/__tests__/ControlsAndShortcuts.test.tsx src/features/vault/__tests__/ShortcutsCard.test.tsx src/components/router/__tests__/ScrollRestoration.test.tsx
+
+# Windows PowerShell
+npx vitest run `
+  src/features/vault/components/Dashboard/DashboardHeader.test.tsx `
+  src/features/vault/__tests__/ControlsAndShortcuts.test.tsx `
+  src/features/vault/__tests__/ShortcutsCard.test.tsx `
+  src/components/router/__tests__/ScrollRestoration.test.tsx
+
+# Linux / macOS Bash & Zsh
+npx vitest run \
+  src/features/vault/components/Dashboard/DashboardHeader.test.tsx \
+  src/features/vault/__tests__/ControlsAndShortcuts.test.tsx \
+  src/features/vault/__tests__/ShortcutsCard.test.tsx \
+  src/components/router/__tests__/ScrollRestoration.test.tsx
+```
+
+### Merkle Tree & Tamper-Alarm Integrity Suite
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run tests/unit/merkle-tree.test.ts tests/unit/integrity-service.test.ts src/components/security/__tests__/VaultIntegrityAlarm.test.tsx src/features/vault/__tests__/SettingsVault/MerkleIntegrityCard.test.tsx
+
+# Windows PowerShell
+npx vitest run `
+  tests/unit/merkle-tree.test.ts `
+  tests/unit/integrity-service.test.ts `
+  src/components/security/__tests__/VaultIntegrityAlarm.test.tsx `
+  src/features/vault/__tests__/SettingsVault/MerkleIntegrityCard.test.tsx
+
+# Linux / macOS Bash & Zsh
+npx vitest run \
+  tests/unit/merkle-tree.test.ts \
+  tests/unit/integrity-service.test.ts \
+  src/components/security/__tests__/VaultIntegrityAlarm.test.tsx \
+  src/features/vault/__tests__/SettingsVault/MerkleIntegrityCard.test.tsx
+```
+
+### Emergency Self-Destruct & Vault Wipe Suite
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run src/features/vault/__tests__/EmergencySelfDestructWipe.test.tsx src/features/vault/__tests__/SettingsVault/EmergencyDestructionCard.test.tsx tests/unit/decoy-vault.test.ts
+
+# Windows PowerShell
+npx vitest run `
+  src/features/vault/__tests__/EmergencySelfDestructWipe.test.tsx `
+  src/features/vault/__tests__/SettingsVault/EmergencyDestructionCard.test.tsx `
+  tests/unit/decoy-vault.test.ts
+
+# Linux / macOS Bash & Zsh
+npx vitest run \
+  src/features/vault/__tests__/EmergencySelfDestructWipe.test.tsx \
+  src/features/vault/__tests__/SettingsVault/EmergencyDestructionCard.test.tsx \
+  tests/unit/decoy-vault.test.ts
+```
+
+### Universal UI Widgets & Theme Provider Suite
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run tests/unit/universal-panic-lock-widget.test.tsx tests/unit/universal-sync-widget.test.tsx tests/unit/activity-details-modal.test.tsx tests/unit/theme-provider.test.tsx
+
+# Windows PowerShell
+npx vitest run `
+  tests/unit/universal-panic-lock-widget.test.tsx `
+  tests/unit/universal-sync-widget.test.tsx `
+  tests/unit/activity-details-modal.test.tsx `
+  tests/unit/theme-provider.test.tsx
+
+# Linux / macOS Bash & Zsh
+npx vitest run \
+  tests/unit/universal-panic-lock-widget.test.tsx \
+  tests/unit/universal-sync-widget.test.tsx \
+  tests/unit/activity-details-modal.test.tsx \
+  tests/unit/theme-provider.test.tsx
+```
+
 ### All Component Tests (src/)
 
 ```bash
@@ -655,8 +826,8 @@ npx vitest run "**/*.test.tsx"
 # Via npm shortcut
 npm run test:components
 
-# All 33 tests in src/ (Universal single-line)
-npx vitest run src/components/router/__tests__/ScrollRestoration.test.tsx src/components/security/__tests__/VaultIntegrityAlarm.test.tsx src/components/vault/__tests__/TagManager.test.tsx src/components/ui/audio-player.test.tsx src/components/ui/video-player.test.tsx src/features/auth/SecurityLayers.test.tsx src/features/vault/__tests__/ControlsAndShortcuts.test.tsx src/features/vault/__tests__/ShortcutsCard.test.tsx src/features/vault/__tests__/EmergencySelfDestructWipe.test.tsx src/features/vault/__tests__/SecretsVault.test.tsx src/features/vault/TodoVault.security.test.tsx src/security/securityIntegration.test.tsx src/features/vault/__tests__/SettingsVault/EmergencyDestructionCard.test.tsx src/features/vault/__tests__/SettingsVault/MaintenanceCard.test.tsx src/features/vault/__tests__/SettingsVault/MerkleIntegrityCard.test.tsx src/features/vault/__tests__/SettingsVault/MobileExperienceCard.test.tsx src/features/vault/__tests__/SettingsVault/ProfileCard.test.tsx src/features/vault/__tests__/SettingsVault/SettingsVaultIntegration.test.tsx src/features/vault/__tests__/SettingsVault/ShareVaultCard.test.tsx src/features/vault/__tests__/SettingsVault/SyncStorageCard.test.tsx src/features/vault/__tests__/SettingsVault/TwoFactorSettingsCard.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/AdvancedCameraModes.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/PhotoEditor.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/VideoEditor.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/filters.test.ts src/features/vault/components/MediaVault/__tests__/MediaPreview.test.tsx src/features/vault/components/MediaVault/__tests__/mediaGallery.test.ts src/features/vault/components/MediaVault/__tests__/mediaZipUtils.test.ts src/hooks/__tests__/useFastAvatar.test.ts src/lib/__tests__/audioDsp.test.ts src/lib/__tests__/encryptedMediaStreaming.test.ts src/lib/__tests__/itemCodec.test.ts src/lib/__tests__/searchableTranscripts.test.ts
+# All 36 tests in src/ (Universal single-line)
+npx vitest run src/components/router/__tests__/ScrollRestoration.test.tsx src/components/security/__tests__/VaultIntegrityAlarm.test.tsx src/components/vault/__tests__/TagManager.test.tsx src/components/ui/GlobalVideoMiniPlayer.test.tsx src/components/ui/audio-player.test.tsx src/components/ui/video-player.test.tsx src/features/auth/SecurityLayers.test.tsx src/features/vault/__tests__/ControlsAndShortcuts.test.tsx src/features/vault/__tests__/ShortcutsCard.test.tsx src/features/vault/__tests__/EmergencySelfDestructWipe.test.tsx src/features/vault/__tests__/SecretsVault.test.tsx src/features/vault/TodoVault.security.test.tsx src/security/securityIntegration.test.tsx src/features/vault/__tests__/SettingsVault/EmergencyDestructionCard.test.tsx src/features/vault/__tests__/SettingsVault/MaintenanceCard.test.tsx src/features/vault/__tests__/SettingsVault/MerkleIntegrityCard.test.tsx src/features/vault/__tests__/SettingsVault/MobileExperienceCard.test.tsx src/features/vault/__tests__/SettingsVault/ProfileCard.test.tsx src/features/vault/__tests__/SettingsVault/SettingsVaultIntegration.test.tsx src/features/vault/__tests__/SettingsVault/ShareVaultCard.test.tsx src/features/vault/__tests__/SettingsVault/SyncStorageCard.test.tsx src/features/vault/__tests__/SettingsVault/TwoFactorSettingsCard.test.tsx src/features/vault/components/Dashboard/DashboardHeader.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/AdvancedCameraModes.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/PhotoEditor.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/VideoEditor.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/filters.test.ts src/features/vault/components/MediaVault/__tests__/MediaPreview.test.tsx src/features/vault/components/MediaVault/__tests__/mediaGallery.test.ts src/features/vault/components/MediaVault/__tests__/mediaZipUtils.test.ts src/hooks/__tests__/useFastAvatar.test.ts src/lib/__tests__/audioDsp.test.ts src/lib/__tests__/encryptedMediaStreaming.test.ts src/lib/__tests__/itemCodec.test.ts src/lib/__tests__/searchableTranscripts.test.ts src/store/videoMiniPlayerStore.test.ts
 ```
 
 ---
@@ -877,9 +1048,53 @@ node scripts/vitest-related.mjs watch
 node scripts/vitest-related.mjs run src/lib/cryptoPrimitives.ts
 node scripts/vitest-related.mjs run src/lib/vaultDragDrop.ts
 node scripts/vitest-related.mjs run server/services/authService.ts
+node scripts/vitest-related.mjs run src/components/ui/GlobalVideoMiniPlayer.tsx
+node scripts/vitest-related.mjs run src/store/videoMiniPlayerStore.ts
+node scripts/vitest-related.mjs run src/features/vault/components/Dashboard/DashboardHeader.tsx
+node scripts/vitest-related.mjs run server/middleware/recaptchaMiddleware.ts
+node scripts/vitest-related.mjs run server/services/twoFactorService.ts
 
 # Extended timeouts for heavy cryptographic operations (Argon2 / Kyber / PBKDF2)
 npx vitest run --testTimeout=60000 --hookTimeout=60000
+
+# High-precision timeout for long-running integration workflows
+npx vitest run --testTimeout=120000 --hookTimeout=90000
+
+# Slow test threshold alerting (highlight any test execution taking longer than 1000ms)
+npx vitest run --slowTestThreshold=1000
+
+# Strict worker thread isolation (isolate memory context per file)
+npx vitest run --poolOptions.threads.isolate=true
+
+# Single-threaded execution without worker pool overhead (for low memory environments)
+npx vitest run --poolOptions.threads.singleThread
+
+# Concurrency throttling (limit concurrent test suites running in parallel)
+npx vitest run --maxConcurrency=5
+
+# Restrict worker threads to exactly 2 workers
+npx vitest run --maxWorkers=2 --minWorkers=1
+
+# Run tests without any setup files (pure isolation from global mocks)
+npx vitest run --setupFiles "" tests/unit/server-crypto.test.ts
+
+# Run tests ignoring integration folder
+npx vitest run --exclude="tests/integration/**"
+
+# Run tests ignoring mock files
+npx vitest run --exclude="**/mocks/**"
+
+# Profile test CPU consumption using Node.js V8 CPU profiler
+node --cpu-prof ./node_modules/vitest/vitest.mjs run tests/unit/encryption.test.ts
+
+# Trigger heap snapshot when approaching V8 memory limit
+node --heapsnapshot-near-heap-limit=3 ./node_modules/vitest/vitest.mjs run
+
+# Execute Vitest typecheck engine across test suites
+npx vitest typecheck
+
+# Run Vitest typecheck only without executing test assertions
+npx vitest typecheck --run
 
 # Clear Vitest cache (removes corrupt module transforms)
 npx vitest run --clearCache
@@ -921,6 +1136,12 @@ npx vitest tests/integration/auth-security.test.ts
 npx vitest src/features/vault/TodoVault.security.test.tsx
 npx vitest src/features/vault/__tests__/SettingsVault/SettingsVaultIntegration.test.tsx
 npx vitest src/lib/__tests__/encryptedMediaStreaming.test.ts
+npx vitest src/components/ui/GlobalVideoMiniPlayer.test.tsx
+npx vitest src/store/videoMiniPlayerStore.test.ts
+npx vitest tests/unit/mobile-pdf-document-handling.test.tsx
+npx vitest tests/unit/two-factor-hardening.test.ts
+npx vitest tests/unit/recaptchaMiddleware.test.ts
+npx vitest src/features/vault/components/Dashboard/DashboardHeader.test.tsx
 ```
 
 ---
@@ -944,6 +1165,18 @@ npx vitest run --coverage tests/unit/vault-item-content.test.ts
 npx vitest run --coverage src/security/securityIntegration.test.tsx
 npx vitest run --coverage src/features/vault/TodoVault.security.test.tsx
 
+# Coverage for video mini-player and store
+npx vitest run --coverage src/components/ui/GlobalVideoMiniPlayer.test.tsx src/store/videoMiniPlayerStore.test.ts
+
+# Coverage for mobile PDF & document handler
+npx vitest run --coverage tests/unit/mobile-pdf-document-handling.test.tsx
+
+# Coverage for hardened 2FA and reCAPTCHA middleware
+npx vitest run --coverage tests/unit/recaptchaMiddleware.test.ts tests/unit/two-factor-hardening.test.ts
+
+# Coverage for dashboard header component
+npx vitest run --coverage src/features/vault/components/Dashboard/DashboardHeader.test.tsx
+
 # Coverage for an entire domain
 npx vitest run --coverage tests/unit/
 npx vitest run --coverage tests/integration/
@@ -966,8 +1199,20 @@ npx vitest run --coverage --coverage.include="server/**"
 # Output specific coverage formats (e.g. lcov for CI, html for review)
 npx vitest run --coverage --coverage.reporter=text --coverage.reporter=html --coverage.reporter=lcov
 
+# Output Cobertura XML format (for CI coverage dashboards)
+npx vitest run --coverage --coverage.reporter=cobertura --coverage.reporter=text-summary
+
+# Output JSON summary format (for automated PR bot comments)
+npx vitest run --coverage --coverage.reporter=json-summary --coverage.reporter=text
+
 # Assert minimum code coverage thresholds on the fly
 npx vitest run --coverage --coverage.thresholds.lines=75 --coverage.thresholds.statements=75
+
+# Enforce strict 80% branch coverage threshold
+npx vitest run --coverage --coverage.thresholds.branches=80
+
+# Clean coverage output on every rerun
+npx vitest run --coverage --coverage.cleanOnRerun=true
 
 # Clean old coverage reports before running
 npm run clean:coverage && npm run test:coverage
@@ -1014,12 +1259,43 @@ npx vitest run -t "decoy"
 npx vitest run -t "pinning"
 npx vitest run -t "manifest"
 
+# Mini-Player & Video filters
+npx vitest run -t "GlobalVideoMiniPlayer"
+npx vitest run -t "useVideoMiniPlayerStore"
+npx vitest run -t "isFloating"
+npx vitest run -t "playVideo"
+
+# Mobile PDF & Document Shield filters
+npx vitest run -t "Mobile PDF and Document Handling"
+npx vitest run -t "anti-screenshot"
+npx vitest run -t "ShieldTestConsumer"
+npx vitest run -t "print blocking"
+
+# 2FA Hardening & reCAPTCHA filters
+npx vitest run -t "reCAPTCHA Middleware"
+npx vitest run -t "2FA Security Hardening"
+npx vitest run -t "Playback Insights Validation"
+
+# Dashboard Header & Health Score filters
+npx vitest run -t "DashboardHeader Component"
+npx vitest run -t "Security Layer Details"
+npx vitest run -t "onOpenProfileCard"
+
+# Regex case-insensitive test filters
+npx vitest run -t "/(login|register|token)/i"
+npx vitest run -t "/(encrypt|decrypt|cipher)/i"
+
+# Inverted test pattern (exclude tests matching regex)
+npx vitest run --testNamePattern "^((?!flaky).)*$"
+
 # Filter within a specific file
 npx vitest run tests/unit/encryption.test.ts -t "encrypts and decrypts"
 npx vitest run tests/unit/vault-drag-drop.test.ts -t "multi-item"
 npx vitest run tests/unit/vault-drag-drop.test.ts -t "fallback"
 npx vitest run tests/unit/auth-api.test.ts -t "login"
 npx vitest run src/features/vault/TodoVault.security.test.tsx -t "write path"
+npx vitest run src/components/ui/GlobalVideoMiniPlayer.test.tsx -t "minimizes"
+npx vitest run tests/unit/mobile-pdf-document-handling.test.tsx -t "anti-screenshot"
 ```
 
 ### Execution Control
@@ -1057,6 +1333,9 @@ npx vitest run --reporter=json
 npx vitest run --reporter=json --outputFile=test-results.json
 npx vitest run --reporter=junit --outputFile=junit.xml
 npx vitest run --reporter=html
+npx vitest run --reporter=tap
+npx vitest run --reporter=github-actions
+npx vitest run --reporter=default --reporter=html --reporter=json --outputFile.json=test-results/results.json --outputFile.html=test-results/index.html
 ```
 
 ### Inspector / Debugger
@@ -1086,6 +1365,12 @@ npx vitest run --logHeapUsage --coverage tests/unit/
 ### Path & Glob Pattern Filtering
 
 ```bash
+# Filter test paths by regex pattern
+npx vitest run --testPathPattern="crypto|auth"
+npx vitest run --testPathPattern="player|video"
+npx vitest run --testPathPattern="Dashboard|MiniPlayer"
+npx vitest run --testPathPattern="mobile-pdf|recaptcha"
+
 # Run all security perimeter tests across the repo
 npx vitest run "**/*.security.test.tsx"
 
@@ -1567,6 +1852,7 @@ npm cache clean --force
 | `npm run test:silent`               | `vitest run --silent`                                                                                                                                                                                                                   |
 | `npm run test:ci`                   | `npm run lint && vitest run --no-cache`                                                                                                                                                                                                 |
 | `npm run test:flaky`                | `vitest run --retry=5`                                                                                                                                                                                                                  |
+| `npm run test:repeat`               | `node scripts/test-repeat.mjs`                                                                                                                                                                                                          |
 | `npm run test:heap`                 | `vitest run --logHeapUsage`                                                                                                                                                                                                             |
 | `npm run test:debug`                | `vitest run --inspect --no-file-parallelism`                                                                                                                                                                                            |
 | `npm run test:debug:watch`          | `vitest --inspect --no-file-parallelism`                                                                                                                                                                                                |
@@ -2180,3 +2466,221 @@ When running `npm run test:watch`, `npm run test:unit:watch`, `npm run test:comp
   node scripts/vitest-related.mjs run src/lib/cryptoPrimitives.ts
   node scripts/vitest-related.mjs watch src/features/auth/SecurityLayers.test.tsx
   ```
+
+### 11. `ReferenceError: document is not defined` or `window is not defined`
+
+- **Cause:** React component or DOM hook test executing under default `'node'` environment without browser DOM globals.
+- **Fix:** Ensure the test file includes the `/* @vitest-environment jsdom */` comment pragma at line 1, or force the jsdom environment via CLI:
+  ```bash
+  npx vitest run --environment=jsdom src/components/ui/GlobalVideoMiniPlayer.test.tsx
+  ```
+
+### 12. `Module did not self-register` or Native Addon ABI Mismatch
+
+- **Cause:** Native C++ addons (e.g. `@sentry/node-cpu-profiler` or canvas binaries) compiled for a different Node.js version.
+- **Fix:** Force Vitest to use the worker `threads` pool and avoid native addons during pure unit testing:
+  ```bash
+  npx vitest run --pool=threads tests/unit/encryption.test.ts
+  ```
+
+---
+
+## 31. Stress Testing, Repeat & Race-Condition Detection
+
+Use these commands to detect intermittent timing issues, race conditions, memory leaks, and async cleanup leaks by running tests repeatedly in automated loops.
+
+> [!IMPORTANT]
+> Vitest natively supports the `--retry=<count>` flag (retrying tests when failures occur), but does **not** include a `--repeat` CLI option. Passing `--repeat` triggers `CACError: Unknown option \`--repeat\``.
+To repeat passing tests unconditionally, use the project's dedicated cross-platform test repeater script (`npm run test:repeat`or`node scripts/test-repeat.mjs`), or the native PowerShell / Bash shell loops detailed below.
+
+### 31.1 Cross-Platform Test Repeater (`scripts/test-repeat.mjs`)
+
+```bash
+# Repeat the entire test suite 5 times sequentially
+npm run test:repeat 5
+node scripts/test-repeat.mjs 5
+
+# Repeat a specific test file 10 times
+npm run test:repeat 10 tests/unit/session-realtime-revocation.test.ts
+node scripts/test-repeat.mjs 10 tests/unit/session-realtime-revocation.test.ts
+
+# Repeat a single test with custom flags (e.g. single worker)
+node scripts/test-repeat.mjs 5 tests/unit/sync-parallel-engine.test.ts --maxWorkers=1
+```
+
+### 31.2 Native Vitest Flaky Test Retries (`--retry`)
+
+```bash
+# Automatically retry failed tests up to 3 times
+npx vitest run --retry=3 tests/unit/sync-parallel-engine.test.ts
+
+# Automatically retry failed tests up to 5 times (preset npm script)
+npm run test:flaky
+npx vitest run --retry=5
+
+# Retry failures across an entire directory
+npx vitest run --retry=3 tests/integration/
+```
+
+### 31.3 Automated Shell Stress Loops
+
+#### Windows PowerShell
+
+```powershell
+# Loop 10 times across full test suite — halts immediately on first failure
+1..10 | ForEach-Object {
+  Write-Host "=== Stress Test Run $_ / 10 ===" -ForegroundColor Cyan
+  npm test
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "Stress test failed on run $_" -ForegroundColor Red
+    break
+  }
+}
+
+# Stress test a single flaky test file 20 times in PowerShell
+1..20 | ForEach-Object {
+  Write-Host "Run #$_" -ForegroundColor Yellow
+  npx vitest run tests/unit/sync-parallel-engine.test.ts
+  if ($LASTEXITCODE -ne 0) { break }
+}
+
+# Quick single-line PowerShell loop (paste and run)
+1..5 | ForEach-Object { npx vitest run tests/unit/encryption.test.ts }
+```
+
+#### Linux / macOS Bash & Zsh
+
+```bash
+# Loop 10 times across full test suite — halts on failure
+for i in {1..10}; do
+  echo "=== Stress Test Run $i / 10 ==="
+  npm test || { echo "Failed on run $i"; break; }
+done
+
+# Stress test a single file 20 times in Bash
+for i in {1..20}; do
+  echo "Run #$i"
+  npx vitest run tests/unit/sync-parallel-engine.test.ts || break
+done
+
+# Quick single-line Bash loop (paste and run)
+for i in {1..5}; do npx vitest run tests/unit/encryption.test.ts || break; done
+```
+
+### 31.4 Concurrency & Chaos Stress Testing
+
+```bash
+# Stress parallel worker execution with maximum CPU allocation
+npx vitest run --maxWorkers=8 --sequence.concurrent
+
+# Randomize test execution order to uncover test order dependencies
+npx vitest run --sequence.shuffle
+
+# Replay a specific failed shuffle order using the reported random seed
+npx vitest run --sequence.shuffle --sequence.seed=1849204
+```
+
+---
+
+## 32. Mock Registry Verification & Test Harness Diagnostics
+
+Vault relies on isolated browser mocks in `tests/setup/mocks/` (`canvas.ts`, `observers.ts`, `browser.ts`). Verify that the mock registry itself is functioning as expected before debugging application code.
+
+```bash
+# Run all test setup mock verifications
+npx vitest run tests/unit/test-setup-mocks.test.ts
+
+# Verbose inspection of all mock assertions
+npx vitest run --reporter=verbose tests/unit/test-setup-mocks.test.ts
+
+# Verify Canvas 2D and WebGL polyfill mocks
+npx vitest run tests/unit/test-setup-mocks.test.ts -t "Canvas"
+
+# Verify DOM observers (ResizeObserver, IntersectionObserver, MutationObserver)
+npx vitest run tests/unit/test-setup-mocks.test.ts -t "Observer"
+
+# Verify Web Storage polyfills (localStorage, sessionStorage)
+npx vitest run tests/unit/test-setup-mocks.test.ts -t "Storage"
+
+# Test isolation comparison: verify sandbox clean state between tests
+npx vitest run --isolate=true tests/unit/activity-store.test.ts
+npx vitest run --no-isolate tests/unit/activity-store.test.ts
+```
+
+---
+
+## 33. Local CI Simulation & Pre-Commit / Pre-Push Workflows
+
+Replay the exact CI validation pipeline locally before opening a pull request or pushing commits to remote branches.
+
+### 33.1 Full CI Pipeline Simulation
+
+#### Windows PowerShell
+
+```powershell
+$env:CI="true"
+$env:GITHUB_ACTIONS="true"
+npm run doctor
+npm run lint
+npm run test:ci
+npm run build
+```
+
+#### Linux / macOS Bash & Zsh
+
+```bash
+CI=true GITHUB_ACTIONS=true npm run verify:ci
+```
+
+### 33.2 Fast Pre-Commit Bundle (< 15 seconds)
+
+Run this lightweight verification before committing code:
+
+```bash
+# Pre-commit bundle: format check + typecheck + fast critical unit tests
+npm run format:check && npm run typecheck && npm run test:fast -- tests/unit/encryption.test.ts tests/unit/auth-validator.test.ts
+```
+
+### 33.3 Pre-Push Comprehensive Verification
+
+Run this before pushing to `main` or a feature branch:
+
+```bash
+# Pre-push bundle: typecheck all + unit suite + security integration + client build
+npm run typecheck:all && npm run test:unit && npm run test:security && npm run build
+```
+
+---
+
+## 34. Network, REST API & Supertest Backend Commands
+
+Commands targeting server controllers, Express middleware, and REST API routes via `supertest`:
+
+```bash
+# Auth REST API supertest integration (login, register, token refresh, rate limits)
+npx vitest run tests/unit/auth-api.test.ts
+
+# Verbose inspect of all HTTP request/response cycles
+npx vitest run --reporter=verbose tests/unit/auth-api.test.ts
+
+# Real-time WebSocket / SSE session revocation API
+npx vitest run tests/unit/session-realtime-revocation.test.ts
+
+# reCAPTCHA middleware request verification (trust proxy, user agent, IP headers)
+npx vitest run tests/unit/recaptchaMiddleware.test.ts
+
+# 2FA security hardening middleware and model validations
+npx vitest run tests/unit/two-factor-hardening.test.ts
+
+# API client axios interceptor and retry loop verification
+npx vitest run tests/unit/apiClient.test.ts
+
+# Multipart chunk upload integrity and boundary attacks
+npx vitest run tests/integration/multipart-security.test.ts
+
+# Upload MIME validation and filename sanitization
+npx vitest run tests/unit/upload-validation.test.ts
+
+# Pre-signed S3/Blob URL generation and token expiry checks
+npx vitest run tests/unit/signed-url.test.ts
+```

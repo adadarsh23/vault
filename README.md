@@ -34,12 +34,14 @@
   <img src="https://img.shields.io/badge/Security-Zero--Knowledge-blueviolet?style=for-the-badge&logo=shield&logoColor=white" alt="Zero Knowledge Security" />
   <img src="https://img.shields.io/badge/Encryption-AES--256--GCM-007acc?style=for-the-badge&logo=lock&logoColor=white" alt="AES-256-GCM" />
   <img src="https://img.shields.io/badge/Post--Quantum-PQC--Kyber-8b5cf6?style=for-the-badge&logo=quantum&logoColor=white" alt="PQC Kyber" />
-  <img src="https://img.shields.io/badge/React-19.2-61dafb?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
-  <img src="https://img.shields.io/badge/Vite-8.2-646cff?style=for-the-badge&logo=vite&logoColor=white" alt="Vite 8" />
-  <img src="https://img.shields.io/badge/TypeScript-5.x-3178c6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/React-19.3-61dafb?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/Vite-8.3-646cff?style=for-the-badge&logo=vite&logoColor=white" alt="Vite 8" />
+  <img src="https://img.shields.io/badge/TypeScript-7.x%20%2F%205.x-3178c6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Node.js-22.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node 22" />
   <img src="https://img.shields.io/badge/Express-5.2-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express 5" />
   <img src="https://img.shields.io/badge/MongoDB-7.x-47a248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB 7" />
+  <a href="./test.md"><img src="https://img.shields.io/badge/Test%20Suite-97%20Files%20%E2%80%A2%2067%20Scripts-success?style=for-the-badge&logo=vitest&logoColor=white" alt="Test Suite" /></a>
+  <img src="https://img.shields.io/badge/TailwindCSS-v4.3-38bdf8?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="TailwindCSS v4" />
 </p>
 
 <p align="center">
@@ -108,6 +110,8 @@
 - **Post-Quantum Key Exchange**: Native lattice cryptography using `pqc-kyber`.
 - **Zero-Knowledge Sentinel Check (`__keycheck__`)**: Validates passphrase correctness locally and verifies sentinel envelopes without exposing secrets to the backend.
 - **Key Derivation**: Memory-hard key derivation via Argon2 (`hash-wasm`) and PBKDF2.
+- **Merkle Tree Tamper Detection**: Hierarchical Merkle hashing across all encrypted records to immediately alert on silent bit-rot, unauthorized edits, or database corruption.
+- **Plausible Deniability Decoy Vault**: Secondary decoy PIN partition seamlessly displays mock data under duress without revealing the existence of true encrypted records.
 
 ### ⚡ Real-Time Cloud Synchronization
 
@@ -115,19 +119,29 @@
 - **Delta & Polling Fallback**: Lightweight delta queries via `/api/vault/sync?since=<timestamp>`.
 - **Conflict Resolution**: Deterministic `latest-update-wins` timestamp arbitration.
 - **Tombstone Sync**: Deletions are soft-deleted and propagated seamlessly across all connected clients.
+- **Multi-Cluster Database Failover**: Seamless automatic failover between MongoDB Atlas primary and secondary clusters with zero downtime.
 
-### 📝 Rich Content & Media Engine
+### 📝 Rich Content, Video Mini-Player & Document Shield
 
 - **TipTap Rich Text Editor**: Markdown-compatible WYSIWYG note editing with live local decryption.
+- **Floating Video Mini-Player (Picture-in-Picture)**: Persistent mini-player (`GlobalVideoMiniPlayer`) backed by Zustand (`videoMiniPlayerStore`) that stays active across navigation, route changes, and tabs with minimize, collapse, and timeline scrub controls.
+- **Mobile PDF & Document Privacy Shield**: Sandboxed in-browser PDF rendering (`PdfViewer`) with anti-screenshot protection, tab-switch blurring (`useAntiScreenshotAndShield`), print prevention, and secure mobile handoff.
 - **Encrypted Media Streaming**: Secure file storage with chunked streaming via HLS.js and Shaka Player.
 - **Interactive Visualizations**: 3D globe visualization (COBE), interactive particles, and dynamic canvas rendering.
 - **TOTP & 2FA Vault**: Built-in OTP token generator with live countdown and QR code scanning.
 
-### 🛡️ Identity & Device Session Management
+### 🛡️ Identity, Bot Defense & Hardened Security
 
+- **Hardened 2FA & reCAPTCHA Bot Defense**: Google reCAPTCHA v2/v3 token verification middleware (`recaptchaMiddleware`), rate-limited 2FA verification, and mandatory password verification on 2FA deactivation.
+- **Universal Panic Lock Widget**: One-tap emergency panic widget that instantly zeroizes and shreds all in-memory cryptographic keys within 60ms.
 - **Device Fingerprinting & Session Rotation**: Distinct device tracking with HTTP-Only rotating refresh cookies.
 - **Remote Revocation**: Instantly revoke individual device sessions or terminate all remote sessions.
 - **Audit & Activity Logs**: Client-side encrypted event tracking (`__logs__`) and login history telemetry.
+
+### 👆 Cross-Device Touch & Gestures
+
+- **Touch Drag-and-Drop Polyfill**: Native-feeling touch drag & drop with 200ms hold initiation, haptic feedback, safe-area inset compliance (`env(safe-area-inset-bottom)`), edge auto-scroll suppression, and synthetic click protection.
+- **Mobile Responsive Layout**: Adaptive quick-drop bar on compact screens (<1024px) and full desktop sidebar on widescreen tablets and laptops.
 
 ### 🚀 Production & Performance
 
@@ -276,15 +290,15 @@ vault/
 
 <div style="overflow-x: auto;">
 
-| Layer                       | Technologies & Key Libraries                                                                                            |
-| :-------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
-| **Frontend UI**             | **React 19.2**, **Vite 8.2**, **TypeScript 5.x**, TailwindCSS v4, Framer Motion, Radix UI, Lucide Icons, Sonner         |
-| **Rich Text & Media**       | TipTap Editor, HLS.js, Shaka Player, HTML-to-Image, Emoji-Mart, tsParticles, COBE 3D Globe                              |
-| **Cryptography & Security** | WebCrypto API, **AES-256-GCM**, `libsodium-wrappers`, **`pqc-kyber`**, `hash-wasm` (Argon2), `bcryptjs`, `jsonwebtoken` |
-| **Backend Framework**       | **Express 5.2**, **Node.js 22 (LTS)**, Socket.IO 4.8, Helmet 8.3, Express Rate Limit, Multer, Cookie Parser             |
-| **Database & Cache**        | **MongoDB 7.x**, Mongoose 9.9, Node Cache                                                                               |
-| **Asset Optimization**      | **Brotli & Gzip Pre-compression**, Module Preload Polyfills, Aggressive Immutable Caching                               |
-| **Testing & Quality**       | **Vitest 4.1**, Supertest, Lighthouse Runner, Sentry Error Tracking & Node Profiling                                    |
+| Layer                       | Technologies & Key Libraries                                                                                                              |
+| :-------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend UI**             | **React 19.3**, **Vite 8.3**, **TypeScript ~7.0 / 5.x**, **TailwindCSS v4.3**, Framer Motion, Radix UI, Lucide Icons 1.47, Sonner Toast   |
+| **Rich Text & Media**       | **TipTap Editor 3.31**, **HLS.js 1.7**, **Shaka Player 5.2**, Global Video Mini-Player (PiP), Sandboxed PDF Viewer, tsParticles, COBE 3D  |
+| **Cryptography & Security** | WebCrypto API, **AES-256-GCM**, `libsodium-wrappers`, **`pqc-kyber`**, `hash-wasm` (Argon2id), Merkle Tree Tamper Alarms, Decoy Vault PIN |
+| **Backend Framework**       | **Express 5.2**, **Node.js 22 (LTS)**, Socket.IO 4.8, Helmet 8.3, Express Rate Limit, Multer 2.4, Cookie Parser, Google reCAPTCHA v2/v3   |
+| **Database & Cache**        | **MongoDB 7.x**, **Mongoose 9.10**, Node Cache, Multi-Cluster Atlas Failover Engine                                                       |
+| **Asset Optimization**      | **Brotli & Gzip Pre-compression**, Module Preload Polyfills, OXC / Terser Minification, Aggressive Immutable Caching                      |
+| **Testing & Quality**       | **Vitest 5.0 (97 Test Files • 67 Scripts)**, Supertest, Lighthouse CI Runner, Sentry 10.75 Error Tracking & Node Profiling                |
 
 </div>
 
@@ -601,11 +615,11 @@ npm run zip:prod
 
 ### Testing Suite & Test Reference (`test.md`)
 
-Vault features an extensive test suite consisting of **86+ test files** and **67+ specialized npm test scripts** verifying client-side zero-knowledge encryption, post-quantum key exchange, authentication boundaries, WebSocket synchronization, and security isolations.
+Vault features an extensive test suite consisting of **97 test files** (57 unit, 4 integration, 36 component/feature specs) and **67 specialized npm test scripts** verifying client-side zero-knowledge encryption, post-quantum key exchange, authentication boundaries, WebSocket synchronization, mobile document shields, picture-in-picture media, and security perimeters.
 
 > [!TIP]
 > **Complete Testing Manual Available**
-> All 67+ npm test scripts, single-file isolation commands, domain suites (crypto, auth, sync, media, settings), watch modes, coverage reports, and debugging flags are fully documented in **[`test.md`](./test.md)**.
+> All 67 npm test scripts, single-file isolation commands, domain suites (crypto, auth, sync, media, settings, mini-player, mobile PDF), watch modes, coverage reports, stress testing loops, and debugging flags are fully documented in **[`test.md`](./test.md)**.
 
 ```bash
 # Safe single-worker default test run
@@ -614,11 +628,15 @@ npm test
 # Standard full test run in parallel
 npm run test:run
 
-# Run all unit tests (tests/unit/)
+# Run all 57 unit tests (tests/unit/)
 npm run test:unit
 
 # Run all integration tests (tests/integration/)
 npm run test:integration
+
+# Run all 36 client component & feature specs (src/)
+npm run test:components
+npm run test:client
 
 # Run security & cryptographic verification tests
 npm run test:crypto
@@ -634,24 +652,35 @@ npm run test:ui
 # Generate code coverage and automatically open HTML report
 npm run test:coverage:open
 
+# Run full suite repeat stress test
+npm run test:repeat 5
+
 # Full CI verification (Doctor + Lint + Vitest CI + Vite Build)
 npm run verify:ci
 ```
 
 #### Quick Test Directory Mapping:
 
-| Test Domain             | Target Path                                     | Dedicated Command          |                                             Full Reference                                              |
-| :---------------------- | :---------------------------------------------- | :------------------------- | :-----------------------------------------------------------------------------------------------------: |
-| **Unit Tests**          | `tests/unit/`                                   | `npm run test:unit`        | [`test.md §1.2 - §1.5`](./test.md#12-unit-tests---cryptography-keys--zero-knowledge-security-testsunit) |
-| **Integration Tests**   | `tests/integration/`                            | `npm run test:integration` |                    [`test.md §1.1`](./test.md#11-integration-tests-testsintegration)                    |
-| **Component Specs**     | `src/**/*.test.tsx`                             | `npm run test:components`  |        [`test.md §1.6`](./test.md#16-source-component--feature-tests-srccomponents--srcfeatures)        |
-| **Cryptography & Keys** | `tests/unit/encryption.test.ts` ...             | `npm run test:crypto`      |            [`test.md §5`](./test.md#5-cryptography-zero-knowledge--key-management-tests-npm)            |
-| **Auth & Sessions**     | `tests/unit/auth-*`, `tests/integration/auth.*` | `npm run test:auth`        |                 [`test.md §4`](./test.md#4-authentication--session-security-tests-npm)                  |
-| **Cloud Sync & Stores** | `tests/unit/sync-*`                             | `npm run test:sync`        |                             [`test.md §7`](./test.md#sync--state-integrity)                             |
-| **Media & Streaming**   | `src/features/vault/components/MediaVault` ...  | `npm run test:media`       |                        [`test.md §7`](./test.md#media-streaming-camera--uploads)                        |
-| **Settings Vault**      | `src/features/vault/__tests__/SettingsVault`    | `npm run test:settings`    |                             [`test.md §7`](./test.md#settings--ui-controls)                             |
-| **Monitoring & Logs**   | `tests/unit/sentry-*`, `logrocket-*`            | `npm run test:monitoring`  |                       [`test.md §7`](./test.md#monitoring-logs--backend-services)                       |
-| **Inspector & Debug**   | Single file or suite                            | `npm run test:debug:brk`   |                    [`test.md §8`](./test.md#8-test-runner-modes--debugging-options)                     |
+| Test Domain              | Target Path                                            | Dedicated Command          |                                   Full Reference                                   |
+| :----------------------- | :----------------------------------------------------- | :------------------------- | :--------------------------------------------------------------------------------: |
+| **Unit Tests**           | `tests/unit/` (57 files)                               | `npm run test:unit`        |     [`test.md §1.2 - §1.5`](./test.md#12-unit--cryptography-keys--zk-security)     |
+| **Integration Tests**    | `tests/integration/` (4 files)                         | `npm run test:integration` |         [`test.md §1.1`](./test.md#11-integration-tests-testsintegration)          |
+| **Component Specs**      | `src/**/*.test.tsx` (36 files)                         | `npm run test:components`  |          [`test.md §1.6`](./test.md#16-source--components--features-src)           |
+| **Cryptography & Keys**  | `tests/unit/encryption.test.ts` ...                    | `npm run test:crypto`      |    [`test.md §5`](./test.md#5-cryptography-zero-knowledge--key-management-npm)     |
+| **Auth & Sessions**      | `tests/unit/auth-*`, `tests/integration/auth.*`        | `npm run test:auth`        |          [`test.md §4`](./test.md#4-authentication--session-security-npm)          |
+| **Hardened 2FA & Bot**   | `tests/unit/recaptchaMiddleware.test.ts` ...           | `npx vitest run ...`       |        [`test.md §2`](./test.md#hardened-2fa-recaptcha--bot-defense-suite)         |
+| **Cloud Sync & Stores**  | `tests/unit/sync-*`                                    | `npm run test:sync`        |                       [`test.md §7`](./test.md#sync--state)                        |
+| **Media & Streaming**    | `src/features/vault/components/MediaVault` ...         | `npm run test:media`       |                  [`test.md §7`](./test.md#media-streaming-camera)                  |
+| **Mini-Player (PiP)**    | `src/components/ui/GlobalVideoMiniPlayer.test.tsx` ... | `npx vitest run ...`       | [`test.md §2`](./test.md#floating-video--picture-in-picture-pip-mini-player-suite) |
+| **Mobile PDF & Shield**  | `tests/unit/mobile-pdf-document-handling.test.tsx`     | `npx vitest run ...`       |     [`test.md §2`](./test.md#mobile-pdf-viewer--anti-screenshot-shield-suite)      |
+| **Settings Vault**       | `src/features/vault/__tests__/SettingsVault`           | `npm run test:settings`    |                  [`test.md §7`](./test.md#settings--ui-controls)                   |
+| **Monitoring & Logs**    | `tests/unit/sentry-*`, `logrocket-*`                   | `npm run test:monitoring`  |                     [`test.md §7`](./test.md#monitoring--logs)                     |
+| **Drag & Drop Polyfill** | `tests/unit/vault-drag-drop.test.ts`                   | `npm run test:vault:core`  |            [`test.md §13`](./test.md#13-drag--drop--deep-test-commands)            |
+| **Inspector & Debug**    | Single file or suite                                   | `npm run test:debug:brk`   |          [`test.md §8`](./test.md#8-test-runner-modes--debugging-options)          |
+| **Stress Testing**       | Full suite or single file in loops                     | `npm run test:repeat`      |   [`test.md §31`](./test.md#31-stress-testing-repeat--race-condition-detection)    |
+| **Mock Diagnostics**     | `tests/unit/test-setup-mocks.test.ts`                  | `npx vitest run ...`       | [`test.md §32`](./test.md#32-mock-registry-verification--test-harness-diagnostics) |
+| **Local CI Simulation**  | Full pipeline replay                                   | `npm run verify:ci`        | [`test.md §33`](./test.md#33-local-ci-simulation--pre-commit--pre-push-workflows)  |
+| **Supertest Backend**    | `tests/unit/auth-api.test.ts` ...                      | `npx vitest run ...`       |     [`test.md §34`](./test.md#34-network-rest-api--supertest-backend-commands)     |
 
 ### Code Quality & Maintenance
 
@@ -680,20 +709,25 @@ npm run verify:ci
 
 ## 📑 Comprehensive Testing Guide (`test.md`)
 
-For exhaustive details on testing Vault, refer directly to **[`test.md`](./test.md)**. It serves as the repository's central test handbook and includes:
+For exhaustive details on testing Vault, refer directly to **[`test.md`](./test.md)**. It serves as the repository's central test handbook across 34 dedicated sections:
 
-- 🎯 **[1. Run a Single Test File (Isolated Execution)](./test.md#1-run-a-single-test-file-isolated-execution)**: Direct `npx vitest run <file>` commands for all 86 unit and integration test files.
-- ⚡ **[2. Domain-Specific Batch Test Suites](./test.md#2-domain-specific-batch-test-suites-direct-vitest)**: Targeted batch test suites for Cryptography, Auth, Sync, Settings, and Media.
+- 🎯 **[1. Run a Single Test File (Isolated Execution)](./test.md#1-run-a-single-test-file--isolated-execution)**: Direct `npx vitest run <file>` commands for all 97 unit and integration test files.
+- ⚡ **[2. Domain-Specific Batch Test Suites](./test.md#2-domain-specific-batch-suites--direct-vitest)**: Targeted batch test suites for Cryptography, Auth, Sync, Settings, Mini-Player, Mobile PDF, and Media.
 - 📦 **[3. Main & All-in-One Test Suites (npm)](./test.md#3-main--all-in-one-test-suites-npm)**: High-level test runners (`npm test`, `npm run test:run`, `npm run test:all`, `npm run test:ci`, `npm run test:server`, `npm run test:client`).
-- 🔐 **[4. Authentication & Session Security Tests](./test.md#4-authentication--session-security-tests-npm)**: Focused commands for login, registration, token rotation, and device revocation.
-- 🛡️ **[5. Cryptography, Zero-Knowledge & Key Management Tests](./test.md#5-cryptography-zero-knowledge--key-management-tests-npm)**: Client-side AES-256-GCM, PQC Kyber, Argon2 KDF, and master key rotation checks.
-- 🌐 **[6. Comprehensive Security Integration Tests](./test.md#6-comprehensive-security-integration-tests-npm)**: Multipart encryption, streaming privacy, and UI sandbox boundaries.
+- 🔐 **[4. Authentication & Session Security Tests](./test.md#4-authentication--session-security-npm)**: Focused commands for login, registration, token rotation, and device revocation.
+- 🛡️ **[5. Cryptography, Zero-Knowledge & Key Management Tests](./test.md#5-cryptography-zero-knowledge--key-management-npm)**: Client-side AES-256-GCM, PQC Kyber, Argon2 KDF, and master key rotation checks.
+- 🌐 **[6. Comprehensive Security Integration Tests](./test.md#6-comprehensive-security-integration-npm)**: Multipart encryption, streaming privacy, and UI sandbox boundaries.
 - 🧩 **[7. Feature & Module Tests](./test.md#7-feature--module-tests-npm)**: Scoped suites for Vault items, Sync engine, Media/Camera, Settings cards, and Sentry/LogRocket.
-- 🐞 **[8. Test Runner Modes & Debugging Options](./test.md#8-test-runner-modes--debugging-options)**: Interactive UI, fast fail, memory tracking, verbose mode, and Chrome DevTools / VS Code debugging (`--inspect-brk`).
-- 🔄 **[9. Test Watch Modes](./test.md#9-test-watch-modes-developer-experience)**: Instant re-run on save during active development.
-- 📊 **[10. Code Coverage & Reports](./test.md#10-code-coverage--reports)**: Terminal summaries, deep profiling, and browser-based HTML reports.
-- ⚙️ **[11. Advanced Vitest Filtering & CLI Flags](./test.md#11-advanced-vitest-filtering--cli-flags)**: Filter by test name (`-t`), re-run failed tests (`--failed`), bail limits, and thread pools.
-- 🚀 **[12. Standalone Test Runner & Verification Pipelines](./test.md#12-standalone-test-runner--system-verification-pipelines)**: Standalone crypto assertion runner and full CI pipelines (`verify:quick`, `verify:ci`, `verify:full`).
+- 🐞 **[8. Test Runner Modes & Debugging Options](./test.md#8-test-runner-modes--debugging-options)**: Interactive UI, fast fail, memory tracking, verbose mode, V8 CPU profiling, and Chrome DevTools / VS Code debugging (`--inspect-brk`).
+- 🔄 **[9. Test Watch Modes](./test.md#9-test-watch-modes)**: Instant re-run on save during active development across all 97 specs.
+- 📊 **[10. Code Coverage & Reports](./test.md#10-code-coverage--reports)**: Terminal summaries, Cobertura XML, JSON summary, and browser-based HTML reports.
+- ⚙️ **[11. Advanced Vitest Filtering & CLI Flags](./test.md#11-advanced-vitest-filtering--cli-flags)**: Filter by test name (`-t`), inverted patterns, path regex (`--testPathPattern`), GitHub Actions annotations, and thread pools.
+- 🚀 **[12. Standalone Test Runner & Verification Pipelines](./test.md#12-standalone-runner--verification-pipelines)**: Standalone crypto assertion runner and full CI pipelines (`verify:quick`, `verify:ci`, `verify:full`).
+- 👆 **[13. Drag & Drop — Deep Test Commands](./test.md#13-drag--drop--deep-test-commands)**: Touch polyfill, DataTransfer, payload encoding, and drop target resolution tests.
+- 🔁 **[31. Stress Testing & Race-Condition Detection](./test.md#31-stress-testing-repeat--race-condition-detection)**: Loop testing in PowerShell & Bash, `npm run test:repeat`, `--retry=N`, and randomized execution orders.
+- 🧪 **[32. Mock Registry Verification & Test Harness Diagnostics](./test.md#32-mock-registry-verification--test-harness-diagnostics)**: Validating canvas, observers, storage polyfills, and sandbox leakage.
+- 🚀 **[33. Local CI Simulation & Pre-Commit / Pre-Push Workflows](./test.md#33-local-ci-simulation--pre-commit--pre-push-workflows)**: Replaying GitHub Actions environment and lightweight pre-commit/pre-push bundles.
+- 📡 **[34. Network, REST API & Supertest Backend Commands](./test.md#34-network-rest-api--supertest-backend-commands)**: Express endpoints, reCAPTCHA middleware, signed URLs, and rate limit tests.
 
 ---
 

@@ -48,10 +48,10 @@ export const Footer: React.FC<FooterProps> = memo(() => {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <footer className="relative z-10 mt-24 sm:mt-28 lg:mt-32 pb-10 overflow-hidden">
+    <footer className="relative z-10 mt-24 sm:mt-28 lg:mt-32 pb-10 overflow-hidden w-full max-w-full isolate">
       {/* ───── Background Text (VAULT) ───── */}
       <div
-        className="absolute inset-0 flex items-end justify-center pointer-events-none select-none -z-10 overflow-hidden"
+        className="absolute inset-0 flex items-end justify-center pointer-events-none select-none -z-10 overflow-hidden w-full max-w-full isolate"
         aria-hidden="true"
       >
         <motion.div
@@ -63,7 +63,7 @@ export const Footer: React.FC<FooterProps> = memo(() => {
             flex items-end justify-center
             -space-x-[0.04em]
             translate-y-[35%] sm:translate-y-[15%] lg:translate-y-[12%]
-            w-full h-full
+            w-full max-w-full h-full
             will-change-transform
           "
         >
@@ -88,7 +88,8 @@ export const Footer: React.FC<FooterProps> = memo(() => {
                     }
               }
               className="
-          text-[clamp(8rem,28vw,35rem)]
+          text-[clamp(3.5rem,20vw,35rem)]
+          sm:text-[clamp(8rem,28vw,35rem)]
           font-black
           leading-none
           text-white

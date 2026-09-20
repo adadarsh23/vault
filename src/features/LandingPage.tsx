@@ -127,7 +127,7 @@ export function LandingPage({
   }, []);
 
   return (
-    <div className="min-h-dvh bg-bg text-text overflow-x-hidden selection:bg-text selection:text-bg">
+    <div className="min-h-svh w-full max-w-full bg-bg text-text overflow-x-clip selection:bg-text selection:text-bg isolate">
       {showDecorativeEffects ? (
         <Suspense fallback={null}>
           <Background />
@@ -135,7 +135,7 @@ export function LandingPage({
       ) : (
         <div
           aria-hidden="true"
-          className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.12),transparent_55%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.08),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent)]"
+          className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.12),transparent_55%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.08),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent)]"
         />
       )}
 
@@ -153,12 +153,12 @@ export function LandingPage({
             onClick={onEnterVault}
             data-testid="enter-vault-button"
           >
-            Enter Vault
+            Vault
           </Button>
         </div>
       </nav>
 
-      <main className="relative z-10 flex min-h-[calc(100dvh-4rem)] items-center">
+      <main className="relative z-10 flex min-h-[calc(100svh-4rem)] sm:min-h-[calc(100svh-5rem)] items-center">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
             <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-card-border bg-text/[0.03] px-4 py-2 text-[10px] sm:text-xs font-semibold backdrop-blur tracking-wide uppercase">
@@ -169,8 +169,8 @@ export function LandingPage({
               Military-grade Encryption
             </div>
 
-            <h1 className="text-[clamp(1.8rem,9vw,9rem)] font-black tracking-tighter leading-[0.95] sm:leading-[1.05]">
-              <span className="block whitespace-nowrap">Your digital life,</span>
+            <h1 className="text-[clamp(1.8rem,9vw,9rem)] font-black tracking-tighter leading-[0.95] sm:leading-[1.05] break-words max-w-full">
+              <span className="block sm:whitespace-nowrap">Your digital life,</span>
               <span
                 className="block bg-gradient-to-r from-text/60 via-text to-text/40 bg-clip-text text-transparent italic bg-[length:200%_auto] transform-gpu py-1 sm:py-2"
                 style={{ backgroundSize: '200% auto' }}

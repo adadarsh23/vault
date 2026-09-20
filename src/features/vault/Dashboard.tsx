@@ -101,6 +101,7 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
     syncStatus,
     lastSuccessfulSyncAt,
     lastSyncError,
+    syncWithCloud,
   } = useVaultStore(
     useShallow((state) => ({
       items: state.items,
@@ -110,6 +111,7 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
       syncStatus: state.syncStatus,
       lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
       lastSyncError: state.lastSyncError,
+      syncWithCloud: state.syncWithCloud,
     })),
   );
 
@@ -413,6 +415,8 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
           clipboardAutoClearDuration={preferences.clipboardAutoClearDuration}
           syncStatus={syncStatus}
           lastSyncError={lastSyncError}
+          onNavigateSettings={() => onNavigate('settings')}
+          onRetrySync={() => void syncWithCloud()}
         />
       </section>
     </div>

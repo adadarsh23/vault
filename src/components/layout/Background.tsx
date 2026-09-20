@@ -179,7 +179,7 @@ function BackgroundComponent() {
   );
 
   return (
-    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none isolate w-full max-w-full">
       <motion.div
         className="absolute inset-0 opacity-70 blur-[100px]"
         animate={{
@@ -237,7 +237,7 @@ function BackgroundComponent() {
         </ParticlesProvider>
       )}
 
-      {!shouldReduceMotion && (
+      {enableFX && !shouldReduceMotion && (
         <motion.div
           className="absolute h-[800px] w-[800px] rounded-full opacity-30"
           style={{

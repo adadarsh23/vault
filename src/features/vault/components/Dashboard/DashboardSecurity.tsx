@@ -1,8 +1,16 @@
 import React from 'react';
-import { Lock, AlertTriangle, ShieldCheck, Activity, Database } from 'lucide-react';
+import {
+  Lock,
+  AlertTriangle,
+  ShieldCheck,
+  ShieldAlert,
+  Activity,
+  RefreshCw,
+  Copy,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/Card';
 import { RecentActivityPanel } from '../../../../components/vault/RecentActivityPanel';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +41,8 @@ interface DashboardSecurityProps {
   clipboardAutoClearDuration: number;
   syncStatus: string;
   lastSyncError?: string | null;
+  onNavigateSettings?: () => void;
+  onRetrySync?: () => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -84,6 +94,38 @@ const getToneClasses = (tone: Tone) => {
   }
 };
 
+const getAdvisorySeverityStyle = (severity: 'critical' | 'warning' | 'info') => {
+  switch (severity) {
+    case 'critical':
+      return {
+        card: 'border-red-500/25 bg-red-500/10 text-red-700 dark:text-red-200',
+        icon: 'text-red-500 dark:text-red-400',
+        title: 'text-red-950 dark:text-red-100',
+        desc: 'text-red-800/80 dark:text-red-200/80',
+        button:
+          'border border-red-500/30 bg-red-500/15 text-red-700 hover:bg-red-500/25 dark:text-red-200 dark:bg-red-500/20 dark:hover:bg-red-500/30',
+      };
+    case 'warning':
+      return {
+        card: 'border-amber-500/25 bg-amber-500/10 text-amber-800 dark:text-amber-200',
+        icon: 'text-amber-500 dark:text-amber-400',
+        title: 'text-amber-950 dark:text-amber-100',
+        desc: 'text-amber-800/80 dark:text-amber-200/80',
+        button:
+          'border border-amber-500/30 bg-amber-500/15 text-amber-800 hover:bg-amber-500/25 dark:text-amber-200 dark:bg-amber-500/20 dark:hover:bg-amber-500/30',
+      };
+    case 'info':
+      return {
+        card: 'border-blue-500/25 bg-blue-500/10 text-blue-800 dark:text-blue-200',
+        icon: 'text-blue-500 dark:text-blue-400',
+        title: 'text-blue-950 dark:text-blue-100',
+        desc: 'text-blue-800/80 dark:text-blue-200/80',
+        button:
+          'border border-blue-500/30 bg-blue-500/15 text-blue-700 hover:bg-blue-500/25 dark:text-blue-200 dark:bg-blue-500/20 dark:hover:bg-blue-500/30',
+      };
+  }
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
@@ -98,7 +140,95 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
   clipboardAutoClearDuration,
   syncStatus,
   lastSyncError,
+  onNavigateSettings,
+  onRetrySync,
 }) => {
+  const advisories = React.useMemo(() => {
+    const list: Array<{
+      id: string;
+      severity: 'critical' | 'warning' | 'info';
+      icon: React.ElementType;
+      title: string;
+      message: string;
+      actionLabel?: string;
+      onAction?: () => void;
+    }> = [];
+
+    if (syncStatus === 'error') {
+      list.push({
+        id: 'sync-error',
+        severity: 'critical',
+        icon: RefreshCw,
+        title: 'Cloud Sync Failed',
+        message:
+          lastSyncError ||
+          'Unable to synchronize with remote storage. Redundant cloud backup is currently unavailable.',
+        actionLabel: onRetrySync ? 'Retry' : undefined,
+        onAction: onRetrySync,
+      });
+    }
+
+    if (!isAutoLockEnabled) {
+      list.push({
+        id: 'auto-lock-off',
+        severity: 'critical',
+        icon: ShieldAlert,
+        title: 'Auto-Lock Disabled',
+        message:
+          'Vault remains unlocked when idle. Anyone with physical access to this device can view decrypted credentials.',
+        actionLabel: onNavigateSettings ? 'Configure' : undefined,
+        onAction: onNavigateSettings,
+      });
+    }
+
+    if (!isClipboardAutoClearEnabled) {
+      list.push({
+        id: 'clipboard-clear-off',
+        severity: 'warning',
+        icon: Copy,
+        title: 'Clipboard Auto-Clear Disabled',
+        message:
+          'Passwords copied to the clipboard remain indefinitely until manually cleared or overwritten.',
+        actionLabel: onNavigateSettings ? 'Enable' : undefined,
+        onAction: onNavigateSettings,
+      });
+    }
+
+    if (allowRestrictedTypes) {
+      list.push({
+        id: 'restricted-types',
+        severity: 'warning',
+        icon: AlertTriangle,
+        title: 'Restricted File Types Permitted',
+        message:
+          'Executable and script files are allowed in document storage. Exercise caution before opening downloaded files.',
+        actionLabel: onNavigateSettings ? 'Review' : undefined,
+        onAction: onNavigateSettings,
+      });
+    }
+
+    if (passwordCount < 3 && itemCount > 0) {
+      list.push({
+        id: 'low-passwords',
+        severity: 'info',
+        icon: Lock,
+        title: 'Vault Setup Incomplete',
+        message: `Only ${passwordCount} password${passwordCount === 1 ? '' : 's'} stored. Migrate your primary credentials to keep them protected.`,
+      });
+    }
+
+    return list;
+  }, [
+    syncStatus,
+    lastSyncError,
+    onRetrySync,
+    isAutoLockEnabled,
+    onNavigateSettings,
+    isClipboardAutoClearEnabled,
+    allowRestrictedTypes,
+    passwordCount,
+    itemCount,
+  ]);
   return (
     <div className="flex min-w-0 flex-col gap-4 sm:gap-8">
       {/* ── Security Status ── */}
@@ -200,101 +330,82 @@ export const DashboardSecurity: React.FC<DashboardSecurityProps> = ({
 
           {/* Recommendations */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 px-1">
-              <div className="h-0.5 w-4 bg-text/20 rounded-full" />
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-text/30 transition-colors">
-                AI Advisories
-              </p>
-            </div>
-            <div className="space-y-2">
-              {passwordCount < 3 && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex min-w-0 items-start gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3.5 text-[10px] font-medium text-amber-200"
-                >
-                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
-                  <span className="min-w-0 break-words">
-                    Low password density detected. Recommend migrating additional credentials to
-                    entropy-controlled environment.
-                  </span>
-                </motion.div>
-              )}
-              {!isAutoLockEnabled && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex min-w-0 items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 p-3.5 text-[10px] font-medium text-red-200"
-                >
-                  <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" />
-                  <span className="min-w-0 break-words">
-                    Auto-lock protocol deactivated. Critical risk: unauthorized physical access may
-                    compromise vault integrity.
-                  </span>
-                </motion.div>
-              )}
-              {syncStatus === 'error' && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex min-w-0 items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 p-3.5 text-[10px] font-medium text-red-200"
-                >
-                  <Database className="h-4 w-4 shrink-0 text-red-400" />
-                  <span className="min-w-0 break-words">
-                    {lastSyncError ||
-                      'Cloud synchronization failure. Remote redundancy state unavailable.'}
-                  </span>
-                </motion.div>
-              )}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="flex min-w-0 items-start gap-3 rounded-2xl border border-blue-500/20 bg-blue-500/10 p-3.5 text-[10px] font-medium text-blue-200"
-              >
-                <ShieldCheck className="h-4 w-4 shrink-0 text-blue-400" />
-                <span className="min-w-0 break-words">
-                  All {itemCount} assets are currently secured in ephemeral memory with
-                  hardware-backed encryption.
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <div className="h-0.5 w-4 rounded-full bg-text/20" />
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text/35 transition-colors">
+                  Security Recommendations
+                </p>
+              </div>
+              {advisories.length === 0 && (
+                <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-500">
+                  <ShieldCheck className="h-3.5 w-3.5" />
                 </span>
-              </motion.div>
-              {allowRestrictedTypes && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex min-w-0 items-start gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3.5 text-[10px] font-medium text-amber-200"
-                >
-                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
-                  <span className="min-w-0 break-words">
-                    Restricted asset types authorized. Enhanced vigilance recommended during payload
-                    ingestion.
-                  </span>
-                </motion.div>
               )}
-              {isClipboardAutoClearEnabled ? (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="flex min-w-0 items-start gap-3 rounded-2xl border border-green-500/20 bg-green-500/10 p-3.5 text-[10px] font-medium text-green-200"
-                >
-                  <Lock className="h-4 w-4 shrink-0 text-green-400" />
-                  <span className="min-w-0 break-words">
-                    Clipboard sanitation active. Auto-purge cycle: {clipboardAutoClearDuration}s.
-                  </span>
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex min-w-0 items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 p-3.5 text-[10px] font-medium text-red-200"
-                >
-                  <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" />
-                  <span className="min-w-0 break-words">
-                    Clipboard buffer exposed. Manual sanitation or protocol activation required.
-                  </span>
-                </motion.div>
-              )}
+            </div>
+
+            <div className="space-y-2">
+              <AnimatePresence mode="popLayout">
+                {advisories.length === 0 ? (
+                  <motion.div
+                    key="all-passed"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="flex min-w-0 items-start gap-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-3.5 text-xs text-emerald-800 dark:text-emerald-200"
+                  >
+                    <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold leading-tight text-emerald-950 dark:text-emerald-100">
+                        All Protections Active
+                      </p>
+                      <p className="text-[11px] text-emerald-800/80 dark:text-emerald-200/80 leading-snug mt-0.5">
+                        Auto-lock and clipboard auto-clear ({clipboardAutoClearDuration}s) are
+                        active, and all {itemCount} vault items are securely encrypted.
+                      </p>
+                    </div>
+                  </motion.div>
+                ) : (
+                  advisories.map((item, index) => {
+                    const styles = getAdvisorySeverityStyle(item.severity);
+                    const Icon = item.icon;
+
+                    return (
+                      <motion.div
+                        key={item.id}
+                        layout
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ delay: index * 0.05 }}
+                        className={`flex min-w-0 items-start justify-between gap-3 rounded-2xl border p-3.5 ${styles.card}`}
+                      >
+                        <div className="flex min-w-0 items-start gap-3">
+                          <Icon className={`h-4 w-4 shrink-0 mt-0.5 ${styles.icon}`} />
+                          <div className="min-w-0 space-y-0.5">
+                            <p className={`text-xs font-bold leading-tight ${styles.title}`}>
+                              {item.title}
+                            </p>
+                            <p className={`text-[11px] leading-snug break-words ${styles.desc}`}>
+                              {item.message}
+                            </p>
+                          </div>
+                        </div>
+
+                        {item.actionLabel && item.onAction && (
+                          <button
+                            type="button"
+                            onClick={item.onAction}
+                            className={`shrink-0 rounded-xl px-2.5 py-1 text-[11px] font-semibold transition-all ${styles.button}`}
+                          >
+                            {item.actionLabel}
+                          </button>
+                        )}
+                      </motion.div>
+                    );
+                  })
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </CardContent>

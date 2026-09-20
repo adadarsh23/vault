@@ -21,7 +21,7 @@ interface RecaptchaFieldProps {
 const RECAPTCHA_MISSING_SITE_KEY_MESSAGE =
   'Security challenge is unavailable. Configure VITE_RECAPTCHA_SITE_KEY with a reCAPTCHA v2 Checkbox site key.';
 const RECAPTCHA_LOADING_MESSAGE = 'Loading security challenge...';
-const RECAPTCHA_PENDING_MESSAGE = 'Complete CAPTCHA before submitting this form.';
+const RECAPTCHA_PENDING_MESSAGE = 'Complete CAPTCHA before submit form.';
 const RECAPTCHA_LOAD_ERROR_MESSAGE =
   'Security challenge failed to load. Use a reCAPTCHA v2 Checkbox key and allow Google reCAPTCHA domains in CSP.';
 const RECAPTCHA_WIDTH = 304;
