@@ -54,6 +54,7 @@
   <a href="#-api-reference">API</a> •
   <a href="#-security--hardening-notes">Security</a> •
   <a href="#-development--verification-commands">Commands</a> •
+  <a href="./doc/README.md"><strong>📚 Docs (doc/)</strong></a> •
   <a href="./test.md"><strong>🧪 Test Guide (test.md)</strong></a>
 </p>
 
@@ -253,6 +254,19 @@ The vault implements a comprehensive defense-in-depth security model across 8 di
 
 ```text
 vault/
+├── doc/                    # 📚 Comprehensive technical architecture & protocol docs
+│   ├── README.md           # Documentation index & role-based reading guide
+│   ├── design.md           # System architecture & design blueprint
+│   ├── security-and-crypto.md # 8-layer cryptographic specifications
+│   ├── database-schemas.md # Data models, Mongoose schemas & indexing strategy
+│   ├── threat-model.md     # STRIDE threat model & cryptographic risk analysis
+│   ├── api-reference.md    # REST API & Socket.IO protocol reference
+│   ├── sync-and-storage.md # Real-time sync & multi-cluster failover
+│   ├── client-features.md  # TipTap notes, video PiP, PDF privacy shield
+│   ├── testing-and-verification.md # Test architecture & CI/CD verification
+│   ├── performance.md      # Asset optimization, Brotli pre-compression & Core Web Vitals
+│   ├── setup-and-deployment.md # Setup, .env catalog, Render deployment
+│   └── user-guide.md       # User-friendly handbook, everyday guide & shortcuts cheat sheet
 ├── public/                 # Static assets, icons, manifest, favicon
 ├── server/                 # Express 5 backend application
 │   ├── boot/               # Server bootstrap & lifecycle handlers
