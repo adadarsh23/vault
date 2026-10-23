@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Video, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { createSHA256 } from 'hash-wasm';
 import { useVaultStore } from '../../store/vaultStore';
 import { encryptFileInWorker } from '../../lib/cryptoPrimitives';
@@ -856,7 +857,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
           toast.success(`${file.name} uploaded & bound to Merkle Tree`, { id: toastId });
           successCount++;
         } catch (error) {
-          console.error('Upload failed:', error);
+          logger.error('Upload failed', { error, fileName: file.name });
           toast.error(`Failed to upload ${file.name}. Please try again.`, { id: toastId });
           logActivity({
             actionType: 'file_upload',
@@ -946,9 +947,19 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
       link.click();
       document.body.removeChild(link);
 
+      if (fileUrl.startsWith('blob:')) {
+        window.setTimeout(() => {
+          try {
+            URL.revokeObjectURL(fileUrl!);
+          } catch {
+            // ignore
+          }
+        }, 60000);
+      }
+
       toast.success(`Downloaded ${item.title}`, { id: toastId });
     } catch (error) {
-      console.error('Download error:', error);
+      logger.error('Download error', { error, itemTitle: item.title });
       toast.error('Download failed. Try again.', { id: toastId });
     }
   };

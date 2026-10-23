@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 
 export interface AntiScreenshotShieldOptions {
@@ -36,7 +36,16 @@ export const useAntiScreenshotAndShield = ({
   const [shieldReason, setShieldReason] = useState<AntiScreenshotShieldState['shieldReason']>(null);
 
   const shieldChangeCallbackRef = useRef(onShieldChange);
-  shieldChangeCallbackRef.current = onShieldChange;
+  useEffect(() => {
+    shieldChangeCallbackRef.current = onShieldChange;
+  }, [onShieldChange]);
+
+  const timeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  const clearPendingTimeouts = useCallback(() => {
+    timeoutsRef.current.forEach((id) => clearTimeout(id));
+    timeoutsRef.current.clear();
+  }, []);
 
   const setShieldState = useCallback(
     (active: boolean, reason: AntiScreenshotShieldState['shieldReason'] = null) => {
@@ -48,20 +57,31 @@ export const useAntiScreenshotAndShield = ({
   );
 
   const deactivateShield = useCallback(() => {
+    clearPendingTimeouts();
     setShieldState(false, null);
-  }, [setShieldState]);
+  }, [clearPendingTimeouts, setShieldState]);
 
   const triggerManualShield = useCallback(
     (durationMs = 2000) => {
+      clearPendingTimeouts();
       setShieldState(true, 'screenshot-attempt');
       if (durationMs > 0) {
-        setTimeout(() => {
+        const timerId = setTimeout(() => {
+          timeoutsRef.current.delete(timerId);
           setShieldState(false, null);
         }, durationMs);
+        timeoutsRef.current.add(timerId);
       }
     },
-    [setShieldState],
+    [clearPendingTimeouts, setShieldState],
   );
+
+  // Clear all pending timeouts on unmount
+  useEffect(() => {
+    return () => {
+      clearPendingTimeouts();
+    };
+  }, [clearPendingTimeouts]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -139,9 +159,11 @@ export const useAntiScreenshotAndShield = ({
             duration: 3500,
           },
         );
-        setTimeout(() => {
+        const timerId = setTimeout(() => {
+          timeoutsRef.current.delete(timerId);
           setShieldState(false, null);
         }, 1200);
+        timeoutsRef.current.add(timerId);
         return;
       }
 
@@ -151,9 +173,11 @@ export const useAntiScreenshotAndShield = ({
         toast.info('🛡️ Security Shield activated against screen capture.', {
           duration: 2500,
         });
-        setTimeout(() => {
+        const timerId = setTimeout(() => {
+          timeoutsRef.current.delete(timerId);
           setShieldState(false, null);
         }, 1500);
+        timeoutsRef.current.add(timerId);
       }
     };
 
@@ -180,11 +204,14 @@ export const useAntiScreenshotAndShield = ({
     setShieldState,
   ]);
 
-  return {
-    isShieldActive,
-    isPrintBlocked,
-    shieldReason,
-    deactivateShield,
-    triggerManualShield,
-  };
+  return useMemo(
+    () => ({
+      isShieldActive,
+      isPrintBlocked,
+      shieldReason,
+      deactivateShield,
+      triggerManualShield,
+    }),
+    [isShieldActive, isPrintBlocked, shieldReason, deactivateShield, triggerManualShield],
+  );
 };

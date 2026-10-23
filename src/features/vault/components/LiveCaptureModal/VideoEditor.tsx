@@ -18,6 +18,7 @@ import { CAMERA_FILTERS, getFilterCss } from './filters';
 import { CameraFilter } from './types';
 import { triggerHaptic } from './haptics';
 import { toast } from 'sonner';
+import { logger } from '../../../../lib/logger';
 
 interface VideoEditorProps {
   initialBlob: Blob;
@@ -154,15 +155,25 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
       renderCanvas.width = targetWidth;
       renderCanvas.height = targetHeight;
       const ctx = renderCanvas.getContext('2d', { alpha: false });
-      if (!ctx) {
-        throw new Error('Canvas 2D context not available');
+      if (!ctx || typeof window === 'undefined' || typeof window.MediaRecorder === 'undefined') {
+        toast.info('Video encoding not supported on this device; preserving original video.', {
+          id: toastId,
+        });
+        onSave(initialBlob, initialUrl);
+        return;
       }
 
       let canvasStream: MediaStream;
       if (typeof (renderCanvas as any).captureStream === 'function') {
         canvasStream = (renderCanvas as any).captureStream(30);
+      } else if (typeof (renderCanvas as any).mozCaptureStream === 'function') {
+        canvasStream = (renderCanvas as any).mozCaptureStream(30);
       } else {
-        throw new Error('Canvas captureStream not supported in this browser');
+        toast.info('Browser does not support canvas video capture; preserving original video.', {
+          id: toastId,
+        });
+        onSave(initialBlob, initialUrl);
+        return;
       }
 
       // Add audio track from video if available
@@ -283,7 +294,7 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
       const newUrl = URL.createObjectURL(resultBlob);
       onSave(resultBlob, newUrl);
     } catch (err) {
-      console.error('Failed to export edited video:', err);
+      logger.error('Failed to export edited video', { error: err });
       toast.error('Failed to render video edits, preserving original', { id: toastId });
       onSave(initialBlob, initialUrl);
     } finally {

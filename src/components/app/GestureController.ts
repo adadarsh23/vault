@@ -38,25 +38,47 @@ const createIdleGestureState = (): MobileGestureState => ({
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+export interface UseGestureControllerOptions {
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  locationPath: string;
+  sidebarPosition?: 'left' | 'right';
+}
+
 export function useGestureController({
   isSidebarOpen,
   setIsSidebarOpen,
   locationPath,
-}: {
-  isSidebarOpen: boolean;
-  setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  locationPath: string;
-}) {
+  sidebarPosition = 'left',
+}: UseGestureControllerOptions) {
   const [sidebarDragOffset, setSidebarDragOffset] = useState<number | null>(null);
   const gestureStateRef = useRef<MobileGestureState>(createIdleGestureState());
+  const rafIdRef = useRef<number | null>(null);
+
+  const isRightSidebar = sidebarPosition === 'right';
+
+  /* ───────── Batch Drag Offset with requestAnimationFrame ───────── */
+  const scheduleOffsetUpdate = useCallback((offset: number | null) => {
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
+    rafIdRef.current = requestAnimationFrame(() => {
+      setSidebarDragOffset(offset);
+      rafIdRef.current = null;
+    });
+  }, []);
 
   /* ───────── Reset ───────── */
   const resetSidebarGesture = useCallback(() => {
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
     gestureStateRef.current = createIdleGestureState();
     setSidebarDragOffset(null);
   }, []);
 
-  /* ───────── Resize Handling ───────── */
+  /* ───────── Resize & Orientation Change Handling ───────── */
   useEffect(() => {
     if (!isClient) return;
 
@@ -69,9 +91,15 @@ export function useGestureController({
 
     handleResize();
 
-    // passive improves scroll perf
     window.addEventListener('resize', handleResize, { passive: true });
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize, { passive: true });
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+    };
   }, [resetSidebarGesture, setIsSidebarOpen]);
 
   /* ───────── Route Change Reset ───────── */
@@ -97,18 +125,32 @@ export function useGestureController({
       if (!touch) return;
 
       const sidebarWidth = getMobileSidebarWidth();
-
+      const screenWidth = window.innerWidth;
       let mode: MobileGestureState['mode'] = null;
 
-      if (isSidebarOpen) {
-        if (touch.clientX <= sidebarWidth + 24) {
-          mode = 'close';
+      if (isRightSidebar) {
+        if (isSidebarOpen) {
+          if (touch.clientX >= screenWidth - sidebarWidth - 24) {
+            mode = 'close';
+          }
+        } else {
+          if (touch.clientX >= screenWidth - MOBILE_SWIPE_EDGE_PX) {
+            mode = 'open';
+          }
         }
       } else {
-        if (touch.clientX <= MOBILE_SWIPE_EDGE_PX) {
-          mode = 'open';
+        if (isSidebarOpen) {
+          if (touch.clientX <= sidebarWidth + 24) {
+            mode = 'close';
+          }
+        } else {
+          if (touch.clientX <= MOBILE_SWIPE_EDGE_PX) {
+            mode = 'open';
+          }
         }
       }
+
+      if (!mode) return;
 
       gestureStateRef.current = {
         mode,
@@ -116,14 +158,14 @@ export function useGestureController({
         startX: touch.clientX,
         startY: touch.clientY,
         lastX: touch.clientX,
-        lastTime: performance.now(),
+        lastTime: typeof performance !== 'undefined' ? performance.now() : Date.now(),
         velocityX: 0,
         sidebarWidth,
       };
 
-      setSidebarDragOffset(mode === 'close' ? 0 : null);
+      scheduleOffsetUpdate(mode === 'close' ? 0 : null);
     },
-    [isSidebarOpen, resetSidebarGesture],
+    [isRightSidebar, isSidebarOpen, resetSidebarGesture, scheduleOffsetUpdate],
   );
 
   /* ───────── Touch Move ───────── */
@@ -141,14 +183,13 @@ export function useGestureController({
       const absDeltaX = Math.abs(deltaX);
       const absDeltaY = Math.abs(deltaY);
 
-      const now = performance.now();
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
       const elapsed = Math.max(now - gesture.lastTime, 1);
 
       const velocity = (touch.clientX - gesture.lastX) / elapsed;
 
-      // smoother velocity blending
+      // Smoother velocity blending
       gesture.velocityX = gesture.velocityX * 0.7 + velocity * 0.3;
-
       gesture.lastX = touch.clientX;
       gesture.lastTime = now;
 
@@ -178,64 +219,98 @@ export function useGestureController({
 
       /* OPEN */
       if (gesture.mode === 'open') {
-        const edgeCompensation = clamp(
-          MOBILE_SWIPE_EDGE_PX - gesture.startX,
-          0,
-          MOBILE_SWIPE_EDGE_PX,
-        );
-
-        const revealedWidth = clamp(
-          deltaX + edgeCompensation,
-          0,
-          gesture.sidebarWidth + MOBILE_SWIPE_OVERSHOOT_PX,
-        );
-
-        const offset = clamp(gesture.sidebarWidth - revealedWidth, 0, gesture.sidebarWidth);
-
-        setSidebarDragOffset(offset);
+        if (isRightSidebar) {
+          const edgeCompensation = clamp(
+            gesture.startX - (window.innerWidth - MOBILE_SWIPE_EDGE_PX),
+            0,
+            MOBILE_SWIPE_EDGE_PX,
+          );
+          const revealedWidth = clamp(
+            -deltaX + edgeCompensation,
+            0,
+            gesture.sidebarWidth + MOBILE_SWIPE_OVERSHOOT_PX,
+          );
+          const offset = clamp(gesture.sidebarWidth - revealedWidth, 0, gesture.sidebarWidth);
+          scheduleOffsetUpdate(offset);
+        } else {
+          const edgeCompensation = clamp(
+            MOBILE_SWIPE_EDGE_PX - gesture.startX,
+            0,
+            MOBILE_SWIPE_EDGE_PX,
+          );
+          const revealedWidth = clamp(
+            deltaX + edgeCompensation,
+            0,
+            gesture.sidebarWidth + MOBILE_SWIPE_OVERSHOOT_PX,
+          );
+          const offset = clamp(gesture.sidebarWidth - revealedWidth, 0, gesture.sidebarWidth);
+          scheduleOffsetUpdate(offset);
+        }
       }
 
       /* CLOSE */
       if (gesture.mode === 'close') {
-        const offset = clamp(-deltaX, 0, gesture.sidebarWidth + MOBILE_SWIPE_OVERSHOOT_PX);
-
-        setSidebarDragOffset(clamp(offset, 0, gesture.sidebarWidth));
+        if (isRightSidebar) {
+          const offset = clamp(deltaX, 0, gesture.sidebarWidth + MOBILE_SWIPE_OVERSHOOT_PX);
+          scheduleOffsetUpdate(clamp(offset, 0, gesture.sidebarWidth));
+        } else {
+          const offset = clamp(-deltaX, 0, gesture.sidebarWidth + MOBILE_SWIPE_OVERSHOOT_PX);
+          scheduleOffsetUpdate(clamp(offset, 0, gesture.sidebarWidth));
+        }
       }
     },
-    [resetSidebarGesture],
+    [isRightSidebar, resetSidebarGesture, scheduleOffsetUpdate],
   );
 
-  /* ───────── Touch End ───────── */
+  /* ───────── Touch End & Cancel ───────── */
   const handleMobileTouchEnd = useCallback(() => {
-    const gesture = gestureStateRef.current;
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
 
+    const gesture = gestureStateRef.current;
     if (!gesture.mode) {
       resetSidebarGesture();
       return;
     }
 
     const currentOffset = sidebarDragOffset ?? (gesture.mode === 'open' ? gesture.sidebarWidth : 0);
-
     const openProgress = 1 - currentOffset / gesture.sidebarWidth;
 
     let shouldOpen = false;
 
     if (gesture.mode === 'open') {
-      shouldOpen =
-        gesture.velocityX >= MOBILE_SWIPE_VELOCITY_THRESHOLD ||
-        openProgress >= MOBILE_SWIPE_OPEN_RATIO ||
-        gesture.lastX - gesture.startX >= MOBILE_SWIPE_TRIGGER_PX;
+      if (isRightSidebar) {
+        shouldOpen =
+          gesture.velocityX <= -MOBILE_SWIPE_VELOCITY_THRESHOLD ||
+          openProgress >= MOBILE_SWIPE_OPEN_RATIO ||
+          gesture.startX - gesture.lastX >= MOBILE_SWIPE_TRIGGER_PX;
+      } else {
+        shouldOpen =
+          gesture.velocityX >= MOBILE_SWIPE_VELOCITY_THRESHOLD ||
+          openProgress >= MOBILE_SWIPE_OPEN_RATIO ||
+          gesture.lastX - gesture.startX >= MOBILE_SWIPE_TRIGGER_PX;
+      }
     } else {
-      shouldOpen = !(
-        gesture.velocityX <= -MOBILE_SWIPE_VELOCITY_THRESHOLD ||
-        currentOffset / gesture.sidebarWidth >= MOBILE_SWIPE_CLOSE_RATIO ||
-        gesture.startX - gesture.lastX >= MOBILE_SWIPE_TRIGGER_PX
-      );
+      if (isRightSidebar) {
+        shouldOpen = !(
+          gesture.velocityX >= MOBILE_SWIPE_VELOCITY_THRESHOLD ||
+          currentOffset / gesture.sidebarWidth >= MOBILE_SWIPE_CLOSE_RATIO ||
+          gesture.lastX - gesture.startX >= MOBILE_SWIPE_TRIGGER_PX
+        );
+      } else {
+        shouldOpen = !(
+          gesture.velocityX <= -MOBILE_SWIPE_VELOCITY_THRESHOLD ||
+          currentOffset / gesture.sidebarWidth >= MOBILE_SWIPE_CLOSE_RATIO ||
+          gesture.startX - gesture.lastX >= MOBILE_SWIPE_TRIGGER_PX
+        );
+      }
     }
 
     setIsSidebarOpen(shouldOpen);
     resetSidebarGesture();
-  }, [resetSidebarGesture, setIsSidebarOpen, sidebarDragOffset]);
+  }, [isRightSidebar, resetSidebarGesture, setIsSidebarOpen, sidebarDragOffset]);
 
   /* ───────── Derived State ───────── */
   const computedSidebarWidth = getMobileSidebarWidth();
@@ -247,7 +322,11 @@ export function useGestureController({
       ? 0.6
       : 0;
 
-  const transform = isDragging ? `translateX(-${sidebarDragOffset}px)` : undefined;
+  const transform = isDragging
+    ? isRightSidebar
+      ? `translateX(${sidebarDragOffset}px)`
+      : `translateX(-${sidebarDragOffset}px)`
+    : undefined;
 
   return {
     handleMobileTouchStart,

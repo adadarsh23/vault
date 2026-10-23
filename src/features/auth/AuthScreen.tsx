@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { SecurityLayers } from './SecurityLayers';
@@ -44,6 +44,10 @@ export const AuthScreen = memo(function AuthScreen({
     authMode,
   });
 
+  const handleRetry = useCallback(() => {
+    void handleUnlock('');
+  }, [handleUnlock]);
+
   const loginForm = (
     <VaultLoginForm
       username={username}
@@ -76,6 +80,9 @@ export const AuthScreen = memo(function AuthScreen({
             currentLayer={currentLayer}
             status="authenticating"
             mode="security"
+            error={authError?.message}
+            onRetry={handleRetry}
+            onGoBack={onGoBack}
           />
         );
 
@@ -88,6 +95,9 @@ export const AuthScreen = memo(function AuthScreen({
             mode="sync"
             title="Syncing Secure Vault"
             description="Cloud sync is in progress. Please wait while we establish a secure connection."
+            error={authError?.message}
+            onRetry={handleRetry}
+            onGoBack={onGoBack}
           />
         );
 

@@ -9,10 +9,16 @@ export interface DeviceInfo {
   userAgent: string;
 }
 
+let cachedDeviceInfo: DeviceInfo | null = null;
+
 /**
  * Detect user operating system and input capabilities
  */
 export function detectDevice(): DeviceInfo {
+  if (cachedDeviceInfo) {
+    return cachedDeviceInfo;
+  }
+
   if (typeof window === 'undefined' || typeof navigator === 'undefined') {
     return {
       os: 'unknown',
@@ -57,13 +63,15 @@ export function detectDevice(): DeviceInfo {
     platformName = 'Linux Desktop';
   }
 
-  return {
+  cachedDeviceInfo = {
     os,
     isTouch,
     isApple: isMac || isIOS,
     platformName,
     userAgent: ua,
   };
+
+  return cachedDeviceInfo;
 }
 
 /**

@@ -13,8 +13,13 @@ import {
 
 const API_BASE_URL = resolveApiBaseUrl();
 
-const isAbsoluteUrl = (value: string): boolean => /^https?:\/\//i.test(value);
-const isBlobOrDataUrl = (value: string): boolean => /^(blob:|data:)/i.test(value);
+const ABSOLUTE_URL_REGEX = /^https?:\/\//i;
+const BLOB_OR_DATA_URL_REGEX = /^(blob:|data:)/i;
+const BASE64_ALPHABET_REGEX = /^[A-Za-z0-9+/=]+$/;
+const asciiDecoder = new TextDecoder('utf-8', { fatal: false });
+
+const isAbsoluteUrl = (value: string): boolean => ABSOLUTE_URL_REGEX.test(value);
+const isBlobOrDataUrl = (value: string): boolean => BLOB_OR_DATA_URL_REGEX.test(value);
 const looksLikeServerPath = (value: string): boolean =>
   value.startsWith('/uploads/') ||
   value.startsWith('uploads/') ||
@@ -42,10 +47,14 @@ const isLikelyEncryptedString = (value: string): boolean => {
     return false;
   }
   if (normalized.startsWith('V2_ENC:')) {
-    normalized = normalized.substring(7).trim();
+    return true;
   }
-  normalized = normalized.replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '');
-  return /^[A-Za-z0-9+/=]+$/.test(normalized);
+
+  // To prevent multi-MB regex freeze and dozens of MBs of string allocations,
+  // sample only the leading 1024 characters to confirm base64 encoding.
+  const sample = normalized.length > 1024 ? normalized.slice(0, 1024) : normalized;
+  const sampleCleaned = sample.replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '');
+  return BASE64_ALPHABET_REGEX.test(sampleCleaned);
 };
 
 const looksLikeReadableMediaBytes = (bytes: Uint8Array, mimeType?: string): boolean => {
@@ -546,7 +555,8 @@ const looksLikeReadableMediaBytes = (bytes: Uint8Array, mimeType?: string): bool
 
   // SVG: <svg or <?xml
   if ((mt.includes('image/svg') || !mt) && bytes.length >= 5) {
-    const textStart = String.fromCharCode(...bytes.slice(0, 100))
+    const textStart = asciiDecoder
+      .decode(bytes.subarray(0, Math.min(100, bytes.length)))
       .trim()
       .toLowerCase();
     if (

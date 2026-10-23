@@ -6,22 +6,18 @@
   "schemaVersion": 1,
   "securityVersion": 1,
   "description": "Secure encrypted vault for storing photos, videos, notes, documents, and passwords with client-side encryption.",
-
   "author": {
     "name": "Adarsh",
     "role": "Developer",
-    "website": "https://github.com/adadarsh23"
+    "website": "https://github.com/adadarsh23",
+    "email": "adrajpu523@gmail.com"
   },
-
   "license": "UNLICENSED",
-
   "repository": {
     "type": "git",
     "url": "https://github.com/adadarsh23/vault"
   },
-
-  "homepage": null,
-
+  "homepage": "https://github.com/adadarsh23/vault#readme",
   "keywords": [
     "vault",
     "encryption",
@@ -31,71 +27,102 @@
     "zero-knowledge",
     "client-side-encryption"
   ],
-
   "application": {
     "type": "secure-storage",
-    "platforms": ["web", "mobile"],
+    "platforms": ["web", "mobile", "desktop", "pwa"],
     "pwa": true,
     "production": true
   },
-
   "security": {
     "model": {
       "clientSideEncryption": true,
       "zeroKnowledge": true,
       "plaintextServerAccess": false
     },
-
     "cryptography": {
       "contentEncryption": {
         "algorithm": "AES-256-GCM",
         "keyLengthBits": 256,
-        "authenticatedEncryption": true
+        "authenticatedEncryption": true,
+        "cascade": {
+          "enabled": true,
+          "magicHeader": "VCAS01",
+          "headerLengthBytes": 122,
+          "ciphers": ["AES-256-GCM", "ChaCha20-Poly1305"]
+        }
       },
-
       "keyDerivation": {
         "algorithm": "PBKDF2-SHA-256",
         "iterations": 600000,
-        "saltLengthBytes": 32
+        "saltLengthBytes": 32,
+        "webAssemblyAcceleration": true,
+        "hashLength": 32
       },
-
       "nonce": {
         "algorithm": "random",
         "lengthBytes": 12,
         "neverReuse": true
       },
-
       "randomness": {
         "provider": "Web Crypto API",
         "cryptographicallySecure": true
       },
-
-      "encryptionFormatVersion": 1
+      "encryptionFormatVersion": 1,
+      "envelope": {
+        "masterKeyWrapping": true,
+        "dekLengthBytes": 64,
+        "magicHeader": "VCAS01",
+        "keyCheckSentinel": "__keycheck__",
+        "reWrapping": true
+      },
+      "postQuantum": {
+        "enabled": true,
+        "algorithm": "ML-KEM-768"
+      }
     },
-
     "keyManagement": {
       "masterKey": {
         "clientGenerated": true,
         "storedPlaintext": false,
-        "exportable": false
+        "exportable": false,
+        "ephemeralMemoryZeroization": true,
+        "cacheTtlMs": 900000
       },
       "keyVersioning": true,
-      "keyRotation": true
+      "keyRotation": true,
+      "cloudMasterKey": true,
+      "rewrapScript": "npm run security:rewrap-kek"
     },
-
     "authentication": {
-      "methods": ["password", "totp", "passkey", "webauthn"],
+      "methods": [
+        "password",
+        "totp",
+        "passkey",
+        "webauthn",
+        "biometrics",
+        "duress-pin",
+        "decoy-vault",
+        "backup-codes",
+        "recovery-keys"
+      ],
       "multiFactorAuthentication": true,
-      "passwordAuthentication": true
+      "passwordAuthentication": true,
+      "botProtection": {
+        "enabled": true,
+        "providers": ["turnstile", "recaptcha-v3"]
+      },
+      "decoyPartition": {
+        "enabled": true,
+        "failedPinThreshold": 3,
+        "autoWipe": true
+      }
     },
-
     "passwordPolicy": {
       "minimumLength": 12,
       "maximumLength": 128,
       "allowPasswordManagers": true,
       "allowPassphrases": true
     },
-
     "sessionSecurity": {
       "secureCookies": true,
       "httpOnlyCookies": true,
@@ -104,38 +131,65 @@
       "sessionRevocation": true,
       "concurrentSessionManagement": true
     },
-
     "accountProtection": {
       "rateLimiting": true,
       "bruteForceProtection": true,
       "credentialStuffingProtection": true
     },
-
     "recovery": {
       "enabled": true,
       "backupCodes": true,
       "recoveryKeys": true
     }
   },
-
   "storage": {
     "encryptionBeforeUpload": true,
     "encryptionAtRest": true,
     "encryptedFilenames": true,
     "encryptedMetadata": true,
     "contentIntegrityVerification": true,
-
-    "categories": ["photo", "video", "document", "note", "password", "other"],
-
+    "categories": [
+      "photo",
+      "video",
+      "audio",
+      "document",
+      "note",
+      "chat",
+      "todo",
+      "password",
+      "secret",
+      "contact",
+      "location",
+      "file",
+      "other-files",
+      "other",
+      "settings",
+      "system",
+      "users",
+      "card",
+      "identity",
+      "wifi"
+    ],
     "upload": {
       "maxFileSizeMB": 100,
       "multipart": true,
       "resumable": true,
       "fileTypeValidation": true,
       "contentValidation": true
+    },
+    "encodings": ["utf-8", "base64", "binary-base64", "gridfs-binary", "file-reference", "modern"],
+    "backends": {
+      "filesystem": true,
+      "gridfs": true
+    },
+    "mediaProcessing": {
+      "webWorkers": true,
+      "ffmpegWasm": true,
+      "exifScrubbing": true,
+      "blurhashGeneration": true,
+      "streamingDecryption": true
     }
   },
-
   "dataLifecycle": {
     "userExport": true,
     "accountDeletion": true,
@@ -144,7 +198,6 @@
     "retentionPolicy": true,
     "backupRetentionDays": 30
   },
-
   "apiSecurity": {
     "httpsRequired": true,
     "tls": true,
@@ -156,7 +209,6 @@
     "securityHeaders": true,
     "requestSizeLimits": true
   },
-
   "securityHeaders": [
     "Content-Security-Policy",
     "Strict-Transport-Security",
@@ -164,42 +216,50 @@
     "Referrer-Policy",
     "Permissions-Policy"
   ],
-
   "database": {
     "type": "MongoDB",
     "tlsRequired": true,
     "applicationLevelEncryption": true,
     "sensitiveFieldsEncrypted": true,
     "credentialsFromEnvironment": true,
-
     "backup": {
       "enabled": true,
       "retentionDays": 30,
       "encrypted": true
+    },
+    "multiCluster": {
+      "enabled": true,
+      "standbyCluster": true,
+      "pingIntervalMs": 10000,
+      "autoFailover": true,
+      "splitBrainMitigation": true
+    },
+    "gridfs": {
+      "enabled": true,
+      "bucketName": "vault_encrypted_blobs"
+    },
+    "isolation": {
+      "perUserCollection": true,
+      "compoundIndexes": true
     }
   },
-
   "privacy": {
     "dataCollection": "minimal",
     "tracking": false,
     "thirdPartyDataSharing": false,
     "advertising": false,
-
     "telemetry": {
       "enabled": false
     },
-
     "analytics": {
       "enabled": false
     }
   },
-
   "logging": {
     "enabled": true,
     "structured": true,
     "auditLogs": true,
     "securityEvents": true,
-
     "redaction": {
       "enabled": true,
       "redactPasswords": true,
@@ -209,15 +269,22 @@
       "redactPlaintextContent": true
     }
   },
-
   "observability": {
     "healthCheck": "/health",
     "readinessCheck": "/ready",
     "metrics": true,
     "errorTracking": true,
-    "performanceMonitoring": true
+    "performanceMonitoring": true,
+    "sentry": {
+      "enabled": true,
+      "clientTraces": true,
+      "serverProfiling": true
+    },
+    "logrocket": {
+      "enabled": true,
+      "sessionReplay": true
+    }
   },
-
   "performance": {
     "maxUploadSizeMB": 100,
     "recommendedMemoryMB": 512,
@@ -227,7 +294,6 @@
     "chunkedUploads": true,
     "workerBasedEncryption": true
   },
-
   "runtime": {
     "node": ">=18.20.0",
     "environment": "production",
@@ -235,7 +301,6 @@
     "https": true,
     "gracefulShutdown": true
   },
-
   "deployment": {
     "environment": "production",
     "httpsRequired": true,
@@ -244,7 +309,6 @@
     "environmentSecrets": true,
     "secretsInRepository": false
   },
-
   "testing": {
     "unit": true,
     "integration": true,
@@ -253,9 +317,16 @@
     "authentication": true,
     "encryption": true,
     "upload": true,
-    "database": true
+    "database": true,
+    "crypto": true,
+    "vault": true,
+    "sync": true,
+    "stores": true,
+    "media": true,
+    "workers": true,
+    "repeatStress": true,
+    "lighthouse": true
   },
-
   "dependencySecurity": {
     "lockfileRequired": true,
     "dependencyAudit": true,
@@ -263,26 +334,30 @@
     "secretScanning": true,
     "sast": true
   },
-
   "threatModel": {
     "protectsAgainst": [
       "Unauthorized database access",
       "Stolen encrypted files",
       "Network interception",
       "Unauthorized account access",
-      "Database credential exposure"
+      "Database credential exposure",
+      "Server-side plaintext data exposure",
+      "Cryptographic downgrade attacks",
+      "Quantum decryption of encapsulated keys",
+      "Credential stuffing and brute-force authentication attacks",
+      "Tampering with encrypted payload integrity",
+      "Duress coercion via decoy partition isolation"
     ],
-
     "outOfScope": [
       "Compromised operating system",
       "Compromised browser",
       "Malicious browser extensions",
       "Malware with access to decrypted memory",
       "Compromised user device",
-      "User-disclosed authentication secrets"
+      "User-disclosed authentication secrets",
+      "Hardware-level keyloggers or physical screen capture"
     ]
   },
-
   "compatibility": {
     "browsers": {
       "Chrome": ">=100",
@@ -290,65 +365,115 @@
       "Edge": ">=100",
       "Safari": ">=15"
     },
-
     "devices": ["desktop", "laptop", "tablet", "mobile"],
-
     "requirements": {
       "javascript": true,
       "webCrypto": true,
       "secureContext": true
     }
   },
-
   "pwa": {
     "enabled": true,
     "installable": true,
     "serviceWorker": true,
     "offlineSupport": true
   },
-
   "features": [
-    "Encrypted file storage",
-    "Secure password manager",
-    "Private notes",
-    "Photo vault",
-    "Video vault",
-    "Document vault",
-    "Client-side encryption",
-    "Secure authentication",
-    "Multi-factor authentication",
-    "Passkeys",
-    "WebAuthn",
-    "TOTP",
-    "Backup codes",
-    "Session management",
-    "Audit logging",
-    "Account recovery",
-    "Data export",
-    "Account deletion"
+    "Client-side zero-knowledge encryption",
+    "Dual-cipher cascade encryption (AES-256-GCM + ChaCha20-Poly1305)",
+    "Post-quantum cryptography (ML-KEM-768 key encapsulation)",
+    "Envelope encryption with ephemeral 64-byte DEK keys",
+    "PBKDF2-SHA-256 key derivation with 600,000 iterations",
+    "Master key rotation and zero-downtime key re-wrapping",
+    "Encrypted photo and media vault with EXIF scrubbing and blurhash",
+    "Encrypted video vault with streaming decryption and mini-player",
+    "Encrypted audio vault with waveform visualizer",
+    "Encrypted document vault with in-browser preview",
+    "Encrypted private notes and journal",
+    "Secure password manager with strength analysis and generator",
+    "Encrypted secrets, API keys, and credential storage",
+    "Encrypted personal contacts directory",
+    "Encrypted geolocation records and interactive maps",
+    "Encrypted todos, checklists, and task management",
+    "Encrypted credit and debit cards vault",
+    "Encrypted personal identity documents and passports vault",
+    "Encrypted WiFi network credentials vault",
+    "Encrypted end-to-end chat vault",
+    "Encrypted generic file storage up to 100MB",
+    "Multi-factor authentication (TOTP, Passkeys, WebAuthn, Biometrics)",
+    "Duress PIN and decoy vault with auto-wipe safety threshold",
+    "Bot protection with Cloudflare Turnstile and Google reCAPTCHA",
+    "Live dual-camera feed capture and QR code scanning",
+    "Session management with device fingerprinting and remote revocation",
+    "MongoDB multi-cluster high availability and GridFS blob storage",
+    "Progressive Web App (PWA) with offline support and service worker",
+    "Structured audit logging with sensitive data redaction",
+    "Encrypted backup codes and recovery key generation",
+    "Complete data export and GDPR-compliant account deletion"
   ],
-
   "permissions": {
-    "browser": [],
-    "device": []
+    "browser": ["clipboard-read", "clipboard-write", "notifications", "geolocation", "storage"],
+    "device": ["camera", "microphone"]
   },
-
   "branding": {
     "primary": "#000000",
     "secondary": "#FFFFFF",
     "favicon": "/favicon.svg",
     "themeAware": true
   },
-
   "maintainers": [
     {
       "name": "Adarsh",
-      "github": "adadarsh23"
+      "github": "adadarsh23",
+      "role": "Lead Architect & Maintainer",
+      "email": "adrajpu523@gmail.com",
+      "url": "https://github.com/adadarsh23"
     }
   ],
-
   "metadata": {
     "createdAt": "2026-03-10",
-    "updatedAt": "2026-08-25"
+    "updatedAt": "2026-10-23"
+  },
+  "paths": {
+    "root": ".",
+    "schemas": "./schemas",
+    "uploads": "./uploads",
+    "backups": "./backups",
+    "logs": "./logs",
+    "dist": "./dist",
+    "build": "./build",
+    "public": "./public",
+    "src": "./src",
+    "server": "./server",
+    "tests": "./tests",
+    "doc": "./doc"
+  },
+  "modules": {
+    "activeVaults": [
+      "photo",
+      "video",
+      "audio",
+      "document",
+      "note",
+      "chat",
+      "todo",
+      "password",
+      "secret",
+      "contact",
+      "location",
+      "file",
+      "other-files",
+      "other",
+      "settings",
+      "system",
+      "users",
+      "card",
+      "identity",
+      "wifi"
+    ],
+    "realVaultEcosystem": true,
+    "deviceSessions": true,
+    "privacyInterface": true,
+    "videoMiniPlayer": true
   }
 }

@@ -491,10 +491,12 @@ export const DOCUMENT_MIME_MAP: Record<string, string> = {
 
 export type DocumentFileExtension = (typeof DOCUMENT_FILE_EXTENSIONS)[number];
 
+export const DOCUMENT_FILE_EXTENSIONS_SET = new Set<string>(DOCUMENT_FILE_EXTENSIONS);
+
 export const isDocumentExtension = (ext: string): boolean => {
   if (!ext) return false;
   const cleanExt = ext.replace(/^\./, '').toUpperCase();
-  return (DOCUMENT_FILE_EXTENSIONS as readonly string[]).includes(cleanExt);
+  return DOCUMENT_FILE_EXTENSIONS_SET.has(cleanExt);
 };
 
 export const getDocumentMimeType = (filenameOrExt: string): string => {

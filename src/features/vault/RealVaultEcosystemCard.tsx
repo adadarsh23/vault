@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { usePerformanceMetrics } from '../../hooks/usePerformanceMetrics';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { Card, CardContent, CardHeader } from '../../components/ui/Card';
 import { ErrorBoundary } from '../../components/ui/ErrorBoundary';
 import { NodeDetailsModal } from './NodeDetailsModal';
@@ -248,7 +249,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       try {
         localStorage.setItem('vault_ecosystem_positions', JSON.stringify(positions));
       } catch (e) {
-        console.error('Failed to save node positions', e);
+        logger.warn('Failed to save node positions to storage', { error: e });
       }
     }, 300);
     return () => {
@@ -266,7 +267,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       try {
         localStorage.setItem('vault_ecosystem_scale', String(scale));
       } catch (e) {
-        console.error('Failed to save scale to localStorage', e);
+        logger.warn('Failed to save scale to storage', { error: e });
       }
     }, 300);
     return () => {
@@ -284,7 +285,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       try {
         localStorage.setItem('vault_ecosystem_pan', JSON.stringify(pan));
       } catch (e) {
-        console.error('Failed to save pan to localStorage', e);
+        logger.warn('Failed to save pan to storage', { error: e });
       }
     }, 300);
     return () => {
@@ -586,9 +587,7 @@ const RealVaultEcosystemCardInternal = memo(function RealVaultEcosystemCard({
       toast.success('Diagram exported in 4K.');
     } catch (err) {
       if (securityErrorHandler(err)) return;
-      if (import.meta.env.DEV) {
-        console.error(err);
-      }
+      logger.error('Failed to export diagram', { error: err });
       toast.error('Failed to export diagram.');
     } finally {
       element.classList.remove('is-exporting-png');

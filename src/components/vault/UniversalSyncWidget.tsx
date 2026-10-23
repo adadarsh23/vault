@@ -18,13 +18,14 @@ import {
 import { useVaultStore } from '../../store/vaultStore';
 import { resolveApiBaseUrl } from '../../lib/apiBaseUrl';
 import { cn } from '../../lib/utils';
+import { logger } from '../../lib/logger';
 
 interface CloudStatusDetail {
   status: 'connected' | 'error' | 'loading';
   dbName: string | null;
 }
 
-export const UniversalSyncWidget: React.FC = () => {
+export const UniversalSyncWidget: React.FC = React.memo(() => {
   const [isOpen, setIsOpen] = useState(false);
   const [cloudStatus, setCloudStatus] = useState<'connected' | 'error' | 'loading'>('loading');
   const [dbName, setDbName] = useState<string | null>(null);
@@ -45,14 +46,22 @@ export const UniversalSyncWidget: React.FC = () => {
 
   useEffect(() => {
     isMountedRef.current = true;
-    const ticker = setInterval(() => {
-      setNow(Date.now());
-    }, 15000);
     return () => {
       isMountedRef.current = false;
-      clearInterval(ticker);
     };
   }, []);
+
+  // Only run the ticker when popover is open to save battery and reduce background renders
+  useEffect(() => {
+    if (!isOpen) return;
+    setNow(Date.now());
+    const ticker = setInterval(() => {
+      if (isMountedRef.current) {
+        setNow(Date.now());
+      }
+    }, 15000);
+    return () => clearInterval(ticker);
+  }, [isOpen]);
 
   // Self-contained resilient cloud health check
   const checkHealth = useCallback(async () => {
@@ -281,7 +290,7 @@ export const UniversalSyncWidget: React.FC = () => {
     if (hours < 24) return `${hours}h ago`;
     const days = Math.floor(hours / 24);
     return `${days}d ago`;
-  }, [lastSyncAttemptAt, syncStatus, now]);
+  }, [lastSyncAttemptAt, now]);
 
   // Consolidated state flags
   const isSyncing = syncStatus === 'syncing' || isManualSyncing;
@@ -294,8 +303,8 @@ export const UniversalSyncWidget: React.FC = () => {
     try {
       await checkHealth();
       await fetchItems('manual');
-    } catch {
-      // Error handled by store toast notifications
+    } catch (err) {
+      logger.error('Manual sync failed', { error: err });
     } finally {
       if (isMountedRef.current) {
         setIsManualSyncing(false);
@@ -311,7 +320,7 @@ export const UniversalSyncWidget: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-3.5 right-3.5 sm:bottom-5 sm:right-5 z-50 select-none print:hidden"
+      className="fixed bottom-3.5 right-3.5 sm:bottom-5 sm:right-5 z-50 select-none print:hidden pointer-events-auto"
       style={{
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         paddingRight: 'env(safe-area-inset-right, 0px)',
@@ -325,7 +334,7 @@ export const UniversalSyncWidget: React.FC = () => {
             animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute bottom-14 right-0 mb-1 w-[calc(100vw-1.75rem)] sm:w-96 max-w-[24rem] max-h-[calc(100vh-6rem)] overflow-y-auto custom-scrollbar rounded-2xl border border-card-border/80 bg-sidebar-bg/95 p-3.5 sm:p-4 shadow-2xl backdrop-blur-2xl text-text transition-colors duration-200"
+            className="absolute bottom-14 right-0 mb-1 w-[calc(100vw-1.75rem)] sm:w-96 max-w-[24rem] max-h-[calc(100dvh-6rem)] max-h-[calc(100vh-6rem)] overflow-y-auto custom-scrollbar rounded-2xl border border-card-border/80 bg-sidebar-bg/95 p-3.5 sm:p-4 shadow-2xl backdrop-blur-2xl text-text transition-colors duration-200"
             role="dialog"
             aria-modal="false"
             aria-label="Universal Cloud Sync Center"
@@ -364,7 +373,7 @@ export const UniversalSyncWidget: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-lg text-text/40 hover:text-text hover:bg-text/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/20 active:scale-95 shrink-0 touch-manipulation"
+                className="p-1.5 rounded-lg text-text/40 hover:text-text hover:bg-text/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/20 active:scale-95 shrink-0 touch-manipulation cursor-pointer"
                 aria-label="Close sync center"
               >
                 <X className="h-4 w-4" />
@@ -543,4 +552,6 @@ export const UniversalSyncWidget: React.FC = () => {
       </motion.button>
     </div>
   );
-};
+});
+
+UniversalSyncWidget.displayName = 'UniversalSyncWidget';

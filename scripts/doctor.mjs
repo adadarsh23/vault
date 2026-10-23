@@ -35,7 +35,7 @@ for (const config of ['tsconfig.json', 'tsconfig.server.json']) {
 }
 
 // 3. Essential Workspace Directories
-const essentialDirs = ['src', 'server', 'tests', 'scripts', 'public'];
+const essentialDirs = ['src', 'server', 'tests', 'scripts', 'public', 'schemas'];
 for (const dir of essentialDirs) {
   const p = path.join(root, dir);
   if (fs.existsSync(p) && fs.lstatSync(p).isDirectory()) {
@@ -43,6 +43,20 @@ for (const dir of essentialDirs) {
   } else {
     addCheck('Workspace', `Directory '${dir}/'`, 'WARN', 'Optional or missing directory');
   }
+}
+
+// 4. Schema & Manifest Integrity
+const schemaFile = path.join(root, 'schemas', 'vault-manifest.schema.json');
+const metaFile = path.join(root, 'metadata.json');
+if (fs.existsSync(schemaFile) && fs.existsSync(metaFile)) {
+  addCheck('Schema', 'vault-manifest.schema.json', 'PASS', 'Production schema & metadata present');
+} else {
+  addCheck(
+    'Schema',
+    'vault-manifest.schema.json',
+    'FAIL',
+    'Manifest schema or metadata.json missing',
+  );
 }
 
 // 4. Environment Configuration

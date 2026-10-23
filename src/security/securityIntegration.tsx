@@ -1,21 +1,39 @@
 /**
  * Frontend Security Integration
  *
- * React components for:
- * - Device fingerprinting
- * - MFA challenges
- * - Security settings
- * - Device management
+ * Production-ready React components and utilities for:
+ * - Deterministic device fingerprinting & signal harvesting
+ * - Secure request interception & header injection
+ * - MFA verification challenge modals
+ * - Trusted device management & remote session revocation
+ * - Account security preferences & session timeout controls
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
 import type { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
+import {
+  Shield,
+  Smartphone,
+  Laptop,
+  Monitor,
+  Globe,
+  CheckCircle2,
+  AlertTriangle,
+  RefreshCw,
+  Trash2,
+  LogOut,
+  Clock,
+  X,
+  Loader2,
+  KeyRound,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '../api/apiClient';
+import { cn } from '../lib/utils';
 
-type MFAMethod = 'totp' | 'email' | 'fido2';
+export type MFAMethod = 'totp' | 'email' | 'fido2';
 
-type DeviceSignals = {
+export type DeviceSignals = {
   screenResolution: string;
   timezone: string;
   platform: string;
@@ -29,7 +47,7 @@ type DeviceSignals = {
   deviceMemoryGb: number | null;
 };
 
-type ManagedDevice = {
+export type ManagedDevice = {
   id: string;
   name: string;
   trustScore: number;
@@ -39,11 +57,11 @@ type ManagedDevice = {
   platform?: string | null;
 };
 
-type DeviceListResponse = {
+export type DeviceListResponse = {
   devices?: ManagedDevice[];
 };
 
-type SecuritySettingsState = {
+export type SecuritySettingsState = {
   mfaEnabled: boolean;
   mfaMethods: MFAMethod[];
   loginAlerts: boolean;
@@ -52,12 +70,31 @@ type SecuritySettingsState = {
   sessionTimeout: number;
 };
 
-type SecurityToggleKey = 'mfaEnabled' | 'loginAlerts' | 'suspiciousActivityAlerts';
+export type SecurityToggleKey =
+  'mfaEnabled' | 'loginAlerts' | 'suspiciousActivityAlerts' | 'twoFactorRequired';
+
+export interface MFAChallengeProps {
+  onComplete: (code: string) => void;
+  method?: MFAMethod;
+  onCancel?: () => void;
+  className?: string;
+}
+
+export interface DeviceManagementProps {
+  className?: string;
+  onDeviceCountChange?: (count: number) => void;
+}
+
+export interface SecuritySettingsProps {
+  className?: string;
+  onSettingsUpdate?: (settings: SecuritySettingsState) => void;
+}
 
 const STORAGE_DEVICE_FINGERPRINT_KEY = 'deviceFingerprint';
 const FALLBACK_PLATFORM = 'unknown';
 const FALLBACK_TIMEZONE = 'UTC';
-const DEFAULT_SECURITY_SETTINGS: SecuritySettingsState = {
+
+export const DEFAULT_SECURITY_SETTINGS: SecuritySettingsState = {
   mfaEnabled: false,
   mfaMethods: ['totp', 'email'],
   loginAlerts: true,
@@ -72,33 +109,51 @@ type RequestHeaderRecord = Record<string, RequestHeaderValue>;
 let cachedFingerprint: string | null = null;
 let pendingFingerprintPromise: Promise<string> | null = null;
 
-const isBrowserEnvironment = () =>
+export const isBrowserEnvironment = (): boolean =>
   typeof window !== 'undefined' &&
   typeof navigator !== 'undefined' &&
   typeof document !== 'undefined';
 
-const getErrorMessage = (error: unknown, fallback: string) => {
+export const getErrorMessage = (error: unknown, fallback: string): string => {
   if (typeof error === 'string' && error.trim()) {
-    return error;
+    return error.trim();
   }
 
   if (error instanceof Error && error.message.trim()) {
-    return error.message;
+    return error.message.trim();
   }
 
-  const candidate = error as { message?: string; error?: { message?: string } } | undefined;
-  if (typeof candidate?.error?.message === 'string' && candidate.error.message.trim()) {
-    return candidate.error.message;
+  const candidate = error as
+    | {
+        response?: { data?: { message?: string; error?: { message?: string } } };
+        message?: string;
+        error?: { message?: string };
+      }
+    | undefined;
+
+  const responseMsg = candidate?.response?.data?.message;
+  if (typeof responseMsg === 'string' && responseMsg.trim()) {
+    return responseMsg.trim();
+  }
+
+  const responseErrorMsg = candidate?.response?.data?.error?.message;
+  if (typeof responseErrorMsg === 'string' && responseErrorMsg.trim()) {
+    return responseErrorMsg.trim();
+  }
+
+  const errorMsg = candidate?.error?.message;
+  if (typeof errorMsg === 'string' && errorMsg.trim()) {
+    return errorMsg.trim();
   }
 
   if (typeof candidate?.message === 'string' && candidate.message.trim()) {
-    return candidate.message;
+    return candidate.message.trim();
   }
 
   return fallback;
 };
 
-const safeReadSessionValue = (key: string): string | null => {
+export const safeReadSessionValue = (key: string): string | null => {
   if (!isBrowserEnvironment()) {
     return null;
   }
@@ -110,7 +165,7 @@ const safeReadSessionValue = (key: string): string | null => {
   }
 };
 
-const safeWriteSessionValue = (key: string, value: string): void => {
+export const safeWriteSessionValue = (key: string, value: string): void => {
   if (!isBrowserEnvironment()) {
     return;
   }
@@ -118,11 +173,11 @@ const safeWriteSessionValue = (key: string, value: string): void => {
   try {
     window.sessionStorage.setItem(key, value);
   } catch {
-    // Ignore write failures (private mode / storage restrictions).
+    // Ignore write failures (private mode / storage quotas).
   }
 };
 
-const createFallbackFingerprint = () => {
+export const createFallbackFingerprint = (): string => {
   const timestamp = Date.now().toString(36);
 
   try {
@@ -135,17 +190,22 @@ const createFallbackFingerprint = () => {
       return `fp_${timestamp}_${randomHex}`;
     }
   } catch {
-    // Ignore and fallback to Math.random below.
+    // Fallback to Math.random below
   }
 
   return `fp_${timestamp}_${Math.random().toString(36).slice(2, 16)}`;
 };
 
-const resolveWebGLRenderer = (canvas: HTMLCanvasElement): string => {
+export const resolveWebGLRenderer = (canvas?: HTMLCanvasElement): string => {
+  if (!isBrowserEnvironment()) {
+    return 'unknown';
+  }
+
   try {
+    const targetCanvas = canvas ?? document.createElement('canvas');
     const context =
-      canvas.getContext('webgl') ??
-      (canvas.getContext('experimental-webgl') as WebGLRenderingContext | null);
+      targetCanvas.getContext('webgl') ??
+      (targetCanvas.getContext('experimental-webgl') as WebGLRenderingContext | null);
 
     if (!context) {
       return 'unknown';
@@ -160,18 +220,24 @@ const resolveWebGLRenderer = (canvas: HTMLCanvasElement): string => {
     }
 
     const renderer = context.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-    return typeof renderer === 'string' && renderer.trim() ? renderer : 'unknown';
+    return typeof renderer === 'string' && renderer.trim() ? renderer.trim() : 'unknown';
   } catch {
     return 'unknown';
   }
 };
 
-const collectDeviceSignals = (): DeviceSignals => {
-  const canvas = document.createElement('canvas');
-  const context2d = canvas.getContext('2d');
-  let canvasFingerprint = '';
+export const resolveCanvasFingerprint = (): string => {
+  if (!isBrowserEnvironment()) {
+    return '';
+  }
 
-  if (context2d) {
+  try {
+    const canvas = document.createElement('canvas');
+    const context2d = canvas.getContext('2d');
+    if (!context2d) {
+      return '';
+    }
+
     context2d.textBaseline = 'top';
     context2d.font = '14px "Arial"';
     context2d.textBaseline = 'alphabetic';
@@ -179,47 +245,190 @@ const collectDeviceSignals = (): DeviceSignals => {
     context2d.fillRect(125, 1, 62, 20);
     context2d.fillStyle = '#069';
     context2d.fillText('Browser Fingerprint', 2, 15);
-    canvasFingerprint = canvas.toDataURL();
+    return canvas.toDataURL();
+  } catch {
+    return '';
+  }
+};
+
+export const resolvePlatform = (): string => {
+  if (!isBrowserEnvironment()) {
+    return FALLBACK_PLATFORM;
   }
 
-  const webglRenderer = resolveWebGLRenderer(canvas);
-  const navigatorWithDeviceMemory = navigator as Navigator & {
-    deviceMemory?: number;
-  };
+  try {
+    const uaData = (navigator as unknown as { userAgentData?: { platform?: string } })
+      ?.userAgentData;
+    if (typeof uaData?.platform === 'string' && uaData.platform.trim()) {
+      return uaData.platform.trim();
+    }
+    return navigator.platform || FALLBACK_PLATFORM;
+  } catch {
+    return FALLBACK_PLATFORM;
+  }
+};
 
+export const resolveScreenResolution = (): string => {
+  if (!isBrowserEnvironment()) {
+    return 'unknown';
+  }
+
+  try {
+    if (
+      window.screen &&
+      typeof window.screen.width === 'number' &&
+      typeof window.screen.height === 'number'
+    ) {
+      return `${window.screen.width}x${window.screen.height}`;
+    }
+    return 'unknown';
+  } catch {
+    return 'unknown';
+  }
+};
+
+export const resolveTimezone = (): string => {
+  if (!isBrowserEnvironment()) {
+    return FALLBACK_TIMEZONE;
+  }
+
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || FALLBACK_TIMEZONE;
+  } catch {
+    return FALLBACK_TIMEZONE;
+  }
+};
+
+export const resolveLanguage = (): string => {
+  if (!isBrowserEnvironment()) {
+    return 'unknown';
+  }
+
+  try {
+    return (
+      navigator.language ||
+      (Array.isArray(navigator.languages) && navigator.languages[0]) ||
+      'unknown'
+    );
+  } catch {
+    return 'unknown';
+  }
+};
+
+export const resolveColorDepth = (): number => {
+  if (!isBrowserEnvironment()) {
+    return 24;
+  }
+
+  try {
+    return typeof window.screen?.colorDepth === 'number' ? window.screen.colorDepth : 24;
+  } catch {
+    return 24;
+  }
+};
+
+export const resolveTimezoneOffset = (): number => {
+  try {
+    return new Date().getTimezoneOffset();
+  } catch {
+    return 0;
+  }
+};
+
+export const resolveHardwareConcurrency = (): number | null => {
+  if (!isBrowserEnvironment()) {
+    return null;
+  }
+
+  try {
+    return typeof navigator.hardwareConcurrency === 'number' &&
+      Number.isFinite(navigator.hardwareConcurrency)
+      ? navigator.hardwareConcurrency
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+export const resolveDeviceMemoryGb = (): number | null => {
+  if (!isBrowserEnvironment()) {
+    return null;
+  }
+
+  try {
+    const navWithMem = navigator as Navigator & { deviceMemory?: number };
+    return typeof navWithMem.deviceMemory === 'number' && Number.isFinite(navWithMem.deviceMemory)
+      ? navWithMem.deviceMemory
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+export const resolveAudioContextAvailable = (): boolean => {
+  if (!isBrowserEnvironment()) {
+    return false;
+  }
+
+  try {
+    return 'AudioContext' in window || 'webkitAudioContext' in window;
+  } catch {
+    return false;
+  }
+};
+
+export const collectDeviceSignals = (): DeviceSignals => {
   return {
-    screenResolution: `${window.screen.width}x${window.screen.height}`,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || FALLBACK_TIMEZONE,
-    platform: navigator.platform || FALLBACK_PLATFORM,
-    language: navigator.language || 'unknown',
-    webglRenderer,
-    canvasFingerprint,
-    audioContextAvailable: 'AudioContext' in window || 'webkitAudioContext' in window,
-    colorDepth: window.screen.colorDepth,
-    timezoneOffset: new Date().getTimezoneOffset(),
-    hardwareConcurrency:
-      typeof navigator.hardwareConcurrency === 'number' ? navigator.hardwareConcurrency : null,
-    deviceMemoryGb:
-      typeof navigatorWithDeviceMemory.deviceMemory === 'number'
-        ? navigatorWithDeviceMemory.deviceMemory
-        : null,
+    screenResolution: resolveScreenResolution(),
+    timezone: resolveTimezone(),
+    platform: resolvePlatform(),
+    language: resolveLanguage(),
+    webglRenderer: resolveWebGLRenderer(),
+    canvasFingerprint: resolveCanvasFingerprint(),
+    audioContextAvailable: resolveAudioContextAvailable(),
+    colorDepth: resolveColorDepth(),
+    timezoneOffset: resolveTimezoneOffset(),
+    hardwareConcurrency: resolveHardwareConcurrency(),
+    deviceMemoryGb: resolveDeviceMemoryGb(),
   };
 };
 
-const hashSignals = async (signals: DeviceSignals): Promise<string> => {
+export const hashSignals = async (signals: DeviceSignals): Promise<string> => {
   if (typeof crypto === 'undefined' || !crypto.subtle || typeof TextEncoder === 'undefined') {
     return createFallbackFingerprint();
   }
 
-  const signalString = JSON.stringify(signals);
-  const buffer = new TextEncoder().encode(signalString);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  try {
+    const sortedKeys = (Object.keys(signals) as (keyof DeviceSignals)[]).sort();
+    const sortedRecord: Record<string, unknown> = {};
+    for (const key of sortedKeys) {
+      sortedRecord[key] = signals[key];
+    }
 
-  return hashArray.map((value) => value.toString(16).padStart(2, '0')).join('');
+    const signalString = JSON.stringify(sortedRecord);
+    const buffer = new TextEncoder().encode(signalString);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+    return hashArray.map((value) => value.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return createFallbackFingerprint();
+  }
 };
 
-const resolveDeviceFingerprint = async (): Promise<string> => {
+export const clearFingerprintCache = (): void => {
+  cachedFingerprint = null;
+  pendingFingerprintPromise = null;
+  if (isBrowserEnvironment()) {
+    try {
+      window.sessionStorage.removeItem(STORAGE_DEVICE_FINGERPRINT_KEY);
+    } catch {
+      // Ignore
+    }
+  }
+};
+
+export const resolveDeviceFingerprint = async (): Promise<string> => {
   if (cachedFingerprint) {
     return cachedFingerprint;
   }
@@ -258,26 +467,16 @@ const resolveDeviceFingerprint = async (): Promise<string> => {
   return pendingFingerprintPromise;
 };
 
-const buildSecurityHeaders = (fingerprint: string): Record<string, string> => {
-  const screenResolution = isBrowserEnvironment()
-    ? `${window.screen.width}x${window.screen.height}`
-    : 'unknown';
-  const timezone = isBrowserEnvironment()
-    ? Intl.DateTimeFormat().resolvedOptions().timeZone || FALLBACK_TIMEZONE
-    : FALLBACK_TIMEZONE;
-  const platform = isBrowserEnvironment()
-    ? navigator.platform || FALLBACK_PLATFORM
-    : FALLBACK_PLATFORM;
-
+export const buildSecurityHeaders = (fingerprint: string): Record<string, string> => {
   return {
     'X-Fingerprint-Id': fingerprint,
-    'X-Screen-Resolution': screenResolution,
-    'X-Timezone': timezone,
-    'X-Platform': platform,
+    'X-Screen-Resolution': resolveScreenResolution(),
+    'X-Timezone': resolveTimezone(),
+    'X-Platform': resolvePlatform(),
   };
 };
 
-const normalizeTrustScore = (value: unknown): number => {
+export const normalizeTrustScore = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return 0;
   }
@@ -287,12 +486,12 @@ const normalizeTrustScore = (value: unknown): number => {
   return Math.round(value);
 };
 
-const formatLastSeen = (value: unknown): string => {
+export const formatLastSeen = (value: unknown): string => {
   const parsedDate = new Date(value as string | number | Date);
   return Number.isFinite(parsedDate.getTime()) ? parsedDate.toLocaleString() : 'Unknown';
 };
 
-const normalizeSecuritySettings = (input: unknown): SecuritySettingsState => {
+export const normalizeSecuritySettings = (input: unknown): SecuritySettingsState => {
   const candidate = (input ?? {}) as Partial<SecuritySettingsState>;
   const methodCandidates = Array.isArray(candidate.mfaMethods)
     ? candidate.mfaMethods
@@ -329,15 +528,13 @@ const normalizeSecuritySettings = (input: unknown): SecuritySettingsState => {
 };
 
 /**
- * Hook: Generate device fingerprint
- * Collects hardware/browser signals and generates unique ID
+ * Hook: Generate and retrieve device fingerprint
  */
 export const useDeviceFingerprint = () => {
   const [fingerprint, setFingerprint] = useState<string | null>(() => {
     if (cachedFingerprint) {
       return cachedFingerprint;
     }
-
     return safeReadSessionValue(STORAGE_DEVICE_FINGERPRINT_KEY);
   });
   const [loading, setLoading] = useState(() => fingerprint === null);
@@ -351,7 +548,6 @@ export const useDeviceFingerprint = () => {
         if (!isMounted) {
           return;
         }
-
         setFingerprint(value);
       } finally {
         if (isMounted) {
@@ -378,7 +574,8 @@ export const useSecureRequest = () => {
 
   return useCallback(
     async (config: AxiosRequestConfig = {}): Promise<AxiosRequestConfig> => {
-      if (!fingerprint) {
+      const activeFingerprint = fingerprint || (await resolveDeviceFingerprint());
+      if (!activeFingerprint) {
         return config;
       }
 
@@ -386,7 +583,7 @@ export const useSecureRequest = () => {
         ...config,
         headers: {
           ...(config.headers as RequestHeaderRecord | undefined),
-          ...buildSecurityHeaders(fingerprint),
+          ...buildSecurityHeaders(activeFingerprint),
         },
       };
     },
@@ -395,20 +592,76 @@ export const useSecureRequest = () => {
 };
 
 /**
+ * Hook: Setup API interceptor for automatic fingerprinting
+ */
+export const useSecurityInterceptor = () => {
+  const { fingerprint } = useDeviceFingerprint();
+
+  useEffect(() => {
+    if (!fingerprint) {
+      return;
+    }
+
+    const interceptor = apiClient.interceptors.request.use(
+      (config: InternalAxiosRequestConfig) => {
+        if (!config.headers) {
+          config.headers = {} as any;
+        }
+
+        const securityHeaders = buildSecurityHeaders(fingerprint);
+        for (const [key, value] of Object.entries(securityHeaders)) {
+          if (typeof (config.headers as any).set === 'function') {
+            (config.headers as any).set(key, value);
+          } else {
+            (config.headers as Record<string, string>)[key] = value;
+          }
+        }
+        return config;
+      },
+      (interceptorError) => Promise.reject(interceptorError),
+    );
+
+    return () => {
+      apiClient.interceptors.request.eject(interceptor);
+    };
+  }, [fingerprint]);
+};
+
+/**
  * Component: MFA Challenge Modal
  */
-export const MFAChallenge: React.FC<{
-  onComplete: (code: string) => void;
-  method: MFAMethod;
-}> = ({ onComplete, method }) => {
+export const MFAChallenge: React.FC<MFAChallengeProps> = ({
+  onComplete,
+  method = 'totp',
+  onCancel,
+  className,
+}) => {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pasted) {
+      setCode(pasted);
+      setError('');
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cleaned = e.target.value.replace(/\D/g, '').slice(0, 6);
+    setCode(cleaned);
+    if (error) {
+      setError('');
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (code.length !== 6) {
+    const trimmedCode = code.trim();
+    if (trimmedCode.length !== 6) {
       setError('Enter a valid 6-digit code.');
       return;
     }
@@ -417,8 +670,14 @@ export const MFAChallenge: React.FC<{
     setError('');
 
     try {
-      await apiClient.post('/security/mfa/verify', { code, method });
-      onComplete(code);
+      // Send both token (expected by server validator) and code/method for backwards compatibility
+      await apiClient.post('/security/mfa/verify', {
+        token: trimmedCode,
+        code: trimmedCode,
+        method,
+      });
+      toast.success('MFA verification successful');
+      onComplete(trimmedCode);
     } catch (submitError) {
       setError(getErrorMessage(submitError, 'Verification failed'));
     } finally {
@@ -426,38 +685,120 @@ export const MFAChallenge: React.FC<{
     }
   };
 
+  const methodLabel =
+    method === 'totp' ? 'authenticator app' : method === 'email' ? 'email' : 'FIDO2';
+
   return (
-    <div className="mfa-challenge">
-      <h2>Two-Factor Authentication</h2>
-      <p>Enter your {method === 'totp' ? 'authenticator app' : method} code:</p>
+    <div
+      className={cn(
+        'mfa-challenge rounded-2xl border border-card-border bg-card-bg/95 p-6 shadow-2xl backdrop-blur-md max-w-md w-full mx-auto space-y-4',
+        className,
+      )}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+            <KeyRound className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-text">Two-Factor Authentication</h2>
+            <p className="text-xs text-text/70">Secure identity verification required</p>
+          </div>
+        </div>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg p-1.5 text-text/50 hover:bg-text/10 hover:text-text transition-colors"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="000000"
-          value={code}
-          onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-          maxLength={6}
-          disabled={loading}
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          autoFocus
-        />
+      <p className="text-sm text-text/80">Enter your {methodLabel} code:</p>
 
-        {error && <div className="error">{error}</div>}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <input
+            type="text"
+            placeholder="000000"
+            value={code}
+            onChange={handleChange}
+            onPaste={handlePaste}
+            maxLength={6}
+            disabled={loading}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            autoFocus
+            aria-label="Verification code"
+            className="w-full text-center text-2xl tracking-[0.5em] font-mono py-3 px-4 rounded-xl border border-card-border bg-bg/50 text-text placeholder:text-text/30 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50 transition-all"
+          />
+        </div>
 
-        <button type="submit" disabled={loading || code.length !== 6}>
-          {loading ? 'Verifying...' : 'Verify'}
-        </button>
+        {error && (
+          <div className="error flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-2.5">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 pt-2">
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={loading}
+              className="flex-1 py-2.5 px-4 rounded-xl border border-card-border bg-text/5 text-text hover:bg-text/10 transition-colors text-sm font-medium disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={loading || code.trim().length !== 6}
+            className="flex-1 py-2.5 px-4 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-sm font-semibold shadow-lg shadow-primary/20 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Verifying...</span>
+              </>
+            ) : (
+              'Verify'
+            )}
+          </button>
+        </div>
       </form>
     </div>
   );
 };
 
+const getDeviceIcon = (platform?: string | null) => {
+  const target = (platform || '').toLowerCase();
+  if (target.includes('win') || target.includes('mac') || target.includes('linux')) {
+    return <Laptop className="h-4 w-4 text-primary" />;
+  }
+  if (
+    target.includes('iphone') ||
+    target.includes('android') ||
+    target.includes('mobile') ||
+    target.includes('ipad')
+  ) {
+    return <Smartphone className="h-4 w-4 text-emerald-400" />;
+  }
+  return <Globe className="h-4 w-4 text-text/60" />;
+};
+
 /**
  * Component: Device Management
  */
-export const DeviceManagement: React.FC = () => {
+export const DeviceManagement: React.FC<DeviceManagementProps> = ({
+  className,
+  onDeviceCountChange,
+}) => {
+  const { fingerprint: currentFingerprint } = useDeviceFingerprint();
   const [devices, setDevices] = useState<ManagedDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -472,12 +813,13 @@ export const DeviceManagement: React.FC = () => {
       const response = await apiClient.get<DeviceListResponse>('/security/devices');
       const receivedDevices = Array.isArray(response.data?.devices) ? response.data.devices : [];
       setDevices(receivedDevices);
+      onDeviceCountChange?.(receivedDevices.length);
     } catch (fetchError) {
       setError(getErrorMessage(fetchError, 'Failed to fetch trusted devices.'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [onDeviceCountChange]);
 
   useEffect(() => {
     void fetchDevices();
@@ -495,7 +837,11 @@ export const DeviceManagement: React.FC = () => {
     setPendingDeviceId(deviceId);
     try {
       await apiClient.delete(`/security/devices/${encodeURIComponent(deviceId)}`);
-      setDevices((currentDevices) => currentDevices.filter((device) => device.id !== deviceId));
+      setDevices((currentDevices) => {
+        const next = currentDevices.filter((device) => device.id !== deviceId);
+        onDeviceCountChange?.(next.length);
+        return next;
+      });
       toast.success('Device forgotten');
     } catch (forgetError) {
       toast.error(getErrorMessage(forgetError, 'Failed to forget device.'));
@@ -525,62 +871,171 @@ export const DeviceManagement: React.FC = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className={cn('p-6 flex items-center justify-center gap-2 text-text/70', className)}>
+        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        <span>Loading...</span>
+      </div>
+    );
+  }
 
   if (error) {
     return (
-      <div className="device-management">
-        <h2>Trusted Devices</h2>
-        <p className="error">{error}</p>
-        <button onClick={() => void fetchDevices()}>Retry</button>
+      <div
+        className={cn(
+          'device-management rounded-2xl border border-card-border bg-card-bg/90 p-6 space-y-4',
+          className,
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-text">
+            <Monitor className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-bold">Trusted Devices</h2>
+          </div>
+          <button
+            onClick={() => void fetchDevices()}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-card-border bg-text/5 hover:bg-text/10 text-text transition-colors"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span>Retry</span>
+          </button>
+        </div>
+        <p className="error text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+          {error}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="device-management">
-      <h2>Trusted Devices</h2>
+    <div
+      className={cn(
+        'device-management rounded-2xl border border-card-border bg-card-bg/90 p-6 space-y-5',
+        className,
+      )}
+    >
+      <div className="flex items-center justify-between border-b border-card-border/60 pb-4">
+        <div>
+          <div className="flex items-center gap-2 text-text">
+            <Monitor className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-bold">Trusted Devices</h2>
+          </div>
+          <p className="text-xs text-text/70 mt-1">
+            Manage devices currently registered with your security profile.
+          </p>
+        </div>
+        <button
+          onClick={() => void fetchDevices()}
+          title="Refresh device list"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-card-border bg-text/5 hover:bg-text/10 text-text transition-colors"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          <span>Refresh</span>
+        </button>
+      </div>
 
       {devices.length === 0 ? (
-        <p>No trusted devices yet. Log in from a new device to add one.</p>
+        <div className="py-8 text-center text-text/60 space-y-2">
+          <Globe className="h-8 w-8 mx-auto text-text/40 opacity-70" />
+          <p className="text-sm">No trusted devices yet. Log in from a new device to add one.</p>
+        </div>
       ) : (
-        <div className="device-list">
-          {devices.map((device) => (
-            <div key={device.id} className="device-card">
-              <div className="device-info">
-                <h3>{device.name}</h3>
-                <p>Trust Score: {normalizeTrustScore(device.trustScore)}%</p>
-                <p>Last Seen: {formatLastSeen(device.lastSeen)}</p>
-                <p>Accesses: {Math.max(0, Math.floor(device.accessCount || 0))}</p>
-                {device.isVerified && <span className="badge verified">Verified</span>}
-              </div>
-              <button
-                onClick={() => void handleForgetDevice(device.id)}
-                className="btn-danger"
-                disabled={pendingDeviceId === device.id || forgettingAll}
+        <div className="device-list space-y-3">
+          {devices.map((device) => {
+            const isCurrentDevice = currentFingerprint !== null && device.id === currentFingerprint;
+            return (
+              <div
+                key={device.id}
+                className="device-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-card-border/80 bg-bg/40 hover:border-card-border transition-all"
               >
-                {pendingDeviceId === device.id ? 'Forgetting...' : 'Forget'}
-              </button>
-            </div>
-          ))}
+                <div className="device-info space-y-1.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {getDeviceIcon(device.platform)}
+                    <h3 className="font-semibold text-text text-sm truncate">{device.name}</h3>
+                    {isCurrentDevice && (
+                      <span className="badge inline-flex items-center gap-1 rounded bg-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase">
+                        Current Device
+                      </span>
+                    )}
+                    {device.isVerified && (
+                      <span className="badge verified inline-flex items-center gap-1 rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 uppercase">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Verified
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-text/70 pt-1">
+                    <p>Trust Score: {normalizeTrustScore(device.trustScore)}%</p>
+                    <p>Last Seen: {formatLastSeen(device.lastSeen)}</p>
+                    <p>Accesses: {Math.max(0, Math.floor(device.accessCount || 0))}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => void handleForgetDevice(device.id)}
+                    className="btn-danger inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-semibold transition-colors disabled:opacity-50"
+                    disabled={pendingDeviceId === device.id || forgettingAll}
+                  >
+                    {pendingDeviceId === device.id ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Forgetting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span>Forget</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      <button
-        onClick={() => void handleLogoutAllOthers()}
-        className="btn-danger btn-block"
-        disabled={forgettingAll || pendingDeviceId !== null}
-      >
-        {forgettingAll ? 'Logging Out Other Devices...' : 'Logout from All Other Devices'}
-      </button>
+      <div className="pt-2 border-t border-card-border/60">
+        <button
+          onClick={() => void handleLogoutAllOthers()}
+          className="btn-danger btn-block w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-red-600/15 hover:bg-red-600/25 border border-red-500/30 text-red-300 text-sm font-semibold transition-all shadow-sm disabled:opacity-50"
+          disabled={forgettingAll || pendingDeviceId !== null}
+        >
+          {forgettingAll ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Logging Out Other Devices...</span>
+            </>
+          ) : (
+            <>
+              <LogOut className="h-4 w-4" />
+              <span>Logout from All Other Devices</span>
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 };
 
+const TIMEOUT_OPTIONS = [
+  { value: 900, label: '15 Minutes' },
+  { value: 1800, label: '30 Minutes' },
+  { value: 3600, label: '1 Hour' },
+  { value: 14400, label: '4 Hours' },
+  { value: 86400, label: '24 Hours' },
+];
+
 /**
  * Component: Security Settings
  */
-export const SecuritySettings: React.FC = () => {
+export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
+  className,
+  onSettingsUpdate,
+}) => {
   const [settings, setSettings] = useState<SecuritySettingsState | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -592,13 +1047,15 @@ export const SecuritySettings: React.FC = () => {
 
     try {
       const response = await apiClient.get<Partial<SecuritySettingsState>>('/security/settings');
-      setSettings(normalizeSecuritySettings(response.data));
+      const normalized = normalizeSecuritySettings(response.data);
+      setSettings(normalized);
+      onSettingsUpdate?.(normalized);
     } catch (fetchError) {
       setError(getErrorMessage(fetchError, 'Failed to fetch settings.'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [onSettingsUpdate]);
 
   useEffect(() => {
     void fetchSettings();
@@ -624,9 +1081,11 @@ export const SecuritySettings: React.FC = () => {
         mfaEnabled: nextSettings.mfaEnabled,
         loginAlerts: nextSettings.loginAlerts,
         suspiciousActivityAlerts: nextSettings.suspiciousActivityAlerts,
+        twoFactorRequired: nextSettings.twoFactorRequired,
         sessionTimeout: nextSettings.sessionTimeout,
       });
       toast.success('Security settings updated');
+      onSettingsUpdate?.(nextSettings);
     } catch (updateError) {
       setSettings(previousSettings);
       const message = getErrorMessage(updateError, 'Failed to update settings.');
@@ -637,98 +1096,199 @@ export const SecuritySettings: React.FC = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  const handleTimeoutChange = async (timeoutSeconds: number) => {
+    if (!settings || saving || timeoutSeconds === settings.sessionTimeout) {
+      return;
+    }
+
+    const previousSettings = settings;
+    const nextSettings: SecuritySettingsState = {
+      ...settings,
+      sessionTimeout: timeoutSeconds,
+    };
+
+    setSettings(nextSettings);
+    setSaving(true);
+    setError(null);
+
+    try {
+      await apiClient.post('/security/settings', {
+        mfaEnabled: nextSettings.mfaEnabled,
+        loginAlerts: nextSettings.loginAlerts,
+        suspiciousActivityAlerts: nextSettings.suspiciousActivityAlerts,
+        twoFactorRequired: nextSettings.twoFactorRequired,
+        sessionTimeout: nextSettings.sessionTimeout,
+      });
+      toast.success('Session timeout updated');
+      onSettingsUpdate?.(nextSettings);
+    } catch (updateError) {
+      setSettings(previousSettings);
+      const message = getErrorMessage(updateError, 'Failed to update session timeout.');
+      setError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className={cn('p-6 flex items-center justify-center gap-2 text-text/70', className)}>
+        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        <span>Loading...</span>
+      </div>
+    );
+  }
 
   if (error && !settings) {
     return (
-      <div className="security-settings">
-        <h2>Security Settings</h2>
-        <p className="error">{error}</p>
-        <button onClick={() => void fetchSettings()}>Retry</button>
+      <div
+        className={cn(
+          'security-settings rounded-2xl border border-card-border bg-card-bg/90 p-6 space-y-4',
+          className,
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-text">
+            <Shield className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-bold">Security Settings</h2>
+          </div>
+          <button
+            onClick={() => void fetchSettings()}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-card-border bg-text/5 hover:bg-text/10 text-text transition-colors"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span>Retry</span>
+          </button>
+        </div>
+        <p className="error text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+          {error}
+        </p>
       </div>
     );
   }
 
   if (!settings) {
     return (
-      <div className="security-settings">
-        <h2>Security Settings</h2>
-        <p>Settings are currently unavailable.</p>
+      <div
+        className={cn(
+          'security-settings rounded-2xl border border-card-border bg-card-bg/90 p-6 space-y-3',
+          className,
+        )}
+      >
+        <div className="flex items-center gap-2 text-text">
+          <Shield className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-bold">Security Settings</h2>
+        </div>
+        <p className="text-sm text-text/70">Settings are currently unavailable.</p>
       </div>
     );
   }
 
   return (
-    <div className="security-settings">
-      <h2>Security Settings</h2>
-
-      <div className="setting-item">
-        <div className="setting-content">
-          <h3>Two-Factor Authentication</h3>
-          <p>Require additional verification when logging in from new devices</p>
+    <div
+      className={cn(
+        'security-settings rounded-2xl border border-card-border bg-card-bg/90 p-6 space-y-5',
+        className,
+      )}
+    >
+      <div className="flex items-center justify-between border-b border-card-border/60 pb-4">
+        <div>
+          <div className="flex items-center gap-2 text-text">
+            <Shield className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-bold">Security Settings</h2>
+          </div>
+          <p className="text-xs text-text/70 mt-1">
+            Configure automated login security and alert policies.
+          </p>
         </div>
-        <input
-          type="checkbox"
-          checked={settings.mfaEnabled}
-          onChange={() => void handleToggle('mfaEnabled')}
-          disabled={saving}
-        />
+        {saving && (
+          <div className="flex items-center gap-1.5 text-xs text-primary font-medium animate-pulse">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <p className="saving">Saving...</p>
+          </div>
+        )}
       </div>
 
-      <div className="setting-item">
-        <div className="setting-content">
-          <h3>Login Alerts</h3>
-          <p>Receive email notifications for new logins</p>
+      <div className="space-y-4">
+        <div className="setting-item flex items-center justify-between gap-4 p-4 rounded-xl border border-card-border/80 bg-bg/40">
+          <div className="setting-content space-y-0.5">
+            <h3 className="font-semibold text-text text-sm">Two-Factor Authentication</h3>
+            <p className="text-xs text-text/70">
+              Require additional verification when logging in from new devices
+            </p>
+          </div>
+          <input
+            type="checkbox"
+            checked={settings.mfaEnabled}
+            onChange={() => void handleToggle('mfaEnabled')}
+            disabled={saving}
+            aria-label="Two-Factor Authentication"
+            className="h-5 w-5 rounded border-card-border text-primary focus:ring-primary/40 cursor-pointer disabled:opacity-50"
+          />
         </div>
-        <input
-          type="checkbox"
-          checked={settings.loginAlerts}
-          onChange={() => void handleToggle('loginAlerts')}
-          disabled={saving}
-        />
+
+        <div className="setting-item flex items-center justify-between gap-4 p-4 rounded-xl border border-card-border/80 bg-bg/40">
+          <div className="setting-content space-y-0.5">
+            <h3 className="font-semibold text-text text-sm">Login Alerts</h3>
+            <p className="text-xs text-text/70">Receive email notifications for new logins</p>
+          </div>
+          <input
+            type="checkbox"
+            checked={settings.loginAlerts}
+            onChange={() => void handleToggle('loginAlerts')}
+            disabled={saving}
+            aria-label="Login Alerts"
+            className="h-5 w-5 rounded border-card-border text-primary focus:ring-primary/40 cursor-pointer disabled:opacity-50"
+          />
+        </div>
+
+        <div className="setting-item flex items-center justify-between gap-4 p-4 rounded-xl border border-card-border/80 bg-bg/40">
+          <div className="setting-content space-y-0.5">
+            <h3 className="font-semibold text-text text-sm">Suspicious Activity Alerts</h3>
+            <p className="text-xs text-text/70">Notify me of unusual account activity</p>
+          </div>
+          <input
+            type="checkbox"
+            checked={settings.suspiciousActivityAlerts}
+            onChange={() => void handleToggle('suspiciousActivityAlerts')}
+            disabled={saving}
+            aria-label="Suspicious Activity Alerts"
+            className="h-5 w-5 rounded border-card-border text-primary focus:ring-primary/40 cursor-pointer disabled:opacity-50"
+          />
+        </div>
+
+        <div className="setting-item flex items-center justify-between gap-4 p-4 rounded-xl border border-card-border/80 bg-bg/40">
+          <div className="setting-content space-y-0.5">
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-4 w-4 text-text/60" />
+              <h3 className="font-semibold text-text text-sm">Session Timeout</h3>
+            </div>
+            <p className="text-xs text-text/70">
+              Automatically invalidate idle access sessions after inactivity
+            </p>
+          </div>
+          <select
+            value={settings.sessionTimeout}
+            onChange={(e) => void handleTimeoutChange(Number(e.target.value))}
+            disabled={saving}
+            aria-label="Session Timeout"
+            className="rounded-lg border border-card-border bg-bg/60 text-text text-xs py-1.5 px-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer disabled:opacity-50"
+          >
+            {TIMEOUT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <div className="setting-item">
-        <div className="setting-content">
-          <h3>Suspicious Activity Alerts</h3>
-          <p>Notify me of unusual account activity</p>
-        </div>
-        <input
-          type="checkbox"
-          checked={settings.suspiciousActivityAlerts}
-          onChange={() => void handleToggle('suspiciousActivityAlerts')}
-          disabled={saving}
-        />
-      </div>
-
-      {saving && <p className="saving">Saving...</p>}
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <p className="error text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-2.5">
+          {error}
+        </p>
+      )}
     </div>
   );
-};
-
-/**
- * Hook: Setup API interceptor for automatic fingerprinting
- */
-export const useSecurityInterceptor = () => {
-  const { fingerprint } = useDeviceFingerprint();
-
-  useEffect(() => {
-    if (!fingerprint) {
-      return;
-    }
-
-    const interceptor = apiClient.interceptors.request.use(
-      (config: InternalAxiosRequestConfig) => {
-        const headers = config.headers as RequestHeaderRecord;
-        Object.assign(headers, buildSecurityHeaders(fingerprint));
-        return config;
-      },
-      (interceptorError) => Promise.reject(interceptorError),
-    );
-
-    return () => {
-      apiClient.interceptors.request.eject(interceptor);
-    };
-  }, [fingerprint]);
 };

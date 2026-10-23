@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
   type CookieOptions,
   deleteCookie,
@@ -18,29 +18,37 @@ export interface UseCookieApi {
   refresh: () => void;
 }
 
+const safeReadCookie = (name: string): string | null => {
+  try {
+    return getCookie(name);
+  } catch (error) {
+    logger.warn('Failed to read cookie in hook', { name, error });
+    return null;
+  }
+};
+
 export const useCookie = (name: string, baseOptions?: CookieOptions): UseCookieApi => {
-  const [value, setValue] = useState<string | null>(() => {
-    try {
-      return getCookie(name);
-    } catch (error) {
-      logger.warn('Failed to read cookie in hook initializer', { name, error });
-      return null;
-    }
-  });
+  const [value, setValue] = useState<string | null>(() => safeReadCookie(name));
+
+  const baseOptionsRef = useRef(baseOptions);
+  useEffect(() => {
+    baseOptionsRef.current = baseOptions;
+  }, [baseOptions]);
+
+  // Synchronize state if cookie name prop changes dynamically
+  useEffect(() => {
+    setValue(safeReadCookie(name));
+  }, [name]);
 
   const refresh = useCallback(() => {
-    try {
-      setValue(getCookie(name));
-    } catch (error) {
-      logger.warn('Failed to refresh cookie value', { name, error });
-      setValue(null);
-    }
+    setValue(safeReadCookie(name));
   }, [name]);
 
   const set = useCallback(
     (nextValue: string, options?: CookieOptions) => {
       try {
-        const success = setCookie(name, nextValue, { ...baseOptions, ...options });
+        const merged = { ...baseOptionsRef.current, ...options };
+        const success = setCookie(name, nextValue, merged);
         if (success) {
           setValue(nextValue);
         }
@@ -50,16 +58,14 @@ export const useCookie = (name: string, baseOptions?: CookieOptions): UseCookieA
         return false;
       }
     },
-    [baseOptions, name],
+    [name],
   );
 
   const update = useCallback(
     (nextValue: string, options?: CookieOptions) => {
       try {
-        const success = updateCookie(name, nextValue, {
-          ...baseOptions,
-          ...options,
-        });
+        const merged = { ...baseOptionsRef.current, ...options };
+        const success = updateCookie(name, nextValue, merged);
         if (success) {
           setValue(nextValue);
         }
@@ -69,13 +75,14 @@ export const useCookie = (name: string, baseOptions?: CookieOptions): UseCookieA
         return false;
       }
     },
-    [baseOptions, name],
+    [name],
   );
 
   const remove = useCallback(
     (options?: CookieOptions) => {
       try {
-        const success = deleteCookie(name, { ...baseOptions, ...options });
+        const merged = { ...baseOptionsRef.current, ...options };
+        const success = deleteCookie(name, merged);
         if (success) {
           setValue(null);
         }
@@ -85,7 +92,7 @@ export const useCookie = (name: string, baseOptions?: CookieOptions): UseCookieA
         return false;
       }
     },
-    [baseOptions, name],
+    [name],
   );
 
   const exists = useMemo(() => {

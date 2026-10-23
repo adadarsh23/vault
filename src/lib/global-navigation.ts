@@ -25,6 +25,8 @@ export const GLOBAL_NAVIGABLE_TYPES: VaultItem['type'][] = [
   'file',
 ];
 
+export const GLOBAL_NAVIGABLE_TYPES_SET = new Set(GLOBAL_NAVIGABLE_TYPES);
+
 export const GLOBAL_NAVIGATION_EVENT = 'vault:global-navigate-to-item';
 
 export const mapItemTypeToTab = (type: VaultItem['type']): string => {
@@ -73,9 +75,11 @@ export const mapItemTypeToTab = (type: VaultItem['type']): string => {
 };
 
 export const requestGlobalItemNavigation = (item: VaultItem) => {
-  window.dispatchEvent(
-    new CustomEvent<VaultItem>(GLOBAL_NAVIGATION_EVENT, {
-      detail: item,
-    }),
-  );
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent<VaultItem>(GLOBAL_NAVIGATION_EVENT, {
+        detail: item,
+      }),
+    );
+  }
 };

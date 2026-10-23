@@ -75,8 +75,8 @@ const Gutter = memo<GutterProps>(({ lineNumbers, activeLine }) => {
 
 Gutter.displayName = 'Gutter';
 
-export const NoteEditorTextarea = forwardRef<HTMLTextAreaElement, NoteEditorTextareaProps>(
-  (props, ref) => {
+export const NoteEditorTextarea = memo(
+  forwardRef<HTMLTextAreaElement, NoteEditorTextareaProps>((props, ref) => {
     const {
       noteId,
       content,
@@ -314,7 +314,7 @@ export const NoteEditorTextarea = forwardRef<HTMLTextAreaElement, NoteEditorText
         />
       </div>
     );
-  },
+  }),
 );
 
 NoteEditorTextarea.displayName = 'NoteEditorTextarea';

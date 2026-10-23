@@ -2,35 +2,35 @@ import { getOrCreateCryptoKey, AES_GCM_IV_LENGTH, AES_GCM_AAD } from './cryptoPr
 import { detectMimeTypeFromBytes } from './encryption';
 import { createTrackedBlobUrl } from './blobRegistry';
 
+const toArrayBuffer = (value: Uint8Array): ArrayBuffer =>
+  value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer;
+
 async function decryptBlock(
   cryptoKey: CryptoKey,
   iv: Uint8Array,
   ciphertext: Uint8Array,
 ): Promise<ArrayBuffer> {
-  const ivBuffer = iv.buffer.slice(iv.byteOffset, iv.byteOffset + iv.byteLength);
-  const cipherBuffer = ciphertext.buffer.slice(
-    ciphertext.byteOffset,
-    ciphertext.byteOffset + ciphertext.byteLength,
-  );
+  const ivBuffer = toArrayBuffer(iv);
+  const cipherBuffer = toArrayBuffer(ciphertext);
 
   try {
     return await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
-        iv: ivBuffer as BufferSource,
-        additionalData: AES_GCM_AAD.buffer as ArrayBuffer,
+        iv: ivBuffer,
+        additionalData: toArrayBuffer(AES_GCM_AAD),
       },
       cryptoKey,
-      cipherBuffer as BufferSource,
+      cipherBuffer,
     );
   } catch {
     return await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
-        iv: ivBuffer as BufferSource,
+        iv: ivBuffer,
       },
       cryptoKey,
-      cipherBuffer as BufferSource,
+      cipherBuffer,
     );
   }
 }

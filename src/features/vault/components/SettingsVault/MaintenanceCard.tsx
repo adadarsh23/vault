@@ -124,8 +124,14 @@ export const MaintenanceCard: React.FC<MaintenanceCardProps> = memo(
         userAgent: navigator.userAgent,
       };
       if (navigator.clipboard?.writeText) {
-        void navigator.clipboard.writeText(JSON.stringify(diagInfo, null, 2));
-        toast.success('Diagnostic details copied to clipboard');
+        navigator.clipboard
+          .writeText(JSON.stringify(diagInfo, null, 2))
+          .then(() => {
+            toast.success('Diagnostic details copied to clipboard');
+          })
+          .catch(() => {
+            toast.info('Diagnostics: ' + JSON.stringify(diagInfo));
+          });
       } else {
         toast.info('Diagnostics: ' + JSON.stringify(diagInfo));
       }

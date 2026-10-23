@@ -35,6 +35,10 @@ export const setActivitySyncHandler = (handler: (() => void) | null) => {
 };
 
 export const triggerActivitySync = () => {
+  if (!activityLoggingEnabled) {
+    return;
+  }
+
   if (typeof window === 'undefined') {
     activitySyncHandler?.();
     return;

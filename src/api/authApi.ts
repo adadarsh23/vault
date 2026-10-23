@@ -1,9 +1,11 @@
 import apiClient, { ApiResponse } from './apiClient';
 
-type AuthUser = {
+export type AuthUser = {
   id?: string;
   userId?: string;
   username?: string;
+  email?: string;
+  role?: string;
   [key: string]: unknown;
 };
 
@@ -37,6 +39,31 @@ export interface LogoutPayload {
 }
 
 export type AuthProfilePayload = Record<string, unknown>;
+
+export interface CheckUsernameResponse {
+  available: boolean;
+  exists?: boolean;
+  message?: string;
+}
+
+export interface SaltResponse {
+  salt: string;
+  pqcSalt?: string;
+  iterations?: number;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword?: string;
+  newPassword?: string;
+  masterKey?: string;
+  oldMasterKey?: string;
+  [key: string]: unknown;
+}
+
+export interface RevokeSessionsPayload {
+  sessionIds?: string[];
+  allOthers?: boolean;
+}
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -93,6 +120,90 @@ export const authApi = {
 
   refreshSession: async (): Promise<ApiResponse<AuthSessionPayload>> => {
     const { data } = await apiClient.post<ApiResponse<AuthSessionPayload>>('/auth/refresh');
+    return data;
+  },
+
+  checkUsername: async (username: string): Promise<ApiResponse<CheckUsernameResponse>> => {
+    const validUsername = assertNonEmptyString(username, 'username');
+    const { data } = await apiClient.get<ApiResponse<CheckUsernameResponse>>(
+      '/auth/username-check',
+      {
+        params: { username: validUsername },
+      },
+    );
+    return data;
+  },
+
+  getSalt: async (username: string): Promise<ApiResponse<SaltResponse>> => {
+    const validUsername = assertNonEmptyString(username, 'username');
+    const { data } = await apiClient.get<ApiResponse<SaltResponse>>('/auth/salt', {
+      params: { username: validUsername },
+    });
+    return data;
+  },
+
+  checkSession: async (): Promise<
+    ApiResponse<{ valid: boolean; active?: boolean; user?: AuthUser }>
+  > => {
+    const { data } =
+      await apiClient.get<ApiResponse<{ valid: boolean; active?: boolean; user?: AuthUser }>>(
+        '/auth/session-check',
+      );
+    return data;
+  },
+
+  revokeSessions: async (
+    payload: RevokeSessionsPayload,
+  ): Promise<ApiResponse<{ success: boolean; revokedCount?: number }>> => {
+    if (!isPlainObject(payload)) {
+      throw new TypeError('payload must be an object.');
+    }
+    const { data } = await apiClient.post<ApiResponse<{ success: boolean; revokedCount?: number }>>(
+      '/auth/sessions/revoke',
+      payload,
+    );
+    return data;
+  },
+
+  updateDeviceName: async (
+    deviceId: string,
+    deviceName: string,
+  ): Promise<ApiResponse<{ success: boolean }>> => {
+    const validDeviceId = assertNonEmptyString(deviceId, 'deviceId');
+    const validDeviceName = assertNonEmptyString(deviceName, 'deviceName');
+    const { data } = await apiClient.post<ApiResponse<{ success: boolean }>>(
+      '/auth/sessions/device-name',
+      {
+        deviceId: validDeviceId,
+        deviceName: validDeviceName,
+      },
+    );
+    return data;
+  },
+
+  updateProfile: async (
+    profile: Record<string, unknown>,
+  ): Promise<ApiResponse<AuthProfilePayload>> => {
+    if (!isPlainObject(profile)) {
+      throw new TypeError('profile must be an object.');
+    }
+    const { data } = await apiClient.post<ApiResponse<AuthProfilePayload>>(
+      '/auth/profile',
+      profile,
+    );
+    return data;
+  },
+
+  changePassword: async (
+    payload: ChangePasswordPayload,
+  ): Promise<ApiResponse<{ success: boolean; message?: string }>> => {
+    if (!isPlainObject(payload)) {
+      throw new TypeError('payload must be an object.');
+    }
+    const { data } = await apiClient.post<ApiResponse<{ success: boolean; message?: string }>>(
+      '/auth/change-password',
+      payload,
+    );
     return data;
   },
 };

@@ -89,15 +89,16 @@ export const getItemRawBytes = (item: VaultItem): number => {
     ) {
       return 0;
     }
-    return new TextEncoder().encode(item.content).length;
+    return textEncoder.encode(item.content).length;
   }
 
   return 0;
 };
 
+const textEncoder = new TextEncoder();
+
 export const estimateVaultItemBytes = (item: VaultItem) => {
   if (!item) return 0;
-  const textEncoder = new TextEncoder();
   const metadataSize = (() => {
     try {
       return textEncoder.encode(JSON.stringify(item.metadata || {})).length;

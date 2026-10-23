@@ -171,6 +171,37 @@ const getLayerStatusTheme = (status?: string) => {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+const LiveClock: React.FC = React.memo(() => {
+  const [time, setTime] = React.useState(() => new Date());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-2 font-mono tabular-nums">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-text/40 whitespace-nowrap">
+        {time.toLocaleDateString(undefined, {
+          weekday: 'short',
+          day: '2-digit',
+          month: 'short',
+        })}
+      </span>
+      <span className="text-text/20">|</span>
+      <span className="text-sm font-bold text-text min-w-[95px] text-left">
+        {time.toLocaleTimeString(undefined, {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        })}
+      </span>
+    </div>
+  );
+});
+LiveClock.displayName = 'LiveClock';
+
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   username,
   securityScore,
@@ -178,7 +209,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onToggleHealth,
   onOpenProfileCard,
 }) => {
-  const [currentTime, setCurrentTime] = React.useState(new Date());
   const [expandedLayers, setExpandedLayers] = React.useState<Record<string, boolean>>({});
   const [showAllDetails, setShowAllDetails] = React.useState(false);
 
@@ -215,11 +245,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     }
   };
 
-  React.useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   return (
     <div className="space-y-6">
       <div className="relative flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
@@ -251,29 +276,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </div>
 
           {/* DATE + TIME CARD */}
-          <div className="flex items-center gap-2 font-mono tabular-nums">
-            {/* DATE */}
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-text/40 whitespace-nowrap">
-              {currentTime.toLocaleDateString('en-IN', {
-                weekday: 'short',
-                day: '2-digit',
-                month: 'short',
-              })}
-            </span>
-
-            {/* SEPARATOR */}
-            <span className="text-text/20">|</span>
-
-            {/* TIME */}
-            <span className="text-sm font-bold text-text min-w-[95px] text-left">
-              {currentTime.toLocaleTimeString('en-IN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false,
-              })}
-            </span>
-          </div>
+          <LiveClock />
         </div>
 
         {/* RIGHT SIDE BUTTON */}

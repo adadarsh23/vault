@@ -14,33 +14,43 @@ export const useVaultItems = (
   const items = useVaultStore((state) => state.items);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const types = useMemo(
-    () => Array.from(new Set(Array.isArray(itemType) ? itemType : [itemType])),
-    [itemType],
+  const typeKey = Array.isArray(itemType) ? itemType.slice().sort().join(',') : itemType;
+
+  const typeSet = useMemo(
+    () => new Set(Array.isArray(itemType) ? itemType : [itemType]),
+    [typeKey], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  const typedItems = useMemo(() => items.filter((i) => types.includes(i.type)), [items, types]);
+  const typedItems = useMemo(() => items.filter((i) => typeSet.has(i.type)), [items, typeSet]);
 
   const normalizedSearchQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery]);
 
   const filteredItems = useMemo(() => {
+    const isSearching = normalizedSearchQuery.length > 0;
+
     const filtered = typedItems.filter((m) => {
+      // Standard folder filtering first (fast path)
+      if (currentFolder !== null) {
+        const folder = typeof m.folder === 'string' ? m.folder : null;
+        if (folder !== currentFolder) return false;
+      }
+
+      // If not searching, passes folder check
+      if (!isSearching) return true;
+
+      // Search query check: title first, transcript fallback
+      if (normalizeTitle(m.title).includes(normalizedSearchQuery)) {
+        return true;
+      }
+
       const transcript =
         typeof m.metadata?.transcript === 'string' ? m.metadata.transcript.toLowerCase() : '';
-      const matchesTranscript = transcript.includes(normalizedSearchQuery);
-      const matchesSearch =
-        normalizedSearchQuery.length === 0 ||
-        normalizeTitle(m.title).includes(normalizedSearchQuery) ||
-        matchesTranscript;
-
-      // If currentFolder is null, show absolutely everything of this type (All View)
-      if (currentFolder === null) return matchesSearch;
-
-      // Standard folder filtering
-      const folder = typeof m.folder === 'string' ? m.folder : null;
-      const matchesFolder = folder === currentFolder;
-      return matchesSearch && matchesFolder;
+      return transcript.includes(normalizedSearchQuery);
     });
+
+    if (filtered.length <= 1) {
+      return filtered;
+    }
 
     try {
       return sortPinnedFirst(filtered);
@@ -50,10 +60,13 @@ export const useVaultItems = (
     }
   }, [typedItems, normalizedSearchQuery, currentFolder]);
 
-  return {
-    searchQuery,
-    setSearchQuery,
-    typedItems,
-    filteredItems,
-  };
+  return useMemo(
+    () => ({
+      searchQuery,
+      setSearchQuery,
+      typedItems,
+      filteredItems,
+    }),
+    [filteredItems, searchQuery, typedItems],
+  );
 };

@@ -15,7 +15,7 @@ export interface MiniPlayerVideoItem {
   allowDownload?: boolean;
 }
 
-interface VideoMiniPlayerState {
+export interface VideoMiniPlayerState {
   activeVideo: MiniPlayerVideoItem | null;
   isFloating: boolean;
   isExpanded: boolean;
@@ -35,8 +35,13 @@ interface VideoMiniPlayerState {
   minimizeToFloating: () => void;
   restoreToFull: () => void;
   closeMiniPlayer: () => void;
+  resetStore: () => void;
   setFloating: (floating: boolean) => void;
   setExpanded: (expanded: boolean) => void;
+  togglePlay: () => void;
+  toggleMute: () => void;
+  seekTo: (seconds: number) => void;
+  setPlaybackRate: (rate: number) => void;
   updatePlaybackState: (state: {
     currentTime?: number;
     duration?: number;
@@ -45,6 +50,11 @@ interface VideoMiniPlayerState {
     playbackRate?: number;
   }) => void;
 }
+
+const sanitizeNumber = (val: unknown, fallback: number, min = 0): number => {
+  const num = typeof val === 'number' ? val : Number(val);
+  return Number.isFinite(num) && num >= min ? num : fallback;
+};
 
 export const useVideoMiniPlayerStore = create<VideoMiniPlayerState>((set, get) => ({
   activeVideo: null,
@@ -57,16 +67,27 @@ export const useVideoMiniPlayerStore = create<VideoMiniPlayerState>((set, get) =
   playbackRate: 1,
 
   playVideo: (video) => {
+    if (!video || !video.src) return;
+    const initialTime = sanitizeNumber(video.currentTime, 0);
+    const initialDuration = sanitizeNumber(video.duration, 0);
+    const initialRate = sanitizeNumber(video.playbackRate, 1, 0.1);
+    const initialPlaying = video.isPlaying ?? true;
+    const initialMuted = Boolean(video.isMuted);
+
     set({
       activeVideo: {
         ...video,
-        currentTime: video.currentTime ?? 0,
-        isPlaying: video.isPlaying ?? true,
+        currentTime: initialTime,
+        duration: initialDuration,
+        isPlaying: initialPlaying,
+        isMuted: initialMuted,
+        playbackRate: initialRate,
       },
-      currentTime: video.currentTime ?? 0,
-      isPlaying: video.isPlaying ?? true,
-      isMuted: video.isMuted ?? false,
-      playbackRate: video.playbackRate ?? 1,
+      currentTime: initialTime,
+      duration: initialDuration,
+      isPlaying: initialPlaying,
+      isMuted: initialMuted,
+      playbackRate: initialRate,
     });
   },
 
@@ -94,31 +115,72 @@ export const useVideoMiniPlayerStore = create<VideoMiniPlayerState>((set, get) =
       isFloating: false,
       isExpanded: false,
       currentTime: 0,
+      duration: 0,
       isPlaying: false,
+      isMuted: false,
+      playbackRate: 1,
     });
+  },
+
+  resetStore: () => {
+    get().closeMiniPlayer();
   },
 
   setFloating: (floating) => {
     set({
-      isFloating: floating,
+      isFloating: Boolean(floating),
       ...(floating ? { isExpanded: false } : {}),
     });
   },
 
   setExpanded: (expanded) => {
     set({
-      isExpanded: expanded,
+      isExpanded: Boolean(expanded),
       ...(expanded ? { isFloating: false } : {}),
     });
   },
 
+  togglePlay: () => {
+    const { activeVideo, isPlaying } = get();
+    if (!activeVideo) return;
+    set({ isPlaying: !isPlaying });
+  },
+
+  toggleMute: () => {
+    const { activeVideo, isMuted } = get();
+    if (!activeVideo) return;
+    set({ isMuted: !isMuted });
+  },
+
+  seekTo: (seconds: number) => {
+    const { activeVideo, duration } = get();
+    if (!activeVideo) return;
+    const target = Math.max(0, duration > 0 ? Math.min(seconds, duration) : Math.max(0, seconds));
+    set({ currentTime: target });
+  },
+
+  setPlaybackRate: (rate: number) => {
+    const safeRate = sanitizeNumber(rate, 1, 0.1);
+    set({ playbackRate: safeRate });
+  },
+
   updatePlaybackState: (updates) => {
+    if (!updates || typeof updates !== 'object') return;
     set((state) => ({
-      currentTime: updates.currentTime !== undefined ? updates.currentTime : state.currentTime,
-      duration: updates.duration !== undefined ? updates.duration : state.duration,
-      isPlaying: updates.isPlaying !== undefined ? updates.isPlaying : state.isPlaying,
-      isMuted: updates.isMuted !== undefined ? updates.isMuted : state.isMuted,
-      playbackRate: updates.playbackRate !== undefined ? updates.playbackRate : state.playbackRate,
+      currentTime:
+        updates.currentTime !== undefined
+          ? sanitizeNumber(updates.currentTime, state.currentTime)
+          : state.currentTime,
+      duration:
+        updates.duration !== undefined
+          ? sanitizeNumber(updates.duration, state.duration)
+          : state.duration,
+      isPlaying: updates.isPlaying !== undefined ? Boolean(updates.isPlaying) : state.isPlaying,
+      isMuted: updates.isMuted !== undefined ? Boolean(updates.isMuted) : state.isMuted,
+      playbackRate:
+        updates.playbackRate !== undefined
+          ? sanitizeNumber(updates.playbackRate, state.playbackRate, 0.1)
+          : state.playbackRate,
     }));
   },
 }));

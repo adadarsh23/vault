@@ -116,7 +116,7 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
           setEditCompany(nextData.company);
           setEditNotes(nextData.notes);
         } catch (err) {
-          console.error('Contact Decryption Error:', err);
+          logger.error('Contact Decryption Error', { error: err });
           if (isMounted) setError(true);
         }
       };
@@ -152,14 +152,18 @@ const DecryptedContactCard: React.FC<ContactCardProps> = React.memo(
         toast.error('Phone number is required');
         return;
       }
-      await onUpdate(item.id, {
-        name: editName,
-        email: editEmail,
-        phone: editPhone,
-        company: editCompany,
-        notes: editNotes,
-      });
-      setIsEditing(false);
+      try {
+        await onUpdate(item.id, {
+          name: editName,
+          email: editEmail,
+          phone: editPhone,
+          company: editCompany,
+          notes: editNotes,
+        });
+        setIsEditing(false);
+      } catch {
+        // Error notification handled by onUpdate; preserve editing state
+      }
     };
 
     if (error) {
@@ -541,18 +545,21 @@ export const ContactsVault: React.FC = () => {
       notes: string;
     },
   ) => {
-    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
+      toast.error('Encryption key missing');
+      throw new Error('Encryption key missing');
+    }
 
     const trimmedName = updates.name.trim();
     if (!trimmedName) {
       toast.error('Contact name is required');
-      return;
+      throw new Error('Contact name is required');
     }
 
     const trimmedPhone = updates.phone.trim();
     if (!trimmedPhone) {
       toast.error('Phone number is required');
-      return;
+      throw new Error('Phone number is required');
     }
 
     try {
@@ -581,6 +588,7 @@ export const ContactsVault: React.FC = () => {
     } catch (updateErr) {
       logger.error('Failed to update contact', { error: updateErr, id });
       toast.error('Failed to update contact');
+      throw updateErr;
     }
   };
 

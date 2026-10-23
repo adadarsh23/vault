@@ -356,7 +356,7 @@ createRoot(rootElement).render(
       }}
     >
       <BrowserRouter>
-        <ScrollRestoration debug={import.meta.env.DEV} />
+        <ScrollRestoration />
         <RouteChangeTracker />
 
         <ThemeProvider>

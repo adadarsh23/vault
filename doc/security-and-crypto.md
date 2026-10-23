@@ -7,6 +7,7 @@ This document provides a technical specification of the security architecture, c
 ## 1. Zero-Knowledge Cryptographic Model
 
 Vault operates on a strict **Zero-Knowledge Architecture**:
+
 - All plaintext content (notes, passwords, files, metadata, control preferences) is encrypted client-side using authenticated symmetric ciphers.
 - The server never possesses, handles, logs, or generates encryption keys.
 - If the server database, backups, or communications channels are intercepted, adversaries obtain only indistinguishable pseudo-random ciphertext envelopes.
@@ -103,13 +104,16 @@ To protect confidential records against **Harvest Now, Decrypt Later (HNDL)** qu
 Payloads can be encrypted with authenticated **AES-256-GCM** or the high-security **`VCAS01` Multi-Cipher Cascade**:
 
 #### Standard AES-256-GCM Envelope
+
 - **Cipher**: AES-256 in Galois/Counter Mode (NIST SP 800-38D).
 - **IV Length**: 96-bit (12 bytes) fresh, random IV per record.
 - **Authentication Tag**: 128-bit authentication tag validating ciphertext integrity.
 - **Additional Authenticated Data (AAD)**: Context-bound user and item IDs bound as AAD to prevent ciphertext splicing across records or accounts.
 
 #### Dual Cascade Encryption (`VCAS01`)
+
 For ultra-critical records, data is sequentially encrypted through two independent cipher algorithms using distinct 32-byte Data Encryption Keys:
+
 1. **Outer Cipher**: Authenticated **AES-256-GCM**.
 2. **Inner Cipher**: Authenticated **ChaCha20-Poly1305** (RFC 8439).
 3. **Magic Header**: Marked with 4-byte identifier `0x56434153` (`VCAS01`).
@@ -197,6 +201,7 @@ The sentinel contains a known cryptographic token (`MAGIC_SENTINEL_TOKEN`). If A
 ## 4. Merkle Tree Tamper Detection
 
 Vault maintains a hierarchical **Merkle Tree** across all encrypted user records:
+
 - Each item's ciphertext, timestamp, and metadata form a leaf hash:
   $$\text{Leaf}_i = \text{SHA-256}(\text{ItemID} \mathbin{\Vert} \text{Ciphertext} \mathbin{\Vert} \text{UpdatedAt})$$
 - Merkle root hash is updated on every mutation and checked upon client sync.

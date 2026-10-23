@@ -123,7 +123,7 @@ export const downloadLogsFromCloud = async (): Promise<any[] | null> => {
       id: log._id,
       actionType: log.action,
       itemName: log.itemId || log.details?.itemId || 'App',
-      timestamp: new Date(log.timestamp || log.createdAt).getTime(),
+      timestamp: Date.parse(log.timestamp || log.createdAt) || Date.now(),
       userOrSessionId: log.device || log.metadata?.deviceId || 'unknown',
       sessionName: log.details?.sessionName || log.device || log.metadata?.deviceId || 'unknown',
       status: log.status === 'SUCCESS' ? 'success' : 'failure',

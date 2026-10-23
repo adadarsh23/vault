@@ -1,0 +1,8 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["metadata.json", "backups/**/metadata.json"],
+      "url": "./schemas/vault-manifest.schema.json"
+    }
+  ]
+}

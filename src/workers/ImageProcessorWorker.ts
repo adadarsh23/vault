@@ -43,9 +43,16 @@ function encode83(value: number, length: number): string {
   return result;
 }
 
-function srgbToLinear(value: number): number {
-  const v = value / 255;
-  return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+// Precomputed sRGB-to-Linear conversion table (0-255)
+// Eliminates tens of thousands of Math.pow calls per image
+const SRGB_TO_LINEAR_LUT = new Float32Array(256);
+for (let i = 0; i < 256; i++) {
+  const v = i / 255;
+  SRGB_TO_LINEAR_LUT[i] = v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+}
+
+function srgbToLinearFast(byteValue: number): number {
+  return SRGB_TO_LINEAR_LUT[byteValue & 255];
 }
 
 function linearToSrgb(value: number): number {
@@ -59,26 +66,66 @@ function signPow(val: number, exp: number): number {
   return Math.sign(val) * Math.pow(Math.abs(val), exp);
 }
 
+/**
+ * Ultra-fast BlurHash encoder with precomputed cosine matrices and linear lookups.
+ */
 function encodeBlurHash(imageData: ImageData, componentX = 4, componentY = 3): string {
   const { width, height, data } = imageData;
   const numPixels = width * height;
+  if (numPixels === 0) return 'L00000fQ00fQ00fQ00fQ';
+
+  // Pre-convert pixel channels to linear float representation once
+  const linearR = new Float32Array(numPixels);
+  const linearG = new Float32Array(numPixels);
+  const linearB = new Float32Array(numPixels);
+
+  for (let i = 0; i < numPixels; i++) {
+    const idx = i * 4;
+    linearR[i] = srgbToLinearFast(data[idx]);
+    linearG[i] = srgbToLinearFast(data[idx + 1]);
+    linearB[i] = srgbToLinearFast(data[idx + 2]);
+  }
+
+  // Precompute 1D cosine basis tables for X and Y components
+  const cosX: Float64Array[] = [];
+  for (let x = 0; x < componentX; x++) {
+    const table = new Float64Array(width);
+    for (let px = 0; px < width; px++) {
+      table[px] = Math.cos((Math.PI * x * px) / width);
+    }
+    cosX.push(table);
+  }
+
+  const cosY: Float64Array[] = [];
+  for (let y = 0; y < componentY; y++) {
+    const table = new Float64Array(height);
+    for (let py = 0; py < height; py++) {
+      table[py] = Math.cos((Math.PI * y * py) / height);
+    }
+    cosY.push(table);
+  }
+
   const factors: Array<[number, number, number]> = [];
 
   for (let y = 0; y < componentY; y++) {
+    const tableY = cosY[y];
     for (let x = 0; x < componentX; x++) {
-      let r = 0,
-        g = 0,
-        b = 0;
+      const tableX = cosX[x];
+      let r = 0;
+      let g = 0;
+      let b = 0;
       const normalisation = x === 0 && y === 0 ? 1 : 2;
 
-      for (let i = 0; i < numPixels; i++) {
-        const px = i % width;
-        const py = Math.floor(i / width);
-        const basis = Math.cos((Math.PI * x * px) / width) * Math.cos((Math.PI * y * py) / height);
-        const idx = i * 4;
-        r += basis * srgbToLinear(data[idx]);
-        g += basis * srgbToLinear(data[idx + 1]);
-        b += basis * srgbToLinear(data[idx + 2]);
+      let pixelIdx = 0;
+      for (let py = 0; py < height; py++) {
+        const basisY = tableY[py];
+        for (let px = 0; px < width; px++) {
+          const basis = tableX[px] * basisY;
+          r += basis * linearR[pixelIdx];
+          g += basis * linearG[pixelIdx];
+          b += basis * linearB[pixelIdx];
+          pixelIdx++;
+        }
       }
 
       const scale = normalisation / numPixels;
@@ -141,7 +188,11 @@ function validateMagicBytes(
   buffer: ArrayBuffer,
   mimeType: string,
 ): { valid: boolean; detectedFormat: string } {
-  const bytes = new Uint8Array(buffer.slice(0, 32));
+  if (!buffer || buffer.byteLength < 4) {
+    return { valid: false, detectedFormat: 'empty-or-truncated' };
+  }
+
+  const bytes = new Uint8Array(buffer, 0, Math.min(32, buffer.byteLength));
 
   // JPEG: FF D8 FF
   if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
@@ -150,6 +201,7 @@ function validateMagicBytes(
 
   // PNG: 89 50 4E 47 0D 0A 1A 0A
   if (
+    bytes.length >= 8 &&
     bytes[0] === 0x89 &&
     bytes[1] === 0x50 &&
     bytes[2] === 0x4e &&
@@ -164,6 +216,7 @@ function validateMagicBytes(
 
   // GIF: GIF87a or GIF89a
   if (
+    bytes.length >= 6 &&
     bytes[0] === 0x47 &&
     bytes[1] === 0x49 &&
     bytes[2] === 0x46 &&
@@ -175,12 +228,13 @@ function validateMagicBytes(
   }
 
   // BMP / DIB: BM
-  if (bytes[0] === 0x42 && bytes[1] === 0x4d) {
+  if (bytes.length >= 2 && bytes[0] === 0x42 && bytes[1] === 0x4d) {
     return { valid: true, detectedFormat: 'image/bmp' };
   }
 
   // WebP: RIFF ... WEBP (bytes 0-3 = 'RIFF', bytes 8-11 = 'WEBP')
   if (
+    bytes.length >= 12 &&
     bytes[0] === 0x52 &&
     bytes[1] === 0x49 &&
     bytes[2] === 0x46 &&
@@ -207,7 +261,13 @@ function validateMagicBytes(
   }
 
   // HEIC / HEIF / AVIF / CR3: ftyp box at offset 4
-  if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+  if (
+    bytes.length >= 12 &&
+    bytes[4] === 0x66 &&
+    bytes[5] === 0x74 &&
+    bytes[6] === 0x79 &&
+    bytes[7] === 0x70
+  ) {
     const brand = String.fromCharCode(...bytes.slice(8, 12)).toLowerCase();
     if (['avif', 'avis'].some((b) => brand.startsWith(b))) {
       return { valid: true, detectedFormat: 'image/avif' };
@@ -235,7 +295,8 @@ function validateMagicBytes(
 
   // JPEG 2000 (JP2, J2K)
   if (
-    (bytes[0] === 0x00 &&
+    (bytes.length >= 6 &&
+      bytes[0] === 0x00 &&
       bytes[1] === 0x00 &&
       bytes[2] === 0x00 &&
       bytes[3] === 0x0c &&
@@ -277,14 +338,20 @@ function validateMagicBytes(
   }
 
   // SVG: Inspect text content for <svg tag
-  const textDecoder = new TextDecoder('utf-8');
-  const sampleText = textDecoder.decode(buffer.slice(0, 1024)).trim();
-  if (sampleText.toLowerCase().includes('<svg') || sampleText.toLowerCase().startsWith('<?xml')) {
-    return { valid: true, detectedFormat: 'image/svg+xml' };
+  try {
+    const textDecoder = new TextDecoder('utf-8');
+    const sampleText = textDecoder
+      .decode(new Uint8Array(buffer, 0, Math.min(1024, buffer.byteLength)))
+      .trim();
+    if (sampleText.toLowerCase().includes('<svg') || sampleText.toLowerCase().startsWith('<?xml')) {
+      return { valid: true, detectedFormat: 'image/svg+xml' };
+    }
+  } catch {
+    // Non-decodable text
   }
 
   // Fallback: If mimeType is an image format, allow if buffer isn't completely zeroed out
-  if (mimeType.startsWith('image/')) {
+  if (mimeType && mimeType.startsWith('image/')) {
     return { valid: true, detectedFormat: mimeType };
   }
 
@@ -292,24 +359,39 @@ function validateMagicBytes(
 }
 
 /**
- * Sanitizes SVG code if present to prevent script injection before rendering
+ * Sanitizes SVG code to prevent script execution and XML entity expansion attacks
  */
 function sanitizeSvgString(svgCode: string): string {
-  // Strip <script> elements and inline event handlers
   return svgCode
+    .replace(/<!DOCTYPE[\s\S]*?>/gi, '')
+    .replace(/<!ENTITY[\s\S]*?>/gi, '')
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/on\w+\s*=\s*(['"]).*?\1/gi, '')
     .replace(/javascript:/gi, 'forbidden:');
 }
 
 self.onmessage = async (event: MessageEvent<ImageProcessorRequest>) => {
+  if (!event.data || typeof event.data !== 'object') {
+    return;
+  }
+
   const { id, type, fileBuffer, mimeType, targetSize = 400, quality = 0.78 } = event.data;
 
   if (type !== 'PROCESS_IMAGE') {
     return;
   }
 
+  let imageBitmap: ImageBitmap | null = null;
+  let canvas: OffscreenCanvas | null = null;
+  let ctx: OffscreenCanvasRenderingContext2D | null = null;
+  let blurCanvas: OffscreenCanvas | null = null;
+  let blurCtx: OffscreenCanvasRenderingContext2D | null = null;
+
   try {
+    if (!fileBuffer || !(fileBuffer instanceof ArrayBuffer) || fileBuffer.byteLength === 0) {
+      throw new Error('Image fileBuffer is invalid or empty.');
+    }
+
     // 1. Magic Byte Validation
     const magicValidation = validateMagicBytes(fileBuffer, mimeType);
     if (!magicValidation.valid) {
@@ -334,7 +416,6 @@ self.onmessage = async (event: MessageEvent<ImageProcessorRequest>) => {
     }
 
     // Create ImageBitmap to measure dimensions & check decompression bomb limits
-    let imageBitmap: ImageBitmap;
     try {
       imageBitmap = await createImageBitmap(imageSource);
     } catch (err) {
@@ -350,9 +431,10 @@ self.onmessage = async (event: MessageEvent<ImageProcessorRequest>) => {
     const { width, height } = imageBitmap;
     const totalPixels = width * height;
 
-    // 2. Decompression Bomb Protection (SLA: Max 4096x4096px or 25 MP)
-    if (width > 4096 || height > 4096 || totalPixels > 25000000) {
-      imageBitmap.close(); // Clean up memory immediately
+    // 2. Decompression Bomb & Bounds Protection (SLA: Max 4096x4096px or 25 MP)
+    if (width <= 0 || height <= 0 || width > 4096 || height > 4096 || totalPixels > 25000000) {
+      imageBitmap.close();
+      imageBitmap = null;
       const response: ImageProcessorErrorResponse = {
         id,
         ok: false,
@@ -363,19 +445,20 @@ self.onmessage = async (event: MessageEvent<ImageProcessorRequest>) => {
     }
 
     // 3. Smart 1:1 Aspect Ratio Center-Crop Calculation
+    const safeTargetSize = Math.max(
+      16,
+      Math.min(2048, Number.isFinite(targetSize) ? Math.round(targetSize) : 400),
+    );
     const minDim = Math.min(width, height);
     const sx = (width - minDim) / 2;
     const sy = (height - minDim) / 2;
-    const finalSize = Math.min(targetSize, minDim);
+    const finalSize = Math.min(safeTargetSize, minDim);
 
     // 4. OffscreenCanvas Processing
-    let canvas: OffscreenCanvas | null = new OffscreenCanvas(finalSize, finalSize);
-    let ctx: OffscreenCanvasRenderingContext2D | null = canvas.getContext('2d', {
-      willReadFrequently: true,
-    });
+    canvas = new OffscreenCanvas(finalSize, finalSize);
+    ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     if (!ctx) {
-      imageBitmap.close();
       throw new Error('Failed to obtain OffscreenCanvas 2D context.');
     }
 
@@ -383,33 +466,33 @@ self.onmessage = async (event: MessageEvent<ImageProcessorRequest>) => {
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(imageBitmap, sx, sy, minDim, minDim, 0, 0, finalSize, finalSize);
 
-    // Close the original bitmap source to free up memory
+    // Close the original bitmap source immediately to release decoded image memory
     imageBitmap.close();
+    imageBitmap = null;
 
     // 5. BlurHash Micro-Placeholder Generation (32x32 downsample)
     let blurHash = 'L00000fQ00fQ00fQ00fQ'; // Fallback
     try {
-      let blurCanvas: OffscreenCanvas | null = new OffscreenCanvas(32, 32);
-      let blurCtx: OffscreenCanvasRenderingContext2D | null = blurCanvas.getContext('2d', {
-        willReadFrequently: true,
-      });
+      blurCanvas = new OffscreenCanvas(32, 32);
+      blurCtx = blurCanvas.getContext('2d', { willReadFrequently: true });
       if (blurCtx) {
         blurCtx.drawImage(canvas, 0, 0, 32, 32);
         const blurData = blurCtx.getImageData(0, 0, 32, 32);
         blurHash = encodeBlurHash(blurData, 4, 3);
       }
+    } catch {
+      // Non-fatal fallback for blurhash calculation
+    } finally {
       if (blurCanvas) {
         blurCanvas.width = 0;
         blurCanvas.height = 0;
+        blurCanvas = null;
       }
-      blurCanvas = null;
       blurCtx = null;
-    } catch {
-      // Non-fatal fallback for blurhash calculation
     }
 
     // 6. AVIF Encoding with WebP Fallback & Size Constraint SLA (< 45 KB)
-    let currentQuality = quality;
+    let currentQuality = Math.max(0.1, Math.min(1.0, Number.isFinite(quality) ? quality : 0.78));
     let outputBlob: Blob | null = null;
     let targetMime = 'image/avif';
 
@@ -428,12 +511,28 @@ self.onmessage = async (event: MessageEvent<ImageProcessorRequest>) => {
 
     // Ensure output filesize < 45 KB (46,080 bytes)
     const MAX_FILE_SIZE = 45 * 1024; // 45 KB
-    while (outputBlob.size > MAX_FILE_SIZE && currentQuality > 0.3) {
-      currentQuality -= 0.1;
-      outputBlob = await canvas.convertToBlob({ type: targetMime, quality: currentQuality });
+    let iterations = 0;
+    while (
+      outputBlob &&
+      outputBlob.size > MAX_FILE_SIZE &&
+      currentQuality > 0.3 &&
+      iterations < 5
+    ) {
+      iterations++;
+      currentQuality = Math.round((currentQuality - 0.1) * 100) / 100;
+      const nextBlob = await canvas.convertToBlob({ type: targetMime, quality: currentQuality });
+      if (nextBlob && nextBlob.size > 0) {
+        outputBlob = nextBlob;
+      } else {
+        break;
+      }
     }
 
-    // 7. Explicit Memory Cleanup & Canvas Release
+    if (!outputBlob || outputBlob.size === 0) {
+      throw new Error('Failed to encode output image blob.');
+    }
+
+    // Explicit Memory Cleanup & Canvas Release
     canvas.width = 0;
     canvas.height = 0;
     canvas = null;
@@ -462,5 +561,44 @@ self.onmessage = async (event: MessageEvent<ImageProcessorRequest>) => {
       error: error instanceof Error ? error.message : 'Unknown image processing error',
     };
     self.postMessage(response);
+  } finally {
+    // Guarantee memory release on all return paths
+    if (imageBitmap) {
+      imageBitmap.close();
+      imageBitmap = null;
+    }
+    if (canvas) {
+      canvas.width = 0;
+      canvas.height = 0;
+      canvas = null;
+    }
+    ctx = null;
+    if (blurCanvas) {
+      blurCanvas.width = 0;
+      blurCanvas.height = 0;
+      blurCanvas = null;
+    }
+    blurCtx = null;
   }
 };
+
+if (typeof self !== 'undefined' && typeof self.addEventListener === 'function') {
+  self.addEventListener('error', (event: Event) => {
+    const errorEvent = event as ErrorEvent;
+    self.postMessage({
+      id: 'unknown',
+      ok: false,
+      error: errorEvent.message || 'Image processor worker unexpected runtime error',
+    });
+  });
+
+  self.addEventListener('unhandledrejection', (event: Event) => {
+    const rejectionEvent = event as PromiseRejectionEvent;
+    self.postMessage({
+      id: 'unknown',
+      ok: false,
+      error:
+        rejectionEvent.reason?.message || 'Unhandled promise rejection in image processor worker',
+    });
+  });
+}

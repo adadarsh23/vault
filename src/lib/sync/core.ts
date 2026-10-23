@@ -445,16 +445,26 @@ export const fetchWithRetry = async function fetchWithRetry(
     : new Error(`${context}: request failed after retries`);
 };
 
+const vaultIdCache = new Map<string, string>();
+const vaultIdEncoder = new TextEncoder();
+
 /**
  * Derives a deterministic vault identifier from the master key.
  */
 export const getVaultId = async (masterKey: string): Promise<string> => {
   if (!masterKey) throw new Error('Master key is required to generate vault ID');
-  const enc = new TextEncoder();
-  const data = enc.encode(masterKey + 'vault-identifier-mongodb-v1');
+  const cached = vaultIdCache.get(masterKey);
+  if (cached) return cached;
+
+  const data = vaultIdEncoder.encode(masterKey + 'vault-identifier-mongodb-v1');
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  const hashArray = new Uint8Array(hashBuffer);
+  let hex = '';
+  for (let i = 0; i < hashArray.length; i++) {
+    hex += hashArray[i].toString(16).padStart(2, '0');
+  }
+  vaultIdCache.set(masterKey, hex);
+  return hex;
 };
 
 /**

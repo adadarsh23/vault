@@ -23,6 +23,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -455,6 +456,9 @@ export const TodoVault: React.FC = () => {
   const [savingTodoIds, setSavingTodoIds] = useState<string[]>([]);
   const [todoPayloads, setTodoPayloads] = useState<Record<string, TodoPayload>>({});
   const [failedTodoIds, setFailedTodoIds] = useState<Record<string, true>>({});
+  const decryptedCacheRef = React.useRef<Map<string, { content: unknown; payload: TodoPayload }>>(
+    new Map(),
+  );
 
   const todos = useMemo(() => items.filter((item) => item.type === 'todo'), [items]);
 
@@ -478,6 +482,7 @@ export const TodoVault: React.FC = () => {
 
   useEffect(() => {
     if (!masterKey && !useVaultStore.getState().isDecoyMode) {
+      decryptedCacheRef.current.clear();
       setTodoPayloads({});
       setFailedTodoIds({});
       return;
@@ -491,6 +496,12 @@ export const TodoVault: React.FC = () => {
 
       await Promise.all(
         todos.map(async (item) => {
+          const cached = decryptedCacheRef.current.get(item.id);
+          if (cached && cached.content === item.content) {
+            nextPayloads[item.id] = cached.payload;
+            return;
+          }
+
           try {
             const encryptedContent = getStringContent(item.content);
             const decrypted = await decryptData(encryptedContent || '', masterKey);
@@ -509,6 +520,7 @@ export const TodoVault: React.FC = () => {
               return;
             }
 
+            decryptedCacheRef.current.set(item.id, { content: item.content, payload });
             nextPayloads[item.id] = payload;
           } catch {
             nextFailures[item.id] = true;
@@ -644,6 +656,7 @@ export const TodoVault: React.FC = () => {
         ...prev,
         [item.id]: nextPayload,
       }));
+      decryptedCacheRef.current.set(item.id, { content: encryptedData, payload: nextPayload });
 
       if (options?.closeEditor) {
         setEditingId(null);
@@ -651,7 +664,8 @@ export const TodoVault: React.FC = () => {
       }
 
       return true;
-    } catch {
+    } catch (error) {
+      logger.error('Failed to update todo', { error, todoId: item.id });
       toast.error('Failed to update todo');
       return false;
     } finally {
@@ -698,7 +712,8 @@ export const TodoVault: React.FC = () => {
         status: 'success',
       });
       resetCreateForm();
-    } catch {
+    } catch (error) {
+      logger.error('Failed to save todo', { error });
       toast.error('Failed to save todo');
     } finally {
       setIsSaving(false);
@@ -735,7 +750,8 @@ export const TodoVault: React.FC = () => {
         description: 'Todo deleted',
         status: 'success',
       });
-    } catch {
+    } catch (error) {
+      logger.error('Failed to delete todo', { error, todoId: item.id });
       toast.error('Failed to delete todo');
     }
   };

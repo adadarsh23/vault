@@ -1,4 +1,5 @@
 import React from 'react';
+import { logger } from '../../../../lib/logger';
 
 interface ErrorBoundaryProps {
   fallback: React.ReactNode;
@@ -20,7 +21,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Media Error:', error, errorInfo);
+    logger.error('Media Error Boundary caught error', { error, errorInfo });
   }
 
   override render() {

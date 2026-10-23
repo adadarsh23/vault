@@ -13,6 +13,7 @@ import {
 } from '../../lib/auth-api';
 
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import {
   getErrorMessage,
   getSyncHealthLabel,
@@ -147,7 +148,9 @@ export const SettingsVault: React.FC<SettingsVaultProps> = memo(
       } catch (error: unknown) {
         setProfile(null);
         setSessionsCount(0);
-        toast.error(getErrorMessage(error, 'Failed to load account sessions'));
+        if (typeof navigator === 'undefined' || navigator.onLine !== false) {
+          logger.warn('Failed to load account sessions', { error });
+        }
       } finally {
         setIsSessionActionLoading(false);
       }

@@ -56,16 +56,19 @@ function clearTusSession(key: string): void {
   }
 }
 
+const toArrayBuffer = (value: Uint8Array): ArrayBuffer =>
+  value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer;
+
 async function encryptChunk(chunkData: Uint8Array, cryptoKey: CryptoKey): Promise<Uint8Array> {
   const iv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
   const ciphertext = await crypto.subtle.encrypt(
     {
       name: 'AES-GCM',
-      iv: iv.buffer as ArrayBuffer,
-      additionalData: AES_GCM_AAD.buffer as ArrayBuffer,
+      iv: toArrayBuffer(iv),
+      additionalData: toArrayBuffer(AES_GCM_AAD),
     },
     cryptoKey,
-    chunkData.buffer as ArrayBuffer,
+    toArrayBuffer(chunkData),
   );
 
   const encrypted = new Uint8Array(iv.length + ciphertext.byteLength);

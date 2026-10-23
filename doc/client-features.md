@@ -19,6 +19,7 @@ flowchart TD
 ```
 
 ### Key Capabilities:
+
 - **Markdown Shortcuts**: Type `# `, `**bold**`, `> `, `- [ ]` to trigger formatting instantly.
 - **Rich Extensions**: Highlight, inline images, tables with cell manipulation, text alignments, task lists, and code blocks.
 - **Client-Side Autosave**: Changes are encrypted in a dedicated Web Worker to prevent UI stutter, saving immediately to IndexedDB with background cloud sync.
@@ -40,6 +41,7 @@ stateDiagram-v2
 ```
 
 ### Architectural Highlights (`videoMiniPlayerStore.ts` & `GlobalVideoMiniPlayer.tsx`):
+
 - **Global State Isolation**: Managed through Zustand (`videoMiniPlayerStore`), preserving playback position, volume, playback speed, and visual filter settings across route changes.
 - **Picture-in-Picture Modes**: Supports browser native PiP API and custom in-DOM floating overlay with dragging and corner snapping.
 - **Visual Filters**: Includes live canvas filters: grayscale, contrast enhancement, sepia, invert, and night-vision presets.
@@ -76,6 +78,7 @@ flowchart TD
 ```
 
 ### Privacy Protections:
+
 - **Tab-Switch Blurring**: The instant a user switches tabs or minimizes the window, the entire document viewer applies a 30px CSS blur and black masking layer to prevent OS-level preview caching.
 - **Anti-Screenshot Deterrence**: Displays an animated, subtle watermark with the user's username and IP address.
 - **Print Prevention**: Suppresses print shortcuts and injects print media CSS destroying DOM rendering during print dialog invocation.
@@ -108,6 +111,7 @@ sequenceDiagram
 ```
 
 ### Key Engineering Features:
+
 - **200ms Hold Initiation**: Prevents accidental drag operations during normal page scrolling.
 - **Haptic Feedback**: Fires subtle vibrational pulses on pickup, target hover, and drop.
 - **Edge Auto-Scroll Suppression**: Prevents erratic page scrolling when dragging near screen edges.
@@ -118,12 +122,15 @@ sequenceDiagram
 ## 5. Duress Decoy Partition & Emergency Panic Shredder
 
 ### 5.1 Decoy Duress Workspace
+
 When a user sets up a secondary Decoy PIN:
+
 - Entering the Master Passphrase loads primary personal encrypted records.
 - Entering the Decoy PIN loads a secondary decoy workspace with realistic placeholder items.
 - There is no UI indication, error message, or network clue that an alternate partition exists.
 
 ### 5.2 Universal Panic Lock Widget
+
 - A floating or shortcut-triggered emergency lock button (`Ctrl+Shift+L` / `Command+Shift+L`).
 - Instantly zeroizes all in-memory cryptographic keys within **60ms**.
 - Destroys active blob URLs in `blobRegistry.ts`.

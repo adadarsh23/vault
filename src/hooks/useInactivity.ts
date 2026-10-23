@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import { logActivity, getSessionName } from '../lib/activity';
 import { logger } from '../lib/logger';
@@ -17,6 +17,7 @@ const INACTIVITY_BLUR_DELAY_MS = 30_000;
 const DEFAULT_AUTO_LOCK_MINUTES = 5;
 const MAX_AUTO_LOCK_MINUTES = 24 * 60;
 const COUNTDOWN_THRESHOLD_SEC = 60;
+const ACTIVITY_THROTTLE_MS = 1000;
 
 const normalizeAutoLockDuration = (value: number): number => {
   if (!Number.isFinite(value) || value <= 0) {
@@ -40,6 +41,11 @@ export const useInactivity = ({
   const [isInactive, setIsInactive] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState<number | null>(null);
 
+  const lockRef = useRef(lock);
+  useEffect(() => {
+    lockRef.current = lock;
+  }, [lock]);
+
   const resetTimerRef = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -54,6 +60,7 @@ export const useInactivity = ({
     let isDisposed = false;
     let hasAutoLocked = false;
     let lockTime = 0;
+    let lastActivityTimestamp = 0;
 
     const clearTimers = () => {
       if (inactivityTimeout) {
@@ -80,7 +87,7 @@ export const useInactivity = ({
 
       try {
         clearCryptoKeyCache();
-        lock();
+        lockRef.current();
         toast.info('Session expired. Vault is secure.');
         logActivity({
           actionType: 'auth_lock',
@@ -109,8 +116,8 @@ export const useInactivity = ({
     };
 
     const resetTimer = () => {
-      setIsInactive(false);
-      setCountdownSeconds(null);
+      setIsInactive((prev) => (prev ? false : prev));
+      setCountdownSeconds((prev) => (prev !== null ? null : prev));
       hasAutoLocked = false;
       clearTimers();
       touchCryptoKeyCache();
@@ -150,6 +157,16 @@ export const useInactivity = ({
 
     resetTimerRef.current = resetTimer;
 
+    // High performance throttled activity listener: ignores rapid mousemove events
+    const handleThrottledActivity = () => {
+      const now = Date.now();
+      if (now - lastActivityTimestamp < ACTIVITY_THROTTLE_MS) {
+        return;
+      }
+      lastActivityTimestamp = now;
+      resetTimer();
+    };
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         // If user is watching video in Picture-in-Picture on another webpage, avoid locking or hiding
@@ -176,20 +193,21 @@ export const useInactivity = ({
     }
 
     const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'pointerdown'];
-    events.forEach((event) => window.addEventListener(event, resetTimer));
+    events.forEach((event) =>
+      window.addEventListener(event, handleThrottledActivity, { passive: true }),
+    );
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     resetTimer();
 
     return () => {
       isDisposed = true;
-      events.forEach((event) => window.removeEventListener(event, resetTimer));
+      events.forEach((event) => window.removeEventListener(event, handleThrottledActivity));
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearTimers();
     };
   }, [
     isUnlocked,
-    lock,
     isAutoLockEnabled,
     autoLockDuration,
     isBlurOnTabHideEnabled,
@@ -200,5 +218,8 @@ export const useInactivity = ({
     resetTimerRef.current();
   }, []);
 
-  return { isInactive, setIsInactive, countdownSeconds, resetTimer };
+  return useMemo(
+    () => ({ isInactive, setIsInactive, countdownSeconds, resetTimer }),
+    [isInactive, countdownSeconds, resetTimer],
+  );
 };

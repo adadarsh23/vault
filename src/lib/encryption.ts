@@ -13,6 +13,7 @@ import {
   touchCryptoKeyCache,
   clearCryptoKeyCache,
   getOrCreateCryptoKey,
+  getSodium,
   ENVELOPE_MAGIC_CASCADE,
   ENVELOPE_MAGIC_V2,
   CASCADE_HEADER_LENGTH,
@@ -81,15 +82,14 @@ const decryptAesGcmWithFallback = async (
  * Robust Base64 encoding for Uint8Array without stack argument spreading
  */
 export const uint8ArrayToBase64 = (array: Uint8Array): string => {
-  const CHUNK_SIZE = 0x2000; // 8KB chunks
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(array.buffer, array.byteOffset, array.byteLength).toString('base64');
+  }
+  const CHUNK_SIZE = 0x8000; // 32KB chunks
   let binaryString = '';
   for (let i = 0; i < array.length; i += CHUNK_SIZE) {
     const chunk = array.subarray(i, i + CHUNK_SIZE);
-    let chunkString = '';
-    for (let j = 0; j < chunk.length; j++) {
-      chunkString += String.fromCharCode(chunk[j]);
-    }
-    binaryString += chunkString;
+    binaryString += String.fromCharCode.apply(null, chunk as unknown as number[]);
   }
   return btoa(binaryString);
 };
@@ -123,7 +123,10 @@ export const base64ToUint8Array = (base64: string): Uint8Array => {
       clean = clean.slice(0, -1);
     }
 
-    if (!clean || !/^[A-Za-z0-9+/=]+$/.test(clean)) {
+    if (!clean) {
+      return new Uint8Array(0);
+    }
+    if (clean.length < 2048 && !/^[A-Za-z0-9+/=]+$/.test(clean)) {
       return new Uint8Array(0);
     }
 
@@ -169,9 +172,7 @@ export const performHybridKeyExchange = async (peerPublicKey?: {
   kyberCiphertext?: Uint8Array;
 }> => {
   try {
-    const sodiumModule = await import('libsodium-wrappers');
-    const sodium = (sodiumModule as any).default || sodiumModule;
-    await sodium.ready;
+    const sodium = await getSodium();
 
     const createKyberFallback = () => ({
       keypair: () => ({

@@ -18,6 +18,7 @@ import {
   XCircle,
   ScanQrCode,
   ShieldAlert,
+  X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -99,7 +100,15 @@ export const VaultLoginForm: React.FC<Props> = memo(
   }) => {
     const [showAccountPassword, setShowAccountPassword] = useState(false);
     const [showVaultKey, setShowVaultKey] = useState(false);
+    const [internalError, setInternalError] = useState<AuthErrorState | null>(null);
+    const effectiveError = authError || internalError;
+    const errorBannerRef = useRef<HTMLDivElement>(null);
     const prevAuthModeRef = useRef(authMode);
+
+    const handleClearAllErrors = useCallback(() => {
+      clearAuthError();
+      setInternalError(null);
+    }, [clearAuthError]);
 
     useEffect(() => {
       if (prevAuthModeRef.current !== authMode) {
@@ -108,9 +117,9 @@ export const VaultLoginForm: React.FC<Props> = memo(
         setVaultKey('');
         setShowAccountPassword(false);
         setShowVaultKey(false);
-        clearAuthError();
+        handleClearAllErrors();
       }
-    }, [authMode, setAccountPassword, setVaultKey, clearAuthError]);
+    }, [authMode, setAccountPassword, setVaultKey, handleClearAllErrors]);
 
     const generatedCredentialLength = useVaultStore(
       (state) => state.preferences.generatedCredentialLength,
@@ -200,17 +209,18 @@ export const VaultLoginForm: React.FC<Props> = memo(
     }, [authMode, twoFactorRequired, cloudSessionActive]);
 
     useEffect(() => {
-      if (!authError) return;
-      if (authError.field === 'accountPassword') {
+      if (!effectiveError) return;
+      errorBannerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (effectiveError.field === 'accountPassword') {
         passwordRef.current?.focus();
-      } else if (authError.field === 'vaultKey') {
+      } else if (effectiveError.field === 'vaultKey') {
         vaultKeyRef.current?.focus();
-      } else if (authError.field === 'username') {
+      } else if (effectiveError.field === 'username') {
         usernameRef.current?.focus();
-      } else if (authError.field === 'otp') {
+      } else if (effectiveError.field === 'otp') {
         otpRef.current?.focus();
       }
-    }, [authError]);
+    }, [effectiveError]);
 
     const validUsername = useMemo(() => {
       const normalized = username.trim().toLowerCase();
@@ -405,27 +415,57 @@ export const VaultLoginForm: React.FC<Props> = memo(
 
     const validateFormInput = useCallback((): boolean => {
       if (!username.trim()) {
-        toast.error('Account Identifier Required', {
-          description: 'Please enter your username so the Master Key can be derived correctly.',
+        const errorState: AuthErrorState = {
+          field: 'username',
+          title: 'Account Identifier Required',
+          message: 'Please enter your username so the Master Key can be derived correctly.',
+        };
+        setInternalError(errorState);
+        toast.error(errorState.title, {
+          description: errorState.message,
         });
+        usernameRef.current?.focus();
         return false;
       }
       if (!USERNAME_PATTERN.test(username.trim().toLowerCase())) {
-        toast.error('Invalid Username', {
-          description:
+        const errorState: AuthErrorState = {
+          field: 'username',
+          title: 'Invalid Username',
+          message:
             'Username cannot use @ and may only include letters, numbers, dots, underscores, and hyphens.',
+        };
+        setInternalError(errorState);
+        toast.error(errorState.title, {
+          description: errorState.message,
         });
+        usernameRef.current?.focus();
         return false;
       }
       if (authMode === 'register' && usernameCheckState === 'taken') {
-        toast.error('Username already exists', {
-          description: 'Please choose a different username.',
+        const errorState: AuthErrorState = {
+          field: 'username',
+          title: 'Username Already Exists',
+          message: 'This username is already taken. Please choose a different username.',
+          code: 'USER_EXISTS',
+        };
+        setInternalError(errorState);
+        toast.error(errorState.title, {
+          description: errorState.message,
         });
+        usernameRef.current?.focus();
         return false;
       }
 
       if (twoFactorRequired && !validOtpToken) {
-        toast.warning('Enter a valid 6-digit code or 8-character backup key.');
+        const errorState: AuthErrorState = {
+          field: 'otp',
+          title: 'Invalid Authenticator Code',
+          message: 'Enter a valid 6-digit code or 8-character backup key.',
+          code: 'INVALID_2FA_CODE',
+        };
+        setInternalError(errorState);
+        toast.warning(errorState.message);
+        otpRef.current?.focus();
         return false;
       }
 
@@ -435,12 +475,28 @@ export const VaultLoginForm: React.FC<Props> = memo(
         authMode === 'register' &&
         !validAccountPassword
       ) {
-        toast.warning(`Account password ${CREDENTIAL_REQUIREMENTS_DETAIL}`);
+        const errorState: AuthErrorState = {
+          field: 'accountPassword',
+          title: 'Account Password Requirements Not Met',
+          message: `Account password ${CREDENTIAL_REQUIREMENTS_DETAIL}`,
+          code: 'AUTH_WEAK_PASSWORD',
+        };
+        setInternalError(errorState);
+        toast.warning(errorState.message);
+        passwordRef.current?.focus();
         return false;
       }
 
       if (!twoFactorRequired && authMode === 'register' && !validVaultKey) {
-        toast.warning(`Master Key ${CREDENTIAL_REQUIREMENTS_DETAIL}`);
+        const errorState: AuthErrorState = {
+          field: 'vaultKey',
+          title: 'Master Key Requirements Not Met',
+          message: `Master Key ${CREDENTIAL_REQUIREMENTS_DETAIL}`,
+          code: 'AUTH_WEAK_PASSWORD',
+        };
+        setInternalError(errorState);
+        toast.warning(errorState.message);
+        vaultKeyRef.current?.focus();
         return false;
       }
 
@@ -451,12 +507,28 @@ export const VaultLoginForm: React.FC<Props> = memo(
         !accountPassword.trim() &&
         !vaultKey.trim()
       ) {
-        toast.warning('Please enter your Master Key, Account Password, or Decoy PIN.');
+        const errorState: AuthErrorState = {
+          field: 'accountPassword',
+          title: 'Credentials Required',
+          message: 'Please enter your Account Password or Master Key to sign in.',
+          code: 'INVALID_CREDENTIALS',
+        };
+        setInternalError(errorState);
+        toast.warning(errorState.message);
+        passwordRef.current?.focus();
         return false;
       }
 
       if (!twoFactorRequired && cloudSessionActive && !vaultKey.trim()) {
-        toast.warning('Please enter your Master Key or Decoy PIN to unlock your vault.');
+        const errorState: AuthErrorState = {
+          field: 'vaultKey',
+          title: 'Master Key Required',
+          message: 'Please enter your Master Key or Decoy PIN to unlock your vault.',
+          code: 'MASTER_KEY_INCORRECT',
+        };
+        setInternalError(errorState);
+        toast.warning(errorState.message);
+        vaultKeyRef.current?.focus();
         return false;
       }
 
@@ -468,12 +540,26 @@ export const VaultLoginForm: React.FC<Props> = memo(
         vaultKey &&
         accountPassword === vaultKey
       ) {
-        toast.warning('Account password and Master Key must not be identical');
+        const errorState: AuthErrorState = {
+          field: 'vaultKey',
+          title: 'Security Requirement Error',
+          message: 'Account password and Master Key must not be identical.',
+        };
+        setInternalError(errorState);
+        toast.warning(errorState.message);
+        vaultKeyRef.current?.focus();
         return false;
       }
 
       if (requiresCaptcha && !isCaptchaCompleted) {
-        toast.warning('Please complete CAPTCHA before submitting.');
+        const errorState: AuthErrorState = {
+          field: 'general',
+          title: 'Security Verification Required',
+          message: 'Please complete the CAPTCHA challenge before submitting.',
+          code: 'CAPTCHA_REQUIRED',
+        };
+        setInternalError(errorState);
+        toast.warning(errorState.message);
         return false;
       }
 
@@ -541,8 +627,15 @@ export const VaultLoginForm: React.FC<Props> = memo(
           error instanceof Error ? error.message : String(apiError?.message || error || '');
 
         if (isConflict && authMode === 'register') {
-          toast.error('Account Already Exists', {
-            description: 'This username is already taken. Would you like to sign in instead?',
+          const errorState: AuthErrorState = {
+            field: 'username',
+            title: 'Account Already Exists',
+            message: 'This username is already taken. Would you like to sign in instead?',
+            code: 'USER_EXISTS',
+          };
+          setInternalError(errorState);
+          toast.error(errorState.title, {
+            description: errorState.message,
             action: {
               label: 'Switch to Sign In',
               onClick: () => {
@@ -562,10 +655,20 @@ export const VaultLoginForm: React.FC<Props> = memo(
           /the operation failed/i.test(msg) ||
           /bad decrypt/i.test(msg)
         ) {
-          toast.error('Master Key Incorrect', {
-            description: cloudSessionActive
-              ? 'The Master Key you entered is incorrect or cannot decrypt this vault.'
-              : 'The account password is valid, but the Master Key is incorrect or cannot decrypt this vault.',
+          const title = cloudSessionActive
+            ? 'Master Key Incorrect'
+            : 'Master Key Decryption Failed';
+          const description = cloudSessionActive
+            ? 'The Master Key you entered is incorrect or cannot decrypt this vault.'
+            : 'The account password is valid, but the Master Key is incorrect or cannot decrypt this vault.';
+          setInternalError({
+            field: 'vaultKey',
+            title,
+            message: description,
+            code: 'MASTER_KEY_INCORRECT',
+          });
+          toast.error(title, {
+            description,
             duration: 6000,
           });
         } else if (
@@ -576,10 +679,18 @@ export const VaultLoginForm: React.FC<Props> = memo(
             /incorrect password/i.test(msg))
         ) {
           // Prevent username enumeration: return a uniform authentication error message
-          toast.error(cloudSessionActive ? 'Master Key Incorrect' : 'Authentication Failed', {
-            description: cloudSessionActive
-              ? 'The Master Key you entered is incorrect or cannot decrypt this vault.'
-              : 'The username or account password is incorrect.',
+          const title = cloudSessionActive ? 'Master Key Incorrect' : 'Authentication Failed';
+          const description = cloudSessionActive
+            ? 'The Master Key you entered is incorrect or cannot decrypt this vault.'
+            : 'The username or account password is incorrect.';
+          setInternalError({
+            field: cloudSessionActive ? 'vaultKey' : 'accountPassword',
+            title,
+            message: description,
+            code: 'INVALID_CREDENTIALS',
+          });
+          toast.error(title, {
+            description,
           });
         } else if (
           apiError?.code === 'TOO_MANY_AUTH_ATTEMPTS' ||
@@ -587,9 +698,17 @@ export const VaultLoginForm: React.FC<Props> = memo(
           apiError?.status === 429 ||
           /too many attempts/i.test(msg)
         ) {
-          toast.error('Too Many Attempts', {
-            description:
-              'Too many authentication attempts detected. Please wait a moment and try again.',
+          const title = 'Too Many Attempts';
+          const description =
+            'Too many authentication attempts detected. Please wait a moment and try again.';
+          setInternalError({
+            field: 'general',
+            title,
+            message: description,
+            code: 'RATE_LIMITED',
+          });
+          toast.error(title, {
+            description,
           });
         } else if (
           !twoFactorRequired &&
@@ -597,8 +716,16 @@ export const VaultLoginForm: React.FC<Props> = memo(
             apiError?.code === 'CAPTCHA_VERIFICATION_FAILED' ||
             /captcha/i.test(msg))
         ) {
-          toast.error('Security Verification Required', {
-            description: 'Please complete the CAPTCHA check to continue.',
+          const title = 'Security Verification Required';
+          const description = 'Please complete the CAPTCHA check to continue.';
+          setInternalError({
+            field: 'general',
+            title,
+            message: description,
+            code: 'CAPTCHA_REQUIRED',
+          });
+          toast.error(title, {
+            description,
           });
         } else if (
           apiError?.code === 'SESSION_EXPIRED' ||
@@ -606,29 +733,64 @@ export const VaultLoginForm: React.FC<Props> = memo(
           apiError?.code === 'INVALID_TOKEN' ||
           /session.*expired/i.test(msg)
         ) {
-          toast.error('Session Expired', {
-            description:
-              'Your saved cloud session has expired. Please sign in with your account password.',
+          const title = 'Session Expired';
+          const description =
+            'Your saved cloud session has expired. Please sign in with your account password.';
+          setInternalError({
+            field: 'general',
+            title,
+            message: description,
+            code: 'SESSION_EXPIRED',
+          });
+          toast.error(title, {
+            description,
           });
         } else if (
           apiError?.code === 'AUTH_WEAK_PASSWORD' ||
           apiError?.code === 'INVALID_PASSWORD' ||
           /password must/i.test(msg)
         ) {
-          toast.error('Password Requirements Not Met', {
-            description:
-              'Use 16-64 characters with uppercase, lowercase, number, and special character.',
+          const title = 'Password Requirements Not Met';
+          const description =
+            'Use 16-64 characters with uppercase, lowercase, number, and special character.';
+          setInternalError({
+            field: 'accountPassword',
+            title,
+            message: description,
+            code: 'AUTH_WEAK_PASSWORD',
+          });
+          toast.error(title, {
+            description,
           });
         } else if (
           apiError?.code === 'NETWORK_ERROR' ||
           /failed to fetch/i.test(msg) ||
           /unable to reach/i.test(msg)
         ) {
-          toast.error('Network Connection Issue', {
-            description: 'Could not connect to the server. Please check your internet connection.',
+          const title = 'Network Connection Issue';
+          const description =
+            'Could not connect to the server. Please check your internet connection.';
+          setInternalError({
+            field: 'general',
+            title,
+            message: description,
+            code: 'NETWORK_ERROR',
+          });
+          toast.error(title, {
+            description,
           });
         } else {
-          handleError(error, twoFactorRequired ? '2FA Verification' : 'Vault Unlock');
+          const handled = handleError(
+            error,
+            twoFactorRequired ? '2FA Verification' : 'Vault Unlock',
+          );
+          setInternalError({
+            field: 'general',
+            title: twoFactorRequired ? '2FA Verification Failed' : 'Vault Unlock Failed',
+            message:
+              handled?.message || msg || 'An error occurred during verification. Please try again.',
+            code: handled?.code || 'AUTH_ERROR',
+          });
         }
       },
       [
@@ -684,6 +846,79 @@ export const VaultLoginForm: React.FC<Props> = memo(
           </CardHeader>
 
           <CardContent className="space-y-6">
+            <AnimatePresence mode="wait">
+              {effectiveError && (
+                <motion.div
+                  key="auth-top-error-banner"
+                  ref={errorBannerRef}
+                  initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                  transition={{ duration: 0.2 }}
+                  role="alert"
+                  aria-live="assertive"
+                  className="relative overflow-hidden rounded-2xl border border-red-500/35 bg-gradient-to-br from-red-500/20 via-red-500/10 to-transparent p-4 shadow-sm backdrop-blur-md dark:border-red-500/40"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-500/20 text-red-400 ring-1 ring-red-500/30">
+                      <ShieldAlert className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0 flex-1 pr-6">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h4 className="text-sm font-bold tracking-tight text-red-300">
+                          {effectiveError.title}
+                        </h4>
+                        {typeof effectiveError.remainingAttempts === 'number' && (
+                          <span className="inline-flex items-center rounded-full bg-red-500/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-200 ring-1 ring-red-500/40">
+                            {effectiveError.remainingAttempts} attempt
+                            {effectiveError.remainingAttempts === 1 ? '' : 's'} remaining
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs leading-relaxed text-red-200/90 break-words">
+                        {effectiveError.message}
+                      </p>
+                      {effectiveError.code === 'USER_EXISTS' && authMode === 'register' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleClearAllErrors();
+                            handleAuthModeSwitch('login');
+                          }}
+                          className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-red-500/25 hover:bg-red-500/35 px-3 py-1.5 text-xs font-semibold text-red-100 transition-colors"
+                        >
+                          Switch to Sign In →
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleClearAllErrors}
+                      className="absolute right-3 top-3 rounded-lg p-1 text-red-300/70 hover:bg-red-500/20 hover:text-red-200 transition-colors focus:outline-none focus:ring-1 focus:ring-red-400"
+                      title="Dismiss error"
+                      aria-label="Dismiss error"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {getFailedUnlockAttempts() > 0 &&
+              !effectiveError &&
+              useVaultStore.getState().preferences.isBruteForceWipeEnabled !== false &&
+              authMode === 'login' && (
+                <div className="flex items-center gap-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 p-3 text-xs text-amber-300">
+                  <ShieldAlert className="h-4 w-4 shrink-0 text-amber-400" />
+                  <span className="leading-tight">
+                    <strong>Security Warning:</strong> {getFailedUnlockAttempts()}/
+                    {useVaultStore.getState().preferences.maxFailedAttemptsBeforeWipe || 10} failed
+                    attempts. Local keys will self-destruct if limit is reached.
+                  </span>
+                </div>
+              )}
+
             {!cloudSessionActive && !twoFactorRequired && (
               <div className="grid grid-cols-2 gap-2 rounded-[1.25rem] border border-card-border bg-card-bg p-1 dark:border-white/10 dark:bg-black/40">
                 <button
@@ -718,57 +953,6 @@ export const VaultLoginForm: React.FC<Props> = memo(
               }}
               className="space-y-6"
             >
-              <AnimatePresence mode="wait">
-                {authError && (
-                  <motion.div
-                    key="auth-error-banner"
-                    initial={{ opacity: 0, y: -8, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                    transition={{ duration: 0.2 }}
-                    role="alert"
-                    aria-live="assertive"
-                    className="overflow-hidden rounded-2xl border border-red-500/30 bg-gradient-to-br from-red-500/15 via-red-500/10 to-transparent p-4 shadow-sm backdrop-blur-md dark:border-red-500/40"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-500/20 text-red-400 ring-1 ring-red-500/30">
-                        <ShieldAlert className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <h4 className="text-sm font-bold tracking-tight text-red-300">
-                            {authError.title}
-                          </h4>
-                          {typeof authError.remainingAttempts === 'number' && (
-                            <span className="inline-flex items-center rounded-full bg-red-500/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-200 ring-1 ring-red-500/40">
-                              {authError.remainingAttempts} attempt
-                              {authError.remainingAttempts === 1 ? '' : 's'} remaining
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-1 text-xs leading-relaxed text-red-200/90">
-                          {authError.message}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {getFailedUnlockAttempts() > 0 &&
-                !authError &&
-                useVaultStore.getState().preferences.isBruteForceWipeEnabled !== false &&
-                authMode === 'login' && (
-                  <div className="flex items-center gap-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 p-3 text-xs text-amber-300">
-                    <ShieldAlert className="h-4 w-4 shrink-0 text-amber-400" />
-                    <span className="leading-tight">
-                      <strong>Security Warning:</strong> {getFailedUnlockAttempts()}/
-                      {useVaultStore.getState().preferences.maxFailedAttemptsBeforeWipe || 10}{' '}
-                      failed attempts. Local keys will self-destruct if limit is reached.
-                    </span>
-                  </div>
-                )}
-
               <div className="space-y-4">
                 {!twoFactorRequired && !cloudSessionActive && (
                   <div className="group w-full">
@@ -788,7 +972,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
                         value={username}
                         onChange={(e) => {
                           setUsername(e.target.value);
-                          if (authError?.field === 'username') clearAuthError();
+                          if (effectiveError?.field === 'username') handleClearAllErrors();
                         }}
                         disabled={loading}
                         readOnly={cloudSessionActive}
@@ -804,16 +988,16 @@ export const VaultLoginForm: React.FC<Props> = memo(
                           }
                         }}
                         className={`w-full rounded-[1.1rem] border bg-card-bg pl-12 pr-12 py-4 text-base md:text-lg outline-none transition-all placeholder:text-text/25 focus:border-white/20 focus:bg-card-bg/80 dark:bg-black/30 ${
-                          authError?.field === 'username'
+                          effectiveError?.field === 'username'
                             ? 'border-red-500/80 ring-2 ring-red-500/25 bg-red-500/5'
                             : 'border-card-border dark:border-white/10'
                         } aria-[invalid=true]:border-red-500/50`}
                         aria-invalid={
-                          authError?.field === 'username' ||
+                          effectiveError?.field === 'username' ||
                           (username.trim().length > 0 && !validUsername)
                         }
                         aria-describedby={
-                          authError?.field === 'username'
+                          effectiveError?.field === 'username'
                             ? 'username-auth-error'
                             : username.trim().length > 0 && !validUsername
                               ? 'username-format-error'
@@ -824,7 +1008,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
                       />
                       <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
                         <Lock
-                          className={`h-5 w-5 transition-colors ${authError?.field === 'username' ? 'text-red-400' : 'text-text/35 group-focus-within:text-text/80'}`}
+                          className={`h-5 w-5 transition-colors ${effectiveError?.field === 'username' ? 'text-red-400' : 'text-text/35 group-focus-within:text-text/80'}`}
                         />
                       </div>
                       <div
@@ -852,7 +1036,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
                         ) : null}
                       </div>
                     </div>
-                    {authError?.field === 'username' && (
+                    {effectiveError?.field === 'username' && (
                       <motion.p
                         id="username-auth-error"
                         role="alert"
@@ -861,10 +1045,10 @@ export const VaultLoginForm: React.FC<Props> = memo(
                         className="mt-2 flex items-center gap-1.5 pl-4 text-xs font-medium text-red-400"
                       >
                         <XCircle className="h-3.5 w-3.5 shrink-0" />
-                        {authError.message}
+                        {effectiveError.message}
                       </motion.p>
                     )}
-                    {!authError && username.trim().length > 0 && !validUsername && (
+                    {!effectiveError && username.trim().length > 0 && !validUsername && (
                       <motion.p
                         id="username-format-error"
                         role="alert"
@@ -876,17 +1060,19 @@ export const VaultLoginForm: React.FC<Props> = memo(
                         numbers, dots, underscores, and hyphens
                       </motion.p>
                     )}
-                    {!authError && authMode === 'register' && usernameCheckState === 'taken' && (
-                      <motion.p
-                        id="username-taken-error"
-                        role="alert"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="mt-2 text-xs text-red-400 pl-4"
-                      >
-                        Username already exists. Please choose another username.
-                      </motion.p>
-                    )}
+                    {!effectiveError &&
+                      authMode === 'register' &&
+                      usernameCheckState === 'taken' && (
+                        <motion.p
+                          id="username-taken-error"
+                          role="alert"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="mt-2 text-xs text-red-400 pl-4"
+                        >
+                          Username already exists. Please choose another username.
+                        </motion.p>
+                      )}
                   </div>
                 )}
 
@@ -912,7 +1098,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
                         value={accountPassword}
                         onChange={(e) => {
                           setAccountPassword(e.target.value);
-                          if (authError?.field === 'accountPassword') clearAuthError();
+                          if (effectiveError?.field === 'accountPassword') handleClearAllErrors();
                         }}
                         disabled={loading}
                         ref={passwordRef}
@@ -923,18 +1109,18 @@ export const VaultLoginForm: React.FC<Props> = memo(
                           }
                         }}
                         className={`w-full rounded-[1.1rem] border bg-card-bg pl-12 pr-24 py-4 text-base md:text-lg outline-none transition-all placeholder:text-text/25 focus:border-white/20 focus:bg-card-bg/80 dark:bg-black/30 ${
-                          authError?.field === 'accountPassword'
+                          effectiveError?.field === 'accountPassword'
                             ? 'border-red-500/80 ring-2 ring-red-500/25 bg-red-500/5'
                             : 'border-card-border dark:border-white/10'
                         } aria-[invalid=true]:border-red-500/50`}
                         aria-invalid={
-                          authError?.field === 'accountPassword' ||
+                          effectiveError?.field === 'accountPassword' ||
                           (authMode === 'register' &&
                             accountPassword.length > 0 &&
                             !validAccountPassword)
                         }
                         aria-describedby={
-                          authError?.field === 'accountPassword'
+                          effectiveError?.field === 'accountPassword'
                             ? 'account-password-auth-error'
                             : authMode === 'register' &&
                                 accountPassword.length > 0 &&
@@ -946,7 +1132,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
 
                       <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
                         <Lock
-                          className={`h-5 w-5 transition-colors ${authError?.field === 'accountPassword' ? 'text-red-400' : 'text-text/35 group-focus-within:text-text/80'}`}
+                          className={`h-5 w-5 transition-colors ${effectiveError?.field === 'accountPassword' ? 'text-red-400' : 'text-text/35 group-focus-within:text-text/80'}`}
                         />
                       </div>
 
@@ -983,7 +1169,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
                         </button>
                       </div>
                     </div>
-                    {authError?.field === 'accountPassword' && (
+                    {effectiveError?.field === 'accountPassword' && (
                       <motion.p
                         id="account-password-auth-error"
                         role="alert"
@@ -992,10 +1178,10 @@ export const VaultLoginForm: React.FC<Props> = memo(
                         className="mt-2 flex items-center gap-1.5 pl-4 text-xs font-medium text-red-400"
                       >
                         <XCircle className="h-3.5 w-3.5 shrink-0" />
-                        {authError.message}
+                        {effectiveError.message}
                       </motion.p>
                     )}
-                    {!authError &&
+                    {!effectiveError &&
                       authMode === 'register' &&
                       accountPassword.length > 0 &&
                       !validAccountPassword && (
@@ -1029,7 +1215,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
                           value={otpToken}
                           onChange={(e) => {
                             setOtpToken(e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8));
-                            if (authError?.field === 'otp') clearAuthError();
+                            if (effectiveError?.field === 'otp') handleClearAllErrors();
                           }}
                           disabled={loading}
                           ref={otpRef}
@@ -1040,15 +1226,16 @@ export const VaultLoginForm: React.FC<Props> = memo(
                             }
                           }}
                           className={`w-full rounded-[1.1rem] border bg-card-bg pl-12 pr-4 py-4 text-center font-mono text-base tracking-[0.2em] outline-none transition-all placeholder:text-text/25 focus:border-white/20 focus:bg-card-bg/80 dark:bg-black/30 md:text-lg ${
-                            authError?.field === 'otp'
+                            effectiveError?.field === 'otp'
                               ? 'border-red-500/80 ring-2 ring-red-500/25 bg-red-500/5'
                               : 'border-card-border dark:border-white/10'
                           }`}
                           aria-invalid={
-                            authError?.field === 'otp' || (otpToken.length > 0 && !validOtpToken)
+                            effectiveError?.field === 'otp' ||
+                            (otpToken.length > 0 && !validOtpToken)
                           }
                           aria-describedby={
-                            authError?.field === 'otp'
+                            effectiveError?.field === 'otp'
                               ? 'otp-auth-error'
                               : otpToken.length > 0 && !validOtpToken
                                 ? 'otp-error'
@@ -1060,12 +1247,12 @@ export const VaultLoginForm: React.FC<Props> = memo(
                             <Loader2 className="h-5 w-5 animate-spin text-text/55" />
                           ) : (
                             <ScanQrCode
-                              className={`h-5 w-5 transition-colors ${authError?.field === 'otp' ? 'text-red-400' : 'text-text/35 group-focus-within:text-text/80'}`}
+                              className={`h-5 w-5 transition-colors ${effectiveError?.field === 'otp' ? 'text-red-400' : 'text-text/35 group-focus-within:text-text/80'}`}
                             />
                           )}
                         </div>
                       </div>
-                      {authError?.field === 'otp' && (
+                      {effectiveError?.field === 'otp' && (
                         <motion.p
                           id="otp-auth-error"
                           role="alert"
@@ -1074,10 +1261,10 @@ export const VaultLoginForm: React.FC<Props> = memo(
                           className="mt-2 flex items-center justify-center gap-1.5 text-center text-xs font-medium text-red-400"
                         >
                           <XCircle className="h-3.5 w-3.5 shrink-0" />
-                          {authError.message}
+                          {effectiveError.message}
                         </motion.p>
                       )}
-                      {!authError && otpToken.length > 0 && !validOtpToken && (
+                      {!effectiveError && otpToken.length > 0 && !validOtpToken && (
                         <motion.p
                           id="otp-error"
                           role="alert"
@@ -1146,7 +1333,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
                         value={vaultKey}
                         onChange={(e) => {
                           setVaultKey(e.target.value);
-                          if (authError?.field === 'vaultKey') clearAuthError();
+                          if (effectiveError?.field === 'vaultKey') handleClearAllErrors();
                         }}
                         disabled={loading}
                         ref={vaultKeyRef}
@@ -1156,16 +1343,16 @@ export const VaultLoginForm: React.FC<Props> = memo(
                           }
                         }}
                         className={`w-full rounded-[1.1rem] border bg-card-bg pl-12 pr-24 py-4 text-base md:text-lg outline-none transition-all placeholder:text-text/25 focus:border-white/20 focus:bg-card-bg/80 dark:bg-black/30 ${
-                          authError?.field === 'vaultKey'
+                          effectiveError?.field === 'vaultKey'
                             ? 'border-red-500/80 ring-2 ring-red-500/25 bg-red-500/5'
                             : 'border-card-border dark:border-white/10'
                         } aria-[invalid=true]:border-red-500/50`}
                         aria-invalid={
-                          authError?.field === 'vaultKey' ||
+                          effectiveError?.field === 'vaultKey' ||
                           (authMode === 'register' && vaultKey.length > 0 && !validVaultKey)
                         }
                         aria-describedby={
-                          authError?.field === 'vaultKey'
+                          effectiveError?.field === 'vaultKey'
                             ? 'master-key-auth-error'
                             : authMode === 'register' && vaultKey.length > 0 && !validVaultKey
                               ? 'master-key-error'
@@ -1175,7 +1362,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
 
                       <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
                         <Key
-                          className={`h-5 w-5 transition-colors ${authError?.field === 'vaultKey' ? 'text-red-400' : 'text-text/35 group-focus-within:text-text/80'}`}
+                          className={`h-5 w-5 transition-colors ${effectiveError?.field === 'vaultKey' ? 'text-red-400' : 'text-text/35 group-focus-within:text-text/80'}`}
                         />
                       </div>
 
@@ -1210,7 +1397,7 @@ export const VaultLoginForm: React.FC<Props> = memo(
                         </button>
                       </div>
                     </div>
-                    {authError?.field === 'vaultKey' && (
+                    {effectiveError?.field === 'vaultKey' && (
                       <motion.p
                         id="master-key-auth-error"
                         role="alert"
@@ -1219,10 +1406,10 @@ export const VaultLoginForm: React.FC<Props> = memo(
                         className="mt-2 flex items-center gap-1.5 pl-4 text-xs font-medium text-red-400"
                       >
                         <XCircle className="h-3.5 w-3.5 shrink-0" />
-                        {authError.message}
+                        {effectiveError.message}
                       </motion.p>
                     )}
-                    {!authError &&
+                    {!effectiveError &&
                       authMode === 'register' &&
                       vaultKey.length > 0 &&
                       !validVaultKey && (

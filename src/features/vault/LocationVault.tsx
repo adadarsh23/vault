@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { FolderSidebar } from '../../components/vault/FolderSidebar';
 import { MobileFolderMenu } from '../../components/vault/MobileFolderMenu';
 import { decryptData, encryptData } from '../../lib/cryptoPrimitives';
@@ -217,7 +218,7 @@ const LocationVaultInternal: React.FC = () => {
           setForm(payloadToForm(selectedItem, parsed));
         }
       } catch (error) {
-        console.error('Location decrypt failed:', error);
+        logger.error('Location decrypt failed', { error });
         if (active) {
           setPayload(null);
           toast.error('Failed to open location');
@@ -242,6 +243,10 @@ const LocationVaultInternal: React.FC = () => {
             'Accept-Language': 'en-US,en;q=0.9',
             'User-Agent': 'Vault-Location-Service/1.0',
           },
+          signal:
+            typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal
+              ? AbortSignal.timeout(8000)
+              : undefined,
         },
       );
       if (!response.ok) throw new Error('Network response was not ok');
@@ -251,7 +256,7 @@ const LocationVaultInternal: React.FC = () => {
       }
       return '';
     } catch (error) {
-      console.error('Reverse geocoding failed:', error);
+      logger.warn('Reverse geocoding failed', { error });
       return '';
     } finally {
       setIsFetchingAddress(false);
@@ -263,6 +268,12 @@ const LocationVaultInternal: React.FC = () => {
     try {
       const response = await fetch(
         `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`,
+        {
+          signal:
+            typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal
+              ? AbortSignal.timeout(8000)
+              : undefined,
+        },
       );
       if (!response.ok) throw new Error('Elevation network error');
       const data = await response.json();
@@ -271,7 +282,7 @@ const LocationVaultInternal: React.FC = () => {
       }
       return null;
     } catch (error) {
-      console.error('Elevation API fetch failed:', error);
+      logger.warn('Elevation API fetch failed', { error });
       return null;
     } finally {
       setIsFetchingAltitude(false);
@@ -297,7 +308,7 @@ const LocationVaultInternal: React.FC = () => {
           },
           {
             enableHighAccuracy: true,
-            timeout: 300000, // 5 minute
+            timeout: 15000, // 15 seconds
             maximumAge: 0,
           },
         );
@@ -345,7 +356,7 @@ const LocationVaultInternal: React.FC = () => {
         error: 'Failed to fetch address',
       });
     } catch (error) {
-      console.error('Location capture failed:', error);
+      logger.error('Location capture failed', { error });
       if (!(error && typeof error === 'object' && 'code' in error)) {
         toast.error('Unable to capture current location');
       }
@@ -399,7 +410,7 @@ const LocationVaultInternal: React.FC = () => {
 
       setIsCreating(false);
     } catch (error) {
-      console.error('Location save failed:', error);
+      logger.error('Location save failed', { error });
       toast.error('Failed to save location');
     } finally {
       setIsSaving(false);
@@ -442,7 +453,7 @@ const LocationVaultInternal: React.FC = () => {
         status: 'success',
       });
     } catch (error) {
-      console.error('Location update failed:', error);
+      logger.error('Location update failed', { error });
       toast.error('Failed to update location');
     } finally {
       setIsSaving(false);
@@ -475,7 +486,7 @@ const LocationVaultInternal: React.FC = () => {
           status: 'success',
         });
       } catch (error) {
-        console.error('Location delete failed:', error);
+        logger.error('Location delete failed', { error });
         toast.error('Failed to delete location');
       }
     },
@@ -499,7 +510,7 @@ const LocationVaultInternal: React.FC = () => {
         setTimeout(() => setCopied((prev) => (prev === type ? null : prev)), 1500);
         toast.success(type === 'id' ? 'Location ID copied' : 'Coordinates copied');
       } catch (err) {
-        console.error('Clipboard copy failed:', err);
+        logger.warn('Clipboard copy failed', { error: err });
         toast.error('Clipboard not supported or permission denied');
       }
     },

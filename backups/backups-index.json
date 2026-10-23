@@ -1,8 +1,20 @@
 {
   "version": "2.0.0",
-  "updatedAt": "2026-09-04T06:08:53.381Z",
-  "totalBackups": 1,
+  "updatedAt": "2026-10-23T14:57:50.516Z",
+  "totalBackups": 2,
   "backups": [
+    {
+      "folder": "backup-2026-10-23_20-27-44",
+      "createdAt": "2026-10-23T14:57:44.516Z",
+      "localCreatedAt": "2026-10-23 20:27:44",
+      "timestamp": 1792767464516,
+      "totalFiles": 1181,
+      "totalBytes": 75470298,
+      "formattedSize": "71.97 MB",
+      "path": "C:\\code\\vault\\backups\\backup-2026-10-23_20-27-44",
+      "gitCommit": "6292d36",
+      "status": "completed"
+    },
     {
       "folder": "backup-2026-09-04_11-38-46",
       "createdAt": "2026-09-04T06:08:46.069Z",

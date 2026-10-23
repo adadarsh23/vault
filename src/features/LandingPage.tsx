@@ -94,6 +94,25 @@ export function LandingPage({
     setProfileSaveError(result.errorMessage || 'Failed to save.');
   }, [onSaveProfile, profileNameInput, profilePhotoInput]);
 
+  // Keyboard accessibility: dismiss modals/lightbox on Escape key
+  useEffect(() => {
+    if (!showProfilePopup && !previewImage) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (previewImage) {
+          setPreviewImage(null);
+        } else if (showProfilePopup && !isSavingProfile) {
+          setProfileSaveError(null);
+          setShowProfilePopup(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showProfilePopup, previewImage, isSavingProfile]);
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -333,62 +352,78 @@ export function LandingPage({
                             return;
                           }
                           try {
-                            const arrayBuffer = await file.arrayBuffer();
-                            const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
-                            const contentHash = Array.from(new Uint8Array(hashBuffer))
-                              .map((b) => b.toString(16).padStart(2, '0'))
-                              .join('')
-                              .substring(0, 16);
-                            const userId = 'u_profile';
-                            const presignRes = await fetch('/api/avatar/presign', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ userId, contentHash, mimeType: file.type }),
-                            });
-                            if (presignRes.ok) {
-                              const { uploadUrl, publicUrl } = await presignRes.json();
-                              let safeUploadUrl = uploadUrl;
-                              let safePublicUrl = publicUrl;
-                              if (
-                                typeof window !== 'undefined' &&
-                                window.location.protocol === 'https:'
-                              ) {
-                                if (safeUploadUrl?.startsWith('http:')) {
-                                  try {
-                                    const parsed = new URL(safeUploadUrl, window.location.href);
-                                    safeUploadUrl =
-                                      parsed.hostname === window.location.hostname
-                                        ? parsed.pathname + parsed.search
-                                        : safeUploadUrl.replace(/^http:/, 'https:');
-                                  } catch {
-                                    safeUploadUrl = safeUploadUrl.replace(/^http:/, 'https:');
-                                  }
-                                }
-                                if (safePublicUrl?.startsWith('http:')) {
-                                  try {
-                                    const parsed = new URL(safePublicUrl, window.location.href);
-                                    safePublicUrl =
-                                      parsed.hostname === window.location.hostname
-                                        ? parsed.pathname + parsed.search
-                                        : safePublicUrl.replace(/^http:/, 'https:');
-                                  } catch {
-                                    safePublicUrl = safePublicUrl.replace(/^http:/, 'https:');
-                                  }
-                                }
-                              }
-                              const uploadRes = await fetch(safeUploadUrl, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': file.type },
-                                body: file,
+                            const cryptoObj =
+                              typeof window !== 'undefined' && window.crypto
+                                ? window.crypto
+                                : typeof globalThis !== 'undefined'
+                                  ? globalThis.crypto
+                                  : null;
+                            const subtle = cryptoObj?.subtle;
+                            if (subtle) {
+                              const arrayBuffer = await file.arrayBuffer();
+                              const hashBuffer = await subtle.digest('SHA-256', arrayBuffer);
+                              const contentHash = Array.from(new Uint8Array(hashBuffer))
+                                .map((b) => b.toString(16).padStart(2, '0'))
+                                .join('')
+                                .substring(0, 16);
+                              const userId = 'u_profile';
+                              const presignRes = await fetch('/api/avatar/presign', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ userId, contentHash, mimeType: file.type }),
                               });
-                              if (uploadRes.ok) {
-                                setProfilePhotoInput(safePublicUrl);
-                                setProfileSaveError(null);
-                                return;
+                              if (presignRes.ok) {
+                                const { uploadUrl, publicUrl } = await presignRes.json();
+                                let safeUploadUrl = uploadUrl;
+                                let safePublicUrl = publicUrl;
+                                if (
+                                  typeof window !== 'undefined' &&
+                                  window.location.protocol === 'https:'
+                                ) {
+                                  if (safeUploadUrl?.startsWith('http:')) {
+                                    try {
+                                      const parsed = new URL(safeUploadUrl, window.location.href);
+                                      safeUploadUrl =
+                                        parsed.hostname === window.location.hostname
+                                          ? parsed.pathname + parsed.search
+                                          : safeUploadUrl.replace(/^http:/, 'https:');
+                                    } catch {
+                                      safeUploadUrl = safeUploadUrl.replace(/^http:/, 'https:');
+                                    }
+                                  }
+                                  if (safePublicUrl?.startsWith('http:')) {
+                                    try {
+                                      const parsed = new URL(safePublicUrl, window.location.href);
+                                      safePublicUrl =
+                                        parsed.hostname === window.location.hostname
+                                          ? parsed.pathname + parsed.search
+                                          : safePublicUrl.replace(/^http:/, 'https:');
+                                    } catch {
+                                      safePublicUrl = safePublicUrl.replace(/^http:/, 'https:');
+                                    }
+                                  }
+                                }
+                                const uploadRes = await fetch(safeUploadUrl, {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': file.type },
+                                  body: file,
+                                });
+                                if (uploadRes.ok) {
+                                  setProfilePhotoInput(safePublicUrl);
+                                  setProfileSaveError(null);
+                                  return;
+                                }
                               }
                             }
                           } catch {
                             // Fallback to FileReader inline Data URL
+                          }
+
+                          if (file.size > 8 * 1024 * 1024) {
+                            setProfileSaveError(
+                              'Direct inline upload exceeds 8MB. Please choose a smaller image or use a URL.',
+                            );
+                            return;
                           }
 
                           const reader = new FileReader();

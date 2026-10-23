@@ -100,6 +100,15 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
   const [focusTarget, setFocusTarget] = useState<{ x: number; y: number } | null>(null);
   const focusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  React.useEffect(() => {
+    return () => {
+      if (focusTimeoutRef.current) {
+        clearTimeout(focusTimeoutRef.current);
+        focusTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const aspectRatioValue =
     captureRatio === '1:1'
       ? '1 / 1'

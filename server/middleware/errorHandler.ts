@@ -113,6 +113,22 @@ export const errorHandler = (
       code = err.code;
       message = err.message;
     }
+  } else if (
+    err.name === 'MongoServerSelectionError' ||
+    err.name === 'MongooseServerSelectionError' ||
+    err.name === 'MongoClientClosedError' ||
+    err.name === 'MongoNetworkError' ||
+    err.name === 'MongoTimeoutError' ||
+    (typeof err?.message === 'string' &&
+      (err.message.includes('client was closed') ||
+        err.message.includes('connection <monitor> closed') ||
+        err.message.includes('server selection') ||
+        err.message.includes('buffering timed out')))
+  ) {
+    statusCode = 503;
+    code = 'DB_UNAVAILABLE';
+    message = 'Vault database is temporarily unavailable or reconnecting.';
+    err.isOperational = true;
   } else if (err instanceof AppError) {
     statusCode = err.statusCode;
     code = err.code;
@@ -153,7 +169,8 @@ export const errorHandler = (
 
   // Log error (only critical/unexpected or detailed for debugging)
   const isClientError = statusCode >= 400 && statusCode < 500;
-  if (statusCode >= 500 || (!err.isOperational && !isClientError)) {
+  const isOperationalError = Boolean(err.isOperational);
+  if (!isOperationalError && (statusCode >= 500 || !isClientError)) {
     logger.error('Unhandled or non-operational server error.', {
       requestId,
       method: req.method,

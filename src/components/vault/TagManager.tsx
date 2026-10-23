@@ -126,76 +126,80 @@ export interface TagBadgeProps {
   className?: string;
 }
 
-export const TagBadge: React.FC<TagBadgeProps> = ({
-  tag,
-  onRemove,
-  onClick,
-  variant = 'default',
-  size = 'sm',
-  highlightMatches,
-  disabled = false,
-  className,
-}) => {
-  const currentVariant = variantStyles[variant] || variantStyles.default;
-  const currentSize = sizeStyles[size] || sizeStyles.sm;
+export const TagBadge: React.FC<TagBadgeProps> = React.memo(
+  ({
+    tag,
+    onRemove,
+    onClick,
+    variant = 'default',
+    size = 'sm',
+    highlightMatches,
+    disabled = false,
+    className,
+  }) => {
+    const currentVariant = variantStyles[variant] || variantStyles.default;
+    const currentSize = sizeStyles[size] || sizeStyles.sm;
 
-  const renderContent = () => {
-    if (!highlightMatches || highlightMatches.length === 0) {
-      return <span>{tag}</span>;
-    }
-    const parts = getHighlightedParts(tag, highlightMatches);
+    const renderContent = () => {
+      if (!highlightMatches || highlightMatches.length === 0) {
+        return <span>{tag}</span>;
+      }
+      const parts = getHighlightedParts(tag, highlightMatches);
+      return (
+        <span>
+          {parts.map((part, i) =>
+            part.isMatch ? (
+              <mark
+                key={i}
+                className="bg-accent/40 text-accent-foreground rounded-xs px-0.5 font-bold"
+              >
+                {part.text}
+              </mark>
+            ) : (
+              <span key={i}>{part.text}</span>
+            ),
+          )}
+        </span>
+      );
+    };
+
     return (
-      <span>
-        {parts.map((part, i) =>
-          part.isMatch ? (
-            <mark
-              key={i}
-              className="bg-accent/40 text-accent-foreground rounded-xs px-0.5 font-bold"
-            >
-              {part.text}
-            </mark>
-          ) : (
-            <span key={i}>{part.text}</span>
-          ),
+      <span
+        className={cn(
+          'inline-flex items-center font-medium rounded-full border transition-all duration-150 select-none group/tag',
+          currentVariant.badge,
+          currentSize.badge,
+          onClick && !disabled && 'cursor-pointer active:scale-95',
+          className,
+        )}
+        onClick={onClick && !disabled ? () => onClick(tag) : undefined}
+      >
+        <span className={cn('font-mono font-semibold shrink-0 select-none', currentVariant.hash)}>
+          #
+        </span>
+        <span className={cn('truncate max-w-[120px]', currentVariant.text)}>{renderContent()}</span>
+        {onRemove && !disabled && (
+          <button
+            type="button"
+            aria-label={`Remove tag ${tag}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(tag);
+            }}
+            className={cn(
+              'rounded-full p-0.5 transition-colors focus:outline-none focus:ring-1 focus:ring-white/20 shrink-0 ml-0.5 touch-manipulation cursor-pointer',
+              currentVariant.removeBtn,
+            )}
+          >
+            <X className={currentSize.icon} />
+          </button>
         )}
       </span>
     );
-  };
+  },
+);
 
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center font-medium rounded-full border transition-all duration-150 select-none group/tag',
-        currentVariant.badge,
-        currentSize.badge,
-        onClick && !disabled && 'cursor-pointer active:scale-95',
-        className,
-      )}
-      onClick={onClick && !disabled ? () => onClick(tag) : undefined}
-    >
-      <span className={cn('font-mono font-semibold shrink-0 select-none', currentVariant.hash)}>
-        #
-      </span>
-      <span className={cn('truncate max-w-[120px]', currentVariant.text)}>{renderContent()}</span>
-      {onRemove && !disabled && (
-        <button
-          type="button"
-          aria-label={`Remove tag ${tag}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove(tag);
-          }}
-          className={cn(
-            'rounded-full p-0.5 transition-colors focus:outline-none focus:ring-1 focus:ring-white/20 shrink-0 ml-0.5',
-            currentVariant.removeBtn,
-          )}
-        >
-          <X className={currentSize.icon} />
-        </button>
-      )}
-    </span>
-  );
-};
+TagBadge.displayName = 'TagBadge';
 
 export interface TagManagerProps {
   item?: VaultItem | null;
@@ -211,177 +215,196 @@ export interface TagManagerProps {
   className?: string;
 }
 
-export const TagManager: React.FC<TagManagerProps> = ({
-  item,
-  tags: propTags,
-  onAddTag,
-  onRemoveTag,
-  readOnly = false,
-  showLabel = false,
-  label = 'Tags:',
-  size = 'sm',
-  variant = 'default',
-  placeholder = 'tag...',
-  className,
-}) => {
-  const updateItem = useVaultStore((state) => state.updateItem);
-  const [isAdding, setIsAdding] = useState(false);
-  const [inputValue, setInputValue] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+export const TagManager: React.FC<TagManagerProps> = React.memo(
+  ({
+    item,
+    tags: propTags,
+    onAddTag,
+    onRemoveTag,
+    readOnly = false,
+    showLabel = false,
+    label = 'Tags:',
+    size = 'sm',
+    variant = 'default',
+    placeholder = 'tag...',
+    className,
+  }) => {
+    const updateItem = useVaultStore((state) => state.updateItem);
+    const [isAdding, setIsAdding] = useState(false);
+    const [inputValue, setInputValue] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const isCancellingRef = useRef(false);
+    const isSubmittingRef = useRef(false);
 
-  const resolvedTags = useMemo<string[]>(() => {
-    if (propTags) return propTags;
-    if (item && Array.isArray(item.metadata?.tags)) {
-      return item.metadata.tags as string[];
-    }
-    return [];
-  }, [item, propTags]);
-
-  useEffect(() => {
-    if (isAdding) {
-      inputRef.current?.focus();
-    }
-  }, [isAdding]);
-
-  const cleanTag = (raw: string): string => {
-    return raw
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9-_]/g, '');
-  };
-
-  const handleAdd = async () => {
-    const cleaned = cleanTag(inputValue);
-    if (!cleaned) {
-      setIsAdding(false);
-      setInputValue('');
-      return;
-    }
-
-    if (resolvedTags.includes(cleaned)) {
-      toast.error('Tag already exists');
-      setIsAdding(false);
-      setInputValue('');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      if (onAddTag) {
-        await onAddTag(cleaned);
-      } else if (item) {
-        const updated = [...resolvedTags, cleaned];
-        await updateItem(item.id, {
-          metadata: { ...(item.metadata || {}), tags: updated },
-        });
-        toast.success(`Tag #${cleaned} added`);
+    const resolvedTags = useMemo<string[]>(() => {
+      if (propTags) return propTags;
+      if (item && Array.isArray(item.metadata?.tags)) {
+        return item.metadata.tags as string[];
       }
-    } catch (err) {
-      logger.error('Failed to add tag', { error: err, itemId: item?.id });
-      toast.error('Failed to add tag');
-    } finally {
-      setIsSubmitting(false);
+      return [];
+    }, [item, propTags]);
+
+    useEffect(() => {
+      if (isAdding) {
+        isCancellingRef.current = false;
+        inputRef.current?.focus();
+      }
+    }, [isAdding]);
+
+    const cleanTag = (raw: string): string => {
+      return raw
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-_]/g, '');
+    };
+
+    const handleAdd = async () => {
+      if (isCancellingRef.current || isSubmittingRef.current) {
+        return;
+      }
+
+      const cleaned = cleanTag(inputValue);
+      if (!cleaned) {
+        setIsAdding(false);
+        setInputValue('');
+        return;
+      }
+
+      if (resolvedTags.includes(cleaned)) {
+        toast.error('Tag already exists');
+        setIsAdding(false);
+        setInputValue('');
+        return;
+      }
+
+      isSubmittingRef.current = true;
+      setIsSubmitting(true);
+
+      try {
+        if (onAddTag) {
+          await onAddTag(cleaned);
+        } else if (item) {
+          const updated = [...resolvedTags, cleaned];
+          await updateItem(item.id, {
+            metadata: { ...(item.metadata || {}), tags: updated },
+          });
+          toast.success(`Tag #${cleaned} added`);
+        }
+      } catch (err) {
+        logger.error('Failed to add tag', { error: err, itemId: item?.id });
+        toast.error('Failed to add tag');
+      } finally {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+        setIsAdding(false);
+        setInputValue('');
+      }
+    };
+
+    const handleCancel = () => {
+      isCancellingRef.current = true;
       setIsAdding(false);
       setInputValue('');
-    }
-  };
+    };
 
-  const handleRemove = async (tagToRemove: string) => {
-    if (readOnly || isSubmitting) return;
+    const handleRemove = async (tagToRemove: string) => {
+      if (readOnly || isSubmitting) return;
 
-    try {
-      if (onRemoveTag) {
-        await onRemoveTag(tagToRemove);
-      } else if (item) {
-        const updated = resolvedTags.filter((t) => t !== tagToRemove);
-        await updateItem(item.id, {
-          metadata: { ...(item.metadata || {}), tags: updated },
-        });
-        toast.success(`Tag #${tagToRemove} removed`);
+      try {
+        if (onRemoveTag) {
+          await onRemoveTag(tagToRemove);
+        } else if (item) {
+          const updated = resolvedTags.filter((t) => t !== tagToRemove);
+          await updateItem(item.id, {
+            metadata: { ...(item.metadata || {}), tags: updated },
+          });
+          toast.success(`Tag #${tagToRemove} removed`);
+        }
+      } catch (err) {
+        logger.error('Failed to remove tag', { error: err, itemId: item?.id });
+        toast.error('Failed to remove tag');
       }
-    } catch (err) {
-      logger.error('Failed to remove tag', { error: err, itemId: item?.id });
-      toast.error('Failed to remove tag');
-    }
-  };
+    };
 
-  const currentSize = sizeStyles[size] || sizeStyles.sm;
+    const currentSize = sizeStyles[size] || sizeStyles.sm;
 
-  return (
-    <div className={cn('flex flex-wrap items-center gap-1.5', className)}>
-      {showLabel && (
-        <div className="flex items-center gap-1.5 text-text/45 text-xs font-semibold mr-1 shrink-0">
-          <TagIcon className="h-3.5 w-3.5" />
-          <span>{label}</span>
-        </div>
-      )}
+    return (
+      <div className={cn('flex flex-wrap items-center gap-1.5', className)}>
+        {showLabel && (
+          <div className="flex items-center gap-1.5 text-text/45 text-xs font-semibold mr-1 shrink-0 select-none">
+            <TagIcon className="h-3.5 w-3.5" />
+            <span>{label}</span>
+          </div>
+        )}
 
-      {resolvedTags.map((tag) => (
-        <TagBadge
-          key={tag}
-          tag={tag}
-          variant={variant}
-          size={size}
-          onRemove={!readOnly ? handleRemove : undefined}
-          disabled={isSubmitting}
-        />
-      ))}
+        {resolvedTags.map((tag) => (
+          <TagBadge
+            key={tag}
+            tag={tag}
+            variant={variant}
+            size={size}
+            onRemove={!readOnly ? handleRemove : undefined}
+            disabled={isSubmitting}
+          />
+        ))}
 
-      {!readOnly && (
-        <>
-          {isAdding ? (
-            <div className="inline-flex items-center relative">
-              <span className="absolute left-1.5 top-1/2 -translate-y-1/2 font-mono text-[9px] text-text/40 pointer-events-none select-none">
-                #
-              </span>
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAdd();
-                  } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    setIsAdding(false);
-                    setInputValue('');
-                  }
-                }}
-                onBlur={handleAdd}
-                placeholder={placeholder}
-                disabled={isSubmitting}
-                className={cn(
-                  'rounded-full bg-white/[0.08] border border-white/20 text-text placeholder:text-text/30 pl-3.5 pr-2 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/20 transition-all font-medium',
-                  currentSize.input,
+        {!readOnly && (
+          <>
+            {isAdding ? (
+              <div className="inline-flex items-center relative">
+                <span className="absolute left-1.5 top-1/2 -translate-y-1/2 font-mono text-[9px] text-text/40 pointer-events-none select-none">
+                  #
+                </span>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  maxLength={40}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAdd();
+                    } else if (e.key === 'Escape') {
+                      e.preventDefault();
+                      handleCancel();
+                    }
+                  }}
+                  onBlur={handleAdd}
+                  placeholder={placeholder}
+                  disabled={isSubmitting}
+                  className={cn(
+                    'rounded-full bg-white/[0.08] border border-white/20 text-text placeholder:text-text/30 pl-3.5 pr-2 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/20 transition-all font-medium',
+                    currentSize.input,
+                  )}
+                  autoFocus
+                />
+                {isSubmitting && (
+                  <Loader2 className="h-2.5 w-2.5 animate-spin absolute right-1.5 top-1/2 -translate-y-1/2 text-text/40" />
                 )}
-                autoFocus
-              />
-              {isSubmitting && (
-                <Loader2 className="h-2.5 w-2.5 animate-spin absolute right-1.5 top-1/2 -translate-y-1/2 text-text/40" />
-              )}
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsAdding(true);
-              }}
-              className={cn(
-                'inline-flex items-center rounded-full border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/[0.08] hover:border-white/30 text-text/50 hover:text-text transition-all font-medium focus:outline-none focus:ring-1 focus:ring-white/20',
-                currentSize.button,
-              )}
-            >
-              <Plus className={currentSize.icon} />
-              <span>Tag</span>
-            </button>
-          )}
-        </>
-      )}
-    </div>
-  );
-};
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsAdding(true);
+                }}
+                className={cn(
+                  'inline-flex items-center rounded-full border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/[0.08] hover:border-white/30 text-text/50 hover:text-text transition-all font-medium focus:outline-none focus:ring-1 focus:ring-white/20 touch-manipulation cursor-pointer',
+                  currentSize.button,
+                )}
+              >
+                <Plus className={currentSize.icon} />
+                <span>Tag</span>
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    );
+  },
+);
+
+TagManager.displayName = 'TagManager';

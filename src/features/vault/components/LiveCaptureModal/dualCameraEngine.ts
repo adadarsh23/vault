@@ -31,6 +31,27 @@ export interface DualCameraManager {
   ) => Promise<Blob | null>;
 }
 
+function drawRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
+  if (typeof (ctx as any).roundRect === 'function') {
+    (ctx as any).roundRect(x, y, w, h, r);
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+}
+
 export function createDualCameraManager(): DualCameraManager {
   let secondaryStream: MediaStream | null = null;
   const secondaryVideo = document.createElement('video');
@@ -252,13 +273,13 @@ export function createDualCameraManager(): DualCameraManager {
           ctx.shadowOffsetY = 6;
 
           ctx.beginPath();
-          ctx.roundRect(pipX, pipY, pipW, pipH, radius);
+          drawRoundedRect(ctx, pipX, pipY, pipW, pipH, radius);
           ctx.fillStyle = '#000';
           ctx.fill();
 
           // Clip & Draw Secondary Feed
           ctx.beginPath();
-          ctx.roundRect(pipX, pipY, pipW, pipH, radius);
+          drawRoundedRect(ctx, pipX, pipY, pipW, pipH, radius);
           ctx.clip();
 
           if (isSubFront) {
@@ -273,7 +294,7 @@ export function createDualCameraManager(): DualCameraManager {
           // Glowing border around PiP bubble
           ctx.save();
           ctx.beginPath();
-          ctx.roundRect(pipX, pipY, pipW, pipH, radius);
+          drawRoundedRect(ctx, pipX, pipY, pipW, pipH, radius);
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
           ctx.lineWidth = 3;
           ctx.stroke();

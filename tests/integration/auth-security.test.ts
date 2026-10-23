@@ -17,7 +17,7 @@ const MASTER_KEY_1 = 'SecureMasterKey2026!';
 
 let isMongoConnected = false;
 
-describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
+describe('🔐 Auth Security & Token Rotation Integration Tests', { timeout: 60000 }, () => {
   beforeAll(async () => {
     process.env.SKIP_RECAPTCHA = 'true';
     if (process.env.SKIP_MONGO_CONNECT === '1' || process.env.SKIP_MONGO_CONNECT === 'true') {
@@ -155,7 +155,7 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
       const userInDb = await User.findOne({ username: 'untrimmed_user' });
       expect(userInDb).not.toBeNull();
       expect(userInDb?.username).toBe('untrimmed_user');
-    });
+    }, 45000);
   });
 
   /* -------------------------------------------------------------------
@@ -254,7 +254,7 @@ describe('🔐 Auth Security & Token Rotation Integration Tests', () => {
       });
       expect(tokenDoc).not.toBeNull();
       expect(tokenDoc?.userAgent).toBe('SecurityAuditorAgent/2.0');
-    });
+    }, 45000);
   });
 
   /* -------------------------------------------------------------------

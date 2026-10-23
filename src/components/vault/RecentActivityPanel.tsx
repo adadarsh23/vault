@@ -98,7 +98,7 @@ function formatRelativeTime(timestamp: number | string | Date) {
   });
 }
 
-export const RecentActivityPanel: React.FC = () => {
+export const RecentActivityPanel: React.FC = React.memo(() => {
   const entries = useActivityStore((state) => state.entries);
   const isSyncingLogs = useVaultStore((state) => state.isSyncingLogs);
   const syncStatus = useVaultStore((state) => state.syncStatus);
@@ -107,6 +107,7 @@ export const RecentActivityPanel: React.FC = () => {
   const [pageChangeDirection, setPageChangeDirection] = useState<'next' | 'prev' | null>(null);
   const [selectedEntry, setSelectedEntry] = useState<DisplayActivityEntry | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const prevEntriesLengthRef = useRef(entries.length);
 
   // Force re-render every minute to update relative times
   const [, setTick] = useState(0);
@@ -193,10 +194,14 @@ export const RecentActivityPanel: React.FC = () => {
 
   // If list updates while transitioning, avoid sticky loading states.
   useEffect(() => {
-    if (isPageChanging) {
-      setIsPageChanging(false);
+    if (prevEntriesLengthRef.current !== entries.length) {
+      prevEntriesLengthRef.current = entries.length;
+      if (isPageChanging) {
+        setIsPageChanging(false);
+        setPageChangeDirection(null);
+      }
     }
-  }, [sortedEntries.length, isPageChanging]);
+  }, [entries.length, isPageChanging]);
 
   return (
     <div className="flex flex-col h-full min-h-0 space-y-3 sm:space-y-4" ref={containerRef}>
@@ -385,4 +390,6 @@ export const RecentActivityPanel: React.FC = () => {
       <ActivityDetailsModal entry={selectedEntry} onClose={() => setSelectedEntry(null)} />
     </div>
   );
-};
+});
+
+RecentActivityPanel.displayName = 'RecentActivityPanel';

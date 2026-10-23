@@ -4,8 +4,10 @@ import apiClient, { ApiResponse } from './apiClient';
 export type MultipartFileCategory = 'photo' | 'video' | 'audio' | 'document' | 'other-files';
 
 export interface VaultFolderRecord {
+  id?: string;
   name?: string;
   itemType?: string;
+  parentId?: string | null;
   [key: string]: unknown;
 }
 
@@ -54,6 +56,31 @@ export interface FolderCreatePayload {
 export interface BasicSuccessResponse {
   success: boolean;
   message?: string;
+}
+
+export interface VaultIntegrityStatusData {
+  activeRootHash?: string;
+  algorithm?: string;
+  totalLeaves?: number;
+  treeDepth?: number;
+  lastAuditAt?: number | string | null;
+  lastAuditStatus?: 'clean' | 'corrupted' | 'idle';
+  [key: string]: unknown;
+}
+
+export interface VaultIntegrityVerifyData {
+  status: 'clean' | 'corrupted';
+  totalChecked: number;
+  rootHash?: string;
+  auditId?: string;
+  corruptedItems?: unknown[];
+  [key: string]: unknown;
+}
+
+export interface SignedUrlResponseData {
+  signedUrl: string;
+  expiresIn?: number;
+  [key: string]: unknown;
 }
 
 const MULTIPART_CATEGORY_SET: ReadonlySet<MultipartFileCategory> = new Set([
@@ -105,9 +132,34 @@ const normalizeSha256 = (value: string, field: string): string => {
   return normalized;
 };
 
+/**
+ * UTF-8 safe Base64 encoder (prevents DOMException on international characters / emoji)
+ */
+const safeBase64Encode = (str: string): string => {
+  try {
+    return btoa(
+      encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) =>
+        String.fromCharCode(parseInt(p1, 16)),
+      ),
+    );
+  } catch {
+    return btoa(str);
+  }
+};
+
 export const vaultApi = {
   fetchSnapshot: async (): Promise<ApiResponse<Record<string, unknown>>> => {
     const { data } = await apiClient.get<ApiResponse<Record<string, unknown>>>('/vault');
+    return data;
+  },
+
+  fetchSync: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+    const { data } = await apiClient.get<ApiResponse<Record<string, unknown>>>('/vault/sync');
+    return data;
+  },
+
+  getItems: async (): Promise<ApiResponse<unknown[]>> => {
+    const { data } = await apiClient.get<ApiResponse<unknown[]>>('/vault/items');
     return data;
   },
 
@@ -163,11 +215,12 @@ export const vaultApi = {
     onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
   ): Promise<ApiResponse<TResponse>> => {
     const categorySegment = encodePathSegment(normalizeRequiredString(category, 'category'));
+    // Do NOT hardcode Content-Type: multipart/form-data without boundary!
+    // apiClient request interceptor removes application/json so browser / Axios computes correct boundary.
     const { data } = await apiClient.post<ApiResponse<TResponse>>(
       `/vault/files/${categorySegment}`,
       formData,
       {
-        headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress,
       },
     );
@@ -286,12 +339,19 @@ export const vaultApi = {
     return data;
   },
 
+  initializeFolders: async (): Promise<ApiResponse<{ initialized: boolean }>> => {
+    const { data } =
+      await apiClient.post<ApiResponse<{ initialized: boolean }>>('/vault/folders/init');
+    return data;
+  },
+
+  // TUS Resumable Upload Protocol
   createTusUpload: async (
     fileSize: number,
     metadata: Record<string, string>,
   ): Promise<{ uploadId: string; location: string }> => {
     const encodedMetadata = Object.entries(metadata)
-      .map(([k, v]) => `${k} ${btoa(v)}`)
+      .map(([k, v]) => `${k} ${safeBase64Encode(v)}`)
       .join(',');
 
     const response = await apiClient.post(
@@ -306,7 +366,10 @@ export const vaultApi = {
       },
     );
 
-    const location = response.headers['location'] || response.headers['Location'] || '';
+    const location =
+      response.headers['location'] ||
+      (typeof response.headers.get === 'function' ? response.headers.get('location') : '') ||
+      '';
     const uploadId = location.split('/').pop() || `${Date.now()}`;
     return { uploadId, location };
   },
@@ -318,7 +381,11 @@ export const vaultApi = {
       },
     });
 
-    const offsetHeader = response.headers['upload-offset'] || response.headers['Upload-Offset'];
+    const offsetHeader =
+      response.headers['upload-offset'] ||
+      (typeof response.headers.get === 'function'
+        ? response.headers.get('upload-offset')
+        : undefined);
     return parseInt(offsetHeader || '0', 10);
   },
 
@@ -335,7 +402,76 @@ export const vaultApi = {
       },
     );
 
-    const newOffsetHeader = response.headers['upload-offset'] || response.headers['Upload-Offset'];
+    const newOffsetHeader =
+      response.headers['upload-offset'] ||
+      (typeof response.headers.get === 'function'
+        ? response.headers.get('upload-offset')
+        : undefined);
     return parseInt(newOffsetHeader || `${offset + chunk.length}`, 10);
+  },
+
+  // Signed URL for secure zero-credential direct media streaming
+  getSignedUrl: async (itemId: string): Promise<ApiResponse<SignedUrlResponseData>> => {
+    const validItemId = normalizeRequiredString(itemId, 'itemId');
+    const { data } = await apiClient.get<ApiResponse<SignedUrlResponseData>>(
+      `/vault/files/signed-url/${encodePathSegment(validItemId)}`,
+    );
+    return data;
+  },
+
+  // Cryptographic Merkle Vault Integrity
+  getIntegrityStatus: async (): Promise<ApiResponse<VaultIntegrityStatusData>> => {
+    const { data } =
+      await apiClient.get<ApiResponse<VaultIntegrityStatusData>>('/vault/integrity/status');
+    return data;
+  },
+
+  verifyIntegrity: async (algorithm?: string): Promise<ApiResponse<VaultIntegrityVerifyData>> => {
+    const { data } = await apiClient.post<ApiResponse<VaultIntegrityVerifyData>>(
+      '/vault/integrity/verify',
+      algorithm ? { algorithm } : {},
+    );
+    return data;
+  },
+
+  getItemIntegrityProof: async (
+    itemId: string,
+    algorithm?: string,
+  ): Promise<ApiResponse<unknown>> => {
+    const validItemId = normalizeRequiredString(itemId, 'itemId');
+    const { data } = await apiClient.get<ApiResponse<unknown>>(
+      `/vault/integrity/proof/${encodePathSegment(validItemId)}`,
+      { params: algorithm ? { algorithm } : undefined },
+    );
+    return data;
+  },
+
+  reportTamper: async (report: {
+    itemId: string;
+    expectedHash: string;
+    actualHash: string;
+    details?: unknown;
+  }): Promise<ApiResponse<{ reported: boolean }>> => {
+    const { data } = await apiClient.post<ApiResponse<{ reported: boolean }>>(
+      '/vault/integrity/report-tamper',
+      report,
+    );
+    return data;
+  },
+
+  // User Activity Audit Logs
+  getActivityLogs: async (params?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<ApiResponse<unknown[]>> => {
+    const { data } = await apiClient.get<ApiResponse<unknown[]>>('/vault/activity', { params });
+    return data;
+  },
+
+  saveActivityLog: async (
+    log: Record<string, unknown>,
+  ): Promise<ApiResponse<{ saved: boolean }>> => {
+    const { data } = await apiClient.post<ApiResponse<{ saved: boolean }>>('/vault/activity', log);
+    return data;
   },
 };

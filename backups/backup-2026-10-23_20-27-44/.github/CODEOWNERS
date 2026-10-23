@@ -1,0 +1,23 @@
+# Vault Repository Code Owners
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything in the repository
+* @adadarsh23
+
+# GitHub configurations & CI/CD workflows
+/.github/ @adadarsh23
+
+# Server & API backend
+/server/ @adadarsh23
+
+# Frontend client & UI components
+/src/ @adadarsh23
+
+# Security & cryptographic core
+/src/security/ @adadarsh23
+/tests/unit/encryption.test.ts @adadarsh23
+/tests/unit/server-crypto.test.ts @adadarsh23
+
+# Infrastructure & Docker
+/Dockerfile @adadarsh23
+/docker-compose.yml @adadarsh23

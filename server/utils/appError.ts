@@ -56,4 +56,11 @@ export class AppError extends Error {
   static internal(message: string, code = 'INTERNAL_ERROR') {
     return new AppError(500, code, message);
   }
+
+  /**
+   * Factory method for Service Unavailable (503)
+   */
+  static serviceUnavailable(message: string, code = 'SERVICE_UNAVAILABLE') {
+    return new AppError(503, code, message);
+  }
 }

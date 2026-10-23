@@ -4,11 +4,16 @@
 const BASE83_CHARS =
   '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#$%*+,-.:;=?@[]^_{|}~';
 
+const BASE83_MAP = new Int16Array(256).fill(-1);
+for (let i = 0; i < BASE83_CHARS.length; i++) {
+  BASE83_MAP[BASE83_CHARS.charCodeAt(i)] = i;
+}
+
 function decode83(str: string): number {
   let value = 0;
   for (let i = 0; i < str.length; i++) {
-    const c = str[i];
-    const digit = BASE83_CHARS.indexOf(c);
+    const code = str.charCodeAt(i);
+    const digit = code < 256 ? BASE83_MAP[code] : -1;
     if (digit !== -1) {
       value = value * 83 + digit;
     }
@@ -39,7 +44,8 @@ export function decodeBlurHash(
 ): Uint8ClampedArray | null {
   if (!blurHash || blurHash.length < 6 || (blurHash.length - 6) % 2 !== 0) return null;
   for (let i = 0; i < blurHash.length; i++) {
-    if (BASE83_CHARS.indexOf(blurHash[i]) === -1) return null;
+    const code = blurHash.charCodeAt(i);
+    if (code >= 256 || BASE83_MAP[code] === -1) return null;
   }
 
   try {
@@ -111,27 +117,48 @@ export function decodeBlurHash(
   }
 }
 
+const MAX_BLURHASH_CACHE = 256;
+const blurHashDataUrlCache = new Map<string, string>();
+let sharedCanvas: HTMLCanvasElement | null = null;
+
 /**
  * Renders a blurHash into a Data URL for <img> src or canvas rendering
  */
 export function blurHashToDataUrl(blurHash: string, width = 16, height = 16): string | null {
+  const cacheKey = `${blurHash}:${width}x${height}`;
+  const cached = blurHashDataUrlCache.get(cacheKey);
+  if (cached) return cached;
+
   const pixels = decodeBlurHash(blurHash, width, height);
   if (!pixels) return null;
 
   if (typeof document === 'undefined') return null;
 
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
+  try {
+    if (!sharedCanvas) {
+      sharedCanvas = document.createElement('canvas');
+    }
+    sharedCanvas.width = width;
+    sharedCanvas.height = height;
+    const ctx = sharedCanvas.getContext('2d');
+    if (!ctx) return null;
 
-  const imageData = ctx.createImageData(width, height);
-  imageData.data.set(pixels);
-  ctx.putImageData(imageData, 0, 0);
+    const imageData = ctx.createImageData(width, height);
+    imageData.data.set(pixels);
+    ctx.putImageData(imageData, 0, 0);
 
-  const dataUrl = canvas.toDataURL();
-  canvas.width = 0;
-  canvas.height = 0;
-  return dataUrl;
+    const dataUrl = sharedCanvas.toDataURL();
+    sharedCanvas.width = 0;
+    sharedCanvas.height = 0;
+
+    if (blurHashDataUrlCache.size >= MAX_BLURHASH_CACHE) {
+      const firstKey = blurHashDataUrlCache.keys().next().value;
+      if (firstKey) blurHashDataUrlCache.delete(firstKey);
+    }
+    blurHashDataUrlCache.set(cacheKey, dataUrl);
+
+    return dataUrl;
+  } catch {
+    return null;
+  }
 }

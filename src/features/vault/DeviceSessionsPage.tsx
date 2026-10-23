@@ -39,7 +39,9 @@ export const DeviceSessionsPage: React.FC<DeviceSessionsPageProps> = ({ onBack }
       setTrustedDeviceLabels(getTrustedDeviceLabels());
     } catch (error: unknown) {
       setSessions([]);
-      toast.error(getErrorMessage(error, 'Failed to load account sessions'));
+      if (typeof navigator === 'undefined' || navigator.onLine !== false) {
+        toast.error(getErrorMessage(error, 'Failed to load account sessions'));
+      }
     } finally {
       setIsSessionActionLoading(false);
     }

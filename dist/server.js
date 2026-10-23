@@ -2153,6 +2153,12 @@ var AppError = class _AppError extends Error {
   static internal(message, code = "INTERNAL_ERROR") {
     return new _AppError(500, code, message);
   }
+  /**
+   * Factory method for Service Unavailable (503)
+   */
+  static serviceUnavailable(message, code = "SERVICE_UNAVAILABLE") {
+    return new _AppError(503, code, message);
+  }
 };
 
 // server/utils/fileStorage.ts
@@ -14759,6 +14765,12 @@ import mongoose24 from "mongoose";
 var router4 = express6.Router();
 router4.get("/", requireAuth, async (req, res) => {
   const { userId, username } = req.user;
+  if (mongoose24.connection.readyState !== 1) {
+    throw AppError.serviceUnavailable(
+      "Database service is temporarily unavailable or reconnecting.",
+      "SERVICE_UNAVAILABLE"
+    );
+  }
   const Notification = getNotificationModel(username);
   const notifications = await Notification.find({ userId }).sort({ createdAt: -1 }).allowDiskUse(true).limit(50).lean().exec();
   return sendSuccess(res, notifications, "Notifications fetched successfully");
@@ -16474,6 +16486,11 @@ var errorHandler = (err, req, res, _next) => {
       code = err.code;
       message = err.message;
     }
+  } else if (err.name === "MongoServerSelectionError" || err.name === "MongooseServerSelectionError" || err.name === "MongoClientClosedError" || err.name === "MongoNetworkError" || err.name === "MongoTimeoutError" || typeof err?.message === "string" && (err.message.includes("client was closed") || err.message.includes("connection <monitor> closed") || err.message.includes("server selection") || err.message.includes("buffering timed out"))) {
+    statusCode = 503;
+    code = "DB_UNAVAILABLE";
+    message = "Vault database is temporarily unavailable or reconnecting.";
+    err.isOperational = true;
   } else if (err instanceof AppError) {
     statusCode = err.statusCode;
     code = err.code;
@@ -16509,7 +16526,8 @@ var errorHandler = (err, req, res, _next) => {
     }
   });
   const isClientError = statusCode >= 400 && statusCode < 500;
-  if (statusCode >= 500 || !err.isOperational && !isClientError) {
+  const isOperationalError = Boolean(err.isOperational);
+  if (!isOperationalError && (statusCode >= 500 || !isClientError)) {
     logger.error("Unhandled or non-operational server error.", {
       requestId,
       method: req.method,

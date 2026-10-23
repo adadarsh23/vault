@@ -49,6 +49,13 @@ export const downloadAllFromCloud = async (masterKey: string | CryptoKey): Promi
   }
 };
 
+const CONTROL_ITEM_ID_SET = new Set([
+  '__settings__',
+  '__logs__',
+  '__profile__',
+  VAULT_KEY_CHECK_ITEM_ID,
+] as const);
+
 export const downloadVaultSnapshotFromCloud = async (
   masterKey: string | CryptoKey,
 ): Promise<{
@@ -57,12 +64,6 @@ export const downloadVaultSnapshotFromCloud = async (
   logs: any[] | null;
   hasKeyCheck: boolean;
 }> => {
-  const controlItemIdSet = new Set([
-    '__settings__',
-    '__logs__',
-    '__profile__',
-    VAULT_KEY_CHECK_ITEM_ID,
-  ] as const);
   const response = await fetchWithRetry(
     `${API_BASE_URL}/api/vault/items`,
     { method: 'GET', headers: getAuthHeaders() },
@@ -160,7 +161,7 @@ export const downloadVaultSnapshotFromCloud = async (
         itemId,
       ): itemId is '__settings__' | '__logs__' | '__profile__' | typeof VAULT_KEY_CHECK_ITEM_ID =>
         typeof itemId === 'string' &&
-        controlItemIdSet.has(
+        CONTROL_ITEM_ID_SET.has(
           itemId as '__settings__' | '__logs__' | '__profile__' | typeof VAULT_KEY_CHECK_ITEM_ID,
         ),
     );
@@ -171,7 +172,7 @@ export const downloadVaultSnapshotFromCloud = async (
         (
           itemId,
         ): itemId is '__settings__' | '__logs__' | '__profile__' | typeof VAULT_KEY_CHECK_ITEM_ID =>
-          controlItemIdSet.has(
+          CONTROL_ITEM_ID_SET.has(
             itemId as '__settings__' | '__logs__' | '__profile__' | typeof VAULT_KEY_CHECK_ITEM_ID,
           ),
       ),

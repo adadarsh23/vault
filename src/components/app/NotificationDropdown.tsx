@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell,
@@ -12,20 +12,27 @@ import {
   Info,
   X,
   Sparkles,
+  Loader2,
 } from 'lucide-react';
 import { useNotificationStore } from '../../store/notificationStore';
 import { cn } from '../../lib/utils';
+import { logger } from '../../lib/logger';
 
 interface NotificationDropdownProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-function formatRelativeTime(dateString: string): string {
+function formatRelativeTime(dateString?: string): string {
+  if (!dateString) return 'Recently';
   try {
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Recently';
+
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
+    if (diffMs < 0) return 'Just now';
+
     const diffSec = Math.floor(diffMs / 1000);
     const diffMin = Math.floor(diffSec / 60);
     const diffHours = Math.floor(diffMin / 60);
@@ -36,6 +43,7 @@ function formatRelativeTime(dateString: string): string {
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays}d ago`;
+
     return date.toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric',
@@ -85,13 +93,14 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
     useNotificationStore();
 
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
   // Close on click outside or Escape key press
   useEffect(() => {
     if (!isOpen) return;
 
-    const handlePointerDown = (event: PointerEvent | MouseEvent | TouchEvent) => {
+    const handlePointerDown = (event: PointerEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         onClose();
       }
@@ -103,7 +112,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
       }
     };
 
-    // Delay attaching event listener so opening click doesn't immediately close
+    // Delay attaching listener so opening click doesn't immediately close
     const timer = setTimeout(() => {
       document.addEventListener('pointerdown', handlePointerDown);
     }, 10);
@@ -116,8 +125,49 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
     };
   }, [isOpen, onClose]);
 
-  const filteredNotifications =
-    activeTab === 'unread' ? notifications.filter((n) => !n.isRead) : notifications;
+  const handleSafeMarkAsRead = useCallback(
+    async (id?: string) => {
+      try {
+        setActionInProgress(id ?? 'all');
+        await markAsRead(id);
+      } catch (err) {
+        logger.warn('Failed to mark notification as read', { error: err });
+      } finally {
+        setActionInProgress(null);
+      }
+    },
+    [markAsRead],
+  );
+
+  const handleSafeDelete = useCallback(
+    async (id: string) => {
+      try {
+        setActionInProgress(id);
+        await deleteNotification(id);
+      } catch (err) {
+        logger.warn('Failed to delete notification', { error: err });
+      } finally {
+        setActionInProgress(null);
+      }
+    },
+    [deleteNotification],
+  );
+
+  const handleSafeClearAll = useCallback(async () => {
+    try {
+      setActionInProgress('clear-all');
+      await clearNotifications();
+    } catch (err) {
+      logger.warn('Failed to clear notifications', { error: err });
+    } finally {
+      setActionInProgress(null);
+    }
+  }, [clearNotifications]);
+
+  const filteredNotifications = useMemo(() => {
+    if (!Array.isArray(notifications)) return [];
+    return activeTab === 'unread' ? notifications.filter((n) => !n.isRead) : notifications;
+  }, [activeTab, notifications]);
 
   return (
     <AnimatePresence>
@@ -129,8 +179,10 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
             className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-[2px]"
             onClick={onClose}
+            aria-hidden="true"
           />
 
           {/* Panel */}
@@ -141,8 +193,9 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed top-16 left-3 right-3 sm:absolute sm:top-full sm:left-auto sm:right-0 sm:w-96 mt-2.5 z-[100] max-h-[80vh] sm:max-h-[520px] flex flex-col rounded-2xl border border-card-border/80 bg-bg/95 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.6)] overflow-hidden text-text"
+            className="fixed top-16 left-3 right-3 sm:absolute sm:top-full sm:left-auto sm:right-0 sm:w-96 mt-2.5 z-[100] max-h-[min(80dvh,520px)] flex flex-col rounded-2xl border border-card-border/80 bg-bg/95 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.6)] overflow-hidden text-text"
             role="dialog"
+            aria-modal="true"
             aria-label="Notifications"
             onClick={(e) => e.stopPropagation()}
           >
@@ -164,27 +217,38 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                   {unreadCount > 0 && (
                     <button
                       type="button"
+                      disabled={actionInProgress === 'all'}
                       onClick={(e) => {
                         e.stopPropagation();
-                        void markAsRead();
+                        void handleSafeMarkAsRead();
                       }}
-                      className="text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors px-1.5 py-0.5 rounded hover:bg-emerald-500/10"
+                      className="text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors px-1.5 py-0.5 rounded hover:bg-emerald-500/10 disabled:opacity-50"
                       title="Mark all as read"
                     >
-                      <CheckCheck className="h-3 w-3" /> MarkAll
+                      {actionInProgress === 'all' ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <CheckCheck className="h-3 w-3" />
+                      )}
+                      <span>Mark All</span>
                     </button>
                   )}
                   {notifications.length > 0 && (
                     <button
                       type="button"
+                      disabled={actionInProgress === 'clear-all'}
                       onClick={(e) => {
                         e.stopPropagation();
-                        void clearNotifications();
+                        void handleSafeClearAll();
                       }}
-                      className="text-[10px] text-red-400 hover:text-red-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors px-1.5 py-0.5 rounded hover:bg-red-500/10"
+                      className="text-[10px] text-red-400 hover:text-red-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors px-1.5 py-0.5 rounded hover:bg-red-500/10 disabled:opacity-50"
                       title="Clear all notifications"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      {actionInProgress === 'clear-all' ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3 w-3" />
+                      )}
                     </button>
                   )}
                   <button
@@ -270,7 +334,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                     onClick={(e) => {
                       e.stopPropagation();
                       if (!notification.isRead) {
-                        void markAsRead(notification._id);
+                        void handleSafeMarkAsRead(notification._id);
                       }
                     }}
                   >
@@ -301,29 +365,35 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                       </p>
                     </div>
 
-                    {/* Quick Item Actions */}
-                    <div className="flex items-center gap-1 shrink-0 self-center pl-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    {/* Quick Item Actions (visible on mobile/tablet, hover-reveal on desktop) */}
+                    <div className="flex items-center gap-1 shrink-0 self-center pl-1 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                       {!notification.isRead && (
                         <button
                           type="button"
+                          disabled={actionInProgress === notification._id}
                           onClick={(e) => {
                             e.stopPropagation();
-                            void markAsRead(notification._id);
+                            void handleSafeMarkAsRead(notification._id);
                           }}
-                          className="p-1 rounded-md text-emerald-400 hover:bg-emerald-500/20 active:bg-emerald-500/30 transition-colors"
+                          className="p-1.5 rounded-md text-emerald-400 hover:bg-emerald-500/20 active:bg-emerald-500/30 transition-colors disabled:opacity-40"
                           title="Mark as read"
                           aria-label="Mark notification as read"
                         >
-                          <Check className="h-3.5 w-3.5" />
+                          {actionInProgress === notification._id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Check className="h-3.5 w-3.5" />
+                          )}
                         </button>
                       )}
                       <button
                         type="button"
+                        disabled={actionInProgress === notification._id}
                         onClick={(e) => {
                           e.stopPropagation();
-                          void deleteNotification(notification._id);
+                          void handleSafeDelete(notification._id);
                         }}
-                        className="p-1 rounded-md text-text/40 hover:text-red-400 hover:bg-red-500/20 active:bg-red-500/30 transition-colors"
+                        className="p-1.5 rounded-md text-text/40 hover:text-red-400 hover:bg-red-500/20 active:bg-red-500/30 transition-colors disabled:opacity-40"
                         title="Delete notification"
                         aria-label="Delete notification"
                       >

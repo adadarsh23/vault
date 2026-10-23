@@ -136,6 +136,9 @@ const normalizeItemType = (
   }
 };
 
+const DATA_URL_BASE64_PATTERN = /^data:[^,]*;base64,(.*)$/i;
+const BASE64_ALPHABET_PATTERN = /^[A-Za-z0-9+/_-]+={0,2}$/;
+
 const isLikelyBase64 = (value: string): boolean => {
   let trimmed = value.trim();
   if (!trimmed) return false;
@@ -148,16 +151,22 @@ const isLikelyBase64 = (value: string): boolean => {
     }
   }
 
-  const dataUrlMatch = trimmed.match(/^data:[^,]*;base64,(.*)$/i);
+  const dataUrlMatch = trimmed.match(DATA_URL_BASE64_PATTERN);
   if (dataUrlMatch) {
     trimmed = dataUrlMatch[1];
+  }
+
+  // To avoid multi-MB regex freeze and copying, sample the first 1024 chars if large
+  if (trimmed.length > 1024) {
+    const sample = trimmed.slice(0, 1024).replace(/\s+/g, '');
+    return BASE64_ALPHABET_PATTERN.test(sample);
   }
 
   trimmed = trimmed.replace(/\s+/g, '');
   if (!trimmed) return false;
 
   // Support standard and URL-safe Base64 alphabets.
-  if (!/^[A-Za-z0-9+/_-]+={0,2}$/.test(trimmed)) {
+  if (!BASE64_ALPHABET_PATTERN.test(trimmed)) {
     return false;
   }
 

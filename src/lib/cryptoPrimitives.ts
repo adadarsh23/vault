@@ -30,14 +30,20 @@ export const ENVELOPE_HEADER_LENGTH = 6 + AES_GCM_IV_LENGTH + 48 + AES_GCM_IV_LE
 const toArrayBuffer = (value: Uint8Array): ArrayBuffer => new Uint8Array(value).buffer;
 
 let sodiumInstance: any = null;
+let sodiumPromise: Promise<any> | null = null;
 
 export const getSodium = async () => {
   if (sodiumInstance) return sodiumInstance;
-  const sodiumModule = await import('libsodium-wrappers');
-  const sodium = sodiumModule.default || sodiumModule;
-  await sodium.ready;
-  sodiumInstance = sodium;
-  return sodium;
+  if (!sodiumPromise) {
+    sodiumPromise = (async () => {
+      const sodiumModule = await import('libsodium-wrappers');
+      const sodium = sodiumModule.default || sodiumModule;
+      await sodium.ready;
+      sodiumInstance = sodium;
+      return sodium;
+    })();
+  }
+  return sodiumPromise;
 };
 
 /**
@@ -172,7 +178,11 @@ export const base64ToUint8Array = (base64: string): Uint8Array => {
   if (!base64 || typeof base64 !== 'string') return new Uint8Array(0);
   try {
     const normalized = normalizeBase64Input(base64);
-    if (!normalized || !/^[A-Za-z0-9+/=]+$/.test(normalized)) return new Uint8Array(0);
+    if (!normalized) return new Uint8Array(0);
+    // For smaller strings, perform strict validation; for large payloads let atob safely parse
+    if (normalized.length < 2048 && !/^[A-Za-z0-9+/=]+$/.test(normalized)) {
+      return new Uint8Array(0);
+    }
 
     const binaryString = atob(normalized);
     const bytes = new Uint8Array(binaryString.length);
@@ -220,13 +230,6 @@ export const touchCryptoKeyCache = (): void => {
   }, CRYPTO_KEY_CACHE_TTL_MS);
 };
 
-const computeKeyHash = async (secretKey: string): Promise<string> => {
-  const msgUint8 = new TextEncoder().encode(secretKey);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-};
-
 export const getOrCreateCryptoKey = async (
   secretKey: string | CryptoKey,
 ): Promise<CryptoKey | null> => {
@@ -234,8 +237,7 @@ export const getOrCreateCryptoKey = async (
   if (secretKey instanceof CryptoKey) {
     return secretKey;
   }
-  const hash = await computeKeyHash(secretKey);
-  const cached = cryptoKeyCache.get(hash);
+  const cached = cryptoKeyCache.get(secretKey);
   if (cached) {
     touchCryptoKeyCache();
     return cached;
@@ -258,7 +260,7 @@ export const getOrCreateCryptoKey = async (
     // Secure zero-out of raw key buffer immediately after import
     keyBuf.fill(0);
 
-    cryptoKeyCache.set(hash, cryptoKey);
+    cryptoKeyCache.set(secretKey, cryptoKey);
     touchCryptoKeyCache();
     return cryptoKey;
   } catch {

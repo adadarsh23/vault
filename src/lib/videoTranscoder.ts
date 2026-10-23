@@ -1,5 +1,5 @@
 import { logger } from './logger';
-import { createTrackedBlobUrl } from './blobRegistry';
+import { createTrackedBlobUrl, revokeBlobUrl } from './blobRegistry';
 
 export type TranscodeProgressStage = 'loading' | 'remuxing' | 'transcoding' | 'done';
 
@@ -19,12 +19,8 @@ function setBoundedTranscodeCache(key: string, value: { url: string; blob: Blob 
     const oldestKey = transcodedBlobCache.keys().next().value;
     if (oldestKey) {
       const old = transcodedBlobCache.get(oldestKey);
-      if (old?.url?.startsWith('blob:')) {
-        try {
-          URL.revokeObjectURL(old.url);
-        } catch {
-          /* ignore */
-        }
+      if (old?.url) {
+        revokeBlobUrl(old.url);
       }
       transcodedBlobCache.delete(oldestKey);
     }
@@ -67,6 +63,43 @@ export const UNIVERSALLY_UNSUPPORTED_VIDEO_CONTAINERS = new Set([
   'ogm',
   '3gp',
   '3g2',
+  'nut',
+  'dv',
+  'dif',
+  'mxf',
+  'gxf',
+]);
+
+const LEGACY_VIDEO_CODECS_SET = new Set([
+  'avi',
+  'wmv',
+  'flv',
+  'f4v',
+  'asf',
+  'asx',
+  'vob',
+  'evo',
+  'mod',
+  'tod',
+  'mpg',
+  'mpeg',
+  'mpe',
+  'mpv',
+  'm2v',
+  'm2p',
+  'divx',
+  'xvid',
+  'rm',
+  'rmvb',
+  'rv',
+  '3gp',
+  '3g2',
+  'y4m',
+  'ogv',
+  'ogm',
+  'ts',
+  'mts',
+  'm2ts',
   'nut',
   'dv',
   'dif',
@@ -356,47 +389,8 @@ export async function transcodeVideoInBrowser(
       (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
-    const legacyVideoCodecs = [
-      'avi',
-      'wmv',
-      'flv',
-      'f4v',
-      'asf',
-      'asx',
-      'vob',
-      'evo',
-      'mod',
-      'tod',
-      'mpg',
-      'mpeg',
-      'mpe',
-      'mpv',
-      'm2v',
-      'm2p',
-      'divx',
-      'xvid',
-      'rm',
-      'rmvb',
-      'rv',
-      '3gp',
-      '3g2',
-      'y4m',
-      'ogv',
-      'ogm',
-      'ts',
-      'mts',
-      'm2ts',
-      'nut',
-      'dv',
-      'dif',
-      'mxf',
-      'gxf',
-    ];
-    // iOS Safari does not support WebM VP8/VP9 natively; must re-encode video track
-    if (isIOS) {
-      legacyVideoCodecs.push('webm');
-    }
-    const needsFullVideoTranscode = forceFullTranscode || legacyVideoCodecs.includes(ext);
+    const needsFullVideoTranscode =
+      forceFullTranscode || LEGACY_VIDEO_CODECS_SET.has(ext) || (isIOS && ext === 'webm');
 
     // --- TIER 1: Stream Copy Video + Normalize Audio to AAC Stereo (-sn to strip incompatible subtitles) ---
     if (!needsFullVideoTranscode) {

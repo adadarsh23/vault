@@ -1,7 +1,7 @@
 // useFastAvatar.ts
 // React Hook for high-performance zero-jank offline-first profile photo ingestion and upload
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import type { ImageProcessorResponse } from '../workers/ImageProcessorWorker';
 import {
   queueOfflineAvatar,
@@ -99,7 +99,10 @@ async function processImageOnMainThread(
     const img = new (typeof Image !== 'undefined' ? Image : (globalThis as any).Image)();
     const objectUrl = BlobLifecycleRegistry.createTrackedUrl(file);
 
-    const watchdogTimer = setTimeout(() => {
+    let watchdogTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      watchdogTimer = null;
+      img.onload = null;
+      img.onerror = null;
       BlobLifecycleRegistry.revokeTrackedUrl(objectUrl);
       file
         .arrayBuffer()
@@ -114,7 +117,10 @@ async function processImageOnMainThread(
     }, 2000);
 
     img.onload = () => {
-      clearTimeout(watchdogTimer);
+      if (watchdogTimer !== null) {
+        clearTimeout(watchdogTimer);
+        watchdogTimer = null;
+      }
       try {
         BlobLifecycleRegistry.revokeTrackedUrl(objectUrl);
         const sourceWidth = img.naturalWidth || img.width;
@@ -219,6 +225,12 @@ async function processImageOnMainThread(
     };
 
     img.onerror = () => {
+      if (watchdogTimer !== null) {
+        clearTimeout(watchdogTimer);
+        watchdogTimer = null;
+      }
+      img.onload = null;
+      img.onerror = null;
       BlobLifecycleRegistry.revokeTrackedUrl(objectUrl);
       file
         .arrayBuffer()
@@ -295,7 +307,19 @@ function uploadBinaryWithProgress(
         };
       }
 
+      const onAbort = () => {
+        xhr.abort();
+        reject(new DOMException('Upload aborted by user', 'AbortError'));
+      };
+
+      const cleanupAbortListener = () => {
+        if (signal) {
+          signal.removeEventListener('abort', onAbort);
+        }
+      };
+
       xhr.onload = () => {
+        cleanupAbortListener();
         if (xhr.status >= 200 && xhr.status < 300) {
           onProgress(98);
           resolve();
@@ -312,18 +336,17 @@ function uploadBinaryWithProgress(
       };
 
       xhr.onerror = () => {
+        cleanupAbortListener();
         reject(new Error('Network error occurred during binary upload.'));
       };
 
       xhr.ontimeout = () => {
+        cleanupAbortListener();
         reject(new Error('Binary upload timed out.'));
       };
 
       if (signal) {
-        signal.addEventListener('abort', () => {
-          xhr.abort();
-          reject(new DOMException('Upload aborted by user', 'AbortError'));
-        });
+        signal.addEventListener('abort', onAbort);
       }
 
       xhr.send(blob);
@@ -917,11 +940,14 @@ export function useFastAvatar({
     [userId, resolvedPresignEndpoint, targetSize, quality, computeHash],
   );
 
-  return {
-    ...state,
-    processAndUploadAvatar,
-    syncOfflineQueue,
-    cancelUpload,
-    resetError,
-  };
+  return useMemo(
+    () => ({
+      ...state,
+      processAndUploadAvatar,
+      syncOfflineQueue,
+      cancelUpload,
+      resetError,
+    }),
+    [state, processAndUploadAvatar, syncOfflineQueue, cancelUpload, resetError],
+  );
 }

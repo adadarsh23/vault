@@ -1,9 +1,11 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 import { motion, useReducedMotion, Variants } from 'framer-motion';
 import { Lock } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
-interface FooterProps {}
+export interface FooterProps {
+  className?: string;
+}
 
 /* ───────── Variants ───────── */
 
@@ -12,19 +14,19 @@ const containerVariants = (reduce: boolean): Variants => ({
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: reduce ? 0 : 0.05,
-      delayChildren: reduce ? 0 : 0.15,
+      staggerChildren: reduce ? 0 : 0.06,
+      delayChildren: reduce ? 0 : 0.1,
     },
   },
 });
 
 const charVariants = (reduce: boolean): Variants => ({
-  hidden: { opacity: 0, y: reduce ? 0 : 60 },
+  hidden: { opacity: 0, y: reduce ? 0 : 40 },
   visible: {
-    opacity: 0.2, // Increased visibility
+    opacity: 0.2,
     y: 0,
     transition: {
-      duration: reduce ? 0 : 0.9,
+      duration: reduce ? 0.01 : 0.9,
       ease: [0.22, 1, 0.36, 1],
     },
   },
@@ -36,7 +38,7 @@ const fadeUp = (reduce: boolean): Variants => ({
     opacity: 1,
     y: 0,
     transition: {
-      duration: reduce ? 0 : 0.5,
+      duration: reduce ? 0.01 : 0.5,
       ease: 'easeOut',
     },
   },
@@ -44,11 +46,32 @@ const fadeUp = (reduce: boolean): Variants => ({
 
 /* ───────── Component ───────── */
 
-export const Footer: React.FC<FooterProps> = memo(() => {
+export const Footer: React.FC<FooterProps> = memo(({ className = '' }) => {
   const shouldReduceMotion = useReducedMotion();
+  const location = useLocation();
+
+  // Handle smooth scroll to section if already on legal page
+  const handleLegalHashClick = useCallback(
+    (hash: string) => {
+      if (typeof window === 'undefined') return;
+      if (location.pathname === '/legal') {
+        try {
+          const element = document.getElementById(hash.replace('#', ''));
+          if (element) {
+            element.scrollIntoView({ behavior: shouldReduceMotion ? 'auto' : 'smooth' });
+          }
+        } catch {
+          // Graceful fallback
+        }
+      }
+    },
+    [location.pathname, shouldReduceMotion],
+  );
 
   return (
-    <footer className="relative z-10 mt-24 sm:mt-28 lg:mt-32 pb-10 overflow-hidden w-full max-w-full isolate">
+    <footer
+      className={`relative z-10 mt-20 sm:mt-28 lg:mt-32 pb-[max(2.5rem,calc(env(safe-area-inset-bottom)+1.5rem))] overflow-hidden w-full max-w-full isolate select-none ${className}`}
+    >
       {/* ───── Background Text (VAULT) ───── */}
       <div
         className="absolute inset-0 flex items-end justify-center pointer-events-none select-none -z-10 overflow-hidden w-full max-w-full isolate"
@@ -57,7 +80,7 @@ export const Footer: React.FC<FooterProps> = memo(() => {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{ once: true, margin: '-60px' }}
           variants={containerVariants(!!shouldReduceMotion)}
           className="
             flex items-end justify-center
@@ -69,35 +92,30 @@ export const Footer: React.FC<FooterProps> = memo(() => {
         >
           {Array.from('VAULT').map((char, index) => (
             <motion.span
-              key={index}
+              key={`${char}-${index}`}
               variants={charVariants(!!shouldReduceMotion)}
-              initial={{ opacity: 0, y: 100 }}
-              animate={{ opacity: 0.2, y: 0 }}
-              transition={{
-                duration: shouldReduceMotion ? 0 : 1.2,
-                delay: index * 0.08,
-                ease: [0.22, 1, 0.36, 1],
-              }}
               whileHover={
                 shouldReduceMotion
                   ? {}
                   : {
-                      opacity: 0.25,
-                      y: -14,
-                      scale: 1.03,
+                      opacity: 0.28,
+                      y: -10,
+                      scale: 1.02,
+                      transition: { duration: 0.2 },
                     }
               }
               className="
-          text-[clamp(3.5rem,20vw,35rem)]
-          sm:text-[clamp(8rem,28vw,35rem)]
-          font-black
-          leading-none
-          text-white
-          whitespace-nowrap
-          tracking-tighter
-        "
+                text-[clamp(3rem,18vw,35rem)]
+                sm:text-[clamp(7.5rem,26vw,35rem)]
+                font-black
+                leading-none
+                text-white
+                whitespace-nowrap
+                tracking-tighter
+                will-change-transform
+              "
               style={{
-                filter: 'blur(0.5px)', // subtle smoothness
+                filter: 'blur(0.5px)',
               }}
             >
               {char}
@@ -105,10 +123,10 @@ export const Footer: React.FC<FooterProps> = memo(() => {
           ))}
         </motion.div>
 
-        {/* Bottom Glow */}
+        {/* Ambient Bottom Glow */}
         <div className="absolute bottom-0 left-0 right-0 h-80 bg-gradient-to-t from-indigo-500/20 via-fuchsia-500/15 via-cyan-400/10 to-transparent blur-[120px]" />
 
-        {/* Extra Center Glow */}
+        {/* Center Glow */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-60 rounded-full bg-white/5 blur-[120px]" />
 
         {/* Vignette */}
@@ -129,76 +147,86 @@ export const Footer: React.FC<FooterProps> = memo(() => {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: '-40px' }}
           variants={fadeUp(!!shouldReduceMotion)}
-          className="pt-14 sm:pt-16 lg:pt-20 border-t border-white/10"
+          className="pt-12 sm:pt-16 lg:pt-20 border-t border-white/10"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-8 gap-y-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-8 gap-y-10 sm:gap-y-12">
             {/* ───── Brand ───── */}
             <div className="lg:col-span-5 flex flex-col items-center sm:items-start text-center sm:text-left">
-              <div className="flex items-center gap-3 mb-5">
+              <div className="flex items-center gap-3 mb-4">
                 <motion.div
-                  whileHover={shouldReduceMotion ? {} : { scale: 1.05, rotate: 4 }}
+                  whileHover={shouldReduceMotion ? {} : { scale: 1.05, rotate: 3 }}
+                  whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
                   className="p-2 rounded-xl bg-white text-black shadow-lg"
                 >
-                  <Lock className="w-7 h-7" />
+                  <Lock className="w-6 h-6 sm:w-7 sm:h-7" aria-hidden="true" />
                 </motion.div>
 
                 <span className="text-xl sm:text-2xl font-semibold text-white tracking-tight">
                   Vault
                 </span>
               </div>
+              <p className="text-xs sm:text-sm text-white/50 max-w-xs sm:max-w-sm">
+                Zero-knowledge client-side encrypted vault for all your personal data, media, and
+                credentials.
+              </p>
             </div>
 
             {/* ───── Links ───── */}
             <div className="lg:col-span-7 flex flex-col items-center sm:items-end">
               <div className="w-full max-w-xs sm:max-w-none flex flex-col items-center sm:items-end">
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40 mb-4">
-                  Links
+                <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40 mb-3 sm:mb-4">
+                  Navigation
                 </h2>
 
-                <nav className="flex flex-col gap-2 w-full items-center sm:items-end">
+                <nav
+                  aria-label="Footer Navigation"
+                  className="flex flex-col gap-2.5 w-full items-center sm:items-end"
+                >
                   <Link
                     to="/contact"
                     className="
                       w-full sm:w-auto
-                      px-4 py-2 sm:px-0 sm:py-0
+                      px-3 py-1.5 sm:px-0 sm:py-0
                       text-center sm:text-right
                       text-white/70 text-sm
                       rounded-lg
-                      transition-all duration-200
+                      transition-colors duration-200
                       hover:text-white
-                      focus:outline-none focus:ring-2 focus:ring-white/20
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40
                     "
                   >
                     Contact Us
                   </Link>
                   <Link
                     to="/legal#privacy"
+                    onClick={() => handleLegalHashClick('privacy')}
                     className="
                       w-full sm:w-auto
-                      px-4 py-2 sm:px-0 sm:py-0
+                      px-3 py-1.5 sm:px-0 sm:py-0
                       text-center sm:text-right
                       text-white/70 text-sm
                       rounded-lg
-                      transition-all duration-200
+                      transition-colors duration-200
                       hover:text-white
-                      focus:outline-none focus:ring-2 focus:ring-white/20
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40
                     "
                   >
                     Privacy Policy
                   </Link>
                   <Link
                     to="/legal#license"
+                    onClick={() => handleLegalHashClick('license')}
                     className="
                       w-full sm:w-auto
-                      px-4 py-2 sm:px-0 sm:py-0
+                      px-3 py-1.5 sm:px-0 sm:py-0
                       text-center sm:text-right
                       text-white/70 text-sm
                       rounded-lg
-                      transition-all duration-200
+                      transition-colors duration-200
                       hover:text-white
-                      focus:outline-none focus:ring-2 focus:ring-white/20
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40
                     "
                   >
                     License
@@ -209,7 +237,7 @@ export const Footer: React.FC<FooterProps> = memo(() => {
           </div>
 
           {/* ───── Bottom ───── */}
-          <div className="mt-14 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="mt-12 sm:mt-14 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-white/40 text-xs">
               © {new Date().getFullYear()} Vault. All rights reserved.
             </p>

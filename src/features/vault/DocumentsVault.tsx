@@ -34,6 +34,7 @@ import {
 import { PdfViewer } from './components/PdfViewer/PdfViewer';
 import { useAntiScreenshotAndShield } from '../../hooks/useAntiScreenshotAndShield';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { useVaultStore } from '../../store/vaultStore';
 import { VaultItem } from '../../lib/storage';
 import { encryptFileInWorker } from '../../lib/cryptoPrimitives';
@@ -416,9 +417,7 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
           }
         }
       } catch (err) {
-        if (import.meta.env.DEV) {
-          console.warn('[SafeDocumentPreview]', err);
-        }
+        logger.warn('[SafeDocumentPreview]', { error: err });
         if (isMounted) {
           setErrorMessage(describeVaultPreviewError(err));
         }

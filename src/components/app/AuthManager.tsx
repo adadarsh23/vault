@@ -1,7 +1,6 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
-import { ErrorFallback } from '../ui/ErrorFallback';
 import { LoadingScreen } from './LoadingScreen';
 import { TAB_PATH_VALUES } from './NavigationHandler';
 
@@ -17,6 +16,7 @@ import { logoutVaultSession, refreshVaultSession } from '../../lib/auth-api';
 import { logger } from '../../lib/logger';
 
 import { LandingPage } from '../../features/LandingPage';
+
 const NotFoundPage = lazy(() =>
   import('../../features/NotFoundPage').then((module) => ({
     default: module.NotFoundPage || (module as any).default,
@@ -37,9 +37,14 @@ const ContactPage = lazy(() =>
     default: module.ContactPage || (module as any).default,
   })),
 );
+const EmergencyClaimPage = lazy(() =>
+  import('./EmergencyClaimPage').then((module) => ({
+    default: module.EmergencyClaimPage || (module as any).default,
+  })),
+);
 
 const SESSION_RESTORE_TIMEOUT_MS = 12_000;
-const PUBLIC_AUTH_ROUTE_PATHS = new Set<string>(['/', '/legal', '/contact']);
+const PUBLIC_AUTH_ROUTE_PATHS = new Set<string>(['/', '/legal', '/contact', '/emergency-claim']);
 
 const normalizePathname = (pathname: string): string => {
   if (!pathname) return '/';
@@ -87,10 +92,20 @@ const withTimeout = async <T,>(
 const AuthRouteLoading = () => <LoadingScreen label="Loading vault..." />;
 
 export function useAuthManager() {
-  const [showLanding, setShowLanding] = useState(true);
+  const [showLanding, setShowLanding] = useState<boolean>(() => {
+    // If a session hint already exists, skip landing screen immediately to eliminate flicker
+    const sessionHint = readCloudSessionHint();
+    return !sessionHint?.username;
+  });
   const [isRestoringSession, setIsRestoringSession] = useState(true);
-  const [restoredUsername, setRestoredUsername] = useState('');
-  const [hasCloudSession, setHasCloudSession] = useState(false);
+  const [restoredUsername, setRestoredUsername] = useState<string>(() => {
+    const sessionHint = readCloudSessionHint();
+    return normalizeUsername(sessionHint?.username);
+  });
+  const [hasCloudSession, setHasCloudSession] = useState<boolean>(() => {
+    const sessionHint = readCloudSessionHint();
+    return Boolean(sessionHint?.username);
+  });
 
   const hasAttemptedAutoRestore = useRef(false);
   const restoreAbortRef = useRef(false);
@@ -216,14 +231,17 @@ export function useAuthManager() {
     }
   }, []);
 
-  return {
-    hasCloudSession,
-    isRestoringSession,
-    restoredUsername,
-    showLanding,
-    setShowLanding,
-    handleSignOut,
-  };
+  return useMemo(
+    () => ({
+      hasCloudSession,
+      isRestoringSession,
+      restoredUsername,
+      showLanding,
+      setShowLanding,
+      handleSignOut,
+    }),
+    [hasCloudSession, isRestoringSession, restoredUsername, showLanding, handleSignOut],
+  );
 }
 
 export function AuthManager({
@@ -248,7 +266,25 @@ export function AuthManager({
     </div>
   ) : (
     <div key="auth">
-      <ErrorBoundary fallback={<ErrorFallback label="Secure access failed. Please refresh." />}>
+      <ErrorBoundary
+        fallback={(error, reset) => (
+          <div className="flex min-h-[60vh] w-full flex-col items-center justify-center p-6 text-center">
+            <div className="w-full max-w-md rounded-3xl border border-card-border bg-card/60 p-8 shadow-xl backdrop-blur-md">
+              <h2 className="text-base font-bold text-text">Authentication Error</h2>
+              <p className="mt-2 text-xs leading-relaxed text-text/60">
+                {error?.message || 'Secure access could not be initialized.'}
+              </p>
+              <button
+                type="button"
+                onClick={reset}
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-text px-4 py-2 text-xs font-semibold text-bg transition hover:opacity-90 active:scale-95"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        )}
+      >
         <Suspense fallback={<AuthRouteLoading />}>
           <AuthScreen
             onGoBack={onGoBack}
@@ -276,6 +312,15 @@ export function AuthManager({
         element={
           <Suspense fallback={<AuthRouteLoading />}>
             <ContactPage />
+          </Suspense>
+        }
+      />
+
+      <Route
+        path="/emergency-claim"
+        element={
+          <Suspense fallback={<AuthRouteLoading />}>
+            <EmergencyClaimPage />
           </Suspense>
         }
       />

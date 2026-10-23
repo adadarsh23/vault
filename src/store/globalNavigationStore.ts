@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 
-interface GlobalNavigationState {
+export interface GlobalNavigationState {
   targetItemId: string | null;
   setTargetItemId: (id: string | null) => void;
   clearTargetItemId: () => void;
+  resetStore: () => void;
 }
 
 const MAX_TARGET_ITEM_ID_LENGTH = 256;
@@ -38,6 +39,14 @@ export const useGlobalNavigationStore = create<GlobalNavigationState>((set) => (
       return { targetItemId: nextTargetItemId };
     }),
   clearTargetItemId: () =>
+    set((state) => {
+      if (state.targetItemId === null) {
+        return state;
+      }
+
+      return { targetItemId: null };
+    }),
+  resetStore: () =>
     set((state) => {
       if (state.targetItemId === null) {
         return state;

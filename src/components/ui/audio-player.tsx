@@ -832,6 +832,9 @@ export const AudioPlayer = ({
       }
       const audio = audioRef.current;
       if (audio) {
+        if (playPromiseRef.current) {
+          playPromiseRef.current.catch(() => {});
+        }
         try {
           audio.pause();
         } catch {
@@ -939,7 +942,7 @@ export const AudioPlayer = ({
         setWaveformPeaks(normalizedPeaks);
       }
     } catch (err: any) {
-      if (!signal.aborted) {
+      if (!signal.aborted && err?.name !== 'AbortError') {
         setWaveformFailed(true);
         logger.warn('Waveform generation fallback to standard seekbar', { error: err?.message });
       }

@@ -290,7 +290,7 @@ export const uploadBinaryInChunks = async (
       const chunkIndex = pendingIndexes[myCursor];
       const start = chunkIndex * chunkSize;
       const end = Math.min(start + chunkSize, totalSize);
-      const chunk = body.slice(start, end);
+      const chunk = body.subarray(start, end);
       const chunkHash = await calculateChunkHash(chunk);
 
       await uploadWithRetry(

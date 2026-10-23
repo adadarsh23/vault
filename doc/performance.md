@@ -7,6 +7,7 @@ This document details the performance engineering, asset optimization pipelines,
 ## 1. Executive Performance Philosophy & Benchmarks
 
 Vault is engineered to deliver zero-latency responsiveness alongside zero-knowledge cryptographic security:
+
 - **Sub-Second First Load**: Sub-800ms Time to First Byte (TTFB) and Largest Contentful Paint (LCP) across global cloud edges.
 - **Uncompromised 60/120 FPS UI**: Heavy cryptographic operations (Argon2id, Kyber-768 ML-KEM, cipher cascades) run inside dedicated Web Workers, ensuring zero main-thread UI frame stutter.
 - **Zero-CPU Static Delivery**: Build-time pre-compressed Brotli (`.br`) and Gzip (`.gz`) static bundles eliminate runtime CPU compression overhead on Express.
@@ -42,22 +43,22 @@ flowchart TD
 
 Modern web applications suffer when heavy libraries block the initial bundle. Vault implements a **17-way granular manual chunk splitting strategy**:
 
-| Chunk Identifier | Contained Libraries & Dependencies | Size (Uncompressed) | Size (Brotli) | Loading Strategy |
-| :--------------- | :--------------------------------- | :------------------ | :------------ | :--------------- |
-| **`vendor`** | `react`, `react-dom`, `react-router` | ~160 KB | ~48 KB | Initial Critical (`<link rel="modulepreload">`) |
-| **`motion`** | `framer-motion`, `motion` | ~110 KB | ~32 KB | Asynchronously preloaded |
-| **`3d`** | `cobe`, `@react-three`, `three` | ~140 KB | ~42 KB | Lazy-loaded on interactive globe view |
-| **`crypto-core`** | `hash-wasm` (Argon2id, PBKDF2) | ~85 KB | ~24 KB | Dedicated Web Worker chunk |
-| **`crypto-pqc`** | `pqc-kyber`, `libsodium-wrappers` | ~120 KB | ~38 KB | On-demand key exchange initialization |
-| **`video-players`** | `hls.js`, `shaka-player` | ~580 KB | ~146 KB | Lazy-loaded on media player mount |
-| **`rich-text-editor`** | `@tiptap/*`, `prosemirror-*` | ~290 KB | ~78 KB | Lazy-loaded on notes view |
-| **`markdown`** | `react-markdown`, `remark`, `marked`, `dompurify` | ~130 KB | ~36 KB | Lazy-loaded on markdown preview |
-| **`image-processing`** | `heic2any`, `html-to-image` | ~90 KB | ~26 KB | Lazy-loaded on image export / upload |
-| **`auth-security`** | `otpauth`, `jsonwebtoken`, `bcrypt` | ~60 KB | ~18 KB | Auth view chunk |
-| **`particles`** | `@tsparticles/*` | ~95 KB | ~28 KB | Background visualizer chunk |
-| **`dnd-kit`** | `@dnd-kit/core`, `@dnd-kit/sortable` | ~55 KB | ~16 KB | Drag-and-drop polyfill chunk |
-| **`2fa-qrcode`** | `qrcode`, `qrcode.react`, `speakeasy` | ~45 KB | ~14 KB | 2FA setup modal chunk |
-| **`realtime`** | `socket.io-client` | ~50 KB | ~15 KB | Background synchronization worker |
+| Chunk Identifier       | Contained Libraries & Dependencies                | Size (Uncompressed) | Size (Brotli) | Loading Strategy                                |
+| :--------------------- | :------------------------------------------------ | :------------------ | :------------ | :---------------------------------------------- |
+| **`vendor`**           | `react`, `react-dom`, `react-router`              | ~160 KB             | ~48 KB        | Initial Critical (`<link rel="modulepreload">`) |
+| **`motion`**           | `framer-motion`, `motion`                         | ~110 KB             | ~32 KB        | Asynchronously preloaded                        |
+| **`3d`**               | `cobe`, `@react-three`, `three`                   | ~140 KB             | ~42 KB        | Lazy-loaded on interactive globe view           |
+| **`crypto-core`**      | `hash-wasm` (Argon2id, PBKDF2)                    | ~85 KB              | ~24 KB        | Dedicated Web Worker chunk                      |
+| **`crypto-pqc`**       | `pqc-kyber`, `libsodium-wrappers`                 | ~120 KB             | ~38 KB        | On-demand key exchange initialization           |
+| **`video-players`**    | `hls.js`, `shaka-player`                          | ~580 KB             | ~146 KB       | Lazy-loaded on media player mount               |
+| **`rich-text-editor`** | `@tiptap/*`, `prosemirror-*`                      | ~290 KB             | ~78 KB        | Lazy-loaded on notes view                       |
+| **`markdown`**         | `react-markdown`, `remark`, `marked`, `dompurify` | ~130 KB             | ~36 KB        | Lazy-loaded on markdown preview                 |
+| **`image-processing`** | `heic2any`, `html-to-image`                       | ~90 KB              | ~26 KB        | Lazy-loaded on image export / upload            |
+| **`auth-security`**    | `otpauth`, `jsonwebtoken`, `bcrypt`               | ~60 KB              | ~18 KB        | Auth view chunk                                 |
+| **`particles`**        | `@tsparticles/*`                                  | ~95 KB              | ~28 KB        | Background visualizer chunk                     |
+| **`dnd-kit`**          | `@dnd-kit/core`, `@dnd-kit/sortable`              | ~55 KB              | ~16 KB        | Drag-and-drop polyfill chunk                    |
+| **`2fa-qrcode`**       | `qrcode`, `qrcode.react`, `speakeasy`             | ~45 KB              | ~14 KB        | 2FA setup modal chunk                           |
+| **`realtime`**         | `socket.io-client`                                | ~50 KB              | ~15 KB        | Background synchronization worker               |
 
 ---
 
@@ -116,15 +117,18 @@ Vault enforces an immutable caching hierarchy designed for maximum edge reuse wi
 ## 5. Client-Side Runtime & CPU Optimizations
 
 ### 5.1 Web Worker Offloading for Argon2id
+
 - **Problem**: Memory-hard KDF derivations (64 MB RAM, 3 iterations) require 400ms–800ms of sustained CPU crunching. Running this on the main thread freezes cursor movements and typing.
 - **Solution**: Vault offloads Argon2id to a dedicated background Web Worker (`hash-wasm`). The main React thread remains at **60 FPS** with zero dropped animation frames.
 
 ### 5.2 TipTap Debounced Autosave Pipeline
+
 - Typing in the note editor triggers a **300ms debounced autosave**.
 - Raw editor JSON documents stream to the Web Worker for background encryption with AES-256-GCM.
 - Decrypted notes persist locally in **IndexedDB** (`idb`), loading in **<10ms** on subsequent vault launches without waiting for remote server roundtrips.
 
 ### 5.3 Streaming Video Playback (HLS & Shaka)
+
 - Rather than loading entire 200MB–2GB video files into browser memory (which triggers out-of-memory crashes on mobile devices), Vault segments media into 2-second adaptive HLS chunks.
 - The player decrypts chunks sequentially, maintaining a rolling 10-second memory buffer.
 
@@ -133,10 +137,12 @@ Vault enforces an immutable caching hierarchy designed for maximum edge reuse wi
 ## 6. Backend Throughput & Database Optimization
 
 ### 6.1 Server Overload Protection & Lag Shedding
+
 - Under volumetric denial-of-service attempts or CPU exhaustion, Node's `perf_hooks` monitor (`monitorEventLoopDelay`) tracks event loop latency.
 - If event loop lag exceeds `1000ms`, the server sheds incoming non-critical requests with **HTTP 503** and `Retry-After: 5`, preserving server stability and active database connections.
 
 ### 6.2 Delta Synchronization Queries (`/api/vault/sync`)
+
 - Traditional sync queries fetch the full vault on every reconnect (~5MB–50MB payloads).
 - Vault's delta synchronization query passes `?since=<lastSyncTimestamp>`.
 - The MongoDB query leverages compound indices `{ "vault.notes.updatedAt": 1, "vault.notes.isDeleted": 1 }`, returning only modified items and tombstones (~1KB–5KB payloads), achieving a **98% bandwidth reduction**.
@@ -149,16 +155,17 @@ Vault automates Core Web Vitals testing via [`scripts/lighthouse-runner.mjs`](..
 
 ### 7.1 Core Web Vitals Budget & Targets
 
-| Metric | Target / Budget | Purpose | Status in Vault |
-| :----- | :-------------- | :------ | :-------------- |
-| **First Contentful Paint (FCP)** | `< 0.9s` | Initial visual feedback | **PASS** (~0.6s) |
-| **Largest Contentful Paint (LCP)** | `< 1.8s` | Main content load time | **PASS** (~1.2s) |
-| **Total Blocking Time (TBT)** | `< 100ms` | Main thread responsiveness | **PASS** (~40ms) |
-| **Cumulative Layout Shift (CLS)** | `< 0.05` | Visual layout stability | **PASS** (0.01) |
-| **Time to First Byte (TTFB)** | `< 250ms` | Server & DNS response latency | **PASS** (~120ms) |
-| **Interaction to Next Paint (INP)** | `< 150ms` | UI interaction responsiveness | **PASS** (~65ms) |
+| Metric                              | Target / Budget | Purpose                       | Status in Vault   |
+| :---------------------------------- | :-------------- | :---------------------------- | :---------------- |
+| **First Contentful Paint (FCP)**    | `< 0.9s`        | Initial visual feedback       | **PASS** (~0.6s)  |
+| **Largest Contentful Paint (LCP)**  | `< 1.8s`        | Main content load time        | **PASS** (~1.2s)  |
+| **Total Blocking Time (TBT)**       | `< 100ms`       | Main thread responsiveness    | **PASS** (~40ms)  |
+| **Cumulative Layout Shift (CLS)**   | `< 0.05`        | Visual layout stability       | **PASS** (0.01)   |
+| **Time to First Byte (TTFB)**       | `< 250ms`       | Server & DNS response latency | **PASS** (~120ms) |
+| **Interaction to Next Paint (INP)** | `< 150ms`       | UI interaction responsiveness | **PASS** (~65ms)  |
 
 ### 7.2 Lighthouse CI Verification Commands
+
 ```bash
 # Run automated Lighthouse audit with CI quality assertions
 npm run lighthouse:ci
@@ -174,6 +181,7 @@ npm run lighthouse:open
 ```
 
 ### 7.3 Bundle Size Visualizer
+
 ```bash
 # Analyze bundle chunk distribution and find optimization opportunities
 npm run build:analyze

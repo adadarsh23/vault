@@ -3,6 +3,7 @@ import { SectionCard } from './SharedComponents';
 import { Button } from '../../../../components/ui/Button';
 import { systemApi, LogEntry } from '../../../../api/systemApi';
 import { SETTINGS_PANEL } from './Utils';
+import { logger } from '../../../../lib/logger';
 import {
   Search,
   RefreshCw,
@@ -177,7 +178,7 @@ export const SystemLogsCard: React.FC = () => {
         }
       } catch (err: any) {
         if (!isMountedRef.current) return;
-        console.error('[SystemLogsCard] Error:', err);
+        logger.error('[SystemLogsCard] Error fetching logs', { error: err });
         setError(err.message || 'Failed to load system logs');
         if (!silent) {
           toast.error('Failed to update system logs');
@@ -330,7 +331,7 @@ export const SystemLogsCard: React.FC = () => {
       }
     } catch (err: any) {
       if (!isMountedRef.current) return;
-      console.error('[SystemLogsCard] Clear error:', err);
+      logger.error('[SystemLogsCard] Clear error', { error: err });
       toast.error('Failed to clear system logs');
     } finally {
       if (isMountedRef.current) {
@@ -379,7 +380,7 @@ export const SystemLogsCard: React.FC = () => {
 
       toast.success(`Exported ${filteredLogs.length} logs as .${extension}`);
     } catch (err) {
-      console.error('[SystemLogsCard] Export failure:', err);
+      logger.error('[SystemLogsCard] Export failure', { error: err });
       toast.error('Failed to export logs');
     }
   };

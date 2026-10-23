@@ -218,19 +218,20 @@ export const PASSPHRASE_WORDS = [
   'camp',
 ];
 
+const randomUint32 = new Uint32Array(1);
+
 const getSecureRandomInt = (maxExclusive: number): number => {
   if (maxExclusive <= 0) return 0;
 
   if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
-    const uint32 = new Uint32Array(1);
     const maxUint32 = 0x100000000;
     const cutoff = maxUint32 - (maxUint32 % maxExclusive);
 
     do {
-      crypto.getRandomValues(uint32);
-    } while (uint32[0] >= cutoff);
+      crypto.getRandomValues(randomUint32);
+    } while (randomUint32[0] >= cutoff);
 
-    return uint32[0] % maxExclusive;
+    return randomUint32[0] % maxExclusive;
   }
 
   return Math.floor(Math.random() * maxExclusive);
@@ -351,6 +352,8 @@ export const generatePasswordWithOptions = (options: GeneratorOptions): string =
   return secureShuffle(password);
 };
 
+const SEQUENTIAL_NUMBERS_REGEX = /012|123|234|345|456|567|678|789|890|321|432|543|654|765|876|987/;
+
 export interface StrengthResult {
   score: number; // 0 to 4
   label: string; // 'Very Weak' | 'Weak' | 'Fair' | 'Strong' | 'Very Strong'
@@ -407,8 +410,7 @@ export const evaluatePasswordStrength = (password: string): StrengthResult => {
   }
 
   // Deduct for sequential numbers or letters
-  const sequentialNumbers = /012|123|234|345|456|567|678|789|890|321|432|543|654|765|876|987/;
-  if (sequentialNumbers.test(password)) {
+  if (SEQUENTIAL_NUMBERS_REGEX.test(password)) {
     score = Math.max(0, score - 1);
     suggestions.push('Avoid sequential numbers.');
   }

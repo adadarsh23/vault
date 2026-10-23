@@ -89,6 +89,7 @@ const encryptedFieldSchema = new mongoose.Schema(
 ```
 
 ### Field Specifications:
+
 - **`cipherText`**: Base64-encoded encrypted payload.
 - **`iv`**: Base64-encoded 96-bit (12-byte) initialization vector generated freshly per record.
 - **`authTag`**: Base64-encoded 128-bit (16-byte) Galois/Counter Mode authentication tag.
@@ -101,6 +102,7 @@ const encryptedFieldSchema = new mongoose.Schema(
 ## 3. Vault Item Schemas
 
 All item schemas incorporate common timestamp and soft-delete fields:
+
 - `createdAt`: Immutable UTC timestamp (`Date.now`).
 - `updatedAt`: Mutable UTC timestamp modified on every update.
 - `isDeleted`: Boolean flag marking soft-deleted records.
@@ -112,15 +114,15 @@ All item schemas incorporate common timestamp and soft-delete fields:
 
 Stores encrypted photos, videos, audio tracks, PDFs, and general document files:
 
-| Field | Type | Rules & Constraints | Purpose |
-| :---- | :--- | :------------------ | :------ |
-| **`itemId`** | `String` | Required, Indexed | Unique client UUID for the file. |
-| **`fileName`** | `String` | Required, Trimmed | Sanitized original filename. |
-| **`filePath`** | `String` | Required | Internal relative path under `uploads/<userId>/`. |
-| **`mimeType`** | `String` | Required, Lowercase | Validated MIME type string (e.g., `image/jpeg`). |
-| **`size`** | `Number` | Min: 1, Max: 524,288,000 (500 MB) | Physical file byte size. |
-| **`isDeleted`**| `Boolean`| Default: `false`, Indexed | Tombstone marker for delta synchronization. |
-| **`deletedAt`**| `Date` | Default: `null`, Indexed | Deletion timestamp for tombstone propagation. |
+| Field           | Type      | Rules & Constraints               | Purpose                                           |
+| :-------------- | :-------- | :-------------------------------- | :------------------------------------------------ |
+| **`itemId`**    | `String`  | Required, Indexed                 | Unique client UUID for the file.                  |
+| **`fileName`**  | `String`  | Required, Trimmed                 | Sanitized original filename.                      |
+| **`filePath`**  | `String`  | Required                          | Internal relative path under `uploads/<userId>/`. |
+| **`mimeType`**  | `String`  | Required, Lowercase               | Validated MIME type string (e.g., `image/jpeg`).  |
+| **`size`**      | `Number`  | Min: 1, Max: 524,288,000 (500 MB) | Physical file byte size.                          |
+| **`isDeleted`** | `Boolean` | Default: `false`, Indexed         | Tombstone marker for delta synchronization.       |
+| **`deletedAt`** | `Date`    | Default: `null`, Indexed          | Deletion timestamp for tombstone propagation.     |
 
 ---
 
@@ -128,13 +130,13 @@ Stores encrypted photos, videos, audio tracks, PDFs, and general document files:
 
 Used for encrypted rich text notes, private chats, tasks/todos, saved locations, and contacts:
 
-| Field | Type | Rules & Constraints | Purpose |
-| :---- | :--- | :------------------ | :------ |
-| **`itemId`** | `String` | Required, Indexed | Unique item UUID. |
-| **`title`** | `String` | Required, Max: 200 chars | Display title. |
-| **`content`** | `encryptedFieldSchema` | Required | Encrypted ProseMirror JSON or Markdown document. |
-| **`isDeleted`**| `Boolean`| Default: `false`, Indexed | Tombstone sync marker. |
-| **`deletedAt`**| `Date` | Default: `null`, Indexed | Deletion timestamp. |
+| Field           | Type                   | Rules & Constraints       | Purpose                                          |
+| :-------------- | :--------------------- | :------------------------ | :----------------------------------------------- |
+| **`itemId`**    | `String`               | Required, Indexed         | Unique item UUID.                                |
+| **`title`**     | `String`               | Required, Max: 200 chars  | Display title.                                   |
+| **`content`**   | `encryptedFieldSchema` | Required                  | Encrypted ProseMirror JSON or Markdown document. |
+| **`isDeleted`** | `Boolean`              | Default: `false`, Indexed | Tombstone sync marker.                           |
+| **`deletedAt`** | `Date`                 | Default: `null`, Indexed  | Deletion timestamp.                              |
 
 ---
 
@@ -142,14 +144,14 @@ Used for encrypted rich text notes, private chats, tasks/todos, saved locations,
 
 Stores credentials, login passwords, and encrypted account notes:
 
-| Field | Type | Rules & Constraints | Purpose |
-| :---- | :--- | :------------------ | :------ |
-| **`itemId`** | `String` | Required, Indexed | Unique credential UUID. |
-| **`label`** | `String` | Required, Trimmed | Service/Application name (e.g., "GitHub Personal"). |
-| **`username`** | `String` | Default: `""` | Account username or email. |
-| **`url`** | `String` | Default: `""` | Service login URL. |
-| **`password`** | `encryptedFieldSchema` | Required | AES-256-GCM encrypted password string. |
-| **`notes`** | `encryptedFieldSchema` | Default: `null` | Encrypted recovery codes or security questions. |
+| Field          | Type                   | Rules & Constraints | Purpose                                             |
+| :------------- | :--------------------- | :------------------ | :-------------------------------------------------- |
+| **`itemId`**   | `String`               | Required, Indexed   | Unique credential UUID.                             |
+| **`label`**    | `String`               | Required, Trimmed   | Service/Application name (e.g., "GitHub Personal"). |
+| **`username`** | `String`               | Default: `""`       | Account username or email.                          |
+| **`url`**      | `String`               | Default: `""`       | Service login URL.                                  |
+| **`password`** | `encryptedFieldSchema` | Required            | AES-256-GCM encrypted password string.              |
+| **`notes`**    | `encryptedFieldSchema` | Default: `null`     | Encrypted recovery codes or security questions.     |
 
 ---
 
@@ -157,12 +159,12 @@ Stores credentials, login passwords, and encrypted account notes:
 
 Dedicated storage for cryptocurrency seed phrases, API private keys, and recovery mnemonics:
 
-| Field | Type | Rules & Constraints | Purpose |
-| :---- | :--- | :------------------ | :------ |
-| **`itemId`** | `String` | Required, Indexed | Unique secret identifier. |
-| **`label`** | `String` | Required, Trimmed | Wallet or service label. |
-| **`value`** | `encryptedFieldSchema` | Required | Encrypted mnemonic phrase or private key string. |
-| **`description`**| `String` | Default: `""` | Optional usage notes or blockchain network. |
+| Field             | Type                   | Rules & Constraints | Purpose                                          |
+| :---------------- | :--------------------- | :------------------ | :----------------------------------------------- |
+| **`itemId`**      | `String`               | Required, Indexed   | Unique secret identifier.                        |
+| **`label`**       | `String`               | Required, Trimmed   | Wallet or service label.                         |
+| **`value`**       | `encryptedFieldSchema` | Required            | Encrypted mnemonic phrase or private key string. |
+| **`description`** | `String`               | Default: `""`       | Optional usage notes or blockchain network.      |
 
 ---
 
@@ -198,6 +200,7 @@ const sessionSchema = new mongoose.Schema(
 ```
 
 #### Token Family Invalidation:
+
 - When an access token is refreshed, the server rotates the refresh token within the same `familyId`.
 - If an adversary intercepts a previously used refresh token and attempts to redeem it, the server detects a replay attack, immediately marks all sessions sharing that `familyId` as `revokedAt: new Date()`, zeroizes active socket connections, and forces all involved devices to log out.
 
@@ -206,6 +209,7 @@ const sessionSchema = new mongoose.Schema(
 ### 4.2 Login History & Security Telemetry
 
 Every authentication attempt is logged under `loginHistorySchema`:
+
 - **`status`**: `'SUCCESS'` or `'FAILED'`.
 - **`errorCode`** & **`failureReason`**: Captured during brute-force detection or invalid passphrase attempts.
 - **`ipAddress`** & **`userAgent`**: Bound to device telemetry to identify geographical anomalies.

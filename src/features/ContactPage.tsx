@@ -19,6 +19,7 @@ import { RecaptchaField } from '../components/security/RecaptchaField';
 import { toast } from 'sonner';
 import { useVaultStore } from '../store/vaultStore';
 import { useRecaptchaChallenge } from '../hooks/useRecaptchaChallenge';
+import { logger } from '../lib/logger';
 
 interface ContactPageProps {
   onNavigate?: (tab: string) => void;
@@ -72,7 +73,7 @@ export function ContactPage({}: ContactPageProps) {
 
     // Bot protection: if honeypot is filled, silently ignore
     if (formData.address) {
-      console.warn('Bot detected via honeypot');
+      logger.warn('Bot detected via honeypot');
       setSubmissionResult({ referenceId: 'BYPASS-AUTH-882' });
       return;
     }
@@ -106,9 +107,14 @@ export function ContactPage({}: ContactPageProps) {
         }),
       });
 
-      const data = await response.json();
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
 
-      if (response.ok && data.success) {
+      if (response.ok && data?.success) {
         setSubmissionResult({ referenceId: data.referenceId });
         toast.success(data.message || 'Message received!');
 
@@ -123,9 +129,9 @@ export function ContactPage({}: ContactPageProps) {
         });
         resetCaptchaChallenge();
       } else {
-        const errorMsg = data.error?.message || 'Failed to send message';
+        const errorMsg = data?.error?.message || response.statusText || 'Failed to send message';
         setCaptchaRejected(errorMsg);
-        if (data.error?.code === 'TOO_MANY_SUBMISSIONS') {
+        if (data?.error?.code === 'TOO_MANY_SUBMISSIONS' || response.status === 429) {
           toast.warning(errorMsg);
         } else {
           toast.error(errorMsg);
@@ -179,14 +185,36 @@ export function ContactPage({}: ContactPageProps) {
                 </p>
 
                 <div
-                  className="group/ref relative mb-10 cursor-pointer select-all rounded-[1.1rem] border border-card-border bg-card-bg p-4 font-mono text-lg tracking-widest text-text/80 dark:border-white/10 dark:bg-black/30"
+                  className="group/ref relative mb-10 cursor-pointer select-all rounded-[1.1rem] border border-card-border bg-card-bg p-4 font-mono text-lg tracking-widest text-text/80 focus:outline-none focus:ring-2 focus:ring-text/30 dark:border-white/10 dark:bg-black/30"
                   title="Click to copy"
                   role="button"
+                  tabIndex={0}
                   aria-label={`Copy reference ID ${submissionResult.referenceId}`}
                   onClick={() => {
                     if (submissionResult?.referenceId) {
-                      navigator.clipboard.writeText(submissionResult.referenceId);
-                      toast.success('Reference ID copied to clipboard');
+                      if (navigator.clipboard?.writeText) {
+                        navigator.clipboard
+                          .writeText(submissionResult.referenceId)
+                          .then(() => toast.success('Reference ID copied to clipboard'))
+                          .catch(() => toast.error('Failed to copy reference ID'));
+                      } else {
+                        toast.info(`Reference ID: ${submissionResult.referenceId}`);
+                      }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      if (submissionResult?.referenceId) {
+                        if (navigator.clipboard?.writeText) {
+                          navigator.clipboard
+                            .writeText(submissionResult.referenceId)
+                            .then(() => toast.success('Reference ID copied to clipboard'))
+                            .catch(() => toast.error('Failed to copy reference ID'));
+                        } else {
+                          toast.info(`Reference ID: ${submissionResult.referenceId}`);
+                        }
+                      }
                     }
                   }}
                 >

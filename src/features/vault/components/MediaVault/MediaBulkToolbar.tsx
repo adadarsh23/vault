@@ -20,6 +20,7 @@ import { getVaultItemPreviewUrl } from '../../../../lib/filePreview';
 import { revokeBlobUrl } from '../../../../lib/blobRegistry';
 import { toast } from 'sonner';
 import { useVaultStore } from '../../../../store/vaultStore';
+import { logger } from '../../../../lib/logger';
 
 interface MediaBulkToolbarProps {
   selectedIds: Set<string>;
@@ -114,7 +115,7 @@ export const MediaBulkToolbar: React.FC<MediaBulkToolbarProps> = ({
             lastModified: item.createdAt ? new Date(item.createdAt) : new Date(),
           });
         } catch (itemErr) {
-          console.warn(`Failed to prepare ${item.title} for zip:`, itemErr);
+          logger.warn(`Failed to prepare ${item.title} for zip`, { error: itemErr });
         }
       }
 
@@ -131,7 +132,7 @@ export const MediaBulkToolbar: React.FC<MediaBulkToolbarProps> = ({
       triggerBlobDownload(zipBlob, zipFilename);
       toast.success(`Downloaded ${zipFiles.length} ${type}s in ${zipFilename}`, { id: toastId });
     } catch (err) {
-      console.error('Bulk ZIP download failed:', err);
+      logger.error('Bulk ZIP download failed', { error: err });
       toast.error('Failed to create ZIP download.', { id: toastId });
     } finally {
       setIsDownloading(false);

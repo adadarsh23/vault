@@ -1,0 +1,19 @@
+name: '🔒 Security Vulnerability'
+description: 'Report a security vulnerability or critical cryptographic flaw'
+title: '[Security]: '
+labels: ['security']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### ⚠️ Important Notice: Do Not Open Public Issues for Vulnerabilities
+
+        If you believe you have found a security vulnerability in Vault (especially related to client-side encryption, zero-knowledge proofs, key derivation, or session management), **please do not report it through a public GitHub issue**.
+
+        #### Recommended Reporting Channels:
+        1. **GitHub Private Security Advisory (Preferred):**
+           Submit via [Vault Security Advisories](https://github.com/adadarsh23/vault/security/advisories/new).
+        2. **Direct Contact:**
+           Reach out privately via GitHub [@adadarsh23](https://github.com/adadarsh23) or security contact email `adrajpu523@gmail.com`.
+
+        Please read our full [Security Policy](https://github.com/adadarsh23/vault/blob/main/SECURITY.md) for response timelines and safe harbor guidelines.

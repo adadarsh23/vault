@@ -23,6 +23,7 @@ import {
   Banknote,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { useVaultStore } from '../../store/vaultStore';
 import { VaultItem } from '../../lib/storage';
 import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
@@ -81,6 +82,36 @@ const formatCvv = (cvv: string): string => {
   return cvv.replace(/\D/g, '').slice(0, 4);
 };
 
+const CARD_STYLES = `
+  .credit-card-container {
+    perspective: 1000px;
+    width: 100%;
+    height: 180px;
+  }
+  .credit-card-inner {
+    transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform-style: preserve-3d;
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .credit-card-flipped {
+    transform: rotateY(180deg);
+  }
+  .credit-card-front, .credit-card-back {
+    backface-visibility: hidden;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-radius: 1rem;
+  }
+  .credit-card-back {
+    transform: rotateY(180deg);
+  }
+`;
+
 const VisualCreditCard: React.FC<{
   cardholderName: string;
   cardNumber: string;
@@ -110,10 +141,11 @@ const VisualCreditCard: React.FC<{
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = e.currentTarget;
     const box = card.getBoundingClientRect();
+    if (!box.width || !box.height) return;
     const x = e.clientX - box.left;
     const y = e.clientY - box.top;
-    const px = x / box.width;
-    const py = y / box.height;
+    const px = Math.max(0, Math.min(1, x / box.width));
+    const py = Math.max(0, Math.min(1, y / box.height));
 
     const rotX = (py - 0.5) * -15;
     const rotY = (px - 0.5) * 15;
@@ -381,7 +413,7 @@ const DecryptedCardItem: React.FC<{
         setData(parsed);
         setEditPayload(parsed);
       } catch (err) {
-        console.error('Card Decryption Error:', err);
+        logger.error('Card Decryption Error', { error: err });
         if (isMounted) setError(true);
       }
     };
@@ -452,36 +484,6 @@ const DecryptedCardItem: React.FC<{
   return (
     <motion.div whileHover={{ y: -5 }} className="h-full">
       <Card className="group relative h-full overflow-hidden border-white/5 bg-gradient-to-br from-white/[0.08] to-transparent backdrop-blur-md transition-all hover:border-white/20 hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)]">
-        <style>{`
-          .credit-card-container {
-            perspective: 1000px;
-            width: 100%;
-            height: 180px;
-          }
-          .credit-card-inner {
-            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transform-style: preserve-3d;
-            position: relative;
-            width: 100%;
-            height: 100%;
-          }
-          .credit-card-flipped {
-            transform: rotateY(180deg);
-          }
-          .credit-card-front, .credit-card-back {
-            backface-visibility: hidden;
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            border-radius: 1rem;
-          }
-          .credit-card-back {
-            transform: rotateY(180deg);
-          }
-        `}</style>
-
         <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl transition-opacity group-hover:opacity-30" />
 
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10 border-b border-white/5">
@@ -917,7 +919,10 @@ export const CardsVault: React.FC = () => {
   };
 
   const handleUpdateCard = async (id: string, name: string, payload: CardPayload) => {
-    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
+      toast.error('Encryption key missing');
+      throw new Error('Encryption key missing');
+    }
     try {
       const encryptedContent = await encryptData(JSON.stringify(payload), masterKey);
       await updateItem(id, {
@@ -930,13 +935,15 @@ export const CardsVault: React.FC = () => {
         },
       });
       toast.success('Card details updated');
-    } catch {
+    } catch (err) {
       toast.error('Failed to update card details');
+      throw err;
     }
   };
 
   return (
     <div className="relative flex h-full min-h-0 gap-6">
+      <style>{CARD_STYLES}</style>
       <FolderSidebar
         items={cards}
         folders={folders}

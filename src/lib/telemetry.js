@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import ReactGA from 'react-ga4';
+import { hasTelemetryConsent } from './logrocket';
 
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_ID;
 const IS_PRODUCTION = import.meta.env.PROD;
@@ -21,8 +22,10 @@ const getGaClient = async () => {
 };
 
 const isAnalyticsEnabled = () => {
+  if (typeof window === 'undefined') return false;
   if (!IS_PRODUCTION) return false;
   if (!GA_MEASUREMENT_ID) return false;
+  if (!hasTelemetryConsent()) return false;
   return !LOCAL_HOSTS.has(window.location.hostname);
 };
 

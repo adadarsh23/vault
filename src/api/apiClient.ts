@@ -61,10 +61,10 @@ export interface ApiClientError {
 
 let pendingRefreshRequest: Promise<RefreshSessionResult | null> | null = null;
 
-const isNonEmptyString = (value: unknown): value is string =>
+export const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
-const isApiResponse = (value: unknown): value is ApiResponse<unknown> => {
+export const isApiResponse = (value: unknown): value is ApiResponse<unknown> => {
   if (!value || typeof value !== 'object') {
     return false;
   }
@@ -72,17 +72,69 @@ const isApiResponse = (value: unknown): value is ApiResponse<unknown> => {
   return typeof candidate.success === 'boolean';
 };
 
-const normalizeApiError = (error: AxiosError<ApiResponse<unknown>>): ApiClientError => {
-  const status = error.response?.status;
-  const rawPayload = error.response?.data;
-  const payload = isApiResponse(rawPayload) ? rawPayload : null;
+export const isApiClientError = (error: unknown): error is ApiClientError => {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as Partial<ApiClientError>;
+  return (
+    candidate.success === false &&
+    typeof candidate.message === 'string' &&
+    typeof candidate.code === 'string'
+  );
+};
+
+export const normalizeApiError = (error: AxiosError<unknown> | Error | unknown): ApiClientError => {
+  if (isApiClientError(error)) {
+    return error;
+  }
+
+  const axiosErr = error as AxiosError<Record<string, unknown>>;
+  const status = axiosErr.response?.status;
+  const rawPayload = axiosErr.response?.data;
+  const payload = isApiResponse(rawPayload) ? (rawPayload as ApiResponse<unknown>) : null;
+
+  const rawObj = typeof rawPayload === 'object' && rawPayload !== null ? rawPayload : null;
+
   const code =
     (isNonEmptyString(payload?.error?.code) && payload.error.code) ||
+    (rawObj && isNonEmptyString(rawObj.code) && (rawObj.code as string)) ||
+    (rawObj &&
+      typeof rawObj.error === 'object' &&
+      rawObj.error !== null &&
+      isNonEmptyString((rawObj.error as any).code) &&
+      (rawObj.error as any).code) ||
     (typeof status === 'number' ? `HTTP_${status}` : 'NETWORK_ERROR');
+
   const message =
     (isNonEmptyString(payload?.message) && payload.message) ||
-    error.message ||
+    (rawObj && isNonEmptyString(rawObj.message) && (rawObj.message as string)) ||
+    (rawObj &&
+      typeof rawObj.error === 'string' &&
+      isNonEmptyString(rawObj.error) &&
+      rawObj.error) ||
+    (rawObj &&
+      typeof rawObj.error === 'object' &&
+      rawObj.error !== null &&
+      isNonEmptyString((rawObj.error as any).message) &&
+      (rawObj.error as any).message) ||
+    axiosErr.message ||
     'An unexpected connection error occurred.';
+
+  const requestId =
+    payload?.error?.requestId ||
+    (rawObj && typeof rawObj.requestId === 'string' ? rawObj.requestId : undefined) ||
+    (rawObj &&
+    typeof rawObj.error === 'object' &&
+    rawObj.error !== null &&
+    typeof (rawObj.error as any).requestId === 'string'
+      ? (rawObj.error as any).requestId
+      : undefined);
+
+  const details =
+    payload?.error?.details ||
+    (rawObj && rawObj.details !== undefined ? rawObj.details : undefined) ||
+    (rawObj && typeof rawObj.error === 'object' && rawObj.error !== null
+      ? (rawObj.error as any).details
+      : undefined);
 
   return {
     success: false,
@@ -91,11 +143,40 @@ const normalizeApiError = (error: AxiosError<ApiResponse<unknown>>): ApiClientEr
     status,
     error: {
       code,
-      requestId: payload?.error?.requestId,
-      details: payload?.error?.details,
+      requestId,
+      details,
       message,
     },
   };
+};
+
+const setHeaderValue = (headers: unknown, key: string, value: string): void => {
+  if (!headers || typeof headers !== 'object') return;
+  const h = headers as Record<string, unknown>;
+  if (typeof (h as any).set === 'function') {
+    (h as any).set(key, value);
+  } else {
+    h[key] = value;
+  }
+};
+
+const getHeaderValue = (headers: unknown, key: string): string | undefined => {
+  if (!headers || typeof headers !== 'object') return undefined;
+  const h = headers as Record<string, unknown>;
+  if (typeof (h as any).get === 'function') {
+    return (h as any).get(key);
+  }
+  return h[key] as string | undefined;
+};
+
+const deleteHeaderValue = (headers: unknown, key: string): void => {
+  if (!headers || typeof headers !== 'object') return;
+  const h = headers as Record<string, unknown>;
+  if (typeof (h as any).delete === 'function') {
+    (h as any).delete(key);
+  } else {
+    delete h[key];
+  }
 };
 
 const requestSessionRefresh = async (): Promise<RefreshSessionResult | null> => {
@@ -141,7 +222,7 @@ const requestSessionRefresh = async (): Promise<RefreshSessionResult | null> => 
   return pendingRefreshRequest;
 };
 
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -152,13 +233,18 @@ const apiClient = axios.create({
 
 /**
  * Request Interceptor
- * Adds Authorization header if token exists
+ * Adds Authorization header if token exists, injects CSRF tokens, and handles FormData boundaries
  */
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const token = getAuthToken();
     if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+      setHeaderValue(config.headers, 'Authorization', `Bearer ${token}`);
+    }
+
+    // When submitting FormData, remove Content-Type so Axios and the browser generate the correct multipart boundary
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData && config.headers) {
+      deleteHeaderValue(config.headers, 'Content-Type');
     }
 
     const requestUrl = (() => {
@@ -169,9 +255,10 @@ apiClient.interceptors.request.use(
       const base = typeof config.baseURL === 'string' ? config.baseURL : API_BASE_URL;
       return `${base.replace(/\/+$/, '')}/${config.url.replace(/^\/+/, '')}`;
     })();
+
     const csrfToken = await getCsrfTokenForApiRequest(requestUrl, config.method);
     if (csrfToken && config.headers) {
-      config.headers['X-CSRF-Token'] = csrfToken;
+      setHeaderValue(config.headers, 'X-CSRF-Token', csrfToken);
     }
 
     addBreadcrumb({
@@ -190,25 +277,28 @@ apiClient.interceptors.request.use(
 
 /**
  * Response Interceptor
- * Handles global error cases like 401/403
+ * Handles automatic token refreshes, concurrent 401 queuing, session terminations, and error normalization
  */
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiResponse>) => {
     const originalRequest = error.config as
       (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+
+    const requestUrl = originalRequest?.url || '';
     const isAuthUrl = Boolean(
-      originalRequest?.url &&
-      (originalRequest.url.includes('/auth/refresh') ||
-        originalRequest.url.includes('/auth/login') ||
-        originalRequest.url.includes('/auth/register') ||
-        originalRequest.url.includes('/auth/signup') ||
-        originalRequest.url.includes('/auth/salt') ||
-        originalRequest.url.includes('/auth/username-check') ||
-        originalRequest.url.includes('/auth/csrf-token') ||
-        originalRequest.url.includes('/2fa/login')),
+      requestUrl &&
+      (requestUrl.includes('/auth/refresh') ||
+        requestUrl.includes('/auth/login') ||
+        requestUrl.includes('/auth/register') ||
+        requestUrl.includes('/auth/signup') ||
+        requestUrl.includes('/auth/salt') ||
+        requestUrl.includes('/auth/username-check') ||
+        requestUrl.includes('/auth/csrf-token') ||
+        requestUrl.includes('/auth/logout') ||
+        requestUrl.includes('/2fa/login')),
     );
-    const isAuthRefreshCall = Boolean(originalRequest?.url?.includes('/auth/refresh'));
+    const isAuthRefreshCall = Boolean(requestUrl.includes('/auth/refresh'));
 
     // Handle 401 Unauthorized
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
@@ -236,10 +326,20 @@ apiClient.interceptors.response.use(
 
       originalRequest._retry = true;
 
+      // If a concurrent request has already refreshed the token in storage, retry immediately
+      const latestToken = getAuthToken();
+      const currentAuthHeader = getHeaderValue(originalRequest.headers, 'Authorization') || '';
+      const previousToken = currentAuthHeader.replace(/^Bearer\s+/i, '').trim();
+
+      if (latestToken && latestToken !== previousToken) {
+        setHeaderValue(originalRequest.headers, 'Authorization', `Bearer ${latestToken}`);
+        return apiClient(originalRequest);
+      }
+
       const refreshed = await requestSessionRefresh();
       if (refreshed?.token) {
         if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${refreshed.token}`;
+          setHeaderValue(originalRequest.headers, 'Authorization', `Bearer ${refreshed.token}`);
         }
         setAuthToken(refreshed.token, {
           sessionId: refreshed.sessionId,
@@ -264,10 +364,19 @@ apiClient.interceptors.response.use(
 
     // Handle 403 Forbidden
     if (error.response?.status === 403) {
-      console.error('Forbidden access:', error.response.data?.message);
+      logger.warn('Forbidden access (HTTP 403)', {
+        url: error.config?.url,
+        message: error.response.data?.message,
+      });
     }
 
-    if (!isAuthRefreshCall && error.response?.status && error.response.status >= 400) {
+    // Log unexpected errors to Sentry (excluding expected 401/404 client flows and cancelled requests)
+    if (
+      !isAuthRefreshCall &&
+      error.response?.status &&
+      error.response.status >= 500 &&
+      !axios.isCancel(error)
+    ) {
       captureException(error, {
         tags: {
           source: 'api-client',
@@ -287,7 +396,6 @@ apiClient.interceptors.response.use(
     }
 
     const apiError = normalizeApiError(error);
-
     return Promise.reject(apiError);
   },
 );

@@ -258,6 +258,8 @@ for (const entry of tests) {
 
 if (failed) {
   process.exitCode = 1;
+  process.exit(1);
 } else {
   console.log(`PASS ${tests.length}/${tests.length} tests`);
+  process.exit(0);
 }

@@ -7,6 +7,51 @@ import { stripExifInMemory } from './mediaExifScrubber';
 export { stripExifInMemory };
 
 let requestIdCounter = 0;
+const WORKER_TIMEOUT_MS = 15_000;
+
+const NON_COMPRESSIBLE_EXTENSIONS = new Set([
+  'svg',
+  'svgz',
+  'gif',
+  'apng',
+  'ico',
+  'cur',
+  'psd',
+  'raw',
+  'cr2',
+  'cr3',
+  'nef',
+  'nrw',
+  'arw',
+  'sr2',
+  'srf',
+  'raf',
+  'orf',
+  'rw2',
+  'pef',
+  'dng',
+  'x3f',
+  '3fr',
+  'fff',
+  'iiq',
+  'erf',
+  'kdc',
+  'mef',
+  'mos',
+  'mrw',
+  'rwl',
+  'dcr',
+  'bay',
+  'gpr',
+  'exr',
+  'hdr',
+  'dds',
+  'tif',
+  'tiff',
+  'tga',
+  'pcx',
+  'icns',
+]);
 
 function createWorker(): Worker | null {
   if (typeof Worker === 'undefined') return null;
@@ -19,6 +64,52 @@ function createWorker(): Worker | null {
   }
 }
 
+async function executeWorkerTask(
+  request: MediaProcessorRequest,
+  transferList: Transferable[],
+): Promise<MediaProcessorResponse> {
+  const worker = createWorker();
+  if (!worker) {
+    throw new Error('Worker unavailable');
+  }
+
+  return new Promise<MediaProcessorResponse>((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      try {
+        worker.terminate();
+      } catch {}
+      reject(new Error(`Worker request ${request.type} timed out`));
+    }, WORKER_TIMEOUT_MS);
+
+    worker.onmessage = (e: MessageEvent<MediaProcessorResponse>) => {
+      if (settled) return;
+      if (e.data.id === request.id) {
+        settled = true;
+        clearTimeout(timer);
+        try {
+          worker.terminate();
+        } catch {}
+        resolve(e.data);
+      }
+    };
+
+    worker.onerror = (e) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try {
+        worker.terminate();
+      } catch {}
+      reject(new Error(e.message || `Media worker failed on ${request.type}`));
+    };
+
+    worker.postMessage(request, transferList);
+  });
+}
+
 /**
  * Offloads thumbnail generation to a background Web Worker.
  * Falls back to main thread canvas if Workers/OffscreenCanvas are unavailable.
@@ -28,31 +119,20 @@ export async function generateThumbnailInWorker(
   maxWidth = 300,
   maxHeight = 300,
 ): Promise<Blob> {
-  const worker = createWorker();
-  if (!worker) {
-    return generateThumbnailMainThread(file, maxWidth, maxHeight);
-  }
-
   const id = `thumb-${Date.now()}-${++requestIdCounter}`;
-  const fileBuffer = await file.arrayBuffer();
-
   try {
-    const response = await new Promise<MediaProcessorResponse>((resolve, reject) => {
-      worker.onmessage = (e: MessageEvent<MediaProcessorResponse>) => {
-        if (e.data.id === id) resolve(e.data);
-      };
-      worker.onerror = (e) => reject(new Error(e.message || 'Media worker thumbnail failed'));
-
-      const request: MediaProcessorRequest = {
+    const fileBuffer = await file.arrayBuffer();
+    const response = await executeWorkerTask(
+      {
         id,
         type: 'GENERATE_THUMBNAIL',
         fileBuffer,
         mimeType: file.type || 'image/jpeg',
         maxWidth,
         maxHeight,
-      };
-      worker.postMessage(request, [fileBuffer]);
-    });
+      },
+      [fileBuffer],
+    );
 
     if (!response.ok || response.type !== 'GENERATE_THUMBNAIL') {
       throw new Error(response.ok === false ? response.error : 'Invalid worker response');
@@ -61,8 +141,6 @@ export async function generateThumbnailInWorker(
     return new Blob([response.thumbnailBuffer], { type: response.mimeType });
   } catch {
     return generateThumbnailMainThread(file, maxWidth, maxHeight);
-  } finally {
-    worker.terminate();
   }
 }
 
@@ -71,29 +149,18 @@ export async function generateThumbnailInWorker(
  * Falls back to main thread calculation if Workers are unavailable.
  */
 export async function generateBlurhashInWorker(file: File): Promise<string | null> {
-  const worker = createWorker();
-  if (!worker) {
-    return null;
-  }
-
   const id = `blur-${Date.now()}-${++requestIdCounter}`;
-  const fileBuffer = await file.arrayBuffer();
-
   try {
-    const response = await new Promise<MediaProcessorResponse>((resolve, reject) => {
-      worker.onmessage = (e: MessageEvent<MediaProcessorResponse>) => {
-        if (e.data.id === id) resolve(e.data);
-      };
-      worker.onerror = (e) => reject(new Error(e.message || 'Media worker blurhash failed'));
-
-      const request: MediaProcessorRequest = {
+    const fileBuffer = await file.arrayBuffer();
+    const response = await executeWorkerTask(
+      {
         id,
         type: 'GENERATE_BLURHASH',
         fileBuffer,
         mimeType: file.type || 'image/jpeg',
-      };
-      worker.postMessage(request, [fileBuffer]);
-    });
+      },
+      [fileBuffer],
+    );
 
     if (!response.ok || response.type !== 'GENERATE_BLURHASH') {
       return null;
@@ -102,8 +169,6 @@ export async function generateBlurhashInWorker(file: File): Promise<string | nul
     return response.blurhash;
   } catch {
     return null;
-  } finally {
-    worker.terminate();
   }
 }
 
@@ -118,75 +183,21 @@ export async function compressFileInWorker(
   maxHeight = 1080,
 ): Promise<File> {
   const ext = (file.name.split('.').pop() || '').toLowerCase();
-  const nonCompressableExtensions = new Set([
-    'svg',
-    'svgz',
-    'gif',
-    'apng',
-    'ico',
-    'cur',
-    'psd',
-    'raw',
-    'cr2',
-    'cr3',
-    'nef',
-    'nrw',
-    'arw',
-    'sr2',
-    'srf',
-    'raf',
-    'orf',
-    'rw2',
-    'pef',
-    'dng',
-    'x3f',
-    '3fr',
-    'fff',
-    'iiq',
-    'erf',
-    'kdc',
-    'mef',
-    'mos',
-    'mrw',
-    'rwl',
-    'dcr',
-    'bay',
-    'gpr',
-    'exr',
-    'hdr',
-    'dds',
-    'tif',
-    'tiff',
-    'tga',
-    'pcx',
-    'icns',
-  ]);
 
   if (
     !file.type.startsWith('image/') ||
     file.type === 'image/svg+xml' ||
     file.type === 'image/gif' ||
-    nonCompressableExtensions.has(ext)
+    NON_COMPRESSIBLE_EXTENSIONS.has(ext)
   ) {
     return file;
   }
 
-  const worker = createWorker();
-  if (!worker) {
-    return file;
-  }
-
   const id = `comp-${Date.now()}-${++requestIdCounter}`;
-  const fileBuffer = await file.arrayBuffer();
-
   try {
-    const response = await new Promise<MediaProcessorResponse>((resolve, reject) => {
-      worker.onmessage = (e: MessageEvent<MediaProcessorResponse>) => {
-        if (e.data.id === id) resolve(e.data);
-      };
-      worker.onerror = (e) => reject(new Error(e.message || 'Media worker compression failed'));
-
-      const request: MediaProcessorRequest = {
+    const fileBuffer = await file.arrayBuffer();
+    const response = await executeWorkerTask(
+      {
         id,
         type: 'COMPRESS_IMAGE',
         fileBuffer,
@@ -194,9 +205,9 @@ export async function compressFileInWorker(
         quality,
         maxWidth,
         maxHeight,
-      };
-      worker.postMessage(request, [fileBuffer]);
-    });
+      },
+      [fileBuffer],
+    );
 
     if (!response.ok || response.type !== 'COMPRESS_IMAGE') {
       return file;
@@ -209,8 +220,6 @@ export async function compressFileInWorker(
     });
   } catch {
     return file;
-  } finally {
-    worker.terminate();
   }
 }
 
@@ -225,13 +234,13 @@ async function generateThumbnailMainThread(
 
     img.onload = () => {
       URL.revokeObjectURL(url);
-      let width = img.width;
-      let height = img.height;
+      let width = Math.max(1, img.width);
+      let height = Math.max(1, img.height);
 
       if (width > maxWidth || height > maxHeight) {
         const ratio = Math.min(maxWidth / width, maxHeight / height);
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
+        width = Math.max(1, Math.round(width * ratio));
+        height = Math.max(1, Math.round(height * ratio));
       }
 
       const canvas = document.createElement('canvas');
@@ -276,36 +285,19 @@ export async function stripExifInWorker(file: File): Promise<File> {
   }
 
   const fileBuffer = await file.arrayBuffer();
-  const worker = createWorker();
-
-  if (!worker) {
-    const cleanedBuffer = stripExifInMemory(fileBuffer, file.type);
-    const mime = file.type || 'image/jpeg';
-    const blob = new Blob([cleanedBuffer], { type: mime });
-    return new File([blob], file.name, {
-      type: mime,
-      lastModified: file.lastModified,
-    });
-  }
-
   const id = `strip-${Date.now()}-${++requestIdCounter}`;
 
   try {
     const workerTransferBuffer = fileBuffer.slice(0);
-    const response = await new Promise<MediaProcessorResponse>((resolve, reject) => {
-      worker.onmessage = (e: MessageEvent<MediaProcessorResponse>) => {
-        if (e.data.id === id) resolve(e.data);
-      };
-      worker.onerror = (e) => reject(new Error(e.message || 'Media worker EXIF strip failed'));
-
-      const request: MediaProcessorRequest = {
+    const response = await executeWorkerTask(
+      {
         id,
         type: 'STRIP_EXIF',
         fileBuffer: workerTransferBuffer,
         mimeType: file.type || 'image/jpeg',
-      };
-      worker.postMessage(request, [workerTransferBuffer]);
-    });
+      },
+      [workerTransferBuffer],
+    );
 
     if (!response.ok || response.type !== 'STRIP_EXIF') {
       const cleanedBuffer = stripExifInMemory(fileBuffer, file.type);
@@ -330,7 +322,5 @@ export async function stripExifInWorker(file: File): Promise<File> {
       type: mime,
       lastModified: file.lastModified,
     });
-  } finally {
-    worker.terminate();
   }
 }

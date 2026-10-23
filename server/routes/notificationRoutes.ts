@@ -16,6 +16,13 @@ const router = express.Router();
 router.get('/', requireAuth, async (req, res) => {
   const { userId, username } = (req as AuthenticatedRequest).user;
 
+  if (mongoose.connection.readyState !== 1) {
+    throw AppError.serviceUnavailable(
+      'Database service is temporarily unavailable or reconnecting.',
+      'SERVICE_UNAVAILABLE',
+    );
+  }
+
   const Notification = getNotificationModel(username);
   const notifications = await Notification.find({ userId })
     .sort({ createdAt: -1 })

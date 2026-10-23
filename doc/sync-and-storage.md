@@ -35,12 +35,14 @@ sequenceDiagram
 ## 2. Synchronization Strategies & Protocols
 
 ### 2.1 Incremental Delta Querying (`/api/vault/sync`)
+
 - Instead of downloading the full vault on every change, clients maintain an integer or ISO timestamp sync cursor (`lastSyncCursor`).
 - Queries pass `?since=<lastSyncCursor>`.
 - The database returns only records where `updatedAt > since` or `deletedAt > since`.
 - Reduces network payload size by over **98%** in active multi-device workflows.
 
 ### 2.2 Offline-First Design & Local Caching
+
 - **Client Cache**: The client persists decrypted records into browser-sandboxed **IndexedDB** (`idb`), keyed by user ID.
 - **Offline Mutations**: When offline, edits are queued in an outbound sync queue.
 - **Reconnection Flush**: Upon network restoration, the queue flushes sequentially, updating remote records and requesting delta reconciliation.
@@ -52,12 +54,14 @@ sequenceDiagram
 When two devices edit the same record concurrently without synchronization:
 
 ### 3.1 Deterministic Timestamp Arbitration (`latest-update-wins`)
+
 - Every record mutation carries a millisecond-precision UTC ISO timestamp generated during local encryption (`updatedAt`).
 - If concurrent edits arrive at the server:
   - If incoming `updatedAt > existingRecord.updatedAt`, the incoming update is accepted.
   - If incoming `updatedAt <= existingRecord.updatedAt`, the update is preserved as a concurrent revision or rejected, depending on client configuration.
 
 ### 3.2 Merkle Tree Tamper Detection
+
 - Vault calculates an in-memory Merkle tree of record hashes on the client.
 - If an out-of-order write or accidental database rollback occurs, the Merkle root hash calculated by the client diverges from the server's state hash.
 - The client prompts the user to inspect differences rather than silently corrupting local state.
@@ -122,6 +126,7 @@ flowchart TD
 ```
 
 ### 5.1 Failover Engine Specifications (`server/services/multiClusterPool.ts`)
+
 - **Dual SRV URIs**: Configured with `MONGODB_URI` and `MONGODB_URI_FALLBACK`.
 - **DNS Lookup Resilience**: Primary DNS lookups query Cloudflare (`1.1.1.1`) and Google (`8.8.8.8`). If DNS resolution fails, fallback resolvers are automatically rotated.
 - **Direct Connection Option**: In restricted cloud container networks where SRV lookups fail, `MONGODB_URI_DIRECT` provides a non-SRV replica set connection string.

@@ -19,6 +19,7 @@ import { marked } from 'marked';
 
 import { Button } from '../../ui/Button';
 import { cn } from '../../../lib/utils';
+import { logger } from '../../../lib/logger';
 import { ScrollButton } from '../ScrollButton';
 import { useScrollRestoration } from '../../../hooks/useScrollRestoration';
 
@@ -337,10 +338,7 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
 
         return buildHtmlDocument(safeBodyHtml);
       } catch (error) {
-        if (import.meta.env.DEV) {
-          console.error('[NoteEditorPreview] Failed to generate preview:', error);
-        }
-
+        logger.error('Failed to generate markdown preview', { error });
         return buildHtmlDocument('<p>Preview failed to render.</p>');
       }
     }, [highlightedMarkdownContent]);
@@ -501,7 +499,13 @@ const NoteEditorPreviewBase = forwardRef<NoteEditorPreviewRef, NoteEditorPreview
                   ),
 
                   a: ({ href, children }) => (
-                    <a href={getSafeMarkdownHref(href)} className="text-blue-400 hover:underline">
+                    <a
+                      href={getSafeMarkdownHref(href)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {children}
                     </a>
                   ),

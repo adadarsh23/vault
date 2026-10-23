@@ -884,7 +884,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
       setIsMuted(false);
       void enumerateDevices();
     } catch (err: any) {
-      console.error('Camera initialization error:', err);
+      logger.error('Camera initialization error', { error: err });
       const isPermissionErr =
         err?.name === 'NotAllowedError' ||
         err?.name === 'PermissionDeniedError' ||
@@ -977,7 +977,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
     if (stream && videoRef.current && videoRef.current.srcObject !== stream) {
       videoRef.current.srcObject = stream;
       videoRef.current.play().catch((err) => {
-        console.warn('Video play interrupted:', err);
+        logger.warn('Video play interrupted', { error: err });
       });
     }
   }, [stream]);
@@ -1275,13 +1275,25 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
 
     // Standard Video, Filtered Video, or Composited Dual Camera Video
     let recordStream = stream;
-    if (dualCamera.enabled && compositeCanvasRef.current) {
-      const canvasStream = (compositeCanvasRef.current as any).captureStream(30);
-      if (stream) {
-        const audioTracks = stream.getAudioTracks();
-        audioTracks.forEach((t) => canvasStream.addTrack(t));
+    if (
+      dualCamera.enabled &&
+      compositeCanvasRef.current &&
+      (typeof (compositeCanvasRef.current as any).captureStream === 'function' ||
+        typeof (compositeCanvasRef.current as any).mozCaptureStream === 'function')
+    ) {
+      try {
+        const getStream =
+          (compositeCanvasRef.current as any).captureStream ||
+          (compositeCanvasRef.current as any).mozCaptureStream;
+        const canvasStream = getStream.call(compositeCanvasRef.current, 30);
+        if (stream) {
+          const audioTracks = stream.getAudioTracks();
+          audioTracks.forEach((t: MediaStreamTrack) => canvasStream.addTrack(t));
+        }
+        recordStream = canvasStream;
+      } catch (err) {
+        logger.warn('Failed to capture composite canvas stream, using direct stream', { err });
       }
-      recordStream = canvasStream;
     } else if (
       type === 'video' &&
       videoRef.current &&
@@ -1562,7 +1574,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
         wasEncrypted: true,
       };
     } catch (e) {
-      console.error('E2EE Encryption failed:', e);
+      logger.error('E2EE Encryption failed', { error: e });
       toast.error('Secure encryption failed, saving with vault encryption instead');
       return { blob, wasEncrypted: false };
     } finally {
@@ -1612,7 +1624,7 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
         setIsSuccess(false);
       }, 1500);
     } catch (error) {
-      console.error('Failed to save to cloud:', error);
+      logger.error('Failed to save to cloud', { error });
       toast.error('Cloud synchronization failed');
       setIsSaving(false);
     }

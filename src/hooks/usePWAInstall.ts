@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { logger } from '../lib/logger';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -69,13 +69,20 @@ export function usePWAInstall() {
 
   const promptRef = useRef<BeforeInstallPromptEvent | null>(null);
   const isPromptingRef = useRef(false);
+  const isInstalledRef = useRef(isInstalled);
+  useEffect(() => {
+    isInstalledRef.current = isInstalled;
+  }, [isInstalled]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     let isMounted = true;
 
     const ua = window.navigator.userAgent.toLowerCase();
-    setIsIOS(/iphone|ipad|ipod/.test(ua));
+    const isAppleDevice =
+      /iphone|ipad|ipod/.test(ua) ||
+      (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+    setIsIOS(isAppleDevice);
 
     const updateStatus = () => {
       if (!isMounted) return;
@@ -94,7 +101,7 @@ export function usePWAInstall() {
     updateStatus();
 
     const handleBeforeInstallPrompt = (event: Event) => {
-      if (!isMounted || isInstalled) return;
+      if (!isMounted || isInstalledRef.current) return;
       event.preventDefault();
 
       if (!isValidBeforeInstallPromptEvent(event)) {
@@ -119,7 +126,7 @@ export function usePWAInstall() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleInstalled);
-    window.addEventListener('visibilitychange', updateStatus);
+    document.addEventListener('visibilitychange', updateStatus);
 
     const mediaQuery =
       typeof window.matchMedia === 'function'
@@ -140,7 +147,7 @@ export function usePWAInstall() {
       isMounted = false;
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleInstalled);
-      window.removeEventListener('visibilitychange', updateStatus);
+      document.removeEventListener('visibilitychange', updateStatus);
 
       if (mediaQuery) {
         if (typeof mediaQuery.removeEventListener === 'function') {
@@ -150,12 +157,12 @@ export function usePWAInstall() {
         }
       }
     };
-  }, [isInstalled]);
+  }, []);
 
   const install = useCallback(async () => {
     const prompt = promptRef.current;
 
-    if (!prompt || isPromptingRef.current || isInstalled) return false;
+    if (!prompt || isPromptingRef.current || isInstalledRef.current) return false;
 
     try {
       isPromptingRef.current = true;
@@ -179,18 +186,21 @@ export function usePWAInstall() {
     } finally {
       isPromptingRef.current = false;
     }
-  }, [isInstalled]);
+  }, []);
 
   const canInstall = Boolean(installPrompt) && !isInstalled;
 
-  return {
-    isReady,
-    isInstalled,
-    isStandalone,
-    isIOS,
-    canInstall,
-    needsManualInstall: isIOS && !isStandalone,
-    supportsNativeInstall: canInstall,
-    install,
-  };
+  return useMemo(
+    () => ({
+      isReady,
+      isInstalled,
+      isStandalone,
+      isIOS,
+      canInstall,
+      needsManualInstall: isIOS && !isStandalone,
+      supportsNativeInstall: canInstall,
+      install,
+    }),
+    [canInstall, install, isIOS, isInstalled, isReady, isStandalone],
+  );
 }

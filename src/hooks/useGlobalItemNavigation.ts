@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useRef, useEffect } from 'react';
 import { useVaultStore } from '../store/vaultStore';
 import { useGlobalNavigationStore } from '../store/globalNavigationStore';
 import { GLOBAL_NAVIGABLE_TYPES, requestGlobalItemNavigation } from '../lib/global-navigation';
@@ -21,6 +21,14 @@ export const useGlobalItemNavigation = ({
   const items = useVaultStore((state) => state.items);
   const setTargetItemId = useGlobalNavigationStore((state) => state.setTargetItemId);
 
+  const onSelectLocalItemRef = useRef(onSelectLocalItem);
+  useEffect(() => {
+    onSelectLocalItemRef.current = onSelectLocalItem;
+  }, [onSelectLocalItem]);
+
+  const localTypesKey = localTypes.join(',');
+  const localTypesSet = useMemo(() => new Set(localTypes), [localTypesKey]);
+
   const orderedItems = useMemo(
     () =>
       items
@@ -30,7 +38,7 @@ export const useGlobalItemNavigation = ({
   );
 
   const currentIndex = useMemo(
-    () => orderedItems.findIndex((item) => item.id === currentItemId),
+    () => (currentItemId ? orderedItems.findIndex((item) => item.id === currentItemId) : -1),
     [orderedItems, currentItemId],
   );
 
@@ -43,8 +51,8 @@ export const useGlobalItemNavigation = ({
 
       try {
         setTargetItemId(item.id);
-        if (localTypes.includes(item.type)) {
-          onSelectLocalItem(item.id);
+        if (localTypesSet.has(item.type)) {
+          onSelectLocalItemRef.current(item.id);
           return;
         }
 
@@ -59,7 +67,7 @@ export const useGlobalItemNavigation = ({
         });
       }
     },
-    [localTypes, onSelectLocalItem, setTargetItemId],
+    [localTypesSet, setTargetItemId],
   );
 
   const goPrevious = useCallback(() => {
@@ -72,10 +80,13 @@ export const useGlobalItemNavigation = ({
     navigateToItem(orderedItems[currentIndex + 1]);
   }, [canNext, currentIndex, navigateToItem, orderedItems]);
 
-  return {
-    canPrevious,
-    canNext,
-    goPrevious,
-    goNext,
-  };
+  return useMemo(
+    () => ({
+      canPrevious,
+      canNext,
+      goPrevious,
+      goNext,
+    }),
+    [canNext, canPrevious, goNext, goPrevious],
+  );
 };

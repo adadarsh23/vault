@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/react';
+import { hasTelemetryConsent } from './logrocket';
 
 const isBrowser = typeof window !== 'undefined';
 const env = import.meta.env;
@@ -13,6 +14,7 @@ const isProd = env.PROD === true;
 const sentryEnabled =
   Boolean(dsn) &&
   !isDisabledExplicitly &&
+  hasTelemetryConsent() &&
   (isEnabledFlag || (isProd && (!isLocalhost || allowLocalhost)));
 
 let initialized = false;
@@ -38,6 +40,14 @@ const shouldDropDuplicate = (key) => {
   const now = Date.now();
   const lastSeenAt = recentEventCache.get(key);
   recentEventCache.set(key, now);
+
+  if (recentEventCache.size > 200) {
+    const cutoff = now - 60_000;
+    for (const [k, timestamp] of recentEventCache) {
+      if (timestamp < cutoff) recentEventCache.delete(k);
+    }
+  }
+
   if (!lastSeenAt) return false;
   return now - lastSeenAt < 1200;
 };
@@ -73,6 +83,7 @@ const SENSITIVE_KEYS = [
   'twofactorcode',
   'encryptedmetadata',
 ];
+const SENSITIVE_KEYS_SET = new Set(SENSITIVE_KEYS);
 
 const redactSensitiveData = (input) => {
   if (!input || typeof input !== 'object') return input;
@@ -81,7 +92,7 @@ const redactSensitiveData = (input) => {
   for (const [key, value] of Object.entries(clone)) {
     const normalizedKey = key.toLowerCase();
     if (
-      SENSITIVE_KEYS.includes(normalizedKey) ||
+      SENSITIVE_KEYS_SET.has(normalizedKey) ||
       SENSITIVE_KEYS.some((k) => normalizedKey.includes(k))
     ) {
       clone[key] = '[Filtered]';

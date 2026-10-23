@@ -11,6 +11,7 @@ export interface LogEntry {
 export interface GetLogsOptions {
   cursor?: string | number | null;
   limit?: number;
+  signal?: AbortSignal;
 }
 
 export interface GetLogsResponse {
@@ -43,7 +44,7 @@ const normalizeGetLogsOptions = (options?: GetLogsOptions): { cursor?: string; l
       : DEFAULT_LOG_LIMIT;
   const limit = Math.min(MAX_LOG_LIMIT, Math.max(1, requestedLimit));
 
-  return { cursor, limit };
+  return cursor !== undefined ? { cursor, limit } : { limit };
 };
 
 type RawGetLogsResponse = Partial<GetLogsResponse> & {
@@ -75,6 +76,7 @@ export const systemApi = {
     const params = normalizeGetLogsOptions(options);
     const { data } = await apiClient.get<RawGetLogsResponse>('/system/logs', {
       params,
+      signal: options?.signal,
     });
     return normalizeLogsResponse(data);
   },

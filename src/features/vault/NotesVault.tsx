@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { useVaultStore } from '../../store/vaultStore';
 import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
 import { useClipboard } from '../../hooks/useClipboard';
@@ -179,7 +180,9 @@ export const NotesVault: React.FC = () => {
   const handleSave = useCallback(
     async (title: string, content: string) => {
       if (!selectedNoteId) return;
-      if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
+      if (!masterKey && !useVaultStore.getState().isDecoyMode) {
+        throw new Error('Vault is locked or encryption key is missing');
+      }
 
       try {
         const encrypted = await encryptData(content, masterKey);
@@ -188,7 +191,7 @@ export const NotesVault: React.FC = () => {
           content: encrypted,
         });
       } catch (error) {
-        console.error('Failed to save note:', error);
+        logger.error('Failed to save note', { error });
         throw error instanceof Error ? error : new Error('Failed to save note');
       }
     },

@@ -6,6 +6,7 @@ import {
   useId,
   useMemo,
   useRef,
+  useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import createGlobe, { type COBEOptions } from 'cobe';
@@ -47,12 +48,27 @@ const getCanvasSize = (canvas: HTMLCanvasElement) => {
   return Math.floor(Math.min(rect.width, rect.height));
 };
 
+const isWebGLSupported = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const canvas = document.createElement('canvas');
+    return Boolean(
+      window.WebGLRenderingContext &&
+      (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')),
+    );
+  } catch {
+    return false;
+  }
+};
+
 interface RenderMarker extends PulseMarker {
   anchorId: string;
 }
 
 export default function Globe({ markers = defaultMarkers, className, speed = 0.003 }: GlobeProps) {
   const componentId = useId();
+  const [webGLFailed, setWebGLFailed] = useState(false);
+
   const markerNamespace = useMemo(
     () => `globe-${sanitizeCssIdentifier(componentId) || 'instance'}`,
     [componentId],
@@ -94,7 +110,11 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
     pointerIdRef.current = event.pointerId;
     pointerInteracting.current = { x: event.clientX, y: event.clientY };
     dragOffset.current = { phi: 0, theta: 0 };
-    event.currentTarget.setPointerCapture(event.pointerId);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Ignore pointer capture errors on older browsers or virtual pointers
+    }
 
     if (canvasRef.current) {
       canvasRef.current.style.cursor = 'grabbing';
@@ -120,8 +140,12 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
       return;
     }
 
-    if (event.currentTarget.hasPointerCapture(activePointerId)) {
-      event.currentTarget.releasePointerCapture(activePointerId);
+    try {
+      if (event.currentTarget.hasPointerCapture(activePointerId)) {
+        event.currentTarget.releasePointerCapture(activePointerId);
+      }
+    } catch {
+      // Ignore releasePointerCapture failure
     }
 
     pointerIdRef.current = null;
@@ -146,17 +170,24 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
   }, []);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const updateReducedMotionPreference = () => {
-      prefersReducedMotionRef.current = mediaQuery.matches;
-    };
+    if (typeof window === 'undefined') return undefined;
+    let cleanup: (() => void) | undefined;
+    try {
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const updateReducedMotionPreference = () => {
+        prefersReducedMotionRef.current = mediaQuery.matches;
+      };
 
-    updateReducedMotionPreference();
-    mediaQuery.addEventListener('change', updateReducedMotionPreference);
+      updateReducedMotionPreference();
+      mediaQuery.addEventListener('change', updateReducedMotionPreference);
 
-    return () => {
-      mediaQuery.removeEventListener('change', updateReducedMotionPreference);
-    };
+      cleanup = () => {
+        mediaQuery.removeEventListener('change', updateReducedMotionPreference);
+      };
+    } catch {
+      // Ignore media query errors
+    }
+    return cleanup;
   }, []);
 
   const handlePointerCancel = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
@@ -165,8 +196,12 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
       return;
     }
 
-    if (event.currentTarget.hasPointerCapture(activePointerId)) {
-      event.currentTarget.releasePointerCapture(activePointerId);
+    try {
+      if (event.currentTarget.hasPointerCapture(activePointerId)) {
+        event.currentTarget.releasePointerCapture(activePointerId);
+      }
+    } catch {
+      // Ignore releasePointerCapture failure
     }
 
     pointerIdRef.current = null;
@@ -193,6 +228,11 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    if (!isWebGLSupported()) {
+      setWebGLFailed(true);
+      return;
+    }
 
     let globe: ReturnType<typeof createGlobe> | null = null;
     let animationId = 0;
@@ -226,16 +266,23 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
 
       const size = canvasSizeRef.current;
       if (size > 0) {
-        currentGlobe.update({
-          width: size,
-          height: size,
-          phi: phi + phiOffsetRef.current + dragOffset.current.phi,
-          theta: clamp(
-            BASE_THETA + thetaOffsetRef.current + dragOffset.current.theta,
-            -THETA_LIMIT,
-            THETA_LIMIT,
-          ),
-        });
+        try {
+          currentGlobe.update({
+            width: size,
+            height: size,
+            phi: phi + phiOffsetRef.current + dragOffset.current.phi,
+            theta: clamp(
+              BASE_THETA + thetaOffsetRef.current + dragOffset.current.theta,
+              -THETA_LIMIT,
+              THETA_LIMIT,
+            ),
+          });
+        } catch {
+          // If update fails due to context loss, dispose cleanly
+          isDisposed = true;
+          setWebGLFailed(true);
+          return;
+        }
       }
 
       animationId = window.requestAnimationFrame(animate);
@@ -248,7 +295,10 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
       if (size === 0) return;
 
       const globeConfig: COBEOptions = {
-        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+        devicePixelRatio: Math.min(
+          typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1,
+          2,
+        ),
         width: size,
         height: size,
         phi: 0,
@@ -269,24 +319,31 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
         opacity: 0.7,
       };
 
-      const createdGlobe = createGlobe(canvas, globeConfig);
-      if (isDisposed) {
-        createdGlobe.destroy();
-        return;
-      }
-      globe = createdGlobe;
-
-      animationId = window.requestAnimationFrame(animate);
-      fadeInTimeoutId = window.setTimeout(() => {
-        if (!isDisposed && canvas.isConnected) {
-          canvas.style.opacity = '1';
+      try {
+        const createdGlobe = createGlobe(canvas, globeConfig);
+        if (isDisposed) {
+          createdGlobe.destroy();
+          return;
         }
-      }, 0);
+        globe = createdGlobe;
+
+        animationId = window.requestAnimationFrame(animate);
+        fadeInTimeoutId = window.setTimeout(() => {
+          if (!isDisposed && canvas.isConnected) {
+            canvas.style.opacity = '1';
+          }
+        }, 0);
+      } catch (err) {
+        console.warn('WebGL Globe initialization failed:', err);
+        setWebGLFailed(true);
+      }
     };
 
     updateCanvasSize();
-    resizeObserver = new ResizeObserver(() => updateCanvasSize());
-    resizeObserver.observe(canvas);
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => updateCanvasSize());
+      resizeObserver.observe(canvas);
+    }
 
     return () => {
       isDisposed = true;
@@ -301,10 +358,30 @@ export default function Globe({ markers = defaultMarkers, className, speed = 0.0
       if (globe) {
         const activeGlobe = globe;
         globe = null;
-        activeGlobe.destroy();
+        try {
+          activeGlobe.destroy();
+        } catch {
+          // Ignore destroy errors
+        }
       }
     };
   }, [cobeMarkers, speed]);
+
+  if (webGLFailed) {
+    return (
+      <div
+        className={cn(
+          'relative aspect-square select-none overflow-hidden rounded-full bg-gradient-to-br from-cyan-950/40 via-card-bg to-black/80 border border-card-border flex items-center justify-center p-6 text-center',
+          className,
+        )}
+      >
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-16 h-16 rounded-full border-2 border-dashed border-cyan-500/40 animate-[spin_12s_linear_infinite]" />
+          <span className="text-xs text-text/60 font-medium">Global Network</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn('relative aspect-square select-none overflow-visible', className)}>

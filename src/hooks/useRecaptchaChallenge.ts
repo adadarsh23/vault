@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 
 export type RecaptchaStatus = 'idle' | 'verified' | 'expired' | 'error';
 
@@ -71,16 +71,29 @@ export const useRecaptchaChallenge = () => {
     setFeedback(DEFAULT_FEEDBACK);
   }, []);
 
-  return {
-    token,
-    isCompleted: Boolean(token),
-    resetNonce,
-    feedback,
-    handleTokenChange,
-    handleExpired,
-    handleError,
-    resetChallenge,
-    setRejected,
-    clearFeedback,
-  };
+  return useMemo(
+    () => ({
+      token,
+      isCompleted: Boolean(token),
+      resetNonce,
+      feedback,
+      handleTokenChange,
+      handleExpired,
+      handleError,
+      resetChallenge,
+      setRejected,
+      clearFeedback,
+    }),
+    [
+      clearFeedback,
+      feedback,
+      handleError,
+      handleExpired,
+      handleTokenChange,
+      resetChallenge,
+      resetNonce,
+      setRejected,
+      token,
+    ],
+  );
 };

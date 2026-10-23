@@ -1,16 +1,48 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useInactivity } from '../../hooks/useInactivity';
 import { useDocumentMeta } from '../../hooks/useDocumentMeta';
 import { useVaultStore } from '../../store/vaultStore';
 import { AppShell } from './AppShell';
 import { useGestureController } from './GestureController';
-import { useNavigationHandler } from './NavigationHandler';
+import { useNavigationHandler, TabId } from './NavigationHandler';
 import { AutoLockCountdownOverlay } from '../vault/AutoLockCountdownOverlay';
+import { ErrorBoundary } from '../ui/ErrorBoundary';
 
 type MaintenanceType = 'export' | 'import' | 'changeKey' | 'changePassword';
 
 type MaintenanceState = { isOpen: false } | { isOpen: true; type: MaintenanceType };
+
+const TAB_TITLE_LABELS: Partial<Record<TabId, string>> = {
+  dashboard: 'Dashboard',
+  identities: 'Identities',
+  contacts: 'Contacts',
+  passwords: 'Passwords',
+  cards: 'Payment Cards',
+  wifi: 'Wi-Fi Networks',
+  secrets: 'Secrets',
+  notes: 'Secure Notes',
+  todos: 'Tasks & Todos',
+  chats: 'Encrypted Chat',
+  locations: 'Locations',
+  photos: 'Photos',
+  videos: 'Videos',
+  audio: 'Audio',
+  documents: 'Documents',
+  files: 'Encrypted Files',
+  privacy: 'Privacy Interface',
+  shortcuts: 'Shortcuts',
+  settings: 'Settings',
+  systemlogs: 'System Logs',
+  devicesessions: 'Device Sessions',
+  ecosystem: 'Vault Ecosystem',
+  legal: 'Legal',
+  contact: 'Contact Support',
+};
+
+const resolveTabTitle = (tab: TabId): string => {
+  return TAB_TITLE_LABELS[tab] ?? tab.charAt(0).toUpperCase() + tab.slice(1);
+};
 
 export function UnlockedVaultHost({ shouldReduceMotion }: { shouldReduceMotion: boolean }) {
   const {
@@ -20,6 +52,7 @@ export function UnlockedVaultHost({ shouldReduceMotion }: { shouldReduceMotion: 
     autoLockDuration,
     isBlurOnTabHideEnabled,
     isLockOnTabHideEnabled,
+    sidebarPosition,
   } = useVaultStore(
     useShallow((state) => ({
       isVaultReady: state.isVaultReady,
@@ -28,6 +61,7 @@ export function UnlockedVaultHost({ shouldReduceMotion }: { shouldReduceMotion: 
       autoLockDuration: state.preferences.autoLockDuration,
       isBlurOnTabHideEnabled: state.preferences.isBlurOnTabHideEnabled,
       isLockOnTabHideEnabled: state.preferences.isLockOnTabHideEnabled,
+      sidebarPosition: state.preferences.sidebarPosition,
     })),
   );
 
@@ -41,6 +75,7 @@ export function UnlockedVaultHost({ shouldReduceMotion }: { shouldReduceMotion: 
     isSidebarOpen,
     setIsSidebarOpen,
     locationPath: navigation.location.pathname,
+    sidebarPosition,
   });
 
   const { isInactive, setIsInactive, countdownSeconds, resetTimer } = useInactivity({
@@ -68,10 +103,10 @@ export function UnlockedVaultHost({ shouldReduceMotion }: { shouldReduceMotion: 
   }, []);
 
   const activePath = navigation.location.pathname;
-  const activeTabLabel =
-    navigation.activeTab === 'dashboard'
-      ? 'Dashboard'
-      : `${navigation.activeTab.charAt(0).toUpperCase()}${navigation.activeTab.slice(1)}`;
+  const activeTabLabel = useMemo(
+    () => resolveTabTitle(navigation.activeTab),
+    [navigation.activeTab],
+  );
 
   useDocumentMeta({
     title: `Vault - ${activeTabLabel}`,
@@ -80,7 +115,7 @@ export function UnlockedVaultHost({ shouldReduceMotion }: { shouldReduceMotion: 
   });
 
   return (
-    <>
+    <ErrorBoundary>
       <AppShell
         activeTab={navigation.activeTab}
         handleMobileTouchEnd={gestureController.handleMobileTouchEnd}
@@ -108,6 +143,6 @@ export function UnlockedVaultHost({ shouldReduceMotion }: { shouldReduceMotion: 
         countdownSeconds={countdownSeconds ?? null}
         resetTimer={resetTimer}
       />
-    </>
+    </ErrorBoundary>
   );
 }

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useGlobalNavigationStore } from '../../store/globalNavigationStore';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { useVaultStore } from '../../store/vaultStore';
 import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
 import { useClipboard } from '../../hooks/useClipboard';
@@ -346,6 +347,8 @@ const PasswordGeneratorPanel: React.FC<{
   );
 };
 
+const hibpCache = new Map<string, string>();
+
 const DecryptedPasswordCard: React.FC<{
   item: any;
   masterKey: string | CryptoKey;
@@ -385,7 +388,7 @@ const DecryptedPasswordCard: React.FC<{
     }
 
     let intervalId: any;
-    const updateTotp = () => {
+    const setupTotp = () => {
       try {
         const cleanSecret = data.totpSecret!.replace(/\s+/g, '').toUpperCase();
         if (!/^[A-Z2-7]+=*$/.test(cleanSecret)) {
@@ -401,16 +404,26 @@ const DecryptedPasswordCard: React.FC<{
           digits: 6,
           period: 30,
         });
-        setTotpCode(totp.generate());
-        setTotpTimeLeft(30 - (Math.floor(Date.now() / 1000) % 30));
-      } catch (err) {
+
+        const tick = () => {
+          try {
+            setTotpCode(totp.generate());
+            setTotpTimeLeft(30 - (Math.floor(Date.now() / 1000) % 30));
+          } catch {
+            setTotpError(true);
+            setTotpCode('ERROR');
+          }
+        };
+
+        tick();
+        intervalId = setInterval(tick, 1000);
+      } catch {
         setTotpError(true);
         setTotpCode('ERROR');
       }
     };
 
-    updateTotp();
-    intervalId = setInterval(updateTotp, 1000);
+    setupTotp();
     return () => clearInterval(intervalId);
   }, [data?.totpSecret]);
 
@@ -421,13 +434,32 @@ const DecryptedPasswordCard: React.FC<{
       return;
     }
 
+    let isMounted = true;
+    const controller = new AbortController();
+
     const checkBreach = async () => {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        if (isMounted) setBreachStatus('idle');
+        return;
+      }
+
       setBreachStatus('checking');
       try {
+        const subtle =
+          typeof window !== 'undefined' && window.crypto?.subtle
+            ? window.crypto.subtle
+            : typeof globalThis !== 'undefined' && (globalThis as any).crypto?.subtle
+              ? (globalThis as any).crypto.subtle
+              : null;
+        if (!subtle) {
+          if (isMounted) setBreachStatus('idle');
+          return;
+        }
+
         const password = data.password;
         const encoder = new TextEncoder();
         const passwordData = encoder.encode(password);
-        const hashBuffer = await crypto.subtle.digest('SHA-1', passwordData);
+        const hashBuffer = await subtle.digest('SHA-1', passwordData);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const hashHex = hashArray
           .map((b) => b.toString(16).padStart(2, '0'))
@@ -437,11 +469,20 @@ const DecryptedPasswordCard: React.FC<{
         const prefix = hashHex.substring(0, 5);
         const suffix = hashHex.substring(5);
 
-        const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
-        if (!res.ok) {
-          throw new Error('API request failed');
+        let text = hibpCache.get(prefix);
+        if (!text) {
+          const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
+            signal: controller.signal,
+          });
+          if (!res.ok) {
+            throw new Error('API request failed');
+          }
+          text = await res.text();
+          hibpCache.set(prefix, text);
         }
-        const text = await res.text();
+
+        if (!isMounted) return;
+
         const lines = text.split('\n');
         let foundCount = 0;
         for (const line of lines) {
@@ -459,13 +500,18 @@ const DecryptedPasswordCard: React.FC<{
           setBreachStatus('safe');
           setBreachCount(0);
         }
-      } catch (err) {
-        console.error('HIBP check error:', err);
+      } catch (err: any) {
+        if (err?.name === 'AbortError' || !isMounted) return;
         setBreachStatus('error');
       }
     };
 
     void checkBreach();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
   }, [data?.password]);
 
   const handleSave2FA = async () => {
@@ -537,7 +583,7 @@ const DecryptedPasswordCard: React.FC<{
           setError(true);
         }
       } catch (err) {
-        console.error('Password Decryption Error:', err);
+        logger.error('Password Decryption Error', { error: err });
         if (isMounted) setError(true);
       }
     };
@@ -1007,7 +1053,7 @@ export const PasswordManager: React.FC = () => {
         status: 'success',
       });
     } catch (err) {
-      console.error('Save Password Error:', err);
+      logger.error('Save Password Error', { error: err });
       toast.error('Failed to save password');
     } finally {
       setIsSaving(false);

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+// @ts-ignore
 import Ajv2020 from 'ajv/dist/2020.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -34,6 +35,7 @@ describe('Vault Manifest Schema (Draft 2020-12)', () => {
     const backupDirs = [
       path.join(rootDir, 'backups', 'backup-2026-08-30_04-42-50', 'metadata.json'),
       path.join(rootDir, 'backups', 'backup-2026-08-31_23-49-06', 'metadata.json'),
+      path.join(rootDir, 'backups', 'backup-2026-09-04_11-38-46', 'metadata.json'),
     ];
 
     for (const backupFile of backupDirs) {
@@ -45,6 +47,71 @@ describe('Vault Manifest Schema (Draft 2020-12)', () => {
     }
   });
 
+  describe('Project-relative architecture and module validations', () => {
+    it('validates all project-relative directory paths', () => {
+      expect(metadataContent.paths).toBeDefined();
+      expect(metadataContent.paths.schemas).toBe('./schemas');
+      expect(metadataContent.paths.uploads).toBe('./uploads');
+      expect(metadataContent.paths.backups).toBe('./backups');
+      expect(metadataContent.paths.logs).toBe('./logs');
+      expect(metadataContent.paths.src).toBe('./src');
+      expect(metadataContent.paths.server).toBe('./server');
+      expect(metadataContent.paths.tests).toBe('./tests');
+      expect(metadataContent.paths.doc).toBe('./doc');
+
+      const valid = validate(metadataContent);
+      expect(valid).toBe(true);
+    });
+
+    it('validates all 20 active vault categories', () => {
+      const allCategories = [
+        'photo',
+        'video',
+        'audio',
+        'document',
+        'note',
+        'chat',
+        'todo',
+        'password',
+        'secret',
+        'contact',
+        'location',
+        'file',
+        'other-files',
+        'other',
+        'settings',
+        'system',
+        'users',
+        'card',
+        'identity',
+        'wifi',
+      ];
+
+      expect(metadataContent.storage.categories).toEqual(expect.arrayContaining(allCategories));
+      expect(metadataContent.modules.activeVaults).toEqual(expect.arrayContaining(allCategories));
+      const valid = validate(metadataContent);
+      expect(valid).toBe(true);
+    });
+
+    it('validates VCAS01 dual cascade and envelope encryption specifications', () => {
+      expect(metadataContent.security.cryptography.contentEncryption.cascade.magicHeader).toBe(
+        'VCAS01',
+      );
+      expect(metadataContent.security.cryptography.envelope.dekLengthBytes).toBe(64);
+      expect(metadataContent.security.cryptography.postQuantum.algorithm).toBe('ML-KEM-768');
+      const valid = validate(metadataContent);
+      expect(valid).toBe(true);
+    });
+
+    it('validates MongoDB multi-cluster and GridFS configuration', () => {
+      expect(metadataContent.database.multiCluster.enabled).toBe(true);
+      expect(metadataContent.database.multiCluster.standbyCluster).toBe(true);
+      expect(metadataContent.database.gridfs.bucketName).toBe('vault_encrypted_blobs');
+      const valid = validate(metadataContent);
+      expect(valid).toBe(true);
+    });
+  });
+
   describe('Negative validations and strict enforcement', () => {
     it('rejects manifest missing required core properties', () => {
       const invalidManifest = { ...metadataContent };
@@ -54,7 +121,7 @@ describe('Vault Manifest Schema (Draft 2020-12)', () => {
       expect(valid).toBe(false);
       expect(
         validate.errors?.some(
-          (e) =>
+          (e: any) =>
             e.params &&
             'missingProperty' in e.params &&
             (e.params as { missingProperty: string }).missingProperty === 'security',
@@ -66,21 +133,21 @@ describe('Vault Manifest Schema (Draft 2020-12)', () => {
       const invalidManifest = { ...metadataContent, version: '1.0' };
       const valid = validate(invalidManifest);
       expect(valid).toBe(false);
-      expect(validate.errors?.some((e) => e.instancePath === '/version')).toBe(true);
+      expect(validate.errors?.some((e: any) => e.instancePath === '/version')).toBe(true);
     });
 
     it('rejects manifest with uppercase or invalid characters in name', () => {
       const invalidManifest = { ...metadataContent, name: 'Vault_App' };
       const valid = validate(invalidManifest);
       expect(valid).toBe(false);
-      expect(validate.errors?.some((e) => e.instancePath === '/name')).toBe(true);
+      expect(validate.errors?.some((e: any) => e.instancePath === '/name')).toBe(true);
     });
 
     it('rejects manifest with unrecognized additional properties at root', () => {
       const invalidManifest = { ...metadataContent, unauthorizedProperty: 'injected' };
       const valid = validate(invalidManifest);
       expect(valid).toBe(false);
-      expect(validate.errors?.some((e) => e.keyword === 'additionalProperties')).toBe(true);
+      expect(validate.errors?.some((e: any) => e.keyword === 'additionalProperties')).toBe(true);
     });
 
     it('rejects manifest with unrecognized additional properties in nested objects', () => {
@@ -89,7 +156,7 @@ describe('Vault Manifest Schema (Draft 2020-12)', () => {
 
       const valid = validate(invalidManifest);
       expect(valid).toBe(false);
-      expect(validate.errors?.some((e) => e.keyword === 'additionalProperties')).toBe(true);
+      expect(validate.errors?.some((e: any) => e.keyword === 'additionalProperties')).toBe(true);
     });
 
     it('rejects crypto keyDerivation iterations below minimum threshold (< 100,000)', () => {
@@ -100,7 +167,7 @@ describe('Vault Manifest Schema (Draft 2020-12)', () => {
       expect(valid).toBe(false);
       expect(
         validate.errors?.some(
-          (e) => e.instancePath === '/security/cryptography/keyDerivation/iterations',
+          (e: any) => e.instancePath === '/security/cryptography/keyDerivation/iterations',
         ),
       ).toBe(true);
     });
@@ -111,7 +178,7 @@ describe('Vault Manifest Schema (Draft 2020-12)', () => {
 
       const valid = validate(invalidManifest);
       expect(valid).toBe(false);
-      expect(validate.errors?.some((e) => e.instancePath === '/branding/primary')).toBe(true);
+      expect(validate.errors?.some((e: any) => e.instancePath === '/branding/primary')).toBe(true);
     });
 
     it('rejects invalid enum values in runtime environment', () => {
@@ -120,7 +187,9 @@ describe('Vault Manifest Schema (Draft 2020-12)', () => {
 
       const valid = validate(invalidManifest);
       expect(valid).toBe(false);
-      expect(validate.errors?.some((e) => e.instancePath === '/runtime/environment')).toBe(true);
+      expect(validate.errors?.some((e: any) => e.instancePath === '/runtime/environment')).toBe(
+        true,
+      );
     });
 
     it('rejects invalid session cookie sameSite configuration', () => {
@@ -130,7 +199,7 @@ describe('Vault Manifest Schema (Draft 2020-12)', () => {
       const valid = validate(invalidManifest);
       expect(valid).toBe(false);
       expect(
-        validate.errors?.some((e) => e.instancePath === '/security/sessionSecurity/sameSite'),
+        validate.errors?.some((e: any) => e.instancePath === '/security/sessionSecurity/sameSite'),
       ).toBe(true);
     });
   });

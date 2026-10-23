@@ -382,7 +382,9 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
       };
     }, []);
 
+    // Lazy-load emoji dataset on demand when the emoji picker is opened
     useEffect(() => {
+      if (!showEmojiPicker || emojiDataset) return;
       let cancelled = false;
 
       const loadEmojiDataset = async () => {
@@ -400,7 +402,7 @@ export const NoteEditorToolbar: React.FC<NoteEditorToolbarProps> = React.memo(
       return () => {
         cancelled = true;
       };
-    }, []);
+    }, [showEmojiPicker, emojiDataset]);
 
     const emojiOptions = useMemo(() => getCuratedEmojiOptions(emojiDataset), [emojiDataset]);
     const visibleEmojiOptions = emojiOptions.slice(0, visibleEmojiCount);

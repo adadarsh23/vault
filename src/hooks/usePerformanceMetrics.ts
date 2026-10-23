@@ -92,6 +92,8 @@ export const usePerformanceMetrics = () => {
             gpuRenderer = rendererValue;
           }
         }
+        // Explicitly release WebGL context to prevent context exhaustion
+        gl.getExtension('WEBGL_lose_context')?.loseContext();
       }
     } catch (error) {
       logger.warn('Failed to detect GPU renderer', { error });
@@ -113,9 +115,15 @@ export const usePerformanceMetrics = () => {
     // FPS and memory calculation
     let animationFrameId: number | null = null;
     let fpsFallbackInterval: ReturnType<typeof setInterval> | null = null;
+    let activePingAbort: AbortController | null = null;
 
     const calculateFps = () => {
       if (!isMounted) return;
+
+      if (typeof document !== 'undefined' && document.hidden) {
+        // Tab is hidden; pause animation frame loop to conserve CPU/battery
+        return;
+      }
 
       const now = performance.now();
       framesRef.current++;
@@ -123,9 +131,13 @@ export const usePerformanceMetrics = () => {
       if (now >= lastTimeRef.current + 1000) {
         // Memory is currently available only on some Chromium-based browsers.
         let memoryUsed: number | undefined;
-        const perfWithMemory = performance as PerformanceWithMemory;
-        if (perfWithMemory.memory?.usedJSHeapSize) {
-          memoryUsed = Math.round(perfWithMemory.memory.usedJSHeapSize / (1024 * 1024));
+        try {
+          const perfWithMemory = performance as PerformanceWithMemory;
+          if (perfWithMemory.memory?.usedJSHeapSize) {
+            memoryUsed = Math.round(perfWithMemory.memory.usedJSHeapSize / (1024 * 1024));
+          }
+        } catch {
+          // Ignore restricted performance.memory access
         }
 
         if (isMounted) {
@@ -150,6 +162,7 @@ export const usePerformanceMetrics = () => {
 
       const start = performance.now();
       const abortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      activePingAbort = abortController;
       const timeoutId =
         abortController !== null ? window.setTimeout(() => abortController.abort(), 3000) : null;
 
@@ -174,8 +187,23 @@ export const usePerformanceMetrics = () => {
         if (timeoutId !== null) {
           clearTimeout(timeoutId);
         }
+        if (activePingAbort === abortController) {
+          activePingAbort = null;
+        }
       }
     };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isMounted) {
+        lastTimeRef.current = performance.now();
+        framesRef.current = 0;
+        if (typeof window.requestAnimationFrame === 'function') {
+          animationFrameId = window.requestAnimationFrame(calculateFps);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     if (typeof window.requestAnimationFrame === 'function') {
       animationFrameId = window.requestAnimationFrame(calculateFps);
@@ -188,6 +216,11 @@ export const usePerformanceMetrics = () => {
 
     return () => {
       isMounted = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (activePingAbort) {
+        activePingAbort.abort();
+        activePingAbort = null;
+      }
       if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
       }

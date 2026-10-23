@@ -51,9 +51,16 @@ const decodeBase64Safely = (value: string): Uint8Array | null => {
   }
 };
 
+const rotationKeyCache = new Map<string, CryptoKey>();
+
 const importAesKey = async (rawKey: string | CryptoKey, usages: KeyUsage[]): Promise<CryptoKey> => {
   if (rawKey instanceof CryptoKey) {
     return rawKey;
+  }
+
+  const cached = rotationKeyCache.get(rawKey);
+  if (cached) {
+    return cached;
   }
 
   if (typeof crypto === 'undefined' || !crypto.subtle) {
@@ -82,6 +89,7 @@ const importAesKey = async (rawKey: string | CryptoKey, usages: KeyUsage[]): Pro
   // Zero out raw key bytes after import
   keyBytes.fill(0);
 
+  rotationKeyCache.set(rawKey, cryptoKey);
   return cryptoKey;
 };
 

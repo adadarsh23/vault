@@ -30,6 +30,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { useVaultStore } from '../../store/vaultStore';
 import { VaultItem } from '../../lib/storage';
 import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
@@ -283,7 +284,7 @@ const DecryptedSecretCard: React.FC<SecretCardProps> = React.memo(
           setData(resolvedPayload);
           setEditValue(finalValue);
         } catch (err) {
-          console.error('Secret Decryption Error:', err);
+          logger.error('Secret Decryption Error', { error: err });
           if (isMounted) setError(true);
         }
       };
@@ -870,29 +871,32 @@ export const SecretsVault: React.FC = () => {
   };
 
   const handleUpdateItem = async (id: string, name: string, value: string) => {
-    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
+      toast.error('Encryption key missing');
+      throw new Error('Encryption key missing');
+    }
 
     const trimmedName = name.trim();
     const trimmedValue = value.trim();
     if (!trimmedName || !trimmedValue) {
       toast.error('Secret name and value are required');
-      return;
+      throw new Error('Secret name and value are required');
     }
 
     try {
       const item = secrets.find((secretItem) => secretItem.id === id);
-      if (!item) return;
+      if (!item) throw new Error('Secret not found');
 
       const encryptedContent = getStringContent(item.content);
       if (!encryptedContent) {
         toast.error('Unsupported secret format');
-        return;
+        throw new Error('Unsupported secret format');
       }
 
       const decrypted = await decryptData(encryptedContent, masterKey);
       if (!decrypted) {
         toast.error('Unable to decrypt secret');
-        return;
+        throw new Error('Unable to decrypt secret');
       }
 
       const currentData = parseJsonSafely<SecretPayload>(decrypted);
@@ -909,8 +913,9 @@ export const SecretsVault: React.FC = () => {
         content: encryptedData,
       });
       toast.success(`Secret "${trimmedName}" updated`);
-    } catch {
+    } catch (err) {
       toast.error('Failed to update secret');
+      throw err;
     }
   };
 

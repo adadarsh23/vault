@@ -13,6 +13,7 @@ import {
 import { Button } from '../../../../components/ui/Button';
 import { cn } from '../../../../lib/utils';
 import { toast } from 'sonner';
+import { logger } from '../../../../lib/logger';
 
 interface PdfViewerProps {
   url: string;
@@ -177,7 +178,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       } catch (err) {
         if (isCancelled) return;
         if (!isTestEnvironment) {
-          console.warn('[PdfViewer] PDF.js load error:', err);
+          logger.warn('[PdfViewer] PDF.js load error', { error: err });
         }
         setRenderError('PDF canvas rendering not supported. Using fallback viewer.');
         setUseIframeFallback(true);
@@ -249,7 +250,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         await renderTask.promise;
       } catch (err: any) {
         if (err?.name !== 'RenderingCancelledException') {
-          console.warn(`[PdfViewer] Error rendering page ${pageNumber}:`, err);
+          logger.warn(`[PdfViewer] Error rendering page ${pageNumber}`, { error: err });
         }
       } finally {
         renderTasksRef.current.delete(pageNumber);

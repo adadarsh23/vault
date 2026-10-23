@@ -401,7 +401,11 @@ export const CustomSlider = ({
     isDragging.current = true;
     onDragStart?.();
     update(e.clientX);
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    try {
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -411,11 +415,26 @@ export const CustomSlider = ({
     update(e.clientX);
   };
 
-  const onPointerUp = () => {
+  const onPointerUp = (e?: React.PointerEvent) => {
     if (!isDragging.current) return;
     isDragging.current = false;
     onDragEnd?.();
+    if (e) {
+      try {
+        if ((e.target as HTMLElement).hasPointerCapture?.(e.pointerId)) {
+          (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+        }
+      } catch {
+        /* ignore */
+      }
+    }
   };
+
+  useEffect(() => {
+    return () => {
+      isDragging.current = false;
+    };
+  }, []);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     const step = e.shiftKey ? 10 : 2;
@@ -1501,13 +1520,36 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const toggleFullscreen = async () => {
     if (!allowFullscreen) return;
     const container = containerRef.current;
+    const video = videoRef.current;
     if (!container) return;
     try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
+      const doc = document as any;
+      const isFs = Boolean(
+        doc.fullscreenElement ||
+        doc.webkitFullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.msFullscreenElement ||
+        (video as any)?.webkitDisplayingFullscreen,
+      );
+
+      if (isFs) {
+        if (doc.exitFullscreen) {
+          await doc.exitFullscreen();
+        } else if (doc.webkitExitFullscreen) {
+          await doc.webkitExitFullscreen();
+        } else if ((video as any)?.webkitExitFullscreen) {
+          (video as any).webkitExitFullscreen();
+        }
         triggerHudBadge(<Minimize2 className="w-7 h-7 text-white" />, 'Exit Fullscreen');
       } else {
-        await container.requestFullscreen();
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+        } else if ((container as any).webkitRequestFullscreen) {
+          await (container as any).webkitRequestFullscreen();
+        } else if (video && typeof (video as any).webkitEnterFullscreen === 'function') {
+          // Native fullscreen support for iOS Safari / iPhone
+          (video as any).webkitEnterFullscreen();
+        }
         triggerHudBadge(<Maximize2 className="w-7 h-7 text-white" />, 'Fullscreen');
       }
     } catch (fullscreenError) {
@@ -1916,7 +1958,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   useEffect(() => {
     const onFullscreenChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement));
+      const doc = document as any;
+      const isFs = Boolean(
+        doc.fullscreenElement ||
+        doc.webkitFullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.msFullscreenElement ||
+        (videoRef.current as any)?.webkitDisplayingFullscreen,
+      );
+      setIsFullscreen(isFs);
     };
     const onEnterPiP = () => setIsPiP(true);
     const onLeavePiP = () => setIsPiP(false);
@@ -1926,24 +1976,32 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         setIsPiP((v as any).webkitPresentationMode === 'picture-in-picture');
       }
     };
+    const onIOSBeginFullscreen = () => setIsFullscreen(true);
+    const onIOSEndFullscreen = () => setIsFullscreen(false);
 
     const video = videoRef.current;
     document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', onFullscreenChange);
     video?.addEventListener('enterpictureinpicture', onEnterPiP as EventListener);
     video?.addEventListener('leavepictureinpicture', onLeavePiP as EventListener);
     video?.addEventListener(
       'webkitpresentationmodechanged',
       onWebKitPresentationModeChange as EventListener,
     );
+    video?.addEventListener('webkitbeginfullscreen', onIOSBeginFullscreen as EventListener);
+    video?.addEventListener('webkitendfullscreen', onIOSEndFullscreen as EventListener);
 
     return () => {
       document.removeEventListener('fullscreenchange', onFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
       video?.removeEventListener('enterpictureinpicture', onEnterPiP as EventListener);
       video?.removeEventListener('leavepictureinpicture', onLeavePiP as EventListener);
       video?.removeEventListener(
         'webkitpresentationmodechanged',
         onWebKitPresentationModeChange as EventListener,
       );
+      video?.removeEventListener('webkitbeginfullscreen', onIOSBeginFullscreen as EventListener);
+      video?.removeEventListener('webkitendfullscreen', onIOSEndFullscreen as EventListener);
     };
   }, []);
 

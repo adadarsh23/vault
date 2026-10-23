@@ -89,6 +89,7 @@ export interface SecurityLayersProps {
   errorTitle?: string;
   errorMessage?: string;
   onRetry?: () => void;
+  onGoBack?: () => void;
 }
 
 const getSafeIcon = (layer: SecurityLayer, index: number): LucideIcon => {
@@ -114,6 +115,7 @@ export const SecurityLayers: React.FC<SecurityLayersProps> = memo(
     errorTitle,
     errorMessage,
     onRetry,
+    onGoBack,
   }) => {
     const prefersReducedMotion = useReducedMotion();
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
@@ -214,9 +216,11 @@ export const SecurityLayers: React.FC<SecurityLayersProps> = memo(
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
             className={`overflow-hidden rounded-2xl sm:rounded-3xl md:rounded-[2rem] border border-card-border bg-card-bg p-4 sm:p-6 md:p-8 shadow-sm backdrop-blur-xs dark:border-white/10 dark:bg-black ${
-              isSuccess || isError
-                ? 'flex min-h-[38vh] sm:min-h-[48vh] md:min-h-[56vh] items-center justify-center'
-                : ''
+              isError
+                ? 'flex min-h-[38vh] sm:min-h-[48vh] md:min-h-[56vh] flex-col items-center justify-start pt-6 sm:pt-8 md:pt-10'
+                : isSuccess
+                  ? 'flex min-h-[38vh] sm:min-h-[48vh] md:min-h-[56vh] items-center justify-center'
+                  : ''
             }`}
           >
             {!isSuccess && !isError && (
@@ -300,15 +304,26 @@ export const SecurityLayers: React.FC<SecurityLayersProps> = memo(
                     <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm leading-relaxed text-text/50 break-words">
                       {resolvedErrorMessage}
                     </p>
-                    {onRetry && (
-                      <button
-                        type="button"
-                        onClick={onRetry}
-                        className="mt-3.5 sm:mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-text/10 px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-text transition-all hover:bg-text/20 active:scale-95 focus:outline-none focus:ring-2 focus:ring-text/30 min-h-[40px] sm:min-h-[44px] w-full sm:w-auto"
-                      >
-                        Retry Verification
-                      </button>
-                    )}
+                    <div className="mt-3.5 sm:mt-4 flex flex-wrap items-center justify-center gap-2.5">
+                      {onRetry && (
+                        <button
+                          type="button"
+                          onClick={onRetry}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl bg-text/10 px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-text transition-all hover:bg-text/20 active:scale-95 focus:outline-none focus:ring-2 focus:ring-text/30 min-h-[40px] sm:min-h-[44px] w-full sm:w-auto"
+                        >
+                          Retry Verification
+                        </button>
+                      )}
+                      {onGoBack && (
+                        <button
+                          type="button"
+                          onClick={onGoBack}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-card-border bg-card-bg px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-text/75 transition-all hover:bg-text/10 hover:text-text active:scale-95 focus:outline-none focus:ring-2 focus:ring-text/30 min-h-[40px] sm:min-h-[44px] w-full sm:w-auto dark:border-white/10 dark:bg-black/40"
+                        >
+                          Return to Sign In
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ) : isSuccess ? (

@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import VideoPlayer from './video-player';
 import { useVideoMiniPlayerStore } from '../../store/videoMiniPlayerStore';
 import { useGlobalNavigationStore } from '../../store/globalNavigationStore';
+import { ErrorBoundary } from './ErrorBoundary';
 
-export const GlobalVideoMiniPlayer: React.FC = () => {
+const MiniPlayerContent: React.FC = () => {
   const navigate = useNavigate();
   const activeVideo = useVideoMiniPlayerStore((state) => state.activeVideo);
   const isFloating = useVideoMiniPlayerStore((state) => state.isFloating);
@@ -22,14 +23,18 @@ export const GlobalVideoMiniPlayer: React.FC = () => {
 
   const handleRestore = useCallback(() => {
     if (!activeVideo) return;
-    restoreToFull();
-    if (activeVideo.id) {
-      setTargetItemId(activeVideo.id);
-    }
-    if (activeVideo.originTab) {
-      navigate(`/${activeVideo.originTab}`);
-    } else {
-      navigate('/videos');
+    try {
+      restoreToFull();
+      if (activeVideo.id) {
+        setTargetItemId(activeVideo.id);
+      }
+      if (activeVideo.originTab) {
+        navigate(`/${activeVideo.originTab}`);
+      } else {
+        navigate('/videos');
+      }
+    } catch {
+      // Gracefully handle navigation errors
     }
   }, [activeVideo, restoreToFull, setTargetItemId, navigate]);
 
@@ -49,7 +54,7 @@ export const GlobalVideoMiniPlayer: React.FC = () => {
     [updatePlaybackState],
   );
 
-  if (!isFloating || !activeVideo) {
+  if (!isFloating || !activeVideo || !activeVideo.src) {
     return null;
   }
 
@@ -75,6 +80,14 @@ export const GlobalVideoMiniPlayer: React.FC = () => {
         className="shadow-2xl ring-1 ring-white/20 border border-white/15 rounded-2xl"
       />
     </div>
+  );
+};
+
+export const GlobalVideoMiniPlayer: React.FC = () => {
+  return (
+    <ErrorBoundary fallback={null}>
+      <MiniPlayerContent />
+    </ErrorBoundary>
   );
 };
 

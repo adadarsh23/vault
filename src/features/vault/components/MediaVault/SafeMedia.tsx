@@ -15,6 +15,7 @@ import {
 } from '../../../../lib/filePreview';
 import { VaultItem } from '../../../../lib/storage';
 import { getSignedUrl } from '../../../../lib/sync';
+import { logger } from '../../../../lib/logger';
 
 interface SafeMediaProps {
   item: VaultItem;
@@ -457,7 +458,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
           }
 
           if (!cancelled) {
-            console.error('[SafeMedia]', e);
+            logger.error('[SafeMedia] Preview failed', { error: e });
             setErrorMessage(describeVaultPreviewError(e));
           }
         } finally {

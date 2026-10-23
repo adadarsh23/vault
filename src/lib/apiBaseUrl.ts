@@ -15,7 +15,9 @@ const isPrivateNetworkHost = (hostname: string): boolean =>
   /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
   /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname);
 
-export const resolveApiBaseUrl = (): string => {
+let cachedBaseUrl: string | null = null;
+
+const computeApiBaseUrl = (): string => {
   if (typeof window !== 'undefined') {
     const { origin, hostname, protocol } = window.location;
     const isHttp = protocol === 'http:' || protocol === 'https:';
@@ -89,4 +91,12 @@ export const resolveApiBaseUrl = (): string => {
   }
 
   return 'http://127.0.0.1:4000';
+};
+
+export const resolveApiBaseUrl = (): string => {
+  if (cachedBaseUrl !== null) {
+    return cachedBaseUrl;
+  }
+  cachedBaseUrl = computeApiBaseUrl();
+  return cachedBaseUrl;
 };

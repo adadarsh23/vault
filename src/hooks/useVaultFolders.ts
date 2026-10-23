@@ -105,13 +105,17 @@ export const useVaultFolders = (itemType: VaultItemType) => {
   );
 
   const folders = useMemo(() => {
-    const existingFolders = Array.from(
-      new Set(itemsOfType.map((i) => i.folder).filter(Boolean) as string[]),
-    );
+    const folderSet = new Set<string>();
+    for (let i = 0; i < itemsOfType.length; i++) {
+      const f = itemsOfType[i].folder;
+      if (f) folderSet.add(f);
+    }
+    for (let i = 0; i < sessionFolders.length; i++) {
+      const f = sessionFolders[i];
+      if (f) folderSet.add(f);
+    }
 
-    const deduped = Array.from(new Set([...existingFolders, ...sessionFolders]));
-
-    return sortFoldersSavedFirst(deduped);
+    return sortFoldersSavedFirst(Array.from(folderSet));
   }, [itemsOfType, sessionFolders]);
 
   // Fetch folders on mount (skip network call in isolated decoy mode)
@@ -416,7 +420,7 @@ export const useVaultFolders = (itemType: VaultItemType) => {
 
       if (itemIds.length === 1) {
         const itemId = itemIds[0];
-        const item = items.find((i) => i.id === itemId) || itemsOfType.find((i) => i.id === itemId);
+        const item = items.find((i) => i.id === itemId);
         if (!item) {
           toast.error('Item not found.');
           return;
@@ -471,22 +475,37 @@ export const useVaultFolders = (itemType: VaultItemType) => {
     [items, itemsOfType, updateItem, batchUpdateItems, syncLogs],
   );
 
-  return {
-    folders,
-    currentFolder,
-    setCurrentFolder,
-    isAddingFolder,
-    setIsAddingFolder,
-    newFolderName,
-    setNewFolderName,
-    editingFolder,
-    setEditingFolder,
-    editingFolderName,
-    setEditingFolderName,
-    handleCreateFolder,
-    handleRenameFolder,
-    handleDeleteFolder,
-    handleMoveToFolder,
-    isLoading,
-  };
+  return useMemo(
+    () => ({
+      folders,
+      currentFolder,
+      setCurrentFolder,
+      isAddingFolder,
+      setIsAddingFolder,
+      newFolderName,
+      setNewFolderName,
+      editingFolder,
+      setEditingFolder,
+      editingFolderName,
+      setEditingFolderName,
+      handleCreateFolder,
+      handleRenameFolder,
+      handleDeleteFolder,
+      handleMoveToFolder,
+      isLoading,
+    }),
+    [
+      currentFolder,
+      editingFolder,
+      editingFolderName,
+      folders,
+      handleCreateFolder,
+      handleDeleteFolder,
+      handleMoveToFolder,
+      handleRenameFolder,
+      isAddingFolder,
+      isLoading,
+      newFolderName,
+    ],
+  );
 };

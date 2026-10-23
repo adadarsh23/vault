@@ -1,7 +1,7 @@
 {
   "requestedUrl": "http://127.0.0.1:4173/",
   "finalUrl": "http://127.0.0.1:4173/",
-  "fetchTime": "2026-09-04T06:09:15.270Z",
+  "fetchTime": "2026-10-23T14:59:17.567Z",
   "category": {
     "title": "SEO",
     "description": "These checks ensure that your page is following basic search engine optimization advice. There are many additional factors Lighthouse does not score here that may affect your search ranking, including performance on [Core Web Vitals](https://web.dev/explore/vitals). [Learn more about Google Search Essentials](https://support.google.com/webmasters/answer/35769).",
@@ -90,7 +90,7 @@
           {
             "source": {
               "type": "node",
-              "lhId": "1-46-META",
+              "lhId": "1-48-META",
               "path": "1,HTML,0,HEAD,16,META",
               "selector": "head > meta",
               "boundingRect": {

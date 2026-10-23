@@ -1,4 +1,6 @@
-import { useEffect, useLayoutEffect, useCallback, useRef, RefObject } from 'react';
+import { useEffect, useLayoutEffect, useCallback, useRef, useMemo, RefObject } from 'react';
+
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 const memoryScrollCache = new Map<string, { top: number; left: number; timestamp?: number }>();
 const MAX_CACHE_ENTRIES = 100;
@@ -62,6 +64,8 @@ export function useScrollRestoration(
   const storageKey = `scroll_pos_${key}`;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelActiveRestoreRef = useRef<(() => void) | null>(null);
+  const onRestoreRef = useRef(onRestore);
+  onRestoreRef.current = onRestore;
 
   // Helper to read position from cache/sessionStorage
   const getSavedPosition = useCallback((): { top: number; left: number } => {
@@ -170,9 +174,7 @@ export function useScrollRestoration(
       target.scrollTop = pos.top;
       target.scrollLeft = pos.left;
 
-      if (onRestore) {
-        onRestore(pos);
-      }
+      onRestoreRef.current?.(pos);
 
       // Check if target height allowed full restoration
       const maxScroll = Math.max(0, target.scrollHeight - target.clientHeight);
@@ -222,7 +224,17 @@ export function useScrollRestoration(
     });
 
     cancelActiveRestoreRef.current = cleanup;
-  }, [enabled, getSavedPosition, onRestore, ref, maxAsyncWaitMs]);
+  }, [enabled, getSavedPosition, ref, maxAsyncWaitMs]);
+
+  // Clean up any pending restoration observer on unmount
+  useEffect(() => {
+    return () => {
+      if (cancelActiveRestoreRef.current) {
+        cancelActiveRestoreRef.current();
+        cancelActiveRestoreRef.current = null;
+      }
+    };
+  }, []);
 
   // Handle scroll listener with throttling
   useEffect(() => {
@@ -268,17 +280,20 @@ export function useScrollRestoration(
   }, [enabled, saveToSessionStorage, saveScrollPosition]);
 
   // Restore on key change / mount if autoRestore is enabled
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (autoRestore) {
       restoreScrollPosition();
     }
   }, [autoRestore, key, restoreScrollPosition]);
 
-  return {
-    saveScroll: saveScrollPosition,
-    restoreScroll: restoreScrollPosition,
-    saveScrollPosition,
-    restoreScrollPosition,
-    getSavedPosition,
-  };
+  return useMemo(
+    () => ({
+      saveScroll: saveScrollPosition,
+      restoreScroll: restoreScrollPosition,
+      saveScrollPosition,
+      restoreScrollPosition,
+      getSavedPosition,
+    }),
+    [getSavedPosition, restoreScrollPosition, saveScrollPosition],
+  );
 }

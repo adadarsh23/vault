@@ -190,6 +190,40 @@ const extractErrorCode = (error: unknown): string | number | undefined => {
 };
 
 /* -------------------------------------------------------------------------- */
+/* Classification Patterns (Precompiled)                                     */
+/* -------------------------------------------------------------------------- */
+
+const DECRYPTION_ERROR_REGEX =
+  /master key is incorrect|candidate salts exhausted|could not be decrypted|decryption failed|bad decrypt|tag mismatch|mac check|operation failed/i;
+const PASSWORD_UNCHANGED_REGEX = /new password must be different/i;
+const SAME_CREDENTIALS_REGEX = /must not be identical|same credentials/i;
+const WEAK_PASSWORD_REGEX = /weak password|password requirement|password must/i;
+const USER_EXISTS_REGEX = /username already exists|user already exists|already registered/i;
+const RATE_LIMIT_REGEX = /too many (?:attempts|requests)|rate limit/i;
+const CAPTCHA_REGEX = /captcha/i;
+const SESSION_EXPIRED_REGEX = /session.*expired|token.*expired|jwt expired/i;
+const INVALID_CREDENTIALS_REGEX =
+  /invalid (?:username|email|credentials|password)|incorrect (?:password|credentials|current password)/i;
+const AUTH_FAILED_REGEX = /authentication failed|authentication error/i;
+const CSRF_ERROR_REGEX = /csrf|cross-site request forgery/i;
+const PAYLOAD_TOO_LARGE_REGEX =
+  /payload too large|file too large|request entity too large|exceeds.*size/i;
+const INVALID_ID_REGEX =
+  /invalid (?:id|identifier)|invalid resource identifier|invalid format for field/i;
+const ENCRYPTION_FAILED_REGEX = /encryption failed|failed to encrypt|encrypt.*failed/i;
+const QUOTA_EXCEEDED_REGEX = /quota exceeded|storage quota/i;
+const STORAGE_DISCONNECTED_REGEX = /storage disconnected|storage connection lost/i;
+const UPLOAD_FAILED_REGEX = /upload failed|failed to upload/i;
+const DOWNLOAD_FAILED_REGEX = /download failed|failed to download/i;
+const SERVER_OVERLOADED_REGEX =
+  /server overloaded|service unavailable|bad gateway|gateway timeout/i;
+const DB_UNAVAILABLE_REGEX =
+  /database unavailable|database connection|mongodb|database timeout|storage is temporarily unavailable/i;
+const NETWORK_ERROR_REGEX =
+  /network error|failed to fetch|network request failed|fetch failed|unable to reach/i;
+const TYPE_ERROR_FETCH_REGEX = /fetch|network/i;
+
+/* -------------------------------------------------------------------------- */
 /* Classification                                                             */
 /* -------------------------------------------------------------------------- */
 
@@ -205,20 +239,13 @@ export const classifyError = (error: unknown): ErrorCode => {
     rawCode === ErrorCode.DECRYPTION_FAILED ||
     code === 'decryption_failed' ||
     code === 'master_key_incorrect' ||
-    /master key is incorrect/i.test(rawMessage) ||
-    /candidate salts exhausted/i.test(rawMessage) ||
-    /could not be decrypted/i.test(rawMessage) ||
-    /decryption failed/i.test(rawMessage) ||
-    /bad decrypt/i.test(rawMessage) ||
-    /tag mismatch/i.test(rawMessage) ||
-    /mac check/i.test(rawMessage) ||
-    /operation failed/i.test(rawMessage)
+    DECRYPTION_ERROR_REGEX.test(rawMessage)
   ) {
     return ErrorCode.DECRYPTION_FAILED;
   }
 
   /* 2. Password Unchanged */
-  if (code === 'password_unchanged' || /new password must be different/i.test(rawMessage)) {
+  if (code === 'password_unchanged' || PASSWORD_UNCHANGED_REGEX.test(rawMessage)) {
     return ErrorCode.PASSWORD_UNCHANGED;
   }
 
@@ -226,7 +253,7 @@ export const classifyError = (error: unknown): ErrorCode => {
   if (
     rawCode === ErrorCode.AUTH_SAME_CREDENTIALS ||
     code === 'auth_same_credentials' ||
-    /must not be identical|same credentials/i.test(rawMessage)
+    SAME_CREDENTIALS_REGEX.test(rawMessage)
   ) {
     return ErrorCode.AUTH_SAME_CREDENTIALS;
   }
@@ -236,7 +263,7 @@ export const classifyError = (error: unknown): ErrorCode => {
     rawCode === ErrorCode.AUTH_WEAK_PASSWORD ||
     code === 'auth_weak_password' ||
     code === 'invalid_password' ||
-    /weak password|password requirement|password must/i.test(rawMessage)
+    WEAK_PASSWORD_REGEX.test(rawMessage)
   ) {
     return ErrorCode.AUTH_WEAK_PASSWORD;
   }
@@ -247,7 +274,7 @@ export const classifyError = (error: unknown): ErrorCode => {
     code === 'user_exists' ||
     code === 'registration_failed' ||
     status === 409 ||
-    /username already exists|user already exists|already registered/i.test(rawMessage)
+    USER_EXISTS_REGEX.test(rawMessage)
   ) {
     return ErrorCode.USER_EXISTS;
   }
@@ -259,13 +286,13 @@ export const classifyError = (error: unknown): ErrorCode => {
     code === 'rate_limited' ||
     code === 'too_many_change_password_attempts' ||
     status === 429 ||
-    /too many (attempts|requests)|rate limit/i.test(rawMessage)
+    RATE_LIMIT_REGEX.test(rawMessage)
   ) {
     return ErrorCode.TOO_MANY_AUTH_ATTEMPTS;
   }
 
   /* 7. CAPTCHA */
-  if (code.includes('captcha') || /captcha/i.test(rawMessage)) {
+  if (code.includes('captcha') || CAPTCHA_REGEX.test(rawMessage)) {
     return ErrorCode.CAPTCHA_FAILED;
   }
 
@@ -276,7 +303,7 @@ export const classifyError = (error: unknown): ErrorCode => {
     code === 'session_refresh_failed' ||
     code === 'invalid_token' ||
     code === 'token_expired' ||
-    /session.*expired|token.*expired|jwt expired/i.test(rawMessage)
+    SESSION_EXPIRED_REGEX.test(rawMessage)
   ) {
     return ErrorCode.SESSION_EXPIRED;
   }
@@ -286,9 +313,7 @@ export const classifyError = (error: unknown): ErrorCode => {
     rawCode === ErrorCode.INVALID_CREDENTIALS ||
     code === 'invalid_credentials' ||
     status === 401 ||
-    /invalid (username|email|credentials|password)|incorrect (password|credentials|current password)/i.test(
-      rawMessage,
-    )
+    INVALID_CREDENTIALS_REGEX.test(rawMessage)
   ) {
     return ErrorCode.INVALID_CREDENTIALS;
   }
@@ -297,7 +322,7 @@ export const classifyError = (error: unknown): ErrorCode => {
   if (
     rawCode === ErrorCode.AUTH_FAILED ||
     code === 'unauthorized' ||
-    /authentication failed|authentication error/i.test(rawMessage)
+    AUTH_FAILED_REGEX.test(rawMessage)
   ) {
     return ErrorCode.AUTH_FAILED;
   }
@@ -307,7 +332,7 @@ export const classifyError = (error: unknown): ErrorCode => {
     rawCode === ErrorCode.CSRF_TOKEN_INVALID ||
     code === 'csrf_token_invalid' ||
     code === 'ebadcsrftoken' ||
-    /csrf|cross-site request forgery/i.test(rawMessage)
+    CSRF_ERROR_REGEX.test(rawMessage)
   ) {
     return ErrorCode.CSRF_TOKEN_INVALID;
   }
@@ -319,7 +344,7 @@ export const classifyError = (error: unknown): ErrorCode => {
     code === 'file_too_large' ||
     code === 'limit_file_size' ||
     status === 413 ||
-    /payload too large|file too large|request entity too large|exceeds.*size/i.test(rawMessage)
+    PAYLOAD_TOO_LARGE_REGEX.test(rawMessage)
   ) {
     return ErrorCode.PAYLOAD_TOO_LARGE;
   }
@@ -328,7 +353,7 @@ export const classifyError = (error: unknown): ErrorCode => {
   if (
     rawCode === ErrorCode.INVALID_ID ||
     code === 'invalid_id' ||
-    /invalid (id|identifier)|invalid resource identifier|invalid format for field/i.test(rawMessage)
+    INVALID_ID_REGEX.test(rawMessage)
   ) {
     return ErrorCode.INVALID_ID;
   }
@@ -337,7 +362,7 @@ export const classifyError = (error: unknown): ErrorCode => {
   if (
     rawCode === ErrorCode.ENCRYPTION_FAILED ||
     code === 'encryption_failed' ||
-    /encryption failed|failed to encrypt|encrypt.*failed/i.test(rawMessage)
+    ENCRYPTION_FAILED_REGEX.test(rawMessage)
   ) {
     return ErrorCode.ENCRYPTION_FAILED;
   }
@@ -356,27 +381,21 @@ export const classifyError = (error: unknown): ErrorCode => {
   if (
     rawCode === ErrorCode.QUOTA_EXCEEDED ||
     code === 'storage/quota-exceeded' ||
-    /quota exceeded|storage quota/i.test(rawMessage)
+    QUOTA_EXCEEDED_REGEX.test(rawMessage)
   ) {
     return ErrorCode.QUOTA_EXCEEDED;
   }
 
-  if (
-    rawCode === ErrorCode.STORAGE_DISCONNECTED ||
-    /storage disconnected|storage connection lost/i.test(rawMessage)
-  ) {
+  if (rawCode === ErrorCode.STORAGE_DISCONNECTED || STORAGE_DISCONNECTED_REGEX.test(rawMessage)) {
     return ErrorCode.STORAGE_DISCONNECTED;
   }
 
   /* 16. Upload & Download */
-  if (rawCode === ErrorCode.UPLOAD_FAILED || /upload failed|failed to upload/i.test(rawMessage)) {
+  if (rawCode === ErrorCode.UPLOAD_FAILED || UPLOAD_FAILED_REGEX.test(rawMessage)) {
     return ErrorCode.UPLOAD_FAILED;
   }
 
-  if (
-    rawCode === ErrorCode.DOWNLOAD_FAILED ||
-    /download failed|failed to download/i.test(rawMessage)
-  ) {
+  if (rawCode === ErrorCode.DOWNLOAD_FAILED || DOWNLOAD_FAILED_REGEX.test(rawMessage)) {
     return ErrorCode.DOWNLOAD_FAILED;
   }
 
@@ -387,7 +406,7 @@ export const classifyError = (error: unknown): ErrorCode => {
     status === 502 ||
     status === 503 ||
     status === 504 ||
-    /server overloaded|service unavailable|bad gateway|gateway timeout/i.test(rawMessage)
+    SERVER_OVERLOADED_REGEX.test(rawMessage)
   ) {
     return ErrorCode.SERVER_OVERLOADED;
   }
@@ -395,9 +414,7 @@ export const classifyError = (error: unknown): ErrorCode => {
   if (
     rawCode === ErrorCode.DB_UNAVAILABLE ||
     code === 'db_unavailable' ||
-    /database unavailable|database connection|mongodb|database timeout|storage is temporarily unavailable/i.test(
-      rawMessage,
-    )
+    DB_UNAVAILABLE_REGEX.test(rawMessage)
   ) {
     return ErrorCode.DB_UNAVAILABLE;
   }
@@ -406,9 +423,7 @@ export const classifyError = (error: unknown): ErrorCode => {
   if (
     rawCode === ErrorCode.NETWORK_ERROR ||
     code === 'network_error' ||
-    /network error|failed to fetch|network request failed|fetch failed|unable to reach/i.test(
-      rawMessage,
-    )
+    NETWORK_ERROR_REGEX.test(rawMessage)
   ) {
     return ErrorCode.NETWORK_ERROR;
   }
@@ -424,7 +439,7 @@ export const classifyError = (error: unknown): ErrorCode => {
   if (
     typeof TypeError !== 'undefined' &&
     error instanceof TypeError &&
-    /fetch|network/i.test(error.message)
+    TYPE_ERROR_FETCH_REGEX.test(error.message)
   ) {
     return ErrorCode.NETWORK_ERROR;
   }

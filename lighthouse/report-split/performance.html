@@ -199,7 +199,7 @@
             <h1>Performance</h1>
             <p class="muted">http://127.0.0.1:4173/</p>
           </div>
-          <div class="score-badge warn">71</div>
+          <div class="score-badge warn">69</div>
         </header>
 
         <div class="nav-links">
@@ -212,7 +212,7 @@
         <h2>Core Web Vitals</h2><div class="cwv-grid">
     <div class="cwv-card">
       <div class="cwv-title" title="First Contentful Paint">FCP</div>
-      <div class="cwv-value badge-metric warn">2.9 s</div>
+      <div class="cwv-value badge-metric poor">3.5 s</div>
     </div>
 <div class="cwv-card">
       <div class="cwv-title" title="Largest Contentful Paint">LCP</div>
@@ -220,15 +220,15 @@
     </div>
 <div class="cwv-card">
       <div class="cwv-title" title="Total Blocking Time">TBT</div>
-      <div class="cwv-value badge-metric good">180 ms</div>
+      <div class="cwv-value badge-metric warn">210 ms</div>
     </div>
 <div class="cwv-card">
       <div class="cwv-title" title="Cumulative Layout Shift">CLS</div>
-      <div class="cwv-value badge-metric good">0.001</div>
+      <div class="cwv-value badge-metric good">0</div>
     </div>
 <div class="cwv-card">
       <div class="cwv-title" title="Speed Index">Speed Index</div>
-      <div class="cwv-value badge-metric good">3.4 s</div>
+      <div class="cwv-value badge-metric warn">3.5 s</div>
     </div>
   </div>
         <h2>Suggested Opportunities</h2>
@@ -247,7 +247,7 @@
         <div class="audit-title">Reduce unused JavaScript</div>
         <div class="audit-description">Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. Learn how to reduce unused JavaScript.</div>
       </td>
-      <td style="width: 140px; font-weight: 700; color: var(--warn);">1.76 s saved</td>
+      <td style="width: 140px; font-weight: 700; color: var(--warn);">1.58 s saved</td>
     </tr>
 <tr>
       <td style="width: 70px;"><span class="score-pill pass">100</span></td>
@@ -292,7 +292,7 @@
     </table>
   </div>
 
-        <h2>Needs Attention (11)</h2>
+        <h2>Needs Attention (12)</h2>
         <div class="table-container">
     <table>
       <thead>
@@ -303,6 +303,22 @@
         </tr>
       </thead>
       <tbody><tr>
+      <td style="width: 70px;"><span class="score-pill fail">0</span></td>
+      <td>
+        <div class="audit-title">Duplicated JavaScript</div>
+        <div class="audit-description">Remove large, duplicate JavaScript modules from bundles to reduce unnecessary bytes consumed by network activity.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;">Est savings of 1 KiB</td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill fail">0</span></td>
+      <td>
+        <div class="audit-title">Legacy JavaScript</div>
+        <div class="audit-description">Polyfills and transforms enable older browsers to use new JavaScript features. However, many aren&#39;t necessary for modern browsers. Consider modifying your JavaScript build process to not transpile Baseline features, unless you know you must support older browsers. Learn why most sites can deploy ES6+ code without transpiling</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;">Est savings of 11 KiB</td>
+    </tr>
+<tr>
       <td style="width: 70px;"><span class="score-pill fail">0</span></td>
       <td>
         <div class="audit-title">Network dependency tree</div>
@@ -316,7 +332,7 @@
         <div class="audit-title">Render-blocking requests</div>
         <div class="audit-description">Requests are blocking the page&#39;s initial render, which may delay LCP. Deferring or inlining can move these network requests out of the critical path.</div>
       </td>
-      <td style="width: 140px; font-weight: 600;">Est savings of 600 ms</td>
+      <td style="width: 140px; font-weight: 600;">Est savings of 450 ms</td>
     </tr>
 <tr>
       <td style="width: 70px;"><span class="score-pill fail">0</span></td>
@@ -324,7 +340,7 @@
         <div class="audit-title">Reduce unused JavaScript</div>
         <div class="audit-description">Reduce unused JavaScript and defer loading scripts until they are required to decrease bytes consumed by network activity. Learn how to reduce unused JavaScript.</div>
       </td>
-      <td style="width: 140px; font-weight: 600;">Est savings of 300 KiB</td>
+      <td style="width: 140px; font-weight: 600;">Est savings of 325 KiB</td>
     </tr>
 <tr>
       <td style="width: 70px;"><span class="score-pill fail">0</span></td>
@@ -332,7 +348,7 @@
         <div class="audit-title">Minimize main-thread work</div>
         <div class="audit-description">Consider reducing the time spent parsing, compiling and executing JS. You may find delivering smaller JS payloads helps with this. Learn how to minimize main-thread work</div>
       </td>
-      <td style="width: 140px; font-weight: 600;">2.7 s</td>
+      <td style="width: 140px; font-weight: 600;">2.4 s</td>
     </tr>
 <tr>
       <td style="width: 70px;"><span class="score-pill fail">18</span></td>
@@ -343,28 +359,12 @@
       <td style="width: 140px; font-weight: 600;">5.6 s</td>
     </tr>
 <tr>
-      <td style="width: 70px;"><span class="score-pill warn">50</span></td>
-      <td>
-        <div class="audit-title">Duplicated JavaScript</div>
-        <div class="audit-description">Remove large, duplicate JavaScript modules from bundles to reduce unnecessary bytes consumed by network activity.</div>
-      </td>
-      <td style="width: 140px; font-weight: 600;">Est savings of 1 KiB</td>
-    </tr>
-<tr>
-      <td style="width: 70px;"><span class="score-pill warn">50</span></td>
-      <td>
-        <div class="audit-title">Legacy JavaScript</div>
-        <div class="audit-description">Polyfills and transforms enable older browsers to use new JavaScript features. However, many aren&#39;t necessary for modern browsers. Consider modifying your JavaScript build process to not transpile Baseline features, unless you know you must support older browsers. Learn why most sites can deploy ES6+ code without transpiling</div>
-      </td>
-      <td style="width: 140px; font-weight: 600;">Est savings of 11 KiB</td>
-    </tr>
-<tr>
-      <td style="width: 70px;"><span class="score-pill warn">51</span></td>
+      <td style="width: 70px;"><span class="score-pill fail">35</span></td>
       <td>
         <div class="audit-title">First Contentful Paint</div>
         <div class="audit-description">First Contentful Paint marks the time at which the first text or image is painted. Learn more about the First Contentful Paint metric.</div>
       </td>
-      <td style="width: 140px; font-weight: 600;">2.9 s</td>
+      <td style="width: 140px; font-weight: 600;">3.5 s</td>
     </tr>
 <tr>
       <td style="width: 70px;"><span class="score-pill warn">69</span></td>
@@ -375,25 +375,33 @@
       <td style="width: 140px; font-weight: 600;">5.6 s</td>
     </tr>
 <tr>
-      <td style="width: 70px;"><span class="score-pill warn">84</span></td>
+      <td style="width: 70px;"><span class="score-pill warn">77</span></td>
       <td>
         <div class="audit-title">Max Potential First Input Delay</div>
         <div class="audit-description">The maximum potential First Input Delay that your users could experience is the duration of the longest task. Learn more about the Maximum Potential First Input Delay metric.</div>
       </td>
-      <td style="width: 140px; font-weight: 600;">150 ms</td>
+      <td style="width: 140px; font-weight: 600;">170 ms</td>
     </tr>
 <tr>
-      <td style="width: 70px;"><span class="score-pill warn">89</span></td>
+      <td style="width: 70px;"><span class="score-pill warn">88</span></td>
       <td>
         <div class="audit-title">Speed Index</div>
         <div class="audit-description">Speed Index shows how quickly the contents of a page are visibly populated. Learn more about the Speed Index metric.</div>
       </td>
-      <td style="width: 140px; font-weight: 600;">3.4 s</td>
+      <td style="width: 140px; font-weight: 600;">3.5 s</td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill warn">89</span></td>
+      <td>
+        <div class="audit-title">Total Blocking Time</div>
+        <div class="audit-description">Sum of all time periods between FCP and Time to Interactive, when task length exceeded 50ms, expressed in milliseconds. Learn more about the Total Blocking Time metric.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;">210 ms</td>
     </tr></tbody>
     </table>
   </div>
 
-        <h2>Passed Audits (35)</h2>
+        <h2>Passed Audits (33)</h2>
         <div class="table-container">
     <table>
       <thead>
@@ -404,20 +412,12 @@
         </tr>
       </thead>
       <tbody><tr>
-      <td style="width: 70px;"><span class="score-pill pass">92</span></td>
-      <td>
-        <div class="audit-title">Total Blocking Time</div>
-        <div class="audit-description">Sum of all time periods between FCP and Time to Interactive, when task length exceeded 50ms, expressed in milliseconds. Learn more about the Total Blocking Time metric.</div>
-      </td>
-      <td style="width: 140px; font-weight: 600;">180 ms</td>
-    </tr>
-<tr>
       <td style="width: 70px;"><span class="score-pill pass">100</span></td>
       <td>
         <div class="audit-title">Cumulative Layout Shift</div>
         <div class="audit-description">Cumulative Layout Shift measures the movement of visible elements within the viewport. Learn more about the Cumulative Layout Shift metric.</div>
       </td>
-      <td style="width: 140px; font-weight: 600;">0.001</td>
+      <td style="width: 140px; font-weight: 600;">0</td>
     </tr>
 <tr>
       <td style="width: 70px;"><span class="score-pill pass">100</span></td>
@@ -428,7 +428,7 @@
       <td style="width: 140px; font-weight: 600;"></td>
     </tr>
 <tr>
-      <td style="width: 70px;"><span class="score-pill pass">Info</span></td>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
       <td>
         <div class="audit-title">Layout shift culprits</div>
         <div class="audit-description">Layout shifts occur when elements move absent any user interaction. Investigate the causes of layout shifts, such as elements being added, removed, or their fonts changing as the page loads.</div>
@@ -537,7 +537,7 @@
         <div class="audit-title">Avoids enormous network payloads</div>
         <div class="audit-description">Large network payloads cost users real money and are highly correlated with long load times. Learn how to reduce payload sizes.</div>
       </td>
-      <td style="width: 140px; font-weight: 600;">Total size was 713 KiB</td>
+      <td style="width: 140px; font-weight: 600;">Total size was 751 KiB</td>
     </tr>
 <tr>
       <td style="width: 70px;"><span class="score-pill pass">Info</span></td>
@@ -545,7 +545,7 @@
         <div class="audit-title">User Timing marks and measures</div>
         <div class="audit-description">Consider instrumenting your app with the User Timing API to measure your app&#39;s real-world performance during key user experiences. Learn more about User Timing marks.</div>
       </td>
-      <td style="width: 140px; font-weight: 600;">41 user timings</td>
+      <td style="width: 140px; font-weight: 600;">37 user timings</td>
     </tr>
 <tr>
       <td style="width: 70px;"><span class="score-pill pass">100</span></td>
@@ -553,7 +553,7 @@
         <div class="audit-title">JavaScript execution time</div>
         <div class="audit-description">Consider reducing the time spent parsing, compiling, and executing JS. You may find delivering smaller JS payloads helps with this. Learn how to reduce Javascript execution time.</div>
       </td>
-      <td style="width: 140px; font-weight: 600;">1.2 s</td>
+      <td style="width: 140px; font-weight: 600;">1.0 s</td>
     </tr>
 <tr>
       <td style="width: 70px;"><span class="score-pill pass">Info</span></td>
@@ -561,7 +561,7 @@
         <div class="audit-title">Avoid long main-thread tasks</div>
         <div class="audit-description">Lists the longest tasks on the main thread, useful for identifying worst contributors to input delay. Learn how to avoid long main-thread tasks</div>
       </td>
-      <td style="width: 140px; font-weight: 600;">5 long tasks found</td>
+      <td style="width: 140px; font-weight: 600;">6 long tasks found</td>
     </tr>
 <tr>
       <td style="width: 70px;"><span class="score-pill pass">100</span></td>
@@ -674,14 +674,6 @@
         <div class="audit-description">Keep the server response time for the main document short because all other requests depend on it. Learn more about the Time to First Byte metric.</div>
       </td>
       <td style="width: 140px; font-weight: 600;">Root document took 10 ms</td>
-    </tr>
-<tr>
-      <td style="width: 70px;"><span class="score-pill pass">Info</span></td>
-      <td>
-        <div class="audit-title">Avoid large layout shifts</div>
-        <div class="audit-description">These are the largest layout shifts observed on the page. Each table item represents a single layout shift, and shows the element that shifted the most. Below each item are possible root causes that led to the layout shift. Some of these layout shifts may not be included in the CLS metric value due to windowing. Learn how to improve CLS</div>
-      </td>
-      <td style="width: 140px; font-weight: 600;">1 layout shift found</td>
     </tr></tbody>
     </table>
   </div>

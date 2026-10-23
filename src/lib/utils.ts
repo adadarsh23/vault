@@ -33,6 +33,11 @@ export function normalizeGeneratedCredentialLength(length: number | undefined | 
 
 const SPECIAL_CHARS = '!@#$%^&*()_+=[];:,.<>?{}|-';
 const REQUIRED_GENERATED_SPECIAL_CHARS = '!@#$%^&*(),.?<>:{}|';
+const SPECIAL_REGEX = new RegExp(`[${SPECIAL_CHARS.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&')}]`);
+const CAPITALS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const LOWERS = 'abcdefghijklmnopqrstuvwxyz';
+const NUMBERS = '0123456789';
+const ALL_PASSWORD_CHARS = CAPITALS + LOWERS + NUMBERS + SPECIAL_CHARS;
 
 export function validatePassword(password: string): { isValid: boolean; error?: string } {
   if (!password) {
@@ -81,8 +86,7 @@ export function validatePassword(password: string): { isValid: boolean; error?: 
     };
   }
 
-  const specialRegex = new RegExp(`[${SPECIAL_CHARS.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&')}]`);
-  if (!specialRegex.test(password)) {
+  if (!SPECIAL_REGEX.test(password)) {
     return {
       isValid: false,
       error: 'Password must contain at least one special character.',
@@ -96,18 +100,19 @@ export function validatePassword(password: string): { isValid: boolean; error?: 
 /*                      Secure Random (Crypto-based)                          */
 /* -------------------------------------------------------------------------- */
 
+const sharedUint32 = new Uint32Array(1);
+
 function getRandomInt(max: number): number {
   if (max <= 0) return 0;
 
   const maxUint32 = 0xffffffff;
   const limit = maxUint32 - (maxUint32 % max);
-  const array = new Uint32Array(1);
 
   do {
-    crypto.getRandomValues(array);
-  } while (array[0] >= limit);
+    crypto.getRandomValues(sharedUint32);
+  } while (sharedUint32[0] >= limit);
 
-  return array[0] % max;
+  return sharedUint32[0] % max;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -117,25 +122,18 @@ function getRandomInt(max: number): number {
 export function generateFormattedPassword(length: number = 16): string {
   length = normalizeGeneratedCredentialLength(length);
 
-  const capitals = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const lowers = 'abcdefghijklmnopqrstuvwxyz';
-  const numbers = '0123456789';
-  const specials = SPECIAL_CHARS;
-  const requiredSpecials = REQUIRED_GENERATED_SPECIAL_CHARS;
-
-  const allChars = capitals + lowers + numbers + specials;
-
   let password = '';
 
   // Ensure required characters
-  password += capitals[getRandomInt(capitals.length)];
-  password += lowers[getRandomInt(lowers.length)];
-  password += numbers[getRandomInt(numbers.length)];
-  password += requiredSpecials[getRandomInt(requiredSpecials.length)];
+  password += CAPITALS[getRandomInt(CAPITALS.length)];
+  password += LOWERS[getRandomInt(LOWERS.length)];
+  password += NUMBERS[getRandomInt(NUMBERS.length)];
+  password +=
+    REQUIRED_GENERATED_SPECIAL_CHARS[getRandomInt(REQUIRED_GENERATED_SPECIAL_CHARS.length)];
 
   // Fill remaining length
   for (let i = 4; i < length; i++) {
-    password += allChars[getRandomInt(allChars.length)];
+    password += ALL_PASSWORD_CHARS[getRandomInt(ALL_PASSWORD_CHARS.length)];
   }
 
   // Shuffle (except first character)

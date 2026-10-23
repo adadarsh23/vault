@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { GLOBAL_NAVIGATION_EVENT, mapItemTypeToTab } from '../../lib/global-navigation';
 import { VaultItem } from '../../lib/storage';
 import { useGlobalNavigationStore } from '../../store/globalNavigationStore';
+import { logger } from '../../lib/logger';
 
 export const TAB_PATHS = {
   // Main
@@ -70,25 +71,41 @@ export const TAB_PATH_VALUES: readonly string[] = validTabs.map((tab) => TAB_PAT
 
 /** Get tab from pathname safely (O(1)) */
 export const getTabFromPathname = (pathname: string): TabId | null => {
-  return PATH_TO_TAB_MAP[pathname] ?? null;
+  if (!pathname) return null;
+  const normalized = pathname.replace(/\/+$/, '') || '/';
+  return PATH_TO_TAB_MAP[normalized] ?? null;
 };
 
-export const getPathnameForTab = (tab: TabId) => TAB_PATHS[tab];
+export const getPathnameForTab = (tab: TabId): string => TAB_PATHS[tab] ?? '/';
 
 export const isTabId = (value: string): value is TabId => validTabSet.has(value as TabId);
 
-/** Safe parser for "tab#hash" */
-const parseTabPath = (tabPath: string): { tab: TabId; hash: string } | null => {
+/** Safe parser supporting tab ID ('passwords'), path ('/passwords'), and item type ('password') */
+const parseTabPath = (tabPath: string): { tab: TabId; hash: string; search: string } | null => {
   if (!tabPath || typeof tabPath !== 'string') return null;
 
-  const [rawTab, rawHash] = tabPath.split('#');
+  const [pathAndQuery, rawHash] = tabPath.trim().split('#');
+  if (!pathAndQuery) return null;
 
-  if (!rawTab) return null;
+  const [rawTab, rawSearch] = pathAndQuery.split('?');
+  const normalizedTab = (rawTab || '').trim();
+  if (!normalizedTab) return null;
 
-  let tabKey: TabId | null = isTabId(rawTab) ? (rawTab as TabId) : null;
+  let tabKey: TabId | null = isTabId(normalizedTab) ? (normalizedTab as TabId) : null;
 
+  // Try matching directly from route pathname (e.g. '/passwords' or 'passwords')
   if (!tabKey) {
-    const mapped = mapItemTypeToTab(rawTab as VaultItem['type']);
+    const fromPath = getTabFromPathname(
+      normalizedTab.startsWith('/') ? normalizedTab : `/${normalizedTab}`,
+    );
+    if (fromPath) {
+      tabKey = fromPath;
+    }
+  }
+
+  // Try mapping vault item type (e.g. 'card' -> 'cards')
+  if (!tabKey) {
+    const mapped = mapItemTypeToTab(normalizedTab as VaultItem['type']);
     if (isTabId(mapped)) {
       tabKey = mapped as TabId;
     }
@@ -96,9 +113,19 @@ const parseTabPath = (tabPath: string): { tab: TabId; hash: string } | null => {
 
   if (!tabKey) return null;
 
+  let safeHash = '';
+  if (rawHash) {
+    try {
+      safeHash = `#${encodeURI(decodeURIComponent(rawHash))}`;
+    } catch {
+      safeHash = `#${encodeURI(rawHash)}`;
+    }
+  }
+
   return {
     tab: tabKey,
-    hash: rawHash ? `#${encodeURIComponent(rawHash)}` : '',
+    hash: safeHash,
+    search: rawSearch ? `?${rawSearch}` : '',
   };
 };
 
@@ -120,38 +147,45 @@ export function useNavigationHandler() {
       const parsed = parseTabPath(tabPath);
       if (!parsed) return;
 
-      const { tab, hash } = parsed;
+      const { tab, hash, search } = parsed;
       const pathname = getPathnameForTab(tab);
 
-      // Prevent unnecessary navigation
-      if (location.pathname === pathname && location.hash === hash) {
+      // Prevent redundant navigation
+      if (
+        location.pathname === pathname &&
+        (location.hash || '') === hash &&
+        (location.search || '') === search
+      ) {
         return;
       }
 
       startTransition(() => {
-        navigate(
-          {
-            pathname,
-            hash,
-          },
-          {
-            replace: false,
-          },
-        );
+        try {
+          navigate(
+            {
+              pathname,
+              hash,
+              search,
+            },
+            {
+              replace: false,
+            },
+          );
+        } catch (error) {
+          logger.error('Failed to navigate to tab', { error, tabPath });
+        }
       });
     },
-    [navigate, location.pathname, location.hash],
+    [navigate, location.pathname, location.hash, location.search],
   );
 
-  /** External-safe navigation (future-proof wrapper) */
+  /** External-safe navigation wrapper */
   const safeNavigateToTab = useCallback(
     (tabPath: string) => {
       try {
         navigateToTab(tabPath);
       } catch (error) {
-        if (import.meta.env.MODE !== 'production') {
-          console.error('Navigation error:', error);
-        }
+        logger.error('Safe navigation error:', { error, tabPath });
       }
     },
     [navigateToTab],
@@ -162,19 +196,23 @@ export function useNavigationHandler() {
     if (typeof window === 'undefined') return;
 
     const handler = (event: Event) => {
-      if (!(event instanceof CustomEvent)) return;
+      try {
+        if (!(event instanceof CustomEvent)) return;
 
-      const item = event.detail as VaultItem | undefined;
-      if (!item?.id || !item.type) return;
+        const item = event.detail as VaultItem | undefined;
+        if (!item?.id || !item.type) return;
 
-      const tabPath = mapItemTypeToTab(item.type);
-      if (!tabPath) return;
+        const tabPath = mapItemTypeToTab(item.type);
+        if (!tabPath) return;
 
-      // Batch update (React concurrent safe)
-      startTransition(() => {
-        safeNavigateToTab(tabPath);
-        setTargetItemId(item.id);
-      });
+        // Batch update (React concurrent safe)
+        startTransition(() => {
+          safeNavigateToTab(tabPath);
+          setTargetItemId(item.id);
+        });
+      } catch (err) {
+        logger.error('Error handling global navigation event', { error: err });
+      }
     };
 
     window.addEventListener(GLOBAL_NAVIGATION_EVENT, handler);
@@ -184,10 +222,13 @@ export function useNavigationHandler() {
     };
   }, [safeNavigateToTab, setTargetItemId]);
 
-  return {
-    activeTab,
-    location,
-    navigateToTab,
-    safeNavigateToTab,
-  };
+  return useMemo(
+    () => ({
+      activeTab,
+      location,
+      navigateToTab,
+      safeNavigateToTab,
+    }),
+    [activeTab, location, navigateToTab, safeNavigateToTab],
+  );
 }

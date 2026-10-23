@@ -10,7 +10,7 @@
 
 1. **Zero-Knowledge Data Boundary**: All sensitive assets are encrypted on the client device using authenticated symmetric ciphers (**AES-256-GCM** or **`VCAS01` Dual-Cipher Cascade**). The backend application, database administrators, and network intermediaries never possess plaintext data or cryptographic keys.
 2. **Dual-Key Isolation**: The account authentication credential (`AuthKey`, hashed via server-side bcrypt with salt and server pepper) is cryptographically isolated from the client-side master encryption key (`MasterKey`, derived via memory-hard **Argon2id**).
-3. **Post-Quantum Cryptographic Forward Secrecy**: Integration of lattice-based **PQC Kyber-768 (ML-KEM, NIST FIPS 203)** combined with classical **X25519 ECDH** protects stored archives against *Harvest Now, Decrypt Later (HNDL)* quantum decryption adversaries.
+3. **Post-Quantum Cryptographic Forward Secrecy**: Integration of lattice-based **PQC Kyber-768 (ML-KEM, NIST FIPS 203)** combined with classical **X25519 ECDH** protects stored archives against _Harvest Now, Decrypt Later (HNDL)_ quantum decryption adversaries.
 4. **Real-Time Cross-Device Synchronization**: Sub-50ms event propagation powered by **Socket.IO** rooms with deterministic timestamp arbitration (`latest-update-wins`) and soft-delete tombstone tracking.
 5. **High Availability Multi-Cluster Failover**: Seamless automatic database cluster failover between MongoDB Atlas primary and secondary clusters via `MultiClusterPool` with DNS resolution retries and zero server restarts.
 6. **Ephemeral RAM Security**: Inactivity key shredder zeroizes all cryptographic buffers and in-memory key handles after 60 seconds of user idle time.
@@ -30,7 +30,7 @@ flowchart TD
         PdfShield["PdfViewer & Anti-Screenshot Shield"]
         ZustandStore["State Layer: Zustand (vaultStore, authStore, syncStore)"]
         IDBCache[("Client Cache: IndexedDB Store (idb)")]
-        
+
         subgraph CryptoEngine["Client Cryptographic Engine"]
             ArgonWorker["Argon2id KDF Web Worker (hash-wasm)"]
             AESEngine["WebCrypto API (AES-256-GCM / 256-bit DEK)"]
@@ -39,7 +39,7 @@ flowchart TD
             MerkleTree["Merkle Tree Tamper Detection Engine"]
             RAMShredder["60s Inactivity Key Shredder & Zeroizer"]
         end
-        
+
         UI --> TipTap & MiniPlayer & PdfShield
         TipTap & MiniPlayer & PdfShield --> ZustandStore
         ZustandStore <--> IDBCache
@@ -60,7 +60,7 @@ flowchart TD
         RateLimiters["IP & Route-Based Sliding Window Rate Limiters"]
         CSRFMw["Double-Submit Cookie HMAC CSRF Middleware"]
         AuthMw["JWT Bearer Verification & Session Validation"]
-        
+
         subgraph Controllers["Route Handlers & Micro-Services"]
             AuthController["Auth & Device Session Controller"]
             VaultController["Vault Item & Delta Sync Controller"]
@@ -69,7 +69,7 @@ flowchart TD
             IntegrityController["Merkle Status & Tamper Controller"]
             TwoFactorController["TOTP, Passkeys & reCAPTCHA Controller"]
         end
-        
+
         SocketHub["Socket.IO Connection Hub & Broadcaster"]
         AnomalyDetector["Upload & Rate Anomaly Defense Watcher"]
     end
@@ -91,11 +91,11 @@ flowchart TD
     RateLimiters --> CSRFMw
     CSRFMw --> AuthMw
     AuthMw --> Controllers
-    
+
     WSS <--> SocketHub
     SocketHub <--> Controllers
     Controllers --> AnomalyDetector
-    
+
     Controllers --> MultiPool
     MultiPool --> AtlasPrimary
     AtlasPrimary -. Automatic Failover .-> AtlasSecondary
@@ -143,6 +143,7 @@ The system is separated into three distinct security enclaves:
 ## 4. Frontend Subsystem Deep Dive (React 19 + TypeScript)
 
 ### 4.1 State Management & Architecture (`src/store/`)
+
 Vault utilizes **Zustand** stores decoupled from UI components, backed by **IndexedDB** (`idb` library) for instantaneous local load times:
 
 - **`vaultStore.ts`**: Central catalog of decrypted notes, passwords, files, and bookmarks. Handles background synchronization, item tagging, folder nesting, and search filtering.
@@ -152,20 +153,25 @@ Vault utilizes **Zustand** stores decoupled from UI components, backed by **Inde
 - **`integrityStore.ts`**: Maintains the local Merkle tree state, leaf hash collections, and audit logs.
 
 ### 4.2 Web Worker Cryptographic Offloading
+
 To ensure zero frame drops (60 FPS / 120 FPS UI smoothness) during heavy key derivation:
+
 - Argon2id key derivation runs inside a dedicated Web Worker via `hash-wasm`.
 - Master passphrases pass via `postMessage` transfer buffers, derived into 32-byte raw keys, converted to non-extractable `CryptoKey` instances in WebCrypto, and the transfer buffer is explicitly wiped.
 
 ### 4.3 Floating Video Mini-Player (PiP)
+
 - **Persistent Overlay**: Implemented in `GlobalVideoMiniPlayer.tsx`, allowing users to watch encrypted video tutorials, private recordings, or camera streams while taking notes in the TipTap editor or managing passwords.
 - **Picture-in-Picture Support**: Toggles between browser-native PiP API (if supported) and an in-DOM draggable, corner-snapping overlay equipped with collapse, minimize, timeline scrub, playback speed, and video filter controls.
 
 ### 4.4 Mobile PDF & Privacy Shield
+
 - **Sandboxed Rendering**: PDF files render via in-browser canvas without executing embedded document JavaScript.
 - **Tab-Switch Blurring**: `useAntiScreenshotAndShield.ts` monitors document visibility. When `document.visibilityState === 'hidden'` or `window.onblur` fires, a 30px Gaussian blur and opaque blackout shield instantly covers the viewport, preventing operating system window-switching previews from recording document contents.
 - **Print & Capture Suppression**: Injects dynamic `@media print { display: none !important; }` rules and renders dynamic identity watermarks (username, client IP, timestamp).
 
 ### 4.5 Touch Drag-and-Drop Engine
+
 - Designed specifically for touch devices (iOS Safari, Android Chrome) where standard HTML5 drag-and-drop fails.
 - Features a **200ms hold initiation timer** to differentiate between page scrolling and item pickup.
 - Triggers **haptic vibration pulses** upon item pickup, folder target hover, and drop confirmation.
@@ -212,11 +218,14 @@ sequenceDiagram
 ```
 
 ### 5.2 Server Overload Protection & Lag Shield
+
 Under heavy denial-of-service attempts or high CPU loads:
+
 - Node.js `perf_hooks` monitor (`monitorEventLoopDelay`) tracks event-loop latency.
 - If event-loop lag exceeds `EVENT_LOOP_LAG_THRESHOLD_MS` (default: 1000ms), the server sheds load immediately with HTTP `503 Service Unavailable` and a `Retry-After: 5` header, preventing process memory crashes.
 
 ### 5.3 Anomaly Detection System
+
 - Tracks failed authentication bursts, invalid MIME uploads, rapid large-file uploads (>100MB within 10 minutes), and hash mismatches.
 - High anomaly counts automatically blacklist abusive IP segments and trigger rate limit lockouts.
 
@@ -259,6 +268,7 @@ flowchart TD
 ```
 
 ### Key Failover Features:
+
 - **SRV Resolution Retries**: If default DNS lookups fail, the engine retries using fallback DNS servers (`1.1.1.1, 8.8.8.8`).
 - **Direct Connection Support**: Supports `MONGODB_URI_DIRECT` for environments blocking SRV DNS queries.
 - **Numbered Secondary URIs**: Supports arbitrary cascading clusters (`MONGODB_URI_1`, `MONGODB_URI_2`, etc.).

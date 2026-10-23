@@ -11,6 +11,7 @@ import {
   useVaultDragState,
 } from '../../../../lib/vaultDragDrop';
 import { isSavedFolderName } from '../../../../lib/folderGuards';
+import { logger } from '../../../../lib/logger';
 
 /* -------------------- Types -------------------- */
 
@@ -134,7 +135,7 @@ export const FolderSidebar: React.FC<FolderSidebarProps> = ({
       try {
         await handleMoveToFolder(itemIds.length === 1 ? itemIds[0] : itemIds, folder);
       } catch (error) {
-        console.error('Move failed:', error);
+        logger.error('Move note to folder failed', { error });
       }
     },
     [handleMoveToFolder, notes],

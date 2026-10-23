@@ -3,6 +3,27 @@ const appId = import.meta.env.VITE_LOGROCKET_APP_ID;
 const isProd = import.meta.env.PROD === true;
 const allowLocalhost = import.meta.env.VITE_LOGROCKET_ALLOW_LOCALHOST === 'true';
 
+const SENSITIVE_FIELDS = [
+  'password',
+  'newPassword',
+  'currentPassword',
+  'masterKey',
+  'token',
+  'refreshToken',
+  'accessToken',
+  'dek',
+  'kek',
+  'secret',
+  'privateKey',
+  'pqcSalt',
+  'ciphertext',
+  'payload',
+  'twoFactorCode',
+  'totpCode',
+  'recoveryCodes',
+  'backupCodes',
+];
+
 type LogRocketClient = {
   init: (appId: string, options?: { release?: string }) => void;
   identify: (userId: string, traits: Record<string, string>) => void;
@@ -75,27 +96,7 @@ export const initLogRocket = (): boolean => {
             if (request.body && typeof request.body === 'string') {
               try {
                 const parsed = JSON.parse(request.body);
-                const sensitiveFields = [
-                  'password',
-                  'newPassword',
-                  'currentPassword',
-                  'masterKey',
-                  'token',
-                  'refreshToken',
-                  'accessToken',
-                  'dek',
-                  'kek',
-                  'secret',
-                  'privateKey',
-                  'pqcSalt',
-                  'ciphertext',
-                  'payload',
-                  'twoFactorCode',
-                  'totpCode',
-                  'recoveryCodes',
-                  'backupCodes',
-                ];
-                for (const field of sensitiveFields) {
+                for (const field of SENSITIVE_FIELDS) {
                   if (parsed[field] !== undefined) parsed[field] = '[REDACTED]';
                 }
                 request.body = JSON.stringify(parsed);

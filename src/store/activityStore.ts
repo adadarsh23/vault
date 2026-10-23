@@ -48,6 +48,7 @@ const MAX_ITEM_NAME_LENGTH = 200;
 const MAX_DESCRIPTION_LENGTH = 2_000;
 const MAX_IDENTIFIER_LENGTH = 256;
 const MAX_SESSION_NAME_LENGTH = 160;
+const MAX_ACTIVITY_ENTRIES = 5_000;
 
 const ACTIVITY_ACTION_SET: Record<ActivityActionType, true> = {
   file_upload: true,
@@ -178,8 +179,16 @@ const pickPreferredEntry = (
 };
 
 const normalizeAndLimitEntries = (entries: ActivityEntry[]): ActivityEntry[] => {
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return [];
+  }
+
   const deduped = new Map<string, ActivityEntry>();
   for (const rawEntry of entries) {
+    if (!rawEntry || typeof rawEntry !== 'object') {
+      continue;
+    }
+
     const normalized = normalizeActivityEntry(rawEntry, {
       actionType: 'error',
       itemName: 'Unknown item',
@@ -192,13 +201,19 @@ const normalizeAndLimitEntries = (entries: ActivityEntry[]): ActivityEntry[] => 
     deduped.set(normalized.id, pickPreferredEntry(deduped.get(normalized.id), normalized));
   }
 
-  return Array.from(deduped.values()).sort((a, b) => b.timestamp - a.timestamp);
+  return Array.from(deduped.values())
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, MAX_ACTIVITY_ENTRIES);
 };
 
 export const useActivityStore = create<ActivityState>((set) => ({
   entries: [],
   count: 0,
   logActivity: (entry) => {
+    if (!entry || typeof entry !== 'object') {
+      return;
+    }
+
     set((state) => {
       const nextEntry = normalizeActivityEntry(entry, {
         actionType: 'error',
@@ -239,12 +254,29 @@ export const useActivityStore = create<ActivityState>((set) => ({
       return;
     }
 
-    const idSet = new Set(ids);
-    set((state) => ({
-      entries: state.entries.map((e) =>
-        idSet.has(e.id) && e.isSynced !== true ? { ...e, isSynced: true } : e,
-      ),
-      count: state.entries.length,
-    }));
+    const idSet = new Set(ids.filter(Boolean));
+    if (idSet.size === 0) {
+      return;
+    }
+
+    set((state) => {
+      let hasChange = false;
+      const nextEntries = state.entries.map((e) => {
+        if (idSet.has(e.id) && e.isSynced !== true) {
+          hasChange = true;
+          return { ...e, isSynced: true };
+        }
+        return e;
+      });
+
+      if (!hasChange) {
+        return state;
+      }
+
+      return {
+        entries: nextEntries,
+        count: nextEntries.length,
+      };
+    });
   },
 }));

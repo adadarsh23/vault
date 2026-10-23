@@ -46,6 +46,8 @@ import { reencryptVaultItemContent } from '../lib/vaultKeyRotation';
 import { normalizeGeneratedCredentialLength, validatePassword } from '../lib/utils';
 import { useNotificationStore } from './notificationStore';
 import { useIntegrityStore } from './integrityStore';
+import { useGlobalNavigationStore } from './globalNavigationStore';
+import { useVideoMiniPlayerStore } from './videoMiniPlayerStore';
 import { revokeAllActiveBlobUrls } from '../lib/blobRegistry';
 
 export interface SecurityPreferences {
@@ -190,6 +192,7 @@ interface VaultState {
     options?: { source?: 'local' | 'cloud' },
   ) => Promise<VaultItem>;
   removeItem: (id: string) => Promise<void>;
+  deleteItem: (id: string) => Promise<void>;
   updateItem: (id: string, updates: Partial<VaultItem>) => Promise<void>;
   togglePin: (id: string) => Promise<void>;
   batchUpdateItems: (updates: { id: string; updates: Partial<VaultItem> }[]) => Promise<void>;
@@ -1135,6 +1138,18 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       runInBackground(get().syncLogs(), 'Activity log sync');
       runInBackground(uploadProfileToCloud(identity, key), 'Profile sync');
     } catch (error) {
+      try {
+        revokeAllActiveBlobUrls();
+      } catch {
+        /* ignore */
+      }
+      try {
+        clearCryptoKeyCache();
+      } catch {
+        /* ignore */
+      }
+      useIntegrityStore.getState().resetIntegrityState();
+
       set({
         isUnlocked: false,
         isVaultReady: false,
@@ -1224,12 +1239,14 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     }
 
     if (preferences.isPurgeTrashOnLockEnabled && items.length > 0) {
-      const activeItems = items.filter((item) => !item.deletedAt);
-      if (activeItems.length !== items.length) {
-        // Persist active items only, removing soft-deleted trash
+      const trashItems = items.filter((item) => Boolean(item.deletedAt));
+      if (trashItems.length > 0) {
+        // Persist active items and safely purge soft-deleted items
         void (async () => {
           try {
-            await (VaultService as any).saveItems?.(masterKey, activeItems);
+            await VaultService.purgeDeletedItems(masterKey, items, {
+              syncCloud: Boolean(masterKey),
+            });
           } catch (e) {
             // Ignore lock save errors
           }
@@ -1238,6 +1255,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     }
 
     useActivityStore.getState().clearActivity();
+    useNotificationStore.getState().resetStore();
+    useIntegrityStore.getState().resetIntegrityState();
+    useGlobalNavigationStore.getState().resetStore();
+    useVideoMiniPlayerStore.getState().closeMiniPlayer();
     clearCryptoKeyCache();
 
     set({
@@ -1297,6 +1318,9 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     clearCloudSessionHint();
     clearRememberedVaultAccess();
     useNotificationStore.getState().resetStore();
+    useIntegrityStore.getState().resetIntegrityState();
+    useGlobalNavigationStore.getState().resetStore();
+    useVideoMiniPlayerStore.getState().closeMiniPlayer();
     get().lock();
   },
 
@@ -1311,7 +1335,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       masterKey: currentState.masterKey,
       preferences: currentState.preferences,
       allowRestrictedTypes: allow,
-      rsaKeyPair: currentState.rsaKeyPair,
+      rsaKeyPair: get().rsaKeyPair || currentState.rsaKeyPair,
     });
   },
 
@@ -1354,7 +1378,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       masterKey: currentState.masterKey,
       preferences: newPreferences,
       allowRestrictedTypes: currentState.allowRestrictedTypes,
-      rsaKeyPair: currentState.rsaKeyPair,
+      rsaKeyPair: get().rsaKeyPair || currentState.rsaKeyPair,
     });
   },
 
@@ -1595,8 +1619,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     rawItems: unknown[],
     onProgress?: (done: number, total: number) => void,
   ) => {
-    const { masterKey } = get();
-    if (!masterKey) return;
+    const { masterKey, isUnlocked, isDecoyMode } = get();
+    if (!isUnlocked || (!masterKey && !isDecoyMode)) {
+      throw new Error('Vault must be unlocked to import data.');
+    }
 
     if (!Array.isArray(rawItems)) {
       throw new Error('Import payload must be an array of vault items.');
@@ -1621,14 +1647,32 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         }
       }
       const newItems = Array.from(dedupedItemsMap.values());
-
       const total = newItems.length;
+
+      if (isDecoyMode) {
+        set((state) => {
+          const map = new Map<string, VaultItem>();
+          for (const item of [...state.items, ...newItems]) {
+            map.set(item.id, item);
+          }
+          return { items: Array.from(map.values()), isLoading: false };
+        });
+        toast.success(`Imported ${total} items successfully`);
+        logActivity({
+          actionType: 'import',
+          itemName: 'Vault import',
+          description: `Imported ${total} items in isolated session`,
+          status: 'success',
+        });
+        return;
+      }
+
       let completedCount = 0;
 
       await runInParallelPool(
         newItems,
         async (item) => {
-          await uploadItemToCloud(item, masterKey);
+          await uploadItemToCloud(item, masterKey!);
           completedCount += 1;
           reportProgress(onProgress, completedCount, total);
           await maybeYieldToMainThread(total, IMPORT_YIELD_THRESHOLD);
@@ -1852,6 +1896,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     }
   },
 
+  deleteItem: async (id: string) => get().removeItem(id),
+
   removeItem: async (id: string) => {
     const { masterKey, items, isDecoyMode, sessionRevokedState } = get();
     if (sessionRevokedState?.isRevoked) {
@@ -1978,10 +2024,22 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       }
 
       await saveItem(updatedItem);
+
+      const inMemoryItem: VaultItem =
+        updatedItem.source === 'cloud' &&
+        updatedItem.content instanceof Uint8Array &&
+        updatedItem.content.byteLength > 512 * 1024
+          ? { ...updatedItem, content: '' }
+          : updatedItem;
+
       set((state) => ({
-        items: state.items.map((i) => (i.id === id ? updatedItem : i)),
+        items: state.items.map((i) => (i.id === id ? inMemoryItem : i)),
         isLoading: false,
       }));
+      useIntegrityStore
+        .getState()
+        .rebuildLocalMerkleTree(get().items)
+        .catch(() => {});
       toast.success('Update saved');
       logActivity({
         actionType: item.type === 'password' ? 'password_change' : 'item_update',
@@ -2113,10 +2171,9 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
     try {
       // Persist to local IndexedDB and upload all changed items to cloud in parallel
-      const currentBatch = batchUpdates.map((u) => {
-        const item = updatedItems.find((i) => i.id === u.id);
-        return item!;
-      });
+      const currentBatch = batchUpdates
+        .map((u) => updatedItems.find((i) => i.id === u.id))
+        .filter((item): item is VaultItem => Boolean(item));
 
       for (const item of currentBatch) {
         try {
@@ -2148,6 +2205,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       );
 
       set({ items: updatedItems, isLoading: false });
+      useIntegrityStore
+        .getState()
+        .rebuildLocalMerkleTree(get().items)
+        .catch(() => {});
       toast.success(`Updated ${batchUpdates.length} items`);
       runInBackground(get().syncLogs(), 'Activity log sync');
     } catch (error) {
@@ -2237,7 +2298,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     try {
       const cloudItems = await downloadAllFromCloud(masterKey!);
 
-      // Batch purge
+      // Batch purge remote assets
       await Promise.allSettled([
         ...cloudItems.map((item) => deleteItemFromCloud(item.id, masterKey!)),
         deleteItemFromCloud('__settings__', masterKey!),
@@ -2248,11 +2309,36 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       clearCloudSessionHint();
       clearRememberedVaultAccess();
 
+      // Clear local IndexedDB, blob URLs and crypto caches
+      try {
+        revokeAllActiveBlobUrls();
+      } catch {
+        /* ignore */
+      }
+      try {
+        clearCryptoKeyCache();
+      } catch {
+        /* ignore */
+      }
+      try {
+        await clearVault();
+      } catch {
+        /* ignore */
+      }
+
+      useActivityStore.getState().clearActivity();
+      useNotificationStore.getState().resetStore();
+      useIntegrityStore.getState().resetIntegrityState();
+      useGlobalNavigationStore.getState().resetStore();
+      useVideoMiniPlayerStore.getState().closeMiniPlayer();
+
       set({
         items: [],
         isUnlocked: false,
         isVaultReady: false,
         masterKey: null,
+        vaultId: null,
+        username: null,
         isLoading: false,
       });
 
@@ -2262,10 +2348,6 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         itemName: 'Full Vault',
         description: 'Emergency destruction complete',
         status: 'success',
-      });
-      const logs = useActivityStore.getState().entries;
-      await uploadLogsToCloud(logs).catch((error) => {
-        console.error('Final activity sync failed:', error);
       });
 
       if (typeof window !== 'undefined') {
@@ -2314,6 +2396,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     }
 
     useActivityStore.getState().clearActivity();
+    useNotificationStore.getState().resetStore();
+    useIntegrityStore.getState().resetIntegrityState();
+    useGlobalNavigationStore.getState().resetStore();
+    useVideoMiniPlayerStore.getState().closeMiniPlayer();
 
     set({
       items: [],

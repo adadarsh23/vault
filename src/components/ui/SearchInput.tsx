@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useId, useCallback } from 'react';
 import { Search, Clock, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -34,70 +34,95 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
     const [activeIndex, setActiveIndex] = useState(-1);
     const [history, setHistory] = useState<string[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
+    const listboxId = useId();
 
-    // Load search history from localStorage on mount
+    // Load search history from localStorage on mount with robust JSON error handling
     useEffect(() => {
       if (!historyKey) return;
       try {
         const stored = localStorage.getItem(`vault_search_history_${historyKey}`);
         if (stored) {
-          setHistory(JSON.parse(stored));
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setHistory(
+              parsed.filter(
+                (item): item is string => typeof item === 'string' && item.trim().length > 0,
+              ),
+            );
+          }
         }
       } catch (err) {
-        console.error('Failed to load search history', err);
+        console.warn('Failed to load search history', err);
+        setHistory([]);
       }
     }, [historyKey]);
 
     // Save history helper
-    const saveHistory = (newHistory: string[]) => {
-      if (!historyKey) return;
-      try {
-        localStorage.setItem(`vault_search_history_${historyKey}`, JSON.stringify(newHistory));
-      } catch (err) {
-        console.error('Failed to save search history', err);
-      }
-    };
+    const saveHistory = useCallback(
+      (newHistory: string[]) => {
+        if (!historyKey) return;
+        try {
+          localStorage.setItem(`vault_search_history_${historyKey}`, JSON.stringify(newHistory));
+        } catch (err) {
+          console.warn('Failed to save search history', err);
+        }
+      },
+      [historyKey],
+    );
 
-    const selectSuggestion = (val: string) => {
-      // Simulate ChangeEvent
-      const event = {
-        target: { value: val },
-        currentTarget: { value: val },
-      } as React.ChangeEvent<HTMLInputElement>;
+    const selectSuggestion = useCallback(
+      (val: string) => {
+        // Simulate ChangeEvent
+        const event = {
+          target: { value: val },
+          currentTarget: { value: val },
+        } as React.ChangeEvent<HTMLInputElement>;
 
-      onChange(event);
+        onChange(event);
 
-      // Add to history
-      if (historyKey && val && val.trim()) {
-        const trimmed = val.trim();
-        const filtered = history.filter((h) => h !== trimmed);
-        const updated = [trimmed, ...filtered].slice(0, 5);
-        setHistory(updated);
-        saveHistory(updated);
-      }
+        // Add to history
+        if (historyKey && val && val.trim()) {
+          const trimmed = val.trim();
+          setHistory((prev) => {
+            const filtered = prev.filter((h) => h !== trimmed);
+            const updated = [trimmed, ...filtered].slice(0, 5);
+            saveHistory(updated);
+            return updated;
+          });
+        }
 
-      setIsOpen(false);
-      setActiveIndex(-1);
-    };
+        setIsOpen(false);
+        setActiveIndex(-1);
+      },
+      [historyKey, onChange, saveHistory],
+    );
 
-    const handleRemoveHistory = (item: string, e: React.MouseEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (!historyKey) return;
-      const updated = history.filter((h) => h !== item);
-      setHistory(updated);
-      saveHistory(updated);
-      setActiveIndex(-1);
-    };
+    const handleRemoveHistory = useCallback(
+      (item: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (!historyKey) return;
+        setHistory((prev) => {
+          const updated = prev.filter((h) => h !== item);
+          saveHistory(updated);
+          return updated;
+        });
+        setActiveIndex(-1);
+      },
+      [historyKey, saveHistory],
+    );
 
-    const handleClearAllHistory = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (!historyKey) return;
-      setHistory([]);
-      saveHistory([]);
-      setActiveIndex(-1);
-    };
+    const handleClearAllHistory = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (!historyKey) return;
+        setHistory([]);
+        saveHistory([]);
+        setActiveIndex(-1);
+      },
+      [historyKey, saveHistory],
+    );
 
     const uniqueSuggestions = useMemo(() => {
       return Array.from(new Set(suggestions.filter(Boolean)));
@@ -136,15 +161,19 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
       setActiveIndex(-1);
     }, [listItems.length]);
 
-    // Close on click outside
+    // Close on click or tap outside (supports desktop mouse and mobile touch devices)
     useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
+      const handleOutside = (event: MouseEvent | TouchEvent) => {
         if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
           setIsOpen(false);
         }
       };
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener('mousedown', handleOutside);
+      document.addEventListener('touchstart', handleOutside, { passive: true });
+      return () => {
+        document.removeEventListener('mousedown', handleOutside);
+        document.removeEventListener('touchstart', handleOutside);
+      };
     }, []);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -180,15 +209,17 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
       }
     };
 
-    const highlightMatch = (text: string, query: string) => {
+    // Deterministic, bug-free highlight matching (avoids RegExp.test global stateful lastIndex bug)
+    const highlightMatch = useCallback((text: string, query: string) => {
       if (!query || !query.trim()) return <span>{text}</span>;
       const trimmed = query.trim();
-      const regex = new RegExp(`(${trimmed.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+      const escaped = trimmed.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(${escaped})`, 'gi');
       const parts = text.split(regex);
       return (
         <>
           {parts.map((part, i) =>
-            regex.test(part) ? (
+            part.toLowerCase() === trimmed.toLowerCase() ? (
               <mark
                 key={i}
                 className="bg-transparent text-emerald-600 dark:text-emerald-400 font-semibold"
@@ -201,7 +232,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           )}
         </>
       );
-    };
+    }, []);
 
     const showDropdown = isOpen && listItems.length > 0;
 
@@ -215,11 +246,18 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
           className={className}
+          role="combobox"
+          aria-expanded={showDropdown}
+          aria-autocomplete="list"
+          aria-controls={showDropdown ? listboxId : undefined}
+          aria-activedescendant={activeIndex >= 0 ? `${listboxId}-item-${activeIndex}` : undefined}
           {...props}
         />
         <AnimatePresence>
           {showDropdown && (
             <motion.div
+              id={listboxId}
+              role="listbox"
               initial={{ opacity: 0, y: 8, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
@@ -233,8 +271,9 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                     <span>Recent Searches</span>
                     {value === '' && (
                       <button
+                        type="button"
                         onClick={handleClearAllHistory}
-                        className="hover:text-destructive transition-colors normal-case font-medium cursor-pointer"
+                        className="hover:text-destructive transition-colors normal-case font-medium cursor-pointer touch-manipulation text-[11px]"
                       >
                         Clear All
                       </button>
@@ -247,10 +286,13 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                       .map(({ item, idx }) => (
                         <div
                           key={`hist-${item.value}-${idx}`}
+                          id={`${listboxId}-item-${idx}`}
+                          role="option"
+                          aria-selected={activeIndex === idx}
                           onClick={() => selectSuggestion(item.value)}
                           onMouseEnter={() => setActiveIndex(idx)}
                           className={cn(
-                            'flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer text-sm transition-all select-none',
+                            'flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer text-sm transition-all select-none touch-manipulation',
                             activeIndex === idx ? 'bg-text/5 text-text' : 'text-text/70',
                           )}
                         >
@@ -259,10 +301,11 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                             <span className="truncate">{highlightMatch(item.value, value)}</span>
                           </div>
                           <button
+                            type="button"
                             onClick={(e) => handleRemoveHistory(item.value, e)}
-                            className="p-1 rounded-md text-text/20 hover:text-destructive hover:bg-text/5 cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all"
+                            className="p-1 rounded-md text-text/20 hover:text-destructive hover:bg-text/5 cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all touch-manipulation"
                             style={{ opacity: activeIndex === idx ? 1 : 0 }}
-                            aria-label="Remove search history item"
+                            aria-label={`Remove search ${item.value}`}
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -285,10 +328,13 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                       .map(({ item, idx }) => (
                         <div
                           key={`sug-${item.value}-${idx}`}
+                          id={`${listboxId}-item-${idx}`}
+                          role="option"
+                          aria-selected={activeIndex === idx}
                           onClick={() => selectSuggestion(item.value)}
                           onMouseEnter={() => setActiveIndex(idx)}
                           className={cn(
-                            'flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer text-sm transition-all select-none',
+                            'flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer text-sm transition-all select-none touch-manipulation',
                             activeIndex === idx ? 'bg-text/5 text-text' : 'text-text/70',
                           )}
                         >
@@ -308,3 +354,4 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
 );
 
 SearchInput.displayName = 'SearchInput';
+export default SearchInput;

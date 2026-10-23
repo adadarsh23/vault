@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SEO - Lighthouse Report</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --panel-alt: #f1f5f9;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --pass: #10b981;
+      --pass-bg: #ecfdf5;
+      --warn: #f59e0b;
+      --warn-bg: #fffbeb;
+      --fail: #ef4444;
+      --fail-bg: #fef2f2;
+      --na: #94a3b8;
+      --accent: #3b82f6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b0f19;
+        --panel: #111827;
+        --panel-alt: #1f2937;
+        --text: #f9fafb;
+        --muted: #9ca3af;
+        --border: #374151;
+        --pass-bg: #064e3b;
+        --warn-bg: #78350f;
+        --fail-bg: #7f1d1d;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    main {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 64px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    h1, h2, h3 { line-height: 1.2; margin: 0; font-weight: 700; }
+    h1 { font-size: clamp(24px, 4vw, 36px); letter-spacing: -0.02em; }
+    h2 { font-size: 18px; margin-top: 32px; margin-bottom: 14px; }
+    .muted { color: var(--muted); }
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0 24px;
+    }
+    .nav-links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      background: var(--panel);
+      color: var(--text);
+      font-weight: 500;
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+    .nav-links a:hover {
+      background: var(--panel-alt);
+      border-color: var(--accent);
+      text-decoration: none;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      font-size: 20px;
+      font-weight: 800;
+      border: 3px solid currentColor;
+    }
+    .score-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid currentColor;
+    }
+    .pass { color: var(--pass); }
+    .warn { color: var(--warn); }
+    .fail { color: var(--fail); }
+    .na { color: var(--na); }
+    .table-container {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      background: var(--panel-alt);
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: var(--panel-alt); }
+    .audit-title { font-weight: 600; color: var(--text); }
+    .audit-description { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .badge-metric {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-metric.good { background: var(--pass-bg); color: var(--pass); }
+    .badge-metric.warn { background: var(--warn-bg); color: var(--warn); }
+    .badge-metric.poor { background: var(--fail-bg); color: var(--fail); }
+    .badge-metric.na { background: var(--panel-alt); color: var(--na); }
+    .cwv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin: 16px 0 28px;
+    }
+    .cwv-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+    .cwv-title { font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+    .cwv-value { font-size: 20px; font-weight: 800; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+          <div>
+            <p class="muted"><a href="./index.html">← Back to Overview</a></p>
+            <h1>SEO</h1>
+            <p class="muted">http://127.0.0.1:4173/</p>
+          </div>
+          <div class="score-badge warn">66</div>
+        </header>
+
+        <div class="nav-links">
+          <a href="./index.html">📊 Overview</a>
+          <a href="./seo.json">📄 Category JSON</a>
+          <a href="../report.report.html">🌐 Full HTML Report</a>
+          <a href="../report.report.json">💾 Full JSON Report</a>
+        </div>
+
+        
+        
+
+        <h2>Needs Attention (1)</h2>
+        <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Score</th>
+          <th>Audit</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody><tr>
+      <td style="width: 70px;"><span class="score-pill fail">0</span></td>
+      <td>
+        <div class="audit-title">Page is blocked from indexing</div>
+        <div class="audit-description">Search engines are unable to include your pages in search results if they don&#39;t have permission to crawl them. Learn more about crawler directives.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr></tbody>
+    </table>
+  </div>
+
+        <h2>Passed Audits (8)</h2>
+        <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Score</th>
+          <th>Audit</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody><tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Document has a `&lt;title&gt;` element</div>
+        <div class="audit-description">The title gives screen reader users an overview of the page, and search engine users rely on it heavily to determine if a page is relevant to their search. Learn more about document titles.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Document has a meta description</div>
+        <div class="audit-description">Meta descriptions may be included in search results to concisely summarize page content. Learn more about the meta description.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Page has successful HTTP status code</div>
+        <div class="audit-description">Pages with unsuccessful HTTP status codes may not be indexed properly. Learn more about HTTP status codes.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Links have descriptive text</div>
+        <div class="audit-description">Descriptive link text helps search engines understand your content. Learn how to make links more accessible.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Links are crawlable</div>
+        <div class="audit-description">Search engines may use href attributes on links to crawl websites. Ensure that the href attribute of anchor elements links to an appropriate destination, so more pages of the site can be discovered. Learn how to make links crawlable</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">robots.txt is valid</div>
+        <div class="audit-description">If your robots.txt file is malformed, crawlers may not be able to understand how you want your website to be crawled or indexed. Learn more about robots.txt.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Document has a valid `hreflang`</div>
+        <div class="audit-description">hreflang links tell search engines what version of a page they should list in search results for a given language or region. Learn more about hreflang.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr>
+<tr>
+      <td style="width: 70px;"><span class="score-pill pass">100</span></td>
+      <td>
+        <div class="audit-title">Document has a valid `rel=canonical`</div>
+        <div class="audit-description">Canonical links suggest which URL to show in search results. Learn more about canonical links.</div>
+      </td>
+      <td style="width: 140px; font-weight: 600;"></td>
+    </tr></tbody>
+    </table>
+  </div>
+  </main>
+</body>
+</html>

@@ -80,6 +80,9 @@ export const triggerSessionTermination = (
   }, 1000);
 };
 
+let lastCheckTime = 0;
+let inFlightCheck: Promise<boolean> | null = null;
+
 /**
  * Fast check against /api/auth/session-check to verify if session is still active
  */
@@ -89,34 +92,49 @@ export const checkSessionValidity = async (): Promise<boolean> => {
     return false;
   }
 
-  try {
-    const baseUrl = resolveApiBaseUrl();
-    const response = await fetch(`${baseUrl}/api/auth/session-check`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-      },
-      credentials: 'include',
-    });
-
-    if (response.status === 401 || response.status === 403) {
-      const data = await response.json().catch(() => ({}));
-      logger.warn('[SessionSecurity] Session validity check failed with unauthenticated status', {
-        status: response.status,
-        code: data?.error?.code,
-      });
-      triggerSessionTermination('REVOKED_BY_SERVER', {
-        reason: data?.error?.code || 'SESSION_REVOKED',
-      });
-      return false;
-    }
-
-    return response.ok;
-  } catch (error) {
-    // Non-blocking for offline/network blips
+  const now = Date.now();
+  if (inFlightCheck) {
+    return inFlightCheck;
+  }
+  if (now - lastCheckTime < 3000) {
     return true;
   }
+
+  lastCheckTime = now;
+  inFlightCheck = (async () => {
+    try {
+      const baseUrl = resolveApiBaseUrl();
+      const response = await fetch(`${baseUrl}/api/auth/session-check`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        const data = await response.json().catch(() => ({}));
+        logger.warn('[SessionSecurity] Session validity check failed with unauthenticated status', {
+          status: response.status,
+          code: data?.error?.code,
+        });
+        triggerSessionTermination('REVOKED_BY_SERVER', {
+          reason: data?.error?.code || 'SESSION_REVOKED',
+        });
+        return false;
+      }
+
+      return response.ok;
+    } catch {
+      // Non-blocking for offline/network blips
+      return true;
+    } finally {
+      inFlightCheck = null;
+    }
+  })();
+
+  return inFlightCheck;
 };
 
 /**
@@ -133,8 +151,11 @@ const handleVisibilityOrFocusChange = () => {
  */
 export const startSessionSecurityWatcher = (token?: string | null) => {
   const authToken = token || getAuthToken();
-  if (!authToken || isWatcherActive) {
+  if (!authToken) {
     return;
+  }
+  if (isWatcherActive) {
+    stopSessionSecurityWatcher();
   }
 
   isWatcherActive = true;

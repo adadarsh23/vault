@@ -87,10 +87,10 @@ export function LegalPage({}: LegalPageProps) {
                 type="button"
                 aria-label="Copy license text"
                 title="Copy license text"
-                className="rounded-md p-1.5 text-text/60 transition-colors hover:bg-text/10 hover:text-text"
+                className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg p-2 text-text/60 transition-colors hover:bg-text/10 hover:text-text focus:outline-none focus:ring-2 focus:ring-text/30"
                 onClick={async () => {
                   try {
-                    if (!navigator.clipboard) {
+                    if (!navigator.clipboard?.writeText) {
                       toast.error('Clipboard is not available on this browser');
                       return;
                     }

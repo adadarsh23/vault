@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   Lock,
   ChevronRight,
@@ -8,13 +8,13 @@ import {
   PanelLeft,
   Eye,
   EyeOff,
+  User,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { NotificationDropdown } from './NotificationDropdown';
 import { useVaultStore } from '../../store/vaultStore';
-// import { CloudHealthIndicator } from '../vault/CloudHealthIndicator';
 
-interface AppHeaderProps {
+export interface AppHeaderProps {
   showNotifications: boolean;
   setShowNotifications: (show: boolean) => void;
   sidebarPosition?: 'left' | 'right';
@@ -34,7 +34,7 @@ interface AppHeaderProps {
   connectionStatus?: 'connected' | 'error' | 'loading';
 }
 
-export const AppHeader: React.FC<AppHeaderProps> = ({
+export const AppHeader: React.FC<AppHeaderProps> = memo(function AppHeader({
   showNotifications,
   setShowNotifications,
   sidebarPosition = 'left',
@@ -52,7 +52,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   username,
   profileMonogram,
   connectionStatus: connectionStatusProp,
-}) => {
+}) {
   const isDiscreetMode = useVaultStore((state) => state.isDiscreetMode);
   const toggleDiscreetMode = useVaultStore((state) => state.toggleDiscreetMode);
 
@@ -73,11 +73,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     }
 
     const handleSyncStatus = (event: Event) => {
-      const customEvent = event as CustomEvent<{
-        status: 'connected' | 'error' | 'loading';
-      }>;
-      if (customEvent.detail?.status) {
-        setConnectionStatus(customEvent.detail.status);
+      try {
+        const customEvent = event as CustomEvent<{
+          status: 'connected' | 'error' | 'loading';
+        }>;
+        if (customEvent.detail?.status) {
+          setConnectionStatus(customEvent.detail.status);
+        }
+      } catch {
+        // Ignore malformed custom events
       }
     };
 
@@ -95,11 +99,22 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     };
   }, [connectionStatusProp]);
 
+  const handleOpenSearch = React.useCallback(() => {
+    try {
+      window.dispatchEvent(new CustomEvent('open-command-palette'));
+    } catch {
+      // Ignore if event dispatching fails in strict sandbox
+    }
+  }, []);
+
+  const safeMonogram = (profileMonogram || '').trim();
+  const displayName = headerProfileName || username || 'User';
+
   return (
     <header
       role="banner"
       className={cn(
-        'relative flex h-14 sm:h-16 w-full items-center justify-between border-b border-sidebar-border bg-sidebar-bg/60 px-2 sm:px-4 lg:px-6 backdrop-blur-xl transition-all duration-200 select-none',
+        'relative flex h-14 sm:h-16 w-full items-center justify-between border-b border-sidebar-border bg-sidebar-bg/60 px-2 sm:px-4 lg:px-6 backdrop-blur-xl transition-all duration-200 select-none shrink-0',
         showNotifications ? 'z-[100]' : 'z-40',
         sidebarPosition === 'right' && 'flex-row-reverse',
       )}
@@ -107,7 +122,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       {/* Mobile Branding, Active Heading & Sidebar Toggle */}
       <div
         className={cn(
-          'flex items-center gap-1.5 sm:gap-2.5 lg:hidden min-w-0 max-w-[48vw] sm:max-w-[55vw]',
+          'flex items-center gap-1.5 sm:gap-2.5 lg:hidden min-w-0 max-w-[45vw] xs:max-w-[50vw] sm:max-w-[55vw]',
           sidebarPosition === 'right' && 'flex-row-reverse',
         )}
       >
@@ -167,7 +182,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           sidebarPosition === 'right' && 'flex-row-reverse mr-auto ml-0',
         )}
       >
-        {/* Tablet Quick Tab Switcher Pill (shown on medium screens, hidden on phones) */}
+        {/* Tablet Quick Tab Switcher Pill (shown on medium screens, hidden on phones & desktop) */}
         <div
           className={cn(
             'hidden md:flex lg:hidden items-center gap-0.5 text-xs font-medium text-text/60 max-w-[140px] truncate',
@@ -209,9 +224,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </button>
         </div>
 
-        {/* Mobile Cloud Health Indicator */}
-        {/*<CloudHealthIndicator compact={true} className="flex lg:hidden shrink-0" /> */}
-
         {/* Discreet / Privacy Blur Mode Toggle */}
         <button
           type="button"
@@ -245,7 +257,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           type="button"
           className="relative flex h-8 w-8 sm:h-9 sm:w-auto shrink-0 items-center justify-center gap-2 rounded-full border border-text/15 bg-text/5 sm:px-3 text-text transition-all duration-200 hover:bg-text/10 hover:border-text/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
-          onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+          onClick={handleOpenSearch}
           aria-label="Open search command palette"
           title="Search (Ctrl+K / Cmd+K)"
         >
@@ -263,6 +275,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             className="relative flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full border border-text/15 bg-text/5 text-text transition-all duration-200 hover:bg-text/10 hover:border-text/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95"
             onClick={() => setShowNotifications(!showNotifications)}
             aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
+            aria-expanded={showNotifications}
+            aria-haspopup="dialog"
             title="Notifications"
           >
             <Bell className="h-4 w-4 text-text/80 transition-colors" />
@@ -285,27 +299,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             type="button"
             className="relative flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full border border-text/15 bg-text/5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide text-text transition-all duration-200 hover:bg-text/10 hover:border-text/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 active:scale-95 overflow-hidden"
             onClick={handleHeaderProfileClick}
-            aria-label={
-              headerProfileName || username
-                ? `${headerProfileName || username} - Settings`
-                : 'Settings'
-            }
-            title={
-              headerProfileName || username
-                ? `${headerProfileName || username} - Settings`
-                : 'Settings'
-            }
+            aria-label={`${displayName} - Settings`}
+            title={`${displayName} - Settings`}
           >
             {headerProfilePhoto && !isHeaderProfilePhotoBroken ? (
               <img
                 src={headerProfilePhoto}
-                alt={`${headerProfileName || username || 'User'} profile`}
+                alt={`${displayName} profile`}
                 className="h-full w-full rounded-full object-cover"
                 referrerPolicy="no-referrer"
                 onError={() => setIsHeaderProfilePhotoBroken(true)}
               />
+            ) : safeMonogram ? (
+              safeMonogram
             ) : (
-              profileMonogram
+              <User className="h-4 w-4 text-text/70" />
             )}
           </button>
           <span
@@ -329,4 +337,4 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       </div>
     </header>
   );
-};
+});

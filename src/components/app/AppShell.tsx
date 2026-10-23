@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Route, Routes } from 'react-router-dom';
 import { Sidebar } from '../layout/Sidebar';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
-import { ErrorFallback } from '../ui/ErrorFallback';
 import type { TabId } from './NavigationHandler';
 import { cn } from '../../lib/utils';
 import { useVaultStore } from '../../store/vaultStore';
@@ -144,6 +143,11 @@ const DeviceSessionsPage = lazy(() =>
 const VaultEcosystemPage = lazy(() =>
   import('../../features/vault/VaultEcosystemPage').then((m) => ({
     default: m.VaultEcosystemPage || (m as any).default,
+  })),
+);
+const EmergencyClaimPage = lazy(() =>
+  import('./EmergencyClaimPage').then((m) => ({
+    default: m.EmergencyClaimPage || (m as any).default,
   })),
 );
 const LegalPage = lazy(() =>
@@ -361,17 +365,25 @@ export function AppShell({
     };
   }, [panicLock, resetSidebarGesture, setIsSidebarOpen]);
 
+  // Notifications poller (pauses when offline or tab is backgrounded)
   React.useEffect(() => {
+    if (!username) return;
+
     let isMounted = true;
     let isFetching = false;
     const pollNotifications = async () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
         return;
       }
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        return;
+      }
       if (isFetching) return;
       isFetching = true;
       try {
         await fetchNotifications();
+      } catch {
+        // Ignored; store manages error states
       } finally {
         if (isMounted) isFetching = false;
       }
@@ -383,10 +395,15 @@ export function AppShell({
       }
     };
 
+    const handleOnline = () => {
+      void pollNotifications();
+    };
+
     void pollNotifications();
     const interval = setInterval(pollNotifications, 30000);
     if (typeof window !== 'undefined') {
       document.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('online', handleOnline);
     }
 
     return () => {
@@ -394,9 +411,10 @@ export function AppShell({
       clearInterval(interval);
       if (typeof window !== 'undefined') {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('online', handleOnline);
       }
     };
-  }, [fetchNotifications]);
+  }, [fetchNotifications, username]);
 
   const [headerProfileName, setHeaderProfileName] = React.useState('');
   const [headerProfilePhoto, setHeaderProfilePhoto] = React.useState<string | null>(null);
@@ -405,21 +423,10 @@ export function AppShell({
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const profileLoadRequestIdRef = React.useRef(0);
 
-  const isPopStateRef = React.useRef(false);
   const { restoreScrollPosition } = useScrollRestoration(`route_${locationPath}`, scrollRef, {
     enabled: true,
     autoRestore: true,
   });
-
-  React.useEffect(() => {
-    const handlePopState = () => {
-      isPopStateRef.current = true;
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, []);
 
   React.useEffect(() => {
     const preloadPriorityRoutes = () => {
@@ -433,9 +440,9 @@ export function AppShell({
     if (typeof window === 'undefined') return;
 
     if ('requestIdleCallback' in window) {
-      const idleId = window.requestIdleCallback(preloadPriorityRoutes, { timeout: 1000 });
+      const idleId = (window as any).requestIdleCallback(preloadPriorityRoutes, { timeout: 1000 });
       return () => {
-        window.cancelIdleCallback(idleId);
+        (window as any).cancelIdleCallback(idleId);
       };
     }
 
@@ -488,13 +495,11 @@ export function AppShell({
 
   React.useEffect(() => {
     setHeaderProfileName((previous) => {
-      const normalizedPrevious = normalizeDisplayName(previous);
-      if (normalizedPrevious) {
-        return normalizedPrevious;
-      }
-      return normalizeDisplayName(username);
+      if (!previous) return normalizeDisplayName(username);
+      return previous;
     });
-  }, [username]);
+    void loadHeaderProfile();
+  }, [username, loadHeaderProfile]);
 
   React.useEffect(() => {
     void loadHeaderProfile();
@@ -561,16 +566,18 @@ export function AppShell({
 
   return (
     <>
-      <Suspense fallback={null}>
-        <CommandPalette />
-        {maintenanceModal.isOpen && (
-          <MaintenanceModal
-            isOpen={maintenanceModal.isOpen}
-            onClose={onCloseMaintenance}
-            type={maintenanceModal.type}
-          />
-        )}
-      </Suspense>
+      <ErrorBoundary fallback={null}>
+        <Suspense fallback={null}>
+          <CommandPalette />
+          {maintenanceModal.isOpen && (
+            <MaintenanceModal
+              isOpen={maintenanceModal.isOpen}
+              onClose={onCloseMaintenance}
+              type={maintenanceModal.type}
+            />
+          )}
+        </Suspense>
+      </ErrorBoundary>
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -582,7 +589,7 @@ export function AppShell({
             ease: [0.22, 1, 0.36, 1],
           }}
           className={cn(
-            'flex h-screen bg-bg text-text selection:bg-text selection:text-bg transition-colors duration-300 overflow-hidden relative',
+            'flex h-screen h-[100dvh] bg-bg text-text selection:bg-text selection:text-bg transition-colors duration-300 overflow-hidden relative',
             sidebarPosition === 'right' && 'flex-row-reverse',
           )}
           onTouchStart={handleMobileTouchStart}
@@ -608,11 +615,15 @@ export function AppShell({
           {showMobileOverlay && (
             <div
               onClick={closeSidebar}
+              onTouchStart={handleMobileTouchStart}
+              onTouchMove={handleMobileTouchMove}
+              onTouchEnd={handleMobileTouchEnd}
+              onTouchCancel={handleMobileTouchEnd}
               className={cn(
                 'fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden',
                 !isSidebarOpen && !isSidebarDragging && 'pointer-events-none',
               )}
-              style={{ opacity: normalizedMobileOverlayOpacity }}
+              style={{ opacity: normalizedMobileOverlayOpacity, touchAction: 'none' }}
             />
           )}
 
@@ -635,7 +646,7 @@ export function AppShell({
             style={mobileSidebarTransform ? { transform: mobileSidebarTransform } : undefined}
           />
 
-          <div className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex flex-1 flex-col overflow-hidden min-w-0">
             <VaultIntegrityAlarmBanner />
             <AppHeader
               showNotifications={showNotifications}
@@ -663,48 +674,64 @@ export function AppShell({
               }`}
             >
               <AnimatePresence mode="wait">
-                <ErrorBoundary
-                  fallback={
-                    <ErrorFallback
-                      label={`The ${activeTabLabel} section failed to load. Please refresh and try again.`}
-                    />
-                  }
+                <motion.div
+                  key={locationPath}
+                  initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+                  animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                  exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
+                  transition={{ duration: shouldReduceMotion ? 0.1 : 0.2 }}
+                  ref={(node) => {
+                    scrollRef.current = node;
+                  }}
+                  onAnimationComplete={() => {
+                    restoreScrollPosition();
+                  }}
+                  data-scroll-container="true"
+                  data-scroll-id="app-shell-main"
+                  className={cn(
+                    'mx-auto w-full h-full',
+                    activeTab === 'notes' || activeTab === 'locations' || activeTab === 'chats'
+                      ? 'overflow-hidden'
+                      : cn(
+                          maintenanceModal.isOpen ? 'overflow-hidden' : 'overflow-y-auto',
+                          'p-4 lg:p-4 xl:p-8 custom-scrollbar touch-pan-y',
+                        ),
+                    'max-w-[120rem]',
+                  )}
                 >
-                  <Suspense
-                    fallback={
-                      <div className="flex h-full min-h-[calc(100vh-10rem)] items-center justify-center">
-                        <LoadingScreen fullscreen={false} label={`Loading ${activeTabLabel}...`} />
+                  <ErrorBoundary
+                    fallback={(error, reset) => (
+                      <div className="flex h-full min-h-[50vh] flex-col items-center justify-center p-6 text-center">
+                        <div className="w-full max-w-md rounded-3xl border border-card-border bg-card/60 p-8 shadow-xl backdrop-blur-md">
+                          <h2 className="text-base font-bold text-text">Section Load Error</h2>
+                          <p className="mt-2 text-xs leading-relaxed text-text/60">
+                            The {activeTabLabel} section encountered an unexpected error.
+                          </p>
+                          {error?.message && (
+                            <p className="mt-2 text-[11px] font-mono text-red-400/90 bg-red-500/10 p-2.5 rounded-xl break-words">
+                              {error.message}
+                            </p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={reset}
+                            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-text px-4 py-2 text-xs font-semibold text-bg transition hover:opacity-90 active:scale-95 cursor-pointer"
+                          >
+                            Try Again
+                          </button>
+                        </div>
                       </div>
-                    }
+                    )}
                   >
-                    <motion.div
-                      key={locationPath}
-                      initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
-                      animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
-                      transition={{ duration: shouldReduceMotion ? 0.1 : 0.2 }}
-                      ref={(node) => {
-                        scrollRef.current = node;
-                        if (node) {
-                          restoreScrollPosition();
-                        }
-                      }}
-                      onAnimationComplete={() => {
-                        restoreScrollPosition();
-                      }}
-                      data-scroll-container="true"
-                      data-scroll-id="app-shell-main"
-                      className={cn(
-                        'mx-auto w-full h-full',
-                        // Pages that handle their own complex layouts with internal scrolling
-                        activeTab === 'notes' || activeTab === 'locations' || activeTab === 'chats'
-                          ? 'overflow-hidden'
-                          : cn(
-                              maintenanceModal.isOpen ? 'overflow-hidden' : 'overflow-y-auto',
-                              'p-4 lg:p-4 xl:p-8 custom-scrollbar touch-pan-y',
-                            ),
-                        'max-w-[120rem]',
-                      )}
+                    <Suspense
+                      fallback={
+                        <div className="flex h-full min-h-[calc(100vh-10rem)] items-center justify-center">
+                          <LoadingScreen
+                            fullscreen={false}
+                            label={`Loading ${activeTabLabel}...`}
+                          />
+                        </div>
+                      }
                     >
                       <Routes>
                         {/* Main */}
@@ -764,6 +791,7 @@ export function AppShell({
                           path="/eco"
                           element={<VaultEcosystemPage onBack={() => navigateToTab('settings')} />}
                         />
+                        <Route path="/emergency-claim" element={<EmergencyClaimPage />} />
                         <Route path="/legal" element={<LegalPage />} />
                         <Route
                           path="/contact"
@@ -771,9 +799,9 @@ export function AppShell({
                         />
                         <Route path="*" element={<NotFoundPage />} />
                       </Routes>
-                    </motion.div>
-                  </Suspense>
-                </ErrorBoundary>
+                    </Suspense>
+                  </ErrorBoundary>
+                </motion.div>
               </AnimatePresence>
             </main>
           </div>

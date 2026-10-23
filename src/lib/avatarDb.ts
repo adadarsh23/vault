@@ -37,6 +37,9 @@ function getDb(): Promise<IDBPDatabase<AvatarDBSchema>> {
           store.createIndex('by-timestamp', 'timestamp');
         }
       },
+    }).catch((err) => {
+      dbPromise = null;
+      throw err;
     });
   }
   return dbPromise;
@@ -76,7 +79,12 @@ export async function removeQueuedAvatar(id: string): Promise<void> {
  * Registers background sync with Service Worker if supported, otherwise returns false
  */
 export async function registerAvatarSync(): Promise<boolean> {
-  if ('serviceWorker' in navigator && 'SyncManager' in window) {
+  if (
+    typeof window !== 'undefined' &&
+    typeof navigator !== 'undefined' &&
+    'serviceWorker' in navigator &&
+    'SyncManager' in window
+  ) {
     try {
       const registration = await navigator.serviceWorker.ready;
       await (registration as any).sync.register('avatar-sync');

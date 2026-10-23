@@ -70,7 +70,7 @@ export const fetchCsrfToken = async (forceRefresh = false): Promise<string | nul
   }
 
   const fetchImpl = resolveFetchImpl();
-  pendingCsrfTokenPromise = fetchImpl(CSRF_TOKEN_ENDPOINT, {
+  const currentPromise = fetchImpl(CSRF_TOKEN_ENDPOINT, {
     method: 'GET',
     credentials: 'include',
     headers: {
@@ -90,7 +90,9 @@ export const fetchCsrfToken = async (forceRefresh = false): Promise<string | nul
         return null;
       }
 
-      cachedCsrfToken = csrfToken;
+      if (pendingCsrfTokenPromise === currentPromise) {
+        cachedCsrfToken = csrfToken;
+      }
       return csrfToken;
     })
     .catch((error) => {
@@ -98,10 +100,13 @@ export const fetchCsrfToken = async (forceRefresh = false): Promise<string | nul
       return null;
     })
     .finally(() => {
-      pendingCsrfTokenPromise = null;
+      if (pendingCsrfTokenPromise === currentPromise) {
+        pendingCsrfTokenPromise = null;
+      }
     });
 
-  return pendingCsrfTokenPromise;
+  pendingCsrfTokenPromise = currentPromise;
+  return currentPromise;
 };
 
 export const getCsrfTokenForApiRequest = async (

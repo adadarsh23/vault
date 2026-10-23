@@ -356,12 +356,21 @@ export const ShortcutsCard: React.FC = () => {
     ).join('\n');
 
     if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(`--- VAULT CONTROLS & SHORTCUTS CHEAT SHEET ---\n\n${text}`);
+      navigator.clipboard
+        .writeText(`--- VAULT CONTROLS & SHORTCUTS CHEAT SHEET ---\n\n${text}`)
+        .then(() => {
+          setCopiedSummary(true);
+          if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+          copyTimerRef.current = setTimeout(() => setCopiedSummary(false), 2000);
+        })
+        .catch(() => {
+          // Ignore clipboard permission rejections gracefully
+        });
+    } else {
+      setCopiedSummary(true);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopiedSummary(false), 2000);
     }
-
-    setCopiedSummary(true);
-    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-    copyTimerRef.current = setTimeout(() => setCopiedSummary(false), 2000);
   }, []);
 
   return (

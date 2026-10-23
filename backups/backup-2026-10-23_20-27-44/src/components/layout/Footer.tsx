@@ -1,0 +1,256 @@
+import React, { memo, useCallback } from 'react';
+import { motion, useReducedMotion, Variants } from 'framer-motion';
+import { Lock } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+
+export interface FooterProps {
+  className?: string;
+}
+
+/* ───────── Variants ───────── */
+
+const containerVariants = (reduce: boolean): Variants => ({
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: reduce ? 0 : 0.06,
+      delayChildren: reduce ? 0 : 0.1,
+    },
+  },
+});
+
+const charVariants = (reduce: boolean): Variants => ({
+  hidden: { opacity: 0, y: reduce ? 0 : 40 },
+  visible: {
+    opacity: 0.2,
+    y: 0,
+    transition: {
+      duration: reduce ? 0.01 : 0.9,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+});
+
+const fadeUp = (reduce: boolean): Variants => ({
+  hidden: { opacity: 0, y: reduce ? 0 : 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: reduce ? 0.01 : 0.5,
+      ease: 'easeOut',
+    },
+  },
+});
+
+/* ───────── Component ───────── */
+
+export const Footer: React.FC<FooterProps> = memo(({ className = '' }) => {
+  const shouldReduceMotion = useReducedMotion();
+  const location = useLocation();
+
+  // Handle smooth scroll to section if already on legal page
+  const handleLegalHashClick = useCallback(
+    (hash: string) => {
+      if (typeof window === 'undefined') return;
+      if (location.pathname === '/legal') {
+        try {
+          const element = document.getElementById(hash.replace('#', ''));
+          if (element) {
+            element.scrollIntoView({ behavior: shouldReduceMotion ? 'auto' : 'smooth' });
+          }
+        } catch {
+          // Graceful fallback
+        }
+      }
+    },
+    [location.pathname, shouldReduceMotion],
+  );
+
+  return (
+    <footer
+      className={`relative z-10 mt-20 sm:mt-28 lg:mt-32 pb-[max(2.5rem,calc(env(safe-area-inset-bottom)+1.5rem))] overflow-hidden w-full max-w-full isolate select-none ${className}`}
+    >
+      {/* ───── Background Text (VAULT) ───── */}
+      <div
+        className="absolute inset-0 flex items-end justify-center pointer-events-none select-none -z-10 overflow-hidden w-full max-w-full isolate"
+        aria-hidden="true"
+      >
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-60px' }}
+          variants={containerVariants(!!shouldReduceMotion)}
+          className="
+            flex items-end justify-center
+            -space-x-[0.04em]
+            translate-y-[35%] sm:translate-y-[15%] lg:translate-y-[12%]
+            w-full max-w-full h-full
+            will-change-transform
+          "
+        >
+          {Array.from('VAULT').map((char, index) => (
+            <motion.span
+              key={`${char}-${index}`}
+              variants={charVariants(!!shouldReduceMotion)}
+              whileHover={
+                shouldReduceMotion
+                  ? {}
+                  : {
+                      opacity: 0.28,
+                      y: -10,
+                      scale: 1.02,
+                      transition: { duration: 0.2 },
+                    }
+              }
+              className="
+                text-[clamp(3rem,18vw,35rem)]
+                sm:text-[clamp(7.5rem,26vw,35rem)]
+                font-black
+                leading-none
+                text-white
+                whitespace-nowrap
+                tracking-tighter
+                will-change-transform
+              "
+              style={{
+                filter: 'blur(0.5px)',
+              }}
+            >
+              {char}
+            </motion.span>
+          ))}
+        </motion.div>
+
+        {/* Ambient Bottom Glow */}
+        <div className="absolute bottom-0 left-0 right-0 h-80 bg-gradient-to-t from-indigo-500/20 via-fuchsia-500/15 via-cyan-400/10 to-transparent blur-[120px]" />
+
+        {/* Center Glow */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-60 rounded-full bg-white/5 blur-[120px]" />
+
+        {/* Vignette */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_45%,rgba(0,0,0,0.3)_100%)]" />
+
+        {/* Top Fade */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30" />
+
+        {/* Grid Noise */}
+        <div className="absolute inset-0 opacity-[0.03] mix-blend-soft-light bg-[radial-gradient(circle_at_center,white_1px,transparent_1px)] [background-size:22px_22px]" />
+
+        {/* Film Grain */}
+        <div className="absolute inset-0 opacity-[0.025] bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%220%200%20200%20200%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter%20id=%22n%22%3E%3CfeTurbulence%20type=%22fractalNoise%22%20baseFrequency=%220.8%22%20numOctaves=%223%22%20stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect%20width=%22100%25%22%20height=%22100%25%22%20filter=%22url(%23n)%22/%3E%3C/svg%3E')] mix-blend-overlay" />
+      </div>
+
+      {/* ───── Main Content ───── */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-40px' }}
+          variants={fadeUp(!!shouldReduceMotion)}
+          className="pt-12 sm:pt-16 lg:pt-20 border-t border-white/10"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-8 gap-y-10 sm:gap-y-12">
+            {/* ───── Brand ───── */}
+            <div className="lg:col-span-5 flex flex-col items-center sm:items-start text-center sm:text-left">
+              <div className="flex items-center gap-3 mb-4">
+                <motion.div
+                  whileHover={shouldReduceMotion ? {} : { scale: 1.05, rotate: 3 }}
+                  whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
+                  className="p-2 rounded-xl bg-white text-black shadow-lg"
+                >
+                  <Lock className="w-6 h-6 sm:w-7 sm:h-7" aria-hidden="true" />
+                </motion.div>
+
+                <span className="text-xl sm:text-2xl font-semibold text-white tracking-tight">
+                  Vault
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-white/50 max-w-xs sm:max-w-sm">
+                Zero-knowledge client-side encrypted vault for all your personal data, media, and
+                credentials.
+              </p>
+            </div>
+
+            {/* ───── Links ───── */}
+            <div className="lg:col-span-7 flex flex-col items-center sm:items-end">
+              <div className="w-full max-w-xs sm:max-w-none flex flex-col items-center sm:items-end">
+                <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40 mb-3 sm:mb-4">
+                  Navigation
+                </h2>
+
+                <nav
+                  aria-label="Footer Navigation"
+                  className="flex flex-col gap-2.5 w-full items-center sm:items-end"
+                >
+                  <Link
+                    to="/contact"
+                    className="
+                      w-full sm:w-auto
+                      px-3 py-1.5 sm:px-0 sm:py-0
+                      text-center sm:text-right
+                      text-white/70 text-sm
+                      rounded-lg
+                      transition-colors duration-200
+                      hover:text-white
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40
+                    "
+                  >
+                    Contact Us
+                  </Link>
+                  <Link
+                    to="/legal#privacy"
+                    onClick={() => handleLegalHashClick('privacy')}
+                    className="
+                      w-full sm:w-auto
+                      px-3 py-1.5 sm:px-0 sm:py-0
+                      text-center sm:text-right
+                      text-white/70 text-sm
+                      rounded-lg
+                      transition-colors duration-200
+                      hover:text-white
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40
+                    "
+                  >
+                    Privacy Policy
+                  </Link>
+                  <Link
+                    to="/legal#license"
+                    onClick={() => handleLegalHashClick('license')}
+                    className="
+                      w-full sm:w-auto
+                      px-3 py-1.5 sm:px-0 sm:py-0
+                      text-center sm:text-right
+                      text-white/70 text-sm
+                      rounded-lg
+                      transition-colors duration-200
+                      hover:text-white
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40
+                    "
+                  >
+                    License
+                  </Link>
+                </nav>
+              </div>
+            </div>
+          </div>
+
+          {/* ───── Bottom ───── */}
+          <div className="mt-12 sm:mt-14 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-white/40 text-xs">
+              © {new Date().getFullYear()} Vault. All rights reserved.
+            </p>
+
+            <span className="text-white/30 text-[10px] uppercase tracking-[0.2em] font-medium">
+              Data Encrypted Vault
+            </span>
+          </div>
+        </motion.div>
+      </div>
+    </footer>
+  );
+});
+
+Footer.displayName = 'Footer';
+export default Footer;

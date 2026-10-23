@@ -99,4 +99,32 @@ describe('useVideoMiniPlayerStore', () => {
     expect(state.isPlaying).toBe(true);
     expect(state.isMuted).toBe(true);
   });
+
+  it('supports togglePlay, toggleMute, seekTo, and setPlaybackRate', () => {
+    useVideoMiniPlayerStore.getState().playVideo({
+      id: 'vid-999',
+      title: 'Action Test',
+      src: 'blob:test',
+    });
+
+    useVideoMiniPlayerStore.getState().updatePlaybackState({ duration: 60 });
+
+    useVideoMiniPlayerStore.getState().togglePlay();
+    expect(useVideoMiniPlayerStore.getState().isPlaying).toBe(false);
+
+    useVideoMiniPlayerStore.getState().togglePlay();
+    expect(useVideoMiniPlayerStore.getState().isPlaying).toBe(true);
+
+    useVideoMiniPlayerStore.getState().toggleMute();
+    expect(useVideoMiniPlayerStore.getState().isMuted).toBe(true);
+
+    useVideoMiniPlayerStore.getState().seekTo(35);
+    expect(useVideoMiniPlayerStore.getState().currentTime).toBe(35);
+
+    useVideoMiniPlayerStore.getState().seekTo(100); // Exceeds duration
+    expect(useVideoMiniPlayerStore.getState().currentTime).toBe(60);
+
+    useVideoMiniPlayerStore.getState().setPlaybackRate(1.5);
+    expect(useVideoMiniPlayerStore.getState().playbackRate).toBe(1.5);
+  });
 });

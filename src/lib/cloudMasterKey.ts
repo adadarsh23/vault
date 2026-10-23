@@ -7,6 +7,8 @@ import {
 import { argon2id } from 'hash-wasm';
 import { handleError } from './error-handler';
 
+const sharedTextEncoder = new TextEncoder();
+
 /**
  * Client-side Master Key Cloud Storage
  * Handles encryption/decryption of master key for cloud backup
@@ -63,7 +65,7 @@ export const generateCloudProtectionKey = async (
       throw new Error('Password and salt are required to generate cloud protection key');
     }
 
-    const saltBuffer = new TextEncoder().encode(salt);
+    const saltBuffer = sharedTextEncoder.encode(salt);
     const hashBuffer = (await argon2id({
       password,
       salt: saltBuffer,
@@ -105,9 +107,9 @@ export const encryptMasterKeyForCloud = async (
 
     // Parse the encrypted bundle to extract components
     const bundleBytes = base64ToUint8Array(encryptedBundle);
-    const iv = bundleBytes.slice(0, 12);
-    const ciphertext = bundleBytes.slice(12, bundleBytes.length - 16);
-    const authTag = bundleBytes.slice(bundleBytes.length - 16);
+    const iv = bundleBytes.subarray(0, 12);
+    const ciphertext = bundleBytes.subarray(12, bundleBytes.length - 16);
+    const authTag = bundleBytes.subarray(bundleBytes.length - 16);
 
     return {
       cipherText: uint8ArrayToBase64(ciphertext),
@@ -175,8 +177,7 @@ export const hashMasterKey = async (masterKey: string): Promise<string> => {
       throw new Error('Master key is required to create hash');
     }
 
-    const encoder = new TextEncoder();
-    const data = encoder.encode(masterKey);
+    const data = sharedTextEncoder.encode(masterKey);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     return uint8ArrayToBase64(new Uint8Array(hashBuffer));
   } catch (error) {

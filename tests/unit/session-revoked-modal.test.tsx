@@ -66,14 +66,14 @@ describe('SessionRevokedModal', () => {
 
     // Check text elements
     expect(screen.getByText('Session Revoked')).toBeInTheDocument();
-    expect(screen.getByText('Session Access Terminated')).toBeInTheDocument();
+    expect(screen.getByText('Terminated from Another Device')).toBeInTheDocument();
     expect(screen.getByText('Operations Banned')).toBeInTheDocument();
     expect(screen.getByText(/Session ID/i)).toBeInTheDocument();
 
     // Check button touch responsiveness
     const returnButton = screen.getByRole('button', { name: /return to sign in/i });
     expect(returnButton).toBeInTheDocument();
-    expect(returnButton.className).toContain('min-h-[44px]');
+    expect(returnButton.className).toContain('min-h-[48px]');
     expect(returnButton.className).toContain('touch-manipulation');
   });
 

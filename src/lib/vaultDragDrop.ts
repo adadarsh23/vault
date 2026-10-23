@@ -7,6 +7,7 @@ export const VAULT_ITEM_PLAIN_PREFIX = 'vault-item:';
 export const VAULT_ITEMS_PLAIN_PREFIX = 'vault-items:';
 const MAX_VAULT_ITEM_ID_LENGTH = 256;
 const DRAG_FALLBACK_TTL_MS = 30_000;
+const CONTROL_CHARS_REGEX = /[\u0000-\u001f\u007f]/;
 
 type DragDataTransferLike = Pick<
   DataTransfer,
@@ -56,7 +57,7 @@ const normalizeVaultItemId = (value: string): string | null => {
   }
 
   // Reject control characters in drag payloads.
-  if (/[\u0000-\u001f\u007f]/.test(trimmed)) {
+  if (CONTROL_CHARS_REGEX.test(trimmed)) {
     return null;
   }
 
@@ -94,7 +95,13 @@ const dragTypesContain = (
   if (!types) {
     return false;
   }
-  return Array.from(types as ArrayLike<string>).includes(expectedType);
+  if ('includes' in types && typeof (types as any).includes === 'function') {
+    return (types as any).includes(expectedType);
+  }
+  for (let i = 0; i < types.length; i++) {
+    if (types[i] === expectedType) return true;
+  }
+  return false;
 };
 
 export const clearDraggedVaultItem = () => {

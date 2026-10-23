@@ -19,6 +19,8 @@ import {
   Wifi,
 } from 'lucide-react';
 import { ItemActivityBarChart } from '../../components/vault/ItemActivityBarChart';
+import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { useVaultStore } from '../../store/vaultStore';
 import { useActivityStore } from '../../store/activityStore';
 import { useShallow } from 'zustand/react/shallow';
@@ -148,9 +150,9 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
       media: 0,
     };
     const mediaTypes = new Set<string>([ITEM_TYPES.PHOTO, ITEM_TYPES.VIDEO, ITEM_TYPES.AUDIO]);
-    items.forEach((item) => {
-      if (item.type in counts) counts[item.type]++;
-      if (mediaTypes.has(item.type)) counts.media++;
+    (items || []).forEach((item) => {
+      if (item && item.type in counts) counts[item.type]++;
+      if (item && mediaTypes.has(item.type)) counts.media++;
     });
     return counts;
   }, [items]);
@@ -293,7 +295,7 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
 
   const syncSummary = React.useMemo(() => {
     if (syncStatus === 'success' && lastSuccessfulSyncAt) {
-      return `Last synced ${new Date(lastSuccessfulSyncAt).toLocaleString('en-IN', {
+      return `Last synced ${new Date(lastSuccessfulSyncAt).toLocaleString(undefined, {
         day: '2-digit',
         month: 'short',
         hour: '2-digit',
@@ -416,7 +418,12 @@ export const Dashboard: React.FC<{ onNavigate: (tab: string) => void }> = ({ onN
           syncStatus={syncStatus}
           lastSyncError={lastSyncError}
           onNavigateSettings={() => onNavigate('settings')}
-          onRetrySync={() => void syncWithCloud()}
+          onRetrySync={() => {
+            syncWithCloud().catch((err) => {
+              logger.error('Dashboard cloud sync retry failed', { error: err });
+              toast.error('Sync failed. Please verify your connection.');
+            });
+          }}
         />
       </section>
     </div>

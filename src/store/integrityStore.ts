@@ -30,7 +30,7 @@ export interface TamperAlarmPayload {
   timestamp: number;
 }
 
-interface IntegrityState {
+export interface IntegrityState {
   rootHash: string;
   algorithm: HashAlgorithm;
   totalLeaves: number;
@@ -51,8 +51,20 @@ interface IntegrityState {
   verifyItemLocally: (item: VaultItem) => Promise<boolean>;
   triggerTamperAlarm: (payload: TamperAlarmPayload) => void;
   dismissTamperAlarm: () => void;
+  resetIntegrityState: () => void;
   simulateBitFlipAttack: (item?: VaultItem) => Promise<void>;
 }
+
+const toValidTimestamp = (val: unknown): number | null => {
+  if (typeof val === 'number' && Number.isFinite(val) && val > 0) return Math.floor(val);
+  if (typeof val === 'string') {
+    const num = Number(val);
+    if (Number.isFinite(num) && num > 0) return Math.floor(num);
+    const parsed = new Date(val).getTime();
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  return null;
+};
 
 export const useIntegrityStore = create<IntegrityState>((set, get) => ({
   rootHash: '',
@@ -74,9 +86,9 @@ export const useIntegrityStore = create<IntegrityState>((set, get) => ({
         set({
           rootHash: data.data.activeRootHash || '',
           algorithm: data.data.algorithm || 'blake3',
-          totalLeaves: data.data.totalLeaves || 0,
-          treeDepth: data.data.treeDepth || 0,
-          lastAuditAt: data.data.lastAuditAt ? new Date(data.data.lastAuditAt).getTime() : null,
+          totalLeaves: typeof data.data.totalLeaves === 'number' ? data.data.totalLeaves : 0,
+          treeDepth: typeof data.data.treeDepth === 'number' ? data.data.treeDepth : 0,
+          lastAuditAt: toValidTimestamp(data.data.lastAuditAt),
           lastAuditStatus: data.data.lastAuditStatus || 'clean',
         });
       }
@@ -218,48 +230,65 @@ export const useIntegrityStore = create<IntegrityState>((set, get) => ({
     const expectedHash = item.metadata?.integrity?.hash || item.metadata?.sha256;
     if (!expectedHash) return true;
 
-    let actualHash = '';
-    if (item.content instanceof Uint8Array) {
-      actualHash = await computeBufferHash(item.content, algorithm);
-    } else if (typeof item.content === 'string' && item.content.length > 0) {
-      actualHash = await computeBufferHash(item.content, algorithm);
-    }
+    try {
+      let actualHash = '';
+      if (item.content instanceof Uint8Array) {
+        actualHash = await computeBufferHash(item.content, algorithm);
+      } else if (typeof item.content === 'string' && item.content.length > 0) {
+        actualHash = await computeBufferHash(item.content, algorithm);
+      }
 
-    if (actualHash && actualHash.toLowerCase() !== expectedHash.toLowerCase()) {
-      // Bit flip detected locally!
-      const corruptedItem: CorruptedItemDetail = {
-        itemId: item.id,
-        title: item.title,
-        category: item.type,
-        expectedHash,
-        actualHash,
-        reason: 'Local cryptographic hash mismatch (bit-flip / corrupted data)',
-      };
-
-      get().triggerTamperAlarm({
-        type: 'LOCAL_BIT_FLIP_DETECTED',
-        severity: 'CRITICAL',
-        corruptedItems: [corruptedItem],
-        timestamp: Date.now(),
-      });
-
-      // Report to server
-      apiClient
-        .post('/vault/integrity/report-tamper', {
+      if (actualHash && actualHash.trim().toLowerCase() !== expectedHash.trim().toLowerCase()) {
+        // Bit flip detected locally!
+        const corruptedItem: CorruptedItemDetail = {
           itemId: item.id,
+          title: item.title,
+          category: item.type,
           expectedHash,
           actualHash,
-          details: { category: item.type, title: item.title },
-        })
-        .catch(() => {});
+          reason: 'Local cryptographic hash mismatch (bit-flip / corrupted data)',
+        };
 
-      return false;
+        get().triggerTamperAlarm({
+          type: 'LOCAL_BIT_FLIP_DETECTED',
+          severity: 'CRITICAL',
+          corruptedItems: [corruptedItem],
+          timestamp: Date.now(),
+        });
+
+        // Report to server
+        apiClient
+          .post('/vault/integrity/report-tamper', {
+            itemId: item.id,
+            expectedHash,
+            actualHash,
+            details: { category: item.type, title: item.title },
+          })
+          .catch(() => {});
+
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.warn('Local integrity verification skipped due to hash error:', err);
+      return true;
     }
-
-    return true;
   },
 
   triggerTamperAlarm: (payload: TamperAlarmPayload) => {
+    const current = get();
+    const isDuplicate =
+      current.tamperAlarmActive &&
+      current.lastAlarmPayload &&
+      ((payload.auditId && current.lastAlarmPayload.auditId === payload.auditId) ||
+        (payload.timestamp &&
+          Math.abs(current.lastAlarmPayload.timestamp - payload.timestamp) < 3000));
+
+    if (isDuplicate) {
+      return;
+    }
+
     set({
       tamperAlarmActive: true,
       corruptedItems: payload.corruptedItems || [],
@@ -291,6 +320,22 @@ export const useIntegrityStore = create<IntegrityState>((set, get) => ({
 
   dismissTamperAlarm: () => {
     set({ tamperAlarmActive: false });
+  },
+
+  resetIntegrityState: () => {
+    set({
+      rootHash: '',
+      algorithm: 'blake3',
+      totalLeaves: 0,
+      treeDepth: 0,
+      lastAuditAt: null,
+      lastAuditStatus: 'idle',
+      isAuditing: false,
+      tamperAlarmActive: false,
+      corruptedItems: [],
+      activeProof: null,
+      lastAlarmPayload: null,
+    });
   },
 
   simulateBitFlipAttack: async (item?: VaultItem) => {

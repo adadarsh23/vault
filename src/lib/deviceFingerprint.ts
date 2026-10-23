@@ -13,11 +13,14 @@ const generateDeviceId = (): string => {
   return `${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 };
 
+let cachedFingerprint: string | null = null;
+
 /**
  * Generates a stable device fingerprint for token binding.
  * Combined factors: User-Agent, Screen Resolution, Platform, and a persistent Random ID.
  */
 export const getDeviceFingerprint = (): string => {
+  if (cachedFingerprint) return cachedFingerprint;
   if (typeof window === 'undefined') return 'unknown';
 
   let deviceId: string | null = null;
@@ -36,14 +39,17 @@ export const getDeviceFingerprint = (): string => {
     }
   }
 
-  const factors = [
-    navigator.userAgent,
-    `${window.screen.width}x${window.screen.height}`,
-    navigator.platform,
-    deviceId,
-  ];
+  const screenRes =
+    typeof window.screen !== 'undefined' ? `${window.screen.width}x${window.screen.height}` : '0x0';
+  const platform =
+    (navigator as unknown as { userAgentData?: { platform?: string } }).userAgentData?.platform ||
+    navigator.platform ||
+    'unknown';
 
-  return factors.join('|');
+  const factors = [navigator.userAgent || '', screenRes, platform, deviceId];
+
+  cachedFingerprint = factors.join('|');
+  return cachedFingerprint;
 };
 
 /**

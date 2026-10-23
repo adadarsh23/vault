@@ -22,6 +22,7 @@ import { clearAuthToken, clearCloudSessionHint } from '../../lib/auth-session';
 import { uploadKeyCheckToCloud } from '../../lib/sync';
 import { logActivity } from '../../lib/activity';
 import { validatePassword } from '../../lib/utils';
+import { logger } from '../../lib/logger';
 import { identifyLogRocketUser } from '../../lib/logrocket';
 import { SecurityLayer } from './SecurityLayers';
 
@@ -408,7 +409,9 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
             try {
               salt = await fetchVaultSalt(normalizedUsername);
             } catch (err) {
-              console.warn('Failed to fetch salt from server, falling back to legacy salt:', err);
+              logger.warn('Failed to fetch salt from server, falling back to legacy salt', {
+                error: err,
+              });
             }
           }
 
@@ -443,7 +446,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
               throw new Error('ChaCha20-Poly1305 cipher suite not available.');
             }
           } catch (sodiumErr: any) {
-            console.warn('Libsodium ChaCha20 cipher check warning:', sodiumErr);
+            logger.warn('Libsodium ChaCha20 cipher check warning', { error: sodiumErr });
           }
           await sleep(LAYER_UI_DELAY_MS);
         } else if (i === 3) {
@@ -460,10 +463,10 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
           try {
             const sodium = await getSodium();
             if (!sodium || typeof sodium.crypto_sign !== 'function') {
-              console.warn('Ed25519 signature primitive warning: signature engine initializing.');
+              logger.warn('Ed25519 signature primitive warning: signature engine initializing.');
             }
           } catch (sigErr) {
-            console.warn('Device signature check fallback:', sigErr);
+            logger.warn('Device signature check fallback', { error: sigErr });
           }
           await sleep(LAYER_UI_DELAY_MS);
         } else if (i === 5) {
@@ -472,7 +475,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
             try {
               touchCryptoKeyCache();
             } catch (cacheErr) {
-              console.warn('Ephemeral key cache check warning:', cacheErr);
+              logger.warn('Ephemeral key cache check warning', { error: cacheErr });
             }
           }
           const ephemeralTestBuffer = new Uint8Array(32);
@@ -489,7 +492,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
           // Layer 8: Multi-Factor & Lockout Defense
           const failedAttempts = getFailedUnlockAttempts();
           if (failedAttempts > 20) {
-            console.warn('Elevated failed unlock attempts detected:', failedAttempts);
+            logger.warn('Elevated failed unlock attempts detected', { failedAttempts });
           }
           await sleep(LAYER_UI_DELAY_MS);
         } else {
@@ -504,7 +507,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
 
       return derivedMasterKey;
     } catch (error) {
-      console.error('[Security Verification Error]:', error);
+      logger.error('Security Verification Error', { error });
       throw error;
     }
   };
@@ -545,9 +548,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
         for (const altSalt of candidateSalts) {
           triedSalts.push(altSalt);
           try {
-            console.warn(
-              `Primary salt unlock failed. Retrying unlock with candidate salt (${altSalt})...`,
-            );
+            logger.warn('Primary salt unlock failed. Retrying unlock with candidate salt...');
             const altMasterKey = await deriveKey(rawKey, altSalt);
             await unlock(altMasterKey, normalizedUsername);
             activeSaltRef.current = altSalt;
@@ -560,10 +561,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
         }
 
         if (!unlockedWithAlt) {
-          console.error(
-            `All candidate salts exhausted (${triedSalts.join(', ')}) – unlock failed.`,
-            unlockErr,
-          );
+          logger.error('All candidate salts exhausted – unlock failed.', { error: unlockErr });
           const masterKeyErr = new Error(
             'Master key is incorrect or vault data could not be decrypted.',
           );
@@ -926,6 +924,7 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
         // Targeted credential management: if Master Key failed after account credentials succeeded,
         // clear only the Master Key so user doesn't lose their account session
         if (isMasterKeyError && !cloudSessionActive && resolvedAccountPassword) {
+          setAccountPassword(resolvedAccountPassword);
           setVaultKey('');
         } else {
           setAccountPassword('');

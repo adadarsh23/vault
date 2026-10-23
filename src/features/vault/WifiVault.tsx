@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { useVaultStore } from '../../store/vaultStore';
 import { VaultItem } from '../../lib/storage';
 import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
@@ -140,7 +141,7 @@ const DecryptedWifiItem: React.FC<{
         setData(parsed);
         setEditPayload(parsed);
       } catch (err) {
-        console.error('Wi-Fi Decryption Error:', err);
+        logger.error('Wi-Fi Decryption Error', { error: err });
         if (isMounted) setError(true);
       }
     };
@@ -213,10 +214,12 @@ const DecryptedWifiItem: React.FC<{
         toast.success(`Downloaded QR Code for ${data.ssid}`);
       } else {
         URL.revokeObjectURL(blobURL);
+        toast.error('Failed to generate QR code canvas');
       }
     };
     image.onerror = () => {
       URL.revokeObjectURL(blobURL);
+      toast.error('Failed to load QR code for export');
     };
     image.src = blobURL;
   };
@@ -623,7 +626,10 @@ export const WifiVault: React.FC = () => {
   };
 
   const handleUpdateWifi = async (id: string, name: string, payload: WifiPayload) => {
-    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
+      toast.error('Encryption key missing');
+      throw new Error('Encryption key missing');
+    }
     try {
       const encryptedContent = await encryptData(JSON.stringify(payload), masterKey);
       await updateItem(id, {
@@ -635,8 +641,9 @@ export const WifiVault: React.FC = () => {
         },
       });
       toast.success('Wi-Fi network credentials updated');
-    } catch {
+    } catch (err) {
       toast.error('Failed to update Wi-Fi credentials');
+      throw err;
     }
   };
 

@@ -23,7 +23,9 @@ const upsertMetaContent = (
     element = created;
   }
 
-  element.setAttribute('content', content);
+  if (element.getAttribute('content') !== content) {
+    element.setAttribute('content', content);
+  }
 };
 
 const upsertCanonicalLink = (url: string) => {
@@ -38,7 +40,9 @@ const upsertCanonicalLink = (url: string) => {
     element = created;
   }
 
-  element.setAttribute('href', url);
+  if (element.getAttribute('href') !== url) {
+    element.setAttribute('href', url);
+  }
 };
 
 const toCanonicalUrl = (path: string): string | null => {
@@ -62,7 +66,9 @@ export const useDocumentMeta = ({ title, description, path = '/' }: MetaConfig) 
       return;
     }
 
-    document.title = title;
+    if (document.title !== title) {
+      document.title = title;
+    }
 
     upsertMetaContent(
       'meta[name="description"]',

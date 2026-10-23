@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 export type Theme = 'light' | 'dark' | 'system';
 type PersistedThemeState = Pick<ThemeState, 'theme'>;
 
-interface ThemeState {
+export interface ThemeState {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
@@ -75,14 +75,18 @@ export const useThemeStore = create<ThemeState>()(
 // Cross-tab synchronization
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e: StorageEvent) => {
-    if (e.key === THEME_STORAGE_KEY && e.newValue) {
-      try {
-        const parsed = JSON.parse(e.newValue);
-        const storedTheme = parsed?.state?.theme;
-        if (isTheme(storedTheme) && useThemeStore.getState().theme !== storedTheme) {
-          useThemeStore.setState({ theme: storedTheme });
-        }
-      } catch {}
+    if (e.key === THEME_STORAGE_KEY) {
+      if (e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          const storedTheme = parsed?.state?.theme;
+          if (isTheme(storedTheme) && useThemeStore.getState().theme !== storedTheme) {
+            useThemeStore.setState({ theme: storedTheme });
+          }
+        } catch {}
+      } else if (e.newValue === null && useThemeStore.getState().theme !== DEFAULT_THEME) {
+        useThemeStore.getState().resetTheme();
+      }
     }
   });
 }

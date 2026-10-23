@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/adadarsh23/vault/main/schemas/vault-manifest.schema.json",
   "title": "Vault Manifest Schema",
-  "description": "Production-grade JSON Schema specification for Vault configuration, security posture baseline, and deployment manifests.",
+  "description": "Production-grade JSON Schema specification (Draft 2020-12) for Vault configuration, project-relative architectural layout, security posture baseline, cryptographic envelopes, and deployment manifests.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -182,6 +182,12 @@
     },
     "metadata": {
       "$ref": "#/$defs/metadata"
+    },
+    "paths": {
+      "$ref": "#/$defs/paths"
+    },
+    "modules": {
+      "$ref": "#/$defs/modules"
     }
   },
   "$defs": {
@@ -364,7 +370,15 @@
               "properties": {
                 "algorithm": {
                   "type": "string",
-                  "enum": ["AES-256-GCM", "AES-128-GCM", "ChaCha20-Poly1305", "XChaCha20-Poly1305"],
+                  "enum": [
+                    "AES-256-GCM",
+                    "AES-128-GCM",
+                    "ChaCha20-Poly1305",
+                    "XChaCha20-Poly1305",
+                    "AES-256-GCM+ChaCha20-Poly1305",
+                    "VCAS01",
+                    "VENV02"
+                  ],
                   "description": "Authenticated symmetric cipher used for content encryption."
                 },
                 "keyLengthBits": {
@@ -375,6 +389,31 @@
                 "authenticatedEncryption": {
                   "type": "boolean",
                   "description": "Must be true to guarantee ciphertext integrity via AEAD."
+                },
+                "cascade": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "description": "Dual cascade cipher configuration (VCAS01).",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "magicHeader": {
+                      "type": "string",
+                      "examples": ["VCAS01"]
+                    },
+                    "headerLengthBytes": {
+                      "type": "integer",
+                      "examples": [122]
+                    },
+                    "ciphers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "examples": [["AES-256-GCM", "ChaCha20-Poly1305"]]
+                    }
+                  }
                 }
               }
             },
@@ -414,6 +453,15 @@
                   "type": "integer",
                   "minimum": 1,
                   "description": "Optional parallelism/threads parameter for KDFs."
+                },
+                "webAssemblyAcceleration": {
+                  "type": "boolean",
+                  "description": "Whether WebAssembly accelerated execution is utilized for memory-hard KDF derivation."
+                },
+                "hashLength": {
+                  "type": "integer",
+                  "minimum": 16,
+                  "description": "Derived key length in bytes (typically 32 bytes for 256-bit keys)."
                 }
               }
             },
@@ -458,6 +506,45 @@
               "type": "integer",
               "minimum": 1,
               "description": "Binary or serialized ciphertext envelope format version."
+            },
+            "envelope": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Envelope encryption configuration with DEK/KEK domain separation and sentinel checks.",
+              "properties": {
+                "masterKeyWrapping": {
+                  "type": "boolean"
+                },
+                "dekLengthBytes": {
+                  "type": "integer",
+                  "examples": [32, 64]
+                },
+                "magicHeader": {
+                  "type": "string",
+                  "examples": ["VENV02", "VCAS01"]
+                },
+                "keyCheckSentinel": {
+                  "type": "string",
+                  "examples": ["__keycheck__"]
+                },
+                "reWrapping": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "postQuantum": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Post-quantum hybrid key encapsulation (ML-KEM-768 / Kyber-768).",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "algorithm": {
+                  "type": "string",
+                  "enum": ["ML-KEM-768", "Kyber-768", "hybrid-p256-kyber768"]
+                }
+              }
             }
           }
         },
@@ -483,6 +570,15 @@
                 "exportable": {
                   "type": "boolean",
                   "description": "Controls whether master keys can be exported by the browser runtime."
+                },
+                "ephemeralMemoryZeroization": {
+                  "type": "boolean",
+                  "description": "Enforces that master key memory buffers are actively overwritten with random bytes and zeros on lock or tab close."
+                },
+                "cacheTtlMs": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Maximum time-to-live for ephemeral decrypted crypto key caching in memory before automatic clearance."
                 }
               }
             },
@@ -493,6 +589,14 @@
             "keyRotation": {
               "type": "boolean",
               "description": "Whether scheduled or on-demand re-wrapping and key rotation are supported."
+            },
+            "cloudMasterKey": {
+              "type": "boolean",
+              "description": "Whether encrypted cloud master key backup and cross-device sync are enabled."
+            },
+            "rewrapScript": {
+              "type": "string",
+              "description": "Relative path or command to execute master key envelope re-wrapping."
             }
           }
         },
@@ -516,7 +620,11 @@
                   "email-otp",
                   "magic-link",
                   "oauth",
-                  "sso"
+                  "sso",
+                  "duress-pin",
+                  "decoy-vault",
+                  "backup-codes",
+                  "recovery-keys"
                 ]
               },
               "uniqueItems": true,
@@ -530,6 +638,40 @@
             "passwordAuthentication": {
               "type": "boolean",
               "description": "Whether master password authentication is enabled."
+            },
+            "botProtection": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Automated bot and brute-force protection middleware configuration.",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "providers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["turnstile", "recaptcha-v2", "recaptcha-v3", "hcaptcha"]
+                  }
+                }
+              }
+            },
+            "decoyPartition": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Decoy vault partition for emergency duress situations.",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "failedPinThreshold": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "autoWipe": {
+                  "type": "boolean"
+                }
+              }
             }
           }
         },
@@ -687,7 +829,28 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["photo", "video", "document", "note", "password", "other"]
+            "enum": [
+              "photo",
+              "video",
+              "audio",
+              "document",
+              "note",
+              "chat",
+              "todo",
+              "password",
+              "secret",
+              "contact",
+              "location",
+              "file",
+              "other-files",
+              "other",
+              "settings",
+              "system",
+              "users",
+              "card",
+              "identity",
+              "wifi"
+            ]
           },
           "uniqueItems": true,
           "minItems": 1,
@@ -724,6 +887,64 @@
             "contentValidation": {
               "type": "boolean",
               "description": "Whether file contents are inspected for malicious structures."
+            }
+          }
+        },
+        "encodings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "utf-8",
+              "base64",
+              "binary-base64",
+              "gridfs-binary",
+              "file-reference",
+              "modern"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "Supported payload encodings in MongoDB vault collection."
+        },
+        "backends": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Supported project storage backends for encrypted artifacts.",
+          "properties": {
+            "filesystem": {
+              "type": "boolean",
+              "description": "Local project-relative filesystem storage directory (./uploads)."
+            },
+            "gridfs": {
+              "type": "boolean",
+              "description": "MongoDB GridFS binary chunk bucket storage."
+            }
+          }
+        },
+        "mediaProcessing": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Client-side media optimization, transcoding, and privacy sanitization pipeline.",
+          "properties": {
+            "webWorkers": {
+              "type": "boolean",
+              "description": "Off-main-thread Web Worker execution for media processing and cryptography."
+            },
+            "ffmpegWasm": {
+              "type": "boolean",
+              "description": "Client-side WebAssembly FFmpeg media transcoding."
+            },
+            "exifScrubbing": {
+              "type": "boolean",
+              "description": "Automatic client-side stripping of GPS, camera, and device metadata from media."
+            },
+            "blurhashGeneration": {
+              "type": "boolean",
+              "description": "Pre-generation of compact Blurhash placeholders before upload."
+            },
+            "streamingDecryption": {
+              "type": "boolean",
+              "description": "Direct chunked decrypt-and-stream pipeline for large audio and video files."
             }
           }
         }
@@ -877,6 +1098,55 @@
             "encrypted": {
               "type": "boolean",
               "description": "Must be true to ensure DB backup archives are encrypted."
+            }
+          }
+        },
+        "multiCluster": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Multi-cluster MongoDB connection pool and automatic failover system.",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "standbyCluster": {
+              "type": "boolean"
+            },
+            "pingIntervalMs": {
+              "type": "integer",
+              "minimum": 1000
+            },
+            "autoFailover": {
+              "type": "boolean"
+            },
+            "splitBrainMitigation": {
+              "type": "boolean"
+            }
+          }
+        },
+        "gridfs": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "GridFS bucket configuration for large encrypted media storage.",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "bucketName": {
+              "type": "string"
+            }
+          }
+        },
+        "isolation": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "User data collection isolation and compound index optimization.",
+          "properties": {
+            "perUserCollection": {
+              "type": "boolean"
+            },
+            "compoundIndexes": {
+              "type": "boolean"
             }
           }
         }
@@ -1034,6 +1304,35 @@
         "performanceMonitoring": {
           "type": "boolean",
           "description": "Whether application performance tracing (APM) is configured."
+        },
+        "sentry": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Sentry error tracking and performance profiling configuration.",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "clientTraces": {
+              "type": "boolean"
+            },
+            "serverProfiling": {
+              "type": "boolean"
+            }
+          }
+        },
+        "logrocket": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "LogRocket frontend session replay and backend telemetry configuration.",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "sessionReplay": {
+              "type": "boolean"
+            }
+          }
         }
       }
     },
@@ -1205,6 +1504,38 @@
         "database": {
           "type": "boolean",
           "description": "Database persistence, indexing, and connection tests passing."
+        },
+        "crypto": {
+          "type": "boolean",
+          "description": "Dual cascade and primitive encryption unit tests passing."
+        },
+        "vault": {
+          "type": "boolean",
+          "description": "Per-vault module tests (Notes, Photos, Videos, Documents, Passwords, etc.) passing."
+        },
+        "sync": {
+          "type": "boolean",
+          "description": "Delta sync, tombstone purge, and conflict resolution tests passing."
+        },
+        "stores": {
+          "type": "boolean",
+          "description": "Zustand state store integrity and subscription tests passing."
+        },
+        "media": {
+          "type": "boolean",
+          "description": "Media player, streaming security, and thumbnail tests passing."
+        },
+        "workers": {
+          "type": "boolean",
+          "description": "Web Worker pipeline and off-thread encryption tests passing."
+        },
+        "repeatStress": {
+          "type": "boolean",
+          "description": "Multi-cycle race condition stress test pipeline passing."
+        },
+        "lighthouse": {
+          "type": "boolean",
+          "description": "Lighthouse performance, accessibility, best-practices, and SEO audit passing."
         }
       }
     },
@@ -1416,6 +1747,139 @@
           "pattern": "^\\d{4}-\\d{2}-\\d{2}(?:T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?)?$",
           "description": "Last updated timestamp (ISO 8601 date or date-time).",
           "examples": ["2026-08-25"]
+        }
+      }
+    },
+    "paths": {
+      "title": "Project Relative Paths",
+      "description": "Project-relative directory paths, asset locations, and entrypoint boundaries across the Vault repository.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "type": "string",
+          "description": "Project root relative path or working directory.",
+          "examples": ["."]
+        },
+        "schemas": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*schemas.*$",
+          "description": "Project-relative path to JSON and manifest schemas directory.",
+          "examples": ["./schemas"]
+        },
+        "uploads": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*uploads.*$",
+          "description": "Project-relative path to local file staging and encrypted blob uploads directory.",
+          "examples": ["./uploads"]
+        },
+        "backups": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*backups.*$",
+          "description": "Project-relative path to system and metadata backup archives directory.",
+          "examples": ["./backups"]
+        },
+        "logs": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*logs.*$",
+          "description": "Project-relative path to structured application and audit log directory.",
+          "examples": ["./logs"]
+        },
+        "dist": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*dist.*$",
+          "description": "Project-relative path to backend distribution bundle and compiled server output.",
+          "examples": ["./dist"]
+        },
+        "build": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*build.*$",
+          "description": "Project-relative path to frontend client distribution bundle.",
+          "examples": ["./build"]
+        },
+        "public": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*public.*$",
+          "description": "Project-relative path to static assets, icons, and web manifest.",
+          "examples": ["./public"]
+        },
+        "src": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*src.*$",
+          "description": "Project-relative path to frontend React TypeScript source directory.",
+          "examples": ["./src"]
+        },
+        "server": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*server.*$",
+          "description": "Project-relative path to backend Express/Node.js server source directory.",
+          "examples": ["./server"]
+        },
+        "tests": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*tests.*$",
+          "description": "Project-relative path to Vitest automated test suites directory.",
+          "examples": ["./tests"]
+        },
+        "doc": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*doc.*$",
+          "description": "Project-relative path to technical documentation, architecture records, and task roadmap directory.",
+          "examples": ["./doc"]
+        }
+      }
+    },
+    "modules": {
+      "title": "Vault Modules & Ecosystem",
+      "description": "Modular vault components and specialized feature subsystems active in the Vault application.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "activeVaults": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "photo",
+              "video",
+              "audio",
+              "document",
+              "note",
+              "chat",
+              "todo",
+              "password",
+              "secret",
+              "contact",
+              "location",
+              "file",
+              "other-files",
+              "other",
+              "settings",
+              "system",
+              "users",
+              "card",
+              "identity",
+              "wifi"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "List of active zero-knowledge vault subsystems enabled in the project."
+        },
+        "realVaultEcosystem": {
+          "type": "boolean",
+          "description": "Whether the multi-vault unified ecosystem card and navigation interface is active."
+        },
+        "deviceSessions": {
+          "type": "boolean",
+          "description": "Whether client device fingerprinting, session telemetry, and remote session revocation are enabled."
+        },
+        "privacyInterface": {
+          "type": "boolean",
+          "description": "Whether screenshot blurring, privacy shield, and tab-hiding protections are enabled."
+        },
+        "videoMiniPlayer": {
+          "type": "boolean",
+          "description": "Whether cross-route picture-in-picture video playback is enabled via videoMiniPlayerStore."
         }
       }
     }

@@ -23,6 +23,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { useVaultStore } from '../../store/vaultStore';
 import { VaultItem } from '../../lib/storage';
 import { encryptData, decryptData } from '../../lib/cryptoPrimitives';
@@ -109,7 +110,7 @@ const DecryptedIdentityItem: React.FC<{
         setData(parsed);
         setEditPayload(parsed);
       } catch (err) {
-        console.error('Identity Decryption Error:', err);
+        logger.error('Identity Decryption Error', { error: err });
         if (isMounted) setError(true);
       }
     };
@@ -612,7 +613,10 @@ export const IdentitiesVault: React.FC = () => {
   };
 
   const handleUpdateIdentity = async (id: string, name: string, payload: IdentityPayload) => {
-    if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
+    if (!masterKey && !useVaultStore.getState().isDecoyMode) {
+      toast.error('Encryption key missing');
+      throw new Error('Encryption key missing');
+    }
     try {
       const encryptedContent = await encryptData(JSON.stringify(payload), masterKey);
       await updateItem(id, {
@@ -628,8 +632,9 @@ export const IdentitiesVault: React.FC = () => {
         },
       });
       toast.success('Identity details updated');
-    } catch {
+    } catch (err) {
       toast.error('Failed to update identity details');
+      throw err;
     }
   };
 

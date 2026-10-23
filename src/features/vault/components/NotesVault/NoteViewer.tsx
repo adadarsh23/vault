@@ -33,6 +33,7 @@ import {
   List,
 } from 'lucide-react';
 import { useVaultStore } from '../../../../store/vaultStore';
+import { logger } from '../../../../lib/logger';
 import { getVaultItemPreviewUrl } from '../../../../lib/filePreview';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -52,6 +53,7 @@ const AttachmentCard: React.FC<{
 }> = ({ item, masterKey, onUnlink, onPreview }) => {
   const [thumbUrl, setThumbUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const thumbUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (item.type !== 'photo') return;
@@ -60,18 +62,31 @@ const AttachmentCard: React.FC<{
       setLoading(true);
       try {
         const url = await getVaultItemPreviewUrl(item, masterKey, 'image/jpeg');
-        if (active) setThumbUrl(url);
+        if (active) {
+          if (
+            thumbUrlRef.current &&
+            thumbUrlRef.current.startsWith('blob:') &&
+            thumbUrlRef.current !== url
+          ) {
+            URL.revokeObjectURL(thumbUrlRef.current);
+          }
+          thumbUrlRef.current = url;
+          setThumbUrl(url);
+        } else if (url && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
       } catch (err) {
-        console.error(err);
+        logger.warn('Failed to load attachment thumbnail', { error: err });
       } finally {
         if (active) setLoading(false);
       }
     };
-    getThumb();
+    void getThumb();
     return () => {
       active = false;
-      if (thumbUrl && thumbUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(thumbUrl);
+      if (thumbUrlRef.current && thumbUrlRef.current.startsWith('blob:')) {
+        URL.revokeObjectURL(thumbUrlRef.current);
+        thumbUrlRef.current = null;
       }
     };
   }, [item, masterKey]);
@@ -270,7 +285,7 @@ export const NoteViewer: React.FC<NoteViewerProps> = ({
       const url = await getVaultItemPreviewUrl(item, masterKey, mime);
       setPreviewUrl(url);
     } catch (err) {
-      console.error('Error generating preview', err);
+      logger.error('Error generating attachment preview', { error: err });
       toast.error('Failed to generate preview');
     } finally {
       setIsPreviewLoading(false);

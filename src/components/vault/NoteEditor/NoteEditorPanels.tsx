@@ -203,20 +203,24 @@ const UrlInputPanel: React.FC<UrlInputPanelProps> = ({
   </PanelShell>
 );
 
-export const NoteEditorPanels: React.FC<NoteEditorPanelsProps> = ({
-  showFindReplace,
-  findReplace,
-  showGoToLine,
-  goToLinePanel,
-  showImageUrlInput,
-  imageUrlPanel,
-  showLinkUrlInput,
-  linkUrlPanel,
-}) => (
-  <AnimatePresence>
-    {showFindReplace && <FindReplacePanel {...findReplace} />}
-    {showGoToLine && <GoToLinePanel {...goToLinePanel} />}
-    {showImageUrlInput && <UrlInputPanel {...imageUrlPanel} />}
-    {showLinkUrlInput && <UrlInputPanel {...linkUrlPanel} />}
-  </AnimatePresence>
+export const NoteEditorPanels: React.FC<NoteEditorPanelsProps> = React.memo(
+  ({
+    showFindReplace,
+    findReplace,
+    showGoToLine,
+    goToLinePanel,
+    showImageUrlInput,
+    imageUrlPanel,
+    showLinkUrlInput,
+    linkUrlPanel,
+  }) => (
+    <AnimatePresence>
+      {showFindReplace && <FindReplacePanel {...findReplace} />}
+      {showGoToLine && <GoToLinePanel {...goToLinePanel} />}
+      {showImageUrlInput && <UrlInputPanel {...imageUrlPanel} />}
+      {showLinkUrlInput && <UrlInputPanel {...linkUrlPanel} />}
+    </AnimatePresence>
+  ),
 );
+
+NoteEditorPanels.displayName = 'NoteEditorPanels';

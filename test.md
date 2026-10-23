@@ -14,43 +14,71 @@
   <a href="#33-local-ci-simulation--pre-commit--pre-push-workflows">CI Simulation</a>
 </p>
 
-Comprehensive cheat sheet and execution manual for **every** Vitest, standalone, and npm command across the Vault repository — covering **97 test files** (57 unit, 4 integration, 36 component/feature), **67 npm test scripts**, all build/clean/deploy pipelines, diagnostics, performance tooling, and cross-device verification procedures.
+Comprehensive cheat sheet and execution manual for **every** Vitest, standalone, and npm command across the Vault repository — covering all test files (63 unit, 4 integration, and component/feature suites), **73 npm test scripts**, all build/clean/deploy pipelines, diagnostics, performance tooling, and cross-device verification procedures.
 
 ---
 
 ## ⚡ Quick Reference Cheat Sheet
 
-| Category / Target        | Command                                                                                                  | Description                                     |
-| :----------------------- | :------------------------------------------------------------------------------------------------------- | :---------------------------------------------- |
-| **Default Safe Run**     | `npm test`                                                                                               | Single-worker Vitest run (`--maxWorkers 1`)     |
-| **Parallel Fast Run**    | `npm run test:run`                                                                                       | Full suite across all CPU workers               |
-| **Full Runner + Lint**   | `npm run test:all`                                                                                       | Lint + Vitest + custom crypto runner            |
-| **CI Strict Test**       | `npm run test:ci`                                                                                        | Lint + Vitest --no-cache                        |
-| **Unit Tests**           | `npm run test:unit`                                                                                      | All 57 unit tests in `tests/unit/`              |
-| **Integration Tests**    | `npm run test:integration`                                                                               | All 4 integration tests in `tests/integration/` |
-| **Client Source Tests**  | `npm run test:client`                                                                                    | All 36 component and lib tests in `src/`        |
-| **Server Tests**         | `npm run test:server`                                                                                    | Backend unit and integration                    |
-| **Component Tests**      | `npm run test:components`                                                                                | All React UI component specs (`*.test.tsx`)     |
-| **Cryptography Suite**   | `npm run test:crypto`                                                                                    | AES-256-GCM, PQC Kyber, KDF & Key Rotation      |
-| **Authentication Suite** | `npm run test:auth`                                                                                      | Login, Register, Session & Token Revocation     |
-| **Hardened 2FA & Bot**   | `npx vitest run tests/unit/recaptchaMiddleware.test.ts tests/unit/two-factor-hardening.test.ts`          | 2FA rate limits, password checks & reCAPTCHA    |
-| **Security Boundaries**  | `npm run test:security`                                                                                  | Auth, Multipart, Streaming & UI Isolation       |
-| **Cloud Sync & Stores**  | `npm run test:sync`                                                                                      | Delta sync, conflict handling & state integrity |
-| **Media & Streaming**    | `npm run test:media`                                                                                     | HLS player, capture modal, video streaming      |
-| **Mini-Player Suite**    | `npx vitest run src/components/ui/GlobalVideoMiniPlayer.test.tsx src/store/videoMiniPlayerStore.test.ts` | Picture-in-picture floating video & store       |
-| **Mobile PDF & Docs**    | `npx vitest run tests/unit/mobile-pdf-document-handling.test.tsx`                                        | Mobile PDF rendering, anti-screenshot shield    |
-| **Interactive UI**       | `npm run test:ui`                                                                                        | Vitest browser dashboard GUI                    |
-| **Code Coverage**        | `npm run test:coverage:open`                                                                             | Generate coverage and open in browser           |
-| **Watch Mode**           | `npm run test:watch`                                                                                     | Auto re-run on file change                      |
-| **Fast Fail**            | `npm run test:fast`                                                                                      | Stop on first failure                           |
-| **Heap Tracking**        | `npm run test:heap`                                                                                      | Memory/heap usage per test file                 |
-| **Node Inspector**       | `npm run test:debug:brk`                                                                                 | Attach Chrome DevTools or VS Code               |
-| **Typecheck Tests**      | `npx vitest typecheck`                                                                                   | Typecheck TypeScript test files                 |
-| **Stress Repeat**        | `npm run test:repeat 5`                                                                                  | Run test suite 5 times sequentially             |
-| **Quick Verify**         | `npm run verify:quick`                                                                                   | Lint + Auth tests                               |
-| **Full CI Verify**       | `npm run verify:ci`                                                                                      | Doctor + Lint + CI tests + Build                |
-| **Local CI Simulation**  | `$env:CI="true"; npm run verify:ci`                                                                      | Replay strict CI pipeline locally               |
-| **Complete Audit**       | `npm run verify:full`                                                                                    | Clean all + Doctor + Verify + All Tests         |
+| Category / Target          | Command                                                                                                  | Description                                                                                                                                            |
+| :------------------------- | :------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Default Safe Run**       | `npm test`                                                                                               | Single-worker Vitest run (`--maxWorkers 1`)                                                                                                            |
+| **Parallel Fast Run**      | `npm run test:run`                                                                                       | Full suite across all CPU workers                                                                                                                      |
+| **Full Runner + Lint**     | `npm run test:all`                                                                                       | Lint + Vitest + custom crypto runner                                                                                                                   |
+| **CI Strict Test**         | `npm run test:ci`                                                                                        | Lint + Vitest --no-cache                                                                                                                               |
+| **Unit Tests**             | `npm run test:unit`                                                                                      | All 57 unit tests in `tests/unit/`                                                                                                                     |
+| **Integration Tests**      | `npm run test:integration`                                                                               | All 4 integration tests in `tests/integration/`                                                                                                        |
+| **Client Source Tests**    | `npm run test:client`                                                                                    | All 37 component and lib tests in `src/`                                                                                                               |
+| **Server Tests**           | `npm run test:server`                                                                                    | Backend unit and integration                                                                                                                           |
+| **Component Tests**        | `npm run test:components`                                                                                | All React UI component specs (`*.test.tsx`)                                                                                                            |
+| **Cryptography Suite**     | `npm run test:crypto`                                                                                    | AES-256-GCM, PQC Kyber, KDF & Key Rotation                                                                                                             |
+| **Manifest Schema Unit**   | `npm run test:schema`                                                                                    | Production JSON Schema Draft 2020-12 validation tests (project paths, 20 categories, VCAS01, multi-cluster)                                            |
+| **Schema CLI Validator**   | `npm run schema:validate`                                                                                | Standalone fast Ajv2020 schema validation for `metadata.json` and backup archives (`--all`)                                                            |
+| **Authentication Suite**   | `npm run test:auth`                                                                                      | Login, Register, Session & Token Revocation                                                                                                            |
+| **API Layer Suite**        | `npm run test:api`                                                                                       | Full API client + modular services suite (`apiClient.ts` + `apiModules.ts`)                                                                            |
+| **Session Revoked Modal**  | `npx vitest run src/components/auth/SessionRevokedModal.test.tsx`                                        | Production session revocation dialog, focus trap, safe timestamping, redirect sanitization & device polish                                             |
+| **Auth Feature UI**        | `npx vitest run src/components/auth src/features/auth`                                                   | SessionRevokedModal, VaultLoginForm & SecurityLayers UI suites                                                                                         |
+| **App Core Suite**         | `npx vitest run src/components/app`                                                                      | Complete app shell, navigation handler, gestures, loading screen & emergency access                                                                    |
+| **Gesture Controller**     | `npx vitest run src/components/app/__tests__/GestureController.test.ts`                                  | Mobile 60/120fps rAF swipe, left/right sidebar, resize breakpoint & cancel                                                                             |
+| **Navigation Handler**     | `npx vitest run src/components/app/__tests__/NavigationHandler.test.ts`                                  | Dual tab ID & route navigation, hash/query preserving, redundant guard                                                                                 |
+| **App Loading Screen**     | `npx vitest run src/components/app/__tests__/LoadingScreen.test.tsx`                                     | Status accessibility, timeout reload prompt & onRetry handling                                                                                         |
+| **Router & Navigation**    | `npx vitest run src/components/router`                                                                   | Full router suite: scroll restoration, POP/hash navigation, mobile bounce, quota recovery & RouteErrorBoundary                                         |
+| **ErrorBoundary Suite**    | `npm run test:error-boundary`                                                                            | Production ErrorBoundary & RouteErrorBoundary: Sentry telemetry, error normalization, resetKeys, fallback UI, retry & clipboard diagnostics            |
+| **ErrorBoundary Isolated** | `npx vitest run src/components/__tests__/ErrorBoundary.test.tsx`                                         | Isolated test execution for root `ErrorBoundary` component with mocked Sentry, fallback tests & copy validation                                        |
+| **ErrorBoundary Watch**    | `npm run test:error-boundary:watch`                                                                      | Watch mode for root `ErrorBoundary.test.tsx`                                                                                                           |
+| **Layout Components**      | `npm run test:layout`                                                                                    | Production layout suite: Background particles/fallback, Footer smooth anchors, Sidebar ARIA radiogroup, VaultLayout responsive drawers & drag-and-drop |
+| **Layout Isolated**        | `npx vitest run tests/unit/layout-components.test.tsx`                                                   | Direct isolated execution of layout components test suite                                                                                              |
+| **Layout Watch Mode**      | `npm run test:layout:watch`                                                                              | Auto re-run layout component tests on file changes                                                                                                     |
+| **Vault Login Form**       | `npx vitest run src/features/auth/VaultLoginForm.test.tsx`                                               | Top error banner, validations & mode switching                                                                                                         |
+| **Hardened 2FA & Bot**     | `npx vitest run tests/unit/recaptchaMiddleware.test.ts tests/unit/two-factor-hardening.test.ts`          | 2FA rate limits, password checks & reCAPTCHA                                                                                                           |
+| **Security Boundaries**    | `npm run test:security`                                                                                  | Auth, Multipart, Streaming & UI Isolation                                                                                                              |
+| **Security Components**    | `npm run test:security:components`                                                                       | Complete security UI components suite (`RecaptchaField` + `VaultIntegrityAlarm` modal & banner)                                                        |
+| **reCAPTCHA Challenge**    | `npx vitest run src/components/security/__tests__/RecaptchaField.test.tsx`                               | Production reCAPTCHA v2 challenge, scaling, theme switching, auto-retry & error handling                                                               |
+| **Vault Integrity Alarm**  | `npx vitest run src/components/security/__tests__/VaultIntegrityAlarm.test.tsx`                          | Cryptographic Merkle tamper alarm banner & lockdown modal, focus trap, forensic hash copy                                                              |
+| **SmartAvatar Component**  | `npx vitest run src/components/__tests__/SmartAvatar.test.tsx`                                           | Production avatar component: CLS=0, BlurHash, monogram initials, Unicode/emoji safety, format/size validation, drag & drop, touch & badges             |
+| **SmartAvatar Watch**      | `npm run test:avatar:watch`                                                                              | Watch mode for SmartAvatar component test suite                                                                                                        |
+| **Avatar Full Suite**      | `npm run test:avatar`                                                                                    | Full avatar pipeline: SmartAvatar UI + useFastAvatar hook + backend avatar-pipeline + MongoDB Atlas                                                    |
+| **Cloud Sync & Stores**    | `npm run test:sync`                                                                                      | Delta sync, conflict handling & state integrity                                                                                                        |
+| **Store Layer Suite**      | `npm run test:stores`                                                                                    | All 7 Zustand state management stores (vault, activity, notification, theme, integrity, navigation, miniplayer)                                        |
+| **Media & Streaming**      | `npm run test:media`                                                                                     | HLS player, capture modal, video streaming                                                                                                             |
+| **Mini-Player Suite**      | `npx vitest run src/components/ui/GlobalVideoMiniPlayer.test.tsx src/store/videoMiniPlayerStore.test.ts` | Picture-in-picture floating video & store                                                                                                              |
+| **Mobile PDF & Docs**      | `npx vitest run tests/unit/mobile-pdf-document-handling.test.tsx`                                        | Mobile PDF rendering, anti-screenshot shield                                                                                                           |
+| **Workers Pipeline**       | `npm run test:workers`                                                                                   | Background workers (Argon2, cascade encryption, avatar & media)                                                                                        |
+| **Workers Isolated**       | `npx vitest run tests/unit/workers-pipeline.test.ts`                                                     | Direct execution of workers test suite                                                                                                                 |
+| **Vault Service Suite**    | `npm run test:vault:service`                                                                             | VaultService key rotation, settings sync, batch save & purge                                                                                           |
+| **Vault Core All**         | `npm run test:vault`                                                                                     | All vault unit test files in `tests/unit/vault-*`                                                                                                      |
+| **Interactive UI**         | `npm run test:ui`                                                                                        | Vitest browser dashboard GUI                                                                                                                           |
+| **Code Coverage**          | `npm run test:coverage:open`                                                                             | Generate coverage and open in browser                                                                                                                  |
+| **Watch Mode**             | `npm run test:watch`                                                                                     | Auto re-run on file change                                                                                                                             |
+| **Fast Fail**              | `npm run test:fast`                                                                                      | Stop on first failure                                                                                                                                  |
+| **Heap Tracking**          | `npm run test:heap`                                                                                      | Memory/heap usage per test file                                                                                                                        |
+| **Node Inspector**         | `npm run test:debug:brk`                                                                                 | Attach Chrome DevTools or VS Code                                                                                                                      |
+| **Typecheck Tests**        | `npx vitest typecheck`                                                                                   | Typecheck TypeScript test files                                                                                                                        |
+| **Stress Repeat**          | `npm run test:repeat 5`                                                                                  | Run test suite 5 times sequentially                                                                                                                    |
+| **Quick Verify**           | `npm run verify:quick`                                                                                   | Lint + Auth tests                                                                                                                                      |
+| **Full CI Verify**         | `npm run verify:ci`                                                                                      | Doctor + Lint + CI tests + Build                                                                                                                       |
+| **Local CI Simulation**    | `$env:CI="true"; npm run verify:ci`                                                                      | Replay strict CI pipeline locally                                                                                                                      |
+| **Complete Audit**         | `npm run verify:full`                                                                                    | Clean all + Doctor + Verify + All Tests                                                                                                                |
 
 ---
 
@@ -98,6 +126,7 @@ Comprehensive cheat sheet and execution manual for **every** Vitest, standalone,
 - [32. Mock Registry Verification & Test Harness Diagnostics](#32-mock-registry-verification--test-harness-diagnostics)
 - [33. Local CI Simulation & Pre-Commit / Pre-Push Workflows](#33-local-ci-simulation--pre-commit--pre-push-workflows)
 - [34. Network, REST API & Supertest Backend Commands](#34-network-rest-api--supertest-backend-commands)
+- [35. Production Readiness & Build Verification Pipeline](#35-production-readiness--build-verification-pipeline)
 
 ---
 
@@ -142,8 +171,13 @@ npx vitest run tests/unit/vault-key-rotation.test.ts
 # Integrity check of stored vault keys
 npx vitest run tests/unit/vault-key-check.test.ts
 
-# Zod schema validation of vault manifests
+# Production JSON Schema (Draft 2020-12) validation of vault manifests, project layout & crypto baseline
+npm run test:schema
 npx vitest run tests/unit/vault-manifest-schema.test.ts
+
+# Production CLI manifest validator (Ajv2020 fast evaluation for metadata.json & backup archives)
+npm run schema:validate
+npm run schema:validate -- --all
 
 # Decoy PIN vault isolation — wrong PIN opens decoy data
 npx vitest run tests/unit/decoy-vault.test.ts
@@ -153,6 +187,9 @@ npx vitest run tests/unit/drm-media-security.test.ts
 
 # EXIF metadata scrubbing from images before encryption
 npx vitest run tests/unit/exif-scrubber.test.ts
+
+# Background Web Workers pipeline (derive-key, encrypt-file, ImageProcessor, media-processor)
+npx vitest run tests/unit/workers-pipeline.test.ts
 
 # Merkle tree hash computation and verification
 npx vitest run tests/unit/merkle-tree.test.ts
@@ -222,8 +259,20 @@ npx vitest run tests/unit/sync-ensure-auth.test.ts
 # Privacy interface store (Zustand — privacy settings)
 npx vitest run tests/unit/privacy-interface-store.test.ts
 
-# Activity store (Zustand — recent actions)
+# Activity store (Zustand — recent actions & history timeline)
 npx vitest run tests/unit/activity-store.test.ts
+
+# Notification store (Zustand — alerts, unread counts, optimistic sync)
+npx vitest run tests/unit/notification-store.test.ts
+
+# Integrity store (Zustand — Merkle tree roots, audits, bit-flip alarms)
+npx vitest run tests/unit/integrity-store.test.ts
+
+# Global navigation store (Zustand — target item selection & cross-view routing)
+npx vitest run tests/unit/global-navigation-store.test.ts
+
+# Theme store (Zustand — light/dark/system mode, cross-tab sync)
+npx vitest run tests/unit/theme-store.test.ts
 
 # Total user mirror (server-side state projection)
 npx vitest run tests/unit/total-user-mirror.test.ts
@@ -241,6 +290,9 @@ npx vitest run tests/unit/upload-validation.test.ts
 ### 1.5 Unit — Vault Core, UI State, Utilities & Monitoring
 
 ```bash
+# Vault service (key rotation, envelope rewrap, settings sync, batch save & trash purge)
+npx vitest run tests/unit/vault-service.test.ts
+
 # Vault item content encryption / decryption roundtrip
 npx vitest run tests/unit/vault-item-content.test.ts
 
@@ -264,6 +316,9 @@ npx vitest run tests/unit/mongo-atlas-avatar.test.ts
 
 # API client — axios instance config, interceptors, retries
 npx vitest run tests/unit/apiClient.test.ts
+
+# API modules & services suite (authApi, vaultApi, systemApi, securityApi, error normalization, UTF-8 TUS)
+npx vitest run tests/unit/apiModules.test.ts
 
 # Environment variable parsing and validation
 npx vitest run tests/unit/env.test.ts
@@ -306,15 +361,61 @@ npx vitest run tests/unit/universal-sync-widget.test.tsx
 
 # Mobile PDF & document handling (anti-screenshot shield, print blocking, iframe isolation)
 npx vitest run tests/unit/mobile-pdf-document-handling.test.tsx
+
+# Layout components suite (Background particles/fallback, Footer smooth anchors, Sidebar ARIA radiogroup, VaultLayout responsive drawers & drag-and-drop)
+npx vitest run tests/unit/layout-components.test.tsx
+
+# Layout components with npm runner
+npm run test:layout
+
+# Layout components in watch mode
+npm run test:layout:watch
 ```
 
 ### 1.6 Source — Components & Features (`src/`)
 
 ```bash
-# Router scroll restoration (history, hash anchors, POP nav, lazy routes)
+# App core suite (complete: NavigationHandler, GestureController, LoadingScreen, AppShell, EmergencyClaimPage)
+npx vitest run src/components/app
+
+# Gesture controller (mobile 60/120fps rAF batching, left/right sidebar direction mapping, touch-cancel, desktop resize reset)
+npx vitest run src/components/app/__tests__/GestureController.test.ts
+
+# Navigation handler (dual tab-id & pathname navigation, hash/search preservation, URI decoding guard, redundant navigation prevention)
+npx vitest run src/components/app/__tests__/NavigationHandler.test.ts
+
+# Loading screen (role status accessibility, reduced motion, 7s timeout fallback, custom onRetry action)
+npx vitest run src/components/app/__tests__/LoadingScreen.test.tsx
+
+# Router suite (complete: scroll restoration, history, hash anchors, RouteErrorBoundary)
+npx vitest run src/components/router
+
+# Router scroll restoration (history, hash anchors, POP nav, iOS rubber-band bounce, quota recovery)
 npx vitest run src/components/router/__tests__/ScrollRestoration.test.tsx
 
-# Vault integrity alarm UI component
+# Route error boundary (chunk load failure, network drops, auto-reset on navigate, accessible fallback)
+npx vitest run src/components/router/__tests__/RouteErrorBoundary.test.tsx
+
+# ErrorBoundary suite (complete: root production ErrorBoundary + RouteErrorBoundary)
+npm run test:error-boundary
+
+# Production ErrorBoundary isolated (Sentry telemetry, error normalization, resetKeys, responsive fallback UI, clipboard copy)
+npx vitest run src/components/__tests__/ErrorBoundary.test.tsx
+
+# Production ErrorBoundary watch mode
+npm run test:error-boundary:watch
+# or direct:
+npx vitest --watch src/components/__tests__/ErrorBoundary.test.tsx
+
+# Security components suite (complete: reCAPTCHA field challenge + VaultIntegrityAlarm modal & banner)
+npm run test:security:components
+# or direct:
+npx vitest run src/components/security
+
+# reCAPTCHA v2 challenge component (mobile scaling, theme switching, offline detection, retry recovery, accessibility)
+npx vitest run src/components/security/__tests__/RecaptchaField.test.tsx
+
+# Vault integrity alarm modal & banner (cryptographic Merkle tamper alarm, focus trap, lockdown, forensic hash copy)
 npx vitest run src/components/security/__tests__/VaultIntegrityAlarm.test.tsx
 
 # Tag manager component (CRUD, multi-select, chips)
@@ -332,8 +433,20 @@ npx vitest run src/components/ui/GlobalVideoMiniPlayer.test.tsx
 # Dashboard header (security health score, layer breakdown, profile card trigger)
 npx vitest run src/features/vault/components/Dashboard/DashboardHeader.test.tsx
 
-# Auth security layers (2FA, rate-limit, brute-force protection)
+# Session revoked modal (complete: instant lockdown, focus trap, safe timestamping, redirect sanitization, copy fallback)
+npx vitest run src/components/auth/SessionRevokedModal.test.tsx
+
+# Full auth components & features suite (SessionRevokedModal + SecurityLayers + VaultLoginForm)
+npx vitest run src/components/auth src/features/auth
+
+# Auth security layers (2FA, rate-limit, brute-force protection, sync UI)
 npx vitest run src/features/auth/SecurityLayers.test.tsx
+
+# Auth login & register form (top error banner, client validation, credential generation, 2FA OTP)
+npx vitest run src/features/auth/VaultLoginForm.test.tsx
+
+# Full auth feature directory suite (SecurityLayers + VaultLoginForm)
+npx vitest run src/features/auth
 
 # Todo vault write path security tests
 npx vitest run src/features/vault/TodoVault.security.test.tsx
@@ -364,6 +477,12 @@ npx vitest run src/features/vault/__tests__/SettingsVault/MobileExperienceCard.t
 
 # Settings — Profile card (avatar, display name, email)
 npx vitest run src/features/vault/__tests__/SettingsVault/ProfileCard.test.tsx
+
+# SmartAvatar component (CLS=0, BlurHash placeholder, monogram initials, Unicode/emoji safety, format/size validation, drag & drop, touch, offline/error badges)
+npx vitest run src/components/__tests__/SmartAvatar.test.tsx
+
+# SmartAvatar isolated watch mode
+npx vitest --watch src/components/__tests__/SmartAvatar.test.tsx
 
 # Settings vault full integration test
 npx vitest run src/features/vault/__tests__/SettingsVault/SettingsVaultIntegration.test.tsx
@@ -489,7 +608,7 @@ npx vitest run \
 
 ```bash
 # Universal (PowerShell, CMD, Bash, Zsh)
-npx vitest run tests/integration/auth.integration.test.ts tests/integration/auth-security.test.ts tests/unit/auth-api.test.ts tests/unit/auth-service-session.test.ts tests/unit/auth-utils.test.ts tests/unit/auth-validator.test.ts tests/unit/session-realtime-revocation.test.ts tests/unit/session-revoked-modal.test.tsx tests/unit/useVaultAuth.test.tsx src/features/auth/SecurityLayers.test.tsx
+npx vitest run tests/integration/auth.integration.test.ts tests/integration/auth-security.test.ts tests/unit/auth-api.test.ts tests/unit/auth-service-session.test.ts tests/unit/auth-utils.test.ts tests/unit/auth-validator.test.ts tests/unit/session-realtime-revocation.test.ts tests/unit/session-revoked-modal.test.tsx tests/unit/useVaultAuth.test.tsx src/components/auth/SessionRevokedModal.test.tsx src/features/auth/SecurityLayers.test.tsx src/features/auth/VaultLoginForm.test.tsx
 
 # Windows PowerShell
 npx vitest run `
@@ -502,7 +621,9 @@ npx vitest run `
   tests/unit/session-realtime-revocation.test.ts `
   tests/unit/session-revoked-modal.test.tsx `
   tests/unit/useVaultAuth.test.tsx `
-  src/features/auth/SecurityLayers.test.tsx
+  src/components/auth/SessionRevokedModal.test.tsx `
+  src/features/auth/SecurityLayers.test.tsx `
+  src/features/auth/VaultLoginForm.test.tsx
 
 # Linux / macOS Bash & Zsh
 npx vitest run \
@@ -515,7 +636,9 @@ npx vitest run \
   tests/unit/session-realtime-revocation.test.ts \
   tests/unit/session-revoked-modal.test.tsx \
   tests/unit/useVaultAuth.test.tsx \
-  src/features/auth/SecurityLayers.test.tsx
+  src/components/auth/SessionRevokedModal.test.tsx \
+  src/features/auth/SecurityLayers.test.tsx \
+  src/features/auth/VaultLoginForm.test.tsx
 ```
 
 ### Cloud Sync, Integrity & State Suite
@@ -551,6 +674,36 @@ npx vitest run \
   tests/unit/privacy-interface-store.test.ts
 ```
 
+### Zustand State Management & Store Layer Suite
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run tests/unit/notification-store.test.ts tests/unit/integrity-store.test.ts tests/unit/global-navigation-store.test.ts tests/unit/theme-store.test.ts tests/unit/activity-store.test.ts tests/unit/privacy-interface-store.test.ts src/store/videoMiniPlayerStore.test.ts
+
+# Windows PowerShell
+npx vitest run `
+  tests/unit/notification-store.test.ts `
+  tests/unit/integrity-store.test.ts `
+  tests/unit/global-navigation-store.test.ts `
+  tests/unit/theme-store.test.ts `
+  tests/unit/activity-store.test.ts `
+  tests/unit/privacy-interface-store.test.ts `
+  src/store/videoMiniPlayerStore.test.ts
+
+# Linux / macOS Bash & Zsh
+npx vitest run \
+  tests/unit/notification-store.test.ts \
+  tests/unit/integrity-store.test.ts \
+  tests/unit/global-navigation-store.test.ts \
+  tests/unit/theme-store.test.ts \
+  tests/unit/activity-store.test.ts \
+  tests/unit/privacy-interface-store.test.ts \
+  src/store/videoMiniPlayerStore.test.ts
+
+# Via npm shortcut
+npm run test:stores
+```
+
 ### Drag & Drop + Vault Core
 
 ```bash
@@ -559,6 +712,16 @@ npx vitest run tests/unit/vault-drag-drop.test.ts tests/unit/vault-item-content.
 
 # Via npm shortcut
 npm run test:vault:core
+```
+
+### Vault Service & Key Lifecycle Operations
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run tests/unit/vault-service.test.ts tests/unit/vault-key-rotation.test.ts tests/unit/vault-key-check.test.ts
+
+# Via npm shortcut
+npm run test:vault:service
 ```
 
 ### Settings Vault Full Suite (All 9 Cards + Integration)
@@ -659,11 +822,83 @@ npm run test:monitoring
 ### Avatar & Profile Pipeline
 
 ```bash
-# Universal (PowerShell, CMD, Bash, Zsh)
-npx vitest run tests/unit/avatar-pipeline.test.ts tests/unit/mongo-atlas-avatar.test.ts src/hooks/__tests__/useFastAvatar.test.ts
+# Universal (PowerShell, CMD, Bash, Zsh) - Full Suite
+npx vitest run src/components/__tests__/SmartAvatar.test.tsx src/hooks/__tests__/useFastAvatar.test.ts tests/unit/avatar-pipeline.test.ts tests/unit/mongo-atlas-avatar.test.ts
 
 # Via npm shortcut
 npm run test:avatar
+
+# Isolated SmartAvatar component test
+npm run test:avatar:component
+
+# SmartAvatar in watch mode
+npm run test:avatar:watch
+```
+
+### Layout & Responsive Shell Architecture Suite
+
+Covers the primary production layout hierarchy:
+
+- **Background**: Ambient animated gradient fallback, coarse pointer detection, canvas failure containment, and high-frequency mouse tracking throttle.
+- **Footer**: Framer Motion scroll stagger, responsive safe-area insets, and smooth legal hash anchors.
+- **Sidebar**: Accessibility radiogroup with arrow keys, dynamic mobile viewport (`100dvh`), and safe state hydration.
+- **VaultLayout**: Category drawer portal with scroll lock, responsive touch targets, debounced search, and drag-and-drop optimization.
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run tests/unit/layout-components.test.tsx
+
+# Via npm shortcut
+npm run test:layout
+
+# Watch mode (auto re-run on file changes)
+npm run test:layout:watch
+```
+
+### Background Web Workers Pipeline
+
+Suite testing all background Web Workers (`derive-key.worker.ts`, `encrypt-file.worker.ts`, `ImageProcessorWorker.ts`, and `media-processor.worker.ts`), covering Argon2 WASM derivation, dual-engine cascade encryption envelopes, offscreen canvas avatar center-cropping, and metadata scrubbing.
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run tests/unit/workers-pipeline.test.ts tests/unit/exif-scrubber.test.ts tests/unit/avatar-pipeline.test.ts
+
+# Windows PowerShell
+npx vitest run `
+  tests/unit/workers-pipeline.test.ts `
+  tests/unit/exif-scrubber.test.ts `
+  tests/unit/avatar-pipeline.test.ts
+
+# Linux / macOS Bash & Zsh
+npx vitest run \
+  tests/unit/workers-pipeline.test.ts \
+  tests/unit/exif-scrubber.test.ts \
+  tests/unit/avatar-pipeline.test.ts
+
+# Via npm shortcut
+npm run test:workers
+```
+
+### API Layer & Modular Network Services Suite
+
+Comprehensive suite verifying the frontend API client (`apiClient.ts`), modular domain endpoints (`authApi.ts`, `vaultApi.ts`, `systemApi.ts`, `securityApi.ts`), unified error normalization, TUS UTF-8 base64 encoding, concurrent request deduplication, and Sentry exception safety.
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run tests/unit/apiClient.test.ts tests/unit/apiModules.test.ts
+
+# Windows PowerShell
+npx vitest run `
+  tests/unit/apiClient.test.ts `
+  tests/unit/apiModules.test.ts
+
+# Linux / macOS Bash & Zsh
+npx vitest run \
+  tests/unit/apiClient.test.ts \
+  tests/unit/apiModules.test.ts
+
+# Via npm shortcut
+npm run test:api
 ```
 
 ### Utilities & Infrastructure
@@ -738,22 +973,27 @@ npx vitest run \
 ### Dashboard, Header & Navigation Suite
 
 ```bash
+# Router suite alone
+npx vitest run src/components/router
+
 # Universal (PowerShell, CMD, Bash, Zsh)
-npx vitest run src/features/vault/components/Dashboard/DashboardHeader.test.tsx src/features/vault/__tests__/ControlsAndShortcuts.test.tsx src/features/vault/__tests__/ShortcutsCard.test.tsx src/components/router/__tests__/ScrollRestoration.test.tsx
+npx vitest run src/features/vault/components/Dashboard/DashboardHeader.test.tsx src/features/vault/__tests__/ControlsAndShortcuts.test.tsx src/features/vault/__tests__/ShortcutsCard.test.tsx src/components/router/__tests__/ScrollRestoration.test.tsx src/components/router/__tests__/RouteErrorBoundary.test.tsx
 
 # Windows PowerShell
 npx vitest run `
   src/features/vault/components/Dashboard/DashboardHeader.test.tsx `
   src/features/vault/__tests__/ControlsAndShortcuts.test.tsx `
   src/features/vault/__tests__/ShortcutsCard.test.tsx `
-  src/components/router/__tests__/ScrollRestoration.test.tsx
+  src/components/router/__tests__/ScrollRestoration.test.tsx `
+  src/components/router/__tests__/RouteErrorBoundary.test.tsx
 
 # Linux / macOS Bash & Zsh
 npx vitest run \
   src/features/vault/components/Dashboard/DashboardHeader.test.tsx \
   src/features/vault/__tests__/ControlsAndShortcuts.test.tsx \
   src/features/vault/__tests__/ShortcutsCard.test.tsx \
-  src/components/router/__tests__/ScrollRestoration.test.tsx
+  src/components/router/__tests__/ScrollRestoration.test.tsx \
+  src/components/router/__tests__/RouteErrorBoundary.test.tsx
 ```
 
 ### Merkle Tree & Tamper-Alarm Integrity Suite
@@ -777,7 +1017,25 @@ npx vitest run \
   src/features/vault/__tests__/SettingsVault/MerkleIntegrityCard.test.tsx
 ```
 
-### Emergency Self-Destruct & Vault Wipe Suite
+### Security UI Components Suite (reCAPTCHA & Tamper Alarm)
+
+```bash
+# npm runner script
+npm run test:security:components
+
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run src/components/security
+
+# Windows PowerShell
+npx vitest run `
+  src/components/security/__tests__/RecaptchaField.test.tsx `
+  src/components/security/__tests__/VaultIntegrityAlarm.test.tsx
+
+# Linux / macOS Bash & Zsh
+npx vitest run \
+  src/components/security/__tests__/RecaptchaField.test.tsx \
+  src/components/security/__tests__/VaultIntegrityAlarm.test.tsx
+```
 
 ```bash
 # Universal (PowerShell, CMD, Bash, Zsh)
@@ -826,8 +1084,8 @@ npx vitest run "**/*.test.tsx"
 # Via npm shortcut
 npm run test:components
 
-# All 36 tests in src/ (Universal single-line)
-npx vitest run src/components/router/__tests__/ScrollRestoration.test.tsx src/components/security/__tests__/VaultIntegrityAlarm.test.tsx src/components/vault/__tests__/TagManager.test.tsx src/components/ui/GlobalVideoMiniPlayer.test.tsx src/components/ui/audio-player.test.tsx src/components/ui/video-player.test.tsx src/features/auth/SecurityLayers.test.tsx src/features/vault/__tests__/ControlsAndShortcuts.test.tsx src/features/vault/__tests__/ShortcutsCard.test.tsx src/features/vault/__tests__/EmergencySelfDestructWipe.test.tsx src/features/vault/__tests__/SecretsVault.test.tsx src/features/vault/TodoVault.security.test.tsx src/security/securityIntegration.test.tsx src/features/vault/__tests__/SettingsVault/EmergencyDestructionCard.test.tsx src/features/vault/__tests__/SettingsVault/MaintenanceCard.test.tsx src/features/vault/__tests__/SettingsVault/MerkleIntegrityCard.test.tsx src/features/vault/__tests__/SettingsVault/MobileExperienceCard.test.tsx src/features/vault/__tests__/SettingsVault/ProfileCard.test.tsx src/features/vault/__tests__/SettingsVault/SettingsVaultIntegration.test.tsx src/features/vault/__tests__/SettingsVault/ShareVaultCard.test.tsx src/features/vault/__tests__/SettingsVault/SyncStorageCard.test.tsx src/features/vault/__tests__/SettingsVault/TwoFactorSettingsCard.test.tsx src/features/vault/components/Dashboard/DashboardHeader.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/AdvancedCameraModes.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/PhotoEditor.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/VideoEditor.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/filters.test.ts src/features/vault/components/MediaVault/__tests__/MediaPreview.test.tsx src/features/vault/components/MediaVault/__tests__/mediaGallery.test.ts src/features/vault/components/MediaVault/__tests__/mediaZipUtils.test.ts src/hooks/__tests__/useFastAvatar.test.ts src/lib/__tests__/audioDsp.test.ts src/lib/__tests__/encryptedMediaStreaming.test.ts src/lib/__tests__/itemCodec.test.ts src/lib/__tests__/searchableTranscripts.test.ts src/store/videoMiniPlayerStore.test.ts
+# All tests in src/ (Universal single-line)
+npx vitest run src/components/__tests__/ErrorBoundary.test.tsx src/components/auth/SessionRevokedModal.test.tsx src/components/router/__tests__/ScrollRestoration.test.tsx src/components/router/__tests__/RouteErrorBoundary.test.tsx src/components/security/__tests__/VaultIntegrityAlarm.test.tsx src/components/vault/__tests__/TagManager.test.tsx src/components/ui/GlobalVideoMiniPlayer.test.tsx src/components/ui/audio-player.test.tsx src/components/ui/video-player.test.tsx src/features/auth/SecurityLayers.test.tsx src/features/auth/VaultLoginForm.test.tsx src/features/vault/__tests__/ControlsAndShortcuts.test.tsx src/features/vault/__tests__/ShortcutsCard.test.tsx src/features/vault/__tests__/EmergencySelfDestructWipe.test.tsx src/features/vault/__tests__/SecretsVault.test.tsx src/features/vault/TodoVault.security.test.tsx src/security/securityIntegration.test.tsx src/features/vault/__tests__/SettingsVault/EmergencyDestructionCard.test.tsx src/features/vault/__tests__/SettingsVault/MaintenanceCard.test.tsx src/features/vault/__tests__/SettingsVault/MerkleIntegrityCard.test.tsx src/features/vault/__tests__/SettingsVault/MobileExperienceCard.test.tsx src/features/vault/__tests__/SettingsVault/ProfileCard.test.tsx src/features/vault/__tests__/SettingsVault/SettingsVaultIntegration.test.tsx src/features/vault/__tests__/SettingsVault/ShareVaultCard.test.tsx src/features/vault/__tests__/SettingsVault/SyncStorageCard.test.tsx src/features/vault/__tests__/SettingsVault/TwoFactorSettingsCard.test.tsx src/features/vault/components/Dashboard/DashboardHeader.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/AdvancedCameraModes.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/PhotoEditor.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/VideoEditor.test.tsx src/features/vault/components/LiveCaptureModal/__tests__/filters.test.ts src/features/vault/components/MediaVault/__tests__/MediaPreview.test.tsx src/features/vault/components/MediaVault/__tests__/mediaGallery.test.ts src/features/vault/components/MediaVault/__tests__/mediaZipUtils.test.ts src/hooks/__tests__/useFastAvatar.test.ts src/lib/__tests__/audioDsp.test.ts src/lib/__tests__/encryptedMediaStreaming.test.ts src/lib/__tests__/itemCodec.test.ts src/lib/__tests__/searchableTranscripts.test.ts src/store/videoMiniPlayerStore.test.ts
 ```
 
 ---
@@ -885,6 +1143,15 @@ npm run test:auth:security
 
 # Combined auth suite (unit + integration)
 npm run test:auth
+
+# Auth UI feature tests (SecurityLayers + VaultLoginForm)
+npx vitest run src/features/auth
+
+# Vault login form UI (top error banner, field validation, mode switcher)
+npx vitest run src/features/auth/VaultLoginForm.test.tsx
+
+# Security layers verification UI (cryptographic protocol, sync mode)
+npx vitest run src/features/auth/SecurityLayers.test.tsx
 ```
 
 ---
@@ -918,6 +1185,9 @@ npm run test:security
 
 # UI security and privacy protection only
 npm run test:security:integration
+
+# Security UI components suite (reCAPTCHA + VaultIntegrityAlarm modal & banner)
+npm run test:security:components
 ```
 
 ---
@@ -939,6 +1209,7 @@ npm run test:vault:todo        # TodoVault security write path
 npm run test:sync              # All sync- prefix unit tests
 npm run test:sync:corruption   # Download corruption detection
 npm run test:sync:stores       # activity-store + privacy-store + total-user-mirror
+npm run test:stores            # All 7 Zustand stores (notification, integrity, navigation, theme, activity, privacy, miniplayer)
 ```
 
 ### Media, Streaming, Camera
@@ -959,6 +1230,7 @@ npm run test:avatar            # Avatar pipeline + MongoDB atlas avatar
 npm run test:settings              # All SettingsVault card tests
 npm run test:settings:integration  # SettingsVault integration only
 npm run test:shortcuts             # ControlsAndShortcuts + ShortcutsCard
+npm run test:router                # Router suite (ScrollRestoration + RouteErrorBoundary)
 ```
 
 ### Monitoring & Logs
@@ -967,16 +1239,20 @@ npm run test:shortcuts             # ControlsAndShortcuts + ShortcutsCard
 npm run test:monitoring        # Sentry + LogRocket (backend + frontend)
 npm run test:sentry            # Sentry backend only
 npm run test:logrocket         # All logrocket- prefix tests
+npm run test:api               # API client + modular services (apiClient.ts + apiModules.ts)
 ```
 
-### Utilities
+### Utilities & Schema Validation
 
 ```bash
-npm run test:utils             # env + fuzzy + apiClient
+npm run test:utils             # env + fuzzy + apiClient + apiModules
 npm run test:env               # Environment variables only
 npm run test:backup            # Backup script tests
 npm run test:lighthouse        # Lighthouse runner tests
 npm run test:reports           # Open-report script tests
+npm run test:schema            # Production JSON Schema (Draft 2020-12) validation suite
+npm run schema:validate        # Production Ajv2020 CLI manifest validator (metadata.json)
+npm run schema:validate -- --all # Validate metadata.json and all backup snapshots
 ```
 
 ---
@@ -1481,6 +1757,7 @@ npx vitest run -u
 # Update snapshots for a single test file
 npx vitest run -u tests/unit/theme-provider.test.tsx
 npx vitest run -u src/components/router/__tests__/ScrollRestoration.test.tsx
+npx vitest run -u src/components/router/__tests__/RouteErrorBoundary.test.tsx
 ```
 
 ### Cache & Diagnostics
@@ -1840,138 +2117,152 @@ npm cache clean --force
 
 ## 19. Complete npm Script Reference Table
 
-| Script                              | Underlying Command                                                                                                                                                                                                                      |
-| :---------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm test`                          | `vitest run --maxWorkers 1`                                                                                                                                                                                                             |
-| `npm run test:run`                  | `vitest run`                                                                                                                                                                                                                            |
-| `npm run test:watch`                | `vitest`                                                                                                                                                                                                                                |
-| `npm run test:ui`                   | `vitest --ui`                                                                                                                                                                                                                           |
-| `npm run test:ui:coverage`          | `vitest --ui --coverage`                                                                                                                                                                                                                |
-| `npm run test:fast`                 | `vitest run --bail=1`                                                                                                                                                                                                                   |
-| `npm run test:verbose`              | `vitest run --reporter=verbose`                                                                                                                                                                                                         |
-| `npm run test:silent`               | `vitest run --silent`                                                                                                                                                                                                                   |
-| `npm run test:ci`                   | `npm run lint && vitest run --no-cache`                                                                                                                                                                                                 |
-| `npm run test:flaky`                | `vitest run --retry=5`                                                                                                                                                                                                                  |
-| `npm run test:repeat`               | `node scripts/test-repeat.mjs`                                                                                                                                                                                                          |
-| `npm run test:heap`                 | `vitest run --logHeapUsage`                                                                                                                                                                                                             |
-| `npm run test:debug`                | `vitest run --inspect --no-file-parallelism`                                                                                                                                                                                            |
-| `npm run test:debug:watch`          | `vitest --inspect --no-file-parallelism`                                                                                                                                                                                                |
-| `npm run test:debug:brk`            | `vitest run --inspect-brk --no-file-parallelism`                                                                                                                                                                                        |
-| `npm run test:update`               | `vitest run -u`                                                                                                                                                                                                                         |
-| `npm run test:changed`              | `node scripts/vitest-related.mjs run`                                                                                                                                                                                                   |
-| `npm run test:related`              | `node scripts/vitest-related.mjs watch`                                                                                                                                                                                                 |
-| `npm run test:coverage`             | `vitest run --coverage`                                                                                                                                                                                                                 |
-| `npm run test:coverage:deep`        | `vitest run --coverage --logHeapUsage`                                                                                                                                                                                                  |
-| `npm run test:coverage:open`        | `vitest run --coverage && node scripts/open-report.mjs coverage/index.html`                                                                                                                                                             |
-| `npm run test:runner`               | `tsx tests/run-tests.ts`                                                                                                                                                                                                                |
-| `npm run test:all`                  | `npm run lint && npm run test:run && npm run test:runner`                                                                                                                                                                               |
-| `npm run test:unit`                 | `vitest run tests/unit`                                                                                                                                                                                                                 |
-| `npm run test:unit:watch`           | `vitest --watch tests/unit`                                                                                                                                                                                                             |
-| `npm run test:integration`          | `vitest run tests/integration`                                                                                                                                                                                                          |
-| `npm run test:integration:watch`    | `vitest --watch tests/integration`                                                                                                                                                                                                      |
-| `npm run test:components`           | `vitest run .test.tsx`                                                                                                                                                                                                                  |
-| `npm run test:components:watch`     | `vitest --watch .test.tsx`                                                                                                                                                                                                              |
-| `npm run test:client`               | `vitest run src`                                                                                                                                                                                                                        |
-| `npm run test:server`               | `vitest run tests/unit/server- tests/unit/auth- tests/unit/sentry- tests/unit/logrocket- tests/integration`                                                                                                                             |
-| `npm run test:e2e`                  | `vitest run tests/integration`                                                                                                                                                                                                          |
-| `npm run test:auth`                 | `vitest run tests/integration/auth.integration.test.ts tests/unit/auth-`                                                                                                                                                                |
-| `npm run test:auth:unit`            | `vitest run tests/unit/auth-`                                                                                                                                                                                                           |
-| `npm run test:auth:integration`     | `vitest run tests/integration/auth.integration.test.ts`                                                                                                                                                                                 |
-| `npm run test:auth:security`        | `vitest run tests/integration/auth-security.test.ts`                                                                                                                                                                                    |
-| `npm run test:security`             | `vitest run tests/integration/auth-security.test.ts tests/integration/multipart-security.test.ts tests/integration/streaming-security.test.ts src/security/securityIntegration.test.tsx src/features/vault/TodoVault.security.test.tsx` |
-| `npm run test:security:integration` | `vitest run src/security/securityIntegration.test.tsx`                                                                                                                                                                                  |
-| `npm run test:crypto`               | `vitest run tests/unit/encryption.test.ts tests/unit/server-crypto.test.ts tests/unit/account-session-profile-encryption.test.ts src/lib/__tests__/encryptedMediaStreaming.test.ts`                                                     |
-| `npm run test:crypto:unit`          | `vitest run tests/unit/encryption.test.ts`                                                                                                                                                                                              |
-| `npm run test:crypto:server`        | `vitest run tests/unit/server-crypto.test.ts`                                                                                                                                                                                           |
-| `npm run test:crypto:rotation`      | `vitest run tests/unit/vault-key-rotation.test.ts tests/unit/vault-key-check.test.ts`                                                                                                                                                   |
-| `npm run test:vault`                | `vitest run tests/unit/vault-`                                                                                                                                                                                                          |
-| `npm run test:vault:core`           | `vitest run tests/unit/vault-item-content.test.ts tests/unit/vault-drag-drop.test.ts tests/unit/legacy-vault-parser.test.ts`                                                                                                            |
-| `npm run test:vault:chat`           | `vitest run tests/unit/chat-vault-`                                                                                                                                                                                                     |
-| `npm run test:vault:todo`           | `vitest run src/features/vault/TodoVault.security.test.tsx`                                                                                                                                                                             |
-| `npm run test:sync`                 | `vitest run tests/unit/sync-`                                                                                                                                                                                                           |
-| `npm run test:sync:corruption`      | `vitest run tests/unit/sync-download-corruption.test.ts`                                                                                                                                                                                |
-| `npm run test:sync:stores`          | `vitest run tests/unit/activity-store.test.ts tests/unit/privacy-interface-store.test.ts tests/unit/total-user-mirror.test.ts`                                                                                                          |
-| `npm run test:settings`             | `vitest run src/features/vault/__tests__/SettingsVault`                                                                                                                                                                                 |
-| `npm run test:settings:integration` | `vitest run src/features/vault/__tests__/SettingsVault/SettingsVaultIntegration.test.tsx`                                                                                                                                               |
-| `npm run test:shortcuts`            | `vitest run src/features/vault/__tests__/ControlsAndShortcuts.test.tsx src/features/vault/__tests__/ShortcutsCard.test.tsx`                                                                                                             |
-| `npm run test:password`             | `vitest run tests/unit/password- tests/unit/pinning.test.ts`                                                                                                                                                                            |
-| `npm run test:media`                | `vitest run src/components/ui/video-player.test.tsx src/lib/__tests__/encryptedMediaStreaming.test.ts tests/integration/streaming-security.test.ts src/features/vault/components/MediaVault`                                            |
-| `npm run test:video`                | `vitest run src/components/ui/video-player.test.tsx`                                                                                                                                                                                    |
-| `npm run test:capture`              | `vitest run src/features/vault/components/LiveCaptureModal`                                                                                                                                                                             |
-| `npm run test:streaming`            | `vitest run tests/integration/streaming-security.test.ts`                                                                                                                                                                               |
-| `npm run test:streaming:media`      | `vitest run src/lib/__tests__/encryptedMediaStreaming.test.ts`                                                                                                                                                                          |
-| `npm run test:avatar`               | `vitest run tests/unit/avatar-pipeline.test.ts tests/unit/mongo-atlas-avatar.test.ts`                                                                                                                                                   |
-| `npm run test:multipart`            | `vitest run tests/integration/multipart-security.test.ts tests/unit/upload-validation.test.ts tests/unit/signed-url.test.ts`                                                                                                            |
-| `npm run test:monitoring`           | `vitest run tests/unit/sentry-backend.test.ts tests/unit/logrocket-backend.test.ts tests/unit/logrocket-frontend.test.ts`                                                                                                               |
-| `npm run test:sentry`               | `vitest run tests/unit/sentry-backend.test.ts`                                                                                                                                                                                          |
-| `npm run test:logrocket`            | `vitest run tests/unit/logrocket-`                                                                                                                                                                                                      |
-| `npm run test:utils`                | `vitest run tests/unit/env.test.ts tests/unit/fuzzy.test.ts tests/unit/apiClient.test.ts`                                                                                                                                               |
-| `npm run test:env`                  | `vitest run tests/unit/env.test.ts`                                                                                                                                                                                                     |
-| `npm run test:backup`               | `vitest run tests/unit/backup.test.ts`                                                                                                                                                                                                  |
-| `npm run test:lighthouse`           | `vitest run tests/unit/lighthouse-runner.test.ts`                                                                                                                                                                                       |
-| `npm run test:reports`              | `vitest run tests/unit/open-report.test.ts`                                                                                                                                                                                             |
-| `npm run typecheck`                 | `tsc --noEmit`                                                                                                                                                                                                                          |
-| `npm run typecheck:server`          | `tsc --noEmit -p tsconfig.server.json`                                                                                                                                                                                                  |
-| `npm run typecheck:all`             | `npm run typecheck && npm run typecheck:server`                                                                                                                                                                                         |
-| `npm run lint`                      | `npm run typecheck:all`                                                                                                                                                                                                                 |
-| `npm run lint:strict`               | `npm run lint && npm run test:unit`                                                                                                                                                                                                     |
-| `npm run format`                    | `prettier --write .`                                                                                                                                                                                                                    |
-| `npm run format:check`              | `prettier --check .`                                                                                                                                                                                                                    |
-| `npm run dev`                       | `tsx watch server.ts`                                                                                                                                                                                                                   |
-| `npm run dev:client`                | `vite`                                                                                                                                                                                                                                  |
-| `npm run dev:host`                  | `vite --host`                                                                                                                                                                                                                           |
-| `npm run dev:debug`                 | `tsx watch --inspect server.ts`                                                                                                                                                                                                         |
-| `npm start`                         | `tsx server.ts`                                                                                                                                                                                                                         |
-| `npm run preview`                   | `vite preview`                                                                                                                                                                                                                          |
-| `npm run preview:host`              | `vite preview --host`                                                                                                                                                                                                                   |
-| `npm run build`                     | `vite build`                                                                                                                                                                                                                            |
-| `npm run build:server`              | `esbuild server.ts --bundle --platform=node --format=esm --packages=external --outdir=dist`                                                                                                                                             |
-| `npm run build:all`                 | `npm run build && npm run build:server`                                                                                                                                                                                                 |
-| `npm run build:prod`                | `node scripts/build-env.mjs --minify=oxc --sourcemap=false --mode=production`                                                                                                                                                           |
-| `npm run build:minify:terser`       | `node scripts/build-env.mjs --minify=terser --sourcemap=false --mode=production`                                                                                                                                                        |
-| `npm run build:analyze`             | `node scripts/build-env.mjs --analyze`                                                                                                                                                                                                  |
-| `npm run build:perf`                | `node scripts/build-env.mjs --mode=production --debug`                                                                                                                                                                                  |
-| `npm run build:zip`                 | `npm run build && npm run zip:prod`                                                                                                                                                                                                     |
-| `npm run build:zip:analyze`         | `lint:strict + format + format:check + build:analyze + memory:all + backup + backup:info + zip:prod + lighthouse:ci + stats:chrome`                                                                                                     |
-| `npm run clean`                     | `node scripts/clean.mjs --build`                                                                                                                                                                                                        |
-| `npm run clean:stats`               | `node scripts/clean.mjs --stats`                                                                                                                                                                                                        |
-| `npm run clean:vite`                | `node scripts/clean.mjs --vite`                                                                                                                                                                                                         |
-| `npm run clean:coverage`            | `node scripts/clean.mjs --coverage`                                                                                                                                                                                                     |
-| `npm run clean:reports`             | `node scripts/clean.mjs --reports`                                                                                                                                                                                                      |
-| `npm run clean:memory`              | `node scripts/clean.mjs --memory`                                                                                                                                                                                                       |
-| `npm run clean:npm`                 | `npm cache clean --force`                                                                                                                                                                                                               |
-| `npm run clean:all`                 | `node scripts/clean.mjs --all`                                                                                                                                                                                                          |
-| `npm run backup`                    | `node scripts/backup.mjs`                                                                                                                                                                                                               |
-| `npm run backup:info`               | `node scripts/backup.mjs --info`                                                                                                                                                                                                        |
-| `npm run verify`                    | `npm run lint && npm run test`                                                                                                                                                                                                          |
-| `npm run verify:quick`              | `npm run lint && npm run test:auth`                                                                                                                                                                                                     |
-| `npm run verify:ci`                 | `npm run doctor && npm run lint && npm run test:ci && npm run build`                                                                                                                                                                    |
-| `npm run verify:full`               | `npm run clean:all && npm run doctor && npm run verify && npm run test:all`                                                                                                                                                             |
-| `npm run verify:jwt`                | `tsx scripts/verify-jwt.ts`                                                                                                                                                                                                             |
-| `npm run doctor`                    | `node scripts/doctor.mjs`                                                                                                                                                                                                               |
-| `npm run env:check`                 | `node scripts/env-check.mjs`                                                                                                                                                                                                            |
-| `npm run db:ping`                   | `node scripts/db-ping.mjs`                                                                                                                                                                                                              |
-| `npm run keepalive`                 | `node scripts/atlas-keepalive.mjs`                                                                                                                                                                                                      |
-| `npm run keepalive:once`            | `node scripts/atlas-keepalive.mjs --once`                                                                                                                                                                                               |
-| `npm run security:rewrap-kek`       | `tsx server/scripts/rewrapEnvelopeKeys.ts --dry-run`                                                                                                                                                                                    |
-| `npm run lighthouse`                | `node scripts/lighthouse-runner.mjs`                                                                                                                                                                                                    |
-| `npm run lighthouse:desktop`        | `node scripts/lighthouse-runner.mjs --desktop`                                                                                                                                                                                          |
-| `npm run lighthouse:ci`             | `node scripts/lighthouse-runner.mjs --assert --min-score-accessibility=90 --min-score-best-practices=90 --min-score-seo=90 --min-score-performance=65`                                                                                  |
-| `npm run lighthouse:split`          | `node scripts/lighthouse-runner.mjs --split-existing-report`                                                                                                                                                                            |
-| `npm run lighthouse:open`           | `node scripts/open-report.mjs lighthouse/report-split/index.html`                                                                                                                                                                       |
-| `npm run lighthouse:chrome`         | `node scripts/open-report.mjs lighthouse/report-split/index.html --chrome`                                                                                                                                                              |
-| `npm run stats`                     | `node scripts/open-report.mjs stats.html`                                                                                                                                                                                               |
-| `npm run stats:chrome`              | `node scripts/open-report.mjs stats.html --chrome`                                                                                                                                                                                      |
-| `npm run memory:index`              | `node scripts/code-memory-index.mjs`                                                                                                                                                                                                    |
-| `npm run memory:visual`             | `node scripts/code-memory-visual.mjs`                                                                                                                                                                                                   |
-| `npm run memory:open`               | `node scripts/open-report.mjs .memory/index.html`                                                                                                                                                                                       |
-| `npm run memory:all`                | `npm run memory:index && npm run memory:visual && npm run memory:open`                                                                                                                                                                  |
-| `npm run update:check`              | `npm outdated`                                                                                                                                                                                                                          |
-| `npm run update:safe`               | `npm update`                                                                                                                                                                                                                            |
-| `npm run update:all`                | `npx npm-check-updates -u && npm install`                                                                                                                                                                                               |
-| `npm run check:audit`               | `npm audit`                                                                                                                                                                                                                             |
-| `npm run fix:audit`                 | `npm audit fix`                                                                                                                                                                                                                         |
-| `npm run zip:prod`                  | `node scripts/zip-prod.mjs`                                                                                                                                                                                                             |
+| Script                              | Underlying Command                                                                                                                                                                                                                                                                  |
+| :---------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm test`                          | `vitest run --maxWorkers 1`                                                                                                                                                                                                                                                         |
+| `npm run test:run`                  | `vitest run`                                                                                                                                                                                                                                                                        |
+| `npm run test:watch`                | `vitest`                                                                                                                                                                                                                                                                            |
+| `npm run test:ui`                   | `vitest --ui`                                                                                                                                                                                                                                                                       |
+| `npm run test:ui:coverage`          | `vitest --ui --coverage`                                                                                                                                                                                                                                                            |
+| `npm run test:fast`                 | `vitest run --bail=1`                                                                                                                                                                                                                                                               |
+| `npm run test:verbose`              | `vitest run --reporter=verbose`                                                                                                                                                                                                                                                     |
+| `npm run test:silent`               | `vitest run --silent`                                                                                                                                                                                                                                                               |
+| `npm run test:ci`                   | `npm run lint && vitest run --no-cache`                                                                                                                                                                                                                                             |
+| `npm run test:flaky`                | `vitest run --retry=5`                                                                                                                                                                                                                                                              |
+| `npm run test:repeat`               | `node scripts/test-repeat.mjs`                                                                                                                                                                                                                                                      |
+| `npm run test:heap`                 | `vitest run --logHeapUsage`                                                                                                                                                                                                                                                         |
+| `npm run test:debug`                | `vitest run --inspect --no-file-parallelism`                                                                                                                                                                                                                                        |
+| `npm run test:debug:watch`          | `vitest --inspect --no-file-parallelism`                                                                                                                                                                                                                                            |
+| `npm run test:debug:brk`            | `vitest run --inspect-brk --no-file-parallelism`                                                                                                                                                                                                                                    |
+| `npm run test:update`               | `vitest run -u`                                                                                                                                                                                                                                                                     |
+| `npm run test:changed`              | `node scripts/vitest-related.mjs run`                                                                                                                                                                                                                                               |
+| `npm run test:related`              | `node scripts/vitest-related.mjs watch`                                                                                                                                                                                                                                             |
+| `npm run test:coverage`             | `vitest run --coverage`                                                                                                                                                                                                                                                             |
+| `npm run test:coverage:deep`        | `vitest run --coverage --logHeapUsage`                                                                                                                                                                                                                                              |
+| `npm run test:coverage:open`        | `vitest run --coverage && node scripts/open-report.mjs coverage/index.html`                                                                                                                                                                                                         |
+| `npm run test:runner`               | `tsx tests/run-tests.ts`                                                                                                                                                                                                                                                            |
+| `npm run test:all`                  | `npm run lint && npm run test:run && npm run test:runner`                                                                                                                                                                                                                           |
+| `npm run test:unit`                 | `vitest run tests/unit`                                                                                                                                                                                                                                                             |
+| `npm run test:unit:watch`           | `vitest --watch tests/unit`                                                                                                                                                                                                                                                         |
+| `npm run test:integration`          | `vitest run tests/integration`                                                                                                                                                                                                                                                      |
+| `npm run test:integration:watch`    | `vitest --watch tests/integration`                                                                                                                                                                                                                                                  |
+| `npm run test:components`           | `vitest run .test.tsx`                                                                                                                                                                                                                                                              |
+| `npm run test:components:watch`     | `vitest --watch .test.tsx`                                                                                                                                                                                                                                                          |
+| `npm run test:client`               | `vitest run src`                                                                                                                                                                                                                                                                    |
+| `npm run test:server`               | `vitest run tests/unit/server- tests/unit/auth- tests/unit/sentry- tests/unit/logrocket- tests/integration`                                                                                                                                                                         |
+| `npm run test:e2e`                  | `vitest run tests/integration`                                                                                                                                                                                                                                                      |
+| `npm run test:auth`                 | `vitest run tests/integration/auth.integration.test.ts tests/unit/auth-`                                                                                                                                                                                                            |
+| `npm run test:auth:unit`            | `vitest run tests/unit/auth-`                                                                                                                                                                                                                                                       |
+| `npm run test:auth:integration`     | `vitest run tests/integration/auth.integration.test.ts`                                                                                                                                                                                                                             |
+| `npm run test:auth:security`        | `vitest run tests/integration/auth-security.test.ts`                                                                                                                                                                                                                                |
+| `npm run test:security`             | `vitest run tests/integration/auth-security.test.ts tests/integration/multipart-security.test.ts tests/integration/streaming-security.test.ts src/security/securityIntegration.test.tsx src/features/vault/TodoVault.security.test.tsx`                                             |
+| `npm run test:security:integration` | `vitest run src/security/securityIntegration.test.tsx`                                                                                                                                                                                                                              |
+| `npm run test:security:components`  | `vitest run src/components/security`                                                                                                                                                                                                                                                |
+| `npm run test:crypto`               | `vitest run tests/unit/encryption.test.ts tests/unit/server-crypto.test.ts tests/unit/account-session-profile-encryption.test.ts src/lib/__tests__/encryptedMediaStreaming.test.ts`                                                                                                 |
+| `npm run test:crypto:unit`          | `vitest run tests/unit/encryption.test.ts`                                                                                                                                                                                                                                          |
+| `npm run test:crypto:server`        | `vitest run tests/unit/server-crypto.test.ts`                                                                                                                                                                                                                                       |
+| `npm run test:crypto:rotation`      | `vitest run tests/unit/vault-key-rotation.test.ts tests/unit/vault-key-check.test.ts`                                                                                                                                                                                               |
+| `npm run test:vault`                | `vitest run tests/unit/vault-`                                                                                                                                                                                                                                                      |
+| `npm run test:vault:core`           | `vitest run tests/unit/vault-item-content.test.ts tests/unit/vault-drag-drop.test.ts tests/unit/legacy-vault-parser.test.ts`                                                                                                                                                        |
+| `npm run test:vault:service`        | `vitest run tests/unit/vault-service.test.ts`                                                                                                                                                                                                                                       |
+| `npm run test:vault:chat`           | `vitest run tests/unit/chat-vault-`                                                                                                                                                                                                                                                 |
+| `npm run test:vault:todo`           | `vitest run src/features/vault/TodoVault.security.test.tsx`                                                                                                                                                                                                                         |
+| `npm run test:sync`                 | `vitest run tests/unit/sync-`                                                                                                                                                                                                                                                       |
+| `npm run test:sync:corruption`      | `vitest run tests/unit/sync-download-corruption.test.ts`                                                                                                                                                                                                                            |
+| `npm run test:sync:stores`          | `vitest run tests/unit/activity-store.test.ts tests/unit/privacy-interface-store.test.ts tests/unit/total-user-mirror.test.ts`                                                                                                                                                      |
+| `npm run test:stores`               | `vitest run tests/unit/notification-store.test.ts tests/unit/integrity-store.test.ts tests/unit/global-navigation-store.test.ts tests/unit/theme-store.test.ts tests/unit/activity-store.test.ts tests/unit/privacy-interface-store.test.ts src/store/videoMiniPlayerStore.test.ts` |
+| `npm run test:settings`             | `vitest run src/features/vault/__tests__/SettingsVault`                                                                                                                                                                                                                             |
+| `npm run test:settings:integration` | `vitest run src/features/vault/__tests__/SettingsVault/SettingsVaultIntegration.test.tsx`                                                                                                                                                                                           |
+| `npm run test:shortcuts`            | `vitest run src/features/vault/__tests__/ControlsAndShortcuts.test.tsx src/features/vault/__tests__/ShortcutsCard.test.tsx`                                                                                                                                                         |
+| `npm run test:router`               | `vitest run src/components/router`                                                                                                                                                                                                                                                  |
+| `npm run test:error-boundary`       | `vitest run src/components/__tests__/ErrorBoundary.test.tsx src/components/router/__tests__/RouteErrorBoundary.test.tsx`                                                                                                                                                            |
+| `npm run test:error-boundary:watch` | `vitest --watch src/components/__tests__/ErrorBoundary.test.tsx`                                                                                                                                                                                                                    |
+| `npm run test:layout`               | `vitest run tests/unit/layout-components.test.tsx`                                                                                                                                                                                                                                  |
+| `npm run test:layout:watch`         | `vitest --watch tests/unit/layout-components.test.tsx`                                                                                                                                                                                                                              |
+| `npm run test:password`             | `vitest run tests/unit/password- tests/unit/pinning.test.ts`                                                                                                                                                                                                                        |
+| `npm run test:media`                | `vitest run src/components/ui/video-player.test.tsx src/lib/__tests__/encryptedMediaStreaming.test.ts tests/integration/streaming-security.test.ts src/features/vault/components/MediaVault`                                                                                        |
+| `npm run test:video`                | `vitest run src/components/ui/video-player.test.tsx`                                                                                                                                                                                                                                |
+| `npm run test:capture`              | `vitest run src/features/vault/components/LiveCaptureModal`                                                                                                                                                                                                                         |
+| `npm run test:streaming`            | `vitest run tests/integration/streaming-security.test.ts`                                                                                                                                                                                                                           |
+| `npm run test:streaming:media`      | `vitest run src/lib/__tests__/encryptedMediaStreaming.test.ts`                                                                                                                                                                                                                      |
+| `npm run test:avatar`               | `vitest run src/components/__tests__/SmartAvatar.test.tsx src/hooks/__tests__/useFastAvatar.test.ts tests/unit/avatar-pipeline.test.ts tests/unit/mongo-atlas-avatar.test.ts`                                                                                                       |
+| `npm run test:avatar:component`     | `vitest run src/components/__tests__/SmartAvatar.test.tsx`                                                                                                                                                                                                                          |
+| `npm run test:avatar:watch`         | `vitest --watch src/components/__tests__/SmartAvatar.test.tsx`                                                                                                                                                                                                                      |
+| `npm run test:workers`              | `vitest run tests/unit/workers-pipeline.test.ts`                                                                                                                                                                                                                                    |
+| `npm run test:multipart`            | `vitest run tests/integration/multipart-security.test.ts tests/unit/upload-validation.test.ts tests/unit/signed-url.test.ts`                                                                                                                                                        |
+| `npm run test:monitoring`           | `vitest run tests/unit/sentry-backend.test.ts tests/unit/logrocket-backend.test.ts tests/unit/logrocket-frontend.test.ts`                                                                                                                                                           |
+| `npm run test:sentry`               | `vitest run tests/unit/sentry-backend.test.ts`                                                                                                                                                                                                                                      |
+| `npm run test:logrocket`            | `vitest run tests/unit/logrocket-`                                                                                                                                                                                                                                                  |
+| `npm run test:api`                  | `vitest run tests/unit/apiClient.test.ts tests/unit/apiModules.test.ts`                                                                                                                                                                                                             |
+| `npm run test:utils`                | `vitest run tests/unit/env.test.ts tests/unit/fuzzy.test.ts tests/unit/apiClient.test.ts tests/unit/apiModules.test.ts`                                                                                                                                                             |
+| `npm run test:env`                  | `vitest run tests/unit/env.test.ts`                                                                                                                                                                                                                                                 |
+| `npm run test:backup`               | `vitest run tests/unit/backup.test.ts`                                                                                                                                                                                                                                              |
+| `npm run test:lighthouse`           | `vitest run tests/unit/lighthouse-runner.test.ts`                                                                                                                                                                                                                                   |
+| `npm run test:reports`              | `vitest run tests/unit/open-report.test.ts`                                                                                                                                                                                                                                         |
+| `npm run test:schema`               | `vitest run tests/unit/vault-manifest-schema.test.ts`                                                                                                                                                                                                                               |
+| `npm run schema:validate`           | `node scripts/validate-schema.mjs`                                                                                                                                                                                                                                                  |
+| `npm run typecheck`                 | `tsc --noEmit`                                                                                                                                                                                                                                                                      |
+| `npm run typecheck:server`          | `tsc --noEmit -p tsconfig.server.json`                                                                                                                                                                                                                                              |
+| `npm run typecheck:all`             | `npm run typecheck && npm run typecheck:server`                                                                                                                                                                                                                                     |
+| `npm run lint`                      | `npm run typecheck:all`                                                                                                                                                                                                                                                             |
+| `npm run lint:strict`               | `npm run lint && npm run test:unit`                                                                                                                                                                                                                                                 |
+| `npm run format`                    | `prettier --write .`                                                                                                                                                                                                                                                                |
+| `npm run format:check`              | `prettier --check .`                                                                                                                                                                                                                                                                |
+| `npm run dev`                       | `tsx watch server.ts`                                                                                                                                                                                                                                                               |
+| `npm run dev:client`                | `vite`                                                                                                                                                                                                                                                                              |
+| `npm run dev:host`                  | `vite --host`                                                                                                                                                                                                                                                                       |
+| `npm run dev:debug`                 | `tsx watch --inspect server.ts`                                                                                                                                                                                                                                                     |
+| `npm start`                         | `tsx server.ts`                                                                                                                                                                                                                                                                     |
+| `npm run preview`                   | `vite preview`                                                                                                                                                                                                                                                                      |
+| `npm run preview:host`              | `vite preview --host`                                                                                                                                                                                                                                                               |
+| `npm run build`                     | `vite build`                                                                                                                                                                                                                                                                        |
+| `npm run build:server`              | `esbuild server.ts --bundle --platform=node --format=esm --packages=external --outdir=dist`                                                                                                                                                                                         |
+| `npm run build:all`                 | `npm run build && npm run build:server`                                                                                                                                                                                                                                             |
+| `npm run build:prod`                | `node scripts/build-env.mjs --minify=oxc --sourcemap=false --mode=production`                                                                                                                                                                                                       |
+| `npm run build:minify:terser`       | `node scripts/build-env.mjs --minify=terser --sourcemap=false --mode=production`                                                                                                                                                                                                    |
+| `npm run build:analyze`             | `node scripts/build-env.mjs --analyze`                                                                                                                                                                                                                                              |
+| `npm run build:perf`                | `node scripts/build-env.mjs --mode=production --debug`                                                                                                                                                                                                                              |
+| `npm run build:zip`                 | `npm run build && npm run zip:prod`                                                                                                                                                                                                                                                 |
+| `npm run build:zip:analyze`         | `lint:strict + format + format:check + build:analyze + memory:all + backup + backup:info + zip:prod + lighthouse:ci + stats:chrome`                                                                                                                                                 |
+| `npm run clean`                     | `node scripts/clean.mjs --build`                                                                                                                                                                                                                                                    |
+| `npm run clean:stats`               | `node scripts/clean.mjs --stats`                                                                                                                                                                                                                                                    |
+| `npm run clean:vite`                | `node scripts/clean.mjs --vite`                                                                                                                                                                                                                                                     |
+| `npm run clean:coverage`            | `node scripts/clean.mjs --coverage`                                                                                                                                                                                                                                                 |
+| `npm run clean:reports`             | `node scripts/clean.mjs --reports`                                                                                                                                                                                                                                                  |
+| `npm run clean:memory`              | `node scripts/clean.mjs --memory`                                                                                                                                                                                                                                                   |
+| `npm run clean:npm`                 | `npm cache clean --force`                                                                                                                                                                                                                                                           |
+| `npm run clean:all`                 | `node scripts/clean.mjs --all`                                                                                                                                                                                                                                                      |
+| `npm run backup`                    | `node scripts/backup.mjs`                                                                                                                                                                                                                                                           |
+| `npm run backup:info`               | `node scripts/backup.mjs --info`                                                                                                                                                                                                                                                    |
+| `npm run verify`                    | `npm run lint && npm run test`                                                                                                                                                                                                                                                      |
+| `npm run verify:quick`              | `npm run lint && npm run test:auth`                                                                                                                                                                                                                                                 |
+| `npm run verify:ci`                 | `npm run doctor && npm run lint && npm run test:ci && npm run build`                                                                                                                                                                                                                |
+| `npm run verify:full`               | `npm run clean:all && npm run doctor && npm run verify && npm run test:all`                                                                                                                                                                                                         |
+| `npm run verify:jwt`                | `tsx scripts/verify-jwt.ts`                                                                                                                                                                                                                                                         |
+| `npm run doctor`                    | `node scripts/doctor.mjs`                                                                                                                                                                                                                                                           |
+| `npm run env:check`                 | `node scripts/env-check.mjs`                                                                                                                                                                                                                                                        |
+| `npm run db:ping`                   | `node scripts/db-ping.mjs`                                                                                                                                                                                                                                                          |
+| `npm run keepalive`                 | `node scripts/atlas-keepalive.mjs`                                                                                                                                                                                                                                                  |
+| `npm run keepalive:once`            | `node scripts/atlas-keepalive.mjs --once`                                                                                                                                                                                                                                           |
+| `npm run security:rewrap-kek`       | `tsx server/scripts/rewrapEnvelopeKeys.ts --dry-run`                                                                                                                                                                                                                                |
+| `npm run lighthouse`                | `node scripts/lighthouse-runner.mjs`                                                                                                                                                                                                                                                |
+| `npm run lighthouse:desktop`        | `node scripts/lighthouse-runner.mjs --desktop`                                                                                                                                                                                                                                      |
+| `npm run lighthouse:ci`             | `node scripts/lighthouse-runner.mjs --assert --min-score-accessibility=90 --min-score-best-practices=90 --min-score-seo=90 --min-score-performance=65`                                                                                                                              |
+| `npm run lighthouse:split`          | `node scripts/lighthouse-runner.mjs --split-existing-report`                                                                                                                                                                                                                        |
+| `npm run lighthouse:open`           | `node scripts/open-report.mjs lighthouse/report-split/index.html`                                                                                                                                                                                                                   |
+| `npm run lighthouse:chrome`         | `node scripts/open-report.mjs lighthouse/report-split/index.html --chrome`                                                                                                                                                                                                          |
+| `npm run stats`                     | `node scripts/open-report.mjs stats.html`                                                                                                                                                                                                                                           |
+| `npm run stats:chrome`              | `node scripts/open-report.mjs stats.html --chrome`                                                                                                                                                                                                                                  |
+| `npm run memory:index`              | `node scripts/code-memory-index.mjs`                                                                                                                                                                                                                                                |
+| `npm run memory:visual`             | `node scripts/code-memory-visual.mjs`                                                                                                                                                                                                                                               |
+| `npm run memory:open`               | `node scripts/open-report.mjs .memory/index.html`                                                                                                                                                                                                                                   |
+| `npm run memory:all`                | `npm run memory:index && npm run memory:visual && npm run memory:open`                                                                                                                                                                                                              |
+| `npm run update:check`              | `npm outdated`                                                                                                                                                                                                                                                                      |
+| `npm run update:safe`               | `npm update`                                                                                                                                                                                                                                                                        |
+| `npm run update:all`                | `npx npm-check-updates -u && npm install`                                                                                                                                                                                                                                           |
+| `npm run check:audit`               | `npm audit`                                                                                                                                                                                                                                                                         |
+| `npm run fix:audit`                 | `npm audit fix`                                                                                                                                                                                                                                                                     |
+| `npm run zip:prod`                  | `node scripts/zip-prod.mjs`                                                                                                                                                                                                                                                         |
 
 ---
 
@@ -2675,6 +2966,12 @@ npx vitest run tests/unit/two-factor-hardening.test.ts
 # API client axios interceptor and retry loop verification
 npx vitest run tests/unit/apiClient.test.ts
 
+# API modular endpoints suite (authApi, vaultApi, systemApi, securityApi, error normalization, UTF-8 TUS)
+npx vitest run tests/unit/apiModules.test.ts
+
+# Full API layer suite via npm shortcut
+npm run test:api
+
 # Multipart chunk upload integrity and boundary attacks
 npx vitest run tests/integration/multipart-security.test.ts
 
@@ -2683,4 +2980,30 @@ npx vitest run tests/unit/upload-validation.test.ts
 
 # Pre-signed S3/Blob URL generation and token expiry checks
 npx vitest run tests/unit/signed-url.test.ts
+```
+
+---
+
+## 35. Production Readiness & Build Verification Pipeline
+
+Commands to verify that the application, client API layer, server types, and production bundles compile cleanly without errors:
+
+```bash
+# 1. Typecheck frontend client & API layer (zero errors required)
+npm run typecheck
+
+# 2. Typecheck backend server & controllers
+npm run typecheck:server
+
+# 3. Full project typecheck (both client and server)
+npm run typecheck:all
+
+# 4. Verify API client and services unit test suite
+npm run test:api
+
+# 5. Full client production bundle build (Vite + Rolldown + Brotli/Gzip assets)
+npm run build
+
+# 6. Full end-to-end production verification bundle
+npm run typecheck:all && npm run test:api && npm run build
 ```

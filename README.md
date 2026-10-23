@@ -10,7 +10,7 @@
   </a>
 </p>
 
-<h1 align="center" style="font-weight: 800; letter-spacing: -0.025em;">Vault</h1>
+<h1 id="vault" align="center" style="font-weight: 800; letter-spacing: -0.025em;">Vault</h1>
 
 <p align="center">
   <span style="display: inline-block; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 9999px; padding: 4px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em;">
@@ -38,22 +38,24 @@
   <img src="https://img.shields.io/badge/Vite-8.3-646cff?style=for-the-badge&logo=vite&logoColor=white" alt="Vite 8" />
   <img src="https://img.shields.io/badge/TypeScript-7.x%20%2F%205.x-3178c6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Node.js-22.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node 22" />
-  <img src="https://img.shields.io/badge/Express-5.2-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express 5" />
+  <img src="https://img.shields.io/badge/Express-5.3-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express 5" />
   <img src="https://img.shields.io/badge/MongoDB-7.x-47a248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB 7" />
-  <a href="./test.md"><img src="https://img.shields.io/badge/Test%20Suite-97%20Files%20%E2%80%A2%2067%20Scripts-success?style=for-the-badge&logo=vitest&logoColor=white" alt="Test Suite" /></a>
+  <a href="./test.md"><img src="https://img.shields.io/badge/Test%20Suite-105%20Files%20%E2%80%A2%2072%20Scripts-success?style=for-the-badge&logo=vitest&logoColor=white" alt="Test Suite" /></a>
   <img src="https://img.shields.io/badge/TailwindCSS-v4.3-38bdf8?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="TailwindCSS v4" />
 </p>
 
 <p align="center">
-  <a href="#-overview">Overview</a> •
-  <a href="#-key-features">Key Features</a> •
-  <a href="#%EF%B8%8F-architecture--security-blueprint">Architecture</a> •
-  <a href="#-repository-structure">Project Structure</a> •
-  <a href="#%EF%B8%8F-technology-stack">Tech Stack</a> •
-  <a href="#%EF%B8%8F-environment-configuration">Configuration</a> •
-  <a href="#-api-reference">API</a> •
-  <a href="#-security--hardening-notes">Security</a> •
-  <a href="#-development--verification-commands">Commands</a> •
+  <a href="#overview">Overview</a> •
+  <a href="#key-features">Key Features</a> •
+  <a href="#-the-5-core-vaults">Core Vaults</a> •
+  <a href="#architecture--security-blueprint">Architecture</a> •
+  <a href="#-technical-documentation-hub-doc">Documentation Hub</a> •
+  <a href="#repository-structure">Project Structure</a> •
+  <a href="#technology-stack">Tech Stack</a> •
+  <a href="#environment-configuration">Configuration</a> •
+  <a href="#-docker--container-quick-start">Docker</a> •
+  <a href="#api-reference">API</a> •
+  <a href="#development--verification-commands">Commands</a> •
   <a href="./doc/README.md"><strong>📚 Docs (doc/)</strong></a> •
   <a href="./test.md"><strong>🧪 Test Guide (test.md)</strong></a>
 </p>
@@ -62,31 +64,35 @@
 
 ## 📋 Table of Contents
 
-- [🎯 Overview](#-overview)
-- [✨ Key Features](#-key-features)
-- [🏗️ Architecture & Security Blueprint](#%EF%B8%8F-architecture--security-blueprint)
+- [🎯 Overview](#overview)
+- [✨ Key Features](#key-features)
+- [🗄️ The 5 Core Vaults](#-the-5-core-vaults)
+- [🏗️ Architecture & Security Blueprint](#architecture--security-blueprint)
   - [Architecture Flowchart](#architecture-flowchart)
   - [Zero-Trust Data Boundary](#zero-trust-data-boundary)
-- [📂 Repository Structure](#-repository-structure)
-- [🛠️ Technology Stack](#%EF%B8%8F-technology-stack)
-- [⚡ Performance & Asset Optimization](#-performance--asset-optimization)
-- [⚙️ Environment Configuration](#%EF%B8%8F-environment-configuration)
+  - [8-Layer Cryptographic Protocol & Security Architecture](#-8-layer-cryptographic-protocol--security-architecture)
+- [📚 Technical Documentation Hub (`doc/`)](#-technical-documentation-hub-doc)
+- [📂 Repository Structure](#repository-structure)
+- [🛠️ Technology Stack](#technology-stack)
+- [⚡ Performance & Asset Optimization](#performance--asset-optimization)
+- [⚙️ Environment Configuration](#environment-configuration)
   - [Quick Start Setup](#quick-start-setup)
-  - [Environment Variables Reference](#-environment-variables-reference)
-  - [Render Production Deployment Guide](#-render-production-deployment-guide)
-- [📡 API Reference](#-api-reference)
+  - [Environment Variables Reference](#environment-variables-reference)
+  - [🐳 Docker & Container Quick Start](#-docker--container-quick-start)
+  - [Render Production Deployment Guide](#render-production-deployment-guide)
+- [📡 API Reference](#api-reference)
   - [Authentication Endpoints](#authentication-endpoints)
   - [Vault Storage Endpoints](#vault-storage-endpoints)
   - [Internal Control Records](#internal-control-records)
-- [🔄 Synchronization Strategy](#-synchronization-strategy)
-- [🔒 Security & Hardening Notes](#-security--hardening-notes)
-- [🧪 Development & Verification Commands](#-development--verification-commands)
+- [🔄 Synchronization Strategy](#synchronization-strategy)
+- [🔒 Security & Hardening Notes](#security--hardening-notes)
+- [🧪 Development & Verification Commands](#development--verification-commands)
   - [Development Server](#development-server)
   - [Build & Production Packaging](#build--production-packaging)
   - [Testing Suite & Test Reference (test.md)](#testing-suite--test-reference-testmd)
   - [Code Quality & Maintenance](#code-quality--maintenance)
-- [📑 Comprehensive Testing Guide (`test.md`)](#-comprehensive-testing-guide-testmd)
-- [📄 License & Authors](#-license--authors)
+- [📑 Comprehensive Testing Guide (`test.md`)](#comprehensive-testing-guide-testmd)
+- [📄 License & Authors](#license-authors)
 
 ---
 
@@ -149,6 +155,20 @@
 - **Pre-compressed Assets**: Automated build-time Brotli (`.br`) and Gzip (`.gz`) asset compression.
 - **Module Preload & Hints**: Optimized resource loading with immutable 1-year cache headers for static chunks.
 - **High Availability**: Automatic database cluster failover between MongoDB Atlas primary and secondary clusters.
+
+---
+
+## 🗄️ The 5 Core Vaults
+
+Vault provides 5 segregated, client-encrypted compartments tailored for every facet of digital privacy:
+
+| Vault                     | Icon | Encryption Method              | Key Features & Capabilities                                                                                                                                                  |
+| :------------------------ | :--: | :----------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Notes Vault**           |  📝  | TipTap 3.32 JSON + `VCAS01`    | Markdown formatting, code syntax highlighting, rich tables, inline encrypted image attachments, 300ms debounce live encryption, full revision history.                       |
+| **Passwords Vault**       |  🔑  | AES-256-GCM + Argon2id         | High-entropy password generator, 6-digit TOTP authenticator with live RFC 6238 countdown, password strength meter, duplicate/compromised credential audit.                   |
+| **Photos & Videos Vault** |  🎬  | HLS.js + Signed HMAC Streaming | Encrypted media galleries, thumbnail generation in Web Workers, persistent Picture-in-Picture global mini-player (`GlobalVideoMiniPlayer`), cross-route continuous playback. |
+| **Documents Vault**       |  📄  | WebCrypto + Privacy Shield     | Multi-gigabyte resumable TUS chunk uploads, sandboxed in-browser PDF viewer, tab-visibility blur shielding (`useAntiScreenshotAndShield`), print blocking.                   |
+| **Decoy Vault Partition** |  🎭  | Isolated Secondary Decoy PIN   | Plausible deniability workspace activated via duress PIN. Instantly shreds in-memory master keys within 60ms and displays harmless decoy files under physical coercion.      |
 
 ---
 
@@ -250,52 +270,84 @@ The vault implements a comprehensive defense-in-depth security model across 8 di
 
 ---
 
+## 📚 Technical Documentation Hub (`doc/`)
+
+Vault includes a dedicated, production-grade technical documentation suite located inside [`doc/`](./doc/README.md). Every document details implementation-level mechanics, formal security audits, network protocols, and disaster recovery procedures:
+
+| Document                                                                             | Description                                                                                                                           | Target Audience               |
+| :----------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------ | :---------------------------- |
+| [**`doc/task.md`**](./doc/task.md)                                                   | **Engineering Task Backlog & Roadmap**: Sprint goals (`TSK-101`–`TSK-107`), Phase 1–4 roadmap, crypto hardening, and QA backlog.      | Engineering & Product         |
+| [**`doc/design.md`**](./doc/design.md)                                               | **System Architecture & Design Blueprint**: Trust boundaries, client-server split, Dual-Key separation, and data flow.                | Architects & Developers       |
+| [**`doc/security-and-crypto.md`**](./doc/security-and-crypto.md)                     | **8-Layer Cryptographic Protocol**: Argon2id KDF, Kyber-768 ML-KEM, `VCAS01` cascade, and sentinel verification.                      | Security Engineers & Auditors |
+| [**`doc/threat-model.md`**](./doc/threat-model.md)                                   | **STRIDE Threat Model & Cryptographic Analysis**: Cold-boot defense, memory shredding, side channels, and duress PINs.                | Security Auditors & SREs      |
+| [**`doc/database-schemas.md`**](./doc/database-schemas.md)                           | **Database Blueprint & Schema Indexing**: Complete Mongoose models (`User`, `Item`, `Session`), soft deletes, and TTL.                | Backend & Database Engineers  |
+| [**`doc/api-reference.md`**](./doc/api-reference.md)                                 | **REST API & WebSocket Protocol Reference**: Route parameters, payload contracts, TUS chunk uploads, and Socket.IO.                   | Full-Stack & API Integrators  |
+| [**`doc/sync-and-storage.md`**](./doc/sync-and-storage.md)                           | **Real-Time Sync & Storage Architecture**: Socket.IO events, latest-update-wins conflict arbitration, and MongoDB failover.           | Backend & Distributed Systems |
+| [**`doc/client-features.md`**](./doc/client-features.md)                             | **Frontend Architecture & Features**: TipTap 3.32 live encryption, Picture-in-Picture mini-player, and PDF Privacy Shield.            | Frontend Engineers            |
+| [**`doc/testing-and-verification.md`**](./doc/testing-and-verification.md)           | **Testing & QA Architecture**: Vitest test isolation, WebCrypto mocks, repeat stress testing, and Lighthouse CI gates.                | QA Engineers & SDETs          |
+| [**`doc/performance.md`**](./doc/performance.md)                                     | **Asset Optimization & Core Web Vitals**: 17-chunk splitting, Brotli pre-compression, and Web Worker offloading.                      | Frontend & Performance SREs   |
+| [**`doc/setup-and-deployment.md`**](./doc/setup-and-deployment.md)                   | **Configuration & Production Deployment**: Step-by-step local setup, Render cloud deployment, and full `.env` catalog.                | DevOps & Cloud Engineers      |
+| [**`doc/troubleshooting.md`**](./doc/troubleshooting.md)                             | **Troubleshooting & Incident Resolution Manual**: Diagnostic playbooks for Sentinel keycheck errors, session loops, and DB failovers. | Support & DevOps Engineers    |
+| [**`doc/disaster-recovery.md`**](./doc/disaster-recovery.md)                         | **Disaster Recovery & Emergency Operations**: BIP-39 24-word recovery seeds, point-in-time restores, and forensic wipe.               | SREs & Security Officers      |
+| [**`doc/architecture-decision-records.md`**](./doc/architecture-decision-records.md) | **Architecture Decision Records (ADR 001–007)**: Immutable historical decision log for Dual-Key, Kyber-768, and cascade ciphers.      | Architects & Reviewers        |
+| [**`doc/user-guide.md`**](./doc/user-guide.md)                                       | **Everyday User Handbook**: Plain-English guide for vault setup, keyboard shortcuts, decoy partition, and FAQs.                       | End-Users & Privacy Seekers   |
+
+---
+
 ## 📂 Repository Structure
 
 ```text
 vault/
-├── doc/                    # 📚 Comprehensive technical architecture & protocol docs
-│   ├── README.md           # Documentation index & role-based reading guide
-│   ├── design.md           # System architecture & design blueprint
-│   ├── security-and-crypto.md # 8-layer cryptographic specifications
-│   ├── database-schemas.md # Data models, Mongoose schemas & indexing strategy
-│   ├── threat-model.md     # STRIDE threat model & cryptographic risk analysis
-│   ├── api-reference.md    # REST API & Socket.IO protocol reference
-│   ├── sync-and-storage.md # Real-time sync & multi-cluster failover
-│   ├── client-features.md  # TipTap notes, video PiP, PDF privacy shield
+├── doc/                            # 📚 Comprehensive technical architecture & protocol docs
+│   ├── README.md                   # Documentation index & role-based reading guide
+│   ├── task.md                     # Engineering task backlog, active sprint & milestone roadmap
+│   ├── DESIGN.md                   # System architecture & design blueprint
+│   ├── security-and-crypto.md       # 8-layer cryptographic protocol & security specifications
+│   ├── threat-model.md             # STRIDE threat model & cryptographic risk analysis
+│   ├── database-schemas.md         # Data models, Mongoose schemas & indexing strategy
+│   ├── api-reference.md            # REST API & Socket.IO real-time protocol reference
+│   ├── sync-and-storage.md         # Real-time sync engine & multi-cluster failover
+│   ├── client-features.md          # TipTap notes, video PiP, PDF privacy shield
 │   ├── testing-and-verification.md # Test architecture & CI/CD verification
-│   ├── performance.md      # Asset optimization, Brotli pre-compression & Core Web Vitals
-│   ├── setup-and-deployment.md # Setup, .env catalog, Render deployment
-│   └── user-guide.md       # User-friendly handbook, everyday guide & shortcuts cheat sheet
-├── public/                 # Static assets, icons, manifest, favicon
-├── server/                 # Express 5 backend application
-│   ├── boot/               # Server bootstrap & lifecycle handlers
-│   ├── controllers/        # Route controllers (Auth, Vault, Sync, Media)
-│   ├── middleware/         # Security, rate limit, JWT, CSRF, error middleware
-│   ├── models/             # Mongoose schemas (User, Item, Session, Log)
-│   ├── routes/             # REST API endpoint definitions
-│   ├── security/           # Server-side cryptography, envelope KEK, tokens
-│   ├── services/           # Geolocation, Sentry, keep-alive, socket services
-│   ├── socket.ts           # Socket.IO connection & event handlers
-│   └── vite.ts             # Vite SSR / production static compression server
-├── src/                    # Frontend React 19 application
-│   ├── api/                # Axios API client & interceptors
-│   ├── components/         # Shared UI components & Radix primitives
-│   ├── features/           # Feature modules (Vault, Notes, Media, Settings, Auth)
-│   ├── hooks/              # Custom React hooks (sync, keyboard, crypto)
-│   ├── lib/                # Client utilities & streaming engines
-│   ├── security/           # WebCrypto, AES-256-GCM, PQC-Kyber, key derivation
-│   ├── store/              # Zustand global application state
-│   ├── App.tsx             # Root React component
-│   └── main.tsx            # Client entry point
-├── scripts/                # Build, analysis, backup, test & diagnostic scripts
-├── tests/                  # Unit, security, crypto, and integration test suites
-├── test.md                 # 🧪 Comprehensive test suite cheat sheet & test execution guide
-├── .env.example            # Environment variable template
-├── package.json            # Dependencies and npm script definitions
-├── server.ts               # Main server entry point
-├── vite.config.ts          # Vite build configuration & compression pipeline
-└── vitest.config.ts        # Vitest testing configuration
+│   ├── performance.md              # Asset optimization, Brotli pre-compression & Core Web Vitals
+│   ├── setup-and-deployment.md     # Setup, .env catalog, Render deployment
+│   ├── troubleshooting.md          # Diagnostic workflows & incident resolution playbooks
+│   ├── disaster-recovery.md        # BIP-39 recovery seeds, database restore & failover runbooks
+│   ├── architecture-decision-records.md # ADRs (ADR-001 through ADR-007)
+│   ├── user-guide.md               # User-friendly handbook, everyday guide & shortcuts cheat sheet
+│   └── audit-report.md             # Security audit findings & vulnerability assessments
+├── public/                         # Static assets, icons, manifest, favicon
+├── server/                         # Express 5 backend application
+│   ├── boot/                       # Server bootstrap & lifecycle handlers
+│   ├── controllers/                # Route controllers (Auth, Vault, Sync, Media)
+│   ├── middleware/                 # Security, rate limit, JWT, CSRF, error middleware
+│   ├── models/                     # Mongoose schemas (User, Item, Session, Log)
+│   ├── routes/                     # REST API endpoint definitions
+│   ├── security/                   # Server-side cryptography, envelope KEK, tokens
+│   ├── services/                   # Geolocation, Sentry, keep-alive, socket services
+│   ├── socket.ts                   # Socket.IO connection & event handlers
+│   └── vite.ts                     # Vite SSR / production static compression server
+├── src/                            # Frontend React 19 application
+│   ├── api/                        # Axios API client & interceptors
+│   ├── components/                 # Shared UI components & Radix primitives
+│   ├── features/                   # Feature modules (Vault, Notes, Media, Settings, Auth)
+│   ├── hooks/                      # Custom React hooks (sync, keyboard, crypto)
+│   ├── lib/                        # Client utilities & streaming engines
+│   ├── security/                   # WebCrypto, AES-256-GCM, PQC-Kyber, key derivation
+│   ├── store/                      # Zustand global application state
+│   ├── App.tsx                     # Root React component
+│   └── main.tsx                    # Client entry point
+├── scripts/                        # Build, analysis, backup, test & diagnostic scripts
+├── tests/                          # Unit, security, crypto, and integration test suites
+├── test.md                         # 🧪 Comprehensive test suite cheat sheet & test execution guide
+├── DOCKER.md                       # 🐳 Containerization & Docker Compose orchestration guide
+├── Dockerfile                      # Multi-stage production container definition
+├── docker-compose.yml              # Multi-container orchestration (App + MongoDB)
+├── .env.example                    # Environment variable template
+├── package.json                    # Dependencies and npm script definitions
+├── server.ts                       # Main server entry point
+├── vite.config.ts                  # Vite build configuration & compression pipeline
+└── vitest.config.ts                # Vitest testing configuration
 ```
 
 ---
@@ -306,13 +358,13 @@ vault/
 
 | Layer                       | Technologies & Key Libraries                                                                                                              |
 | :-------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
-| **Frontend UI**             | **React 19.3**, **Vite 8.3**, **TypeScript ~7.0 / 5.x**, **TailwindCSS v4.3**, Framer Motion, Radix UI, Lucide Icons 1.47, Sonner Toast   |
-| **Rich Text & Media**       | **TipTap Editor 3.31**, **HLS.js 1.7**, **Shaka Player 5.2**, Global Video Mini-Player (PiP), Sandboxed PDF Viewer, tsParticles, COBE 3D  |
+| **Frontend UI**             | **React 19.3**, **Vite 8.3**, **TypeScript ~7.0 / 5.x**, **TailwindCSS v4.3**, Framer Motion, Radix UI, Lucide Icons 1.61, Sonner Toast   |
+| **Rich Text & Media**       | **TipTap Editor 3.32**, **HLS.js 1.7**, **Shaka Player 5.3**, Global Video Mini-Player (PiP), Sandboxed PDF Viewer, tsParticles, COBE 3D  |
 | **Cryptography & Security** | WebCrypto API, **AES-256-GCM**, `libsodium-wrappers`, **`pqc-kyber`**, `hash-wasm` (Argon2id), Merkle Tree Tamper Alarms, Decoy Vault PIN |
-| **Backend Framework**       | **Express 5.2**, **Node.js 22 (LTS)**, Socket.IO 4.8, Helmet 8.3, Express Rate Limit, Multer 2.4, Cookie Parser, Google reCAPTCHA v2/v3   |
-| **Database & Cache**        | **MongoDB 7.x**, **Mongoose 9.10**, Node Cache, Multi-Cluster Atlas Failover Engine                                                       |
+| **Backend Framework**       | **Express 5.3**, **Node.js 22 (LTS)**, Socket.IO 4.8, Helmet 8.3, Express Rate Limit, Multer 2.5, Cookie Parser, Google reCAPTCHA v2/v3   |
+| **Database & Cache**        | **MongoDB 7.x**, **Mongoose 9.11**, Node Cache, Multi-Cluster Atlas Failover Engine                                                       |
 | **Asset Optimization**      | **Brotli & Gzip Pre-compression**, Module Preload Polyfills, OXC / Terser Minification, Aggressive Immutable Caching                      |
-| **Testing & Quality**       | **Vitest 5.0 (97 Test Files • 67 Scripts)**, Supertest, Lighthouse CI Runner, Sentry 10.75 Error Tracking & Node Profiling                |
+| **Testing & Quality**       | **Vitest 5.0 (105 Test Files • 72 Scripts)**, Supertest, Lighthouse CI Runner, Sentry 11.8 Error Tracking & Node Profiling                |
 
 </div>
 
@@ -464,6 +516,32 @@ npm run dev:client
 | `AUTH_RATE_LIMIT_MAX`      | Max auth attempts per window                 | `100`             |    No    |
 
 </div>
+
+---
+
+### 🐳 Docker & Container Quick Start
+
+Vault includes complete multi-stage containerization with Docker and Docker Compose. See [**`DOCKER.md`**](./DOCKER.md) for full container documentation.
+
+#### 1. Start Vault & MongoDB via Docker Compose
+
+```bash
+# Build and start services in the background
+docker compose up -d --build
+
+# View real-time container logs
+docker compose logs -f app
+```
+
+#### 2. Standalone Docker Container
+
+```bash
+# Build production multi-stage image
+docker build -t vault:latest .
+
+# Run standalone container mapping port 4000
+docker run -d -p 4000:4000 --env-file .env --name vault-app vault:latest
+```
 
 ---
 
@@ -629,11 +707,11 @@ npm run zip:prod
 
 ### Testing Suite & Test Reference (`test.md`)
 
-Vault features an extensive test suite consisting of **97 test files** (57 unit, 4 integration, 36 component/feature specs) and **67 specialized npm test scripts** verifying client-side zero-knowledge encryption, post-quantum key exchange, authentication boundaries, WebSocket synchronization, mobile document shields, picture-in-picture media, and security perimeters.
+Vault features an extensive test suite consisting of **105 test files** (64 unit, 4 integration, 37 component/feature specs) and **72 specialized npm test scripts** verifying client-side zero-knowledge encryption, post-quantum key exchange, authentication boundaries, WebSocket synchronization, mobile document shields, picture-in-picture media, and security perimeters.
 
 > [!TIP]
 > **Complete Testing Manual Available**
-> All 67 npm test scripts, single-file isolation commands, domain suites (crypto, auth, sync, media, settings, mini-player, mobile PDF), watch modes, coverage reports, stress testing loops, and debugging flags are fully documented in **[`test.md`](./test.md)**.
+> All 72 npm test scripts, single-file isolation commands, domain suites (crypto, auth, sync, media, settings, mini-player, mobile PDF), watch modes, coverage reports, stress testing loops, and debugging flags are fully documented in **[`test.md`](./test.md)**.
 
 ```bash
 # Safe single-worker default test run
@@ -642,13 +720,13 @@ npm test
 # Standard full test run in parallel
 npm run test:run
 
-# Run all 57 unit tests (tests/unit/)
+# Run all 64 unit tests (tests/unit/)
 npm run test:unit
 
 # Run all integration tests (tests/integration/)
 npm run test:integration
 
-# Run all 36 client component & feature specs (src/)
+# Run all 37 client component & feature specs (src/)
 npm run test:components
 npm run test:client
 
@@ -677,9 +755,9 @@ npm run verify:ci
 
 | Test Domain              | Target Path                                            | Dedicated Command          |                                   Full Reference                                   |
 | :----------------------- | :----------------------------------------------------- | :------------------------- | :--------------------------------------------------------------------------------: |
-| **Unit Tests**           | `tests/unit/` (57 files)                               | `npm run test:unit`        |     [`test.md §1.2 - §1.5`](./test.md#12-unit--cryptography-keys--zk-security)     |
+| **Unit Tests**           | `tests/unit/` (64 files)                               | `npm run test:unit`        |     [`test.md §1.2 - §1.5`](./test.md#12-unit--cryptography-keys--zk-security)     |
 | **Integration Tests**    | `tests/integration/` (4 files)                         | `npm run test:integration` |         [`test.md §1.1`](./test.md#11-integration-tests-testsintegration)          |
-| **Component Specs**      | `src/**/*.test.tsx` (36 files)                         | `npm run test:components`  |          [`test.md §1.6`](./test.md#16-source--components--features-src)           |
+| **Component Specs**      | `src/` (37 files)                                      | `npm run test:components`  |          [`test.md §1.6`](./test.md#16-source--components--features-src)           |
 | **Cryptography & Keys**  | `tests/unit/encryption.test.ts` ...                    | `npm run test:crypto`      |    [`test.md §5`](./test.md#5-cryptography-zero-knowledge--key-management-npm)     |
 | **Auth & Sessions**      | `tests/unit/auth-*`, `tests/integration/auth.*`        | `npm run test:auth`        |          [`test.md §4`](./test.md#4-authentication--session-security-npm)          |
 | **Hardened 2FA & Bot**   | `tests/unit/recaptchaMiddleware.test.ts` ...           | `npx vitest run ...`       |        [`test.md §2`](./test.md#hardened-2fa-recaptcha--bot-defense-suite)         |
@@ -725,7 +803,7 @@ npm run verify:ci
 
 For exhaustive details on testing Vault, refer directly to **[`test.md`](./test.md)**. It serves as the repository's central test handbook across 34 dedicated sections:
 
-- 🎯 **[1. Run a Single Test File (Isolated Execution)](./test.md#1-run-a-single-test-file--isolated-execution)**: Direct `npx vitest run <file>` commands for all 97 unit and integration test files.
+- 🎯 **[1. Run a Single Test File (Isolated Execution)](./test.md#1-run-a-single-test-file--isolated-execution)**: Direct `npx vitest run <file>` commands for all 105 unit, integration, and component test files.
 - ⚡ **[2. Domain-Specific Batch Test Suites](./test.md#2-domain-specific-batch-suites--direct-vitest)**: Targeted batch test suites for Cryptography, Auth, Sync, Settings, Mini-Player, Mobile PDF, and Media.
 - 📦 **[3. Main & All-in-One Test Suites (npm)](./test.md#3-main--all-in-one-test-suites-npm)**: High-level test runners (`npm test`, `npm run test:run`, `npm run test:all`, `npm run test:ci`, `npm run test:server`, `npm run test:client`).
 - 🔐 **[4. Authentication & Session Security Tests](./test.md#4-authentication--session-security-npm)**: Focused commands for login, registration, token rotation, and device revocation.
@@ -733,7 +811,7 @@ For exhaustive details on testing Vault, refer directly to **[`test.md`](./test.
 - 🌐 **[6. Comprehensive Security Integration Tests](./test.md#6-comprehensive-security-integration-npm)**: Multipart encryption, streaming privacy, and UI sandbox boundaries.
 - 🧩 **[7. Feature & Module Tests](./test.md#7-feature--module-tests-npm)**: Scoped suites for Vault items, Sync engine, Media/Camera, Settings cards, and Sentry/LogRocket.
 - 🐞 **[8. Test Runner Modes & Debugging Options](./test.md#8-test-runner-modes--debugging-options)**: Interactive UI, fast fail, memory tracking, verbose mode, V8 CPU profiling, and Chrome DevTools / VS Code debugging (`--inspect-brk`).
-- 🔄 **[9. Test Watch Modes](./test.md#9-test-watch-modes)**: Instant re-run on save during active development across all 97 specs.
+- 🔄 **[9. Test Watch Modes](./test.md#9-test-watch-modes)**: Instant re-run on save during active development across all 105 specs.
 - 📊 **[10. Code Coverage & Reports](./test.md#10-code-coverage--reports)**: Terminal summaries, Cobertura XML, JSON summary, and browser-based HTML reports.
 - ⚙️ **[11. Advanced Vitest Filtering & CLI Flags](./test.md#11-advanced-vitest-filtering--cli-flags)**: Filter by test name (`-t`), inverted patterns, path regex (`--testPathPattern`), GitHub Actions annotations, and thread pools.
 - 🚀 **[12. Standalone Test Runner & Verification Pipelines](./test.md#12-standalone-runner--verification-pipelines)**: Standalone crypto assertion runner and full CI pipelines (`verify:quick`, `verify:ci`, `verify:full`).

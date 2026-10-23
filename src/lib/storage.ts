@@ -68,11 +68,20 @@ const LOCAL_DB_NAME = 'VaultLocalStorage';
 const LOCAL_DB_VERSION = 1;
 const LOCAL_STORE_NAME = 'vault_local_items';
 
+let cachedDb: IDBDatabase | null = null;
+let dbPromise: Promise<IDBDatabase | null> | null = null;
+
 const openLocalDB = (): Promise<IDBDatabase | null> => {
   if (typeof window === 'undefined' || !window.indexedDB) {
     return Promise.resolve(null);
   }
-  return new Promise((resolve) => {
+  if (cachedDb) {
+    return Promise.resolve(cachedDb);
+  }
+  if (dbPromise) {
+    return dbPromise;
+  }
+  dbPromise = new Promise((resolve) => {
     try {
       const request = window.indexedDB.open(LOCAL_DB_NAME, LOCAL_DB_VERSION);
       request.onupgradeneeded = (event) => {
@@ -81,16 +90,30 @@ const openLocalDB = (): Promise<IDBDatabase | null> => {
           db.createObjectStore(LOCAL_STORE_NAME, { keyPath: 'id' });
         }
       };
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => {
+        cachedDb = request.result;
+        cachedDb.onclose = () => {
+          cachedDb = null;
+          dbPromise = null;
+        };
+        cachedDb.onerror = () => {
+          cachedDb = null;
+          dbPromise = null;
+        };
+        resolve(cachedDb);
+      };
       request.onerror = (err) => {
         logger.warn('Failed to open IndexedDB storage', { error: err });
+        dbPromise = null;
         resolve(null);
       };
     } catch (e) {
       logger.warn('Exception while opening IndexedDB storage', { error: e });
+      dbPromise = null;
       resolve(null);
     }
   });
+  return dbPromise;
 };
 
 export const saveItemToLocalDb = async (item: VaultItem): Promise<void> => {

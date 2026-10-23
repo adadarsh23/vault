@@ -17,13 +17,25 @@ const transports = new Set<LoggerTransport>();
 const redactKeys = new Set([
   'password',
   'token',
-  'accessToken',
-  'refreshToken',
+  'accesstoken',
+  'refreshtoken',
   'authorization',
   'cookie',
   'set-cookie',
   'secret',
+  'masterkey',
 ]);
+
+const isSensitiveKey = (key: string): boolean => {
+  const lower = key.toLowerCase();
+  return (
+    redactKeys.has(lower) ||
+    lower.includes('password') ||
+    lower.includes('secret') ||
+    lower.includes('token') ||
+    lower.includes('masterkey')
+  );
+};
 
 const sanitizeMetadata = (value: unknown, depth = 0): unknown => {
   if (depth > 3) {
@@ -48,7 +60,7 @@ const sanitizeMetadata = (value: unknown, depth = 0): unknown => {
   return Object.fromEntries(
     Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
       key,
-      redactKeys.has(key) ? '[REDACTED]' : sanitizeMetadata(entry, depth + 1),
+      isSensitiveKey(key) ? '[REDACTED]' : sanitizeMetadata(entry, depth + 1),
     ]),
   );
 };
@@ -74,7 +86,16 @@ const emitLog = (payload: LogPayload) => {
 
   for (const transport of transports) {
     try {
-      void transport(payload);
+      const res = transport(payload);
+      if (res && typeof (res as Promise<void>).catch === 'function') {
+        (res as Promise<void>).catch((error) => {
+          writeToConsole({
+            level: 'warn',
+            message: 'Logger transport failed',
+            metadata: { error, originalPayload: payload },
+          });
+        });
+      }
     } catch (error) {
       writeToConsole({
         level: 'warn',

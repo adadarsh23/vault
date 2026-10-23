@@ -6,6 +6,8 @@
  * directly at the binary stream level before client-side encryption.
  */
 
+const PNG_METADATA_CHUNK_NAMES = new Set(['eXIf', 'tEXt', 'zTXt', 'iTXt', 'tIME']);
+
 /**
  * Strips all metadata markers (APP1..APP15, COM) directly from JPEG binary buffers.
  * Preserves SOI, JFIF, DQT, SOF, DHT, DRI, and SOS image stream segments.
@@ -107,7 +109,6 @@ export function stripPngMetadataBinary(buffer: ArrayBuffer): ArrayBuffer {
   const chunks: Uint8Array[] = [];
   chunks.push(bytes.subarray(0, 8)); // PNG Signature
 
-  const metadataChunkNames = new Set(['eXIf', 'tEXt', 'zTXt', 'iTXt', 'tIME']);
   let offset = 8;
   const view = new DataView(buffer);
 
@@ -125,7 +126,7 @@ export function stripPngMetadataBinary(buffer: ArrayBuffer): ArrayBuffer {
       break;
     }
 
-    if (!metadataChunkNames.has(chunkType)) {
+    if (!PNG_METADATA_CHUNK_NAMES.has(chunkType)) {
       chunks.push(bytes.subarray(offset, offset + totalChunkLength));
     }
 
@@ -152,9 +153,18 @@ export function stripWebpMetadataBinary(buffer: ArrayBuffer): ArrayBuffer {
   const bytes = new Uint8Array(buffer);
   if (bytes.length < 12) return buffer;
 
-  const riff = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
-  const webp = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
-  if (riff !== 'RIFF' || webp !== 'WEBP') {
+  // Direct byte comparison: 'RIFF' and 'WEBP'
+  const isWebp =
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50;
+
+  if (!isWebp) {
     return buffer;
   }
 
@@ -241,8 +251,14 @@ export function stripExifInMemory(buffer: ArrayBuffer, mimeType?: string): Array
   if (
     normalizedMime.includes('webp') ||
     (bytes.length >= 12 &&
-      String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]) === 'RIFF' &&
-      String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]) === 'WEBP')
+      bytes[0] === 0x52 &&
+      bytes[1] === 0x49 &&
+      bytes[2] === 0x46 &&
+      bytes[3] === 0x46 &&
+      bytes[8] === 0x57 &&
+      bytes[9] === 0x45 &&
+      bytes[10] === 0x42 &&
+      bytes[11] === 0x50)
   ) {
     return stripWebpMetadataBinary(buffer);
   }

@@ -307,4 +307,140 @@ describe('ScrollRestoration (Enterprise Production Suite)', () => {
       }),
     );
   });
+
+  it('handles invalid or throwing getKey without crashing and uses default key', () => {
+    const throwingGetKey = () => {
+      throw new Error('Broken getKey logic');
+    };
+
+    expect(() => {
+      render(
+        <MemoryRouter initialEntries={['/safe-route']}>
+          <ScrollRestoration getKey={throwingGetKey as any} debug={true} />
+        </MemoryRouter>,
+      );
+    }).not.toThrow();
+  });
+
+  it('tolerates malformed containerSelector without throwing DOMException', () => {
+    expect(() => {
+      render(
+        <MemoryRouter initialEntries={['/']}>
+          <ScrollRestoration containerSelector="[invalid-selector===" />
+        </MemoryRouter>,
+      );
+    }).not.toThrow();
+  });
+
+  it('ignores prototype pollution attempts in sessionStorage payload', async () => {
+    sessionStorage.setItem(
+      'react-router-scroll-positions',
+      JSON.stringify({
+        __proto__: { admin: true },
+        constructor: { prototype: { poll: true } },
+        '/clean-page': { x: 0, y: 350, timestamp: Date.now() },
+      }),
+    );
+
+    expect(() => {
+      render(
+        <MemoryRouter initialEntries={['/clean-page']}>
+          <ScrollRestoration />
+        </MemoryRouter>,
+      );
+    }).not.toThrow();
+
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
+    expect(scrollToSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        top: 350,
+      }),
+    );
+    expect((Object.prototype as any).admin).toBeUndefined();
+  });
+
+  it('does not hijack scroll when user is actively focused in an input/textarea', async () => {
+    let navigateFn: ReturnType<typeof useNavigate>;
+
+    function Harness() {
+      navigateFn = useNavigate();
+      return (
+        <div>
+          <ScrollRestoration storageKey="test-input-active" />
+          <input data-testid="search-input" />
+        </div>
+      );
+    }
+
+    const { getByTestId } = render(
+      <MemoryRouter initialEntries={['/route-a']}>
+        <Harness />
+      </MemoryRouter>,
+    );
+
+    Object.defineProperty(window, 'scrollY', { value: 650, writable: true, configurable: true });
+
+    act(() => {
+      navigateFn('/route-b');
+    });
+
+    scrollToSpy.mockClear();
+
+    // Focus input
+    const input = getByTestId('search-input');
+    input.focus();
+
+    await act(async () => {
+      navigateFn(-1);
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 60));
+
+    // Scroll should NOT hijack input while activeElement is input
+    expect(scrollToSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        top: 650,
+      }),
+    );
+  });
+
+  it('respects shouldUpdateScroll returning false or custom coordinates', () => {
+    let navigateFn: ReturnType<typeof useNavigate>;
+
+    function CustomUpdateHarness() {
+      navigateFn = useNavigate();
+      return (
+        <div>
+          <ScrollRestoration
+            shouldUpdateScroll={(_prev, current) => {
+              if (current.pathname === '/no-scroll') return false;
+              if (current.pathname === '/custom-coord') return [10, 200];
+              return true;
+            }}
+          />
+        </div>
+      );
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/start']}>
+        <CustomUpdateHarness />
+      </MemoryRouter>,
+    );
+
+    scrollToSpy.mockClear();
+
+    // Navigate to /no-scroll -> should skip scrolling
+    act(() => {
+      navigateFn('/no-scroll');
+    });
+    expect(scrollToSpy).not.toHaveBeenCalled();
+
+    // Navigate to /custom-coord -> should scroll to [10, 200]
+    act(() => {
+      navigateFn('/custom-coord');
+    });
+    expect(scrollToSpy).toHaveBeenCalledWith(10, 200);
+  });
 });

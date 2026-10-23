@@ -339,12 +339,16 @@ export function attachVoiceClarityToMediaElement(
 
   try {
     const audioContext = new AudioCtxClass();
+    let resumeHandler: (() => void) | null = null;
     if (audioContext.state === 'suspended') {
-      const resume = () => {
+      resumeHandler = () => {
         void audioContext.resume().catch(() => {});
-        mediaElement.removeEventListener('play', resume);
+        if (resumeHandler) {
+          mediaElement.removeEventListener('play', resumeHandler);
+          resumeHandler = null;
+        }
       };
-      mediaElement.addEventListener('play', resume);
+      mediaElement.addEventListener('play', resumeHandler);
     }
 
     const source = audioContext.createMediaElementSource(mediaElement);
@@ -353,6 +357,10 @@ export function attachVoiceClarityToMediaElement(
     chain.outputNode.connect(audioContext.destination);
 
     const destroy = () => {
+      if (resumeHandler) {
+        mediaElement.removeEventListener('play', resumeHandler);
+        resumeHandler = null;
+      }
       chain.destroy();
       if (audioContext.state !== 'closed') {
         audioContext.close().catch(() => {});

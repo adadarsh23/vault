@@ -143,9 +143,19 @@ export const TwoFactorSettingsCard: React.FC<TwoFactorSettingsCardProps> = ({
 
   const copySecret = () => {
     if (secret) {
-      navigator.clipboard.writeText(secret);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard
+          .writeText(secret)
+          .then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          })
+          .catch(() => {
+            toast.error('Failed to copy to clipboard');
+          });
+      } else {
+        toast.error('Clipboard not supported on this device');
+      }
     }
   };
 

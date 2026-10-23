@@ -1,7 +1,70 @@
 import { resolveApiBaseUrl } from './apiBaseUrl';
 import { getAuthToken, getDeviceId } from './auth-session';
+import { getCsrfTokenForApiRequest } from './csrf';
 
-const API_BASE_URL = resolveApiBaseUrl();
+const REQUEST_TIMEOUT_MS = 20_000;
+
+const getApiBaseUrl = (): string => resolveApiBaseUrl().replace(/\/+$/, '');
+
+const safeParseJson = async <T>(response: Response): Promise<T | null> => {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
+};
+
+const authenticatedFetch = async (
+  endpoint: string,
+  method: 'GET' | 'POST' | 'DELETE',
+  body?: unknown,
+): Promise<Response> => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error('No authentication token available');
+  }
+
+  const url = `${getApiBaseUrl()}${endpoint}`;
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    'X-Requested-With': 'XMLHttpRequest',
+  };
+
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  if (method === 'POST' || method === 'DELETE') {
+    const csrfToken = await getCsrfTokenForApiRequest(url, method);
+    if (csrfToken) {
+      headers['X-CSRF-Token'] = csrfToken;
+    }
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      method,
+      credentials: 'include',
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+    return response;
+  } catch (error) {
+    if (
+      (error instanceof DOMException && error.name === 'AbortError') ||
+      (error as { name?: string })?.name === 'AbortError'
+    ) {
+      throw new Error(`Cloud request timed out after ${REQUEST_TIMEOUT_MS / 1000}s`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+};
 
 /**
  * Client API for Master Key Cloud Storage
@@ -129,25 +192,13 @@ export const saveMasterKeyToCloud = async (payload: {
   };
 }): Promise<SaveMasterKeyResponse> => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
+    const response = await authenticatedFetch('/api/master-key/save', 'POST', payload);
+    const data = await safeParseJson<SaveMasterKeyResponse>(response);
 
-    const response = await fetch(`${API_BASE_URL}/api/master-key/save`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = (await response.json()) as SaveMasterKeyResponse;
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.error?.message || 'Failed to save master key to cloud');
+    if (!response.ok || !data?.success) {
+      throw new Error(
+        data?.error?.message || `Failed to save master key to cloud (${response.status})`,
+      );
     }
 
     return data;
@@ -162,27 +213,17 @@ export const saveMasterKeyToCloud = async (payload: {
  */
 export const retrieveMasterKeyFromCloud = async (): Promise<RetrieveMasterKeyResponse> => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
     const deviceId = getDeviceId();
-    const response = await fetch(
-      `${API_BASE_URL}/api/master-key/retrieve?deviceId=${encodeURIComponent(deviceId)}`,
-      {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+    const response = await authenticatedFetch(
+      `/api/master-key/retrieve?deviceId=${encodeURIComponent(deviceId)}`,
+      'GET',
     );
+    const data = await safeParseJson<RetrieveMasterKeyResponse>(response);
 
-    const data = (await response.json()) as RetrieveMasterKeyResponse;
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.error?.message || 'Failed to retrieve master key from cloud');
+    if (!response.ok || !data?.success) {
+      throw new Error(
+        data?.error?.message || `Failed to retrieve master key from cloud (${response.status})`,
+      );
     }
 
     return data;
@@ -199,25 +240,11 @@ export const verifyMasterKeyHash = async (
   masterKeyHash: string,
 ): Promise<VerifyMasterKeyResponse> => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
+    const response = await authenticatedFetch('/api/master-key/verify', 'POST', { masterKeyHash });
+    const data = await safeParseJson<VerifyMasterKeyResponse>(response);
 
-    const response = await fetch(`${API_BASE_URL}/api/master-key/verify`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ masterKeyHash }),
-    });
-
-    const data = (await response.json()) as VerifyMasterKeyResponse;
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.error?.message || 'Failed to verify master key');
+    if (!response.ok || !data?.success) {
+      throw new Error(data?.error?.message || `Failed to verify master key (${response.status})`);
     }
 
     return data;
@@ -232,23 +259,13 @@ export const verifyMasterKeyHash = async (
  */
 export const deleteMasterKeyFromCloud = async (): Promise<DeleteMasterKeyResponse> => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
+    const response = await authenticatedFetch('/api/master-key', 'DELETE');
+    const data = await safeParseJson<DeleteMasterKeyResponse>(response);
 
-    const response = await fetch(`${API_BASE_URL}/api/master-key`, {
-      method: 'DELETE',
-      credentials: 'include',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const data = (await response.json()) as DeleteMasterKeyResponse;
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.error?.message || 'Failed to delete master key from cloud');
+    if (!response.ok || !data?.success) {
+      throw new Error(
+        data?.error?.message || `Failed to delete master key from cloud (${response.status})`,
+      );
     }
 
     return data;
@@ -263,23 +280,13 @@ export const deleteMasterKeyFromCloud = async (): Promise<DeleteMasterKeyRespons
  */
 export const getMasterKeyMetadata = async (): Promise<GetMetadataResponse> => {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
+    const response = await authenticatedFetch('/api/master-key/metadata', 'GET');
+    const data = await safeParseJson<GetMetadataResponse>(response);
 
-    const response = await fetch(`${API_BASE_URL}/api/master-key/metadata`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const data = (await response.json()) as GetMetadataResponse;
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.error?.message || 'Failed to get master key metadata');
+    if (!response.ok || !data?.success) {
+      throw new Error(
+        data?.error?.message || `Failed to get master key metadata (${response.status})`,
+      );
     }
 
     return data;

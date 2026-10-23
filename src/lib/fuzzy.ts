@@ -40,10 +40,19 @@ export function fuzzyMatch(query: string, text: string): FuzzyResult | null {
     return null;
   }
 
-  // Memoization table: memo[qIdx][tIdx] stores the best FuzzyResult or null
-  const memo: (FuzzyResult | null)[][] = Array.from({ length: qLen }, () =>
-    Array(tLen).fill(undefined),
-  );
+  // Fast early-rejection check: verify all characters of query appear sequentially in text
+  let qScan = 0;
+  for (let tScan = 0; tScan < tLen && qScan < qLen; tScan++) {
+    if (t[tScan] === q[qScan]) {
+      qScan++;
+    }
+  }
+  if (qScan < qLen) {
+    return null;
+  }
+
+  // Flat 1D memoization table: stores the best FuzzyResult or null
+  const memo: (FuzzyResult | null | undefined)[] = new Array(qLen * tLen);
 
   function match(qIdx: number, tIdx: number): FuzzyResult | null {
     if (qIdx === qLen) {
@@ -53,8 +62,9 @@ export function fuzzyMatch(query: string, text: string): FuzzyResult | null {
       return null;
     }
 
-    if (memo[qIdx][tIdx] !== undefined) {
-      return memo[qIdx][tIdx];
+    const memoKey = qIdx * tLen + tIdx;
+    if (memo[memoKey] !== undefined) {
+      return memo[memoKey];
     }
 
     const char = q[qIdx];
@@ -119,7 +129,7 @@ export function fuzzyMatch(query: string, text: string): FuzzyResult | null {
       }
     }
 
-    memo[qIdx][tIdx] = bestResult;
+    memo[memoKey] = bestResult;
     return bestResult;
   }
 
@@ -244,6 +254,7 @@ export function searchVaultItems(
   }
 
   const results: FuzzySearchResult[] = [];
+  const actualQueryLower = actualQuery.toLowerCase();
 
   for (const item of items) {
     if (!typeConfigs[item.type]) continue;
@@ -297,7 +308,6 @@ export function searchVaultItems(
       const transcript =
         typeof item.metadata?.transcript === 'string' ? item.metadata.transcript : '';
       const transcriptLower = transcript.toLowerCase();
-      const actualQueryLower = actualQuery.toLowerCase();
       const directTranscriptIndex = transcriptLower.indexOf(actualQueryLower);
       const transcriptFuzzy =
         directTranscriptIndex === -1 && transcript.length > 0

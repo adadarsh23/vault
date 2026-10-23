@@ -34,6 +34,24 @@ export const sortPinnedFirst = <T extends PinnableItem>(items: readonly T[]): T[
     return [...items];
   }
 
+  // Fast-path: Check if any item is pinned
+  let hasPinned = false;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].isPinned) {
+      hasPinned = true;
+      break;
+    }
+  }
+
+  // If no items are pinned, do a fast sort by updatedAt without Schwartzian transform overhead
+  if (!hasPinned) {
+    return [...items].sort((left, right) => {
+      const leftTime = normalizeTimestamp(left.updatedAt);
+      const rightTime = normalizeTimestamp(right.updatedAt);
+      return rightTime - leftTime;
+    });
+  }
+
   return items
     .map((item, originalIndex) => ({
       item,

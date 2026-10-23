@@ -46,6 +46,7 @@ export interface MerkleTreeSnapshot {
 // Domain separation prefixes (RFC 6962 standard) to prevent second-preimage attacks
 const LEAF_PREFIX = '00';
 const NODE_PREFIX = '01';
+const sharedTextEncoder = new TextEncoder();
 
 /**
  * Compute cryptographic hash of a Uint8Array buffer or string
@@ -56,7 +57,7 @@ export const computeBufferHash = async (
 ): Promise<string> => {
   const buffer =
     typeof data === 'string'
-      ? new TextEncoder().encode(data)
+      ? sharedTextEncoder.encode(data)
       : data instanceof Uint8Array
         ? data
         : new Uint8Array(data);
@@ -184,27 +185,30 @@ export class MerkleTree {
     // Deterministic sorting by itemId (lexicographical)
     const sortedItems = [...items].sort((a, b) => a.itemId.localeCompare(b.itemId));
 
-    // Generate leaf hashes
-    const leafNodes: { item: MerkleLeafItem; leafHash: string }[] = [];
-    for (const item of sortedItems) {
-      const leafHash = await computeLeafHash(item, this.algorithm);
-      leafNodes.push({ item, leafHash });
-    }
+    // Generate leaf hashes in parallel
+    const leafNodes = await Promise.all(
+      sortedItems.map(async (item) => {
+        const leafHash = await computeLeafHash(item, this.algorithm);
+        return { item, leafHash };
+      }),
+    );
 
     this.leaves = leafNodes;
     let currentLayer = leafNodes.map((l) => l.leafHash);
     this.layers = [currentLayer];
 
-    // Iteratively build layers up to root
+    // Iteratively build layers up to root in parallel pairs
     while (currentLayer.length > 1) {
-      const nextLayer: string[] = [];
+      const pairs: Array<[string, string]> = [];
       for (let i = 0; i < currentLayer.length; i += 2) {
         const left = currentLayer[i];
         // If odd number of nodes, pair the last node with itself
         const right = i + 1 < currentLayer.length ? currentLayer[i + 1] : left;
-        const parentHash = await computeNodeHash(left, right, this.algorithm);
-        nextLayer.push(parentHash);
+        pairs.push([left, right]);
       }
+      const nextLayer = await Promise.all(
+        pairs.map(([left, right]) => computeNodeHash(left, right, this.algorithm)),
+      );
       this.layers.push(nextLayer);
       currentLayer = nextLayer;
     }

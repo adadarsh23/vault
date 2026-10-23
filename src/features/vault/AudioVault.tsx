@@ -221,10 +221,23 @@ const SafeAudioPreview: React.FC<{
               variant="ghost"
               size="sm"
               onClick={() => {
-                void navigator.clipboard.writeText(item.metadata?.transcript);
-                setCopiedTranscript(true);
-                toast.success('Transcript copied to clipboard');
-                setTimeout(() => setCopiedTranscript(false), 2000);
+                const transcript = item.metadata?.transcript;
+                if (!transcript) return;
+                if (navigator.clipboard?.writeText) {
+                  navigator.clipboard
+                    .writeText(transcript)
+                    .then(() => {
+                      setCopiedTranscript(true);
+                      toast.success('Transcript copied to clipboard');
+                      setTimeout(() => setCopiedTranscript(false), 2000);
+                    })
+                    .catch((err) => {
+                      logger.warn('Failed to copy transcript to clipboard', { error: err });
+                      toast.error('Failed to copy transcript');
+                    });
+                } else {
+                  toast.error('Clipboard not supported on this device');
+                }
               }}
               className="h-7 px-2 text-xs text-cyan-300 hover:bg-cyan-500/20 shrink-0"
             >
@@ -362,6 +375,13 @@ export const AudioVault: React.FC = () => {
     }
   };
 
+  const showNextAudioRef = useRef(showNextAudio);
+  showNextAudioRef.current = showNextAudio;
+  const showPreviousAudioRef = useRef(showPreviousAudio);
+  showPreviousAudioRef.current = showPreviousAudio;
+  const handleClosePreviewRef = useRef(handleClosePreview);
+  handleClosePreviewRef.current = handleClosePreview;
+
   useEffect(() => {
     if (!previewItem) return;
 
@@ -391,15 +411,15 @@ export const AudioVault: React.FC = () => {
       }
 
       if (e.key === 'ArrowRight') {
-        showNextAudio();
+        showNextAudioRef.current();
       }
 
       if (e.key === 'ArrowLeft') {
-        showPreviousAudio();
+        showPreviousAudioRef.current();
       }
 
       if (e.key === 'Escape') {
-        handleClosePreview();
+        handleClosePreviewRef.current();
       }
     };
 
