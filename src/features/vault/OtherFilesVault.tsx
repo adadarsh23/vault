@@ -42,6 +42,9 @@ import {
   Share2,
 } from 'lucide-react';
 import { PdfViewer } from './components/PdfViewer/PdfViewer';
+import { AudioPlayer } from '../../components/ui/audio-player';
+import { DecryptedMarkdown } from '../../components/vault/DecryptedMarkdown';
+import { logger } from '../../lib/logger';
 import { useAntiScreenshotAndShield } from '../../hooks/useAntiScreenshotAndShield';
 import { toast } from 'sonner';
 import { useVaultStore } from '../../store/vaultStore';
@@ -61,13 +64,17 @@ import {
   getVaultItemFileUrl,
   getVaultItemPreviewUrl,
   describeVaultPreviewError,
+  getVaultItemPreviewRevision,
+  getCachedMediaBlobUrl,
 } from '../../lib/filePreview';
+import { revokeBlobUrl } from '../../lib/blobRegistry';
 import { setDraggedVaultItem, clearDraggedVaultItem } from '../../lib/vaultDragDrop';
 import {
   exceedsUploadSizeLimit,
   getUploadSizeErrorMessage,
   formatBytes,
   openDocumentInMobileApp,
+  isAudioExtension,
 } from '../../lib/fileHandling';
 import VideoPlayer, { getMimeTypeFromUrl } from '../../components/ui/video-player';
 
@@ -502,9 +509,102 @@ const parseDelimitedData = (rawText: string, ext: string) => {
   };
 };
 
+export const extractAudioDuration = async (file: File): Promise<number | undefined> => {
+  if (typeof window === 'undefined') return undefined;
+  return new Promise((resolve) => {
+    try {
+      const url = URL.createObjectURL(file);
+      const audio = new Audio();
+      let settled = false;
+
+      const cleanup = () => {
+        if (settled) return;
+        settled = true;
+        try {
+          URL.revokeObjectURL(url);
+          audio.removeAttribute('src');
+          audio.load();
+        } catch {
+          // ignore
+        }
+      };
+
+      audio.preload = 'metadata';
+
+      audio.onloadedmetadata = () => {
+        const d = audio.duration;
+        cleanup();
+        resolve(isFinite(d) && d > 0 ? Math.round(d * 10) / 10 : undefined);
+      };
+
+      audio.onerror = () => {
+        cleanup();
+        resolve(undefined);
+      };
+
+      setTimeout(() => {
+        cleanup();
+        resolve(undefined);
+      }, 2500);
+
+      audio.src = url;
+    } catch {
+      resolve(undefined);
+    }
+  });
+};
+
+export const extractImageDimensions = async (
+  file: File,
+): Promise<{ width: number; height: number } | undefined> => {
+  if (typeof window === 'undefined') return undefined;
+  return new Promise((resolve) => {
+    try {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      let settled = false;
+
+      const cleanup = () => {
+        if (settled) return;
+        settled = true;
+        try {
+          URL.revokeObjectURL(url);
+        } catch {
+          // ignore
+        }
+      };
+
+      img.onload = () => {
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        cleanup();
+        if (w > 0 && h > 0) {
+          resolve({ width: w, height: h });
+        } else {
+          resolve(undefined);
+        }
+      };
+
+      img.onerror = () => {
+        cleanup();
+        resolve(undefined);
+      };
+
+      setTimeout(() => {
+        cleanup();
+        resolve(undefined);
+      }, 2000);
+
+      img.src = url;
+    } catch {
+      resolve(undefined);
+    }
+  });
+};
+
 interface SafeUniversalPreviewProps {
   item: VaultItem;
-  masterKey: string | CryptoKey;
+  masterKey: string | CryptoKey | null | undefined;
   onDownload: () => void;
   onClose?: () => void;
 }
@@ -521,6 +621,7 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const rsaKeyPair = useVaultStore((state) => state.rsaKeyPair);
+  const isAudioWaveformEnabled = useVaultStore((state) => state.preferences.isAudioWaveformEnabled);
 
   // Viewer interactive state
   const [copied, setCopied] = useState(false);
@@ -551,6 +652,17 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
     category === 'text' ||
     item.metadata?.mimeType?.startsWith('text/');
 
+  const revisionKey = useMemo(
+    () => getVaultItemPreviewRevision(item),
+    [
+      item.id,
+      item.updatedAt,
+      item.content instanceof Uint8Array ? item.content.byteLength : 0,
+      typeof item.content === 'string' ? item.content.length : 0,
+      item.metadata?.mimeType,
+    ],
+  );
+
   useEffect(() => {
     let isMounted = true;
     let activeObjectUrl: string | null = null;
@@ -569,7 +681,9 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
         );
 
         if (!isMounted) {
-          if (previewUrl?.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
+          if (previewUrl?.startsWith('blob:') && !getCachedMediaBlobUrl(revisionKey)) {
+            revokeBlobUrl(previewUrl);
+          }
           return;
         }
 
@@ -602,6 +716,7 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
           }
         }
       } catch (err: any) {
+        logger.warn('[OtherFilesVault] Decrypt preview failed', { error: err });
         if (isMounted) {
           setErrorMessage(describeVaultPreviewError(err));
         }
@@ -610,13 +725,28 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
       }
     };
 
-    decryptAndLoad();
+    void decryptAndLoad();
+
+    const handlePanicLock = () => {
+      if (activeObjectUrl && !getCachedMediaBlobUrl(revisionKey)) {
+        revokeBlobUrl(activeObjectUrl);
+        activeObjectUrl = null;
+      }
+      setUrl(null);
+      setTextContent(null);
+      setIsLoading(false);
+    };
+
+    window.addEventListener('vault:panic-lock', handlePanicLock);
 
     return () => {
       isMounted = false;
-      if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
+      window.removeEventListener('vault:panic-lock', handlePanicLock);
+      if (activeObjectUrl && !getCachedMediaBlobUrl(revisionKey)) {
+        revokeBlobUrl(activeObjectUrl);
+      }
     };
-  }, [item.content, item.id, item.updatedAt, masterKey, rsaKeyPair, isTextLike]);
+  }, [revisionKey, masterKey, rsaKeyPair?.privateKey, isTextLike]);
 
   useEffect(() => {
     return () => {
@@ -712,7 +842,6 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
         url={url}
         title={item.title}
         extension={extension || 'PDF'}
-        fileContent={item.content instanceof Uint8Array ? item.content : null}
         onDownload={onDownload}
       />
     );
@@ -784,13 +913,13 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
     );
   }
 
-  // 3. Audio Player
+  // 3. Audio Player (Enhanced AudioPlayer with Voice Clarity DSP & Waveform)
   if (category === 'audio') {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center p-4 sm:p-6 text-center bg-zinc-950 overflow-y-auto custom-scrollbar">
-        <div className="flex flex-col items-center max-w-md w-full gap-5 p-6 rounded-2xl bg-white/[0.03] border border-white/10 shadow-2xl backdrop-blur-xl my-auto">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-400 border border-violet-500/20 shadow-inner">
-            <Music className="h-10 w-10" />
+        <div className="flex flex-col items-center max-w-lg w-full gap-5 p-6 rounded-2xl bg-white/[0.03] border border-white/10 shadow-2xl backdrop-blur-xl my-auto">
+          <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-400 border border-violet-500/20 shadow-inner">
+            <Music className="h-8 w-8 sm:h-10 sm:w-10" />
           </div>
           <div className="w-full text-center">
             <span className="rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
@@ -803,12 +932,23 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
               {formatBytes(item.metadata?.size || 0)}
             </p>
           </div>
-          <audio controls src={url} className="w-full mt-1 rounded-lg accent-violet-500" />
+          <div className="w-full">
+            <AudioPlayer
+              src={url}
+              title={item.title}
+              initialVoiceClarityPreset={item.metadata?.voiceClarityPreset}
+              initialDuration={
+                typeof item.metadata?.duration === 'number' ? item.metadata.duration : undefined
+              }
+              isWaveformEnabled={isAudioWaveformEnabled}
+            />
+          </div>
           <Button
             onClick={onDownload}
-            className="w-full bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-lg shadow-violet-600/20"
+            variant="outline"
+            className="w-full border-white/10 bg-white/5 hover:bg-white/10 text-white rounded-xl shadow-lg"
           >
-            <Download className="mr-2 h-4 w-4" />
+            <Download className="mr-2 h-4 w-4 text-violet-400" />
             Download Audio File
           </Button>
         </div>
@@ -1192,10 +1332,8 @@ const SafeUniversalPreview: React.FC<SafeUniversalPreviewProps> = ({
         {/* Code / Text Content Area */}
         <div className="flex-1 min-h-0 overflow-auto bg-zinc-950 p-3 sm:p-4 font-mono custom-scrollbar">
           {category === 'markdown' && viewMode === 'formatted' ? (
-            <div className="max-w-none text-white/90 text-sm p-2 sm:p-4 font-sans leading-relaxed">
-              <pre className="whitespace-pre-wrap font-sans text-sm text-white/90 bg-transparent border-none p-0">
-                {textContent}
-              </pre>
+            <div className="max-w-none text-white/90 text-sm p-3 sm:p-6 font-sans leading-relaxed bg-zinc-900/40 rounded-xl border border-white/5 overflow-x-auto">
+              <DecryptedMarkdown content={textContent} showHtmlPreview={false} />
             </div>
           ) : (
             <div className={cn('flex flex-col select-text', fontSizeClass)}>
@@ -1564,6 +1702,24 @@ export const OtherFilesVault: React.FC = () => {
         }
         const fileExt = uploadFileObj.name.split('.').pop()?.toUpperCase() || 'FILE';
 
+        let audioDuration: number | undefined;
+        if (isAudioExtension(fileExt) || uploadFileObj.type.startsWith('audio/')) {
+          try {
+            audioDuration = await extractAudioDuration(uploadFileObj);
+          } catch {
+            // ignore
+          }
+        }
+
+        let imageDimensions: { width: number; height: number } | undefined;
+        if (uploadFileObj.type.startsWith('image/') || IMAGE_EXTENSIONS.has(fileExt)) {
+          try {
+            imageDimensions = await extractImageDimensions(uploadFileObj);
+          } catch {
+            // ignore
+          }
+        }
+
         await yieldToMainThread();
 
         await addItem(
@@ -1576,6 +1732,9 @@ export const OtherFilesVault: React.FC = () => {
               mimeType: uploadFileObj.type || 'application/octet-stream',
               size: uploadFileObj.size,
               extension: fileExt,
+              duration: audioDuration,
+              width: imageDimensions?.width,
+              height: imageDimensions?.height,
               isE2EE: true,
               clientEncrypted: true,
             },
@@ -1600,6 +1759,7 @@ export const OtherFilesVault: React.FC = () => {
         });
       } catch (error) {
         failedCount++;
+        logger.error('[OtherFilesVault] Upload error', { error, fileName: file.name });
         logActivity({
           actionType: 'file_upload',
           itemName: file.name,
@@ -1664,7 +1824,13 @@ export const OtherFilesVault: React.FC = () => {
     if (!masterKey && !useVaultStore.getState().isDecoyMode) return;
     try {
       const mimeType = item.metadata?.mimeType as string | undefined;
-      const fileUrl = await getVaultItemPreviewUrl(item, masterKey, mimeType);
+      const rsaKeyPair = useVaultStore.getState().rsaKeyPair;
+      const fileUrl = await getVaultItemPreviewUrl(
+        item,
+        masterKey,
+        mimeType,
+        rsaKeyPair?.privateKey,
+      );
       if (!fileUrl) {
         toast.error('Decryption failed', {
           description:
@@ -1680,8 +1846,8 @@ export const OtherFilesVault: React.FC = () => {
       link.click();
       document.body.removeChild(link);
 
-      if (!getVaultItemFileUrl(item)) {
-        window.setTimeout(() => URL.revokeObjectURL(fileUrl), 60000);
+      if (!getVaultItemFileUrl(item) && !getCachedMediaBlobUrl(item.id)) {
+        window.setTimeout(() => revokeBlobUrl(fileUrl), 60000);
       }
       toast.success(`Downloading ${item.title}`);
       logActivity({
@@ -1690,7 +1856,8 @@ export const OtherFilesVault: React.FC = () => {
         description: 'File decrypted and downloaded',
         status: 'success',
       });
-    } catch {
+    } catch (err) {
+      logger.error('[OtherFilesVault] Download error', { error: err, itemId: item.id });
       toast.error('Download failed. Could not decrypt file.');
       logActivity({
         actionType: 'file_download',
@@ -2083,10 +2250,13 @@ export const OtherFilesVault: React.FC = () => {
               onNext={showNextFile}
               layout="overlay"
             />
-            <div className="relative h-[92vh] sm:h-[88vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-zinc-950 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)] transition-all flex flex-col min-h-0 doc-preview-content vault-print-protected">
+            <div
+              className="relative h-[92vh] sm:h-[88vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-zinc-950 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)] transition-all flex flex-col min-h-0 doc-preview-content vault-print-protected"
+              onClick={(e) => e.stopPropagation()}
+            >
               <SafeUniversalPreview
                 item={previewedFile}
-                masterKey={masterKey!}
+                masterKey={masterKey}
                 onDownload={() => downloadFile(previewedFile)}
                 onClose={() => setPreviewItem(null)}
               />

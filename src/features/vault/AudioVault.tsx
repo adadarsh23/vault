@@ -20,6 +20,7 @@ import {
   Sparkles,
   Copy,
   Check,
+  Clock,
 } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { toast } from 'sonner';
@@ -32,7 +33,9 @@ import {
   getVaultItemPreviewUrl,
   getVaultItemPreviewRevision,
   describeVaultPreviewError,
+  getCachedMediaBlobUrl,
 } from '../../lib/filePreview';
+import { revokeBlobUrl } from '../../lib/blobRegistry';
 import { logActivity } from '../../lib/activity';
 import { useVaultFolders } from '../../hooks/useVaultFolders';
 import { useVaultItems } from '../../hooks/useVaultItems';
@@ -51,11 +54,70 @@ import {
   isAudioExtension,
 } from '../../lib/fileHandling';
 
+const formatAudioDuration = (seconds?: number): string => {
+  if (!seconds || !isFinite(seconds) || seconds <= 0) return '';
+  const totalSeconds = Math.floor(seconds);
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  if (m >= 60) {
+    const h = Math.floor(m / 60);
+    const remM = m % 60;
+    return `${h}:${remM.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+  return `${m}:${s.toString().padStart(2, '0')}`;
+};
+
+const extractAudioDuration = async (file: File): Promise<number | undefined> => {
+  if (typeof window === 'undefined') return undefined;
+  return new Promise((resolve) => {
+    try {
+      const url = URL.createObjectURL(file);
+      const audio = new Audio();
+      let settled = false;
+
+      const cleanup = () => {
+        if (settled) return;
+        settled = true;
+        try {
+          URL.revokeObjectURL(url);
+          audio.removeAttribute('src');
+          audio.load();
+        } catch {
+          // ignore
+        }
+      };
+
+      audio.preload = 'metadata';
+
+      audio.onloadedmetadata = () => {
+        const d = audio.duration;
+        cleanup();
+        resolve(isFinite(d) && d > 0 ? Math.round(d * 10) / 10 : undefined);
+      };
+
+      audio.onerror = () => {
+        cleanup();
+        resolve(undefined);
+      };
+
+      setTimeout(() => {
+        cleanup();
+        resolve(undefined);
+      }, 2500);
+
+      audio.src = url;
+    } catch {
+      resolve(undefined);
+    }
+  });
+};
+
 const SafeAudioPreview: React.FC<{
   item: VaultItem;
-  masterKey: string | CryptoKey;
+  masterKey: string | CryptoKey | null | undefined;
   compact?: boolean;
-}> = ({ item, masterKey, compact }) => {
+  autoPlay?: boolean;
+}> = ({ item, masterKey, compact, autoPlay = true }) => {
   const [url, setUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -68,10 +130,14 @@ const SafeAudioPreview: React.FC<{
   const [copiedTranscript, setCopiedTranscript] = useState(false);
 
   const handleRetry = () => {
-    if (currentBlobUrlRef.current && currentBlobUrlRef.current.startsWith('blob:')) {
-      URL.revokeObjectURL(currentBlobUrlRef.current);
-      currentBlobUrlRef.current = null;
+    if (
+      currentBlobUrlRef.current &&
+      currentBlobUrlRef.current.startsWith('blob:') &&
+      !getCachedMediaBlobUrl(revisionKey)
+    ) {
+      revokeBlobUrl(currentBlobUrlRef.current);
     }
+    currentBlobUrlRef.current = null;
     setUrl(null);
     setErrorMessage(null);
     setIsLoading(true);
@@ -99,8 +165,8 @@ const SafeAudioPreview: React.FC<{
 
         const result = await getVaultItemPreviewUrl(item, masterKey, mime, rsaKeyPair?.privateKey);
         if (!isMounted) {
-          if (result && result.startsWith('blob:')) {
-            URL.revokeObjectURL(result);
+          if (result && result.startsWith('blob:') && !getCachedMediaBlobUrl(revisionKey)) {
+            revokeBlobUrl(result);
           }
           return;
         }
@@ -113,9 +179,10 @@ const SafeAudioPreview: React.FC<{
         if (
           currentBlobUrlRef.current &&
           currentBlobUrlRef.current !== result &&
-          currentBlobUrlRef.current.startsWith('blob:')
+          currentBlobUrlRef.current.startsWith('blob:') &&
+          !getCachedMediaBlobUrl(revisionKey)
         ) {
-          URL.revokeObjectURL(currentBlobUrlRef.current);
+          revokeBlobUrl(currentBlobUrlRef.current);
         }
 
         if (result.startsWith('blob:')) {
@@ -138,8 +205,12 @@ const SafeAudioPreview: React.FC<{
 
     return () => {
       isMounted = false;
-      if (currentBlobUrlRef.current && currentBlobUrlRef.current.startsWith('blob:')) {
-        URL.revokeObjectURL(currentBlobUrlRef.current);
+      if (
+        currentBlobUrlRef.current &&
+        currentBlobUrlRef.current.startsWith('blob:') &&
+        !getCachedMediaBlobUrl(revisionKey)
+      ) {
+        revokeBlobUrl(currentBlobUrlRef.current);
         currentBlobUrlRef.current = null;
       }
     };
@@ -147,8 +218,12 @@ const SafeAudioPreview: React.FC<{
 
   useEffect(() => {
     const handlePanicLock = () => {
-      if (currentBlobUrlRef.current && currentBlobUrlRef.current.startsWith('blob:')) {
-        URL.revokeObjectURL(currentBlobUrlRef.current);
+      if (
+        currentBlobUrlRef.current &&
+        currentBlobUrlRef.current.startsWith('blob:') &&
+        !getCachedMediaBlobUrl(revisionKey)
+      ) {
+        revokeBlobUrl(currentBlobUrlRef.current);
         currentBlobUrlRef.current = null;
       }
       setUrl(null);
@@ -158,12 +233,16 @@ const SafeAudioPreview: React.FC<{
     window.addEventListener('vault:panic-lock', handlePanicLock);
     return () => {
       window.removeEventListener('vault:panic-lock', handlePanicLock);
-      if (currentBlobUrlRef.current && currentBlobUrlRef.current.startsWith('blob:')) {
-        URL.revokeObjectURL(currentBlobUrlRef.current);
+      if (
+        currentBlobUrlRef.current &&
+        currentBlobUrlRef.current.startsWith('blob:') &&
+        !getCachedMediaBlobUrl(revisionKey)
+      ) {
+        revokeBlobUrl(currentBlobUrlRef.current);
         currentBlobUrlRef.current = null;
       }
     };
-  }, []);
+  }, [revisionKey]);
 
   if (isLoading) {
     return (
@@ -197,8 +276,12 @@ const SafeAudioPreview: React.FC<{
         src={url}
         title={item.title}
         initialVoiceClarityPreset={item.metadata?.voiceClarityPreset}
+        initialDuration={
+          typeof item.metadata?.duration === 'number' ? item.metadata.duration : undefined
+        }
         isWaveformEnabled={isAudioWaveformEnabled}
         compact={compact}
+        autoPlay={autoPlay}
         fileSize={typeof item.metadata?.size === 'number' ? item.metadata.size : undefined}
         className={cn(
           'max-w-none border-none bg-transparent shadow-none backdrop-blur-none',
@@ -223,20 +306,44 @@ const SafeAudioPreview: React.FC<{
               onClick={() => {
                 const transcript = item.metadata?.transcript;
                 if (!transcript) return;
+                const copyText = String(transcript);
                 if (navigator.clipboard?.writeText) {
                   navigator.clipboard
-                    .writeText(transcript)
+                    .writeText(copyText)
                     .then(() => {
                       setCopiedTranscript(true);
                       toast.success('Transcript copied to clipboard');
                       setTimeout(() => setCopiedTranscript(false), 2000);
                     })
-                    .catch((err) => {
-                      logger.warn('Failed to copy transcript to clipboard', { error: err });
-                      toast.error('Failed to copy transcript');
+                    .catch(() => {
+                      try {
+                        const el = document.createElement('textarea');
+                        el.value = copyText;
+                        document.body.appendChild(el);
+                        el.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(el);
+                        setCopiedTranscript(true);
+                        toast.success('Transcript copied to clipboard');
+                        setTimeout(() => setCopiedTranscript(false), 2000);
+                      } catch {
+                        toast.error('Failed to copy transcript');
+                      }
                     });
                 } else {
-                  toast.error('Clipboard not supported on this device');
+                  try {
+                    const el = document.createElement('textarea');
+                    el.value = copyText;
+                    document.body.appendChild(el);
+                    el.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(el);
+                    setCopiedTranscript(true);
+                    toast.success('Transcript copied to clipboard');
+                    setTimeout(() => setCopiedTranscript(false), 2000);
+                  } catch {
+                    toast.error('Clipboard not supported on this device');
+                  }
                 }
               }}
               className="h-7 px-2 text-xs text-cyan-300 hover:bg-cyan-500/20 shrink-0"
@@ -271,10 +378,6 @@ export const AudioVault: React.FC = () => {
   const pinningItemIds = useVaultStore((state) => state.pinningItemIds);
   const masterKey = useVaultStore((state) => state.masterKey);
   const rsaKeyPair = useVaultStore((state) => state.rsaKeyPair);
-  const isInlineMediaPreviewEnabled = useVaultStore(
-    (state) => state.preferences.isInlineMediaPreviewEnabled,
-  );
-  const isAudioWaveformEnabled = useVaultStore((state) => state.preferences.isAudioWaveformEnabled);
   const [isUploading, setIsUploading] = useState(false);
   const [isLiveRecordOpen, setIsLiveRecordOpen] = useState(false);
   const [previewItem, setPreviewItem] = useState<string | null>(null);
@@ -410,11 +513,19 @@ export const AudioVault: React.FC = () => {
         }
       }
 
-      if (e.key === 'ArrowRight') {
+      const target = e.target as HTMLElement | null;
+      const isPlayerInteractive =
+        target &&
+        (target.closest('[role="region"]') ||
+          target.closest('input') ||
+          target.closest('textarea') ||
+          target.closest('[role="slider"]'));
+
+      if (e.key === 'ArrowRight' && !isPlayerInteractive) {
         showNextAudioRef.current();
       }
 
-      if (e.key === 'ArrowLeft') {
+      if (e.key === 'ArrowLeft' && !isPlayerInteractive) {
         showPreviousAudioRef.current();
       }
 
@@ -516,6 +627,11 @@ export const AudioVault: React.FC = () => {
             ? file.type
             : getAudioMimeType(file.name);
 
+        const detectedDuration =
+          typeof additionalMetadata?.duration === 'number'
+            ? additionalMetadata.duration
+            : await extractAudioDuration(file);
+
         await addItem({
           type: 'audio',
           title: file.name,
@@ -524,6 +640,7 @@ export const AudioVault: React.FC = () => {
           metadata: {
             mimeType: resolvedMimeType,
             size: file.size,
+            duration: detectedDuration,
             extension: file.name.split('.').pop()?.toUpperCase() || 'AUDIO',
             isE2EE: true,
             clientEncrypted: true,
@@ -587,6 +704,9 @@ export const AudioVault: React.FC = () => {
 
   const handleDelete = (id: string, title: string) => {
     if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+    if (previewItem === id) {
+      handleClosePreview();
+    }
     void removeItem(id);
     toast.success(`${title} removed from vault`);
   };
@@ -605,12 +725,20 @@ export const AudioVault: React.FC = () => {
       const link = document.createElement('a');
       link.href = fileUrl;
       link.download = item.title;
+      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      if (!getVaultItemFileUrl(item) && fileUrl.startsWith('blob:')) {
-        window.setTimeout(() => URL.revokeObjectURL(fileUrl), 1000);
+      const isCached = !!getCachedMediaBlobUrl(getVaultItemPreviewRevision(item));
+      if (!isCached && !getVaultItemFileUrl(item) && fileUrl.startsWith('blob:')) {
+        window.setTimeout(() => {
+          try {
+            revokeBlobUrl(fileUrl);
+          } catch {
+            // ignore
+          }
+        }, 60000);
       }
 
       toast.success(`Downloading ${item.title}`);
@@ -713,31 +841,39 @@ export const AudioVault: React.FC = () => {
                 <div className="flex min-h-[180px] flex-col justify-between p-4 sm:p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      {(!isInlineMediaPreviewEnabled || !isAudioWaveformEnabled) && (
-                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 relative">
-                          <AudioLines className="h-7 w-7 text-cyan-400" />
-                          {isLiveCaptureItem(item.metadata?.isLiveCapture) ? (
-                            <div
-                              className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 backdrop-blur-sm shadow-md"
-                              title="Live Capture"
-                            >
-                              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                            </div>
-                          ) : (
-                            <div
-                              className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm shadow-md"
-                              title="Storage Upload"
-                            >
-                              <HardDrive className="h-3.5 w-3.5 text-blue-400" />
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 relative">
+                        <AudioLines className="h-7 w-7 text-cyan-400" />
+                        {isLiveCaptureItem(item.metadata?.isLiveCapture) ? (
+                          <div
+                            className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 backdrop-blur-sm shadow-md"
+                            title="Live Capture"
+                          >
+                            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                          </div>
+                        ) : (
+                          <div
+                            className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm shadow-md"
+                            title="Storage Upload"
+                          >
+                            <HardDrive className="h-3.5 w-3.5 text-blue-400" />
+                          </div>
+                        )}
+                      </div>
                       <h3 className="truncate text-base font-semibold text-white">{item.title}</h3>
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/40">
                         <span>
                           {(((item.metadata?.size || 0) as number) / (1024 * 1024)).toFixed(2)} MB
                         </span>
+                        {typeof item.metadata?.duration === 'number' &&
+                          item.metadata.duration > 0 && (
+                            <span
+                              className="flex items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-[11px] text-cyan-300 font-mono border border-cyan-500/20"
+                              title={`Duration: ${formatAudioDuration(item.metadata.duration)}`}
+                            >
+                              <Clock className="h-3 w-3 text-cyan-400 shrink-0" />
+                              {formatAudioDuration(item.metadata.duration)}
+                            </span>
+                          )}
                         {item.folder && (
                           <span className="flex max-w-full items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-cyan-300/80">
                             <Folder className="h-3 w-3 shrink-0" />
@@ -823,7 +959,7 @@ export const AudioVault: React.FC = () => {
                                 </div>
                               </div>
 
-                              <div className="max-h-[100px] overflow-y-auto custom-scrollbar">
+                              <div className="max-h-48 sm:max-h-56 overflow-y-auto custom-scrollbar">
                                 <button
                                   className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs text-white transition-colors hover:bg-white/5"
                                   onClick={() => {
@@ -857,21 +993,37 @@ export const AudioVault: React.FC = () => {
                     </div>
                   </div>
 
-                  {isInlineMediaPreviewEnabled ? (
-                    <div className="rounded-2xl border border-white/5 bg-black/20">
-                      <SafeAudioPreview item={item} masterKey={masterKey!} compact />
-                    </div>
-                  ) : (
-                    <div className="flex min-h-[96px] items-center gap-4 rounded-2xl border border-white/5 bg-black/20 px-5 py-4 text-white/60">
-                      <Music className="h-8 w-8 text-cyan-400/70" />
-                      <div>
-                        <p className="text-sm font-medium text-white">Inline preview disabled</p>
-                        <p className="text-xs text-white/40">
-                          Open the secure preview only when you need it.
+                  <div
+                    className="group/preview mt-4 flex items-center justify-between gap-4 rounded-2xl border border-white/5 bg-black/20 p-4 transition-all duration-200 hover:border-cyan-500/30 hover:bg-white/[0.04] cursor-pointer"
+                    onClick={() => setPreviewItem(item.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setPreviewItem(item.id);
+                      }
+                    }}
+                    title="Click to preview audio securely"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 group-hover/preview:scale-105 transition-transform">
+                        <Music className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-white/90 group-hover/preview:text-cyan-300 transition-colors truncate">
+                          Encrypted Audio File
+                        </p>
+                        <p className="text-[11px] text-white/40 truncate">
+                          Click Preview to listen securely
                         </p>
                       </div>
                     </div>
-                  )}
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-cyan-400/80 group-hover/preview:text-cyan-300 transition-colors shrink-0">
+                      <Eye className="h-3.5 w-3.5" />
+                      Preview
+                    </span>
+                  </div>
 
                   <div className="mt-5 flex items-center gap-2">
                     <Button
@@ -969,17 +1121,22 @@ export const AudioVault: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                handleClosePreview();
+              }
+            }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-3 sm:p-6 backdrop-blur-md overflow-y-auto"
             ref={modalRef}
           >
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-3 top-3 sm:right-6 sm:top-6 z-50 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-white/10 sm:bg-white/5 hover:bg-white/20 text-white backdrop-blur-md"
+              className="absolute right-3 top-3 sm:right-6 sm:top-6 z-50 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-white/10 sm:bg-white/5 hover:bg-white/20 text-white backdrop-blur-md border border-white/10 active:scale-95 transition-all"
               onClick={handleClosePreview}
               aria-label="Close preview"
             >
-              <X className="h-5 w-5 sm:h-7 sm:w-7" />
+              <X className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
 
             <GlobalNavigator
@@ -990,7 +1147,10 @@ export const AudioVault: React.FC = () => {
               layout="overlay"
             />
 
-            <div className="relative w-full max-w-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col rounded-3xl border border-white/10 bg-black/90 backdrop-blur-2xl shadow-2xl overflow-hidden p-3.5 sm:p-6 md:p-8">
+            <div
+              className="relative w-full max-w-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col rounded-3xl border border-white/10 bg-black/90 backdrop-blur-2xl shadow-2xl overflow-hidden p-3.5 sm:p-6 md:p-8 overscroll-contain"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="mb-3.5 sm:mb-6 flex items-center justify-between gap-2 sm:gap-4 border-b border-white/10 pb-3 sm:pb-4 shrink-0">
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                   <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-md">
@@ -1010,6 +1170,13 @@ export const AudioVault: React.FC = () => {
                         )}{' '}
                         MB
                       </span>
+                      {typeof previewedAudio.metadata?.duration === 'number' &&
+                        previewedAudio.metadata.duration > 0 && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-cyan-500/10 px-1.5 sm:px-2 py-0.5 text-cyan-300 shrink-0 font-mono text-[10px] sm:text-xs border border-cyan-500/20">
+                            <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                            <span>{formatAudioDuration(previewedAudio.metadata.duration)}</span>
+                          </span>
+                        )}
                       {previewedAudio.folder && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-cyan-500/10 px-1.5 sm:px-2 py-0.5 text-cyan-300 shrink-0 max-w-[85px] xs:max-w-[120px]">
                           <Folder className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
@@ -1076,7 +1243,7 @@ export const AudioVault: React.FC = () => {
               </div>
 
               <div className="overflow-y-auto custom-scrollbar flex-1 pr-1 -mr-1">
-                <SafeAudioPreview item={previewedAudio} masterKey={masterKey!} />
+                <SafeAudioPreview item={previewedAudio} masterKey={masterKey} />
               </div>
             </div>
           </motion.div>

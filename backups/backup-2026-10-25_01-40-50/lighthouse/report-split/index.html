@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lighthouse Quality Overview</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --panel-alt: #f1f5f9;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --pass: #10b981;
+      --pass-bg: #ecfdf5;
+      --warn: #f59e0b;
+      --warn-bg: #fffbeb;
+      --fail: #ef4444;
+      --fail-bg: #fef2f2;
+      --na: #94a3b8;
+      --accent: #3b82f6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b0f19;
+        --panel: #111827;
+        --panel-alt: #1f2937;
+        --text: #f9fafb;
+        --muted: #9ca3af;
+        --border: #374151;
+        --pass-bg: #064e3b;
+        --warn-bg: #78350f;
+        --fail-bg: #7f1d1d;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    main {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 64px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    h1, h2, h3 { line-height: 1.2; margin: 0; font-weight: 700; }
+    h1 { font-size: clamp(24px, 4vw, 36px); letter-spacing: -0.02em; }
+    h2 { font-size: 18px; margin-top: 32px; margin-bottom: 14px; }
+    .muted { color: var(--muted); }
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0 24px;
+    }
+    .nav-links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      background: var(--panel);
+      color: var(--text);
+      font-weight: 500;
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+    .nav-links a:hover {
+      background: var(--panel-alt);
+      border-color: var(--accent);
+      text-decoration: none;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      font-size: 20px;
+      font-weight: 800;
+      border: 3px solid currentColor;
+    }
+    .score-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid currentColor;
+    }
+    .pass { color: var(--pass); }
+    .warn { color: var(--warn); }
+    .fail { color: var(--fail); }
+    .na { color: var(--na); }
+    .table-container {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      background: var(--panel-alt);
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: var(--panel-alt); }
+    .audit-title { font-weight: 600; color: var(--text); }
+    .audit-description { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .badge-metric {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-metric.good { background: var(--pass-bg); color: var(--pass); }
+    .badge-metric.warn { background: var(--warn-bg); color: var(--warn); }
+    .badge-metric.poor { background: var(--fail-bg); color: var(--fail); }
+    .badge-metric.na { background: var(--panel-alt); color: var(--na); }
+    .cwv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin: 16px 0 28px;
+    }
+    .cwv-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+    .cwv-title { font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+    .cwv-value { font-size: 20px; font-weight: 800; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+        <div>
+          <p class="muted">Generated on 25/10/2026, 1:28:00 am</p>
+          <h1>Lighthouse Quality Dashboard</h1>
+          <p class="muted">http://127.0.0.1:4173/</p>
+        </div>
+      </header>
+
+      <h2>Category Scores</h2>
+      <section class="grid">
+        <a class="card" href="./performance.html">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+              <h3 style="font-size: 16px;">Performance</h3>
+              <span class="score-pill warn">65</span>
+            </div>
+            <p class="muted" style="margin: 0; font-size: 13px;">View details & audits →</p>
+          </a>
+<a class="card" href="./accessibility.html">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+              <h3 style="font-size: 16px;">Accessibility</h3>
+              <span class="score-pill pass">100</span>
+            </div>
+            <p class="muted" style="margin: 0; font-size: 13px;">View details & audits →</p>
+          </a>
+<a class="card" href="./best-practices.html">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+              <h3 style="font-size: 16px;">Best Practices</h3>
+              <span class="score-pill pass">100</span>
+            </div>
+            <p class="muted" style="margin: 0; font-size: 13px;">View details & audits →</p>
+          </a>
+<a class="card" href="./seo.html">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+              <h3 style="font-size: 16px;">SEO</h3>
+              <span class="score-pill warn">66</span>
+            </div>
+            <p class="muted" style="margin: 0; font-size: 13px;">View details & audits →</p>
+          </a>
+      </section>
+
+      <h2>Core Web Vitals Summary</h2>
+      <div class="cwv-grid">
+    <div class="cwv-card">
+      <div class="cwv-title" title="First Contentful Paint">FCP</div>
+      <div class="cwv-value badge-metric poor">3.9 s</div>
+    </div>
+<div class="cwv-card">
+      <div class="cwv-title" title="Largest Contentful Paint">LCP</div>
+      <div class="cwv-value badge-metric poor">6.4 s</div>
+    </div>
+<div class="cwv-card">
+      <div class="cwv-title" title="Total Blocking Time">TBT</div>
+      <div class="cwv-value badge-metric warn">230 ms</div>
+    </div>
+<div class="cwv-card">
+      <div class="cwv-title" title="Cumulative Layout Shift">CLS</div>
+      <div class="cwv-value badge-metric good">0</div>
+    </div>
+<div class="cwv-card">
+      <div class="cwv-title" title="Speed Index">Speed Index</div>
+      <div class="cwv-value badge-metric warn">3.9 s</div>
+    </div>
+  </div>
+
+      <h2>Report Artifacts</h2>
+      <div class="nav-links">
+        <a href="../report.report.html">🌐 Full Lighthouse HTML</a>
+        <a href="../report.report.json">💾 Full Lighthouse JSON</a>
+        <a href="./performance.json">📄 Performance JSON</a>
+<a href="./accessibility.json">📄 Accessibility JSON</a>
+<a href="./best-practices.json">📄 Best Practices JSON</a>
+<a href="./seo.json">📄 SEO JSON</a>
+      </div>
+  </main>
+</body>
+</html>

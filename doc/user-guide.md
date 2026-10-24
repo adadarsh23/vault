@@ -35,22 +35,33 @@ flowchart LR
 
 1. Go to **Settings** $\rightarrow$ **Security & 2FA**.
 2. **Biometric Passkeys (Recommended)**: Click **Add Passkey** to sign in using **Face ID**, **Touch ID**, or **Windows Hello** — fast, seamless, and completely immune to phishing attacks.
-3. **Authenticator App (TOTP)**: Click **Enable 2FA**, scan the QR code using Google Authenticator, Authy, or 1Password, and save the 6 backup recovery codes.
+3. **Authenticator App (TOTP)**: Click **Enable 2FA**, scan the QR code using Google Authenticator, Authy, or 1Password, and save the backup recovery codes.
 
 ---
 
-## 3. Daily Usage: Exploring the Core Vaults
+## 3. Daily Usage: Exploring the 14 Specialized Vaults
 
-Vault organizes your digital life into specialized encrypted compartments:
+Vault organizes your digital life into 14 purpose-built encrypted compartments:
 
 ```
-+-----------------------------------------------------------------------------------+
-|  📝 Notes Vault      - Rich text formatting, checklists, Markdown & autosaving    |
-|  📷 Photos & Media   - Encrypted photo gallery, EXIF stripping & lightbox viewer  |
-|  🎬 Video Player     - Floating Picture-in-Picture mini-player with filters       |
-|  🔑 Password Manager - Secure credential vault, password generator & OTP tokens   |
-|  📄 Document Shield  - PDF viewer with tab-switch blurring & anti-screenshot      |
-+-----------------------------------------------------------------------------------+
++-----------------------------------------------------------------------------------------+
+|                                🏛️ VAULT ECOSYSTEM MODULES                               |
++-----------------------------------------------------------------------------------------+
+|  1. 📝 Notes Vault       - Rich text formatting, checklists, Markdown & autosaving      |
+|  2. 📷 Media Vault       - Encrypted photo/video gallery, EXIF stripping, PiP player    |
+|  3. 🎵 Audio Vault       - Encrypted voice memos, visual waveform analyzer, audio player|
+|  4. 📄 Documents Vault   - PDF viewer with tab-switch blurring & anti-screenshot mask   |
+|  5. 🔑 Password Manager  - Secure credentials, password generator & breach checks       |
+|  6. 🗝️ Secrets Vault     - BIP-39 mnemonic recovery seeds, private API & crypto keys    |
+|  7. 💳 Cards Vault       - Credit & debit cards, Luhn checksum validation, CVV masking  |
+|  8. 👤 Contacts Vault    - Encrypted address book, avatars, notes, vCard export         |
+|  9. 🆔 Identities Vault  - Passports, national IDs, driver licenses, scan attachments  |
+| 10. 📶 Wi-Fi Vault       - Network SSIDs, passwords, encryption modes, QR generators    |
+| 11. 📍 Location Vault    - Coordinates, addresses, interactive map pins, travel notes   |
+| 12. ✅ Todo Vault        - Checklists, priorities, deadline alerts, encrypted subtasks  |
+| 13. 💬 Chat Vault        - Private encrypted messages, self-destruct timers, media clips|
+| 14. 📁 Other Files Vault - Arbitrary binary storage, bulk upload, MIME validation       |
++-----------------------------------------------------------------------------------------+
 ```
 
 ---
@@ -59,14 +70,9 @@ Vault organizes your digital life into specialized encrypted compartments:
 
 Write daily journals, confidential thoughts, meeting notes, or project tasks using the built-in **TipTap** editor:
 
-- **Instant Markdown Shortcuts**:
-  - Type `# ` for Large Heading.
-  - Type `## ` for Sub-Heading.
-  - Type `- [ ] ` to create an interactive To-Do Checklist.
-  - Type `> ` to format a blockquote.
-  - Type `***` or `---` to insert a horizontal divider.
+- **Instant Markdown Shortcuts**: Type `# ` for large heading, `## ` for subheading, `- [ ] ` for to-do items, `> ` for blockquotes, and `***` for dividers.
 - **Automatic Saving**: Notes autosave 300ms after you stop typing. No need to click "Save"!
-- **Local Decryption**: Your notes decrypt instantly on your device so browsing feels instantaneous even on slow networks.
+- **Local Decryption**: Your notes decrypt instantly on your device so browsing feels instantaneous.
 
 ---
 
@@ -74,113 +80,178 @@ Write daily journals, confidential thoughts, meeting notes, or project tasks usi
 
 Safely archive private family photos, identification scans, and personal memories:
 
-- **Automatic EXIF Stripping**: When enabled in Settings, Vault automatically strips sensitive GPS location data, camera serial numbers, and device models from photos before encryption.
-- **In-Browser Decryption**: High-resolution photos are decrypted in your browser’s memory without creating temporary unencrypted cache files on your hard drive.
-- **Live Camera Capture**: Tap the Camera icon to capture encrypted photos or audio memos directly into your vault without leaving traces in your phone's default camera roll.
+- **Automatic EXIF Stripping**: Vault automatically strips sensitive GPS location data, camera serial numbers, and device models from photos before encryption.
+- **In-Browser Decryption**: High-resolution photos are decrypted directly in your browser's memory without leaving unencrypted temporary files on your hard drive.
+- **Live Camera Capture**: Tap the Camera icon to capture encrypted photos or audio memos directly into your vault without leaving traces in your phone's camera roll.
 
 ---
 
-### 🎬 3.3 Floating Video Mini-Player (Picture-in-Picture)
+### 🎬 3.3 Persistent Floating Video Mini-Player (Picture-in-Picture)
 
-Watch encrypted videos, tutorials, or voice memos without interrupting your work:
+Watch encrypted private videos while taking notes or organizing files:
+
+- **Picture-in-Picture**: Click the PiP icon on any video to pop it out into a floating window that stays on top as you switch tabs or vaults.
+- **Visual Filters**: Switch between Normal, Contrast Boost, Night-Vision, Inverted, and Grayscale filters directly inside the player.
+- **Playback Controls**: Adjust playback speed from 0.5x to 2.0x, scrub forward/back 10 seconds, and adjust volume.
+
+---
+
+### 🎵 3.4 Audio Vault: Voice Notes & Waveform Visualizer
+
+Record private voice memos or store confidential audio recordings:
+
+- **Encrypted Voice Recording**: Click the microphone icon to record encrypted voice memos directly in your browser.
+- **Live Frequency Waveform**: View the audio wave visualizer in real time during playback.
+- **Variable Playback**: Speed up audio playback up to 2.0x for rapid listening.
+
+---
+
+### 📄 3.5 Document Shield & PDF Privacy Viewer
+
+Read sensitive PDFs, tax returns, and confidential contracts with zero risk of shoulder snooping:
+
+- **Anti-Screenshot Blurring**: As soon as you switch tabs or minimize the window, the document instantly blurs with a 30px Gaussian mask.
+- **Dynamic Watermark**: A floating watermark with your username and timestamp discourages unauthorized photography.
+- **Print Protection**: Attempts to print the page (`Ctrl+P` / `Cmd+P`) are blocked and blank out the content.
+
+---
+
+### 🔑 3.6 Password Manager & Breach Checker
+
+Store all your logins securely:
+
+- **Instant Password Generator**: Generate ultra-strong passwords with customized symbols, numbers, and length.
+- **Breach Alert**: Vault checks your passwords against known data breaches without ever revealing your actual password (using k-anonymity).
+- **Auto-Clipboard Clear**: Copied passwords automatically wipe from your clipboard after 30 seconds.
+
+---
+
+### 🗝️ 3.7 Secrets Vault: Crypto Recovery Seeds & API Keys
+
+Designed for cryptocurrency users, developers, and security professionals:
+
+- **BIP-39 Seed Phrase Generator**: Generate and verify 12, 18, or 24-word recovery seeds with checksum validation.
+- **API & SSH Keys**: Dedicated encrypted fields for private server keys, cloud tokens, and post-quantum keys.
+- **Quick Masking**: All secrets are hidden behind dots with a 5-second reveal timer.
+
+---
+
+### 💳 3.8 Payment Cards Vault
+
+Store credit cards, debit cards, and banking information:
+
+- **Card Detection**: Automatically detects Visa, Mastercard, Amex, and Discover with realistic card previews.
+- **Luhn Checksum Check**: Validates card numbers client-side to prevent typos before saving.
+- **CVV Privacy Shield**: CVV security codes remain hidden until toggled.
+
+---
+
+### 👤 3.9 Contacts Vault
+
+Keep your sensitive personal and business contacts encrypted:
+
+- Encrypt names, phone numbers, email addresses, and private notes.
+- Import and export contacts via standard vCard (`.vcf`) format.
+
+---
+
+### 🆔 3.10 Identities Vault
+
+Store passports, national ID cards, driver licenses, and tax cards:
+
+- Store document numbers, expiration dates, and issuing countries.
+- Attach high-resolution encrypted scans of front and back cards.
+
+---
+
+### 📶 3.11 Wi-Fi Vault
+
+Organize all your home, office, and travel Wi-Fi credentials:
+
+- Store SSID names, security protocols (WPA3, WPA2, WEP), and passphrases.
+- **One-Click QR Code**: Generate a dynamic QR code that friends or your mobile camera can scan to connect instantly without typing passwords.
+
+---
+
+### 📍 3.12 Location Vault
+
+Bookmark sensitive travel locations, emergency meeting points, and coordinates:
+
+- Store latitude/longitude coordinates and street addresses.
+- Launch directly into OpenStreetMap or Google Maps with one click.
+
+---
+
+### ✅ 3.13 Todo & Tasks Vault
+
+Organize confidential tasks, checklists, and project deadlines:
+
+- Categorize by priority: Urgent, High, Medium, Low.
+- Set due dates and interactive checkboxes that sync across all your devices.
+
+---
+
+### 💬 3.14 Chat Vault: Ephemeral Encrypted Messages
+
+Communicate securely with temporary encrypted notes or messaging threads:
+
+- Set auto-delete timers (1 hour, 24 hours, 7 days).
+- Messages are erased from memory and disk upon expiration.
+
+---
+
+### 📁 3.15 Other Files Vault
+
+Store arbitrary encrypted files, archives (ZIP), and binaries up to 500MB:
+
+- Drag and drop files from desktop or mobile file manager.
+- Client-side SHA-256 verification guarantees file integrity.
+
+---
+
+## 4. Physical Coercion Defense: Duress Decoy Vault
+
+If you are ever forced by an attacker, border inspector, or hostile actor to unlock your device under physical threat:
 
 ```mermaid
-stateDiagram-v2
-    [*] --> FullPlayer: Click any video in Media Vault
-    FullPlayer --> MiniPlayer: Navigate to Notes or Passwords
-    MiniPlayer --> Minimized: Tap the Minimize (-) icon
-    Minimized --> MiniPlayer: Tap Expand icon
-    MiniPlayer --> FullPlayer: Tap Expand-to-Full icon
-    MiniPlayer --> [*]: Close player
+flowchart TD
+    Coercion["Hostile Coercion / Demand to Unlock"] --> EnterDuress["Enter Your Secret Duress PIN"]
+    EnterDuress --> ShredReal["1. Real Master Keys Instantly Shredded from RAM"]
+    EnterDuress --> LoadDecoy["2. Realistic Decoy Vault Loaded"]
+    LoadDecoy --> PlausibleSafety["3. Shows Benign Documents & Photos with No Warning Signs"]
 ```
 
-- **Floating Convenience**: When you browse away from the media tab, the video detaches into a floating window in the bottom-right corner.
-- **Picture-in-Picture (PiP)**: Supports browser native Picture-in-Picture to keep playing outside the browser window.
-- **Live Visual Filters**: Need to enhance a dark recording? Open the player settings to apply **Contrast Boost**, **Night Vision**, or **Grayscale** filters on-the-fly.
+1. **Setup**: Go to **Settings** $\rightarrow$ **Duress PIN** and set a secondary PIN.
+2. **Execution**: At the login screen, enter your **Duress PIN** instead of your master passphrase.
+3. **What Happens**:
+   - Vault **instantly wipes all primary keys from device RAM**.
+   - Vault renders a pre-configured decoy vault with authentic-looking notes, receipts, and photos.
+   - The inspecting party sees a functional vault with zero clue that duress mode was triggered.
 
 ---
 
-### 🔑 3.4 Password Manager & Credential Locker
+## 5. Keyboard Shortcuts & Power User Tips
 
-Store all your website logins and security credentials securely:
-
-- **Built-in Password Generator**: Generate high-entropy passwords (16 to 64 characters) with custom symbols, numbers, and uppercase rules.
-- **One-Click Copy with Auto-Clear**: Click the copy icon next to any password. For security, your clipboard automatically purges the password after 30 seconds to prevent clipboard theft.
-- **Built-in TOTP Authenticator**: Scan 2FA QR codes from other websites directly into Vault. Vault generates live 6-digit codes with animated 30-second countdown rings.
-
----
-
-### 📄 3.5 Document & Mobile PDF Privacy Shield
-
-When viewing confidential PDFs (passports, tax filings, legal contracts), Vault guards you against shoulder surfing:
-
-- **Tab-Switch Blurring**: The moment you switch browser tabs or minimize your window, the PDF viewer instantly applies a **heavy 30px blur** and black shield. Operating system previews (like the Windows Taskbar or iOS App Switcher) will never capture a thumbnail of your sensitive document.
-- **Anti-Screenshot Deterrence**: Displays a dynamic, subtle watermark containing your username and IP address.
-- **Print Protection**: Suppresses accidental `Ctrl+P` print attempts.
+| Shortcut               | Action                                            |
+| :--------------------- | :------------------------------------------------ |
+| `Ctrl + L` / `Cmd + L` | **Instant Vault Lock** (Zeroizes all keys in RAM) |
+| `Ctrl + K` / `Cmd + K` | **Global Search** across all 14 compartments      |
+| `Ctrl + N` / `Cmd + N` | **New Note / Item** in the active compartment     |
+| `Ctrl + Shift + D`     | **Trigger Emergency Decoy View**                  |
+| `Escape`               | Close any open modal or viewer                    |
 
 ---
 
-## 4. Mobile & Touch-Friendly Features
+## 6. Frequently Asked Questions (FAQ)
 
-Vault is designed to work like a native app on iOS Safari and Android Chrome:
+### Can the Vault team reset my password if I lose it?
 
-### 4.1 Touch Drag-and-Drop Polyfill
+**No.** Vault is mathematically zero-knowledge. Your keys never leave your browser. If you lose your passphrase and recovery kit, your data cannot be recovered.
 
-- **200ms Hold-to-Pick**: On mobile screens, press and hold any item for 200 milliseconds. Your phone will give a **subtle vibrational haptic buzz**, indicating the file is picked up.
-- **Quick-Drop Bar**: A mobile-optimized bottom bar will slide up, allowing you to drop files into folders without hunting through tiny sidebar trees.
-- **Safe-Area Padding**: Drop targets automatically avoid bottom gesture home bars on modern iPhones and Android displays.
+### How does multi-device sync work?
 
-### 4.2 Install as PWA (Add to Home Screen)
+Vault uses secure WebSockets (`Socket.IO`). When you save an item on your laptop, the encrypted ciphertext is pushed to the server, which notifies your phone to download the new encrypted blob and decrypt it locally in milliseconds.
 
-- **iPhone (iOS Safari)**: Tap the **Share** button $\rightarrow$ tap **Add to Home Screen**.
-- **Android (Chrome)**: Tap the **three-dots menu** $\rightarrow$ tap **Install App** or **Add to Home screen**.
-- Vault will launch in full-screen standalone mode with no browser URL bars.
+### Are my files safe if the Vault server is hacked?
 
----
-
-## 5. Security & Privacy Shortcuts Cheat Sheet
-
-| Action                              | Windows / Linux    | macOS             | Description                                              |
-| :---------------------------------- | :----------------- | :---------------- | :------------------------------------------------------- |
-| **Quick Search / Command Palette**  | `Ctrl + K`         | `Cmd + K`         | Open search to find notes, files, or settings instantly. |
-| **Create New Item**                 | `Ctrl + N`         | `Cmd + N`         | Open quick creation modal for a note or password.        |
-| **Immediately Lock Vault**          | `Ctrl + L`         | `Cmd + L`         | Locks the vault and wipes keys from memory immediately.  |
-| **Universal Emergency Panic Lock**  | `Ctrl + Shift + L` | `Cmd + Shift + L` | Emergency wipe: shred all keys within 60ms and logout.   |
-| **Copy Password / Content**         | `Ctrl + C`         | `Cmd + C`         | Secure copy with automated clipboard purge.              |
-| **Delete / Trash Highlighted Item** | `Delete`           | `Backspace`       | Move selected vault item to trash.                       |
-| **Next / Previous Item**            | `←` / `→`          | `←` / `→`         | Navigate between items in galleries or lists.            |
-
----
-
-## 6. Advanced Privacy: Decoy Vault & Duress Defense
-
-### What is the Decoy Vault?
-
-If you are ever in a situation where someone (such as an attacker, border inspector, or coercive individual) forces you to unlock your vault:
-
-1. Go to **Settings** $\rightarrow$ **Security Preferences** $\rightarrow$ enable **Decoy Vault Partition**.
-2. Set a distinct secondary **Decoy PIN**.
-3. **How it works under duress**:
-   - If you enter your **Master Passphrase**, your true personal vault unlocks.
-   - If you enter your **Decoy PIN**, a completely authentic-looking decoy vault unlocks with realistic placeholder items!
-   - There are **zero clues, error messages, or network signs** that another vault exists.
-
----
-
-## 7. Frequently Asked Questions (FAQ)
-
-### Q1: Can the website creator or server administrator see my files?
-
-**No, never.** All encryption and decryption happen strictly inside your browser using AES-256-GCM. The server only receives encrypted ciphertexts that look like scrambled noise.
-
-### Q2: What happens if my internet disconnects while I am working?
-
-**You can keep working seamlessly!** Vault is offline-first. Your decrypted notes and files stay accessible in your browser's local encrypted storage (`IndexedDB`). When you reconnect, Vault automatically syncs your changes to the cloud.
-
-### Q3: Why does Vault lock automatically after a minute of inactivity?
-
-To protect your data if you walk away from your desk! If no mouse movement, touch, or keystroke is detected for 60 seconds, Vault purges all encryption keys from computer memory. You can adjust the auto-lock timeout in **Settings**.
-
-### Q4: How do I export or backup my data?
-
-Go to **Settings** $\rightarrow$ **Backup & Export**. You can export an encrypted JSON vault backup to store on an external USB drive or offline storage.
+**Yes.** All data stored on the server is fully encrypted with AES-256-GCM / VCAS01 dual cascade ciphers. An attacker who steals the entire database will obtain only scrambled ciphertext.

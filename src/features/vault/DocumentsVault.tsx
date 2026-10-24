@@ -48,9 +48,7 @@ import {
   getVaultItemFileUrl,
   getVaultItemPreviewRevision,
   getVaultItemPreviewUrl,
-  vaultItemHasServerFileReference,
 } from '../../lib/filePreview';
-import { getSignedUrl } from '../../lib/sync';
 
 import { useVaultFolders } from '../../hooks/useVaultFolders';
 import { useVaultItems } from '../../hooks/useVaultItems';
@@ -374,16 +372,6 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
       setTextContent('');
 
       try {
-        const isServerStored = vaultItemHasServerFileReference(item);
-
-        if (isServerStored && (isPdf || category === 'word' || isImage)) {
-          const signedUrl = await getSignedUrl(item.id, 'view');
-          if (!isMounted) return;
-          setUrl(signedUrl);
-          setIsLoading(false);
-          return;
-        }
-
         const effectiveMime = mimeType || getDocumentMimeType(item.title);
         const result = await getVaultItemPreviewUrl(
           item,
@@ -540,7 +528,6 @@ const SafeDocumentPreview: React.FC<SafeDocumentPreviewProps> = ({
         url={url}
         title={item.title}
         extension={extension || 'PDF'}
-        fileContent={item.content instanceof Uint8Array ? item.content : null}
         onDownload={onDownload}
       />
     );

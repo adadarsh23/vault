@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect, useCallback, memo, useId, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './Button';
 import {
@@ -9,16 +10,18 @@ import {
   Volume2,
   Volume1,
   VolumeX,
-  RotateCcw,
-  RotateCw,
   Download,
   Sparkles,
   Check,
   Loader2,
   AudioLines,
-  ChevronDown,
+  ChevronUp,
   Repeat,
   RefreshCw,
+  ShieldCheck,
+  Mic,
+  Sliders,
+  X,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { logger } from '../../lib/logger';
@@ -580,6 +583,7 @@ export interface AudioPlayerProps {
   autoPlay?: boolean;
   loop?: boolean;
   initialVoiceClarityPreset?: VoiceClarityPreset;
+  initialDuration?: number;
   onEnded?: () => void;
   onPlay?: () => void;
   onPause?: () => void;
@@ -595,6 +599,7 @@ export const AudioPlayer = ({
   autoPlay = false,
   loop = false,
   initialVoiceClarityPreset,
+  initialDuration,
   onEnded,
   onPlay,
   onPause,
@@ -606,7 +611,9 @@ export const AudioPlayer = ({
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(
+    initialDuration && isFinite(initialDuration) && initialDuration > 0 ? initialDuration : 0,
+  );
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [isLooping, setIsLooping] = useState(loop);
@@ -622,6 +629,12 @@ export const AudioPlayer = ({
   const [waveformFailed, setWaveformFailed] = useState(false);
   const isSeekingRef = useRef(false);
 
+  useEffect(() => {
+    if (initialDuration && isFinite(initialDuration) && initialDuration > 0) {
+      setDuration((prev) => (prev <= 0 || !isFinite(prev) ? initialDuration : prev));
+    }
+  }, [initialDuration]);
+
   // Voice Clarity DSP
   const [voiceClarityPreset, setVoiceClarityPreset] = useState<VoiceClarityPreset>(
     initialVoiceClarityPreset && initialVoiceClarityPreset in VOICE_CLARITY_PRESETS
@@ -630,6 +643,22 @@ export const AudioPlayer = ({
   );
   const [isDspMenuOpen, setIsDspMenuOpen] = useState(false);
   const dspMenuRef = useRef<HTMLDivElement>(null);
+  const dspButtonRef = useRef<HTMLButtonElement>(null);
+  const dspPopoverRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState<{
+    bottom?: number;
+    top?: number;
+    left: number;
+    width: number;
+    arrowLeft: number;
+    placement: 'up' | 'down';
+  }>({
+    bottom: 50,
+    left: 16,
+    width: 215,
+    arrowLeft: 20,
+    placement: 'up',
+  });
   const dspControllerRef = useRef<{
     setPreset: (p: VoiceClarityPreset) => void;
     destroy: () => void;
@@ -655,6 +684,77 @@ export const AudioPlayer = ({
     }
   }, [title, src]);
 
+  const updateMenuPosition = useCallback(() => {
+    if (!dspButtonRef.current || typeof window === 'undefined') return;
+    const rect = dspButtonRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Popover target width (ultra-compact: 215px)
+    const targetWidth = Math.min(215, viewportWidth - 24);
+
+    const spaceAbove = rect.top;
+    const spaceBelow = viewportHeight - rect.bottom;
+
+    // Prefer opening upward as requested, only flip downward if space above is tight (< 260px) and space below has more room
+    const shouldOpenDownward = spaceAbove < 260 && spaceBelow > spaceAbove;
+    const placement: 'up' | 'down' = shouldOpenDownward ? 'down' : 'up';
+
+    // Horizontal positioning: align with button left, but clamp within viewport boundaries
+    const idealLeft = rect.left;
+    const clampedLeft = Math.max(12, Math.min(idealLeft, viewportWidth - targetWidth - 12));
+
+    // Arrow notch alignment pointing straight to the DSP button center
+    const buttonCenterX = rect.left + rect.width / 2;
+    const arrowLeft = Math.max(16, Math.min(buttonCenterX - clampedLeft - 6, targetWidth - 28));
+
+    if (placement === 'up') {
+      setMenuPosition({
+        bottom: viewportHeight - rect.top + 8,
+        left: clampedLeft,
+        width: targetWidth,
+        arrowLeft,
+        placement: 'up',
+      });
+    } else {
+      setMenuPosition({
+        top: rect.bottom + 8,
+        left: clampedLeft,
+        width: targetWidth,
+        arrowLeft,
+        placement: 'down',
+      });
+    }
+  }, []);
+
+  const toggleDspMenu = useCallback(() => {
+    setIsDspMenuOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        updateMenuPosition();
+      }
+      return next;
+    });
+  }, [updateMenuPosition]);
+
+  // Track window resize and scroll to keep portaled popover aligned with trigger button
+  useEffect(() => {
+    if (!isDspMenuOpen) return;
+    updateMenuPosition();
+
+    const handleScrollOrResize = () => {
+      updateMenuPosition();
+    };
+
+    window.addEventListener('resize', handleScrollOrResize);
+    window.addEventListener('scroll', handleScrollOrResize, true);
+
+    return () => {
+      window.removeEventListener('resize', handleScrollOrResize);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+    };
+  }, [isDspMenuOpen, updateMenuPosition]);
+
   // Handle Preset Change with Web Audio Single-Source Lifecycle
   const handleSelectPreset = useCallback((preset: VoiceClarityPreset) => {
     const audio = audioRef.current;
@@ -672,12 +772,18 @@ export const AudioPlayer = ({
     }
   }, []);
 
-  // Close DSP menu when clicking outside or pressing Escape
+  // Close DSP menu when clicking outside or pressing Escape (supports portaled popover ref)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      if (dspMenuRef.current && !dspMenuRef.current.contains(e.target as Node)) {
-        setIsDspMenuOpen(false);
+      const target = e.target as Node;
+      if (
+        (dspButtonRef.current && dspButtonRef.current.contains(target)) ||
+        (dspMenuRef.current && dspMenuRef.current.contains(target)) ||
+        (dspPopoverRef.current && dspPopoverRef.current.contains(target))
+      ) {
+        return;
       }
+      setIsDspMenuOpen(false);
     };
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -938,6 +1044,10 @@ export const AudioPlayer = ({
       const maxPeak = Math.max(...rawPeaks, 0.001);
       const normalizedPeaks = rawPeaks.map((p) => Math.min(1, p / maxPeak));
 
+      if (isFinite(audioBuffer.duration) && audioBuffer.duration > 0) {
+        setDuration((prev) => (prev <= 0 || !isFinite(prev) ? audioBuffer.duration : prev));
+      }
+
       if (!signal.aborted) {
         setWaveformPeaks(normalizedPeaks);
       }
@@ -973,6 +1083,8 @@ export const AudioPlayer = ({
         if (e?.name !== 'AbortError' && e?.name !== 'NotAllowedError') {
           setHasError(true);
           logger.warn('Audio retry playback failed', { error: e });
+        } else if (e?.name === 'NotAllowedError') {
+          setIsPlaying(false);
         }
         setIsLoading(false);
       } finally {
@@ -993,6 +1105,8 @@ export const AudioPlayer = ({
         if (e?.name !== 'AbortError' && e?.name !== 'NotAllowedError') {
           setHasError(true);
           logger.warn('Audio playback initiation failed', { error: e });
+        } else if (e?.name === 'NotAllowedError') {
+          setIsPlaying(false);
         }
       } finally {
         playPromiseRef.current = null;
@@ -1005,7 +1119,11 @@ export const AudioPlayer = ({
           /* ignore */
         }
       }
-      audio.pause();
+      try {
+        audio.pause();
+      } catch {
+        /* ignore */
+      }
       setIsPlaying(false);
     }
   }, [src, hasError, playerId]);
@@ -1098,8 +1216,12 @@ export const AudioPlayer = ({
     const v = Math.min(1, Math.max(0, value / 100));
     if (v > 0) lastVolume.current = v;
     if (audioRef.current) {
-      audioRef.current.volume = v;
-      audioRef.current.muted = v === 0;
+      try {
+        audioRef.current.volume = v;
+        audioRef.current.muted = v === 0;
+      } catch {
+        /* iOS Safari disallows volume modifications on HTMLMediaElement */
+      }
     }
     setVolume(v);
     setIsMuted(v === 0);
@@ -1110,12 +1232,20 @@ export const AudioPlayer = ({
     if (!audio) return;
 
     const newMuted = !isMuted;
-    audio.muted = newMuted;
+    try {
+      audio.muted = newMuted;
+    } catch {
+      /* ignore */
+    }
     setIsMuted(newMuted);
 
     if (!newMuted && volume === 0) {
       const restored = lastVolume.current > 0 ? lastVolume.current : 0.7;
-      audio.volume = restored;
+      try {
+        audio.volume = restored;
+      } catch {
+        /* ignore */
+      }
       setVolume(restored);
     }
   }, [isMuted, volume]);
@@ -1247,6 +1377,8 @@ export const AudioPlayer = ({
         src={src}
         preload="metadata"
         loop={isLooping}
+        playsInline
+        {...({ 'webkit-playsinline': 'true' } as any)}
         crossOrigin={
           src && (src.startsWith('blob:') || src.startsWith('data:')) ? undefined : 'anonymous'
         }
@@ -1398,24 +1530,7 @@ export const AudioPlayer = ({
       {/* CONTROLS BAR: RESPONSIVE FOR MOBILE AND DESKTOP */}
       <div className="flex flex-col gap-3 sm:gap-0 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-3 md:gap-4">
         {/* PRIMARY PLAYBACK CONTROLS: (Center on Desktop, Top on Mobile) */}
-        <div className="flex items-center gap-3.5 sm:gap-2 justify-center shrink-0 order-1 sm:order-2">
-          {/* Skip Back 10s */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => skip(-10)}
-            disabled={!duration || hasError}
-            aria-label="Skip back 10 seconds"
-            title="Skip back 10s (J or Left Arrow)"
-            className={cn(
-              'h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-white/10 active:scale-95 transition-all relative shrink-0',
-              compact && 'h-8 w-8',
-            )}
-          >
-            <RotateCcw className={cn('h-4 w-4', compact && 'h-3.5 w-3.5')} />
-            <span className="sr-only">Skip back 10 seconds</span>
-          </Button>
-
+        <div className="flex items-center justify-center shrink-0 order-1 sm:order-2">
           {/* Primary Play / Pause Button */}
           <Button
             data-testid="audio-play-pause-btn"
@@ -1440,27 +1555,15 @@ export const AudioPlayer = ({
               <Play className={cn('h-5 w-5 fill-current ml-0.5', compact && 'h-4 w-4 ml-0.5')} />
             )}
           </Button>
-
-          {/* Skip Forward 10s */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => skip(10)}
-            disabled={!duration || hasError}
-            aria-label="Skip forward 10 seconds"
-            title="Skip forward 10s (L or Right Arrow)"
-            className={cn(
-              'h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-white/10 active:scale-95 transition-all relative shrink-0',
-              compact && 'h-8 w-8',
-            )}
-          >
-            <RotateCw className={cn('h-4 w-4', compact && 'h-3.5 w-3.5')} />
-            <span className="sr-only">Skip forward 10 seconds</span>
-          </Button>
         </div>
 
-        {/* SECONDARY UTILITY BAR: (Full width row on Mobile, Left & Right columns on Desktop) */}
-        <div className="flex items-center justify-between w-full sm:w-auto sm:contents order-2">
+        {/* SECONDARY UTILITY BAR: (Responsive row on Mobile, Left & Right columns on Desktop) */}
+        <div
+          className={cn(
+            'flex flex-wrap items-center justify-between gap-2 w-full sm:w-auto sm:contents order-2',
+            isDspMenuOpen && 'relative z-40',
+          )}
+        >
           {/* LEFT COLUMN: SPEED, REPEAT & DSP VOICE CLARITY */}
           <div className="flex items-center gap-1.5 sm:gap-2 justify-start min-w-0 sm:order-1">
             {/* Speed Button */}
@@ -1498,116 +1601,186 @@ export const AudioPlayer = ({
             </button>
 
             {/* DSP Voice Clarity Popover Menu */}
-            <div className="relative" ref={dspMenuRef}>
+            <div className={cn('relative', isDspMenuOpen ? 'z-50' : 'z-10')} ref={dspMenuRef}>
               <button
+                ref={dspButtonRef}
                 type="button"
-                onClick={() => setIsDspMenuOpen((prev) => !prev)}
+                onClick={toggleDspMenu}
                 disabled={hasError}
+                aria-haspopup="listbox"
+                aria-expanded={isDspMenuOpen}
                 title={`Voice Clarity DSP: ${VOICE_CLARITY_PRESETS[voiceClarityPreset].name}`}
                 aria-label={`Voice Clarity DSP filter: ${VOICE_CLARITY_PRESETS[voiceClarityPreset].name}`}
                 className={cn(
-                  'h-8 px-2 sm:px-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5 shrink-0 border select-none',
+                  'group/dsp relative h-8 px-2 sm:px-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5 shrink-0 border select-none',
                   voiceClarityPreset !== 'off'
-                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]'
-                    : 'bg-white/5 text-white/70 border-white/10 hover:text-white hover:bg-white/10',
+                    ? 'bg-gradient-to-r from-cyan-500/25 via-cyan-500/15 to-blue-500/15 text-cyan-300 border-cyan-400/50 shadow-[0_0_12px_rgba(6,182,212,0.3)] ring-1 ring-cyan-400/30'
+                    : 'bg-white/5 text-white/70 border-white/10 hover:text-white hover:bg-white/10 hover:border-white/20',
+                  isDspMenuOpen &&
+                    'ring-2 ring-cyan-400/60 border-cyan-400 shadow-[0_0_16px_rgba(6,182,212,0.4)]',
                 )}
               >
-                <Sparkles
+                {voiceClarityPreset !== 'off' ? (
+                  <span className="relative flex h-2 w-2 mr-0.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400 shadow-[0_0_6px_rgba(6,182,212,1)]" />
+                  </span>
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5 text-white/50 group-hover/dsp:text-white/80 transition-colors" />
+                )}
+                <span className="text-[11px] font-bold tracking-wide inline">DSP</span>
+                <ChevronUp
                   className={cn(
-                    'h-3.5 w-3.5',
-                    voiceClarityPreset !== 'off' ? 'text-cyan-400' : 'text-white/50',
-                  )}
-                />
-                <span className="text-[11px] inline">DSP</span>
-                <ChevronDown
-                  className={cn(
-                    'h-3 w-3 transition-transform text-white/40',
-                    isDspMenuOpen && 'rotate-180 text-white/80',
+                    'h-3 w-3 transition-transform duration-200 text-white/40',
+                    isDspMenuOpen
+                      ? 'rotate-180 text-cyan-300'
+                      : 'text-white/50 group-hover/dsp:text-white',
                   )}
                 />
               </button>
 
-              {/* DSP Dropdown Menu */}
-              <AnimatePresence>
-                {isDspMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute bottom-full left-0 mb-2.5 w-64 max-w-[calc(100vw-36px)] p-2 rounded-2xl bg-black/95 backdrop-blur-2xl border border-white/15 shadow-2xl z-[100] overflow-hidden"
-                  >
-                    <div className="px-2 py-1.5 mb-1.5 border-b border-white/10 flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-white/80 flex items-center gap-1.5">
-                        <Sparkles className="h-3 w-3 text-cyan-400" />
-                        Voice Clarity DSP
-                      </span>
-                      <span className="text-[10px] text-white/40">Real-time</span>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      {(
-                        [
-                          {
-                            id: 'off' as VoiceClarityPreset,
-                            title: 'Bypass (Raw Audio)',
-                            subtitle: 'Original unmodified sound',
-                          },
-                          {
-                            id: 'crystal' as VoiceClarityPreset,
-                            title: 'Crystal Voice',
-                            subtitle: 'Cuts fan noise, AC hum & adds vocal pop',
-                          },
-                          {
-                            id: 'aggressive' as VoiceClarityPreset,
-                            title: 'Heavy Noise Gate',
-                            subtitle: 'Maximum noise cutoff for loud environments',
-                          },
-                          {
-                            id: 'warm-interview' as VoiceClarityPreset,
-                            title: 'Warm Interview',
-                            subtitle: 'Podcast compression & dialogue warmth',
-                          },
-                        ] as const
-                      ).map((option) => {
-                        const isSelected = voiceClarityPreset === option.id;
-                        return (
-                          <button
-                            key={option.id}
-                            type="button"
-                            onClick={() => handleSelectPreset(option.id)}
-                            className={cn(
-                              'w-full text-left p-2 rounded-xl transition-all flex items-start gap-2.5 select-none',
-                              isSelected
-                                ? 'bg-cyan-500/20 text-white border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.15)]'
-                                : 'hover:bg-white/10 text-white/70 hover:text-white',
-                            )}
-                          >
-                            <div
-                              className={cn(
-                                'h-4 w-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5',
-                                isSelected
-                                  ? 'border-cyan-400 bg-cyan-500 text-black'
-                                  : 'border-white/30 bg-white/5',
-                              )}
+              {/* DSP Dropdown Menu Portaled to document.body for zero-clipping & maximum z-index in preview and modals */}
+              {typeof document !== 'undefined' &&
+                createPortal(
+                  <AnimatePresence>
+                    {isDspMenuOpen && (
+                      <motion.div
+                        ref={dspPopoverRef}
+                        role="listbox"
+                        aria-label="Voice Clarity DSP filter presets"
+                        initial={{
+                          opacity: 0,
+                          y: menuPosition.placement === 'up' ? 10 : -10,
+                          scale: 0.95,
+                        }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{
+                          opacity: 0,
+                          y: menuPosition.placement === 'up' ? 6 : -6,
+                          scale: 0.95,
+                        }}
+                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                        style={{
+                          position: 'fixed',
+                          ...(menuPosition.placement === 'up'
+                            ? { bottom: `${menuPosition.bottom}px` }
+                            : { top: `${menuPosition.top}px` }),
+                          left: `${menuPosition.left}px`,
+                          width: `${menuPosition.width}px`,
+                          transformOrigin:
+                            menuPosition.placement === 'up' ? 'bottom left' : 'top left',
+                          zIndex: 99999,
+                        }}
+                        className="select-none"
+                      >
+                        <div className="relative rounded-xl bg-zinc-950/95 backdrop-blur-2xl border border-cyan-500/30 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.9),0_0_20px_rgba(6,182,212,0.2)] ring-1 ring-cyan-500/20 flex flex-col gap-1 overflow-hidden">
+                          {/* Compact Popover Header */}
+                          <div className="px-1.5 py-1 border-b border-white/10 flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-white/90 flex items-center gap-1.5">
+                              <Sparkles className="h-3 w-3 text-cyan-400" />
+                              Voice DSP
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setIsDspMenuOpen(false)}
+                              className="h-4 w-4 rounded text-white/40 hover:text-white flex items-center justify-center transition-colors"
+                              aria-label="Close DSP menu"
                             >
-                              {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
-                            </div>
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-xs font-semibold leading-tight">
-                                {option.title}
-                              </span>
-                              <span className="text-[10px] text-white/40 leading-tight mt-0.5">
-                                {option.subtitle}
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+
+                          {/* Presets List - Ultra Compact */}
+                          <div className="flex flex-col gap-0.5">
+                            {(
+                              [
+                                {
+                                  id: 'crystal' as VoiceClarityPreset,
+                                  title: 'Crystal Voice',
+                                  icon: Sparkles,
+                                  color: 'text-cyan-400',
+                                },
+                                {
+                                  id: 'aggressive' as VoiceClarityPreset,
+                                  title: 'Heavy Noise Gate',
+                                  icon: ShieldCheck,
+                                  color: 'text-amber-400',
+                                },
+                                {
+                                  id: 'warm-interview' as VoiceClarityPreset,
+                                  title: 'Warm Interview',
+                                  icon: Mic,
+                                  color: 'text-purple-400',
+                                },
+                                {
+                                  id: 'off' as VoiceClarityPreset,
+                                  title: 'Bypass (Raw Audio)',
+                                  icon: Sliders,
+                                  color: 'text-zinc-400',
+                                },
+                              ] as const
+                            ).map((option) => {
+                              const isSelected = voiceClarityPreset === option.id;
+                              const Icon = option.icon;
+                              return (
+                                <button
+                                  key={option.id}
+                                  type="button"
+                                  role="option"
+                                  aria-selected={isSelected}
+                                  onClick={() => handleSelectPreset(option.id)}
+                                  className={cn(
+                                    'group/opt relative w-full text-left px-2 py-1.5 rounded-lg transition-all duration-100 flex items-center justify-between gap-2 select-none text-xs',
+                                    isSelected
+                                      ? 'bg-cyan-500/20 text-white font-semibold shadow-[0_0_10px_rgba(6,182,212,0.15)] border border-cyan-500/40'
+                                      : 'hover:bg-white/10 text-white/70 hover:text-white',
+                                  )}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <Icon
+                                      className={cn(
+                                        'h-3.5 w-3.5 shrink-0',
+                                        isSelected ? 'text-cyan-300' : option.color,
+                                      )}
+                                    />
+                                    <span className="truncate text-[11px] leading-tight">
+                                      {option.title}
+                                    </span>
+                                  </div>
+
+                                  <div
+                                    className={cn(
+                                      'h-3.5 w-3.5 rounded-full border flex items-center justify-center shrink-0 transition-all',
+                                      isSelected
+                                        ? 'border-cyan-400 bg-cyan-500 text-black shadow-[0_0_6px_rgba(6,182,212,0.6)]'
+                                        : 'border-white/20 bg-white/5 opacity-0 group-hover/opt:opacity-60',
+                                    )}
+                                  >
+                                    {isSelected && <Check className="h-2 w-2 stroke-[3.5]" />}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Anchor arrow pointing directly to the DSP button */}
+                        {menuPosition.placement === 'up' ? (
+                          <div
+                            className="absolute -bottom-1 w-2.5 h-2.5 rotate-45 bg-zinc-950 border-r border-b border-cyan-500/40 shadow-sm pointer-events-none"
+                            style={{ left: `${menuPosition.arrowLeft}px` }}
+                          />
+                        ) : (
+                          <div
+                            className="absolute -top-1 w-2.5 h-2.5 rotate-45 bg-zinc-950 border-l border-t border-cyan-500/40 shadow-sm pointer-events-none"
+                            style={{ left: `${menuPosition.arrowLeft}px` }}
+                          />
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>,
+                  document.body,
                 )}
-              </AnimatePresence>
             </div>
           </div>
 
@@ -1633,7 +1806,7 @@ export const AudioPlayer = ({
               </Button>
 
               {/* Inline Volume Slider */}
-              <div className="hidden xs:block w-14 sm:w-16 md:w-20">
+              <div className="hidden sm:block w-14 sm:w-16 md:w-20">
                 <CustomSlider
                   value={isMuted ? 0 : volume * 100}
                   onChange={handleVolumeChange}

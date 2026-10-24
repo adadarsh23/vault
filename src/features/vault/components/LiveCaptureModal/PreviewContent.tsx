@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Maximize2, Minimize2, Music, Edit3 } from 'lucide-react';
+import { Maximize2, Minimize2, Music, Edit3, MessageSquareText, Copy, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import VideoPlayer from '../../../../components/ui/video-player';
 import { AudioPlayer } from '../../../../components/ui/audio-player';
 import { useVaultStore } from '../../../../store/vaultStore';
@@ -8,6 +9,7 @@ import { Button } from '../../../../components/ui/Button';
 import { CaptureType } from './types';
 import { PhotoEditor } from './PhotoEditor';
 import { VideoEditor } from './VideoEditor';
+import { VoiceClarityPreset } from '../../../../lib/audioDsp';
 
 const MemoVideoPlayer = React.memo(VideoPlayer);
 
@@ -15,6 +17,9 @@ interface PreviewContentProps {
   type: CaptureType;
   previewUrl: string;
   capturedBlob?: Blob | null;
+  transcript?: string;
+  voiceClarityPreset?: VoiceClarityPreset;
+  duration?: number;
   onUpdateBlob?: (blob: Blob, url: string) => void;
 }
 
@@ -22,12 +27,16 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
   type,
   previewUrl,
   capturedBlob,
+  transcript,
+  voiceClarityPreset,
+  duration,
   onUpdateBlob,
 }) => {
   const previewRootRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isEditingPhoto, setIsEditingPhoto] = useState(false);
   const [isEditingVideo, setIsEditingVideo] = useState(false);
+  const [copiedTranscript, setCopiedTranscript] = useState(false);
 
   const isAudioWaveformEnabled = useVaultStore((state) => state.preferences.isAudioWaveformEnabled);
 
@@ -161,32 +170,70 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
 
       {/* AUDIO */}
       {type === 'audio' && (
-        <div
-          className="w-full max-w-lg
-          flex flex-col items-center justify-center 
-          gap-10 p-8 sm:p-12
-        "
-        >
-          <div
-            className="
-            flex h-24 w-24 sm:h-32 sm:w-32 
-            items-center justify-center 
-            rounded-full 
-            bg-primary/10 
-            text-primary 
-            border border-primary/20 
-            shadow-[0_0_30px_rgba(0,242,254,0.1)]
-          "
-          >
-            <Music className="h-12 w-12 sm:h-16 sm:w-16" />
+        <div className="w-full max-w-lg max-h-full overflow-y-auto custom-scrollbar flex flex-col items-center justify-center gap-3 sm:gap-5 p-2 sm:p-5 md:p-6">
+          <div className="flex flex-col items-center gap-1 shrink-0">
+            <div className="flex h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 items-center justify-center rounded-2xl sm:rounded-3xl bg-primary/10 text-primary border border-primary/20 shadow-[0_0_30px_rgba(0,242,254,0.15)]">
+              <Music className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10" />
+            </div>
+            <span className="text-[10px] sm:text-xs font-bold tracking-widest text-white/50 uppercase mt-0.5">
+              Recorded Audio Preview
+            </span>
           </div>
 
           <AudioPlayer
             src={previewUrl}
             title="Recorded Audio"
+            initialVoiceClarityPreset={voiceClarityPreset}
+            initialDuration={duration}
             isWaveformEnabled={isAudioWaveformEnabled}
-            className="w-full max-w-none border-none shadow-none bg-transparent backdrop-blur-none p-0"
+            autoPlay={true}
+            className="w-full max-w-none border border-white/10 bg-black/50 backdrop-blur-2xl p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-2xl"
           />
+
+          {transcript && (
+            <div className="w-full rounded-2xl border border-cyan-500/20 bg-cyan-950/20 p-3 sm:p-4 backdrop-blur-md shrink-0">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300 min-w-0">
+                  <MessageSquareText className="h-4 w-4 text-cyan-400 shrink-0" />
+                  <span className="truncate">Recorded Speech Transcript</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (navigator.clipboard?.writeText) {
+                      navigator.clipboard
+                        .writeText(transcript)
+                        .then(() => {
+                          setCopiedTranscript(true);
+                          toast.success('Transcript copied to clipboard');
+                          setTimeout(() => setCopiedTranscript(false), 2000);
+                        })
+                        .catch(() => {
+                          toast.error('Failed to copy');
+                        });
+                    }
+                  }}
+                  className="h-7 px-2 text-xs text-cyan-300 hover:bg-cyan-500/20 shrink-0"
+                >
+                  {copiedTranscript ? (
+                    <>
+                      <Check className="h-3 w-3 mr-1 text-emerald-400" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3 w-3 mr-1" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-white/85 whitespace-pre-wrap select-text max-h-28 sm:max-h-36 overflow-y-auto custom-scrollbar leading-relaxed font-sans border-l border-cyan-500/30 pl-2">
+                {transcript}
+              </p>
+            </div>
+          )}
         </div>
       )}
     </motion.div>

@@ -178,6 +178,11 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
   const speechRecognitionRef = useRef<any>(null);
   const transcriptRef = useRef<string>('');
   const filteredStreamRef = useRef<FilteredStreamResult | null>(null);
+  const isTranscribingRef = useRef<boolean>(false);
+  const isRecordingRef = useRef<boolean>(false);
+  const accumulatedTranscriptRef = useRef<string>('');
+  const sessionFinalTranscriptRef = useRef<string>('');
+  const activeTranscriptLangRef = useRef<'en-IN' | 'hi-IN'>('en-IN');
 
   const isIOS =
     typeof window !== 'undefined' &&
@@ -548,7 +553,11 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
     }
   }, [recordingTime, isRecording]);
 
-  // Speech-to-Text Recognition Setup with Hindi & English Compatibility
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
+
+  // Speech-to-Text Recognition Setup with Hindi & English Compatibility & Auto-Resume
   const startSpeechRecognition = useCallback(
     (lang?: 'en-IN' | 'hi-IN') => {
       const SpeechRecognitionClass =
@@ -560,32 +569,48 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
 
       if (speechRecognitionRef.current) {
         try {
+          speechRecognitionRef.current.onend = null;
+          speechRecognitionRef.current.onerror = null;
           speechRecognitionRef.current.stop();
         } catch {}
         speechRecognitionRef.current = null;
       }
 
       const selectedLang = lang || transcriptLang;
+      activeTranscriptLangRef.current = selectedLang;
+      isTranscribingRef.current = true;
 
       try {
         const recognition = new SpeechRecognitionClass();
         recognition.continuous = true;
         recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
         // Compatible with Indian English / Hinglish (en-IN) and Hindi (hi-IN)
         recognition.lang = selectedLang;
 
         recognition.onresult = (event: any) => {
-          let finalTrans = '';
+          let currentSessionFinal = '';
           let interimTrans = '';
           for (let i = 0; i < event.results.length; i++) {
             const res = event.results[i];
+            const text = res[0]?.transcript || '';
             if (res.isFinal) {
-              finalTrans += res[0].transcript + ' ';
+              currentSessionFinal += (currentSessionFinal ? ' ' : '') + text.trim();
             } else {
-              interimTrans += res[0].transcript;
+              interimTrans += (interimTrans ? ' ' : '') + text.trim();
             }
           }
-          const full = (finalTrans + interimTrans).trim();
+          if (currentSessionFinal) {
+            sessionFinalTranscriptRef.current = currentSessionFinal;
+          }
+
+          const parts = [
+            accumulatedTranscriptRef.current,
+            sessionFinalTranscriptRef.current,
+            interimTrans,
+          ].filter(Boolean);
+
+          const full = parts.join(' ').replace(/\s+/g, ' ').trim();
           if (full) {
             setLiveTranscript(full);
             transcriptRef.current = full;
@@ -593,17 +618,50 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
         };
 
         recognition.onerror = (event: any) => {
-          logger.warn('Speech recognition error:', { error: event.error });
+          const err = event.error;
+          // Normal pause in speaking or abort - keep transcribing active
+          if (err === 'no-speech' || err === 'aborted') {
+            return;
+          }
+          if (err === 'not-allowed' || err === 'service-not-allowed') {
+            isTranscribingRef.current = false;
+            setIsTranscribing(false);
+            toast.error('Microphone access required for speech transcription');
+            return;
+          }
+          logger.warn('Speech recognition warning:', { error: err });
+        };
+
+        recognition.onend = () => {
+          // Commit current session's final transcript into accumulated buffer
+          if (sessionFinalTranscriptRef.current) {
+            accumulatedTranscriptRef.current = [
+              accumulatedTranscriptRef.current,
+              sessionFinalTranscriptRef.current,
+            ]
+              .filter(Boolean)
+              .join(' ')
+              .trim();
+            sessionFinalTranscriptRef.current = '';
+          }
+
+          // Auto-resume continuous stream if transcribing is still active
+          if (isTranscribingRef.current) {
+            setTimeout(() => {
+              if (isTranscribingRef.current) {
+                try {
+                  startSpeechRecognition(activeTranscriptLangRef.current);
+                } catch (e) {
+                  logger.warn('Auto-restart speech recognition error', { error: e });
+                }
+              }
+            }, 50);
+          }
         };
 
         recognition.start();
         speechRecognitionRef.current = recognition;
         setIsTranscribing(true);
-        toast.info(
-          selectedLang === 'hi-IN'
-            ? 'Live Transcription: हिन्दी Hindi (hi-IN)'
-            : 'Live Transcription: English / Hinglish (en-IN)',
-        );
       } catch (err) {
         logger.warn('Failed to start speech recognition', { err });
       }
@@ -612,27 +670,66 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
   );
 
   const stopSpeechRecognition = useCallback(() => {
+    isTranscribingRef.current = false;
     if (speechRecognitionRef.current) {
       try {
+        speechRecognitionRef.current.onend = null;
+        speechRecognitionRef.current.onerror = null;
         speechRecognitionRef.current.stop();
       } catch {
         /* ignore */
       }
       speechRecognitionRef.current = null;
     }
+    if (sessionFinalTranscriptRef.current) {
+      accumulatedTranscriptRef.current = [
+        accumulatedTranscriptRef.current,
+        sessionFinalTranscriptRef.current,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      sessionFinalTranscriptRef.current = '';
+    }
     setIsTranscribing(false);
   }, []);
+
+  const switchTranscriptLanguage = useCallback(
+    (lang: 'en-IN' | 'hi-IN') => {
+      triggerHaptic('light');
+      setTranscriptLang(lang);
+      activeTranscriptLangRef.current = lang;
+
+      // Preserve previously finalized speech into accumulated buffer
+      if (sessionFinalTranscriptRef.current) {
+        accumulatedTranscriptRef.current = [
+          accumulatedTranscriptRef.current,
+          sessionFinalTranscriptRef.current,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .trim();
+        sessionFinalTranscriptRef.current = '';
+      }
+
+      if (isTranscribingRef.current) {
+        startSpeechRecognition(lang);
+      }
+      toast.info(lang === 'hi-IN' ? 'Language: हिन्दी (Hindi)' : 'Language: English / Hinglish');
+    },
+    [startSpeechRecognition],
+  );
 
   const toggleTranscription = () => {
     triggerHaptic('light');
     if (!isTranscribing) {
       // 1st click: Start English / Hinglish (en-IN)
       setTranscriptLang('en-IN');
+      toast.info('Live Transcription: English / Hinglish (en-IN)');
       startSpeechRecognition('en-IN');
     } else if (transcriptLang === 'en-IN') {
       // 2nd click: Switch to Hindi (hi-IN)
-      setTranscriptLang('hi-IN');
-      startSpeechRecognition('hi-IN');
+      switchTranscriptLanguage('hi-IN');
     } else {
       // 3rd click: Turn off
       stopSpeechRecognition();
@@ -1385,6 +1482,8 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
 
     // Speech-to-text transcript capture (default OFF unless user enabled)
     transcriptRef.current = '';
+    accumulatedTranscriptRef.current = '';
+    sessionFinalTranscriptRef.current = '';
     setLiveTranscript('');
     if (isTranscribing) {
       startSpeechRecognition(transcriptLang);
@@ -1416,7 +1515,9 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
         return;
       }
       const outputMimeType =
-        recorder.mimeType || mimeType || (type === 'video' ? 'video/webm' : 'audio/webm');
+        recorder.mimeType ||
+        mimeType ||
+        (type === 'video' ? 'video/webm' : isIOS ? 'audio/mp4' : 'audio/webm');
       const blob = new Blob(chunksRef.current, {
         type: outputMimeType,
       });
@@ -1591,7 +1692,8 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
       filename = `photo_${timestamp}.jpg`;
     } else {
       const ext =
-        capturedBlob.type.split('/')[1]?.split(';')[0] || (type === 'video' ? 'mp4' : 'webm');
+        capturedBlob.type.split('/')[1]?.split(';')[0] ||
+        (type === 'video' ? 'mp4' : isIOS ? 'm4a' : 'webm');
       const finalExt = ext === 'quicktime' ? 'mov' : ext;
       filename = `${type}_${timestamp}.${finalExt}`;
     }
@@ -1612,6 +1714,9 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
       if (type !== 'photo') {
         additionalMetadata.voiceClarityPreset = activeVoicePreset;
         additionalMetadata.hasVoiceClarity = activeVoicePreset !== 'off';
+      }
+      if (recordingTime > 0) {
+        additionalMetadata.duration = recordingTime;
       }
 
       await onCapture(file, wasEncrypted, additionalMetadata);
@@ -1929,6 +2034,9 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
                   type={type}
                   previewUrl={previewUrl!}
                   capturedBlob={capturedBlob}
+                  transcript={transcriptRef.current || liveTranscript}
+                  voiceClarityPreset={activeVoicePreset}
+                  duration={recordingTime}
                   onUpdateBlob={(blob, url) => {
                     setCapturedBlob(blob);
                     setPreviewUrl(url);
@@ -2021,6 +2129,9 @@ export const LiveCaptureModal: React.FC<LiveCaptureModalProps> = ({
                       liveTranscript={liveTranscript}
                       isTranscribing={isTranscribing}
                       transcriptLang={transcriptLang}
+                      onToggleTranscribe={toggleTranscription}
+                      onCycleVoiceClarity={cycleVoicePreset}
+                      onSwitchLanguage={switchTranscriptLanguage}
                     />
                   )}
 

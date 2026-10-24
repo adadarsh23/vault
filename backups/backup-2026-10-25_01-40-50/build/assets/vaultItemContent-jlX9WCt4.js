@@ -1,0 +1,2 @@
+var t=t=>(t.startsWith("\ufeff")?t.slice(1):t).trim(),n=n=>{if("string"!=typeof n)return null;if(0===n.length||n.length>33554432)return null;const r=t(n);return r.length>0?r:null},r=n=>{if("string"!=typeof n||0===n.length||n.length>4194304)return null;const r=t(n);if(!r)return null;try{return JSON.parse(r)}catch{return null}};export{r as n,n as t};
+//# sourceMappingURL=vaultItemContent-jlX9WCt4.js.map

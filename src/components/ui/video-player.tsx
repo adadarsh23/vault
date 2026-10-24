@@ -32,6 +32,15 @@ import {
   Sparkles,
   Smartphone,
   Cpu,
+  StepBack,
+  StepForward,
+  Share2,
+  RectangleHorizontal,
+  Check,
+  Lock,
+  Unlock,
+  Zap,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -44,6 +53,7 @@ import { transcodeVideoInBrowser } from '../../lib/videoTranscoder';
 import { resolveApiBaseUrl } from '../../lib/apiBaseUrl';
 import { useVideoMiniPlayerStore } from '../../store/videoMiniPlayerStore';
 
+export type AspectRatioMode = 'fit' | 'cover' | 'fill';
 export type VideoVisualFilter = string;
 export interface VideoFilterOption {
   id: string;
@@ -621,6 +631,8 @@ export interface VideoPlayerProps {
   allowedMediaDomains?: string[];
   onClose?: () => void;
   initialTime?: number;
+  aspectRatioMode?: AspectRatioMode;
+  onAspectRatioChange?: (mode: AspectRatioMode) => void;
   poster?: string;
   onPlaybackChange?: (state: { currentTime: number; duration: number; isPlaying: boolean }) => void;
 }
@@ -635,6 +647,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   className,
   style,
   aspectRatio,
+  aspectRatioMode: controlledAspectRatioMode,
+  onAspectRatioChange,
   autoPlay = false,
   loop = false,
   lowDataMode = false,
@@ -693,6 +707,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         } catch {
           /* ignore */
         }
+      }
+      if (audioContextRef.current) {
+        try {
+          void audioContextRef.current.close();
+        } catch {
+          /* ignore */
+        }
+        audioContextRef.current = null;
+        gainNodeRef.current = null;
       }
     };
   }, []);
@@ -755,6 +778,42 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const [isSpeedMenuOpen, setIsSpeedMenuOpen] = useState(false);
   const speedMenuRef = useRef<HTMLDivElement>(null);
+  const speedButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Screen lock (Touch Lock) state
+  const [isControlsLocked, setIsControlsLocked] = useState(false);
+
+  // Audio Booster (Web Audio API) state
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const [volumeBoost, setVolumeBoost] = useState<number>(1);
+
+  // Video Adjustments (Brightness / Contrast / Saturation) state
+  const [videoFilters, setVideoFilters] = useState<{
+    brightness: number;
+    contrast: number;
+    saturation: number;
+  }>({
+    brightness: 100,
+    contrast: 100,
+    saturation: 100,
+  });
+  const [isAdjustmentsOpen, setIsAdjustmentsOpen] = useState(false);
+  const adjustmentsMenuRef = useRef<HTMLDivElement>(null);
+  const adjustmentsButtonRef = useRef<HTMLButtonElement>(null);
+
+  const isAdjusted = useMemo(
+    () =>
+      videoFilters.brightness !== 100 ||
+      videoFilters.contrast !== 100 ||
+      videoFilters.saturation !== 100,
+    [videoFilters],
+  );
+
+  const activeFilterStyle = useMemo(() => {
+    if (!isAdjusted) return undefined;
+    return `brightness(${videoFilters.brightness}%) contrast(${videoFilters.contrast}%) saturate(${videoFilters.saturation}%)`;
+  }, [isAdjusted, videoFilters]);
 
   const [qualityOptions, setQualityOptions] = useState<{ index: number; label: string }[]>([
     { index: -1, label: 'Auto' },
@@ -836,6 +895,151 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
   }, [isMirrored, currentTime, title, triggerHudBadge]);
 
+  const [internalAspectRatioMode, setInternalAspectRatioMode] = useState<AspectRatioMode>('fit');
+  const aspectRatioMode = controlledAspectRatioMode ?? internalAspectRatioMode;
+
+  const toggleAspectRatio = useCallback(() => {
+    const nextMode: AspectRatioMode =
+      aspectRatioMode === 'fit' ? 'cover' : aspectRatioMode === 'cover' ? 'fill' : 'fit';
+    setInternalAspectRatioMode(nextMode);
+    onAspectRatioChange?.(nextMode);
+
+    const labels: Record<AspectRatioMode, string> = {
+      fit: 'Aspect: Fit (Original)',
+      cover: 'Aspect: Cover (Fill/Crop)',
+      fill: 'Aspect: Stretch',
+    };
+    triggerHudBadge(<RectangleHorizontal className="w-6 h-6 text-white" />, labels[nextMode]);
+    toast.info(labels[nextMode], { duration: 1200 });
+  }, [aspectRatioMode, onAspectRatioChange, triggerHudBadge]);
+
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
+
+  const shareOrCopyTimestamp = useCallback(async () => {
+    const timeInSec = Math.floor(videoRef.current?.currentTime ?? currentTime);
+    let shareUrl = '';
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('t', String(timeInSec));
+      url.hash = `t=${timeInSec}`;
+      shareUrl = url.toString();
+    } catch {
+      shareUrl = typeof window !== 'undefined' ? `${window.location.href}#t=${timeInSec}` : '';
+    }
+
+    const shareData = {
+      title: title || 'Video',
+      text: `Watch ${title ? `"${title}"` : 'video'} at ${formatTime(timeInSec)}`,
+      url: shareUrl,
+    };
+
+    if (
+      typeof navigator !== 'undefined' &&
+      navigator.share &&
+      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+    ) {
+      try {
+        await navigator.share(shareData);
+        triggerHudBadge(<Share2 className="w-6 h-6 text-white" />, 'Shared');
+        toast.success(`Shared at ${formatTime(timeInSec)}`);
+        return;
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else if (typeof document !== 'undefined') {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareUrl;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setIsLinkCopied(true);
+      setTimeout(() => setIsLinkCopied(false), 2000);
+      triggerHudBadge(<Share2 className="w-6 h-6 text-white" />, `Link: ${formatTime(timeInSec)}`);
+      toast.success(`Copied timestamp link: ${formatTime(timeInSec)}`);
+    } catch {
+      toast.error('Could not copy link to clipboard');
+    }
+  }, [currentTime, title, triggerHudBadge]);
+
+  const stepFrame = useCallback(
+    (direction: 'prev' | 'next') => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      if (!video.paused) {
+        video.pause();
+        setIsPlaying(false);
+      }
+
+      const frameStep = 1 / 30;
+      const safeDuration = finiteOrZero(video.duration) || Number.MAX_SAFE_INTEGER;
+      const nextTime =
+        direction === 'next'
+          ? Math.min(safeDuration, video.currentTime + frameStep)
+          : Math.max(0, video.currentTime - frameStep);
+
+      video.currentTime = nextTime;
+      setCurrentTime(nextTime);
+
+      triggerHudBadge(
+        direction === 'next' ? (
+          <StepForward className="w-6 h-6 text-white" />
+        ) : (
+          <StepBack className="w-6 h-6 text-white" />
+        ),
+        direction === 'next' ? '+1 Frame' : '-1 Frame',
+      );
+    },
+    [triggerHudBadge],
+  );
+
+  const cycleVolumeBoost = useCallback(() => {
+    const video = videoRef.current;
+    const nextBoost = volumeBoost === 1 ? 1.5 : volumeBoost === 1.5 ? 2 : 1;
+    setVolumeBoost(nextBoost);
+
+    try {
+      if (video && typeof window !== 'undefined') {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          if (!audioContextRef.current) {
+            const ctx = new AudioCtx();
+            const source = ctx.createMediaElementSource(video);
+            const gain = ctx.createGain();
+            source.connect(gain);
+            gain.connect(ctx.destination);
+            audioContextRef.current = ctx;
+            gainNodeRef.current = gain;
+          }
+          if (audioContextRef.current?.state === 'suspended') {
+            void audioContextRef.current.resume();
+          }
+          if (gainNodeRef.current) {
+            gainNodeRef.current.gain.value = nextBoost;
+          }
+        }
+      }
+    } catch (err) {
+      logger.warn('Web Audio volume boost setup skipped', { error: String(err) });
+    }
+
+    const label =
+      nextBoost === 1
+        ? 'Volume Boost: Off (100%)'
+        : `Volume Boost: ${Math.round(nextBoost * 100)}%`;
+    triggerHudBadge(<Zap className="w-6 h-6 text-amber-400 fill-amber-400" />, label);
+    toast.info(label, { duration: 1400 });
+  }, [volumeBoost, triggerHudBadge]);
+
   // Double-tap skip ripple state
   const [skipRipple, setSkipRipple] = useState<{
     side: 'left' | 'right';
@@ -893,18 +1097,51 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     return () => mediaQuery?.removeEventListener?.('change', updateLiteMode);
   }, [lowDataMode]);
 
-  // Click outside speed popup listener
+  // Click outside speed popup & adjustments popup listener
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (speedMenuRef.current && !speedMenuRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (
+        isSpeedMenuOpen &&
+        speedMenuRef.current &&
+        !speedMenuRef.current.contains(target) &&
+        speedButtonRef.current &&
+        !speedButtonRef.current.contains(target)
+      ) {
         setIsSpeedMenuOpen(false);
       }
+      if (
+        isAdjustmentsOpen &&
+        adjustmentsMenuRef.current &&
+        !adjustmentsMenuRef.current.contains(target) &&
+        adjustmentsButtonRef.current &&
+        !adjustmentsButtonRef.current.contains(target)
+      ) {
+        setIsAdjustmentsOpen(false);
+      }
     };
-    if (isSpeedMenuOpen) {
+    if (isSpeedMenuOpen || isAdjustmentsOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isSpeedMenuOpen]);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isSpeedMenuOpen, isAdjustmentsOpen]);
+
+  // Close menus on Escape key
+  useEffect(() => {
+    if (!isSpeedMenuOpen && !isAdjustmentsOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsSpeedMenuOpen(false);
+        setIsAdjustmentsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isSpeedMenuOpen, isAdjustmentsOpen]);
 
   const logEvent = useCallback(
     async (event: string, metadata: any = {}) => {
@@ -1294,8 +1531,27 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     setIsVideoReady(true);
     video.loop = isLooping;
 
-    // Always start playback from the absolute beginning (0:00) unless initialTime is specified
-    const startPos = initialTime && initialTime > 0 ? initialTime : 0;
+    // Always start playback from the absolute beginning (0:00) unless initialTime is specified or URL has timestamp
+    let startPos = initialTime && initialTime > 0 ? initialTime : 0;
+    if (startPos === 0 && typeof window !== 'undefined') {
+      try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const tParam =
+          searchParams.get('t') || window.location.hash.match(/t=(\d+(?:\.\d+)?)/)?.[1];
+        if (tParam) {
+          const parsed = parseFloat(tParam);
+          if (
+            Number.isFinite(parsed) &&
+            parsed > 0 &&
+            (safeDuration === 0 || parsed < safeDuration)
+          ) {
+            startPos = parsed;
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    }
     try {
       video.currentTime = startPos;
     } catch {
@@ -1753,6 +2009,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   /* ---------------- ZERO-LAG INTERACTIVE GESTURE HANDLING ---------------- */
 
   const handleVideoAreaClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isControlsLocked) {
+      triggerHudBadge(<Lock className="w-6 h-6 text-amber-400" />, 'Screen Locked');
+      return;
+    }
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const isLeft = clickX < rect.width / 2;
@@ -1785,6 +2045,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     if (!showControls) {
       setShowControls(true);
       resetHideTimer();
+    } else if (isAdjustmentsOpen || isSpeedMenuOpen) {
+      setIsAdjustmentsOpen(false);
+      setIsSpeedMenuOpen(false);
     } else {
       togglePlay();
     }
@@ -1793,19 +2056,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   /* ---------------- AUTO HIDE CONTROLS ---------------- */
 
   const resetHideTimer = useCallback(() => {
+    if (isControlsLocked) return;
     setShowControls(true);
     if (hideTimer.current) clearTimeout(hideTimer.current);
-    if (isPlaying && !error && !isSpeedMenuOpen) {
+    if (isPlaying && !error && !isSpeedMenuOpen && !isAdjustmentsOpen) {
       hideTimer.current = setTimeout(() => setShowControls(false), 3000);
     }
-  }, [isPlaying, error, isSpeedMenuOpen]);
+  }, [isControlsLocked, isPlaying, error, isSpeedMenuOpen, isAdjustmentsOpen]);
 
   useEffect(() => {
     resetHideTimer();
     return () => {
       if (hideTimer.current) clearTimeout(hideTimer.current);
     };
-  }, [isPlaying, error, isSpeedMenuOpen, resetHideTimer]);
+  }, [isControlsLocked, isPlaying, error, isSpeedMenuOpen, isAdjustmentsOpen, resetHideTimer]);
 
   useEffect(() => {
     return () => {
@@ -1813,6 +2077,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       if (badgeTimer.current) clearTimeout(badgeTimer.current);
       if (hudBadgeTimer.current) clearTimeout(hudBadgeTimer.current);
       if (skipRippleTimer.current) clearTimeout(skipRippleTimer.current);
+      if (audioContextRef.current) {
+        try {
+          audioContextRef.current.close()?.catch?.(() => {});
+        } catch {
+          /* ignore */
+        }
+        audioContextRef.current = null;
+        gainNodeRef.current = null;
+      }
       hlsRef.current?.destroy();
       hlsRef.current = null;
       const video = videoRef.current;
@@ -1846,7 +2119,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     const onKey = (e: KeyboardEvent) => {
       const video = videoRef.current;
       const container = containerRef.current;
-      if (!video || !container || error) return;
+      if (!video || !container || error || isControlsLocked) return;
 
       const target = e.target as HTMLElement | null;
       if (
@@ -1933,14 +2206,26 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       // Frame-by-frame: comma (,) and period (.)
       if (e.key === ',') {
         e.preventDefault();
-        seekRelative(-1 / 30);
-        triggerHudBadge(<RotateCcw className="w-7 h-7 text-white" />, '-1 Frame');
+        stepFrame('prev');
         return;
       }
       if (e.key === '.') {
         e.preventDefault();
-        seekRelative(1 / 30);
-        triggerHudBadge(<RotateCw className="w-7 h-7 text-white" />, '+1 Frame');
+        stepFrame('next');
+        return;
+      }
+
+      // A: Aspect ratio toggle (fit / cover / fill)
+      if (e.key === 'a' || e.key === 'A') {
+        e.preventDefault();
+        toggleAspectRatio();
+        return;
+      }
+
+      // C: Share / Copy timestamp link
+      if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        void shareOrCopyTimestamp();
         return;
       }
 
@@ -2034,6 +2319,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, [
     togglePlay,
     seekRelative,
+    stepFrame,
+    toggleAspectRatio,
+    shareOrCopyTimestamp,
     toggleMute,
     toggleFullscreen,
     togglePiP,
@@ -2046,6 +2334,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     handleVolume,
     triggerHudBadge,
     error,
+    isControlsLocked,
   ]);
 
   useEffect(() => {
@@ -2306,7 +2595,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           src={activeSrc.includes('.m3u8') ? undefined : activeSrc}
           poster={poster}
           className={cn(
-            'h-full w-full max-h-[min(82vh,calc(100dvh-5.5rem))] max-w-full object-contain transition-opacity duration-300',
+            'h-full w-full max-h-[min(82vh,calc(100dvh-5.5rem))] max-w-full transition-opacity duration-300',
+            aspectRatioMode === 'cover'
+              ? 'object-cover'
+              : aspectRatioMode === 'fill'
+                ? 'object-fill'
+                : 'object-contain',
             isMirrored ? 'scale-x-[-1]' : '',
             isFloating ? 'pt-8 pb-1' : '',
           )}
@@ -2319,6 +2613,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             transform: 'translateZ(0)',
             backfaceVisibility: 'hidden',
             contain: 'paint layout',
+            filter: activeFilterStyle,
           }}
           {...({ 'webkit-playsinline': 'true', autopictureinpicture: 'true' } as any)}
           onLoadedMetadata={handleLoadedMetadata}
@@ -2344,7 +2639,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
         {/* CENTER BIG PLAY/PAUSE BUTTON FOR INSTANT TOUCH/CLICK */}
         <AnimatePresence>
-          {!isPlaying && isVideoReady && !error && showControls && (
+          {!isPlaying && isVideoReady && !error && showControls && !isControlsLocked && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2461,7 +2756,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
         {/* TITLE OVERLAY (STANDARD VIEW) */}
         <AnimatePresence>
-          {!isFloating && showControls && title && (
+          {!isFloating && showControls && !isControlsLocked && title && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -2637,9 +2932,38 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           )}
         </AnimatePresence>
 
+        {/* SCREEN LOCK OVERLAY PILL */}
+        <AnimatePresence>
+          {isControlsLocked && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="absolute top-[calc(env(safe-area-inset-top,0px)+0.75rem)] left-3 sm:left-4 z-[70] flex items-center gap-2 pointer-events-auto"
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setIsControlsLocked(false);
+                  setShowControls(true);
+                  resetHideTimer();
+                  triggerHudBadge(<Unlock className="w-6 h-6 text-emerald-400" />, 'Unlocked');
+                  toast.success('Controls unlocked');
+                }}
+                className="h-10 px-4 rounded-full bg-black/85 backdrop-blur-xl text-white border border-amber-400/50 shadow-2xl flex items-center gap-2.5 hover:bg-black/95 active:scale-95 transition-all text-xs font-semibold ring-2 ring-amber-400/20 touch-manipulation cursor-pointer select-none"
+                aria-label="Unlock controls"
+              >
+                <Lock className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+                <span>Screen Locked (Tap to Unlock)</span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* RESPONSIVE CONTROLS OVERLAY */}
         <AnimatePresence>
-          {showControls && (
+          {showControls && !isControlsLocked && (
             <motion.div
               key="video-controls"
               className={cn(
@@ -2656,19 +2980,231 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 if (hideTimer.current) clearTimeout(hideTimer.current);
               }}
               onMouseLeave={() => {
-                if (isPlaying && !error && !isSpeedMenuOpen) {
+                if (isPlaying && !error && !isSpeedMenuOpen && !isAdjustmentsOpen) {
                   hideTimer.current = setTimeout(() => setShowControls(false), 3000);
                 }
               }}
               onClick={(e) => e.stopPropagation()}
             >
+              {/* SPEED MENU POPUP (Positioned above controls bar, outside overflow-x-auto) */}
+              <AnimatePresence>
+                {isSpeedMenuOpen && !isFloating && (
+                  <motion.div
+                    ref={speedMenuRef}
+                    data-testid="speed-selector-popup"
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute bottom-full mb-3 right-3 sm:right-28 p-3 sm:p-2.5 rounded-2xl sm:rounded-xl bg-black/95 backdrop-blur-2xl border border-white/20 shadow-2xl z-[70] max-w-[220px] min-w-[160px] pointer-events-auto"
+                    onClick={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-white/10">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-white/70">
+                        Speed
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsSpeedMenuOpen(false)}
+                        aria-label="Close speed menu"
+                        className="text-white/50 hover:text-white p-0.5 rounded cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {SPEED_OPTIONS.map((speed) => (
+                        <button
+                          key={speed}
+                          onClick={() => {
+                            setSpeed(speed);
+                            setIsSpeedMenuOpen(false);
+                          }}
+                          className={cn(
+                            'px-2 py-1.5 rounded-lg text-xs font-medium transition-all text-center touch-manipulation',
+                            playbackSpeed === speed
+                              ? 'bg-primary text-primary-foreground font-bold shadow-md shadow-primary/20'
+                              : 'bg-white/10 text-white hover:bg-white/20 active:scale-95',
+                          )}
+                        >
+                          {speed}x
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* VIDEO ADJUSTMENTS POPUP (Positioned above controls bar, outside overflow-x-auto) */}
+              <AnimatePresence>
+                {isAdjustmentsOpen && !isFloating && (
+                  <motion.div
+                    ref={adjustmentsMenuRef}
+                    data-testid="adjustments-popup"
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute bottom-full mb-3 right-2 sm:right-6 p-3.5 sm:p-3 rounded-2xl sm:rounded-xl bg-black/95 backdrop-blur-2xl border border-white/20 shadow-2xl z-[70] w-[calc(100%-1rem)] sm:w-64 max-w-[280px] text-white pointer-events-auto"
+                    onClick={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-white/10">
+                      <div className="flex items-center gap-1.5">
+                        <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-white/80">
+                          Video Adjustments
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isAdjusted && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setVideoFilters({
+                                brightness: 100,
+                                contrast: 100,
+                                saturation: 100,
+                              })
+                            }
+                            className="text-[10px] text-amber-400 hover:text-amber-300 font-semibold cursor-pointer"
+                          >
+                            Reset
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setIsAdjustmentsOpen(false)}
+                          aria-label="Close adjustments"
+                          className="text-white/50 hover:text-white p-0.5 rounded cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Brightness */}
+                    <div className="mb-2.5">
+                      <div className="flex justify-between text-[11px] mb-1 text-white/80">
+                        <span>Brightness</span>
+                        <span className="font-mono text-white/60">{videoFilters.brightness}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="50"
+                        max="180"
+                        step="5"
+                        aria-label="Adjust brightness"
+                        value={videoFilters.brightness}
+                        onChange={(e) =>
+                          setVideoFilters((prev) => ({
+                            ...prev,
+                            brightness: Number(e.target.value),
+                          }))
+                        }
+                        className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-primary touch-manipulation"
+                      />
+                    </div>
+
+                    {/* Contrast */}
+                    <div className="mb-2.5">
+                      <div className="flex justify-between text-[11px] mb-1 text-white/80">
+                        <span>Contrast</span>
+                        <span className="font-mono text-white/60">{videoFilters.contrast}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="50"
+                        max="180"
+                        step="5"
+                        aria-label="Adjust contrast"
+                        value={videoFilters.contrast}
+                        onChange={(e) =>
+                          setVideoFilters((prev) => ({
+                            ...prev,
+                            contrast: Number(e.target.value),
+                          }))
+                        }
+                        className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-primary touch-manipulation"
+                      />
+                    </div>
+
+                    {/* Saturation */}
+                    <div className="mb-2">
+                      <div className="flex justify-between text-[11px] mb-1 text-white/80">
+                        <span>Saturation</span>
+                        <span className="font-mono text-white/60">{videoFilters.saturation}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="200"
+                        step="5"
+                        aria-label="Adjust saturation"
+                        value={videoFilters.saturation}
+                        onChange={(e) =>
+                          setVideoFilters((prev) => ({
+                            ...prev,
+                            saturation: Number(e.target.value),
+                          }))
+                        }
+                        className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-primary touch-manipulation"
+                      />
+                    </div>
+
+                    {/* Presets */}
+                    <div className="grid grid-cols-3 gap-1 pt-2 border-t border-white/10">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setVideoFilters({
+                            brightness: 100,
+                            contrast: 100,
+                            saturation: 100,
+                          })
+                        }
+                        className="px-1.5 py-1 text-[10px] rounded bg-white/10 hover:bg-white/20 text-center text-white cursor-pointer active:scale-95 transition-all"
+                      >
+                        Normal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setVideoFilters({
+                            brightness: 140,
+                            contrast: 120,
+                            saturation: 110,
+                          })
+                        }
+                        className="px-1.5 py-1 text-[10px] rounded bg-white/10 hover:bg-white/20 text-center text-white cursor-pointer active:scale-95 transition-all"
+                      >
+                        Night
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setVideoFilters({
+                            brightness: 105,
+                            contrast: 120,
+                            saturation: 140,
+                          })
+                        }
+                        className="px-1.5 py-1 text-[10px] rounded bg-white/10 hover:bg-white/20 text-center text-white cursor-pointer active:scale-95 transition-all"
+                      >
+                        Vivid
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               {/* SEEK BAR ROW */}
               <div className="flex items-center gap-1.5 sm:gap-2 text-white text-xs sm:text-sm mb-1 sm:mb-1.5 font-medium">
                 <span className="w-[32px] sm:w-[42px] text-right shrink-0 font-mono text-[10px] sm:text-xs text-white/90">
                   {formatTime(currentTime)}
                 </span>
 
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <CustomSlider
                     label="Seek video"
                     value={progress}
@@ -2726,9 +3262,35 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       aria-label="Rewind 10 seconds"
                       title="Rewind 10s (J)"
                       size="icon"
-                      className="hidden sm:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                      className="hidden sm:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation items-center justify-center"
                     >
-                      <RotateCcw className="w-3.5 h-3.5" />
+                      <RotateCcw className="w-4 h-4" />
+                    </Button>
+                  )}
+
+                  {/* Previous Frame (Desktop/Tablet) */}
+                  {!isFloating && (
+                    <Button
+                      onClick={() => stepFrame('prev')}
+                      aria-label="Previous frame"
+                      title="Previous frame (,)"
+                      size="icon"
+                      className="hidden md:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation items-center justify-center"
+                    >
+                      <StepBack className="w-4 h-4" />
+                    </Button>
+                  )}
+
+                  {/* Next Frame (Desktop/Tablet) */}
+                  {!isFloating && (
+                    <Button
+                      onClick={() => stepFrame('next')}
+                      aria-label="Next frame"
+                      title="Next frame (.)"
+                      size="icon"
+                      className="hidden md:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation items-center justify-center"
+                    >
+                      <StepForward className="w-4 h-4" />
                     </Button>
                   )}
 
@@ -2739,9 +3301,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       aria-label="Forward 10 seconds"
                       title="Forward 10s (L)"
                       size="icon"
-                      className="hidden sm:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                      className="hidden sm:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation items-center justify-center"
                     >
-                      <RotateCw className="w-3.5 h-3.5" />
+                      <RotateCw className="w-4 h-4" />
                     </Button>
                   )}
 
@@ -2751,7 +3313,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                     title="Mute (M)"
                     size="icon"
                     className={cn(
-                      'shrink-0 rounded-lg bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all touch-manipulation',
+                      'shrink-0 rounded-lg bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all touch-manipulation flex items-center justify-center',
                       isFloating ? 'h-7 w-7' : 'h-8 w-8 sm:h-9 sm:w-9',
                     )}
                   >
@@ -2777,10 +3339,36 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       />
                     </div>
                   )}
+
+                  {/* Volume Booster 200% */}
+                  {!isFloating && (
+                    <Button
+                      onClick={cycleVolumeBoost}
+                      aria-label={`Volume boost: ${volumeBoost > 1 ? `${Math.round(volumeBoost * 100)}%` : 'Off'}`}
+                      title={`Volume Boost: ${Math.round(volumeBoost * 100)}% (Click to toggle 100% -> 150% -> 200%)`}
+                      size="sm"
+                      className={cn(
+                        'h-8 w-8 sm:w-auto px-1.5 sm:px-2 rounded-lg text-[10px] sm:text-xs font-bold active:scale-95 transition-all touch-manipulation shrink-0 flex items-center justify-center gap-1',
+                        volumeBoost > 1
+                          ? 'bg-amber-500/25 text-amber-300 border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+                          : 'bg-white/10 text-white hover:bg-white/20',
+                      )}
+                    >
+                      <Zap
+                        className={cn(
+                          'w-4 h-4 shrink-0',
+                          volumeBoost > 1 ? 'fill-amber-400 text-amber-400' : '',
+                        )}
+                      />
+                      <span className="hidden sm:inline">
+                        {volumeBoost > 1 ? `${Math.round(volumeBoost * 100)}%` : 'Boost'}
+                      </span>
+                    </Button>
+                  )}
                 </div>
 
-                {/* RIGHT CONTROLS */}
-                <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 relative">
+                {/* RIGHT CONTROLS (SCROLLABLE & TOUCH ADAPTIVE) */}
+                <div className="flex-1 min-w-0 flex items-center justify-end gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5 px-0.5">
                   {/* HLS QUALITY SELECTOR (Desktop/Tablet) */}
                   {!isFloating && qualityOptions.length > 1 && (
                     <div className="hidden sm:block relative min-w-[54px] sm:min-w-[68px]">
@@ -2807,65 +3395,29 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                     </div>
                   )}
 
-                  {/* QUICK SPEED SELECTOR POPUP */}
+                  {/* QUICK SPEED SELECTOR TRIGGER */}
                   {!isFloating && (
-                    <div className="relative" ref={speedMenuRef}>
-                      <Button
-                        onClick={() => {
-                          if (!allowSpeedChange) return;
-                          setIsSpeedMenuOpen((prev) => !prev);
-                        }}
-                        aria-label={`Playback speed: ${playbackSpeed}x`}
-                        title="Playback speed"
-                        disabled={!allowSpeedChange}
-                        size="sm"
-                        className={cn(
-                          'h-8 px-1.5 sm:px-2 text-[10px] sm:text-xs font-semibold text-white active:scale-95 transition-all touch-manipulation min-w-[28px] sm:min-w-[32px] rounded-lg',
-                          playbackSpeed !== 1
-                            ? 'bg-primary/30 text-primary border border-primary/40'
-                            : 'bg-white/10 hover:bg-white/20',
-                        )}
-                      >
-                        {playbackSpeed}x
-                      </Button>
-
-                      {/* Speed Popup */}
-                      <AnimatePresence>
-                        {isSpeedMenuOpen && (
-                          <motion.div
-                            data-testid="speed-selector-popup"
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute bottom-full right-0 mb-2 p-2.5 rounded-xl bg-black/95 backdrop-blur-2xl border border-white/20 shadow-2xl z-[50] min-w-[160px]"
-                          >
-                            <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-white/10">
-                              <span className="text-[11px] font-bold uppercase tracking-wider text-white/70">
-                                Playback Speed
-                              </span>
-                              <span className="text-[10px] text-white/40 font-mono">[ / ]</span>
-                            </div>
-                            <div className="grid grid-cols-3 gap-1.5">
-                              {SPEED_OPTIONS.map((speed) => (
-                                <button
-                                  key={speed}
-                                  onClick={() => setSpeed(speed)}
-                                  className={cn(
-                                    'px-2 py-1.5 rounded-lg text-xs font-medium transition-all text-center touch-manipulation',
-                                    playbackSpeed === speed
-                                      ? 'bg-primary text-primary-foreground font-bold shadow-md shadow-primary/20'
-                                      : 'bg-white/10 text-white hover:bg-white/20 active:scale-95',
-                                  )}
-                                >
-                                  {speed}x
-                                </button>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
+                    <Button
+                      ref={speedButtonRef}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!allowSpeedChange) return;
+                        setIsAdjustmentsOpen(false);
+                        setIsSpeedMenuOpen((prev) => !prev);
+                      }}
+                      aria-label={`Playback speed: ${playbackSpeed}x`}
+                      title="Playback speed"
+                      disabled={!allowSpeedChange}
+                      size="sm"
+                      className={cn(
+                        'h-8 px-1.5 sm:px-2 text-[10px] sm:text-xs font-semibold text-white active:scale-95 transition-all touch-manipulation min-w-[28px] sm:min-w-[32px] rounded-lg',
+                        playbackSpeed !== 1 || isSpeedMenuOpen
+                          ? 'bg-primary/30 text-primary border border-primary/40'
+                          : 'bg-white/10 hover:bg-white/20',
+                      )}
+                    >
+                      {playbackSpeed}x
+                    </Button>
                   )}
 
                   {/* LOOP TOGGLE BUTTON */}
@@ -2876,17 +3428,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       title={isLooping ? 'Disable Loop (R)' : 'Enable Loop (R)'}
                       size="icon"
                       className={cn(
-                        'h-8 w-8 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation',
+                        'h-8 w-8 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation flex items-center justify-center',
                         isLooping
                           ? 'bg-primary/30 text-primary border border-primary/50'
                           : 'bg-white/10 text-white hover:bg-white/20',
                       )}
                     >
-                      {isLooping ? (
-                        <Repeat1 className="w-3.5 h-3.5" />
-                      ) : (
-                        <Repeat className="w-3.5 h-3.5" />
-                      )}
+                      {isLooping ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
                     </Button>
                   )}
 
@@ -2910,7 +3458,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       }
                       size="icon"
                       className={cn(
-                        'hidden lg:inline-flex h-8 w-8 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation',
+                        'hidden lg:inline-flex h-8 w-8 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation items-center justify-center',
                         abRepeat.active
                           ? abRepeat.pointB !== null
                             ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
@@ -2918,7 +3466,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                           : 'bg-white/10 text-white hover:bg-white/20',
                       )}
                     >
-                      <Bookmark className="w-3.5 h-3.5" />
+                      <Bookmark className="w-4 h-4" />
                     </Button>
                   )}
 
@@ -2929,9 +3477,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       aria-label={isMirrored ? 'Unmirror video' : 'Mirror video'}
                       title={isMirrored ? 'Unmirror video' : 'Mirror video'}
                       size="icon"
-                      className="hidden sm:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                      className="hidden sm:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation items-center justify-center"
                     >
-                      <FlipHorizontal className="w-3.5 h-3.5" />
+                      <FlipHorizontal className="w-4 h-4" />
                     </Button>
                   )}
 
@@ -2947,9 +3495,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       }
                       disabled={!allowPiP}
                       size="icon"
-                      className="inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                      className="inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation items-center justify-center"
                     >
-                      <PictureInPicture2 className="w-3.5 h-3.5" />
+                      <PictureInPicture2 className="w-4 h-4" />
                     </Button>
                   )}
 
@@ -2963,7 +3511,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       }
                       size="icon"
                       className={cn(
-                        'active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation',
+                        'active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation flex items-center justify-center',
                         isFloating
                           ? 'h-7 w-7 bg-primary/30 text-primary border border-primary/50'
                           : 'h-8 w-8 bg-white/10 text-white hover:bg-white/20',
@@ -2972,7 +3520,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       {isFloating ? (
                         <Maximize className="w-3.5 h-3.5" />
                       ) : (
-                        <Layers className="w-3.5 h-3.5" />
+                        <Layers className="w-4 h-4" />
                       )}
                     </Button>
                   )}
@@ -2984,9 +3532,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       aria-label="Capture Snapshot Frame"
                       title="Capture Snapshot Frame"
                       size="icon"
-                      className="hidden lg:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                      className="hidden lg:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation items-center justify-center"
                     >
-                      <Camera className="w-3.5 h-3.5" />
+                      <Camera className="w-4 h-4" />
                     </Button>
                   )}
 
@@ -2997,9 +3545,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       aria-label="Refresh video"
                       title="Refresh video"
                       size="icon"
-                      className="hidden lg:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                      className="hidden lg:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation items-center justify-center"
                     >
-                      <RefreshCw className="w-3.5 h-3.5" />
+                      <RefreshCw className="w-4 h-4" />
                     </Button>
                   )}
 
@@ -3011,32 +3559,119 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       title="Download video"
                       disabled={!allowDownload}
                       size="icon"
-                      className="hidden md:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                      className="hidden md:inline-flex h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation items-center justify-center"
                     >
-                      <Download className="w-3.5 h-3.5" />
+                      <Download className="w-4 h-4" />
                     </Button>
                   )}
 
-                  {/* FULLSCREEN */}
+                  {/* ASPECT RATIO TOGGLE (FIT / COVER / STRETCH) */}
+                  {!isFloating && (
+                    <Button
+                      onClick={toggleAspectRatio}
+                      aria-label={`Aspect ratio: ${aspectRatioMode === 'fit' ? 'Fit' : aspectRatioMode === 'cover' ? 'Cover' : 'Stretch'}`}
+                      title={`Aspect Ratio: ${aspectRatioMode.toUpperCase()} - click to cycle Fit / Cover / Stretch (A)`}
+                      size="icon"
+                      className={cn(
+                        'h-8 w-8 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation flex items-center justify-center',
+                        aspectRatioMode !== 'fit'
+                          ? 'bg-primary/30 text-primary border border-primary/50'
+                          : 'bg-white/10 text-white hover:bg-white/20',
+                      )}
+                    >
+                      <RectangleHorizontal className="w-4 h-4" />
+                    </Button>
+                  )}
+
+                  {/* VIDEO ADJUSTMENTS TRIGGER */}
+                  {!isFloating && (
+                    <Button
+                      ref={adjustmentsButtonRef}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsSpeedMenuOpen(false);
+                        setIsAdjustmentsOpen((prev) => !prev);
+                      }}
+                      aria-label="Video adjustments"
+                      title="Video Adjustments (Brightness & Contrast)"
+                      size="icon"
+                      className={cn(
+                        'h-8 w-8 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation flex items-center justify-center',
+                        isAdjusted || isAdjustmentsOpen
+                          ? 'bg-primary/30 text-primary border border-primary/50'
+                          : 'bg-white/10 text-white hover:bg-white/20',
+                      )}
+                    >
+                      <SlidersHorizontal className="w-4 h-4" />
+                    </Button>
+                  )}
+
+                  {/* SCREEN LOCK (TOUCH LOCK) */}
                   {!isFloating && (
                     <Button
                       onClick={() => {
-                        void toggleFullscreen();
+                        setIsAdjustmentsOpen(false);
+                        setIsSpeedMenuOpen(false);
+                        setIsControlsLocked(true);
+                        triggerHudBadge(
+                          <Lock className="w-6 h-6 text-amber-400" />,
+                          'Screen Locked',
+                        );
+                        toast.info('Screen locked. Tap unlock icon to restore controls.');
                       }}
-                      aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                      title="Fullscreen (F)"
-                      disabled={!allowFullscreen}
+                      aria-label="Lock controls"
+                      title="Lock controls (prevent accidental touches)"
                       size="icon"
-                      className="h-8 w-8 sm:h-9 sm:w-9 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation"
+                      className="h-8 w-8 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation flex items-center justify-center"
                     >
-                      {isFullscreen ? (
-                        <Minimize2 className="w-4 h-4" />
+                      <Lock className="w-4 h-4" />
+                    </Button>
+                  )}
+
+                  {/* COPY TIMESTAMP LINK / SHARE */}
+                  {!isFloating && (
+                    <Button
+                      onClick={() => {
+                        void shareOrCopyTimestamp();
+                      }}
+                      aria-label="Share / Copy timestamp link"
+                      title={`Share / Copy link at current timestamp (${formatTime(currentTime)}) (C)`}
+                      size="icon"
+                      className={cn(
+                        'h-8 w-8 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation flex items-center justify-center',
+                        isLinkCopied
+                          ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50'
+                          : 'bg-white/10 text-white hover:bg-white/20',
+                      )}
+                    >
+                      {isLinkCopied ? (
+                        <Check className="w-4 h-4 text-emerald-400" />
                       ) : (
-                        <Maximize2 className="w-4 h-4" />
+                        <Share2 className="w-4 h-4" />
                       )}
                     </Button>
                   )}
                 </div>
+
+                {/* PINNED FULLSCREEN (ALWAYS VISIBLE & ACCESSIBLE ON MOBILE & DESKTOP) */}
+                {!isFloating && (
+                  <Button
+                    onClick={() => {
+                      void toggleFullscreen();
+                    }}
+                    aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                    title="Fullscreen (F)"
+                    disabled={!allowFullscreen}
+                    size="icon"
+                    className="h-8 w-8 sm:h-9 sm:w-9 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all shrink-0 rounded-lg touch-manipulation flex items-center justify-center ml-0.5"
+                  >
+                    {isFullscreen ? (
+                      <Minimize2 className="w-4 h-4" />
+                    ) : (
+                      <Maximize2 className="w-4 h-4" />
+                    )}
+                  </Button>
+                )}
               </div>
             </motion.div>
           )}

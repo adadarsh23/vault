@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import VideoPlayer, {
   CustomSlider,
@@ -506,6 +506,160 @@ describe('VideoPlayer Polish Enhancements', () => {
     expect(closeBtn).toBeInTheDocument();
     fireEvent.click(closeBtn);
     expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('VideoPlayer New Advanced Features', () => {
+  it('toggles aspect ratio between fit, cover, and fill and updates video class', () => {
+    const onAspectChange = vi.fn();
+    const { container } = render(
+      <VideoPlayer src="https://cdn.example.com/video.mp4" onAspectRatioChange={onAspectChange} />,
+    );
+    const video = container.querySelector('video') as HTMLVideoElement;
+    expect(video.className).toContain('object-contain');
+
+    const aspectBtn = screen.getByRole('button', { name: /aspect ratio: fit/i });
+    expect(aspectBtn).toBeInTheDocument();
+
+    // Click to cycle to 'cover'
+    fireEvent.click(aspectBtn);
+    expect(video.className).toContain('object-cover');
+    expect(onAspectChange).toHaveBeenCalledWith('cover');
+
+    // Click to cycle to 'fill' (stretch)
+    fireEvent.click(aspectBtn);
+    expect(video.className).toContain('object-fill');
+    expect(onAspectChange).toHaveBeenCalledWith('fill');
+
+    // Click to cycle back to 'fit'
+    fireEvent.click(aspectBtn);
+    expect(video.className).toContain('object-contain');
+    expect(onAspectChange).toHaveBeenCalledWith('fit');
+  });
+
+  it('steps frame forward and backward by 1 frame', () => {
+    const { container } = render(<VideoPlayer src="https://cdn.example.com/video.mp4" />);
+    const video = container.querySelector('video') as HTMLVideoElement;
+
+    // Set duration & initial time
+    Object.defineProperty(video, 'duration', { value: 60, writable: true, configurable: true });
+    video.currentTime = 5;
+
+    const nextFrameBtn = screen.getByRole('button', { name: /next frame/i });
+    const prevFrameBtn = screen.getByRole('button', { name: /previous frame/i });
+
+    expect(nextFrameBtn).toBeInTheDocument();
+    expect(prevFrameBtn).toBeInTheDocument();
+
+    // Step forward 1 frame (~1/30 = 0.0333s)
+    fireEvent.click(nextFrameBtn);
+    expect(video.currentTime).toBeCloseTo(5 + 1 / 30, 3);
+
+    // Step backward 1 frame
+    fireEvent.click(prevFrameBtn);
+    expect(video.currentTime).toBeCloseTo(5, 3);
+  });
+
+  it('copies timestamp link to clipboard and shows success feedback', async () => {
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: writeTextMock,
+      },
+    });
+
+    const { container } = render(
+      <VideoPlayer src="https://cdn.example.com/video.mp4" title="My Test Video" />,
+    );
+    const video = container.querySelector('video') as HTMLVideoElement;
+    video.currentTime = 42;
+
+    const shareBtn = screen.getByRole('button', { name: /share \/ copy timestamp link/i });
+    expect(shareBtn).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(shareBtn);
+    });
+
+    expect(writeTextMock).toHaveBeenCalledTimes(1);
+    expect(writeTextMock.mock.calls[0][0]).toContain('t=42');
+  });
+
+  it('locks controls on Screen Lock click and unlocks when Unlock button is clicked', async () => {
+    render(<VideoPlayer src="https://cdn.example.com/video.mp4" />);
+
+    const lockBtn = screen.getByRole('button', { name: /lock controls/i });
+    expect(lockBtn).toBeInTheDocument();
+
+    // Lock controls
+    fireEvent.click(lockBtn);
+
+    const unlockBtn = screen.getByRole('button', { name: /unlock controls/i });
+    expect(unlockBtn).toBeInTheDocument();
+
+    // Unlock controls
+    fireEvent.click(unlockBtn);
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: /unlock controls/i })).not.toBeInTheDocument();
+    });
+  });
+
+  it('cycles volume boost between 100%, 150%, and 200%', () => {
+    render(<VideoPlayer src="https://cdn.example.com/video.mp4" />);
+
+    const boostBtn = screen.getByRole('button', { name: /volume boost: off/i });
+    expect(boostBtn).toBeInTheDocument();
+
+    // Click 1: 150%
+    fireEvent.click(boostBtn);
+    expect(screen.getByRole('button', { name: /volume boost: 150%/i })).toBeInTheDocument();
+
+    // Click 2: 200%
+    fireEvent.click(screen.getByRole('button', { name: /volume boost: 150%/i }));
+    expect(screen.getByRole('button', { name: /volume boost: 200%/i })).toBeInTheDocument();
+
+    // Click 3: Back to off
+    fireEvent.click(screen.getByRole('button', { name: /volume boost: 200%/i }));
+    expect(screen.getByRole('button', { name: /volume boost: off/i })).toBeInTheDocument();
+  });
+
+  it('opens video adjustments popup, adjusts brightness and resets filters', async () => {
+    const { container } = render(<VideoPlayer src="https://cdn.example.com/video.mp4" />);
+    const video = container.querySelector('video') as HTMLVideoElement;
+
+    const adjustBtn = screen.getByRole('button', { name: /video adjustments/i });
+    expect(adjustBtn).toBeInTheDocument();
+
+    // Open popup
+    fireEvent.click(adjustBtn);
+    expect(screen.getByTestId('adjustments-popup')).toBeInTheDocument();
+
+    // Adjust brightness slider
+    const brightnessSlider = screen.getByRole('slider', { name: /adjust brightness/i });
+    fireEvent.change(brightnessSlider, { target: { value: '140' } });
+
+    expect(video.style.filter).toContain('brightness(140%)');
+
+    // Click Reset
+    const resetBtn = screen.getByRole('button', { name: /reset/i });
+    fireEvent.click(resetBtn);
+
+    expect(video.style.filter).toBe('');
+
+    // Close via close button
+    const closeBtn = screen.getByRole('button', { name: /close adjustments/i });
+    fireEvent.click(closeBtn);
+    await waitFor(() => {
+      expect(screen.queryByTestId('adjustments-popup')).not.toBeInTheDocument();
+    });
+
+    // Re-open and close with Escape key
+    fireEvent.click(adjustBtn);
+    expect(screen.getByTestId('adjustments-popup')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await waitFor(() => {
+      expect(screen.queryByTestId('adjustments-popup')).not.toBeInTheDocument();
+    });
   });
 });
 

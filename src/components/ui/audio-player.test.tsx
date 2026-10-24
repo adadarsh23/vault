@@ -94,8 +94,8 @@ describe('AudioPlayer UI & Controls', () => {
 
     expect(screen.getByRole('region', { name: /voice memo #42/i })).toBeTruthy();
     expect(screen.getByTestId('audio-play-pause-btn')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /skip back 10 seconds/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /skip forward 10 seconds/i })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /skip back 10 seconds/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /skip forward 10 seconds/i })).toBeNull();
     expect(screen.getByRole('button', { name: /mute/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /download audio/i })).toBeTruthy();
   });
@@ -129,7 +129,7 @@ describe('AudioPlayer UI & Controls', () => {
     expect(mockPause).toHaveBeenCalledTimes(1);
   });
 
-  it('handles skip backward and forward 10s buttons', () => {
+  it('handles keyboard arrow keys for seeking', () => {
     const { container } = render(
       <AudioPlayer src="https://example.com/sample.mp3" title="Test Track" />,
     );
@@ -142,15 +142,14 @@ describe('AudioPlayer UI & Controls', () => {
       fireEvent.loadedMetadata(audio);
     });
 
-    const skipBackBtn = screen.getByRole('button', { name: /skip back 10 seconds/i });
+    const playerRegion = screen.getByRole('region', { name: /test track/i });
     act(() => {
-      fireEvent.click(skipBackBtn);
+      fireEvent.keyDown(playerRegion, { key: 'ArrowLeft' });
     });
-    expect(audio.currentTime).toBe(20);
+    expect(audio.currentTime).toBe(25);
 
-    const skipFwdBtn = screen.getByRole('button', { name: /skip forward 10 seconds/i });
     act(() => {
-      fireEvent.click(skipFwdBtn);
+      fireEvent.keyDown(playerRegion, { key: 'ArrowRight' });
     });
     expect(audio.currentTime).toBe(30);
   });

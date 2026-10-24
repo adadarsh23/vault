@@ -14,7 +14,7 @@
   <a href="#33-local-ci-simulation--pre-commit--pre-push-workflows">CI Simulation</a>
 </p>
 
-Comprehensive cheat sheet and execution manual for **every** Vitest, standalone, and npm command across the Vault repository — covering all test files (63 unit, 4 integration, and component/feature suites), **73 npm test scripts**, all build/clean/deploy pipelines, diagnostics, performance tooling, and cross-device verification procedures.
+Comprehensive cheat sheet and execution manual for **every** Vitest, standalone, and npm command across the Vault repository — covering all test files (64 unit, 4 integration, and component/feature suites), **86 npm test scripts**, all build/clean/deploy pipelines, diagnostics, performance tooling, and cross-device verification procedures.
 
 ---
 
@@ -26,7 +26,7 @@ Comprehensive cheat sheet and execution manual for **every** Vitest, standalone,
 | **Parallel Fast Run**      | `npm run test:run`                                                                                       | Full suite across all CPU workers                                                                                                                      |
 | **Full Runner + Lint**     | `npm run test:all`                                                                                       | Lint + Vitest + custom crypto runner                                                                                                                   |
 | **CI Strict Test**         | `npm run test:ci`                                                                                        | Lint + Vitest --no-cache                                                                                                                               |
-| **Unit Tests**             | `npm run test:unit`                                                                                      | All 57 unit tests in `tests/unit/`                                                                                                                     |
+| **Unit Tests**             | `npm run test:unit`                                                                                      | All 58 unit tests in `tests/unit/` (including OtherFilesVault)                                                                                         |
 | **Integration Tests**      | `npm run test:integration`                                                                               | All 4 integration tests in `tests/integration/`                                                                                                        |
 | **Client Source Tests**    | `npm run test:client`                                                                                    | All 37 component and lib tests in `src/`                                                                                                               |
 | **Server Tests**           | `npm run test:server`                                                                                    | Backend unit and integration                                                                                                                           |
@@ -43,6 +43,9 @@ Comprehensive cheat sheet and execution manual for **every** Vitest, standalone,
 | **Navigation Handler**     | `npx vitest run src/components/app/__tests__/NavigationHandler.test.ts`                                  | Dual tab ID & route navigation, hash/query preserving, redundant guard                                                                                 |
 | **Vault Tab Switching**    | `npm run test:vault:tabs`                                                                                | Sidebar vault category switching, immediate route content swap without freeze, MediaVault key separation                                               |
 | **Vault Navigation Suite** | `npm run test:vault:navigation`                                                                          | Combined vault tab switching integration + NavigationHandler unit tests                                                                                |
+| **Other Files Vault**      | `npm run test:vault:other`                                                                               | Multi-format vault UI, 16 file categories, audio/image metadata extraction, search, preview modal, pin & delete actions                                |
+| **Other Files Isolated**   | `npx vitest run tests/unit/other-files-vault.test.tsx`                                                   | Direct isolated execution of OtherFilesVault test suite                                                                                                |
+| **Other Files Watch**      | `npm run test:vault:other:watch`                                                                         | Watch mode for `other-files-vault.test.tsx`                                                                                                            |
 | **App Loading Screen**     | `npx vitest run src/components/app/__tests__/LoadingScreen.test.tsx`                                     | Status accessibility, timeout reload prompt & onRetry handling                                                                                         |
 | **Router & Navigation**    | `npx vitest run src/components/router`                                                                   | Full router suite: scroll restoration, POP/hash navigation, mobile bounce, quota recovery & RouteErrorBoundary                                         |
 | **ErrorBoundary Suite**    | `npm run test:error-boundary`                                                                            | Production ErrorBoundary & RouteErrorBoundary: Sentry telemetry, error normalization, resetKeys, fallback UI, retry & clipboard diagnostics            |
@@ -293,6 +296,17 @@ npx vitest run tests/unit/upload-validation.test.ts
 ### 1.5 Unit — Vault Core, UI State, Utilities & Monitoring
 
 ```bash
+# Other Files Vault (multi-format vault UI, 16 file categories, audio/image metadata extraction, search, preview & pinning)
+npx vitest run tests/unit/other-files-vault.test.tsx
+
+# Other Files Vault with npm runner
+npm run test:vault:other
+
+# Other Files Vault in watch mode
+npm run test:vault:other:watch
+# or direct:
+npx vitest --watch tests/unit/other-files-vault.test.tsx
+
 # Vault tab switching & sidebar navigation (smooth route switching without animation freeze)
 npx vitest run tests/unit/vault-tab-switching.test.tsx
 
@@ -1018,6 +1032,32 @@ npm run test:vault:tabs
 npm run test:vault:navigation
 ```
 
+### Other Files Vault & Multi-Format Storage Suite
+
+Comprehensive test suite validating multi-format file management in `OtherFilesVault`:
+
+- **16 File Category Classifications**: `code`, `config`, `csv`, `markdown`, `text`, `pdf`, `image`, `audio`, `video`, `archive`, `executable`, `database`, `disk-image`, `font`, `3d`, and fallback `generic`
+- **Dynamic Category Icons**: Validates React SVG icon elements for every supported category
+- **Metadata Extraction Helpers**: Asynchronous metadata extraction for audio durations (`HTMLAudioElement`) and image dimensions (`HTMLImageElement`)
+- **UI & State Assertions**: File card layouts with human-readable size badges (`1.00 KB`, `2.00 KB`, `4.88 MB`), empty state messaging, real-time search filtering, preview modal display, pinning toggles via `useVaultStore`, and deletion confirmation workflows
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run tests/unit/other-files-vault.test.tsx
+
+# Windows PowerShell
+npx vitest run `
+  tests/unit/other-files-vault.test.tsx
+
+# Linux / macOS Bash & Zsh
+npx vitest run \
+  tests/unit/other-files-vault.test.tsx
+
+# Via npm shortcuts
+npm run test:vault:other
+npm run test:vault:other:watch
+```
+
 ### Media Inspector Drawer & Deep Technical Inspection Suite
 
 Comprehensive inspection suite covering photo/video technical metadata, compression ratio telemetry, live EXIF privacy sanitization audit, raw JSON tree explorer, and one-click forensic report export.
@@ -1235,6 +1275,10 @@ npm run test:vault             # All vault- prefix unit tests
 npm run test:vault:core        # drag-drop + item-content + parser
 npm run test:vault:chat        # Chat vault (chat-vault- prefix)
 npm run test:vault:todo        # TodoVault security write path
+npm run test:vault:tabs        # Sidebar vault category switching without animation freeze
+npm run test:vault:navigation  # Combined tab switching integration + NavigationHandler unit tests
+npm run test:vault:other       # Other files vault (16 file types, category icons, metadata extraction, preview & pin)
+npm run test:vault:other:watch # Auto re-run other files vault tests on file changes
 ```
 
 ### Sync & State
@@ -1440,6 +1484,8 @@ npm run test:integration:watch
 npm run test:components:watch
 
 # Watch a specific file directly
+npm run test:vault:other:watch
+npx vitest tests/unit/other-files-vault.test.tsx
 npx vitest tests/unit/vault-drag-drop.test.ts
 npx vitest tests/unit/encryption.test.ts
 npx vitest tests/integration/auth-security.test.ts
@@ -1469,6 +1515,7 @@ npm run test:coverage:deep
 npm run test:coverage:open
 
 # Coverage for a specific file
+npx vitest run --coverage tests/unit/other-files-vault.test.tsx
 npx vitest run --coverage tests/unit/vault-drag-drop.test.ts
 npx vitest run --coverage tests/unit/encryption.test.ts
 npx vitest run --coverage tests/unit/vault-item-content.test.ts
@@ -1599,6 +1646,13 @@ npx vitest run -t "/(encrypt|decrypt|cipher)/i"
 npx vitest run --testNamePattern "^((?!flaky).)*$"
 
 # Filter within a specific file
+npx vitest run tests/unit/other-files-vault.test.tsx -t "Category Detection"
+npx vitest run tests/unit/other-files-vault.test.tsx -t "Metadata Extraction"
+npx vitest run tests/unit/other-files-vault.test.tsx -t "renders files in vault"
+npx vitest run tests/unit/other-files-vault.test.tsx -t "filters files when searching"
+npx vitest run tests/unit/other-files-vault.test.tsx -t "opens preview modal"
+npx vitest run tests/unit/other-files-vault.test.tsx -t "allows pinning and unpinning"
+npx vitest run tests/unit/other-files-vault.test.tsx -t "allows deleting items"
 npx vitest run tests/unit/encryption.test.ts -t "encrypts and decrypts"
 npx vitest run tests/unit/vault-drag-drop.test.ts -t "multi-item"
 npx vitest run tests/unit/vault-drag-drop.test.ts -t "fallback"
@@ -2831,6 +2885,10 @@ node scripts/test-repeat.mjs 5
 # Repeat a specific test file 10 times
 npm run test:repeat 10 tests/unit/session-realtime-revocation.test.ts
 node scripts/test-repeat.mjs 10 tests/unit/session-realtime-revocation.test.ts
+
+# Repeat Other Files Vault test 5 times
+npm run test:repeat 5 tests/unit/other-files-vault.test.tsx
+node scripts/test-repeat.mjs 5 tests/unit/other-files-vault.test.tsx
 
 # Repeat a single test with custom flags (e.g. single worker)
 node scripts/test-repeat.mjs 5 tests/unit/sync-parallel-engine.test.ts --maxWorkers=1

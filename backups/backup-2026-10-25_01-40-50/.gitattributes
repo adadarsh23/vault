@@ -1,0 +1,490 @@
+# ==============================================================================
+# Vault Project - Git Attributes Configuration
+# ==============================================================================
+# Enterprise-grade Git attributes for Vault:
+# - Cross-platform line ending normalization (strict LF standard, CRLF for Windows batch)
+# - Specialized Git diff drivers for syntax-aware diffs (TypeScript, HTML, CSS, Markdown, etc.)
+# - Safe merge handling for package lockfiles (merge=binary prevents corruption)
+# - Comprehensive binary definitions preventing whitespace corruption & line-ending shifts
+# - GitHub Linguist categorization (language stats, docs, vendored shims, generated bundles)
+# - Suppressed diffs (-diff) on heavy generated reports, logs, code-memory, & minified assets
+# - Git Archive release optimization (export-ignore for CI, dev env, tests, and temporary artifacts)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. GLOBAL DEFAULTS & LINE ENDING NORMALIZATION
+# ------------------------------------------------------------------------------
+# Auto-detect all files as text and normalize line endings to LF on commit.
+* text=auto eol=lf
+
+# Explicit binary fallback (disable line ending changes or text diff heuristics)
+*.bin                       binary
+
+# Strict preservation of verbatim line endings for patch and diff artifacts
+*.patch                     -text
+*.diff                      -text
+
+# ------------------------------------------------------------------------------
+# 2. SOURCE CODE & LANGUAGE DIFF DRIVERS
+# ------------------------------------------------------------------------------
+# TypeScript & JavaScript (Vault UI, Server, Workers & Utilities)
+*.ts                        text eol=lf diff=typescript
+*.tsx                       text eol=lf diff=typescript
+*.mts                       text eol=lf diff=typescript
+*.cts                       text eol=lf diff=typescript
+*.d.ts                      text eol=lf diff=typescript
+*.d.mts                     text eol=lf diff=typescript
+*.d.cts                     text eol=lf diff=typescript
+*.js                        text eol=lf diff=javascript
+*.jsx                       text eol=lf diff=javascript
+*.mjs                       text eol=lf diff=javascript
+*.cjs                       text eol=lf diff=javascript
+*.es                        text eol=lf diff=javascript
+*.es6                       text eol=lf diff=javascript
+
+# Web Styles & CSS Preprocessors
+*.css                       text eol=lf diff=css
+*.scss                      text eol=lf diff=css
+*.sass                      text eol=lf diff=css
+*.less                      text eol=lf diff=css
+*.postcss                   text eol=lf diff=css
+*.pcss                      text eol=lf diff=css
+*.styl                      text eol=lf diff=css
+*.sss                       text eol=lf diff=css
+
+# HTML & Web Components
+*.html                      text eol=lf diff=html
+*.htm                       text eol=lf diff=html
+*.xhtml                     text eol=lf diff=html
+*.vue                       text eol=lf diff=html
+*.svelte                    text eol=lf diff=html
+*.astro                     text eol=lf diff=html
+*.ejs                       text eol=lf diff=html
+*.hbs                       text eol=lf diff=html
+*.handlebars                text eol=lf diff=html
+
+# Systems, Native Modules & Backend Languages (Crypto, Libsodium, WebAssembly)
+*.c                         text eol=lf diff=cpp
+*.cc                        text eol=lf diff=cpp
+*.cpp                       text eol=lf diff=cpp
+*.cxx                       text eol=lf diff=cpp
+*.h                         text eol=lf diff=cpp
+*.hh                        text eol=lf diff=cpp
+*.hpp                       text eol=lf diff=cpp
+*.hxx                       text eol=lf diff=cpp
+*.inl                       text eol=lf diff=cpp
+*.ipp                       text eol=lf diff=cpp
+*.rs                        text eol=lf diff=rust
+*.go                        text eol=lf diff=golang
+*.py                        text eol=lf diff=python
+*.pyi                       text eol=lf diff=python
+*.gyp                       text eol=lf diff=python
+*.gypi                      text eol=lf diff=python
+*.rb                        text eol=lf diff=ruby
+*.rake                      text eol=lf diff=ruby
+*.php                       text eol=lf diff=php
+*.java                      text eol=lf diff=java
+*.kt                        text eol=lf diff=kotlin
+*.kts                       text eol=lf diff=kotlin
+*.cs                        text eol=lf diff=csharp
+*.csx                       text eol=lf diff=csharp
+
+# ------------------------------------------------------------------------------
+# 3. DATABASE, SCHEMAS & SERIALIZATION IDLs
+# ------------------------------------------------------------------------------
+*.sql                       text eol=lf
+*.pgsql                     text eol=lf
+*.mysql                     text eol=lf
+*.prisma                    text eol=lf linguist-language=Prisma
+*.graphql                   text eol=lf linguist-language=GraphQL
+*.gql                       text eol=lf linguist-language=GraphQL
+*.proto                     text eol=lf linguist-language=Protocol-Buffer
+*.avsc                      text eol=lf linguist-language=JSON
+*.schema.json               text eol=lf linguist-language=JSON
+schemas/**                  text eol=lf
+
+# ------------------------------------------------------------------------------
+# 4. CONFIGURATION, MANIFESTS & INFRASTRUCTURE
+# ------------------------------------------------------------------------------
+# JSON & JSON Variants
+*.json                      text eol=lf
+*.json5                     text eol=lf
+*.jsonc                     text eol=lf
+*.jsonl                     text eol=lf
+*.ndjson                    text eol=lf
+*.webmanifest               text eol=lf linguist-language=JSON
+*.geojson                   text eol=lf linguist-language=JSON
+*.topojson                  text eol=lf linguist-language=JSON
+
+# YAML, TOML, XML & Common Configs
+*.yml                       text eol=lf
+*.yaml                      text eol=lf
+*.toml                      text eol=lf
+*.xml                       text eol=lf
+*.xsd                       text eol=lf
+*.xsl                       text eol=lf
+*.xslt                      text eol=lf
+*.plist                     text eol=lf
+*.ini                       text eol=lf
+*.cfg                       text eol=lf
+*.conf                      text eol=lf
+*.config                    text eol=lf
+*.properties                text eol=lf
+
+# Tooling & Runtime Configuration Files
+.env*                       text eol=lf linguist-language=Dotenv
+.gitignore                  text eol=lf
+.gitattributes              text eol=lf
+.editorconfig               text eol=lf
+.prettierrc*                text eol=lf
+.prettierignore             text eol=lf
+.eslintrc*                  text eol=lf
+.eslintignore               text eol=lf
+.vscodeignore               text eol=lf
+.dockerignore               text eol=lf
+.npmrc                      text eol=lf
+.npmignore                  text eol=lf
+.yarnrc*                    text eol=lf
+.nvmrc                      text eol=lf
+.node-version               text eol=lf
+.browserslistrc             text eol=lf
+CODEOWNERS                  text eol=lf
+.github/CODEOWNERS          text eol=lf
+
+# Containerization & Project Descriptors
+Dockerfile*                 text eol=lf linguist-language=Dockerfile
+docker-compose*.yml         text eol=lf linguist-language=YAML
+components.json             text eol=lf linguist-language=JSON
+metadata.json               text eol=lf linguist-language=JSON
+tsconfig*.json              text eol=lf linguist-language=JSON
+vite.config*.ts             text eol=lf diff=typescript
+vitest.config*.ts           text eol=lf diff=typescript
+server.ts                   text eol=lf diff=typescript
+
+# ------------------------------------------------------------------------------
+# 5. MAINTENANCE, AUTOMATION & PLATFORM SCRIPTS
+# ------------------------------------------------------------------------------
+# POSIX Shell Scripts (MUST strictly have LF line endings to avoid \r errors)
+*.sh                        text eol=lf diff=bash
+*.bash                      text eol=lf diff=bash
+*.zsh                       text eol=lf diff=bash
+*.fish                      text eol=lf diff=bash
+*.ksh                       text eol=lf diff=bash
+
+# Windows Batch & Command Prompt (MUST strictly have CRLF line endings)
+*.bat                       text eol=crlf
+*.cmd                       text eol=crlf
+*.reg                       text eol=crlf
+
+# PowerShell Scripts (LF safe across Windows PowerShell 5.1 and PS Core / Linux)
+*.ps1                       text eol=lf
+*.psm1                      text eol=lf
+*.psd1                      text eol=lf
+*.ps1xml                    text eol=lf
+
+# Repository Maintenance & CI Scripts
+push.sh                     text eol=lf diff=bash
+push.ps1                    text eol=lf
+verify_jwt_fix.sh           text eol=lf diff=bash
+verify_jwt_fix.ps1          text eol=lf
+fix.js                      text eol=lf diff=javascript
+fix.cjs                     text eol=lf diff=javascript
+scripts/**                  text eol=lf
+scripts/*.mjs               text eol=lf diff=javascript
+scripts/*.cjs               text eol=lf diff=javascript
+scripts/*.ts                text eol=lf diff=typescript
+scripts/*.js                text eol=lf diff=javascript
+
+# ------------------------------------------------------------------------------
+# 6. DOCUMENTATION & PROSE
+# ------------------------------------------------------------------------------
+*.md                        text eol=lf diff=markdown linguist-documentation=true
+*.markdown                  text eol=lf diff=markdown linguist-documentation=true
+*.mdown                     text eol=lf diff=markdown linguist-documentation=true
+*.mkd                       text eol=lf diff=markdown linguist-documentation=true
+*.mdx                       text eol=lf diff=markdown
+*.txt                       text eol=lf
+*.text                      text eol=lf
+*.rst                       text eol=lf linguist-documentation=true
+*.adoc                      text eol=lf linguist-documentation=true
+*.asciidoc                  text eol=lf linguist-documentation=true
+*.tex                       text eol=lf diff=tex
+*.csv                       text eol=lf
+*.tsv                       text eol=lf
+
+# Standard Open-Source Documentation Files
+AUTHORS*                    text eol=lf diff=markdown linguist-documentation=true
+CHANGELOG*                  text eol=lf diff=markdown linguist-documentation=true
+CODE_OF_CONDUCT*            text eol=lf diff=markdown linguist-documentation=true
+CONTRIBUTING*               text eol=lf diff=markdown linguist-documentation=true
+DOCKER*.md                  text eol=lf diff=markdown linguist-documentation=true
+LICENSE*                    text eol=lf diff=markdown linguist-documentation=true
+README*                     text eol=lf diff=markdown linguist-documentation=true
+SECURITY*                   text eol=lf diff=markdown linguist-documentation=true
+PULL_REQUEST_TEMPLATE*      text eol=lf diff=markdown linguist-documentation=true
+
+# Documentation Directories
+doc/**                      text eol=lf linguist-documentation=true
+doc/**/*.md                 text eol=lf diff=markdown linguist-documentation=true
+docs/**                     text eol=lf linguist-documentation=true
+docs/**/*.md                text eol=lf diff=markdown linguist-documentation=true
+md/**                       text eol=lf linguist-documentation=true
+md/**/*.md                  text eol=lf diff=markdown linguist-documentation=true
+
+# ------------------------------------------------------------------------------
+# 7. PACKAGE MANAGERS & LOCKFILES
+# ------------------------------------------------------------------------------
+# Prevent accidental merge resolution conflicts and diff pollution on lockfiles
+package-lock.json           text -diff merge=binary linguist-generated=true
+npm-shrinkwrap.json         text -diff merge=binary linguist-generated=true
+yarn.lock                   text -diff merge=binary linguist-generated=true
+pnpm-lock.yaml              text -diff merge=binary linguist-generated=true
+bun.lock                    text -diff merge=binary linguist-generated=true
+bun.lockb                   binary linguist-generated=true
+Cargo.lock                  text -diff merge=binary linguist-generated=true
+composer.lock               text -diff merge=binary linguist-generated=true
+Gemfile.lock                text -diff merge=binary linguist-generated=true
+poetry.lock                 text -diff merge=binary linguist-generated=true
+Pipfile.lock                text -diff merge=binary linguist-generated=true
+deno.lock                   text -diff merge=binary linguist-generated=true
+flake.lock                  text -diff merge=binary linguist-generated=true
+packages.lock.json          text -diff merge=binary linguist-generated=true
+pubspec.lock                text -diff merge=binary linguist-generated=true
+mix.lock                    text -diff merge=binary linguist-generated=true
+go.sum                      text -diff merge=binary linguist-generated=true
+
+# ------------------------------------------------------------------------------
+# 8. STATIC MEDIA, FONTS & BINARY ASSETS
+# ------------------------------------------------------------------------------
+# Vector Graphics (SVG is text, XML based)
+*.svg                       text eol=lf
+*.svgz                      binary
+
+# Raster Images
+*.png                       binary
+*.jpg                       binary
+*.jpeg                      binary
+*.gif                       binary
+*.webp                      binary
+*.avif                      binary
+*.ico                       binary
+*.bmp                       binary
+*.tif                       binary
+*.tiff                      binary
+*.psd                       binary
+*.ai                        binary
+*.eps                       binary
+*.icns                      binary
+*.heic                      binary
+*.heif                      binary
+*.raw                       binary
+*.cr2                       binary
+*.nef                       binary
+
+# Audio & Video Media Assets (Encrypted media vaults, HLS, Shaka)
+*.mp3                       binary
+*.wav                       binary
+*.ogg                       binary
+*.oga                       binary
+*.m4a                       binary
+*.flac                      binary
+*.aac                       binary
+*.opus                      binary
+*.weba                      binary
+*.wma                       binary
+*.mid                       binary
+*.midi                      binary
+*.mp4                       binary
+*.m4v                       binary
+*.mov                       binary
+*.webm                      binary
+*.mkv                       binary
+*.avi                       binary
+*.wmv                       binary
+*.flv                       binary
+*.3gp                       binary
+*.ogv                       binary
+
+# Fonts
+*.woff                      binary
+*.woff2                     binary
+*.ttf                       binary
+*.otf                       binary
+*.eot                       binary
+*.fon                       binary
+*.ttc                       binary
+
+# WebAssembly & Compiled Native Binaries
+*.wasm                      binary
+*.node                      binary
+*.dll                       binary
+*.dylib                     binary
+*.so                        binary
+*.exe                       binary
+*.lib                       binary
+*.a                         binary
+*.o                         binary
+*.obj                       binary
+*.class                     binary
+*.pyc                       binary
+*.pyo                       binary
+*.pyd                       binary
+
+# Compressed Archives & Bundled Packages
+*.zip                       binary
+*.tar                       binary
+*.gz                        binary
+*.tgz                       binary
+*.bz2                       binary
+*.tbz2                      binary
+*.xz                        binary
+*.txz                       binary
+*.7z                        binary
+*.rar                       binary
+*.zst                       binary
+*.br                        binary
+*.lz4                       binary
+*.lzma                      binary
+*.sz                        binary
+*.apk                       binary
+*.jar                       binary
+vault-production.zip        binary linguist-generated=true -diff export-ignore
+
+# Documents & Portable Formats
+*.pdf                       binary
+*.doc                       binary
+*.docx                      binary
+*.xls                       binary
+*.xlsx                      binary
+*.ppt                       binary
+*.pptx                      binary
+*.odt                       binary
+*.ods                       binary
+*.odp                       binary
+*.pages                     binary
+*.numbers                   binary
+*.keynote                   binary
+
+# Embedded Databases & Binary Datasets
+*.sqlite                    binary
+*.sqlite3                   binary
+*.db                        binary
+*.db3                       binary
+*.sdb                       binary
+*.parquet                   binary
+*.arrow                     binary
+*.orc                       binary
+*.feather                   binary
+*.h5                        binary
+*.hdf5                      binary
+
+# ------------------------------------------------------------------------------
+# 9. CRYPTOGRAPHY, CERTIFICATES & CREDENTIALS
+# ------------------------------------------------------------------------------
+# ASCII-Armored / PEM Cryptographic Keys & Certificates (normalized LF)
+*.pem                       text eol=lf
+*.crt                       text eol=lf
+*.pub                       text eol=lf
+*.asc                       text eol=lf
+*.csr                       text eol=lf
+*.crl                       text eol=lf
+*.key                       text eol=lf
+
+# Binary Keystores, PKCS Bundles & Encrypted Credential Vaults
+*.p12                       binary
+*.pfx                       binary
+*.der                       binary
+*.cer                       binary
+*.keystore                  binary
+*.jks                       binary
+*.keychain                  binary
+*.enc                       binary
+*.sig                       binary
+*.gpg                       binary
+*.pgp                       binary
+*.kdbx                      binary
+
+# ------------------------------------------------------------------------------
+# 10. GITHUB LINGUIST & PR DIFF SUPPRESSION RULES
+# ------------------------------------------------------------------------------
+# Mark machine-generated / minified files to keep PR diffs and stats clean
+*.min.js                    linguist-generated=true -diff
+*.min.css                   linguist-generated=true -diff
+*.min.mjs                   linguist-generated=true -diff
+*.min.cjs                   linguist-generated=true -diff
+*.map                       linguist-generated=true -diff
+*.tsbuildinfo               linguist-generated=true -diff
+
+# Heavy Generated Reports & Benchmark Pages
+stats.html                  linguist-generated=true -diff
+overload.html               linguist-generated=true -diff
+test.md                     linguist-generated=true -diff
+
+# Generated Directories, Analysis Reports & Build Output
+build/**                    linguist-generated=true -diff
+dist/**                     linguist-generated=true -diff
+coverage/**                 linguist-generated=true -diff
+test-results/**             linguist-generated=true -diff
+lighthouse/**               linguist-generated=true -diff
+backups/**                  linguist-generated=true -diff
+.memory/**                  linguist-generated=true -diff
+logs/**                     linguist-generated=true -diff
+vault-tmp/**                linguist-generated=true -diff
+uploads/**                  linguist-generated=true -diff
+*.log                       linguist-generated=true -diff
+
+# Vendored & Third-Party Dependencies
+node_modules/**             linguist-vendored=true
+vendor/**                   linguist-vendored=true
+third_party/**              linguist-vendored=true
+public/vite-preload-shim.js linguist-vendored=true
+
+# Core Language Detectability Overrides (Ensure high signal in repo stats)
+src/**/*.ts                 linguist-detectable=true
+src/**/*.tsx                linguist-detectable=true
+server/**/*.ts              linguist-detectable=true
+scripts/**/*.mjs            linguist-detectable=true
+
+# ------------------------------------------------------------------------------
+# 11. GIT ARCHIVE RELEASE PACKAGING (export-ignore & export-subst)
+# ------------------------------------------------------------------------------
+# Exclude developer environment, CI/CD, tests, caches, ephemeral files & docs from git archive
+.git*                       export-ignore
+.github/**                  export-ignore
+.vscode/**                  export-ignore
+.idea/**                    export-ignore
+.memory/**                  export-ignore
+backups/**                  export-ignore
+coverage/**                 export-ignore
+test-results/**             export-ignore
+lighthouse/**               export-ignore
+logs/**                     export-ignore
+vault-tmp/**                export-ignore
+uploads/**                  export-ignore
+tests/**                    export-ignore
+scripts/**                  export-ignore
+build/**                    export-ignore
+dist/**                     export-ignore
+node_modules/**             export-ignore
+doc/**                      export-ignore
+md/**                       export-ignore
+Dockerfile*                 export-ignore
+docker-compose*.yml         export-ignore
+.dockerignore               export-ignore
+.editorconfig               export-ignore
+.prettierrc*                export-ignore
+.prettierignore             export-ignore
+.eslintrc*                  export-ignore
+.eslintignore               export-ignore
+.vscodeignore               export-ignore
+.env*                       export-ignore
+vitest.config.*             export-ignore
+tsconfig*.json              export-ignore
+stats.html                  export-ignore
+overload.html               export-ignore
+test.md                     export-ignore
+vault-production.zip        export-ignore
+fix.js                      export-ignore
+fix.cjs                     export-ignore
+verify_jwt_fix.*            export-ignore
+push.*                      export-ignore

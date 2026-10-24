@@ -1,0 +1,1887 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/adadarsh23/vault/main/schemas/vault-manifest.schema.json",
+  "title": "Vault Manifest Schema",
+  "description": "Production-grade JSON Schema specification (Draft 2020-12) for Vault configuration, project-relative architectural layout, security posture baseline, cryptographic envelopes, and deployment manifests.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "displayName",
+    "version",
+    "schemaVersion",
+    "securityVersion",
+    "description",
+    "author",
+    "license",
+    "repository",
+    "keywords",
+    "application",
+    "security",
+    "storage",
+    "runtime"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "URI or local relative path to the Vault manifest schema against which this document is validated."
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Unique, lowercase machine-readable identifier of the application (kebab-case).",
+      "examples": ["vault"]
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Human-readable display name of the application.",
+      "examples": ["Vault"]
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "description": "Semantic version string conforming to SemVer 2.0.0 specifications.",
+      "examples": ["1.0.0"]
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version number for the manifest schema specification.",
+      "examples": [1]
+    },
+    "securityVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version number representing the enforced security baseline.",
+      "examples": [1]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "description": "Detailed description of the application purpose and security model."
+    },
+    "author": {
+      "$ref": "#/$defs/author"
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Software license identifier (e.g. SPDX license identifier, UNLICENSED, or PROPRIETARY).",
+      "examples": ["UNLICENSED", "MIT", "Apache-2.0"]
+    },
+    "repository": {
+      "$ref": "#/$defs/repository"
+    },
+    "homepage": {
+      "type": ["string", "null"],
+      "pattern": "^https?://.+",
+      "description": "Optional URL to the application homepage or project landing page, or null."
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "description": "Keywords, tags, and classification identifiers for the vault project."
+    },
+    "application": {
+      "$ref": "#/$defs/application"
+    },
+    "security": {
+      "$ref": "#/$defs/security"
+    },
+    "storage": {
+      "$ref": "#/$defs/storage"
+    },
+    "dataLifecycle": {
+      "$ref": "#/$defs/dataLifecycle"
+    },
+    "apiSecurity": {
+      "$ref": "#/$defs/apiSecurity"
+    },
+    "securityHeaders": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9\\-]+$"
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "description": "List of HTTP response security headers enforced across all endpoints."
+    },
+    "database": {
+      "$ref": "#/$defs/database"
+    },
+    "privacy": {
+      "$ref": "#/$defs/privacy"
+    },
+    "logging": {
+      "$ref": "#/$defs/logging"
+    },
+    "observability": {
+      "$ref": "#/$defs/observability"
+    },
+    "performance": {
+      "$ref": "#/$defs/performance"
+    },
+    "runtime": {
+      "$ref": "#/$defs/runtime"
+    },
+    "deployment": {
+      "$ref": "#/$defs/deployment"
+    },
+    "testing": {
+      "$ref": "#/$defs/testing"
+    },
+    "dependencySecurity": {
+      "$ref": "#/$defs/dependencySecurity"
+    },
+    "threatModel": {
+      "$ref": "#/$defs/threatModel"
+    },
+    "compatibility": {
+      "$ref": "#/$defs/compatibility"
+    },
+    "pwa": {
+      "$ref": "#/$defs/pwa"
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "description": "Complete list of functional capabilities and user-facing features supported by the application."
+    },
+    "permissions": {
+      "$ref": "#/$defs/permissions"
+    },
+    "branding": {
+      "$ref": "#/$defs/branding"
+    },
+    "maintainers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/maintainer"
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "description": "List of active code owners, core maintainers, and security contacts."
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "paths": {
+      "$ref": "#/$defs/paths"
+    },
+    "modules": {
+      "$ref": "#/$defs/modules"
+    }
+  },
+  "$defs": {
+    "author": {
+      "title": "Author",
+      "description": "Primary author or creator details.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "role", "website"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Author's full name or pseudonym."
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Role or title of the author."
+        },
+        "website": {
+          "type": "string",
+          "pattern": "^https?://.+",
+          "description": "Author's personal website or profile URL."
+        },
+        "email": {
+          "type": "string",
+          "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+          "description": "Author's contact email address."
+        }
+      }
+    },
+    "maintainer": {
+      "title": "Maintainer",
+      "description": "Project maintainer or code owner details.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "github"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Maintainer's name."
+        },
+        "github": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$",
+          "description": "Maintainer's GitHub username."
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Maintainer's specific responsibilities or team role."
+        },
+        "email": {
+          "type": "string",
+          "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+          "description": "Maintainer's contact email address."
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https?://.+",
+          "description": "Maintainer's personal profile URL."
+        }
+      }
+    },
+    "repository": {
+      "title": "Repository",
+      "description": "Version control repository metadata.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "url"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["git", "github", "gitlab", "bitbucket", "svn", "hg"],
+          "description": "Type of version control system hosting the repository."
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^(?:https?|git|ssh)://.+",
+          "description": "Public URL or remote address of the repository."
+        },
+        "directory": {
+          "type": "string",
+          "description": "Optional subdirectory within a monorepo."
+        }
+      }
+    },
+    "application": {
+      "title": "Application Configuration",
+      "description": "Application environment, target platforms, and production readiness configuration.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "platforms", "pwa", "production"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "secure-storage",
+            "password-manager",
+            "encrypted-vault",
+            "cloud-storage",
+            "web-application"
+          ],
+          "description": "Categorical type of the secure vault application."
+        },
+        "platforms": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["web", "mobile", "desktop", "pwa", "server", "cli", "extension"]
+          },
+          "uniqueItems": true,
+          "minItems": 1,
+          "description": "Supported target platforms."
+        },
+        "pwa": {
+          "type": "boolean",
+          "description": "Whether Progressive Web App capabilities are enabled."
+        },
+        "production": {
+          "type": "boolean",
+          "description": "Whether the application is configured for production operation."
+        }
+      }
+    },
+    "security": {
+      "title": "Security Posture Baseline",
+      "description": "Cryptographic standards, key management policies, and authentication specifications.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "cryptography",
+        "keyManagement",
+        "authentication",
+        "passwordPolicy",
+        "sessionSecurity",
+        "accountProtection",
+        "recovery"
+      ],
+      "properties": {
+        "model": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["clientSideEncryption", "zeroKnowledge", "plaintextServerAccess"],
+          "description": "Core zero-knowledge threat and access model.",
+          "properties": {
+            "clientSideEncryption": {
+              "type": "boolean",
+              "description": "True if all sensitive data is encrypted on the client device prior to transit."
+            },
+            "zeroKnowledge": {
+              "type": "boolean",
+              "description": "True if the server never possesses encryption keys or unencrypted data."
+            },
+            "plaintextServerAccess": {
+              "type": "boolean",
+              "description": "False to enforce that backend infrastructure has zero plaintext access to user data."
+            }
+          }
+        },
+        "cryptography": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "contentEncryption",
+            "keyDerivation",
+            "nonce",
+            "randomness",
+            "encryptionFormatVersion"
+          ],
+          "description": "Cryptographic algorithm configurations and parameter requirements.",
+          "properties": {
+            "contentEncryption": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["algorithm", "keyLengthBits", "authenticatedEncryption"],
+              "properties": {
+                "algorithm": {
+                  "type": "string",
+                  "enum": [
+                    "AES-256-GCM",
+                    "AES-128-GCM",
+                    "ChaCha20-Poly1305",
+                    "XChaCha20-Poly1305",
+                    "AES-256-GCM+ChaCha20-Poly1305",
+                    "VCAS01",
+                    "VENV02"
+                  ],
+                  "description": "Authenticated symmetric cipher used for content encryption."
+                },
+                "keyLengthBits": {
+                  "type": "integer",
+                  "enum": [128, 192, 256],
+                  "description": "Symmetric key length in bits."
+                },
+                "authenticatedEncryption": {
+                  "type": "boolean",
+                  "description": "Must be true to guarantee ciphertext integrity via AEAD."
+                },
+                "cascade": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "description": "Dual cascade cipher configuration (VCAS01).",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "magicHeader": {
+                      "type": "string",
+                      "examples": ["VCAS01"]
+                    },
+                    "headerLengthBytes": {
+                      "type": "integer",
+                      "examples": [122]
+                    },
+                    "ciphers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "examples": [["AES-256-GCM", "ChaCha20-Poly1305"]]
+                    }
+                  }
+                }
+              }
+            },
+            "keyDerivation": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["algorithm", "iterations", "saltLengthBytes"],
+              "properties": {
+                "algorithm": {
+                  "type": "string",
+                  "enum": [
+                    "PBKDF2-SHA-256",
+                    "PBKDF2-SHA-512",
+                    "Argon2id",
+                    "Argon2i",
+                    "Argon2d",
+                    "scrypt"
+                  ],
+                  "description": "Key derivation function (KDF) algorithm."
+                },
+                "iterations": {
+                  "type": "integer",
+                  "minimum": 100000,
+                  "description": "KDF iteration rounds (minimum 100,000 for PBKDF2)."
+                },
+                "saltLengthBytes": {
+                  "type": "integer",
+                  "minimum": 16,
+                  "description": "Cryptographic salt length in bytes (minimum 16 bytes)."
+                },
+                "memoryCost": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Optional memory cost parameter for memory-hard KDFs (e.g. Argon2)."
+                },
+                "parallelism": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Optional parallelism/threads parameter for KDFs."
+                },
+                "webAssemblyAcceleration": {
+                  "type": "boolean",
+                  "description": "Whether WebAssembly accelerated execution is utilized for memory-hard KDF derivation."
+                },
+                "hashLength": {
+                  "type": "integer",
+                  "minimum": 16,
+                  "description": "Derived key length in bytes (typically 32 bytes for 256-bit keys)."
+                }
+              }
+            },
+            "nonce": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["algorithm", "lengthBytes", "neverReuse"],
+              "properties": {
+                "algorithm": {
+                  "type": "string",
+                  "enum": ["random", "counter", "deterministic"],
+                  "description": "Initialization vector or nonce generation method."
+                },
+                "lengthBytes": {
+                  "type": "integer",
+                  "minimum": 12,
+                  "description": "Nonce length in bytes (12 bytes for standard AES-GCM)."
+                },
+                "neverReuse": {
+                  "type": "boolean",
+                  "description": "Must be true to prevent catastrophic GCM nonce reuse."
+                }
+              }
+            },
+            "randomness": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["provider", "cryptographicallySecure"],
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Cryptographically secure pseudorandom number generator (CSPRNG) provider."
+                },
+                "cryptographicallySecure": {
+                  "type": "boolean",
+                  "description": "Must be true to certify entropy source suitability."
+                }
+              }
+            },
+            "encryptionFormatVersion": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Binary or serialized ciphertext envelope format version."
+            },
+            "envelope": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Envelope encryption configuration with DEK/KEK domain separation and sentinel checks.",
+              "properties": {
+                "masterKeyWrapping": {
+                  "type": "boolean"
+                },
+                "dekLengthBytes": {
+                  "type": "integer",
+                  "examples": [32, 64]
+                },
+                "magicHeader": {
+                  "type": "string",
+                  "examples": ["VENV02", "VCAS01"]
+                },
+                "keyCheckSentinel": {
+                  "type": "string",
+                  "examples": ["__keycheck__"]
+                },
+                "reWrapping": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "postQuantum": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Post-quantum hybrid key encapsulation (ML-KEM-768 / Kyber-768).",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "algorithm": {
+                  "type": "string",
+                  "enum": ["ML-KEM-768", "Kyber-768", "hybrid-p256-kyber768"]
+                }
+              }
+            }
+          }
+        },
+        "keyManagement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["masterKey", "keyVersioning", "keyRotation"],
+          "description": "Key life-cycle, versioning, and storage policies.",
+          "properties": {
+            "masterKey": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["clientGenerated", "storedPlaintext", "exportable"],
+              "properties": {
+                "clientGenerated": {
+                  "type": "boolean",
+                  "description": "True if master key is derived or generated exclusively on the client."
+                },
+                "storedPlaintext": {
+                  "type": "boolean",
+                  "description": "False to enforce that unencrypted keys are never persisted."
+                },
+                "exportable": {
+                  "type": "boolean",
+                  "description": "Controls whether master keys can be exported by the browser runtime."
+                },
+                "ephemeralMemoryZeroization": {
+                  "type": "boolean",
+                  "description": "Enforces that master key memory buffers are actively overwritten with random bytes and zeros on lock or tab close."
+                },
+                "cacheTtlMs": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Maximum time-to-live for ephemeral decrypted crypto key caching in memory before automatic clearance."
+                }
+              }
+            },
+            "keyVersioning": {
+              "type": "boolean",
+              "description": "Whether encryption envelopes track key version IDs for seamless rotation."
+            },
+            "keyRotation": {
+              "type": "boolean",
+              "description": "Whether scheduled or on-demand re-wrapping and key rotation are supported."
+            },
+            "cloudMasterKey": {
+              "type": "boolean",
+              "description": "Whether encrypted cloud master key backup and cross-device sync are enabled."
+            },
+            "rewrapScript": {
+              "type": "string",
+              "description": "Relative path or command to execute master key envelope re-wrapping."
+            }
+          }
+        },
+        "authentication": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["methods", "multiFactorAuthentication", "passwordAuthentication"],
+          "description": "Authentication protocols and factor requirements.",
+          "properties": {
+            "methods": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "password",
+                  "totp",
+                  "passkey",
+                  "webauthn",
+                  "biometrics",
+                  "sms",
+                  "email-otp",
+                  "magic-link",
+                  "oauth",
+                  "sso",
+                  "duress-pin",
+                  "decoy-vault",
+                  "backup-codes",
+                  "recovery-keys"
+                ]
+              },
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "Supported authentication methods."
+            },
+            "multiFactorAuthentication": {
+              "type": "boolean",
+              "description": "Whether MFA is enforced or supported."
+            },
+            "passwordAuthentication": {
+              "type": "boolean",
+              "description": "Whether master password authentication is enabled."
+            },
+            "botProtection": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Automated bot and brute-force protection middleware configuration.",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "providers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["turnstile", "recaptcha-v2", "recaptcha-v3", "hcaptcha"]
+                  }
+                }
+              }
+            },
+            "decoyPartition": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Decoy vault partition for emergency duress situations.",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "failedPinThreshold": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "autoWipe": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "passwordPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "minimumLength",
+            "maximumLength",
+            "allowPasswordManagers",
+            "allowPassphrases"
+          ],
+          "description": "Password strength parameters and credential handling policies.",
+          "properties": {
+            "minimumLength": {
+              "type": "integer",
+              "minimum": 8,
+              "maximum": 256,
+              "description": "Minimum required master password length."
+            },
+            "maximumLength": {
+              "type": "integer",
+              "minimum": 16,
+              "maximum": 1024,
+              "description": "Maximum allowed master password length."
+            },
+            "allowPasswordManagers": {
+              "type": "boolean",
+              "description": "True if inputs do not block pasting from password managers."
+            },
+            "allowPassphrases": {
+              "type": "boolean",
+              "description": "True if multi-word passphrases with spaces are allowed."
+            }
+          }
+        },
+        "sessionSecurity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "secureCookies",
+            "httpOnlyCookies",
+            "sameSite",
+            "sessionExpiration",
+            "sessionRevocation",
+            "concurrentSessionManagement"
+          ],
+          "description": "Session token configuration and transport protections.",
+          "properties": {
+            "secureCookies": {
+              "type": "boolean",
+              "description": "True if session cookies have the Secure attribute."
+            },
+            "httpOnlyCookies": {
+              "type": "boolean",
+              "description": "True if session cookies have the HttpOnly flag."
+            },
+            "sameSite": {
+              "type": "string",
+              "enum": ["strict", "lax", "none"],
+              "description": "Cookie SameSite policy."
+            },
+            "sessionExpiration": {
+              "type": "boolean",
+              "description": "True if inactive or maximum lifetime session expiration is enforced."
+            },
+            "sessionRevocation": {
+              "type": "boolean",
+              "description": "True if sessions can be immediately revoked server-side."
+            },
+            "concurrentSessionManagement": {
+              "type": "boolean",
+              "description": "True if users can inspect and terminate concurrent active sessions."
+            }
+          }
+        },
+        "accountProtection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["rateLimiting", "bruteForceProtection", "credentialStuffingProtection"],
+          "description": "Anti-abuse and account defense protections.",
+          "properties": {
+            "rateLimiting": {
+              "type": "boolean",
+              "description": "True if authentication endpoints are protected by IP and account rate limiters."
+            },
+            "bruteForceProtection": {
+              "type": "boolean",
+              "description": "True if exponential backoff or lockouts thwart brute-force attacks."
+            },
+            "credentialStuffingProtection": {
+              "type": "boolean",
+              "description": "True if protections against automated credential stuffing are enforced."
+            }
+          }
+        },
+        "recovery": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "backupCodes", "recoveryKeys"],
+          "description": "Emergency account recovery and zero-knowledge fallback options.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether zero-knowledge account recovery workflows are enabled."
+            },
+            "backupCodes": {
+              "type": "boolean",
+              "description": "Whether single-use emergency backup recovery codes are generated."
+            },
+            "recoveryKeys": {
+              "type": "boolean",
+              "description": "Whether cryptographic account recovery keys are supported."
+            }
+          }
+        }
+      }
+    },
+    "storage": {
+      "title": "Storage Configuration",
+      "description": "Storage categorization, upload constraints, and client-side encryption enforcement.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "encryptionBeforeUpload",
+        "encryptionAtRest",
+        "encryptedFilenames",
+        "encryptedMetadata",
+        "contentIntegrityVerification",
+        "categories",
+        "upload"
+      ],
+      "properties": {
+        "encryptionBeforeUpload": {
+          "type": "boolean",
+          "description": "Must be true to ensure payloads are encrypted before leaving the client."
+        },
+        "encryptionAtRest": {
+          "type": "boolean",
+          "description": "Must be true to guarantee stored records remain encrypted at rest."
+        },
+        "encryptedFilenames": {
+          "type": "boolean",
+          "description": "True if original filenames and paths are encrypted in the manifest and storage."
+        },
+        "encryptedMetadata": {
+          "type": "boolean",
+          "description": "True if item metadata (mime-types, tags, sizes) is encrypted client-side."
+        },
+        "contentIntegrityVerification": {
+          "type": "boolean",
+          "description": "True if cryptographic hashes or AEAD tags verify integrity on retrieval."
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "photo",
+              "video",
+              "audio",
+              "document",
+              "note",
+              "chat",
+              "todo",
+              "password",
+              "secret",
+              "contact",
+              "location",
+              "file",
+              "other-files",
+              "other",
+              "settings",
+              "system",
+              "users",
+              "card",
+              "identity",
+              "wifi"
+            ]
+          },
+          "uniqueItems": true,
+          "minItems": 1,
+          "description": "Allowed encrypted storage asset categories."
+        },
+        "upload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "maxFileSizeMB",
+            "multipart",
+            "resumable",
+            "fileTypeValidation",
+            "contentValidation"
+          ],
+          "properties": {
+            "maxFileSizeMB": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Maximum permitted single file upload size in megabytes."
+            },
+            "multipart": {
+              "type": "boolean",
+              "description": "Whether chunked/multipart file uploads are supported."
+            },
+            "resumable": {
+              "type": "boolean",
+              "description": "Whether interrupted uploads can be resumed without restarting."
+            },
+            "fileTypeValidation": {
+              "type": "boolean",
+              "description": "Whether client and server validate file extensions and mime types."
+            },
+            "contentValidation": {
+              "type": "boolean",
+              "description": "Whether file contents are inspected for malicious structures."
+            }
+          }
+        },
+        "encodings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "utf-8",
+              "base64",
+              "binary-base64",
+              "gridfs-binary",
+              "file-reference",
+              "modern"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "Supported payload encodings in MongoDB vault collection."
+        },
+        "backends": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Supported project storage backends for encrypted artifacts.",
+          "properties": {
+            "filesystem": {
+              "type": "boolean",
+              "description": "Local project-relative filesystem storage directory (./uploads)."
+            },
+            "gridfs": {
+              "type": "boolean",
+              "description": "MongoDB GridFS binary chunk bucket storage."
+            }
+          }
+        },
+        "mediaProcessing": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Client-side media optimization, transcoding, and privacy sanitization pipeline.",
+          "properties": {
+            "webWorkers": {
+              "type": "boolean",
+              "description": "Off-main-thread Web Worker execution for media processing and cryptography."
+            },
+            "ffmpegWasm": {
+              "type": "boolean",
+              "description": "Client-side WebAssembly FFmpeg media transcoding."
+            },
+            "exifScrubbing": {
+              "type": "boolean",
+              "description": "Automatic client-side stripping of GPS, camera, and device metadata from media."
+            },
+            "blurhashGeneration": {
+              "type": "boolean",
+              "description": "Pre-generation of compact Blurhash placeholders before upload."
+            },
+            "streamingDecryption": {
+              "type": "boolean",
+              "description": "Direct chunked decrypt-and-stream pipeline for large audio and video files."
+            }
+          }
+        }
+      }
+    },
+    "dataLifecycle": {
+      "title": "Data Lifecycle",
+      "description": "User data retention, export, and GDPR/CCPA deletion guarantees.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "userExport",
+        "accountDeletion",
+        "itemDeletion",
+        "softDelete",
+        "retentionPolicy",
+        "backupRetentionDays"
+      ],
+      "properties": {
+        "userExport": {
+          "type": "boolean",
+          "description": "Whether users can download a complete encrypted export of their vault."
+        },
+        "accountDeletion": {
+          "type": "boolean",
+          "description": "Whether users can permanently delete their account and associated data."
+        },
+        "itemDeletion": {
+          "type": "boolean",
+          "description": "Whether individual items can be permanently purged."
+        },
+        "softDelete": {
+          "type": "boolean",
+          "description": "False to enforce immediate cryptographic shredding upon deletion."
+        },
+        "retentionPolicy": {
+          "type": "boolean",
+          "description": "Whether automated data retention guidelines are active."
+        },
+        "backupRetentionDays": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of days before encrypted system backups are rotated out."
+        }
+      }
+    },
+    "apiSecurity": {
+      "title": "API Security",
+      "description": "API boundary controls, TLS requirements, and request protection.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "httpsRequired",
+        "tls",
+        "cors",
+        "csrfProtection",
+        "rateLimiting",
+        "requestValidation",
+        "inputSanitization",
+        "securityHeaders",
+        "requestSizeLimits"
+      ],
+      "properties": {
+        "httpsRequired": {
+          "type": "boolean",
+          "description": "Must be true to forbid plaintext HTTP communication."
+        },
+        "tls": {
+          "type": "boolean",
+          "description": "Whether TLS 1.2+ is strictly mandated."
+        },
+        "cors": {
+          "type": "boolean",
+          "description": "Whether Cross-Origin Resource Sharing is strictly constrained."
+        },
+        "csrfProtection": {
+          "type": "boolean",
+          "description": "Whether CSRF mitigation is active across state-changing endpoints."
+        },
+        "rateLimiting": {
+          "type": "boolean",
+          "description": "Whether incoming API traffic is governed by rate limiters."
+        },
+        "requestValidation": {
+          "type": "boolean",
+          "description": "Whether all request payloads undergo schema validation."
+        },
+        "inputSanitization": {
+          "type": "boolean",
+          "description": "Whether input data is sanitized against injection attacks."
+        },
+        "securityHeaders": {
+          "type": "boolean",
+          "description": "Whether defense-in-depth security headers are attached to responses."
+        },
+        "requestSizeLimits": {
+          "type": "boolean",
+          "description": "Whether maximum payload byte limits are enforced to thwart DoS attacks."
+        }
+      }
+    },
+    "database": {
+      "title": "Database Security",
+      "description": "Database engine, connection encryption, and backup configurations.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "tlsRequired",
+        "applicationLevelEncryption",
+        "sensitiveFieldsEncrypted",
+        "credentialsFromEnvironment",
+        "backup"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["MongoDB", "PostgreSQL", "MySQL", "SQLite", "DynamoDB", "Redis", "CouchDB"],
+          "description": "Database management system."
+        },
+        "tlsRequired": {
+          "type": "boolean",
+          "description": "Must be true to mandate encrypted connections to the database."
+        },
+        "applicationLevelEncryption": {
+          "type": "boolean",
+          "description": "True if application performs field or envelope encryption before DB writes."
+        },
+        "sensitiveFieldsEncrypted": {
+          "type": "boolean",
+          "description": "True if all confidential fields are encrypted in the database collections."
+        },
+        "credentialsFromEnvironment": {
+          "type": "boolean",
+          "description": "True if DB connection strings and credentials are read exclusively from environment variables."
+        },
+        "backup": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "retentionDays", "encrypted"],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether automated database backups are enabled."
+            },
+            "retentionDays": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Database backup retention period in days."
+            },
+            "encrypted": {
+              "type": "boolean",
+              "description": "Must be true to ensure DB backup archives are encrypted."
+            }
+          }
+        },
+        "multiCluster": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Multi-cluster MongoDB connection pool and automatic failover system.",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "standbyCluster": {
+              "type": "boolean"
+            },
+            "pingIntervalMs": {
+              "type": "integer",
+              "minimum": 1000
+            },
+            "autoFailover": {
+              "type": "boolean"
+            },
+            "splitBrainMitigation": {
+              "type": "boolean"
+            }
+          }
+        },
+        "gridfs": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "GridFS bucket configuration for large encrypted media storage.",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "bucketName": {
+              "type": "string"
+            }
+          }
+        },
+        "isolation": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "User data collection isolation and compound index optimization.",
+          "properties": {
+            "perUserCollection": {
+              "type": "boolean"
+            },
+            "compoundIndexes": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "privacy": {
+      "title": "Privacy Posture",
+      "description": "User privacy controls, data telemetry, and tracking policies.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataCollection",
+        "tracking",
+        "thirdPartyDataSharing",
+        "advertising",
+        "telemetry",
+        "analytics"
+      ],
+      "properties": {
+        "dataCollection": {
+          "type": "string",
+          "enum": ["none", "minimal", "essential", "opt-in", "full"],
+          "description": "Scope of user information collected."
+        },
+        "tracking": {
+          "type": "boolean",
+          "description": "Must be false to forbid cross-site user tracking."
+        },
+        "thirdPartyDataSharing": {
+          "type": "boolean",
+          "description": "Must be false to prevent user data sharing with third parties."
+        },
+        "advertising": {
+          "type": "boolean",
+          "description": "Must be false to guarantee an ad-free service."
+        },
+        "telemetry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled"],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether diagnostic telemetry collection is active."
+            }
+          }
+        },
+        "analytics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled"],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether product analytics are collected."
+            }
+          }
+        }
+      }
+    },
+    "logging": {
+      "title": "Logging & Audit Trail",
+      "description": "Structured logging, security auditing, and sensitive data redaction.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "structured", "auditLogs", "securityEvents", "redaction"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether application logging is enabled."
+        },
+        "structured": {
+          "type": "boolean",
+          "description": "Whether logs are output in structured JSON format."
+        },
+        "auditLogs": {
+          "type": "boolean",
+          "description": "Whether critical user and administrative actions generate immutable audit logs."
+        },
+        "securityEvents": {
+          "type": "boolean",
+          "description": "Whether authentication and authorization failures produce security log events."
+        },
+        "redaction": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "enabled",
+            "redactPasswords",
+            "redactEncryptionKeys",
+            "redactTokens",
+            "redactRecoveryCodes",
+            "redactPlaintextContent"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether automatic secret redaction is enforced before logs are written."
+            },
+            "redactPasswords": {
+              "type": "boolean",
+              "description": "Redacts passwords and credentials from log outputs."
+            },
+            "redactEncryptionKeys": {
+              "type": "boolean",
+              "description": "Redacts encryption keys and derived keys from log outputs."
+            },
+            "redactTokens": {
+              "type": "boolean",
+              "description": "Redacts session tokens, JWTs, and bearer tokens."
+            },
+            "redactRecoveryCodes": {
+              "type": "boolean",
+              "description": "Redacts emergency recovery codes and master recovery keys."
+            },
+            "redactPlaintextContent": {
+              "type": "boolean",
+              "description": "Redacts user plaintexts, notes, and file payloads from log messages."
+            }
+          }
+        }
+      }
+    },
+    "observability": {
+      "title": "Observability & Diagnostics",
+      "description": "Health checks, metrics endpoints, error tracking, and performance monitoring.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "healthCheck",
+        "readinessCheck",
+        "metrics",
+        "errorTracking",
+        "performanceMonitoring"
+      ],
+      "properties": {
+        "healthCheck": {
+          "type": "string",
+          "pattern": "^/.*",
+          "description": "Liveness health check endpoint path."
+        },
+        "readinessCheck": {
+          "type": "string",
+          "pattern": "^/.*",
+          "description": "Readiness probe endpoint path."
+        },
+        "metrics": {
+          "type": "boolean",
+          "description": "Whether application runtime metrics are collected and exported."
+        },
+        "errorTracking": {
+          "type": "boolean",
+          "description": "Whether real-time error tracking and alerting (e.g. Sentry) are configured."
+        },
+        "performanceMonitoring": {
+          "type": "boolean",
+          "description": "Whether application performance tracing (APM) is configured."
+        },
+        "sentry": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Sentry error tracking and performance profiling configuration.",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "clientTraces": {
+              "type": "boolean"
+            },
+            "serverProfiling": {
+              "type": "boolean"
+            }
+          }
+        },
+        "logrocket": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "LogRocket frontend session replay and backend telemetry configuration.",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "sessionReplay": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "performance": {
+      "title": "Performance Specifications",
+      "description": "Memory constraints, upload limits, and optimization techniques.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxUploadSizeMB",
+        "recommendedMemoryMB",
+        "compression",
+        "lazyLoading",
+        "streamingUploads",
+        "chunkedUploads",
+        "workerBasedEncryption"
+      ],
+      "properties": {
+        "maxUploadSizeMB": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Maximum upload payload size in megabytes."
+        },
+        "recommendedMemoryMB": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Recommended server runtime RAM allocation in megabytes."
+        },
+        "compression": {
+          "type": "boolean",
+          "description": "Whether HTTP response compression (e.g. gzip, brotli) is applied."
+        },
+        "lazyLoading": {
+          "type": "boolean",
+          "description": "Whether client lazily loads heavy assets and code chunks."
+        },
+        "streamingUploads": {
+          "type": "boolean",
+          "description": "Whether media and large files stream directly to storage."
+        },
+        "chunkedUploads": {
+          "type": "boolean",
+          "description": "Whether file uploads support chunked pipelining."
+        },
+        "workerBasedEncryption": {
+          "type": "boolean",
+          "description": "Whether client cryptography runs inside Web Workers to avoid main-thread UI jank."
+        }
+      }
+    },
+    "runtime": {
+      "title": "Runtime Environment",
+      "description": "Target server runtime, Node.js version requirements, and process lifecycle.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node", "environment", "runtime", "https", "gracefulShutdown"],
+      "properties": {
+        "node": {
+          "type": "string",
+          "pattern": "^(\\^|~|>=|>|<=|<|=)?\\s*\\d+(\\.\\d+)*.*$",
+          "description": "Supported Node.js engine version range.",
+          "examples": [">=18.20.0"]
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["production", "staging", "development", "test"],
+          "description": "Execution deployment environment."
+        },
+        "runtime": {
+          "type": "string",
+          "enum": ["nodejs", "bun", "deno", "browser", "worker"],
+          "description": "Target JavaScript/TypeScript execution runtime."
+        },
+        "https": {
+          "type": "boolean",
+          "description": "Whether HTTPS transport is active."
+        },
+        "gracefulShutdown": {
+          "type": "boolean",
+          "description": "Whether SIGINT/SIGTERM triggers graceful shutdown of connections and servers."
+        }
+      }
+    },
+    "deployment": {
+      "title": "Deployment Guidelines",
+      "description": "Production environment criteria and secret management policies.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "environment",
+        "httpsRequired",
+        "healthChecks",
+        "gracefulShutdown",
+        "environmentSecrets",
+        "secretsInRepository"
+      ],
+      "properties": {
+        "environment": {
+          "type": "string",
+          "enum": ["production", "staging", "development", "test"],
+          "description": "Deployment environment tier."
+        },
+        "httpsRequired": {
+          "type": "boolean",
+          "description": "Must be true in production."
+        },
+        "healthChecks": {
+          "type": "boolean",
+          "description": "Whether load-balancer health checks are bound and functional."
+        },
+        "gracefulShutdown": {
+          "type": "boolean",
+          "description": "Whether zero-downtime rolling deploys and graceful draining are supported."
+        },
+        "environmentSecrets": {
+          "type": "boolean",
+          "description": "True if production secrets are provided via environment variables or secret vaults."
+        },
+        "secretsInRepository": {
+          "type": "boolean",
+          "description": "Must be false to certify no plaintext secrets or certificates are committed to Git."
+        }
+      }
+    },
+    "testing": {
+      "title": "Testing Assurance",
+      "description": "Test suite coverage flags across unit, integration, crypto, and security levels.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unit",
+        "integration",
+        "e2e",
+        "security",
+        "authentication",
+        "encryption",
+        "upload",
+        "database"
+      ],
+      "properties": {
+        "unit": {
+          "type": "boolean",
+          "description": "Automated unit tests present and passing."
+        },
+        "integration": {
+          "type": "boolean",
+          "description": "Automated integration tests present and passing."
+        },
+        "e2e": {
+          "type": "boolean",
+          "description": "End-to-end user journey tests present and passing."
+        },
+        "security": {
+          "type": "boolean",
+          "description": "Automated security regressions and penetration tests present."
+        },
+        "authentication": {
+          "type": "boolean",
+          "description": "Auth flow, MFA, and session invalidation test suites passing."
+        },
+        "encryption": {
+          "type": "boolean",
+          "description": "Cryptographic vectors and round-trip encryption/decryption tests passing."
+        },
+        "upload": {
+          "type": "boolean",
+          "description": "File upload validation and streaming chunk tests passing."
+        },
+        "database": {
+          "type": "boolean",
+          "description": "Database persistence, indexing, and connection tests passing."
+        },
+        "crypto": {
+          "type": "boolean",
+          "description": "Dual cascade and primitive encryption unit tests passing."
+        },
+        "vault": {
+          "type": "boolean",
+          "description": "Per-vault module tests (Notes, Photos, Videos, Documents, Passwords, etc.) passing."
+        },
+        "sync": {
+          "type": "boolean",
+          "description": "Delta sync, tombstone purge, and conflict resolution tests passing."
+        },
+        "stores": {
+          "type": "boolean",
+          "description": "Zustand state store integrity and subscription tests passing."
+        },
+        "media": {
+          "type": "boolean",
+          "description": "Media player, streaming security, and thumbnail tests passing."
+        },
+        "workers": {
+          "type": "boolean",
+          "description": "Web Worker pipeline and off-thread encryption tests passing."
+        },
+        "repeatStress": {
+          "type": "boolean",
+          "description": "Multi-cycle race condition stress test pipeline passing."
+        },
+        "lighthouse": {
+          "type": "boolean",
+          "description": "Lighthouse performance, accessibility, best-practices, and SEO audit passing."
+        }
+      }
+    },
+    "dependencySecurity": {
+      "title": "Dependency Security",
+      "description": "Supply chain security verification and static analysis scanning.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lockfileRequired",
+        "dependencyAudit",
+        "dependencyScanning",
+        "secretScanning",
+        "sast"
+      ],
+      "properties": {
+        "lockfileRequired": {
+          "type": "boolean",
+          "description": "Must be true to mandate deterministic package lockfiles."
+        },
+        "dependencyAudit": {
+          "type": "boolean",
+          "description": "Whether automated npm security audits run in CI pipelines."
+        },
+        "dependencyScanning": {
+          "type": "boolean",
+          "description": "Whether automated vulnerability scanners inspect transitive dependencies."
+        },
+        "secretScanning": {
+          "type": "boolean",
+          "description": "Whether secret scanning prevents accidental credential commits."
+        },
+        "sast": {
+          "type": "boolean",
+          "description": "Whether Static Application Security Testing (SAST) runs on commits."
+        }
+      }
+    },
+    "threatModel": {
+      "title": "Threat Model",
+      "description": "Specification of considered threats, security guarantees, and out-of-scope risks.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protectsAgainst", "outOfScope"],
+      "properties": {
+        "protectsAgainst": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Threats against which the application design provides strong cryptographic or architectural mitigation."
+        },
+        "outOfScope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Threat scenarios deliberately categorized as out-of-scope for the client-side zero-knowledge model."
+        }
+      }
+    },
+    "compatibility": {
+      "title": "Platform Compatibility",
+      "description": "Target browser versions, supported device form-factors, and platform runtime prerequisites.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["browsers", "devices", "requirements"],
+      "properties": {
+        "browsers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^(>=|>|<=|<|=|~|\\^)?\\s*\\d+(\\.\\d+)*$"
+          },
+          "description": "Minimum browser version matrix required for modern cryptographic primitives."
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["desktop", "laptop", "tablet", "mobile", "wearable", "tv"]
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Supported hardware device form-factors."
+        },
+        "requirements": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["javascript", "webCrypto", "secureContext"],
+          "properties": {
+            "javascript": {
+              "type": "boolean",
+              "description": "Whether modern JavaScript execution is required."
+            },
+            "webCrypto": {
+              "type": "boolean",
+              "description": "Must be true to mandate standard Web Cryptography API support."
+            },
+            "secureContext": {
+              "type": "boolean",
+              "description": "Must be true to require execution within a browser Secure Context (HTTPS or localhost)."
+            }
+          }
+        }
+      }
+    },
+    "pwa": {
+      "title": "Progressive Web App Specification",
+      "description": "PWA installability, service worker caching, and offline access options.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "installable", "serviceWorker", "offlineSupport"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether PWA capabilities are enabled."
+        },
+        "installable": {
+          "type": "boolean",
+          "description": "Whether web app manifest conforms to standalone installability standards."
+        },
+        "serviceWorker": {
+          "type": "boolean",
+          "description": "Whether service worker is registered for caching static application shell."
+        },
+        "offlineSupport": {
+          "type": "boolean",
+          "description": "Whether offline UI and cached state are available."
+        }
+      }
+    },
+    "permissions": {
+      "title": "Runtime Permissions",
+      "description": "Browser and hardware device capabilities requested by the application.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["browser", "device"],
+      "properties": {
+        "browser": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "description": "Browser API permissions requested (e.g. notifications, clipboard-read)."
+        },
+        "device": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "description": "Hardware device permissions requested (e.g. camera, microphone)."
+        }
+      }
+    },
+    "branding": {
+      "title": "Branding & Visual Theme",
+      "description": "Visual theme colors, icons, and theme awareness settings.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary", "secondary", "favicon", "themeAware"],
+      "properties": {
+        "primary": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$",
+          "description": "Primary brand color hex code.",
+          "examples": ["#000000"]
+        },
+        "secondary": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$",
+          "description": "Secondary brand color hex code.",
+          "examples": ["#FFFFFF"]
+        },
+        "favicon": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Relative path or URL to the brand favicon."
+        },
+        "themeAware": {
+          "type": "boolean",
+          "description": "Whether the application supports dynamic dark and light mode themes."
+        }
+      }
+    },
+    "metadata": {
+      "title": "Manifest Document Metadata",
+      "description": "Record creation and last-modified dates.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["createdAt", "updatedAt"],
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}(?:T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?)?$",
+          "description": "Initial creation timestamp (ISO 8601 date or date-time).",
+          "examples": ["2026-03-10"]
+        },
+        "updatedAt": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}(?:T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?)?$",
+          "description": "Last updated timestamp (ISO 8601 date or date-time).",
+          "examples": ["2026-08-25"]
+        }
+      }
+    },
+    "paths": {
+      "title": "Project Relative Paths",
+      "description": "Project-relative directory paths, asset locations, and entrypoint boundaries across the Vault repository.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "type": "string",
+          "description": "Project root relative path or working directory.",
+          "examples": ["."]
+        },
+        "schemas": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*schemas.*$",
+          "description": "Project-relative path to JSON and manifest schemas directory.",
+          "examples": ["./schemas"]
+        },
+        "uploads": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*uploads.*$",
+          "description": "Project-relative path to local file staging and encrypted blob uploads directory.",
+          "examples": ["./uploads"]
+        },
+        "backups": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*backups.*$",
+          "description": "Project-relative path to system and metadata backup archives directory.",
+          "examples": ["./backups"]
+        },
+        "logs": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*logs.*$",
+          "description": "Project-relative path to structured application and audit log directory.",
+          "examples": ["./logs"]
+        },
+        "dist": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*dist.*$",
+          "description": "Project-relative path to backend distribution bundle and compiled server output.",
+          "examples": ["./dist"]
+        },
+        "build": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*build.*$",
+          "description": "Project-relative path to frontend client distribution bundle.",
+          "examples": ["./build"]
+        },
+        "public": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*public.*$",
+          "description": "Project-relative path to static assets, icons, and web manifest.",
+          "examples": ["./public"]
+        },
+        "src": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*src.*$",
+          "description": "Project-relative path to frontend React TypeScript source directory.",
+          "examples": ["./src"]
+        },
+        "server": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*server.*$",
+          "description": "Project-relative path to backend Express/Node.js server source directory.",
+          "examples": ["./server"]
+        },
+        "tests": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*tests.*$",
+          "description": "Project-relative path to Vitest automated test suites directory.",
+          "examples": ["./tests"]
+        },
+        "doc": {
+          "type": "string",
+          "pattern": "^\\.?\\/?.*doc.*$",
+          "description": "Project-relative path to technical documentation, architecture records, and task roadmap directory.",
+          "examples": ["./doc"]
+        }
+      }
+    },
+    "modules": {
+      "title": "Vault Modules & Ecosystem",
+      "description": "Modular vault components and specialized feature subsystems active in the Vault application.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "activeVaults": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "photo",
+              "video",
+              "audio",
+              "document",
+              "note",
+              "chat",
+              "todo",
+              "password",
+              "secret",
+              "contact",
+              "location",
+              "file",
+              "other-files",
+              "other",
+              "settings",
+              "system",
+              "users",
+              "card",
+              "identity",
+              "wifi"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "List of active zero-knowledge vault subsystems enabled in the project."
+        },
+        "realVaultEcosystem": {
+          "type": "boolean",
+          "description": "Whether the multi-vault unified ecosystem card and navigation interface is active."
+        },
+        "deviceSessions": {
+          "type": "boolean",
+          "description": "Whether client device fingerprinting, session telemetry, and remote session revocation are enabled."
+        },
+        "privacyInterface": {
+          "type": "boolean",
+          "description": "Whether screenshot blurring, privacy shield, and tab-hiding protections are enabled."
+        },
+        "videoMiniPlayer": {
+          "type": "boolean",
+          "description": "Whether cross-route picture-in-picture video playback is enabled via videoMiniPlayerStore."
+        }
+      }
+    }
+  }
+}
