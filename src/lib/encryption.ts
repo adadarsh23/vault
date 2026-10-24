@@ -4,6 +4,7 @@ import {
   encryptData as encryptDataPrimitives,
   decryptData as decryptDataPrimitives,
   decryptFileEnvelope,
+  decryptFileInWorker,
   encryptFileEnvelope,
   rotateItemEnvelopeKey,
   isEnvelopeBundle,
@@ -26,6 +27,7 @@ import { createTrackedBlobUrl } from './blobRegistry';
 
 export {
   decryptFileEnvelope,
+  decryptFileInWorker,
   encryptFileEnvelope,
   rotateItemEnvelopeKey,
   isEnvelopeBundle,
@@ -1323,7 +1325,7 @@ export const decryptToFile = async (
       return null;
     }
 
-    const decrypted = await decryptFileEnvelope(bundle, secretKey);
+    const decrypted = await decryptFileInWorker(bundle, secretKey);
     const decryptedBytes = new Uint8Array(decrypted);
 
     try {

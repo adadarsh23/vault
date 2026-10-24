@@ -105,6 +105,7 @@ const encryptedActivityLogSchema = new mongoose.Schema(
 /**
  * Indexes for optimal querying
  */
+encryptedActivityLogSchema.index({ userId: 1, isDeleted: 1, createdAt: -1 });
 encryptedActivityLogSchema.index({ userId: 1, createdAt: -1 });
 encryptedActivityLogSchema.index({ userId: 1, action: 1, createdAt: -1 });
 encryptedActivityLogSchema.index({ userId: 1, 'metadata.ipAddress': 1, createdAt: -1 });

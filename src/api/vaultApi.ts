@@ -45,6 +45,7 @@ export interface CompleteMultipartUploadPayload {
   fileSha256: string;
   clientUpdatedAt: string;
   deviceId?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface FolderCreatePayload {
@@ -296,6 +297,10 @@ export const vaultApi = {
 
     if (typeof payload.deviceId === 'string' && payload.deviceId.trim().length > 0) {
       sanitizedPayload.deviceId = payload.deviceId.trim();
+    }
+
+    if (typeof payload.metadata === 'object' && payload.metadata !== null) {
+      sanitizedPayload.metadata = payload.metadata;
     }
 
     const { data } = await apiClient.post<ApiResponse<TResponse>>(

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import VideoPlayer, { getMimeTypeFromUrl } from '../../../../components/ui/video-player';
 import { Button } from '../../../../components/ui/Button';
-import { Lock, EyeOff, AlertTriangle, Video } from 'lucide-react';
+import { EyeOff, AlertTriangle, Video, Loader2 } from 'lucide-react';
 import { useVaultStore } from '../../../../store/vaultStore';
 import { useVideoMiniPlayerStore } from '../../../../store/videoMiniPlayerStore';
 import { blurHashToDataUrl } from '../../../../lib/blurhash';
@@ -9,6 +9,7 @@ import { createTrackedBlobUrl, revokeBlobUrl } from '../../../../lib/blobRegistr
 import { cn } from '../../../../lib/utils';
 import {
   describeVaultPreviewError,
+  getCachedMediaBlobUrl,
   getVaultItemPreviewRevision,
   getVaultItemPreviewUrl,
   vaultItemHasServerFileReference,
@@ -66,9 +67,8 @@ type WindowWithIdle = Window & {
 };
 
 // Atlas GridFS envelope decryption reads large encrypted videos before the
-// browser can decrypt them. Do not classify a healthy large-file response as
-// a format error after the old 10-second timeout.
-const PREVIEW_REQUEST_TIMEOUT_MS = 60000;
+// browser can decrypt them. Generous 2-minute timeout prevents ERR_EMPTY_RESPONSE / connection abort.
+const PREVIEW_REQUEST_TIMEOUT_MS = 120000;
 
 const withTimeout = async <T,>(
   promise: Promise<T>,
@@ -150,8 +150,33 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
     onToggleFloating,
     onClose,
   }) => {
-    const [url, setUrl] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const mimeType = useMemo(
+      () =>
+        item.metadata?.mimeType ||
+        (item as any).file?.mimeType ||
+        getMimeTypeFromUrl(item.title) ||
+        (type === 'video' ? 'video/mp4' : ''),
+      [item.metadata?.mimeType, (item as any).file?.mimeType, item.title, type],
+    );
+
+    const previewRevision = useMemo(
+      () => getVaultItemPreviewRevision(item),
+      [
+        item.id,
+        item.updatedAt,
+        item.content instanceof Uint8Array ? item.content.byteLength : 0,
+        typeof item.content === 'string' ? item.content.length : 0,
+        mimeType,
+      ],
+    );
+
+    const initialCachedUrl = useMemo(
+      () => getCachedMediaBlobUrl(previewRevision),
+      [previewRevision],
+    );
+
+    const [url, setUrl] = useState<string | null>(() => initialCachedUrl);
+    const [isLoading, setIsLoading] = useState<boolean>(() => !initialCachedUrl && !isThumbnail);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [thumbnailError, setThumbnailError] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -203,15 +228,6 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
       return () => window.removeEventListener('vault:panic-lock', handlePanic);
     }, []);
 
-    const mimeType = useMemo(
-      () =>
-        item.metadata?.mimeType ||
-        (item as any).file?.mimeType ||
-        getMimeTypeFromUrl(item.title) ||
-        getMimeTypeFromUrl(url || '') ||
-        (type === 'video' ? 'video/mp4' : ''),
-      [item.metadata?.mimeType, (item as any).file?.mimeType, item.title, url, type],
-    );
     const isHeicMime =
       mimeType === 'image/heic' ||
       mimeType === 'image/heif' ||
@@ -272,17 +288,6 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
         }
       };
     }, [url, type, item, mimeType, isFloating]);
-
-    const previewRevision = useMemo(
-      () => getVaultItemPreviewRevision(item),
-      [
-        item.id,
-        item.updatedAt,
-        item.content instanceof Uint8Array ? item.content.byteLength : 0,
-        typeof item.content === 'string' ? item.content.length : 0,
-        mimeType,
-      ],
-    );
 
     const isClientEncrypted =
       typeof item.metadata === 'object' && item.metadata !== null
@@ -348,26 +353,60 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
       };
 
       const run = async () => {
+        const cached = getCachedMediaBlobUrl(previewRevision);
+        if (cached) {
+          if (!cancelled) {
+            setManagedBlob(cached);
+            effectSourceUrl = cached;
+            setUrl(cached);
+            setIsLoading(false);
+          }
+          return;
+        }
+
         setIsLoading(true);
         setErrorMessage(null);
 
         try {
           const current = itemRef.current;
 
-          if (hasServerFile) {
+          if (hasServerFile || type === 'video') {
             if (type === 'video') {
+              if (isThumbnail) {
+                const preThumb =
+                  (current.metadata as any)?.thumbnail ||
+                  (current.metadata as any)?.poster ||
+                  (current.metadata as any)?.previewUrl;
+                if (preThumb) {
+                  setIsLoading(false);
+                  return;
+                }
+              }
               // MongoDB/GridFS cloud media is served directly via signed streaming URLs.
-              const directUrl = await withTimeout(
-                getSignedUrl(current.id, 'view'),
-                PREVIEW_REQUEST_TIMEOUT_MS,
-                'SIGNED_URL_TIMEOUT',
-              );
+              if (hasServerFile) {
+                try {
+                  const directUrl = await withTimeout(
+                    getSignedUrl(current.id, 'stream'),
+                    PREVIEW_REQUEST_TIMEOUT_MS,
+                    'SIGNED_URL_TIMEOUT',
+                  );
 
-              if (cancelled) return;
-              setManagedBlob(null);
-              effectSourceUrl = directUrl;
-              setUrl(directUrl);
-              return;
+                  if (cancelled) return;
+                  setManagedBlob(null);
+                  effectSourceUrl = directUrl;
+                  setUrl(directUrl);
+                  setIsLoading(false);
+                  return;
+                } catch (signedErr) {
+                  logger.warn(
+                    'Signed streaming URL fetch failed, falling back to local decryption',
+                    {
+                      itemId: current.id,
+                      error: signedErr,
+                    },
+                  );
+                }
+              }
             }
 
             if (!isClientEncrypted) {
@@ -488,7 +527,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
         return () => {
           cancelled = true;
           clearTimeout(timeoutId);
-          if (effectBlobUrl) safeRevoke(effectBlobUrl);
+          if (effectBlobUrl && !getCachedMediaBlobUrl(previewRevision)) safeRevoke(effectBlobUrl);
           setUrl((currentUrl) => (currentUrl === effectSourceUrl ? null : currentUrl));
           if (managedBlobRef.current === effectBlobUrl) managedBlobRef.current = null;
         };
@@ -502,8 +541,8 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
         if (idleId !== null && win.cancelIdleCallback) {
           win.cancelIdleCallback(idleId);
         }
-        // Do not revoke a URL created by a newer preview effect.
-        if (effectBlobUrl) safeRevoke(effectBlobUrl);
+        // Do not revoke a URL created by a newer preview effect or stored in media cache.
+        if (effectBlobUrl && !getCachedMediaBlobUrl(previewRevision)) safeRevoke(effectBlobUrl);
         setUrl((currentUrl) => (currentUrl === effectSourceUrl ? null : currentUrl));
         if (managedBlobRef.current === effectBlobUrl) managedBlobRef.current = null;
       };
@@ -607,22 +646,216 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
           />
         )}
 
-        {/* 2. Slim Cryptographic Decrypting Progress Bar / Shimmer Wave */}
-        <div className="absolute top-0 inset-x-0 h-1 bg-black/50 overflow-hidden z-20">
-          <div className="h-full w-full bg-gradient-to-r from-transparent via-cyan-400 via-indigo-400 to-transparent animate-pulse -translate-x-full duration-1000" />
-        </div>
-
-        {/* 3. Cryptographic Loading Status Pill */}
-        <div className="relative z-10 flex items-center gap-1.5 rounded-full border border-white/15 bg-black/75 px-3 py-1 text-[10px] font-mono text-white/90 shadow-2xl backdrop-blur-md">
-          <Lock className="h-3 w-3 text-cyan-400 animate-pulse" />
-          <span className="tracking-wider">AES-256 Decrypting...</span>
-        </div>
-
-        {/* Bottom subtle shimmer wave */}
-        <div className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent animate-pulse" />
+        {/* Loading Spinner */}
+        <Loader2
+          className={cn(
+            'relative z-10 animate-spin text-white',
+            isThumbnail ? 'h-5 w-5' : 'h-7 w-7',
+          )}
+        />
       </div>
     );
 
+    const thumbnailSrc =
+      (item.metadata as any)?.thumbnail ||
+      (item.metadata as any)?.poster ||
+      (item.metadata as any)?.previewUrl;
+
+    // 1. Instant Thumbnail Mode
+    if (isThumbnail) {
+      if (!isNearViewport) {
+        return (
+          <div
+            ref={mediaElementRef as React.RefObject<HTMLDivElement>}
+            className={cn(className, 'bg-white/5')}
+            aria-hidden="true"
+          />
+        );
+      }
+
+      // Fast image thumbnail available
+      if (thumbnailSrc && !thumbnailError) {
+        return (
+          <div
+            data-vault-shield="true"
+            className="relative h-full w-full overflow-hidden select-none safe-media-container vault-print-protected"
+            onPointerDown={() => setInternalTouchRevealed(true)}
+            onPointerUp={() => setInternalTouchRevealed(false)}
+            onPointerLeave={() => setInternalTouchRevealed(false)}
+            onPointerCancel={() => setInternalTouchRevealed(false)}
+          >
+            <img
+              ref={mediaElementRef as React.RefObject<HTMLImageElement>}
+              src={thumbnailSrc}
+              alt={item.title || `${type} thumbnail`}
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+              onContextMenu={(e) => e.preventDefault()}
+              className={cn(
+                className,
+                'object-cover w-full h-full pointer-events-none vault-print-protected',
+                isBlurred
+                  ? 'filter blur-2xl scale-110 select-none transition-all duration-300 group-hover:filter-none group-hover:blur-0 group-hover:scale-100 hover:filter-none hover:blur-0 hover:scale-100'
+                  : 'filter-none blur-0 scale-100 transition-all duration-300',
+              )}
+              onLoad={(e) => {
+                const img = e.currentTarget;
+                if (img.naturalWidth && img.naturalHeight && onAspectRatioLoaded) {
+                  onAspectRatioLoaded(img.naturalWidth / img.naturalHeight);
+                }
+              }}
+              onError={() => setThumbnailError(true)}
+            />
+            {type === 'video' && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="rounded-full bg-black/40 backdrop-blur-xs p-2 text-white/90 shadow-lg border border-white/20 transition-transform group-hover:scale-110">
+                  <Video className="w-4 h-4" />
+                </div>
+              </div>
+            )}
+            {isBlurred && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none backdrop-blur-xl bg-black/10 transition-opacity duration-300 group-hover:opacity-0 hover:opacity-0">
+                <div className="flex items-center gap-1 rounded-full bg-black/70 border border-white/20 px-2 py-0.5 text-[9px] font-medium text-amber-300 shadow-2xl backdrop-blur-md">
+                  <EyeOff className="h-2.5 w-2.5 text-amber-400" />
+                  <span className="hidden xs:inline">Discreet</span>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // Video thumbnail fallback: render video element at first frame if stream is ready, else video card
+      if (type === 'video') {
+        if (url) {
+          return (
+            <div
+              data-vault-shield="true"
+              className="relative h-full w-full overflow-hidden select-none safe-media-container vault-print-protected"
+              onPointerDown={() => setInternalTouchRevealed(true)}
+              onPointerUp={() => setInternalTouchRevealed(false)}
+              onPointerLeave={() => setInternalTouchRevealed(false)}
+              onPointerCancel={() => setInternalTouchRevealed(false)}
+            >
+              <video
+                ref={mediaElementRef as React.RefObject<HTMLVideoElement>}
+                src={`${url}#t=0.1`}
+                preload="metadata"
+                muted
+                playsInline
+                className={cn(
+                  className,
+                  'object-cover w-full h-full pointer-events-none vault-print-protected',
+                  isBlurred
+                    ? 'filter blur-2xl scale-110 select-none transition-all duration-300'
+                    : 'filter-none blur-0 scale-100 transition-all duration-300',
+                )}
+                onLoadedMetadata={(e) => {
+                  const v = e.currentTarget;
+                  if (v.videoWidth && v.videoHeight && onAspectRatioLoaded) {
+                    onAspectRatioLoaded(v.videoWidth / v.videoHeight);
+                  }
+                }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="rounded-full bg-black/40 backdrop-blur-xs p-2 text-white/90 shadow-lg border border-white/20 transition-transform group-hover:scale-110">
+                  <Video className="w-4 h-4" />
+                </div>
+              </div>
+              {isBlurred && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none backdrop-blur-xl bg-black/10 transition-opacity duration-300 group-hover:opacity-0 hover:opacity-0">
+                  <div className="flex items-center gap-1 rounded-full bg-black/70 border border-white/20 px-2 py-0.5 text-[9px] font-medium text-amber-300 shadow-2xl backdrop-blur-md">
+                    <EyeOff className="h-2.5 w-2.5 text-amber-400" />
+                    <span className="hidden xs:inline">Discreet</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        const ext = (item.title || '').split('.').pop()?.toUpperCase() || 'VIDEO';
+        return (
+          <div
+            data-vault-shield="true"
+            className={cn(
+              'relative h-full w-full overflow-hidden select-none safe-media-container vault-print-protected flex flex-col items-center justify-center bg-gradient-to-br from-neutral-900/90 to-black',
+              className,
+            )}
+            onPointerDown={() => setInternalTouchRevealed(true)}
+            onPointerUp={() => setInternalTouchRevealed(false)}
+            onPointerLeave={() => setInternalTouchRevealed(false)}
+            onPointerCancel={() => setInternalTouchRevealed(false)}
+          >
+            {blurDataUrl ? (
+              <img
+                src={blurDataUrl}
+                alt={item.title || 'Video preview'}
+                className={cn(
+                  'absolute inset-0 w-full h-full object-cover pointer-events-none',
+                  isBlurred ? 'filter blur-2xl scale-110' : 'filter blur-sm opacity-60',
+                )}
+              />
+            ) : null}
+            <div className="relative z-10 flex flex-col items-center gap-1.5 p-3 text-center pointer-events-none">
+              <div className="rounded-full bg-black/60 border border-white/20 p-2.5 shadow-lg group-hover:scale-110 group-hover:bg-primary/30 group-hover:border-primary/50 transition-all duration-200 backdrop-blur-md">
+                <Video className="w-5 h-5 text-white/90" />
+              </div>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-white/70 bg-black/50 border border-white/10 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                {ext}
+              </span>
+            </div>
+            {isBlurred && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none backdrop-blur-xl bg-black/10 transition-opacity duration-300 group-hover:opacity-0 hover:opacity-0">
+                <div className="flex items-center gap-1 rounded-full bg-black/70 border border-white/20 px-2 py-0.5 text-[9px] font-medium text-amber-300 shadow-2xl backdrop-blur-md">
+                  <EyeOff className="h-2.5 w-2.5 text-amber-400" />
+                  <span className="hidden xs:inline">Discreet</span>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // Photo thumbnail without pre-generated thumb: if url is ready, render it
+      if (url) {
+        return (
+          <div
+            data-vault-shield="true"
+            className={cn(
+              'relative h-full w-full overflow-hidden select-none safe-media-container vault-print-protected',
+              className,
+            )}
+            onPointerDown={() => setInternalTouchRevealed(true)}
+            onPointerUp={() => setInternalTouchRevealed(false)}
+            onPointerLeave={() => setInternalTouchRevealed(false)}
+            onPointerCancel={() => setInternalTouchRevealed(false)}
+          >
+            <img
+              ref={mediaElementRef as React.RefObject<HTMLImageElement>}
+              src={url}
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+              onContextMenu={(e) => e.preventDefault()}
+              className={cn(
+                className,
+                'object-cover w-full h-full pointer-events-none vault-print-protected',
+                isBlurred
+                  ? 'filter blur-2xl scale-110 select-none transition-all duration-300 group-hover:filter-none group-hover:blur-0 group-hover:scale-100 hover:filter-none hover:blur-0 hover:scale-100'
+                  : 'filter-none blur-0 scale-100 transition-all duration-300',
+              )}
+              onError={onImgError}
+            />
+          </div>
+        );
+      }
+
+      return renderDecryptionPlaceholder();
+    }
+
+    // 2. Full Media Preview Mode
     if (isLoading) {
       return renderDecryptionPlaceholder();
     }
@@ -646,15 +879,6 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
     }
 
     if (!url) {
-      if (isThumbnail && !isNearViewport) {
-        return (
-          <div
-            ref={mediaElementRef as React.RefObject<HTMLDivElement>}
-            className={cn(className, 'bg-white/5')}
-            aria-hidden="true"
-          />
-        );
-      }
       return renderDecryptionPlaceholder();
     }
 
@@ -663,8 +887,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
         <div
           data-vault-shield="true"
           className={cn(
-            'relative h-full w-full overflow-hidden select-none safe-media-container vault-print-protected',
-            isThumbnail ? '' : 'flex items-center justify-center',
+            'relative h-full w-full overflow-hidden select-none safe-media-container vault-print-protected flex items-center justify-center',
           )}
           onContextMenu={(e) => e.preventDefault()}
           onPointerDown={() => setInternalTouchRevealed(true)}
@@ -675,15 +898,14 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
           <img
             ref={mediaElementRef as React.RefObject<HTMLImageElement>}
             src={url}
-            loading={isThumbnail ? 'lazy' : 'eager'}
+            loading="eager"
             decoding="async"
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}
-            fetchPriority={isThumbnail ? 'low' : 'high'}
+            fetchPriority="high"
             className={cn(
               className,
               'select-none pointer-events-auto vault-print-protected',
-              isThumbnail ? 'pointer-events-none' : '',
               isBlurred
                 ? 'filter blur-2xl scale-110 select-none transition-all duration-300 group-hover:filter-none group-hover:blur-0 group-hover:scale-100 hover:filter-none hover:blur-0 hover:scale-100'
                 : 'filter-none blur-0 scale-100 transition-all duration-300',
@@ -706,66 +928,6 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
     }
 
     if (type === 'video') {
-      if (isThumbnail) {
-        if (thumbnailError) {
-          const ext = (item.title || '').split('.').pop()?.toUpperCase() || 'VIDEO';
-          return (
-            <div
-              className={cn(
-                'flex flex-col items-center justify-center bg-black/40 text-white/40 gap-1 select-none',
-                className,
-              )}
-            >
-              <Video className="w-8 h-8 opacity-60" />
-              <span className="text-[10px] font-mono uppercase tracking-wider text-white/50 bg-white/10 px-1.5 py-0.5 rounded">
-                {ext}
-              </span>
-            </div>
-          );
-        }
-        return (
-          <div
-            data-vault-shield="true"
-            className="relative h-full w-full overflow-hidden select-none safe-media-container vault-print-protected"
-            onPointerDown={() => setInternalTouchRevealed(true)}
-            onPointerUp={() => setInternalTouchRevealed(false)}
-            onPointerLeave={() => setInternalTouchRevealed(false)}
-            onPointerCancel={() => setInternalTouchRevealed(false)}
-          >
-            <video
-              ref={mediaElementRef as React.RefObject<HTMLVideoElement>}
-              src={url}
-              className={cn(
-                className,
-                'pointer-events-none vault-print-protected',
-                isBlurred
-                  ? 'filter blur-2xl scale-110 select-none transition-all duration-300 group-hover:filter-none group-hover:blur-0 group-hover:scale-100 hover:filter-none hover:blur-0 hover:scale-100'
-                  : 'filter-none blur-0 scale-100 transition-all duration-300',
-              )}
-              muted
-              playsInline
-              preload="metadata"
-              aria-label="Video thumbnail"
-              onError={() => setThumbnailError(true)}
-              onLoadedMetadata={(e) => {
-                const v = e.currentTarget;
-                if (v.videoWidth && v.videoHeight && onAspectRatioLoaded) {
-                  onAspectRatioLoaded(v.videoWidth / v.videoHeight);
-                }
-              }}
-            />
-            {isBlurred && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none backdrop-blur-xl bg-black/10 transition-opacity duration-300 group-hover:opacity-0 hover:opacity-0">
-                <div className="flex items-center gap-1 rounded-full bg-black/70 border border-white/20 px-2 py-0.5 text-[9px] font-medium text-amber-300 shadow-2xl backdrop-blur-md">
-                  <EyeOff className="h-2.5 w-2.5 text-amber-400" />
-                  <span className="hidden xs:inline">Discreet</span>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      }
-
       return (
         <div
           className={cn(
@@ -778,6 +940,7 @@ export const SafeMedia: React.FC<SafeMediaProps> = React.memo(
         >
           <VideoPlayer
             src={url}
+            poster={blurDataUrl || undefined}
             mimeType={mimeType || undefined}
             itemId={item.id}
             title={item.title}

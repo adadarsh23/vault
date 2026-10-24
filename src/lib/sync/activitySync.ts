@@ -3,8 +3,8 @@ import { logger } from '../logger';
 import { useActivityStore } from '../../store/activityStore';
 import { API_BASE_URL, fetchWithRetry, getAuthHeaders, runInParallelPool } from './core';
 
-const ACTIVITY_LOG_PAGE_SIZE = 1000;
-const ACTIVITY_LOG_MAX_PAGES = 1000;
+const ACTIVITY_LOG_PAGE_SIZE = 50;
+const ACTIVITY_LOG_MAX_PAGES = 5;
 const DEVICE_ID_PATTERN = /^[a-zA-Z0-9._:-]+$/;
 
 const normalizeActivityDeviceId = (value: unknown): string | undefined => {
@@ -59,7 +59,10 @@ export const uploadActivityLog = async (log: any): Promise<boolean> => {
       'Activity Log Sync',
     );
     return true;
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.status === 429) {
+      throw error;
+    }
     logger.error('Activity Log Sync failed', { error });
     return false;
   }
@@ -75,13 +78,21 @@ export const uploadLogsToCloud = async (logs: any[], concurrency = 4) => {
   if (pendingLogs.length === 0) return;
 
   const syncedIds: string[] = [];
+  let isRateLimited = false;
 
   await runInParallelPool(
     pendingLogs,
     async (log) => {
-      const success = await uploadActivityLog(log);
-      if (success) {
-        syncedIds.push(log.id);
+      if (isRateLimited) return;
+      try {
+        const success = await uploadActivityLog(log);
+        if (success) {
+          syncedIds.push(log.id);
+        }
+      } catch (err: any) {
+        if (err?.status === 429 || err?.code === 'TOO_MANY_REQUESTS') {
+          isRateLimited = true;
+        }
       }
     },
     concurrency,
@@ -130,7 +141,11 @@ export const downloadLogsFromCloud = async (): Promise<any[] | null> => {
       description: log.details?.description || '',
       isSynced: true,
     }));
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.status === 429) {
+      logger.warn('downloadLogsFromCloud paused: rate limit active');
+      return null;
+    }
     logger.error('downloadLogsFromCloud failed', { error });
     return null;
   }

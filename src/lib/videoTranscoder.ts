@@ -214,16 +214,8 @@ async function fetchFileData(src: string | Blob): Promise<Uint8Array> {
  * Pre-warms the FFmpeg WebAssembly engine in idle time.
  */
 export function preloadFFmpeg(): void {
-  if (ffmpegInstance || ffmpegLoadingPromise) return;
-  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(() => {
-      getFFmpegInstance().catch(() => {});
-    });
-  } else {
-    setTimeout(() => {
-      getFFmpegInstance().catch(() => {});
-    }, 2000);
-  }
+  // Intentional no-op: FFmpeg is loaded strictly on demand when transcoding is requested
+  // to avoid consuming bandwidth, exhausting socket pools, and triggering false offline states.
 }
 
 /**
@@ -450,6 +442,12 @@ export async function transcodeVideoInBrowser(
         'ultrafast',
         '-tune',
         'zerolatency',
+        '-g',
+        '60',
+        '-keyint_min',
+        '30',
+        '-sc_threshold',
+        '0',
         '-crf',
         '26',
         '-pix_fmt',

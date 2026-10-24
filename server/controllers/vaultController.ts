@@ -631,6 +631,10 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
       typeof req.body?.clientUpdatedAt === 'string' ? req.body.clientUpdatedAt : undefined,
     deviceId: typeof req.body?.deviceId === 'string' ? req.body.deviceId : undefined,
     ipAddress: getClientIp(req),
+    metadata:
+      typeof req.body?.metadata === 'object' && req.body.metadata !== null
+        ? req.body.metadata
+        : undefined,
   });
   const normalizedResult =
     typeof (result as any)?.toObject === 'function' ? (result as any).toObject() : result;

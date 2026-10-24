@@ -3,7 +3,7 @@ let activityLoggingEnabled = true;
 let pendingSyncTimeout: number | null = null;
 let lifecycleListenersInstalled = false;
 
-const SYNC_DEBOUNCE_MS = 1500;
+const SYNC_DEBOUNCE_MS = 15000;
 
 const flushPendingActivitySync = () => {
   if (pendingSyncTimeout != null) {

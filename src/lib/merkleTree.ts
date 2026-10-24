@@ -68,6 +68,30 @@ export const computeBufferHash = async (
     return sha256('');
   }
 
+  // Hardware-accelerated Web Crypto for SHA-256 / SHA-512 (zero WASM overhead, native CPU throughput)
+  if (
+    (algorithm === 'sha256' || algorithm === 'sha512') &&
+    typeof crypto !== 'undefined' &&
+    crypto.subtle?.digest
+  ) {
+    try {
+      const algoName = algorithm === 'sha512' ? 'SHA-512' : 'SHA-256';
+      const digestInput =
+        buffer.byteOffset === 0 && buffer.byteLength === buffer.buffer.byteLength
+          ? buffer.buffer
+          : buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+      const hashBuf = await crypto.subtle.digest(algoName, digestInput as any);
+      const arr = new Uint8Array(hashBuf);
+      let hex = '';
+      for (let i = 0; i < arr.length; i++) {
+        hex += arr[i].toString(16).padStart(2, '0');
+      }
+      return hex;
+    } catch {
+      // Fallback to hash-wasm below
+    }
+  }
+
   try {
     if (algorithm === 'blake3') {
       return await blake3(buffer);

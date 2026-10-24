@@ -491,6 +491,22 @@ describe('VideoPlayer Polish Enhancements', () => {
     expect(playerContainer).toBeInTheDocument();
     expect(playerContainer.className).not.toContain('transition-all duration-300');
   });
+
+  it('renders floating mini player with close action and drag capability', () => {
+    const handleClose = vi.fn();
+    render(
+      <VideoPlayer
+        src="https://cdn.example.com/video.mp4"
+        isFloating={true}
+        onClose={handleClose}
+      />,
+    );
+
+    const closeBtn = screen.getByRole('button', { name: /close floating player/i });
+    expect(closeBtn).toBeInTheDocument();
+    fireEvent.click(closeBtn);
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('formatTime helper', () => {

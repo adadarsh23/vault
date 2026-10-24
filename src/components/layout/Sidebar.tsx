@@ -299,6 +299,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(
                 return (
                   <motion.button
                     key={item.id}
+                    type="button"
                     whileHover={compact ? undefined : { x: sidebarPosition === 'right' ? -4 : 4 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleTabClick(item.id)}

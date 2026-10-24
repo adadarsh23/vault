@@ -41,6 +41,8 @@ Comprehensive cheat sheet and execution manual for **every** Vitest, standalone,
 | **App Core Suite**         | `npx vitest run src/components/app`                                                                      | Complete app shell, navigation handler, gestures, loading screen & emergency access                                                                    |
 | **Gesture Controller**     | `npx vitest run src/components/app/__tests__/GestureController.test.ts`                                  | Mobile 60/120fps rAF swipe, left/right sidebar, resize breakpoint & cancel                                                                             |
 | **Navigation Handler**     | `npx vitest run src/components/app/__tests__/NavigationHandler.test.ts`                                  | Dual tab ID & route navigation, hash/query preserving, redundant guard                                                                                 |
+| **Vault Tab Switching**    | `npm run test:vault:tabs`                                                                                | Sidebar vault category switching, immediate route content swap without freeze, MediaVault key separation                                               |
+| **Vault Navigation Suite** | `npm run test:vault:navigation`                                                                          | Combined vault tab switching integration + NavigationHandler unit tests                                                                                |
 | **App Loading Screen**     | `npx vitest run src/components/app/__tests__/LoadingScreen.test.tsx`                                     | Status accessibility, timeout reload prompt & onRetry handling                                                                                         |
 | **Router & Navigation**    | `npx vitest run src/components/router`                                                                   | Full router suite: scroll restoration, POP/hash navigation, mobile bounce, quota recovery & RouteErrorBoundary                                         |
 | **ErrorBoundary Suite**    | `npm run test:error-boundary`                                                                            | Production ErrorBoundary & RouteErrorBoundary: Sentry telemetry, error normalization, resetKeys, fallback UI, retry & clipboard diagnostics            |
@@ -61,6 +63,7 @@ Comprehensive cheat sheet and execution manual for **every** Vitest, standalone,
 | **Cloud Sync & Stores**    | `npm run test:sync`                                                                                      | Delta sync, conflict handling & state integrity                                                                                                        |
 | **Store Layer Suite**      | `npm run test:stores`                                                                                    | All 7 Zustand state management stores (vault, activity, notification, theme, integrity, navigation, miniplayer)                                        |
 | **Media & Streaming**      | `npm run test:media`                                                                                     | HLS player, capture modal, video streaming                                                                                                             |
+| **Media Inspector Drawer** | `npm run test:media:inspector`                                                                           | Deep photo/video inspection drawer, metadata specs, telemetry, EXIF privacy audit, JSON & export                                                       |
 | **Mini-Player Suite**      | `npx vitest run src/components/ui/GlobalVideoMiniPlayer.test.tsx src/store/videoMiniPlayerStore.test.ts` | Picture-in-picture floating video & store                                                                                                              |
 | **Mobile PDF & Docs**      | `npx vitest run tests/unit/mobile-pdf-document-handling.test.tsx`                                        | Mobile PDF rendering, anti-screenshot shield                                                                                                           |
 | **Workers Pipeline**       | `npm run test:workers`                                                                                   | Background workers (Argon2, cascade encryption, avatar & media)                                                                                        |
@@ -290,6 +293,9 @@ npx vitest run tests/unit/upload-validation.test.ts
 ### 1.5 Unit — Vault Core, UI State, Utilities & Monitoring
 
 ```bash
+# Vault tab switching & sidebar navigation (smooth route switching without animation freeze)
+npx vitest run tests/unit/vault-tab-switching.test.tsx
+
 # Vault service (key rotation, envelope rewrap, settings sync, batch save & trash purge)
 npx vitest run tests/unit/vault-service.test.ts
 
@@ -429,6 +435,9 @@ npx vitest run src/components/ui/video-player.test.tsx
 
 # Global video mini-player (floating picture-in-picture, minimize/restore, playback controls)
 npx vitest run src/components/ui/GlobalVideoMiniPlayer.test.tsx
+
+# Media inspector drawer (deep technical specs, compression telemetry, EXIF privacy audit, JSON explorer, report export)
+npx vitest run src/features/vault/components/MediaVault/__tests__/MediaInspectorDrawer.test.tsx
 
 # Dashboard header (security health score, layer breakdown, profile card trigger)
 npx vitest run src/features/vault/components/Dashboard/DashboardHeader.test.tsx
@@ -994,6 +1003,31 @@ npx vitest run \
   src/features/vault/__tests__/ShortcutsCard.test.tsx \
   src/components/router/__tests__/ScrollRestoration.test.tsx \
   src/components/router/__tests__/RouteErrorBoundary.test.tsx
+```
+
+### Vault Category Switching & Sidebar Navigation Suite
+
+Verifies smooth route transitions when switching between vault categories (`dashboard`, `passwords`, `notes`, `photos`, `videos`, `documents`) without React 19 transition locks or Framer Motion `<AnimatePresence>` deadlocks.
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run tests/unit/vault-tab-switching.test.tsx src/components/app/__tests__/NavigationHandler.test.ts
+
+# Via npm shortcuts
+npm run test:vault:tabs
+npm run test:vault:navigation
+```
+
+### Media Inspector Drawer & Deep Technical Inspection Suite
+
+Comprehensive inspection suite covering photo/video technical metadata, compression ratio telemetry, live EXIF privacy sanitization audit, raw JSON tree explorer, and one-click forensic report export.
+
+```bash
+# Universal (PowerShell, CMD, Bash, Zsh)
+npx vitest run src/features/vault/components/MediaVault/__tests__/MediaInspectorDrawer.test.tsx
+
+# Via npm shortcut
+npm run test:media:inspector
 ```
 
 ### Merkle Tree & Tamper-Alarm Integrity Suite
@@ -2167,6 +2201,8 @@ npm cache clean --force
 | `npm run test:vault:service`        | `vitest run tests/unit/vault-service.test.ts`                                                                                                                                                                                                                                       |
 | `npm run test:vault:chat`           | `vitest run tests/unit/chat-vault-`                                                                                                                                                                                                                                                 |
 | `npm run test:vault:todo`           | `vitest run src/features/vault/TodoVault.security.test.tsx`                                                                                                                                                                                                                         |
+| `npm run test:vault:tabs`           | `vitest run tests/unit/vault-tab-switching.test.tsx`                                                                                                                                                                                                                                |
+| `npm run test:vault:navigation`     | `vitest run tests/unit/vault-tab-switching.test.tsx src/components/app/__tests__/NavigationHandler.test.ts`                                                                                                                                                                         |
 | `npm run test:sync`                 | `vitest run tests/unit/sync-`                                                                                                                                                                                                                                                       |
 | `npm run test:sync:corruption`      | `vitest run tests/unit/sync-download-corruption.test.ts`                                                                                                                                                                                                                            |
 | `npm run test:sync:stores`          | `vitest run tests/unit/activity-store.test.ts tests/unit/privacy-interface-store.test.ts tests/unit/total-user-mirror.test.ts`                                                                                                                                                      |
@@ -2181,6 +2217,7 @@ npm cache clean --force
 | `npm run test:layout:watch`         | `vitest --watch tests/unit/layout-components.test.tsx`                                                                                                                                                                                                                              |
 | `npm run test:password`             | `vitest run tests/unit/password- tests/unit/pinning.test.ts`                                                                                                                                                                                                                        |
 | `npm run test:media`                | `vitest run src/components/ui/video-player.test.tsx src/lib/__tests__/encryptedMediaStreaming.test.ts tests/integration/streaming-security.test.ts src/features/vault/components/MediaVault`                                                                                        |
+| `npm run test:media:inspector`      | `vitest run src/features/vault/components/MediaVault/__tests__/MediaInspectorDrawer.test.tsx`                                                                                                                                                                                       |
 | `npm run test:video`                | `vitest run src/components/ui/video-player.test.tsx`                                                                                                                                                                                                                                |
 | `npm run test:capture`              | `vitest run src/features/vault/components/LiveCaptureModal`                                                                                                                                                                                                                         |
 | `npm run test:streaming`            | `vitest run tests/integration/streaming-security.test.ts`                                                                                                                                                                                                                           |

@@ -84,6 +84,11 @@ export const useVaultFolders = (itemType: VaultItemType) => {
   const [sessionFolders, setSessionFolders] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    setCurrentFolder(null);
+    setSessionFolders([]);
+  }, [itemType]);
+
   const mergeSessionFolders = useCallback(
     (incoming: string[]) => {
       if (incoming.length === 0) return;

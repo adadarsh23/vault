@@ -484,7 +484,12 @@ export const encryptFileEnvelope = async (
     ['encrypt', 'decrypt'],
   );
 
-  const rawData = data instanceof Uint8Array ? data : new Uint8Array(data);
+  const rawData =
+    data instanceof Uint8Array
+      ? data
+      : ArrayBuffer.isView(data)
+        ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+        : new Uint8Array(data);
 
   // 2. Layer 1 (Inner): Encrypt File data with AES-256-GCM
   const fileAesIv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
@@ -549,6 +554,91 @@ export const encryptFileEnvelope = async (
   bundle.set(fileChaChaNonce, offset);
   offset += fileChaChaNonce.length;
   bundle.set(cascadeCiphertext, offset);
+
+  return bundle;
+};
+
+/**
+ * Ultra-Fast Hardware-Accelerated AES-256-GCM Envelope Encryption (VENV02).
+ * Designed for large media and videos where software ChaCha20 causes severe CPU bottleneck.
+ * Utilizes native Web Crypto API with hardware AES-NI instructions (~3 GB/s throughput).
+ */
+export const encryptFileEnvelopeFast = async (
+  data: BufferSource | Uint8Array,
+  masterKey: string | CryptoKey,
+): Promise<Uint8Array> => {
+  touchCryptoKeyCache();
+  const kekCryptoKey = await getOrCreateCryptoKey(masterKey);
+  if (!kekCryptoKey) {
+    throw new Error('Failed to import master key (KEK)');
+  }
+
+  // 1. Generate 32-byte DEK (Hardware AES-256-GCM)
+  const dekBytes = crypto.getRandomValues(new Uint8Array(32));
+  const dekCryptoKey = await crypto.subtle.importKey(
+    'raw',
+    toArrayBuffer(dekBytes),
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt', 'decrypt'],
+  );
+
+  const rawData =
+    data instanceof Uint8Array
+      ? data
+      : ArrayBuffer.isView(data)
+        ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+        : new Uint8Array(data);
+
+  // 2. Encrypt File data with AES-256-GCM (Hardware accelerated AES-NI)
+  const fileAesIv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
+  const fileAesCiphertext = await crypto.subtle.encrypt(
+    {
+      name: 'AES-GCM',
+      iv: toArrayBuffer(fileAesIv),
+      additionalData: toArrayBuffer(AES_GCM_AAD),
+    },
+    dekCryptoKey,
+    toArrayBuffer(rawData),
+  );
+  const encFileBytes = new Uint8Array(fileAesCiphertext);
+
+  // 3. Encrypt DEK (32 bytes) with KEK (Master Key) -> 48 bytes output
+  const kekIv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
+  const encryptedDek = await crypto.subtle.encrypt(
+    {
+      name: 'AES-GCM',
+      iv: toArrayBuffer(kekIv),
+      additionalData: toArrayBuffer(DEK_AAD),
+    },
+    kekCryptoKey,
+    toArrayBuffer(dekBytes),
+  );
+
+  // Secure zero-out plain DEK buffer immediately after encryption
+  dekBytes.fill(0);
+
+  const encDekBytes = new Uint8Array(encryptedDek);
+
+  // 4. Assemble VENV02 Bundle:
+  // [6B VENV02] + [12B KEK IV] + [48B Encrypted DEK] + [12B File AES IV] + [Ciphertext]
+  const bundle = new Uint8Array(
+    ENVELOPE_MAGIC_V2.length +
+      kekIv.length +
+      encDekBytes.length +
+      fileAesIv.length +
+      encFileBytes.length,
+  );
+  let offset = 0;
+  bundle.set(ENVELOPE_MAGIC_V2, offset);
+  offset += ENVELOPE_MAGIC_V2.length;
+  bundle.set(kekIv, offset);
+  offset += kekIv.length;
+  bundle.set(encDekBytes, offset);
+  offset += encDekBytes.length;
+  bundle.set(fileAesIv, offset);
+  offset += fileAesIv.length;
+  bundle.set(encFileBytes, offset);
 
   return bundle;
 };
@@ -861,7 +951,13 @@ export const encryptFile = async (
 export const encryptFileInWorker = async (
   file: File | Blob,
   secretKey: string | CryptoKey,
+  options?: { fastHardware?: boolean },
 ): Promise<Uint8Array> => {
+  if (options?.fastHardware) {
+    const fileBuffer = await file.arrayBuffer();
+    return encryptFileEnvelopeFast(fileBuffer, secretKey);
+  }
+
   if (typeof Worker === 'undefined') {
     return encryptFile(file, secretKey);
   }
@@ -899,7 +995,61 @@ export const encryptFileInWorker = async (
         err,
       );
     }
-    return encryptFile(file, secretKey);
+    return options?.fastHardware
+      ? encryptFileEnvelopeFast(await file.arrayBuffer(), secretKey)
+      : encryptFile(file, secretKey);
+  }
+};
+
+export const decryptFileInWorker = async (
+  encryptedBundle: Uint8Array | ArrayBuffer,
+  secretKey: string | CryptoKey,
+): Promise<ArrayBuffer> => {
+  const bytes =
+    encryptedBundle instanceof Uint8Array ? encryptedBundle : new Uint8Array(encryptedBundle);
+
+  if (typeof Worker === 'undefined' || bytes.byteLength < 64 * 1024) {
+    return decryptFileEnvelope(bytes, secretKey);
+  }
+
+  try {
+    const worker = new Worker(new URL('../workers/decrypt-file.worker.ts', import.meta.url), {
+      type: 'module',
+    });
+
+    try {
+      const transferBuffer = bytes.buffer.slice(
+        bytes.byteOffset,
+        bytes.byteOffset + bytes.byteLength,
+      ) as ArrayBuffer;
+
+      const decrypted = await new Promise<ArrayBuffer>((resolve, reject) => {
+        worker.onmessage = (event: MessageEvent) => {
+          const data = event.data as
+            { ok: true; decryptedBuffer: ArrayBuffer } | { ok: false; error?: string };
+          if (data?.ok) {
+            resolve(data.decryptedBuffer);
+          } else {
+            reject(new Error(data?.error || 'Worker decryption failed'));
+          }
+        };
+        worker.onerror = (event) => {
+          reject(new Error(event.message || 'Worker decryption error'));
+        };
+        worker.postMessage({ encryptedBuffer: transferBuffer, secretKey }, [transferBuffer]);
+      });
+      return decrypted;
+    } finally {
+      worker.terminate();
+    }
+  } catch (err) {
+    if (import.meta.env.DEV) {
+      console.warn(
+        '[decryptFileInWorker] Worker failed, falling back to main-thread decryption:',
+        err,
+      );
+    }
+    return decryptFileEnvelope(bytes, secretKey);
   }
 };
 

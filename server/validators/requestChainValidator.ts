@@ -255,6 +255,10 @@ export const multipartCompleteBodyValidation = [
     .trim()
     .isLength({ min: 1, max: 128 })
     .withMessage('clientUpdatedAt is invalid.'),
+  body('metadata')
+    .optional({ values: 'null' })
+    .isObject()
+    .withMessage('metadata must be an object.'),
 ];
 
 export const activityLogQueryValidation = [

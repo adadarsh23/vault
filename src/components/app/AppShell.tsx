@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { Sidebar } from '../layout/Sidebar';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 import type { TabId } from './NavigationHandler';
@@ -324,6 +324,7 @@ export function AppShell({
   const sidebarPosition = useVaultStore((state) => state.preferences.sidebarPosition);
   const username = useVaultStore((state) => state.username);
   const panicLock = useVaultStore((state) => state.panicLock);
+  const location = useLocation();
 
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const fetchNotifications = useNotificationStore((state) => state.fetchNotifications);
@@ -733,7 +734,7 @@ export function AppShell({
                         </div>
                       }
                     >
-                      <Routes>
+                      <Routes location={location} key={location.pathname}>
                         {/* Main */}
                         <Route path="/" element={<Dashboard onNavigate={safeNavigateToTab} />} />
 
@@ -752,8 +753,8 @@ export function AppShell({
                         <Route path="/locations" element={<LocationVault />} />
 
                         {/* Media */}
-                        <Route path="/photos" element={<MediaVault type="photo" />} />
-                        <Route path="/videos" element={<MediaVault type="video" />} />
+                        <Route path="/photos" element={<MediaVault key="photo" type="photo" />} />
+                        <Route path="/videos" element={<MediaVault key="video" type="video" />} />
                         <Route path="/audio" element={<AudioVault />} />
 
                         {/* Documents & Files */}

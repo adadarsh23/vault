@@ -182,6 +182,7 @@ export interface FileSaveInput {
   clientUpdatedAt?: string;
   deviceId?: string;
   ipAddress?: string;
+  metadata?: Record<string, unknown>;
 }
 
 /**

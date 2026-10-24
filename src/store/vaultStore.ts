@@ -1850,6 +1850,9 @@ export const useVaultStore = create<VaultState>((set, get) => ({
             get().handleSessionRevoked({ reason: 'REVOKED_BY_SERVER' });
             throw new Error('SESSION_REVOKED: Operation prohibited on revoked session.');
           }
+          if (newItem.type === 'video') {
+            throw uploadErr;
+          }
           console.warn(
             'Cloud upload failed, retaining item locally in IndexedDB as fallback:',
             uploadErr,
@@ -1858,17 +1861,18 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         }
       }
 
-      // Persist to local IndexedDB
-      await saveItem(newItem);
-
-      // Memory optimization: For large binary payloads saved in cloud/IndexedDB,
-      // create a lightweight copy for in-memory React state so the browser doesn't run out of memory.
-      const inMemoryItem: VaultItem =
+      // Storage & Memory optimization: Never persist large binary video or media payloads to local IndexedDB for cloud items.
+      const itemToSave: VaultItem =
         newItem.source === 'cloud' &&
-        newItem.content instanceof Uint8Array &&
-        newItem.content.byteLength > 512 * 1024
+        (newItem.type === 'video' ||
+          (newItem.content instanceof Uint8Array && newItem.content.byteLength > 512 * 1024))
           ? { ...newItem, content: '' }
           : newItem;
+
+      // Persist to local IndexedDB
+      await saveItem(itemToSave);
+
+      const inMemoryItem: VaultItem = itemToSave;
 
       set((state) => ({
         items: [inMemoryItem, ...state.items.filter((i) => i.id !== inMemoryItem.id)],
@@ -2232,7 +2236,11 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
     set({ isSyncingLogs: true, hasPendingLogSync: false });
     try {
-      const remoteLogs = (await downloadLogsFromCloud()) ?? [];
+      const remoteLogs = await downloadLogsFromCloud();
+      if (!remoteLogs) {
+        toast.dismiss(toastId);
+        return;
+      }
       const localLogs = useActivityStore.getState().entries;
       const mergedLogs = Array.from(
         new Map([...remoteLogs, ...localLogs].map((entry) => [entry.id, entry])).values(),

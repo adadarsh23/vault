@@ -1,4 +1,6 @@
 import { decryptToFile, detectMimeTypeFromBytes, base64ToUint8Array } from './encryption';
+export { getCachedMediaBlobUrl, setCachedMediaBlobUrl } from './mediaBlobCache';
+import { getCachedMediaBlobUrl, setCachedMediaBlobUrl } from './mediaBlobCache';
 import { VaultItem } from './storage';
 import { resolveApiBaseUrl } from './apiBaseUrl';
 import { getAuthToken } from './auth-session';
@@ -886,7 +888,9 @@ export const getVaultItemFileUrl = (item: VaultItem): string | null => {
     typeof item.content === 'string' &&
     (looksLikeServerPath(item.content) ||
       isAbsoluteUrl(item.content) ||
-      isBlobOrDataUrl(item.content))
+      isBlobOrDataUrl(item.content) ||
+      item.content.startsWith('cloud://') ||
+      item.content.startsWith('gridfs://'))
       ? item.content
       : null;
 
@@ -900,6 +904,12 @@ export const getVaultItemPreviewUrl = async (
   mimeType?: string,
   rsaPrivateKey?: CryptoKeyPair['privateKey'] | null,
 ): Promise<string | null> => {
+  const cacheKey = getVaultItemPreviewRevision(item);
+  const cachedUrl = getCachedMediaBlobUrl(cacheKey);
+  if (cachedUrl) {
+    return cachedUrl;
+  }
+
   const effectiveMimeType = mimeType || inferMimeTypeFromItem(item);
 
   // 1. Direct in-memory blob: or data: URL
@@ -961,9 +971,13 @@ export const getVaultItemPreviewUrl = async (
   }
 
   // 4. Server/Cloud file reference (cloud://, gridfs://, /api/vault/files/access/, /uploads/, etc.)
+  // Only attempt direct fetch if it has a valid signed token. Unsigned server access routes
+  // require the signed URL pipeline (step 5) to prevent socket timeouts and backend load spikes.
   const candidateServerUrl = getVaultItemFileUrl(item);
   if (
     candidateServerUrl &&
+    !candidateServerUrl.startsWith('cloud://') &&
+    !candidateServerUrl.startsWith('gridfs://') &&
     (!candidateServerUrl.includes('/api/vault/files/access/') ||
       candidateServerUrl.includes('token='))
   ) {
@@ -981,7 +995,9 @@ export const getVaultItemPreviewUrl = async (
             const blob = new Blob([u8], {
               type:
                 normalizedMime ||
-                (item.type === 'video' ? 'video/mp4' : 'application/octet-stream'),
+                ((item as any).type === 'video' || (item as any).category === 'video'
+                  ? 'video/mp4'
+                  : 'application/octet-stream'),
             });
             return createTrackedBlobUrl(blob);
           }
@@ -999,7 +1015,13 @@ export const getVaultItemPreviewUrl = async (
     const { getSignedUrl } = await import('./sync/media');
     const signedUrl = await getSignedUrl(item.id, 'view');
     if (signedUrl) {
-      if (item.type === 'video' && vaultItemHasServerFileReference(item)) {
+      // For video items, always return the signed streaming URL directly.
+      // Videos must never be fetched into RAM via giant in-memory Blobs.
+      if (
+        (item as any).type === 'video' ||
+        (item as any).category === 'video' ||
+        item.metadata?.mimeType?.startsWith('video/')
+      ) {
         return signedUrl;
       }
       const response = await fetch(signedUrl);
@@ -1015,7 +1037,9 @@ export const getVaultItemPreviewUrl = async (
             const blob = new Blob([u8], {
               type:
                 normalizedMime ||
-                (item.type === 'video' ? 'video/mp4' : 'application/octet-stream'),
+                ((item as any).type === 'video' || (item as any).category === 'video'
+                  ? 'video/mp4'
+                  : 'application/octet-stream'),
             });
             return createTrackedBlobUrl(blob);
           }
@@ -1028,19 +1052,33 @@ export const getVaultItemPreviewUrl = async (
   }
 
   // 6. Generic string decrypt fallback (ONLY if valid encrypted string format)
+  let resolvedUrl: string | null = null;
   if (typeof item.content === 'string' && isLikelyEncryptedString(item.content)) {
-    return decryptToFile(item.content, masterKey, effectiveMimeType, rsaPrivateKey);
+    resolvedUrl = await decryptToFile(item.content, masterKey, effectiveMimeType, rsaPrivateKey);
   }
 
-  return null;
+  if (resolvedUrl && resolvedUrl.startsWith('blob:')) {
+    setCachedMediaBlobUrl(cacheKey, resolvedUrl);
+  }
+
+  return resolvedUrl;
 };
 
-/** True when the item points at a server-side file (disk / signed URL pipeline). E2EE-only items and decoy items return false. */
+/** True when the item points at a server-side file (disk / signed URL pipeline / cloud storage). */
 export const vaultItemHasServerFileReference = (item: VaultItem): boolean =>
   !item.id.startsWith('decoy-') &&
-  normalizeMetadata(item.metadata)?.isE2EE !== true &&
-  normalizeMetadata(item.metadata)?.clientEncrypted !== true &&
-  getVaultItemFileUrl(item) !== null;
+  (getVaultItemFileUrl(item) !== null ||
+    Boolean(
+      typeof item.content === 'string' &&
+      (item.content.startsWith('cloud://') ||
+        item.content.startsWith('gridfs://') ||
+        item.content.startsWith('/uploads/') ||
+        item.content.startsWith('http://') ||
+        item.content.startsWith('https://')),
+    ) ||
+    Boolean((item as any).file?.filePath) ||
+    Boolean((item as any).gridFsId) ||
+    item.source === 'cloud');
 
 /**
  * Stable dependency key for preview hooks (identity + content size + revision).

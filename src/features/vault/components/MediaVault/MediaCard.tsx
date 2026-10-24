@@ -39,6 +39,7 @@ import {
   formatFileSize,
   getFileExtension,
 } from './mediaUtils';
+import { prewarmVaultMedia, cancelPrewarmVaultMedia } from '../../../../lib/videoPrewarm';
 
 interface MediaCardProps {
   item: VaultItem;
@@ -231,6 +232,16 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
       initial={{ opacity: 0, scale: 0.92, y: 15 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       whileHover={!isCompact ? { y: -4, scale: 1.015 } : undefined}
+      onMouseEnter={() => {
+        if (type === 'video' && masterKey) {
+          prewarmVaultMedia(item, masterKey, undefined, 120);
+        }
+      }}
+      onMouseLeave={() => {
+        if (type === 'video') {
+          cancelPrewarmVaultMedia(item.id);
+        }
+      }}
       transition={{
         delay: Math.min(idx * 0.015, 0.25),
         type: 'spring',
@@ -527,7 +538,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/20">
                         <Info className="h-4 w-4" />
                       </div>
-                      <span>View Details</span>
+                      <span>Inspect {type === 'photo' ? 'Photo' : 'Video'}</span>
                     </button>
                   )}
 
@@ -623,7 +634,7 @@ const MediaCardComponent: React.FC<MediaCardProps> = ({
                       className="w-full rounded-xl px-3 py-2 text-left text-xs hover:bg-white/10 flex items-center gap-2 transition-colors"
                     >
                       <Info className="h-3.5 w-3.5 text-blue-400" />
-                      <span>View Details</span>
+                      <span>Inspect {type === 'photo' ? 'Photo' : 'Video'}</span>
                     </button>
                   )}
 

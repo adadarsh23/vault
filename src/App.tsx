@@ -52,7 +52,7 @@ function isLocalhost(): boolean {
   return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
 }
 
-function getTrustedServiceWorkerUrl(rawUrl: string): string | TrustedScriptURL {
+function getTrustedServiceWorkerUrl(rawUrl: string): any {
   const trustedTypesApi = (window as WindowWithTrustedTypes).trustedTypes;
   if (!trustedTypesApi?.createPolicy) {
     return rawUrl;

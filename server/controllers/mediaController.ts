@@ -53,6 +53,48 @@ const CACHE_SWEEP_INTERVAL_MS = Math.max(
   toPositiveInt(process.env.MEDIA_CACHE_SWEEP_INTERVAL_MS, 60_000),
 );
 
+// High-Performance In-Memory Cache for Decrypted Video Buffers
+// Prevents continuous full-file GridFS re-reads and CPU crypto on every byte-range chunk
+interface CachedMediaBuffer {
+  buffer: Buffer;
+  size: number;
+  mimeType: string;
+  expires: number;
+}
+const decryptedMediaCache = new Map<string, CachedMediaBuffer>();
+const MAX_DECRYPTED_MEDIA_ENTRIES = Math.max(
+  4,
+  toPositiveInt(process.env.DECRYPTED_MEDIA_CACHE_MAX_ENTRIES, 12),
+);
+const DECRYPTED_MEDIA_TTL_MS = Math.max(
+  60_000,
+  toPositiveInt(process.env.DECRYPTED_MEDIA_CACHE_TTL_MS, 5 * 60 * 1000),
+);
+
+const getCachedMediaBuffer = (cacheKey: string): CachedMediaBuffer | null => {
+  const item = decryptedMediaCache.get(cacheKey);
+  if (!item) return null;
+  if (Date.now() > item.expires) {
+    decryptedMediaCache.delete(cacheKey);
+    return null;
+  }
+  return item;
+};
+
+const setCachedMediaBuffer = (cacheKey: string, buffer: Buffer, mimeType: string): void => {
+  const now = Date.now();
+  for (const [k, v] of decryptedMediaCache.entries()) {
+    if (v.expires <= now) decryptedMediaCache.delete(k);
+  }
+  trimMapToMaxEntries(decryptedMediaCache, MAX_DECRYPTED_MEDIA_ENTRIES);
+  decryptedMediaCache.set(cacheKey, {
+    buffer,
+    size: buffer.length,
+    mimeType,
+    expires: now + DECRYPTED_MEDIA_TTL_MS,
+  });
+};
+
 const getSingleQueryValue = (value: unknown): string | undefined =>
   typeof value === 'string' ? value : Array.isArray(value) ? value[0] : undefined;
 
@@ -461,6 +503,10 @@ const setMediaCorsHeaders = (req: express.Request, res: express.Response) => {
       'Access-Control-Allow-Headers',
       'Authorization, Content-Type, Range, X-CSRF-Token, X-Device-Hash',
     );
+    res.setHeader(
+      'Access-Control-Expose-Headers',
+      'Content-Range, Accept-Ranges, Content-Length, Content-Type',
+    );
   } else if (originHeader || refererHeader) {
     const rawOrigin = originHeader || refererHeader;
     try {
@@ -468,6 +514,10 @@ const setMediaCorsHeaders = (req: express.Request, res: express.Response) => {
       if (isAllowedCorsOrigin(fallbackOrigin)) {
         res.setHeader('Access-Control-Allow-Origin', fallbackOrigin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader(
+          'Access-Control-Expose-Headers',
+          'Content-Range, Accept-Ranges, Content-Length, Content-Type',
+        );
       }
     } catch {}
   } else {
@@ -914,15 +964,23 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
         res.setHeader('Content-Type', mimeType);
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
-        const chunks: Buffer[] = [];
-        const downloadStream = bucket.openDownloadStream(objectId);
-        const gridBuffer: Buffer = await new Promise((resolve, reject) => {
-          downloadStream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
-          downloadStream.on('error', reject);
-          downloadStream.on('end', () => resolve(Buffer.concat(chunks)));
-        });
+        let decrypted: Buffer;
+        const cacheKey = `direct_gridfs:${objectId.toString()}`;
+        const cachedEntry = getCachedMediaBuffer(cacheKey);
+        if (cachedEntry) {
+          decrypted = cachedEntry.buffer;
+        } else {
+          const chunks: Buffer[] = [];
+          const downloadStream = bucket.openDownloadStream(objectId);
+          const gridBuffer: Buffer = await new Promise((resolve, reject) => {
+            downloadStream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+            downloadStream.on('error', reject);
+            downloadStream.on('end', () => resolve(Buffer.concat(chunks)));
+          });
 
-        const decrypted = decryptGridFsPayload(gridBuffer, fileMetadata);
+          decrypted = decryptGridFsPayload(gridBuffer, fileMetadata);
+          setCachedMediaBuffer(cacheKey, decrypted, mimeType);
+        }
 
         const size = decrypted.length;
         if (isStreamableMedia && requestedRange) {
@@ -1035,23 +1093,31 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
           });
           return downloadStream.pipe(res);
         } else {
-          const chunks: Buffer[] = [];
-          const downloadStream = bucket.openDownloadStream(objectId);
-          const gridBuffer: Buffer = await new Promise((resolve, reject) => {
-            downloadStream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
-            downloadStream.on('error', reject);
-            downloadStream.on('end', () => resolve(Buffer.concat(chunks)));
-          });
-
           let decrypted: Buffer;
-          try {
-            decrypted = decryptGridFsPayload(gridBuffer, fileMetadata, item.file);
-          } catch (decryptionError) {
-            logger.error('Failed to decrypt GridFS media envelope', {
-              itemId: item._id,
-              error: decryptionError,
+          const cacheKey = `gridfs:${gridFsId}`;
+          const cachedEntry = getCachedMediaBuffer(cacheKey);
+
+          if (cachedEntry) {
+            decrypted = cachedEntry.buffer;
+          } else {
+            const chunks: Buffer[] = [];
+            const downloadStream = bucket.openDownloadStream(objectId);
+            const gridBuffer: Buffer = await new Promise((resolve, reject) => {
+              downloadStream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+              downloadStream.on('error', reject);
+              downloadStream.on('end', () => resolve(Buffer.concat(chunks)));
             });
-            throw new AppError(500, 'DECRYPTION_FAILED', 'Failed to decrypt media payload.');
+
+            try {
+              decrypted = decryptGridFsPayload(gridBuffer, fileMetadata, item.file);
+              setCachedMediaBuffer(cacheKey, decrypted, mimeType);
+            } catch (decryptionError) {
+              logger.error('Failed to decrypt GridFS media envelope', {
+                itemId: item._id,
+                error: decryptionError,
+              });
+              throw new AppError(500, 'DECRYPTION_FAILED', 'Failed to decrypt media payload.');
+            }
           }
 
           const size = decrypted.length;
@@ -1107,23 +1173,31 @@ export const accessVaultFile = async (req: express.Request, res: express.Respons
 
     if (rawBuffer && rawBuffer.length > 0) {
       let decrypted: Buffer;
-      try {
-        const payloadObj: EncryptedPayload = JSON.parse(rawBuffer.toString());
-        decrypted = decryptBuffer(payloadObj);
-      } catch {
-        if (item.file?.encryptionIv && item.file?.encryptionTag) {
-          try {
-            decrypted = decryptBuffer({
-              iv: item.file.encryptionIv,
-              tag: item.file.encryptionTag,
-              encryptedData: rawBuffer.toString('hex'),
-            });
-          } catch {
+      const cacheKey = `payload:${itemId}`;
+      const cachedEntry = getCachedMediaBuffer(cacheKey);
+
+      if (cachedEntry) {
+        decrypted = cachedEntry.buffer;
+      } else {
+        try {
+          const payloadObj: EncryptedPayload = JSON.parse(rawBuffer.toString());
+          decrypted = decryptBuffer(payloadObj);
+        } catch {
+          if (item.file?.encryptionIv && item.file?.encryptionTag) {
+            try {
+              decrypted = decryptBuffer({
+                iv: item.file.encryptionIv,
+                tag: item.file.encryptionTag,
+                encryptedData: rawBuffer.toString('hex'),
+              });
+            } catch {
+              decrypted = rawBuffer;
+            }
+          } else {
             decrypted = rawBuffer;
           }
-        } else {
-          decrypted = rawBuffer;
         }
+        setCachedMediaBuffer(cacheKey, decrypted, mimeType);
       }
 
       const size = decrypted.length;

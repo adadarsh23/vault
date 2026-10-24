@@ -113,6 +113,7 @@ export const saveEncryptedVaultItem = async (input: {
   payload: any;
   deviceId?: string;
   ipAddress?: string;
+  metadata?: Record<string, unknown>;
 }) => {
   const { userId, category, folder, itemId, payload } = input;
   const normalizedCategory = normalizeCategory(category);
@@ -335,6 +336,7 @@ export const saveFileToVault = async (input: {
   clientUpdatedAt?: string;
   deviceId?: string;
   ipAddress?: string;
+  metadata?: Record<string, unknown>;
 }) => {
   let { userId, category, folder, file } = input;
 
@@ -413,6 +415,7 @@ export const saveFileToVault = async (input: {
     },
     gridFsId,
     encoding: 'gridfs-binary',
+    metadata: input.metadata || {},
     deviceId: input.deviceId,
     ipAddress: input.ipAddress,
   });

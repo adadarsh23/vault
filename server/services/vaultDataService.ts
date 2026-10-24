@@ -203,6 +203,7 @@ export const saveFileToVault = async (input: FileSaveInput) => {
             isActive: false,
             queuedAt: new Date().toISOString(),
           },
+          ...(input.metadata || {}),
         },
       });
 

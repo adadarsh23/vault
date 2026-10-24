@@ -15,6 +15,7 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = React.m
     const [dbName, setDbName] = useState<string | null>(null);
 
     const isMountedRef = useRef(true);
+    const consecutiveErrorsRef = useRef(0);
 
     useEffect(() => {
       isMountedRef.current = true;
@@ -25,6 +26,7 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = React.m
 
     const checkHealth = useCallback(async () => {
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        consecutiveErrorsRef.current = 3;
         if (isMountedRef.current) {
           setStatus('error');
         }
@@ -43,7 +45,7 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = React.m
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
       try {
         const rawBase = resolveApiBaseUrl();
@@ -82,6 +84,7 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = React.m
         if (resp && resp.ok) {
           const data = await resp.json().catch(() => null);
           if (data && (data.status === 'connected' || data.success === true)) {
+            consecutiveErrorsRef.current = 0;
             const newDbName = data.database?.name || null;
             if (isMountedRef.current) {
               setStatus('connected');
@@ -95,6 +98,23 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = React.m
               );
             }
           } else {
+            consecutiveErrorsRef.current += 1;
+            if (consecutiveErrorsRef.current >= 3) {
+              if (isMountedRef.current) {
+                setStatus('error');
+              }
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(
+                  new CustomEvent('vault-cloud-health-status', {
+                    detail: { status: 'error', dbName: null },
+                  }),
+                );
+              }
+            }
+          }
+        } else {
+          consecutiveErrorsRef.current += 1;
+          if (consecutiveErrorsRef.current >= 3) {
             if (isMountedRef.current) {
               setStatus('error');
             }
@@ -106,7 +126,10 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = React.m
               );
             }
           }
-        } else {
+        }
+      } catch {
+        consecutiveErrorsRef.current += 1;
+        if (consecutiveErrorsRef.current >= 3) {
           if (isMountedRef.current) {
             setStatus('error');
           }
@@ -117,17 +140,6 @@ export const CloudHealthIndicator: React.FC<CloudHealthIndicatorProps> = React.m
               }),
             );
           }
-        }
-      } catch {
-        if (isMountedRef.current) {
-          setStatus('error');
-        }
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(
-            new CustomEvent('vault-cloud-health-status', {
-              detail: { status: 'error', dbName: null },
-            }),
-          );
         }
       } finally {
         clearTimeout(timeoutId);

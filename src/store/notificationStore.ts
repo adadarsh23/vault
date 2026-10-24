@@ -3,6 +3,8 @@ import apiClient from '../api/apiClient';
 import { getAuthToken } from '../lib/auth-session';
 
 let pendingNotificationFetch: Promise<void> | null = null;
+let rateLimitBackoffUntil = 0;
+let lastNotificationFetchTime = 0;
 
 export interface Notification {
   _id: string;
@@ -68,9 +70,18 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       return Promise.resolve();
     }
 
+    const now = Date.now();
+    if (now < rateLimitBackoffUntil) {
+      return Promise.resolve();
+    }
+    if (now - lastNotificationFetchTime < 5000) {
+      return Promise.resolve();
+    }
+
     pendingNotificationFetch = (async () => {
       set({ loading: true });
       try {
+        lastNotificationFetchTime = Date.now();
         const { data } = await apiClient.get<any>('/notifications', { timeout: 15000 });
         if (data && data.success && Array.isArray(data.data)) {
           const notifications = data.data;
@@ -90,7 +101,15 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
           code === 'TOKEN_EXPIRED' ||
           code === 'SESSION_REVOKED';
 
+        const isRateLimited =
+          status === 429 ||
+          code === 'TOO_MANY_REQUESTS' ||
+          code === 'HTTP_429' ||
+          message.includes('too many requests') ||
+          message.includes('rate limit');
+
         const isTransient =
+          isRateLimited ||
           status === 503 ||
           status === 502 ||
           status === 504 ||
@@ -112,7 +131,12 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
           return;
         }
 
-        if (isTransient) {
+        if (isRateLimited) {
+          rateLimitBackoffUntil = Date.now() + 30000;
+          if (import.meta.env.DEV) {
+            console.debug('Notification fetch deferred (rate limit active). Backing off for 30s.');
+          }
+        } else if (isTransient) {
           // Defer quietly during transient outages / service reconnection without noisy console warnings
           if (import.meta.env.DEV) {
             console.debug(

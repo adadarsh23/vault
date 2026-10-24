@@ -5,7 +5,7 @@ import cors from 'cors';
 import compression from 'compression';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import os from 'os';
 import { monitorEventLoopDelay } from 'perf_hooks';
 import fs from 'fs';
@@ -459,9 +459,42 @@ const setOverloadResponseHeaders = (res: express.Response): void => {
  */
 const apiLimiter = rateLimit({
   windowMs: Number.parseInt(process.env.API_RATE_LIMIT_WINDOW_MS || '', 10) || 15 * 60 * 1000,
-  max:
-    Number.parseInt(process.env.API_RATE_LIMIT_MAX || '', 10) ||
-    (process.env.NODE_ENV === 'production' ? 500 : 5000),
+  max: () => {
+    const configured = Number.parseInt(process.env.API_RATE_LIMIT_MAX || '', 10);
+    if (process.env.NODE_ENV !== 'production') {
+      return Number.isFinite(configured) && configured > 5000 ? configured : 50000;
+    }
+    return Number.isFinite(configured) && configured > 0 ? configured : 2000;
+  },
+  skip: (req) => {
+    if (process.env.DISABLE_RATE_LIMITING === 'true') {
+      return true;
+    }
+    // In local development, bypass rate limiting for localhost requests to avoid dev lockouts
+    if (process.env.NODE_ENV !== 'production') {
+      const clientIp = req.ip || req.socket.remoteAddress || '';
+      if (
+        clientIp === '127.0.0.1' ||
+        clientIp === '::1' ||
+        clientIp === '::ffff:127.0.0.1' ||
+        clientIp.includes('127.0.0.1')
+      ) {
+        return true;
+      }
+    }
+    return false;
+  },
+  keyGenerator: (req) => {
+    const authHeader = req.headers.authorization;
+    const userId = (req as any)?.user?.userId;
+    if (userId) {
+      return `user_${userId}`;
+    }
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return `token_${authHeader.slice(7, 40)}`;
+    }
+    return ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown');
+  },
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -565,10 +598,10 @@ async function startServer() {
 
     app.set('shutdownSignal', shutdownController.signal);
 
-    // Defend against slowloris-style socket starvation.
-    httpServer.requestTimeout = 30_000;
-    httpServer.headersTimeout = 35_000;
-    httpServer.keepAliveTimeout = 5_000;
+    // Generous timeouts for large encrypted media streams & GridFS chunks
+    httpServer.requestTimeout = 300_000; // 5 minutes
+    httpServer.headersTimeout = 310_000;
+    httpServer.keepAliveTimeout = 65_000;
 
     httpServer.on('connection', (socket) => {
       runtimeMetrics.onConnectionOpen();
@@ -619,7 +652,20 @@ async function startServer() {
             'Upload-Metadata',
             'Upload-Offset',
           ],
-          exposedHeaders: ['Location', 'Tus-Resumable', 'Upload-Offset', 'Upload-Length'],
+          exposedHeaders: [
+            'Location',
+            'Tus-Resumable',
+            'Upload-Offset',
+            'Upload-Length',
+            'Content-Range',
+            'Accept-Ranges',
+            'Content-Length',
+            'Content-Type',
+            'Retry-After',
+            'RateLimit-Limit',
+            'RateLimit-Remaining',
+            'RateLimit-Reset',
+          ],
         }),
       );
       app.use(originProtection); // Enforce CDN-only access in production
@@ -627,8 +673,13 @@ async function startServer() {
         app.use(compression(deepCompressionOptions));
       }
       app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
-      app.use((_req, res, next) => {
-        res.setTimeout(30_000);
+      app.use((req, res, next) => {
+        // Set higher response socket timeout for media access & streaming endpoints
+        const isMediaStreamPath =
+          req.path.includes('/api/vault/files/access') ||
+          req.path.includes('/api/vault/media') ||
+          req.path.includes('/uploads');
+        res.setTimeout(isMediaStreamPath ? 300_000 : 60_000);
         next();
       });
     });

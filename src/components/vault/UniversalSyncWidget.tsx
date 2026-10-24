@@ -34,6 +34,7 @@ export const UniversalSyncWidget: React.FC = React.memo(() => {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
+  const consecutiveErrorsRef = useRef(0);
   const shouldReduceMotion = useReducedMotion();
 
   const isUnlocked = useVaultStore((state) => state.isUnlocked);
@@ -66,12 +67,15 @@ export const UniversalSyncWidget: React.FC = React.memo(() => {
   // Self-contained resilient cloud health check
   const checkHealth = useCallback(async () => {
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      if (isMountedRef.current) setCloudStatus('error');
+      consecutiveErrorsRef.current += 1;
+      if (consecutiveErrorsRef.current >= 3 && isMountedRef.current) {
+        setCloudStatus('error');
+      }
       return;
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
       const rawBase = resolveApiBaseUrl();
@@ -106,6 +110,7 @@ export const UniversalSyncWidget: React.FC = React.memo(() => {
       if (resp && resp.ok) {
         const data = await resp.json().catch(() => null);
         if (data && (data.status === 'connected' || data.success === true)) {
+          consecutiveErrorsRef.current = 0;
           const newDbName = data.database?.name || null;
           if (isMountedRef.current) {
             setCloudStatus('connected');
@@ -118,14 +123,21 @@ export const UniversalSyncWidget: React.FC = React.memo(() => {
               }),
             );
           }
-        } else if (isMountedRef.current) {
+        } else {
+          consecutiveErrorsRef.current += 1;
+          if (consecutiveErrorsRef.current >= 3 && isMountedRef.current) {
+            setCloudStatus('error');
+          }
+        }
+      } else {
+        consecutiveErrorsRef.current += 1;
+        if (consecutiveErrorsRef.current >= 3 && isMountedRef.current) {
           setCloudStatus('error');
         }
-      } else if (isMountedRef.current) {
-        setCloudStatus('error');
       }
     } catch {
-      if (isMountedRef.current) {
+      consecutiveErrorsRef.current += 1;
+      if (consecutiveErrorsRef.current >= 3 && isMountedRef.current) {
         setCloudStatus('error');
       }
     } finally {

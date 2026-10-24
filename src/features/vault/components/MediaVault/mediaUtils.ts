@@ -60,13 +60,19 @@ export const formatFileSize = (bytes?: number): string => {
 export const getMediaDimensions = async (
   file: File,
   type: 'photo' | 'video',
-): Promise<{ width: number; height: number; aspectRatio: number; duration?: number } | null> => {
+): Promise<{
+  width: number;
+  height: number;
+  aspectRatio: number;
+  duration?: number;
+  thumbnail?: string;
+} | null> => {
   try {
     const objectUrl = URL.createObjectURL(file);
     try {
       if (type === 'photo') {
         const image = new Image();
-        const dimensions = await new Promise<{ width: number; height: number }>(
+        const dimensions = await new Promise<{ width: number; height: number; thumbnail?: string }>(
           (resolve, reject) => {
             const timer = setTimeout(() => {
               image.onload = null;
@@ -77,9 +83,30 @@ export const getMediaDimensions = async (
 
             image.onload = () => {
               clearTimeout(timer);
+              let thumb: string | undefined;
+              try {
+                const canvas = document.createElement('canvas');
+                const maxDim = 320;
+                const scale = Math.min(
+                  1,
+                  maxDim / Math.max(image.naturalWidth, image.naturalHeight),
+                );
+                const targetW = Math.max(1, Math.round(image.naturalWidth * scale));
+                const targetH = Math.max(1, Math.round(image.naturalHeight * scale));
+                canvas.width = targetW;
+                canvas.height = targetH;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                  ctx.drawImage(image, 0, 0, targetW, targetH);
+                  thumb = canvas.toDataURL('image/jpeg', 0.7);
+                }
+              } catch {
+                // Ignore canvas extraction error in test environments
+              }
               resolve({
                 width: image.naturalWidth,
                 height: image.naturalHeight,
+                thumbnail: thumb,
               });
             };
             image.onerror = () => {
@@ -102,37 +129,79 @@ export const getMediaDimensions = async (
       const video = document.createElement('video');
       video.muted = true;
       video.playsInline = true;
-      video.preload = 'metadata';
+      video.preload = 'auto';
 
-      const details = await new Promise<{ width: number; height: number; duration?: number }>(
-        (resolve) => {
-          const timer = setTimeout(() => {
-            video.onloadedmetadata = null;
-            video.onerror = null;
-            resolve({
-              width: 1920,
-              height: 1080,
-            });
-          }, 2500);
+      const details = await new Promise<{
+        width: number;
+        height: number;
+        duration?: number;
+        thumbnail?: string;
+      }>((resolve) => {
+        let finished = false;
+        const done = (w: number, h: number, dur?: number, thumb?: string) => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timer);
+          video.onloadedmetadata = null;
+          video.onseeked = null;
+          video.onerror = null;
+          resolve({
+            width: w || 1920,
+            height: h || 1080,
+            duration: dur,
+            thumbnail: thumb,
+          });
+        };
 
-          video.onloadedmetadata = () => {
-            clearTimeout(timer);
-            resolve({
-              width: video.videoWidth || 1920,
-              height: video.videoHeight || 1080,
-              duration: video.duration && !isNaN(video.duration) ? video.duration : undefined,
-            });
-          };
-          video.onerror = () => {
-            clearTimeout(timer);
-            resolve({
-              width: 1920,
-              height: 1080,
-            });
-          };
-          video.src = objectUrl;
-        },
-      );
+        const timer = setTimeout(() => {
+          done(1920, 1080);
+        }, 2500);
+
+        video.onloadedmetadata = () => {
+          const w = video.videoWidth || 1920;
+          const h = video.videoHeight || 1080;
+          const dur = video.duration && !isNaN(video.duration) ? video.duration : undefined;
+
+          // Attempt to seek to a frame (0.1s or 10% of duration) for thumbnail capture
+          try {
+            video.currentTime = Math.min(0.1, (video.duration || 1) / 10);
+          } catch {
+            done(w, h, dur);
+          }
+        };
+
+        video.onseeked = () => {
+          const w = video.videoWidth || 1920;
+          const h = video.videoHeight || 1080;
+          const dur = video.duration && !isNaN(video.duration) ? video.duration : undefined;
+          let thumb: string | undefined;
+          try {
+            const canvas = document.createElement('canvas');
+            const targetW = Math.min(360, w);
+            const targetH = Math.max(1, Math.round((targetW * h) / w));
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(video, 0, 0, targetW, targetH);
+              thumb = canvas.toDataURL('image/jpeg', 0.7);
+            }
+          } catch {
+            // Ignore canvas extraction error in test environments
+          }
+          done(w, h, dur, thumb);
+        };
+
+        video.onerror = () => {
+          done(1920, 1080);
+        };
+        video.src = objectUrl;
+        try {
+          video.load();
+        } catch {
+          // Ignore
+        }
+      });
 
       try {
         video.pause();

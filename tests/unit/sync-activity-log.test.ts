@@ -80,7 +80,7 @@ describe('activity log cloud sync', () => {
   });
 
   it('downloads every activity-log page instead of stopping at the first batch', async () => {
-    const firstPage = Array.from({ length: 1000 }, (_, index) => ({
+    const firstPage = Array.from({ length: 50 }, (_, index) => ({
       _id: `log-${index}`,
       action: 'item_create',
       itemId: `Item ${index}`,
@@ -93,7 +93,7 @@ describe('activity log cloud sync', () => {
     }));
     const secondPage = [
       {
-        _id: 'log-1000',
+        _id: 'log-50',
         action: 'item_update',
         itemId: 'Last Item',
         createdAt: '2026-05-21T10:31:00.000Z',
@@ -112,11 +112,11 @@ describe('activity log cloud sync', () => {
 
     const logs = await downloadLogsFromCloud();
 
-    expect(logs).toHaveLength(1001);
+    expect(logs).toHaveLength(51);
     expect(logs?.[0]?.id).toBe('log-0');
-    expect(logs?.[1000]?.id).toBe('log-1000');
+    expect(logs?.[50]?.id).toBe('log-50');
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('limit=1000&skip=0');
-    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('limit=1000&skip=1000');
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('limit=50&skip=0');
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('limit=50&skip=50');
   });
 });

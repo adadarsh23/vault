@@ -29,6 +29,7 @@ import { MediaFilmstrip } from './MediaFilmstrip';
 import { MediaInspectorDrawer } from './MediaInspectorDrawer';
 import { cn } from '../../../../lib/utils';
 import { VaultItem } from '../../../../lib/storage';
+import { prewarmVaultMedia } from '../../../../lib/videoPrewarm';
 
 interface MediaPreviewProps {
   previewItem: string | null;
@@ -136,7 +137,18 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
     setFlipH(false);
     setFlipV(false);
     setIsFloating(false);
-  }, [previewItem]);
+
+    // Dual-Buffer Pre-rolling: Speculatively pre-warm next media item
+    if (previewItem && allItems.length > 1 && masterKey) {
+      const currentIndex = allItems.findIndex((i) => i.id === previewItem);
+      if (currentIndex !== -1 && currentIndex + 1 < allItems.length) {
+        const nextItem = allItems[currentIndex + 1];
+        if (nextItem.type === 'video') {
+          prewarmVaultMedia(nextItem, masterKey, undefined, 200);
+        }
+      }
+    }
+  }, [previewItem, allItems, masterKey]);
 
   // Non-passive wheel event listener for photo zooming
   useEffect(() => {
@@ -640,7 +652,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                       ? 'bg-blue-500/25 text-blue-300 border-blue-500/40'
                       : 'bg-black/75 text-white/75 border-white/15 hover:bg-white/10 hover:text-white',
                   )}
-                  title="View EXIF & Vault Metadata (I)"
+                  title={`Inspect ${type === 'photo' ? 'Photo' : 'Video'} Deep Details & Metadata (I)`}
                 >
                   <Info className="h-3.5 w-3.5" />
                 </Button>

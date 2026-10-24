@@ -123,8 +123,10 @@ const connectWithUri = async (mongoUri: string): Promise<typeof mongoose> => {
   const connection = await mongoose.connect(mongoUri, {
     dbName,
     autoIndex: process.env.NODE_ENV !== 'production',
-    serverSelectionTimeoutMS: 10_000,
-    maxPoolSize: 20,
+    serverSelectionTimeoutMS: 30_000,
+    socketTimeoutMS: 120_000,
+    connectTimeoutMS: 30_000,
+    maxPoolSize: 25,
   });
   currentUri = mongoUri;
   return connection;

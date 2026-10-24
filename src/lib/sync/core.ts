@@ -105,10 +105,37 @@ export const resolveRuntimeOrigin = (): string => {
 
 export const resolveSignedUrl = (value: string, context: string, code: string): URL => {
   try {
+    let resolved: URL;
     if (value.startsWith('/') && !value.startsWith('//') && API_BASE_URL) {
-      return new URL(value, API_BASE_URL);
+      resolved = new URL(value, API_BASE_URL);
+    } else {
+      resolved = new URL(value, resolveRuntimeOrigin());
     }
-    return new URL(value, resolveRuntimeOrigin());
+
+    // Host alignment: if signed URL references localhost/127.0.0.1, align with runtime API origin or window.location
+    if (typeof window !== 'undefined' && window.location) {
+      const currentHost = window.location.hostname;
+      const targetHost = resolved.hostname;
+      if (
+        (targetHost === 'localhost' || targetHost === '127.0.0.1') &&
+        currentHost !== 'localhost' &&
+        currentHost !== '127.0.0.1'
+      ) {
+        resolved.hostname = currentHost;
+      }
+    }
+    if (API_BASE_URL) {
+      try {
+        const apiUrl = new URL(API_BASE_URL);
+        if (resolved.pathname.startsWith('/api') && resolved.origin !== apiUrl.origin) {
+          resolved.protocol = apiUrl.protocol;
+          resolved.host = apiUrl.host;
+        }
+      } catch {
+        // ignore invalid API_BASE_URL parse
+      }
+    }
+    return resolved;
   } catch {
     const error = new Error(`${context}: server returned an invalid signed URL.`);
     (error as Error & { code?: string }).code = code;
@@ -412,6 +439,17 @@ export const fetchWithRetry = async function fetchWithRetry(
       // Check if this status should be silenced (treat as success)
       if (silentStatuses.has(response.status)) {
         return response;
+      }
+
+      if (response.status === 429) {
+        // If server provided a short Retry-After <= 5s, retry once
+        if (attempt === 0 && error.retryAfterMs && error.retryAfterMs <= 5000) {
+          lastError = error;
+          await sleep(error.retryAfterMs);
+          continue;
+        }
+        // Do not hammer rate-limited endpoints with repeated rapid retries
+        throw error;
       }
 
       if (

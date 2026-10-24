@@ -424,7 +424,7 @@ import cors from "cors";
 import compression3 from "compression";
 import helmet from "helmet";
 import morgan from "morgan";
-import rateLimit8 from "express-rate-limit";
+import rateLimit8, { ipKeyGenerator as ipKeyGenerator2 } from "express-rate-limit";
 import os4 from "os";
 import { monitorEventLoopDelay as monitorEventLoopDelay2 } from "perf_hooks";
 import fs12 from "fs";
@@ -559,8 +559,10 @@ var connectWithUri = async (mongoUri) => {
   const connection = await mongoose.connect(mongoUri, {
     dbName,
     autoIndex: process.env.NODE_ENV !== "production",
-    serverSelectionTimeoutMS: 1e4,
-    maxPoolSize: 20
+    serverSelectionTimeoutMS: 3e4,
+    socketTimeoutMS: 12e4,
+    connectTimeoutMS: 3e4,
+    maxPoolSize: 25
   });
   currentUri = mongoUri;
   return connection;
@@ -4490,6 +4492,7 @@ var encryptedActivityLogSchema = new mongoose6.Schema(
     timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" }
   }
 );
+encryptedActivityLogSchema.index({ userId: 1, isDeleted: 1, createdAt: -1 });
 encryptedActivityLogSchema.index({ userId: 1, createdAt: -1 });
 encryptedActivityLogSchema.index({ userId: 1, action: 1, createdAt: -1 });
 encryptedActivityLogSchema.index({ userId: 1, "metadata.ipAddress": 1, createdAt: -1 });
@@ -7483,7 +7486,8 @@ var saveFileToVault = async (input) => {
             reason: null,
             isActive: false,
             queuedAt: (/* @__PURE__ */ new Date()).toISOString()
-          }
+          },
+          ...input.metadata || {}
         }
       });
       enqueueUploadSecurityScan({
@@ -7757,6 +7761,8 @@ ${keyFilePath}`);
   const args = [
     "-i",
     sourcePath,
+    "-movflags",
+    "+faststart",
     "-hls_key_info_file",
     keyInfoPath,
     // 144p
@@ -7768,8 +7774,10 @@ ${keyFilePath}`);
     "180k",
     "-g",
     "48",
+    "-keyint_min",
+    "24",
     "-hls_time",
-    "10",
+    "2",
     "-hls_playlist_type",
     "vod",
     "-hls_segment_filename",
@@ -7784,8 +7792,10 @@ ${keyFilePath}`);
     "400k",
     "-g",
     "48",
+    "-keyint_min",
+    "24",
     "-hls_time",
-    "10",
+    "2",
     "-hls_playlist_type",
     "vod",
     "-hls_segment_filename",
@@ -7800,8 +7810,10 @@ ${keyFilePath}`);
     "800k",
     "-g",
     "48",
+    "-keyint_min",
+    "24",
     "-hls_time",
-    "10",
+    "2",
     "-hls_playlist_type",
     "vod",
     "-hls_segment_filename",
@@ -7816,8 +7828,10 @@ ${keyFilePath}`);
     "1400k",
     "-g",
     "48",
+    "-keyint_min",
+    "24",
     "-hls_time",
-    "10",
+    "2",
     "-hls_playlist_type",
     "vod",
     "-hls_segment_filename",
@@ -7832,8 +7846,10 @@ ${keyFilePath}`);
     "2800k",
     "-g",
     "48",
+    "-keyint_min",
+    "24",
     "-hls_time",
-    "10",
+    "2",
     "-hls_playlist_type",
     "vod",
     "-hls_segment_filename",
@@ -7848,8 +7864,10 @@ ${keyFilePath}`);
     "5000k",
     "-g",
     "48",
+    "-keyint_min",
+    "24",
     "-hls_time",
-    "10",
+    "2",
     "-hls_playlist_type",
     "vod",
     "-hls_segment_filename",
@@ -8410,7 +8428,8 @@ var completeMultipartUpload = async (req, res) => {
     keepMetadata: session.keepMetadata === true,
     clientUpdatedAt: typeof req.body?.clientUpdatedAt === "string" ? req.body.clientUpdatedAt : void 0,
     deviceId: typeof req.body?.deviceId === "string" ? req.body.deviceId : void 0,
-    ipAddress: getClientIp(req)
+    ipAddress: getClientIp(req),
+    metadata: typeof req.body?.metadata === "object" && req.body.metadata !== null ? req.body.metadata : void 0
   });
   const normalizedResult = typeof result?.toObject === "function" ? result.toObject() : result;
   if (MEMORY_ONLY_MULTIPART_UPLOADS) {
@@ -9025,6 +9044,37 @@ var CACHE_SWEEP_INTERVAL_MS = Math.max(
   3e4,
   toPositiveInt(process.env.MEDIA_CACHE_SWEEP_INTERVAL_MS, 6e4)
 );
+var decryptedMediaCache = /* @__PURE__ */ new Map();
+var MAX_DECRYPTED_MEDIA_ENTRIES = Math.max(
+  4,
+  toPositiveInt(process.env.DECRYPTED_MEDIA_CACHE_MAX_ENTRIES, 12)
+);
+var DECRYPTED_MEDIA_TTL_MS = Math.max(
+  6e4,
+  toPositiveInt(process.env.DECRYPTED_MEDIA_CACHE_TTL_MS, 5 * 60 * 1e3)
+);
+var getCachedMediaBuffer = (cacheKey) => {
+  const item = decryptedMediaCache.get(cacheKey);
+  if (!item) return null;
+  if (Date.now() > item.expires) {
+    decryptedMediaCache.delete(cacheKey);
+    return null;
+  }
+  return item;
+};
+var setCachedMediaBuffer = (cacheKey, buffer, mimeType) => {
+  const now = Date.now();
+  for (const [k, v] of decryptedMediaCache.entries()) {
+    if (v.expires <= now) decryptedMediaCache.delete(k);
+  }
+  trimMapToMaxEntries(decryptedMediaCache, MAX_DECRYPTED_MEDIA_ENTRIES);
+  decryptedMediaCache.set(cacheKey, {
+    buffer,
+    size: buffer.length,
+    mimeType,
+    expires: now + DECRYPTED_MEDIA_TTL_MS
+  });
+};
 var getSingleQueryValue = (value) => typeof value === "string" ? value : Array.isArray(value) ? value[0] : void 0;
 var getSingleRouteParam = (value) => typeof value === "string" ? value : Array.isArray(value) ? value[0] : void 0;
 var findVaultItemFlexible = async (DynamicVaultModel, userId, itemId, username) => {
@@ -9363,6 +9413,10 @@ var setMediaCorsHeaders = (req, res) => {
       "Access-Control-Allow-Headers",
       "Authorization, Content-Type, Range, X-CSRF-Token, X-Device-Hash"
     );
+    res.setHeader(
+      "Access-Control-Expose-Headers",
+      "Content-Range, Accept-Ranges, Content-Length, Content-Type"
+    );
   } else if (originHeader || refererHeader) {
     const rawOrigin = originHeader || refererHeader;
     try {
@@ -9370,6 +9424,10 @@ var setMediaCorsHeaders = (req, res) => {
       if (isAllowedCorsOrigin(fallbackOrigin)) {
         res.setHeader("Access-Control-Allow-Origin", fallbackOrigin);
         res.setHeader("Access-Control-Allow-Credentials", "true");
+        res.setHeader(
+          "Access-Control-Expose-Headers",
+          "Content-Range, Accept-Ranges, Content-Length, Content-Type"
+        );
       }
     } catch {
     }
@@ -9683,14 +9741,22 @@ var accessVaultFile = async (req, res) => {
         res.setHeader("Accept-Ranges", "bytes");
         res.setHeader("Content-Type", mimeType2);
         res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-        const chunks = [];
-        const downloadStream = bucket.openDownloadStream(objectId);
-        const gridBuffer = await new Promise((resolve, reject) => {
-          downloadStream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
-          downloadStream.on("error", reject);
-          downloadStream.on("end", () => resolve(Buffer.concat(chunks)));
-        });
-        const decrypted = decryptGridFsPayload(gridBuffer, fileMetadata);
+        let decrypted;
+        const cacheKey = `direct_gridfs:${objectId.toString()}`;
+        const cachedEntry = getCachedMediaBuffer(cacheKey);
+        if (cachedEntry) {
+          decrypted = cachedEntry.buffer;
+        } else {
+          const chunks = [];
+          const downloadStream = bucket.openDownloadStream(objectId);
+          const gridBuffer = await new Promise((resolve, reject) => {
+            downloadStream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+            downloadStream.on("error", reject);
+            downloadStream.on("end", () => resolve(Buffer.concat(chunks)));
+          });
+          decrypted = decryptGridFsPayload(gridBuffer, fileMetadata);
+          setCachedMediaBuffer(cacheKey, decrypted, mimeType2);
+        }
         const size = decrypted.length;
         if (isStreamableMedia2 && requestedRange2) {
           const parsedRange = parseSingleByteRange(requestedRange2, size);
@@ -9781,22 +9847,29 @@ var accessVaultFile = async (req, res) => {
           });
           return downloadStream.pipe(res);
         } else {
-          const chunks = [];
-          const downloadStream = bucket.openDownloadStream(objectId);
-          const gridBuffer = await new Promise((resolve, reject) => {
-            downloadStream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
-            downloadStream.on("error", reject);
-            downloadStream.on("end", () => resolve(Buffer.concat(chunks)));
-          });
           let decrypted;
-          try {
-            decrypted = decryptGridFsPayload(gridBuffer, fileMetadata, item.file);
-          } catch (decryptionError) {
-            logger.error("Failed to decrypt GridFS media envelope", {
-              itemId: item._id,
-              error: decryptionError
+          const cacheKey = `gridfs:${gridFsId}`;
+          const cachedEntry = getCachedMediaBuffer(cacheKey);
+          if (cachedEntry) {
+            decrypted = cachedEntry.buffer;
+          } else {
+            const chunks = [];
+            const downloadStream = bucket.openDownloadStream(objectId);
+            const gridBuffer = await new Promise((resolve, reject) => {
+              downloadStream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+              downloadStream.on("error", reject);
+              downloadStream.on("end", () => resolve(Buffer.concat(chunks)));
             });
-            throw new AppError(500, "DECRYPTION_FAILED", "Failed to decrypt media payload.");
+            try {
+              decrypted = decryptGridFsPayload(gridBuffer, fileMetadata, item.file);
+              setCachedMediaBuffer(cacheKey, decrypted, mimeType);
+            } catch (decryptionError) {
+              logger.error("Failed to decrypt GridFS media envelope", {
+                itemId: item._id,
+                error: decryptionError
+              });
+              throw new AppError(500, "DECRYPTION_FAILED", "Failed to decrypt media payload.");
+            }
           }
           const size = decrypted.length;
           if (isStreamableMedia && requestedRange) {
@@ -9847,23 +9920,30 @@ var accessVaultFile = async (req, res) => {
     }
     if (rawBuffer && rawBuffer.length > 0) {
       let decrypted;
-      try {
-        const payloadObj = JSON.parse(rawBuffer.toString());
-        decrypted = decryptBuffer(payloadObj);
-      } catch {
-        if (item.file?.encryptionIv && item.file?.encryptionTag) {
-          try {
-            decrypted = decryptBuffer({
-              iv: item.file.encryptionIv,
-              tag: item.file.encryptionTag,
-              encryptedData: rawBuffer.toString("hex")
-            });
-          } catch {
+      const cacheKey = `payload:${itemId}`;
+      const cachedEntry = getCachedMediaBuffer(cacheKey);
+      if (cachedEntry) {
+        decrypted = cachedEntry.buffer;
+      } else {
+        try {
+          const payloadObj = JSON.parse(rawBuffer.toString());
+          decrypted = decryptBuffer(payloadObj);
+        } catch {
+          if (item.file?.encryptionIv && item.file?.encryptionTag) {
+            try {
+              decrypted = decryptBuffer({
+                iv: item.file.encryptionIv,
+                tag: item.file.encryptionTag,
+                encryptedData: rawBuffer.toString("hex")
+              });
+            } catch {
+              decrypted = rawBuffer;
+            }
+          } else {
             decrypted = rawBuffer;
           }
-        } else {
-          decrypted = rawBuffer;
         }
+        setCachedMediaBuffer(cacheKey, decrypted, mimeType);
       }
       const size = decrypted.length;
       res.setHeader("Accept-Ranges", "bytes");
@@ -10696,7 +10776,8 @@ var multipartCompleteBodyValidation = [
   body().isObject().withMessage("Request body must be a JSON object."),
   body("fileSha256").optional({ values: "null" }).isString().withMessage("fileSha256 must be a string.").bail().trim().matches(HASH_HEX_64_PATTERN).withMessage("fileSha256 must be a 64-character hex hash."),
   body("deviceId").optional({ values: "null" }).isString().withMessage("deviceId must be a string.").bail().trim().isLength({ min: 1, max: 128 }).withMessage("deviceId must be between 1 and 128 characters.").bail().matches(DEVICE_ID_PATTERN).withMessage("deviceId format is invalid."),
-  body("clientUpdatedAt").optional({ values: "null" }).isString().withMessage("clientUpdatedAt must be a string.").bail().trim().isLength({ min: 1, max: 128 }).withMessage("clientUpdatedAt is invalid.")
+  body("clientUpdatedAt").optional({ values: "null" }).isString().withMessage("clientUpdatedAt must be a string.").bail().trim().isLength({ min: 1, max: 128 }).withMessage("clientUpdatedAt is invalid."),
+  body("metadata").optional({ values: "null" }).isObject().withMessage("metadata must be an object.")
 ];
 var activityLogQueryValidation = [
   query("limit").optional().isInt({ min: 1, max: 1e3 }).withMessage("limit must be an integer between 1 and 1000.").toInt(),
@@ -17639,7 +17720,36 @@ var setOverloadResponseHeaders = (res) => {
 };
 var apiLimiter = rateLimit8({
   windowMs: Number.parseInt(process.env.API_RATE_LIMIT_WINDOW_MS || "", 10) || 15 * 60 * 1e3,
-  max: Number.parseInt(process.env.API_RATE_LIMIT_MAX || "", 10) || (process.env.NODE_ENV === "production" ? 500 : 5e3),
+  max: () => {
+    const configured = Number.parseInt(process.env.API_RATE_LIMIT_MAX || "", 10);
+    if (process.env.NODE_ENV !== "production") {
+      return Number.isFinite(configured) && configured > 5e3 ? configured : 5e4;
+    }
+    return Number.isFinite(configured) && configured > 0 ? configured : 2e3;
+  },
+  skip: (req) => {
+    if (process.env.DISABLE_RATE_LIMITING === "true") {
+      return true;
+    }
+    if (process.env.NODE_ENV !== "production") {
+      const clientIp = req.ip || req.socket.remoteAddress || "";
+      if (clientIp === "127.0.0.1" || clientIp === "::1" || clientIp === "::ffff:127.0.0.1" || clientIp.includes("127.0.0.1")) {
+        return true;
+      }
+    }
+    return false;
+  },
+  keyGenerator: (req) => {
+    const authHeader = req.headers.authorization;
+    const userId = req?.user?.userId;
+    if (userId) {
+      return `user_${userId}`;
+    }
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      return `token_${authHeader.slice(7, 40)}`;
+    }
+    return ipKeyGenerator2(req.ip || req.socket.remoteAddress || "unknown");
+  },
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -17728,9 +17838,9 @@ async function startServer() {
     let shutdownInProgress = false;
     let lastOverloadLogAt = 0;
     app.set("shutdownSignal", shutdownController.signal);
-    httpServer.requestTimeout = 3e4;
-    httpServer.headersTimeout = 35e3;
-    httpServer.keepAliveTimeout = 5e3;
+    httpServer.requestTimeout = 3e5;
+    httpServer.headersTimeout = 31e4;
+    httpServer.keepAliveTimeout = 65e3;
     httpServer.on("connection", (socket) => {
       runtimeMetrics.onConnectionOpen();
       socket.on("close", () => runtimeMetrics.onConnectionClose());
@@ -17777,7 +17887,20 @@ async function startServer() {
             "Upload-Metadata",
             "Upload-Offset"
           ],
-          exposedHeaders: ["Location", "Tus-Resumable", "Upload-Offset", "Upload-Length"]
+          exposedHeaders: [
+            "Location",
+            "Tus-Resumable",
+            "Upload-Offset",
+            "Upload-Length",
+            "Content-Range",
+            "Accept-Ranges",
+            "Content-Length",
+            "Content-Type",
+            "Retry-After",
+            "RateLimit-Limit",
+            "RateLimit-Remaining",
+            "RateLimit-Reset"
+          ]
         })
       );
       app.use(originProtection);
@@ -17785,8 +17908,9 @@ async function startServer() {
         app.use(compression3(deepCompressionOptions));
       }
       app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
-      app.use((_req, res, next) => {
-        res.setTimeout(3e4);
+      app.use((req, res, next) => {
+        const isMediaStreamPath = req.path.includes("/api/vault/files/access") || req.path.includes("/api/vault/media") || req.path.includes("/uploads");
+        res.setTimeout(isMediaStreamPath ? 3e5 : 6e4);
         next();
       });
     });

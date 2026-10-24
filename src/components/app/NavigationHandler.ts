@@ -159,22 +159,20 @@ export function useNavigationHandler() {
         return;
       }
 
-      startTransition(() => {
-        try {
-          navigate(
-            {
-              pathname,
-              hash,
-              search,
-            },
-            {
-              replace: false,
-            },
-          );
-        } catch (error) {
-          logger.error('Failed to navigate to tab', { error, tabPath });
-        }
-      });
+      try {
+        navigate(
+          {
+            pathname,
+            hash,
+            search,
+          },
+          {
+            replace: false,
+          },
+        );
+      } catch (error) {
+        logger.error('Failed to navigate to tab', { error, tabPath });
+      }
     },
     [navigate, location.pathname, location.hash, location.search],
   );

@@ -1,7 +1,7 @@
 {
   "requestedUrl": "http://127.0.0.1:4173/",
   "finalUrl": "http://127.0.0.1:4173/",
-  "fetchTime": "2026-10-23T14:59:17.567Z",
+  "fetchTime": "2026-10-24T09:51:32.555Z",
   "category": {
     "title": "Best Practices",
     "supportedModes": [
@@ -613,7 +613,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-DimM3YeO.js",
+              "url": "http://127.0.0.1:4173/assets/index-D5JqnruC.js",
               "urlProvider": "network",
               "line": 1,
               "column": 6529
@@ -1090,8 +1090,8 @@
               "type": "source-location",
               "url": "http://127.0.0.1:4173/",
               "urlProvider": "network",
-              "line": 205,
-              "column": 49
+              "line": 0,
+              "column": 0
             }
           },
           {
@@ -1183,10 +1183,10 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/index-DimM3YeO.js",
+              "url": "http://127.0.0.1:4173/assets/index-D5JqnruC.js",
               "urlProvider": "network",
               "line": 1,
-              "column": 249973
+              "column": 253339
             }
           },
           {
@@ -1297,7 +1297,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/Background-DthhqM0S.js",
+              "url": "http://127.0.0.1:4173/assets/Background-CUE2WxkR.js",
               "urlProvider": "network",
               "line": 0,
               "column": 855
@@ -1316,7 +1316,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/Background-DthhqM0S.js",
+              "url": "http://127.0.0.1:4173/assets/Background-CUE2WxkR.js",
               "urlProvider": "network",
               "line": 0,
               "column": 855
@@ -1335,7 +1335,7 @@
             },
             "source": {
               "type": "source-location",
-              "url": "http://127.0.0.1:4173/assets/Background-DthhqM0S.js",
+              "url": "http://127.0.0.1:4173/assets/Background-CUE2WxkR.js",
               "urlProvider": "network",
               "line": 0,
               "column": 855
@@ -1553,8 +1553,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/sentry-w9MKPzM_.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/sentry-w9MKPzM_.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/sentry-ZY7-8lfA.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/sentry-ZY7-8lfA.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1601,8 +1601,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/index-DimM3YeO.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-DimM3YeO.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/index-D5JqnruC.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/index-D5JqnruC.js.map",
             "subItems": {
               "type": "subitems",
               "items": []
@@ -1641,8 +1641,8 @@
             }
           },
           {
-            "scriptUrl": "http://127.0.0.1:4173/assets/Background-DthhqM0S.js",
-            "sourceMapUrl": "http://127.0.0.1:4173/assets/Background-DthhqM0S.js.map",
+            "scriptUrl": "http://127.0.0.1:4173/assets/Background-CUE2WxkR.js",
+            "sourceMapUrl": "http://127.0.0.1:4173/assets/Background-CUE2WxkR.js.map",
             "subItems": {
               "type": "subitems",
               "items": []

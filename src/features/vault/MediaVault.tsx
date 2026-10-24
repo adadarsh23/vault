@@ -42,7 +42,6 @@ import { MediaTimelineView } from './components/MediaVault/MediaTimelineView';
 import { MediaBulkToolbar } from './components/MediaVault/MediaBulkToolbar';
 import { MediaPreview } from './components/MediaVault/MediaPreview';
 import { MediaInspectorDrawer } from './components/MediaVault/MediaInspectorDrawer';
-import { preloadFFmpeg } from '../../lib/videoTranscoder';
 import { computeBufferHash } from '../../lib/merkleTree';
 import { vaultApi } from '../../api/vaultApi';
 
@@ -152,9 +151,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
     setActivePreviewItem(null);
   }, [cancelScheduledPreviewActivation]);
 
-  useEffect(() => {
-    preloadFFmpeg();
-  }, []);
+  // Removed automatic preloadFFmpeg() on vault entry to eliminate CDN download lag, network socket choking, and false offline status
 
   // Reusable folder and item hooks
   const {
@@ -645,17 +642,35 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
           const folderFromPath = readTopLevelFolderFromWebkitPath(file);
           const fileTargetFolder = folderFromPath || targetFolder;
 
+          const isVideo = type === 'video';
           const shouldUseDirectLargeUpload =
             !useVaultStore.getState().isDecoyMode &&
             !isAlreadyEncrypted &&
-            type !== 'photo' &&
-            file.size >= LARGE_MEDIA_DIRECT_UPLOAD_BYTES;
+            (isVideo || file.size >= LARGE_MEDIA_DIRECT_UPLOAD_BYTES);
 
           if (shouldUseDirectLargeUpload) {
             try {
-              toast.loading(`Preparing multipart upload ${index + 1}/${total}...`, {
-                id: toastId,
-              });
+              toast.loading(
+                isVideo
+                  ? `Extracting poster & preparing cloud stream ${index + 1}/${total}...`
+                  : `Preparing multipart upload ${index + 1}/${total}...`,
+                { id: toastId },
+              );
+
+              let dimensions: Awaited<ReturnType<typeof getMediaDimensions>> = null;
+              if (isVideo) {
+                try {
+                  dimensions = await getMediaDimensions(file, type);
+                } catch (dimErr) {
+                  logger.warn(
+                    'Could not extract video dimensions/thumbnail prior to cloud upload',
+                    {
+                      error: dimErr,
+                    },
+                  );
+                }
+              }
+
               const resumeKey = `vault:multipart:${type}:${file.name}:${file.size}:${file.lastModified}`;
               let resumeUploadId: string | undefined;
               try {
@@ -665,7 +680,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
               }
 
               const initResponse = await vaultApi.startMultipartUpload({
-                category: 'video',
+                category: isVideo ? 'video' : 'photo',
                 folder: fileTargetFolder || null,
                 fileName: file.name,
                 mimeType: normalizeMediaMimeType(file, type),
@@ -750,6 +765,21 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
               await vaultApi.completeMultipartUpload(uploadId, {
                 fileSha256: fullHash,
                 clientUpdatedAt: new Date().toISOString(),
+                metadata: isVideo
+                  ? {
+                      mimeType: normalizeMediaMimeType(file, type),
+                      size: file.size,
+                      extension: getFileExtension(file.name),
+                      width: dimensions?.width,
+                      height: dimensions?.height,
+                      aspectRatio: dimensions?.aspectRatio,
+                      duration: dimensions?.duration,
+                      thumbnail: (dimensions as any)?.thumbnail || undefined,
+                      isE2EE: true,
+                      storage: 'cloud',
+                      ...additionalMetadata,
+                    }
+                  : undefined,
               });
               try {
                 window.localStorage.removeItem(resumeKey);
@@ -757,12 +787,19 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
                 // ignore
               }
 
-              await fetchItems('manual');
-              toast.success(`${file.name} uploaded successfully`, { id: toastId });
+              await fetchItems('background');
+              toast.success(
+                isVideo
+                  ? `${file.name} uploaded to cloud successfully`
+                  : `${file.name} uploaded successfully`,
+                { id: toastId },
+              );
               logActivity({
                 actionType: 'file_upload',
                 itemName: file.name,
-                description: `${type} uploaded (large direct mode)`,
+                description: isVideo
+                  ? `${type} uploaded to cloud storage`
+                  : `${type} uploaded (large direct mode)`,
                 status: 'success',
               });
               successCount++;
@@ -811,15 +848,19 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
           if (isDecoy || isAlreadyEncrypted || !masterKey) {
             encryptedData = new Uint8Array(await file.arrayBuffer());
           } else {
-            encryptedData = await encryptFileInWorker(uploadFileObj, masterKey);
+            encryptedData = await encryptFileInWorker(uploadFileObj, masterKey, {
+              fastHardware: type === 'video' || uploadFileObj.size >= 4 * 1024 * 1024,
+            });
           }
 
           await yieldToMainThread();
           const dimensions = await getMediaDimensions(uploadFileObj, type);
 
           await yieldToMainThread();
-          const blake3Hash = await computeBufferHash(encryptedData, 'blake3');
-          const sha256Hash = await computeBufferHash(encryptedData, 'sha256');
+          const [blake3Hash, sha256Hash] = await Promise.all([
+            computeBufferHash(encryptedData, 'blake3'),
+            computeBufferHash(encryptedData, 'sha256'),
+          ]);
 
           await addItem(
             {
@@ -835,6 +876,7 @@ export const MediaVault: React.FC<{ type: 'photo' | 'video' }> = ({ type }) => {
                 height: dimensions?.height,
                 aspectRatio: dimensions?.aspectRatio,
                 duration: dimensions?.duration,
+                thumbnail: (dimensions as any)?.thumbnail || undefined,
                 blurhash: blurhash || undefined,
                 sha256: sha256Hash,
                 integrity: {
