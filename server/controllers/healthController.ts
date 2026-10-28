@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { ensureMongoReady } from '../mongo.ts';
 import { multiClusterPool } from '../services/multiClusterPool.ts';
+import { logger } from '../utils/logger.ts';
 
 const DEFAULT_DB_NAME = process.env.MONGODB_DB_NAME?.trim() || 'vault';
 
@@ -15,7 +16,6 @@ const isTestRuntime = (): boolean => {
   if (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
     return true;
   }
-
   return process.argv.some((arg) => arg.includes('vitest'));
 };
 
@@ -25,18 +25,47 @@ const isMongoOptionalMode = (): boolean => {
   return skipMongo && !isTestRuntime();
 };
 
+const sanitizeDatabaseHost = (host: string | null | undefined): string | null => {
+  if (!host) return null;
+  if (process.env.NODE_ENV === 'production') {
+    // In production, mask internal host details to prevent network topology disclosure
+    return host.includes('.') ? `***.${host.split('.').slice(-2).join('.')}` : 'configured';
+  }
+  return host;
+};
+
 export const getHealthStatus = async (_req: express.Request, res: express.Response) => {
-  const ready = isMongoOptionalMode() ? true : await ensureMongoReady();
   writeHealthHeaders(res);
 
-  const clusterSummaries = multiClusterPool.getAllNodes().map((n) => ({
-    id: n.id,
-    name: n.name,
-    host: n.host,
-    healthy: n.isHealthy,
-    full: n.isFull,
-    lastPingMs: n.lastPingMs,
-  }));
+  let ready = false;
+  try {
+    ready = isMongoOptionalMode() ? true : await ensureMongoReady();
+  } catch (error) {
+    logger.warn('[HealthController] ensureMongoReady check failed', { error });
+    ready = false;
+  }
+
+  let clusterSummaries: Array<{
+    id: string;
+    name: string;
+    host: string;
+    healthy: boolean;
+    full: boolean;
+    lastPingMs?: number;
+  }> = [];
+
+  try {
+    clusterSummaries = multiClusterPool.getAllNodes().map((n) => ({
+      id: n.id,
+      name: n.name,
+      host: sanitizeDatabaseHost(n.host) || 'unknown',
+      healthy: n.isHealthy,
+      full: n.isFull,
+      lastPingMs: n.lastPingMs,
+    }));
+  } catch (poolErr) {
+    logger.debug('[HealthController] multiClusterPool.getAllNodes failed', { poolErr });
+  }
 
   return res.status(ready ? 200 : 503).json({
     success: ready,
@@ -44,7 +73,7 @@ export const getHealthStatus = async (_req: express.Request, res: express.Respon
     database: {
       name: mongoose.connection.name || DEFAULT_DB_NAME,
       readyState: mongoose.connection.readyState,
-      host: mongoose.connection.host || null,
+      host: sanitizeDatabaseHost(mongoose.connection.host),
       multiCluster: {
         totalConfigured: clusterSummaries.length,
         healthyCount: clusterSummaries.filter((c) => c.healthy).length,
@@ -56,15 +85,22 @@ export const getHealthStatus = async (_req: express.Request, res: express.Respon
 };
 
 export const getReadinessStatus = async (_req: express.Request, res: express.Response) => {
+  writeHealthHeaders(res);
+
   const mongoOptional = isMongoOptionalMode();
-  const mongoReady = mongoOptional ? true : await ensureMongoReady();
+  let mongoReady = false;
+  try {
+    mongoReady = mongoOptional ? true : await ensureMongoReady();
+  } catch (error) {
+    logger.warn('[HealthController] ensureMongoReady check failed in readiness', { error });
+    mongoReady = false;
+  }
+
   const hasJwtSecret = Boolean(process.env.JWT_SECRET?.trim());
   const hasMongoUri = mongoOptional
     ? true
     : Boolean(process.env.MONGODB_URI?.trim() || process.env.MONGODB_URL?.trim());
   const ready = mongoReady && hasJwtSecret && hasMongoUri;
-
-  writeHealthHeaders(res);
 
   return res.status(ready ? 200 : 503).json({
     success: ready,

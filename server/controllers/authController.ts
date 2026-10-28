@@ -1,6 +1,6 @@
 import express from 'express';
-import { User } from '../models/user.ts';
 import crypto from 'node:crypto';
+import { User } from '../models/user.ts';
 import { authenticateUser, registerUser } from '../services/authService.ts';
 import {
   changeAuthenticatedPassword,
@@ -33,7 +33,6 @@ const isTestRuntime = (): boolean => {
   if (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
     return true;
   }
-
   return process.argv.some((arg) => arg.includes('vitest'));
 };
 
@@ -41,7 +40,6 @@ const isMongoOptionalMode = (): boolean => {
   if (process.env.NODE_ENV === 'production') {
     return false;
   }
-
   const raw = process.env.SKIP_MONGO_CONNECT?.trim().toLowerCase();
   const skipMongo = raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
   return skipMongo && !isTestRuntime();
@@ -84,11 +82,9 @@ const toOperationalAuthError = (error: unknown): unknown => {
   if (error instanceof AppError) {
     return error;
   }
-
   if (isMongoConnectivityFailure(error)) {
     return new AppError(503, DB_FAILURE_CODE, DB_FAILURE_MESSAGE);
   }
-
   return error;
 };
 
@@ -308,11 +304,16 @@ export const login = async (req: express.Request, res: express.Response) => {
 };
 
 export const checkUsername = async (req: express.Request, res: express.Response) => {
-  const username =
+  const rawUsername =
     typeof req.query?.username === 'string' ? req.query.username : req.body?.username;
 
-  if (!username) {
+  if (typeof rawUsername !== 'string' || !rawUsername.trim()) {
     throw AppError.badRequest('Username is required.', 'INVALID_USERNAME');
+  }
+
+  const username = rawUsername.trim().toLowerCase();
+  if (username.length > 64) {
+    throw AppError.badRequest('Username exceeds maximum allowed length.', 'INVALID_USERNAME');
   }
 
   if (isMongoOptionalMode()) {
@@ -324,12 +325,14 @@ export const checkUsername = async (req: express.Request, res: express.Response)
 };
 
 export const getSalt = async (req: express.Request, res: express.Response) => {
-  const username =
+  const rawUsername =
     typeof req.query?.username === 'string' ? req.query.username.trim().toLowerCase() : '';
 
-  if (!username) {
+  if (!rawUsername) {
     throw AppError.badRequest('Username is required.', 'INVALID_USERNAME');
   }
+
+  const username = rawUsername.slice(0, 64);
 
   const hmacSecret = process.env.JWT_SECRET || 'dummy-secret-key-salt-derivation-fallback';
   const defaultDeterministicSalt = crypto
@@ -417,10 +420,8 @@ export const refreshSession = async (req: express.Request, res: express.Response
     applyRefreshCookie(req, res, result.refreshToken);
     return sendSuccess(res, toPublicAuthPayload(result), 'Session refreshed successfully');
   } catch (error) {
-    // Security Intelligence: Track session refresh failure
     anomalyDetectionService.trackAuthFailure(getClientIp(req));
 
-    // Log JWT verification errors
     if (error instanceof Error) {
       if (error.message.includes('invalid signature')) {
         logger.warn('JWT signature verification failed during session refresh', {
@@ -481,29 +482,53 @@ export const revokeSessions = async (req: AuthenticatedRequest, res: express.Res
 };
 
 export const changePassword = async (req: AuthenticatedRequest, res: express.Response) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (!currentPassword || typeof currentPassword !== 'string') {
+    throw AppError.badRequest('Current password is required.', 'MISSING_CREDENTIALS');
+  }
+  if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
+    throw AppError.badRequest('New password must be at least 8 characters.', 'AUTH_WEAK_PASSWORD');
+  }
+
   const result = await changeAuthenticatedPassword({
     userId: req.user.userId,
-    currentPassword: req.body?.currentPassword,
-    newPassword: req.body?.newPassword,
+    currentPassword,
+    newPassword,
     ipAddress: getClientIp(req),
   });
   return sendSuccess(res, result, 'Password changed successfully');
 };
 
 export const updateDeviceName = async (req: AuthenticatedRequest, res: express.Response) => {
-  if (typeof req.body?.deviceId !== 'string' || typeof req.body?.deviceName !== 'string') {
-    throw AppError.badRequest('deviceId and deviceName are required.', 'INVALID_INPUT');
+  const { deviceId, deviceName } = req.body || {};
+  if (typeof deviceId !== 'string' || typeof deviceName !== 'string') {
+    throw AppError.badRequest('deviceId and deviceName are required strings.', 'INVALID_INPUT');
   }
 
-  const result = await renameDeviceSession(req.user.userId, req.body.deviceId, req.body.deviceName);
+  const cleanDeviceId = deviceId.trim().slice(0, 128);
+  const cleanDeviceName = deviceName.trim().slice(0, 100);
+
+  if (!cleanDeviceId || !cleanDeviceName) {
+    throw AppError.badRequest('deviceId and deviceName cannot be empty.', 'INVALID_INPUT');
+  }
+
+  const result = await renameDeviceSession(req.user.userId, cleanDeviceId, cleanDeviceName);
   return sendSuccess(res, result, 'Device name updated successfully');
 };
 
 export const updateProfile = async (req: AuthenticatedRequest, res: express.Response) => {
+  const rawProfileName = req.body?.profileName;
+  const rawProfilePhoto = req.body?.profilePhoto;
+
+  const profileName =
+    typeof rawProfileName === 'string' ? rawProfileName.trim().slice(0, 100) : undefined;
+  const profilePhoto =
+    typeof rawProfilePhoto === 'string' ? rawProfilePhoto.trim().slice(0, 2048) : undefined;
+
   const result = await updateAuthenticatedUserProfile({
     userId: req.user.userId,
-    profileName: req.body?.profileName,
-    profilePhoto: req.body?.profilePhoto,
+    profileName,
+    profilePhoto,
   });
   return sendSuccess(res, result, 'Profile updated successfully');
 };
@@ -521,7 +546,6 @@ export const sessionStream = async (req: AuthenticatedRequest, res: express.Resp
     'X-Accel-Buffering': 'no',
   });
 
-  // Flush initial connection event immediately
   const initialPayload = JSON.stringify({
     event: 'connected',
     userId,
@@ -531,6 +555,10 @@ export const sessionStream = async (req: AuthenticatedRequest, res: express.Resp
   res.write(`event: connected\ndata: ${initialPayload}\n\n`);
 
   sessionRealtimeService.registerSessionStream(userId, sessionId, res);
+
+  req.on('close', () => {
+    logger.debug('SSE connection closed by client', { userId, sessionId });
+  });
 };
 
 export const checkSessionStatus = async (req: AuthenticatedRequest, res: express.Response) => {

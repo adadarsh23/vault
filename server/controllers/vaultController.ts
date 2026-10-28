@@ -11,7 +11,7 @@ import {
   deleteVaultItemByCategory,
   getVaultSnapshot,
   saveEncryptedVaultItem,
-} from '../services/vaultItemService.ts'; // Updated path
+} from '../services/vaultItemService.ts';
 import { saveFileToVault } from '../services/vaultService.ts';
 import { AuthenticatedRequest } from '../utils/requestTypes.ts';
 import { getClientIp } from '../utils/requestIp.ts';
@@ -25,6 +25,7 @@ import {
 
 const getUserId = (req: AuthenticatedRequest): string => req.user.userId;
 const getUsername = (req: AuthenticatedRequest): string => req.user.username;
+
 const DEFAULT_MULTIPART_TMP_ROOT = path.join(process.cwd(), 'vault-tmp', 'multipart-uploads');
 const MULTIPART_ROOT = path.resolve(process.env.MULTIPART_TMP_ROOT || DEFAULT_MULTIPART_TMP_ROOT);
 const MULTIPART_PART_SIZE_BYTES = Math.max(
@@ -42,8 +43,54 @@ const MULTIPART_SESSION_TTL_MS = Math.max(
 const MULTIPART_MAX_FILE_SIZE_BYTES = maxUploadFileSizeBytes;
 const MULTIPART_MAX_PARTS = Math.max(1, Number(process.env.MULTIPART_MAX_PARTS || 2000));
 const FILE_CATEGORY_SET = new Set(['photo', 'video', 'audio', 'document', 'other-files']);
+const ALL_CATEGORY_SET = new Set([
+  'photo',
+  'photos',
+  'video',
+  'videos',
+  'audio',
+  'audios',
+  'document',
+  'documents',
+  'file',
+  'files',
+  'other',
+  'other-files',
+  'other_files',
+  'otherfile',
+  'otherfiles',
+  'notes',
+  'note',
+  'chats',
+  'chat',
+  'todos',
+  'todo',
+  'passwords',
+  'password',
+  'secretKeys',
+  'secretkey',
+  'secretkeys',
+  'secret',
+  'secrets',
+  'contact',
+  'contacts',
+  'location',
+  'locations',
+  'card',
+  'cards',
+  'identity',
+  'identities',
+  'wifi',
+  'settings',
+  'system',
+  'users',
+  'user',
+  'v2_items',
+]);
+
 const MULTIPART_SECURE_CLEANUP =
   (process.env.MULTIPART_SECURE_CLEANUP?.trim().toLowerCase() || 'true') === 'true';
+
 const resolveMemoryOnlyMultipartUploads = (): boolean => {
   const explicit = process.env.MEMORY_ONLY_MULTIPART_UPLOADS?.trim().toLowerCase();
   if (explicit === 'true' || explicit === '1' || explicit === 'yes') {
@@ -56,6 +103,7 @@ const resolveMemoryOnlyMultipartUploads = (): boolean => {
 };
 
 const MEMORY_ONLY_MULTIPART_UPLOADS = resolveMemoryOnlyMultipartUploads();
+const SAFE_ID_PATTERN = /^[a-zA-Z0-9:_-]{1,128}$/;
 
 const getRouteParam = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value.trim();
@@ -66,6 +114,13 @@ const getRouteParam = (value: unknown): string | undefined => {
     if (typeof first === 'number' && Number.isFinite(first)) return String(first);
   }
   return undefined;
+};
+
+const assertSafeId = (id: unknown, paramName: string): string => {
+  if (typeof id !== 'string' || !id.trim() || !SAFE_ID_PATTERN.test(id.trim())) {
+    throw AppError.badRequest(`Invalid format for ${paramName}.`, 'INVALID_IDENTIFIER');
+  }
+  return id.trim();
 };
 
 type MultipartSessionRecord = {
@@ -134,11 +189,15 @@ const recordUploadAnomaly = (
   }
 };
 
-const multipartSessionPath = (userId: string, uploadId: string) =>
-  path.join(MULTIPART_ROOT, userId, uploadId, 'session.json');
+const multipartSessionPath = (userId: string, uploadId: string) => {
+  const safeUploadId = assertSafeId(uploadId, 'uploadId');
+  return path.join(MULTIPART_ROOT, userId, safeUploadId, 'session.json');
+};
 
-const multipartPartsDir = (userId: string, uploadId: string) =>
-  path.join(MULTIPART_ROOT, userId, uploadId, 'parts');
+const multipartPartsDir = (userId: string, uploadId: string) => {
+  const safeUploadId = assertSafeId(uploadId, 'uploadId');
+  return path.join(MULTIPART_ROOT, userId, safeUploadId, 'parts');
+};
 
 const multipartMemorySessions = new Map<string, MultipartSessionRecord>();
 const multipartMemoryParts = new Map<string, Buffer>();
@@ -149,7 +208,7 @@ const multipartPartMemoryKey = (userId: string, uploadId: string, partNumber: nu
 
 const safeRm = async (target: string): Promise<{ filesDeleted: number; bytesDeleted: number }> => {
   const absoluteTarget = path.resolve(target);
-  if (!absoluteTarget.startsWith(MULTIPART_ROOT)) {
+  if (!absoluteTarget.startsWith(MULTIPART_ROOT) || absoluteTarget === MULTIPART_ROOT) {
     return { filesDeleted: 0, bytesDeleted: 0 };
   }
   let filesDeleted = 0;
@@ -248,6 +307,10 @@ const loadMultipartSession = async (
   userId: string,
   uploadId: string,
 ): Promise<MultipartSessionRecord | null> => {
+  if (!SAFE_ID_PATTERN.test(uploadId)) {
+    return null;
+  }
+
   if (MEMORY_ONLY_MULTIPART_UPLOADS) {
     return multipartMemorySessions.get(multipartMemoryKey(userId, uploadId)) ?? null;
   }
@@ -349,18 +412,32 @@ export const startMultipartUpload = async (req: AuthenticatedRequest, res: expre
   const username = getUsername(req);
   await cleanupExpiredMultipartSessions(userId);
 
-  const { category, folder, fileName, mimeType, fileSize, resumeUploadId, keepMetadata } =
-    req.body || {};
+  const {
+    category,
+    folder,
+    fileName: rawFileName,
+    mimeType,
+    fileSize,
+    resumeUploadId,
+    keepMetadata,
+  } = req.body || {};
 
   if (
     typeof category !== 'string' ||
-    typeof fileName !== 'string' ||
+    typeof rawFileName !== 'string' ||
     typeof mimeType !== 'string' ||
     typeof fileSize !== 'number' ||
     fileSize <= 0
   ) {
     throw AppError.badRequest('Invalid multipart init payload.', 'INVALID_MULTIPART_INIT');
   }
+
+  // Sanitize fileName to prevent directory traversal
+  const fileName = path.basename(rawFileName.trim());
+  if (!fileName || fileName === '.' || fileName === '..') {
+    throw AppError.badRequest('Invalid file name.', 'INVALID_FILE_NAME');
+  }
+
   if (!FILE_CATEGORY_SET.has(category)) {
     throw AppError.badRequest('Unsupported multipart category.', 'UNSUPPORTED_FILE_CATEGORY');
   }
@@ -395,7 +472,11 @@ export const startMultipartUpload = async (req: AuthenticatedRequest, res: expre
     recordUploadAnomaly(userId, 'rapid_large_upload', { category, fileSize });
   }
 
-  if (typeof resumeUploadId === 'string' && resumeUploadId.trim()) {
+  if (
+    typeof resumeUploadId === 'string' &&
+    resumeUploadId.trim() &&
+    SAFE_ID_PATTERN.test(resumeUploadId.trim())
+  ) {
     const existing = await loadMultipartSession(userId, resumeUploadId.trim());
     if (
       existing &&
@@ -432,7 +513,7 @@ export const startMultipartUpload = async (req: AuthenticatedRequest, res: expre
     userId,
     username,
     category,
-    folder: typeof folder === 'string' && folder.trim() ? folder : null,
+    folder: typeof folder === 'string' && folder.trim() ? folder.trim() : null,
     fileName,
     mimeType,
     fileSize,
@@ -442,6 +523,7 @@ export const startMultipartUpload = async (req: AuthenticatedRequest, res: expre
     updatedAt: Date.now(),
     parts: {},
   };
+
   if (!MEMORY_ONLY_MULTIPART_UPLOADS) {
     await fs.mkdir(multipartPartsDir(userId, uploadId), { recursive: true });
   }
@@ -455,15 +537,18 @@ export const startMultipartUpload = async (req: AuthenticatedRequest, res: expre
 
 export const uploadMultipartPart = async (req: AuthenticatedRequest, res: express.Response) => {
   const userId = getUserId(req);
-  const uploadId = getRouteParam(req.params.uploadId);
+  const rawUploadId = getRouteParam(req.params.uploadId);
   const partNumberRaw = getRouteParam(req.params.partNumber);
-  if (!uploadId || !partNumberRaw) {
+  if (!rawUploadId || !partNumberRaw) {
     throw AppError.badRequest('uploadId and partNumber are required.', 'MULTIPART_PART_REQUIRED');
   }
+  const uploadId = assertSafeId(rawUploadId, 'uploadId');
+
   const partNumber = Number.parseInt(partNumberRaw, 10);
   if (!Number.isFinite(partNumber) || partNumber < 1) {
     throw AppError.badRequest('partNumber must be >= 1.', 'INVALID_PART_NUMBER');
   }
+
   const resolved = await findMultipartSessionForIdentity(userId, uploadId);
   if (!resolved) {
     throw AppError.notFound('Upload session not found.', 'UPLOAD_SESSION_NOT_FOUND');
@@ -473,6 +558,7 @@ export const uploadMultipartPart = async (req: AuthenticatedRequest, res: expres
   if (partNumber > partCount) {
     throw AppError.badRequest('partNumber exceeds expected chunk count.', 'INVALID_PART_NUMBER');
   }
+
   const partBuffer = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || []);
   if (!partBuffer.length) {
     throw AppError.badRequest('Part payload is empty.', 'EMPTY_PART');
@@ -504,12 +590,14 @@ export const uploadMultipartPart = async (req: AuthenticatedRequest, res: expres
     await fs.mkdir(path.dirname(partFile), { recursive: true });
     await fs.writeFile(partFile, partBuffer);
   }
+
   const persisted = await mergeAndSaveMultipartPartMetadata(
     sessionOwnerUserId,
     uploadId,
     partNumber,
     { size: partBuffer.length, sha256: computed },
   );
+
   return sendSuccess(
     res,
     { uploadId, partNumber, uploadedParts: Object.keys(persisted.parts).length },
@@ -519,10 +607,12 @@ export const uploadMultipartPart = async (req: AuthenticatedRequest, res: expres
 
 export const completeMultipartUpload = async (req: AuthenticatedRequest, res: express.Response) => {
   const userId = getUserId(req);
-  const uploadId = getRouteParam(req.params.uploadId);
-  if (!uploadId) {
+  const rawUploadId = getRouteParam(req.params.uploadId);
+  if (!rawUploadId) {
     throw AppError.badRequest('uploadId is required.', 'MULTIPART_COMPLETE_REQUIRED');
   }
+  const uploadId = assertSafeId(rawUploadId, 'uploadId');
+
   const resolved = await findMultipartSessionForIdentity(userId, uploadId);
   if (!resolved) {
     throw AppError.notFound('Upload session not found.', 'UPLOAD_SESSION_NOT_FOUND');
@@ -565,6 +655,7 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
       'System memory limit exceeded for file assembly. File is too large to assemble.',
     );
   }
+
   let writeOffset = 0;
   for (let i = 1; i <= partCount; i += 1) {
     let data: Buffer;
@@ -592,9 +683,11 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
     data.copy(finalBuffer, writeOffset);
     writeOffset += data.length;
   }
+
   if (writeOffset !== session.fileSize) {
     throw AppError.badRequest('Assembled size mismatch.', 'ASSEMBLED_SIZE_MISMATCH');
   }
+
   const finalHash = assembler.digest('hex');
   if (expectedFileHash && expectedFileHash !== finalHash) {
     throw AppError.badRequest('Final file hash mismatch.', 'FILE_HASH_MISMATCH');
@@ -636,6 +729,7 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
         ? req.body.metadata
         : undefined,
   });
+
   const normalizedResult =
     typeof (result as any)?.toObject === 'function' ? (result as any).toObject() : result;
 
@@ -656,6 +750,7 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
       });
     }
   }
+
   return sendSuccess(
     res,
     { ...normalizedResult, uploadId, sha256: finalHash },
@@ -665,12 +760,13 @@ export const completeMultipartUpload = async (req: AuthenticatedRequest, res: ex
 };
 
 export const fetchVault = async (req: AuthenticatedRequest, res: express.Response) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   const snapshot = await getVaultSnapshot(getUserId(req), getUsername(req));
   return sendSuccess(res, snapshot, 'Vault snapshot fetched successfully');
 };
 
 export const syncVault = async (req: AuthenticatedRequest, res: express.Response) => {
-  // We'll keep this simple for now, ideally get changes since a date
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   const snapshot = await getVaultSnapshot(getUserId(req), getUsername(req));
   return sendSuccess(res, snapshot, 'Vault items synced successfully');
 };
@@ -685,6 +781,7 @@ export const uploadVaultFile = async (req: AuthenticatedRequest, res: express.Re
   if (!category) {
     throw AppError.badRequest('Vault category is required.', 'CATEGORY_REQUIRED');
   }
+
   if (category === 'photo' || category === 'video' || category === 'audio') {
     try {
       assertFileContentMatchesCategory(category, file.originalname, file.mimetype, file.buffer);
@@ -703,14 +800,14 @@ export const uploadVaultFile = async (req: AuthenticatedRequest, res: express.Re
     username: getUsername(req),
     category,
     folder:
-      typeof req.body.folder === 'string'
+      typeof req.body?.folder === 'string'
         ? req.body.folder
         : (req.headers['x-vault-folder'] as string),
     file,
-    keepMetadata: req.body.keepMetadata === true || req.headers['x-keep-metadata'] === 'true',
+    keepMetadata: req.body?.keepMetadata === true || req.headers['x-keep-metadata'] === 'true',
     clientUpdatedAt:
-      typeof req.body.clientUpdatedAt === 'string' ? req.body.clientUpdatedAt : undefined,
-    deviceId: typeof req.body.deviceId === 'string' ? req.body.deviceId : undefined,
+      typeof req.body?.clientUpdatedAt === 'string' ? req.body.clientUpdatedAt : undefined,
+    deviceId: typeof req.body?.deviceId === 'string' ? req.body.deviceId : undefined,
     ipAddress: getClientIp(req),
   });
 
@@ -725,6 +822,7 @@ export const uploadVaultFile = async (req: AuthenticatedRequest, res: express.Re
     typeof directFilePath === 'string' &&
     directFilePath.length > 0 &&
     !directFilePath.startsWith('cloud://');
+
   if (
     (category === 'video' || category === 'videos' || directMimeType?.startsWith('video/')) &&
     canTranscodeLocalFile
@@ -738,9 +836,7 @@ export const uploadVaultFile = async (req: AuthenticatedRequest, res: express.Re
       filePath,
       outputDir,
     ).catch((err) =>
-      logger.error(`Background transcoding failed for ${(result as any).itemId}`, {
-        err,
-      }),
+      logger.error(`Background transcoding failed for ${(result as any).itemId}`, { err }),
     );
   }
 
@@ -751,18 +847,38 @@ export const upsertVaultEntry = async (req: AuthenticatedRequest, res: express.R
   const category = getRouteParam(req.params.category);
   const itemId = getRouteParam(req.params.itemId);
 
-  if (!category) {
-    throw AppError.badRequest('Vault category is required.', 'CATEGORY_REQUIRED');
+  if (!category || !ALL_CATEGORY_SET.has(category)) {
+    throw AppError.badRequest('Vault category is required and must be valid.', 'CATEGORY_REQUIRED');
   }
+
+  if (itemId) {
+    assertSafeId(itemId, 'itemId');
+  }
+
+  const rawHeaderTitle =
+    typeof req.headers['x-vault-title'] === 'string' ? req.headers['x-vault-title'] : '';
+  let headerTitle = '';
+  if (rawHeaderTitle) {
+    try {
+      headerTitle = decodeURIComponent(rawHeaderTitle);
+    } catch {
+      headerTitle = rawHeaderTitle;
+    }
+  }
+
+  const payloadToSave =
+    req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+      ? { ...req.body, title: req.body.title || headerTitle || undefined }
+      : req.body;
 
   const result = await saveEncryptedVaultItem({
     userId: getUserId(req),
     username: getUsername(req),
     category,
-    folder: typeof req.body.folder === 'string' ? req.body.folder : undefined,
+    folder: typeof req.body?.folder === 'string' ? req.body.folder : undefined,
     itemId,
-    payload: req.body,
-    deviceId: typeof req.body.deviceId === 'string' ? req.body.deviceId : undefined,
+    payload: payloadToSave,
+    deviceId: typeof req.body?.deviceId === 'string' ? req.body.deviceId : undefined,
     ipAddress: getClientIp(req),
   });
 
@@ -776,11 +892,12 @@ export const upsertVaultEntry = async (req: AuthenticatedRequest, res: express.R
 
 export const deleteVaultEntry = async (req: AuthenticatedRequest, res: express.Response) => {
   const category = getRouteParam(req.params.category);
-  const itemId = getRouteParam(req.params.itemId);
+  const rawItemId = getRouteParam(req.params.itemId);
 
-  if (!category || !itemId) {
+  if (!category || !rawItemId) {
     throw AppError.badRequest('Vault category and item id are required.', 'ITEM_REQUIRED');
   }
+  const itemId = assertSafeId(rawItemId, 'itemId');
 
   const result = await deleteVaultItemByCategory({
     userId: getUserId(req),
@@ -797,19 +914,40 @@ export const deleteVaultEntry = async (req: AuthenticatedRequest, res: express.R
 };
 
 export const saveUserActivityLog = async (req: AuthenticatedRequest, res: express.Response) => {
+  let details: Record<string, unknown> = {};
+  if (req.body?.details && typeof req.body.details === 'object') {
+    const serialized = JSON.stringify(req.body.details);
+    if (serialized.length <= 10240) {
+      details = req.body.details;
+    }
+  }
+
+  const action =
+    typeof req.body?.action === 'string' ? req.body.action.trim().slice(0, 64) : 'OTHER';
+  const category =
+    typeof req.body?.category === 'string' ? req.body.category.trim().slice(0, 64) : 'system';
+  const itemId = typeof req.body?.itemId === 'string' ? req.body.itemId.trim().slice(0, 128) : null;
+  const status =
+    typeof req.body?.status === 'string' ? req.body.status.trim().slice(0, 32) : 'SUCCESS';
+
   const result = await saveActivityLog({
     userId: getUserId(req),
     username: getUsername(req),
-    action: req.body.action || 'OTHER',
-    category: req.body.category || 'system',
-    itemId: req.body.itemId || null,
-    deviceId: typeof req.body.deviceId === 'string' ? req.body.deviceId : undefined,
+    action,
+    category,
+    itemId,
+    deviceId:
+      typeof req.body?.deviceId === 'string' ? req.body.deviceId.trim().slice(0, 128) : undefined,
     ipAddress: getClientIp(req),
     userAgent: req.headers['user-agent'] as string | undefined,
-    status: req.body.status || 'SUCCESS',
-    errorCode: req.body.errorCode,
-    errorMessage: req.body.errorMessage,
-    details: req.body.details || {},
+    status,
+    errorCode:
+      typeof req.body?.errorCode === 'string' ? req.body.errorCode.trim().slice(0, 64) : undefined,
+    errorMessage:
+      typeof req.body?.errorMessage === 'string'
+        ? req.body.errorMessage.trim().slice(0, 512)
+        : undefined,
+    details,
   });
 
   return sendSuccess(res, result, 'Activity log saved successfully', 201);
@@ -819,8 +957,12 @@ export const getUserActivityLogsController = async (
   req: AuthenticatedRequest,
   res: express.Response,
 ) => {
-  const limit = req.query.limit ? parseInt(req.query.limit as string) : 500;
-  const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
+  const parsedLimit = Number.parseInt(String(req.query.limit || '500'), 10);
+  const parsedSkip = Number.parseInt(String(req.query.skip || '0'), 10);
+
+  const limit = Math.min(Math.max(1, Number.isFinite(parsedLimit) ? parsedLimit : 500), 1000);
+  const skip = Math.max(0, Number.isFinite(parsedSkip) ? parsedSkip : 0);
+
   const logs = await getUserActivityLogs(getUserId(req), getUsername(req), limit, skip);
   return sendSuccess(res, logs, 'Activity logs fetched successfully');
 };

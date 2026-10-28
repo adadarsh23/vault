@@ -225,11 +225,36 @@ describe('changePasswordSchema', () => {
     expect(parsed.newPassword).toBe('Replacementpass123!');
   });
 
-  it('rejects replacement passwords that contain spaces', () => {
+  it('accepts replacement passwords that contain spaces', () => {
     const result = changePasswordSchema.safeParse({
       currentPassword: 'CurrentPassword123!',
       newPassword: 'Replacement pass123!',
       captchaToken: CAPTCHA_TOKEN,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts long strong passwords up to 128 characters', () => {
+    const longPass = 'StrongPass123!_' + 'a'.repeat(60) + 'B1!';
+    expect(longPass.length).toBeGreaterThan(64);
+    expect(longPass.length).toBeLessThanOrEqual(128);
+
+    const result = changePasswordSchema.safeParse({
+      currentPassword: 'CurrentPassword123!',
+      newPassword: longPass,
+      captchaToken: CAPTCHA_TOKEN,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects unexpected fields to prevent mass assignment', () => {
+    const result = changePasswordSchema.safeParse({
+      currentPassword: 'CurrentPassword123!',
+      newPassword: 'Replacementpass123!',
+      captchaToken: CAPTCHA_TOKEN,
+      role: 'admin',
     });
 
     expect(result.success).toBe(false);

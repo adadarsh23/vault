@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import { AppError } from '../utils/appError.ts';
 import { logger } from '../utils/logger.ts';
 import { mediaService } from '../services/mediaService.ts';
@@ -8,17 +9,19 @@ import { getVaultItemModel } from '../models/vaultItem.ts';
 import { findVaultItemFlexible } from './mediaController.ts';
 import { User } from '../models/user.ts';
 
-/**
- * LicenseServer Controller - Centralized DRM & Key Delivery
- *
- * Flow:
- * 1. Player requests license (POST)
- * 2. Authenticate: Verify JWT & User
- * 3. Policy Check: Verify Device & Ownership
- * 4. Key Retrieval: Secure fetch from MediaService
- * 5. Delivery: Return encrypted license (never raw keys)
- */
+const SAFE_ID_PATTERN = /^[a-zA-Z0-9:_-]+$/;
 
+const assertSafeId = (id: string, paramName: string) => {
+  if (!id || id.length > 256 || !SAFE_ID_PATTERN.test(id)) {
+    throw AppError.badRequest(`Invalid format for ${paramName}.`, 'INVALID_IDENTIFIER');
+  }
+};
+
+/**
+ * Validates DRM playback license policies:
+ * 1. Vault media ownership and existence.
+ * 2. Device continuity / registered session verification.
+ */
 const validateLicensePolicy = async (
   userId: string,
   username: string,
@@ -34,74 +37,87 @@ const validateLicensePolicy = async (
   }
 
   // 2. Device Continuity Check
-  if (deviceId) {
-    const user = await User.findById(userId).select('sessions').lean();
-    const isDeviceRegistered = user?.sessions?.some((s) => s.deviceId === deviceId);
-    if (!isDeviceRegistered) {
-      logger.error('Security Alert: License requested from unregistered device', {
-        userId,
-        deviceId,
-      });
-      throw AppError.forbidden(
-        'Playback not permitted on this device. Please sign in again.',
-        'DEVICE_UNAUTHORIZED',
-      );
+  if (deviceId && typeof deviceId === 'string' && deviceId.trim()) {
+    const cleanDeviceId = deviceId.trim();
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      const user = await User.findById(userId).select('sessions.deviceId').lean();
+      const isDeviceRegistered = user?.sessions?.some((s) => s.deviceId === cleanDeviceId);
+      if (!isDeviceRegistered) {
+        logger.error('Security Alert: License requested from unregistered device', {
+          userId,
+          deviceId: cleanDeviceId,
+        });
+        throw AppError.forbidden(
+          'Playback not permitted on this device. Please sign in again.',
+          'DEVICE_UNAUTHORIZED',
+        );
+      }
     }
   }
-
-  // 3. Anomaly Check (e.g. usage velocity)
-  // Handled by anomalyDetectionService inside the endpoints
 };
 
 /**
- * Unified License Entry Point (POST /api/vault/license/:itemId)
+ * Internal license delivery worker
  */
-export const handleLicenseRequest = async (req: express.Request, res: express.Response) => {
-  const itemId = typeof req.params.itemId === 'string' ? req.params.itemId : undefined;
-  const { drmType, deviceId } = req.body; // Client specifies DRM type
+const deliverLicense = async (
+  req: express.Request,
+  res: express.Response,
+  drmTypeOverride?: string,
+) => {
+  const rawItemId = typeof req.params.itemId === 'string' ? req.params.itemId.trim() : undefined;
+  if (!rawItemId) {
+    throw AppError.badRequest('itemId is required.', 'ITEM_REQUIRED');
+  }
+  assertSafeId(rawItemId, 'itemId');
+
+  const body = req.body || {};
+  const query = req.query || {};
+  const drmType = drmTypeOverride || (typeof body.drmType === 'string' ? body.drmType : undefined);
+  const deviceId =
+    typeof body.deviceId === 'string'
+      ? body.deviceId.trim()
+      : typeof query.deviceId === 'string'
+        ? query.deviceId.trim()
+        : undefined;
+
   // 1. Resolve Identity Strictly from Authenticated Session
   const userId = (req as any).user?.userId;
   const username = (req as any).user?.username;
   const clientIp = getClientIp(req);
 
-  if (!itemId) {
-    throw AppError.badRequest('itemId is required.', 'ITEM_REQUIRED');
-  }
-
   if (!userId || !username) {
-    logger.warn('License access denied: Identification missing', {
-      itemId,
-    });
+    logger.warn('License access denied: Identification missing', { itemId: rawItemId });
     throw AppError.unauthorized('License delivery requires a verified authenticated session.');
   }
 
   // Security Intelligence: IP Drift & Anomaly Tracking
-  anomalyDetectionService.trackMediaRequest(userId, itemId, clientIp);
+  anomalyDetectionService.trackMediaRequest(userId, rawItemId, clientIp);
   anomalyDetectionService.trackIpDrift(userId, clientIp);
 
-  // 1. Enforce Playback Policy
-  await validateLicensePolicy(userId, username, itemId, deviceId);
+  // 2. Enforce Playback Policy
+  await validateLicensePolicy(userId, username, rawItemId, deviceId);
 
-  // 2. Retrieve Secure Content Key
-  const contentKey = await mediaService.getStreamingKey(userId, itemId);
+  // 3. Retrieve Secure Content Key
+  const contentKey = await mediaService.getStreamingKey(userId, rawItemId);
 
   logger.info(`License delivered [${drmType || 'standard'}]`, {
     userId,
-    itemId,
+    itemId: rawItemId,
     ip: clientIp,
     deviceId,
   });
 
+  // Never cache encryption license payloads
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   /**
    * PROTECTED KEY DELIVERY
-   * We do not send JSON. We send a binary payload tailored to the DRM protocol.
    */
-  if (drmType === 'widevine') {
+  if (drmType === 'widevine' || drmType === 'fairplay') {
     res.setHeader('Content-Type', 'application/octet-stream');
-    return res.send(contentKey); // Securely wrapped Content Key for Widevine CDM
-  } else if (drmType === 'fairplay') {
-    res.setHeader('Content-Type', 'application/octet-stream');
-    return res.send(contentKey); // Securely wrapped for Apple KSM
+    return res.send(contentKey);
   }
 
   // Default to secure CENC response
@@ -111,21 +127,23 @@ export const handleLicenseRequest = async (req: express.Request, res: express.Re
   });
 };
 
+/**
+ * Unified License Entry Point (POST /api/vault/license/:itemId)
+ */
+export const handleLicenseRequest = async (req: express.Request, res: express.Response) => {
+  return deliverLicense(req, res);
+};
+
 /* ---------------- LEGACY ADAPTERS (Delegating to Unified Handler) ---------------- */
 
 export const handleWidevineLicense = async (req: express.Request, res: express.Response) => {
-  req.body = req.body || {};
-  req.body.drmType = 'widevine';
-  return handleLicenseRequest(req, res);
+  return deliverLicense(req, res, 'widevine');
 };
 
 export const handleFairPlayLicense = async (req: express.Request, res: express.Response) => {
-  req.body = req.body || {};
-  req.body.drmType = 'fairplay';
-  return handleLicenseRequest(req, res);
+  return deliverLicense(req, res, 'fairplay');
 };
 
 export const getCencKey = async (req: express.Request, res: express.Response) => {
-  req.body = req.body || {};
-  return handleLicenseRequest(req, res);
+  return deliverLicense(req, res, 'cenc');
 };

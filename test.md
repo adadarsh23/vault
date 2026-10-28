@@ -20,71 +20,75 @@ Comprehensive cheat sheet and execution manual for **every** Vitest, standalone,
 
 ## ⚡ Quick Reference Cheat Sheet
 
-| Category / Target          | Command                                                                                                  | Description                                                                                                                                            |
-| :------------------------- | :------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Default Safe Run**       | `npm test`                                                                                               | Single-worker Vitest run (`--maxWorkers 1`)                                                                                                            |
-| **Parallel Fast Run**      | `npm run test:run`                                                                                       | Full suite across all CPU workers                                                                                                                      |
-| **Full Runner + Lint**     | `npm run test:all`                                                                                       | Lint + Vitest + custom crypto runner                                                                                                                   |
-| **CI Strict Test**         | `npm run test:ci`                                                                                        | Lint + Vitest --no-cache                                                                                                                               |
-| **Unit Tests**             | `npm run test:unit`                                                                                      | All 58 unit tests in `tests/unit/` (including OtherFilesVault)                                                                                         |
-| **Integration Tests**      | `npm run test:integration`                                                                               | All 4 integration tests in `tests/integration/`                                                                                                        |
-| **Client Source Tests**    | `npm run test:client`                                                                                    | All 37 component and lib tests in `src/`                                                                                                               |
-| **Server Tests**           | `npm run test:server`                                                                                    | Backend unit and integration                                                                                                                           |
-| **Component Tests**        | `npm run test:components`                                                                                | All React UI component specs (`*.test.tsx`)                                                                                                            |
-| **Cryptography Suite**     | `npm run test:crypto`                                                                                    | AES-256-GCM, PQC Kyber, KDF & Key Rotation                                                                                                             |
-| **Manifest Schema Unit**   | `npm run test:schema`                                                                                    | Production JSON Schema Draft 2020-12 validation tests (project paths, 20 categories, VCAS01, multi-cluster)                                            |
-| **Schema CLI Validator**   | `npm run schema:validate`                                                                                | Standalone fast Ajv2020 schema validation for `metadata.json` and backup archives (`--all`)                                                            |
-| **Authentication Suite**   | `npm run test:auth`                                                                                      | Login, Register, Session & Token Revocation                                                                                                            |
-| **API Layer Suite**        | `npm run test:api`                                                                                       | Full API client + modular services suite (`apiClient.ts` + `apiModules.ts`)                                                                            |
-| **Session Revoked Modal**  | `npx vitest run src/components/auth/SessionRevokedModal.test.tsx`                                        | Production session revocation dialog, focus trap, safe timestamping, redirect sanitization & device polish                                             |
-| **Auth Feature UI**        | `npx vitest run src/components/auth src/features/auth`                                                   | SessionRevokedModal, VaultLoginForm & SecurityLayers UI suites                                                                                         |
-| **App Core Suite**         | `npx vitest run src/components/app`                                                                      | Complete app shell, navigation handler, gestures, loading screen & emergency access                                                                    |
-| **Gesture Controller**     | `npx vitest run src/components/app/__tests__/GestureController.test.ts`                                  | Mobile 60/120fps rAF swipe, left/right sidebar, resize breakpoint & cancel                                                                             |
-| **Navigation Handler**     | `npx vitest run src/components/app/__tests__/NavigationHandler.test.ts`                                  | Dual tab ID & route navigation, hash/query preserving, redundant guard                                                                                 |
-| **Vault Tab Switching**    | `npm run test:vault:tabs`                                                                                | Sidebar vault category switching, immediate route content swap without freeze, MediaVault key separation                                               |
-| **Vault Navigation Suite** | `npm run test:vault:navigation`                                                                          | Combined vault tab switching integration + NavigationHandler unit tests                                                                                |
-| **Other Files Vault**      | `npm run test:vault:other`                                                                               | Multi-format vault UI, 16 file categories, audio/image metadata extraction, search, preview modal, pin & delete actions                                |
-| **Other Files Isolated**   | `npx vitest run tests/unit/other-files-vault.test.tsx`                                                   | Direct isolated execution of OtherFilesVault test suite                                                                                                |
-| **Other Files Watch**      | `npm run test:vault:other:watch`                                                                         | Watch mode for `other-files-vault.test.tsx`                                                                                                            |
-| **App Loading Screen**     | `npx vitest run src/components/app/__tests__/LoadingScreen.test.tsx`                                     | Status accessibility, timeout reload prompt & onRetry handling                                                                                         |
-| **Router & Navigation**    | `npx vitest run src/components/router`                                                                   | Full router suite: scroll restoration, POP/hash navigation, mobile bounce, quota recovery & RouteErrorBoundary                                         |
-| **ErrorBoundary Suite**    | `npm run test:error-boundary`                                                                            | Production ErrorBoundary & RouteErrorBoundary: Sentry telemetry, error normalization, resetKeys, fallback UI, retry & clipboard diagnostics            |
-| **ErrorBoundary Isolated** | `npx vitest run src/components/__tests__/ErrorBoundary.test.tsx`                                         | Isolated test execution for root `ErrorBoundary` component with mocked Sentry, fallback tests & copy validation                                        |
-| **ErrorBoundary Watch**    | `npm run test:error-boundary:watch`                                                                      | Watch mode for root `ErrorBoundary.test.tsx`                                                                                                           |
-| **Layout Components**      | `npm run test:layout`                                                                                    | Production layout suite: Background particles/fallback, Footer smooth anchors, Sidebar ARIA radiogroup, VaultLayout responsive drawers & drag-and-drop |
-| **Layout Isolated**        | `npx vitest run tests/unit/layout-components.test.tsx`                                                   | Direct isolated execution of layout components test suite                                                                                              |
-| **Layout Watch Mode**      | `npm run test:layout:watch`                                                                              | Auto re-run layout component tests on file changes                                                                                                     |
-| **Vault Login Form**       | `npx vitest run src/features/auth/VaultLoginForm.test.tsx`                                               | Top error banner, validations & mode switching                                                                                                         |
-| **Hardened 2FA & Bot**     | `npx vitest run tests/unit/recaptchaMiddleware.test.ts tests/unit/two-factor-hardening.test.ts`          | 2FA rate limits, password checks & reCAPTCHA                                                                                                           |
-| **Security Boundaries**    | `npm run test:security`                                                                                  | Auth, Multipart, Streaming & UI Isolation                                                                                                              |
-| **Security Components**    | `npm run test:security:components`                                                                       | Complete security UI components suite (`RecaptchaField` + `VaultIntegrityAlarm` modal & banner)                                                        |
-| **reCAPTCHA Challenge**    | `npx vitest run src/components/security/__tests__/RecaptchaField.test.tsx`                               | Production reCAPTCHA v2 challenge, scaling, theme switching, auto-retry & error handling                                                               |
-| **Vault Integrity Alarm**  | `npx vitest run src/components/security/__tests__/VaultIntegrityAlarm.test.tsx`                          | Cryptographic Merkle tamper alarm banner & lockdown modal, focus trap, forensic hash copy                                                              |
-| **SmartAvatar Component**  | `npx vitest run src/components/__tests__/SmartAvatar.test.tsx`                                           | Production avatar component: CLS=0, BlurHash, monogram initials, Unicode/emoji safety, format/size validation, drag & drop, touch & badges             |
-| **SmartAvatar Watch**      | `npm run test:avatar:watch`                                                                              | Watch mode for SmartAvatar component test suite                                                                                                        |
-| **Avatar Full Suite**      | `npm run test:avatar`                                                                                    | Full avatar pipeline: SmartAvatar UI + useFastAvatar hook + backend avatar-pipeline + MongoDB Atlas                                                    |
-| **Cloud Sync & Stores**    | `npm run test:sync`                                                                                      | Delta sync, conflict handling & state integrity                                                                                                        |
-| **Store Layer Suite**      | `npm run test:stores`                                                                                    | All 7 Zustand state management stores (vault, activity, notification, theme, integrity, navigation, miniplayer)                                        |
-| **Media & Streaming**      | `npm run test:media`                                                                                     | HLS player, capture modal, video streaming                                                                                                             |
-| **Media Inspector Drawer** | `npm run test:media:inspector`                                                                           | Deep photo/video inspection drawer, metadata specs, telemetry, EXIF privacy audit, JSON & export                                                       |
-| **Mini-Player Suite**      | `npx vitest run src/components/ui/GlobalVideoMiniPlayer.test.tsx src/store/videoMiniPlayerStore.test.ts` | Picture-in-picture floating video & store                                                                                                              |
-| **Mobile PDF & Docs**      | `npx vitest run tests/unit/mobile-pdf-document-handling.test.tsx`                                        | Mobile PDF rendering, anti-screenshot shield                                                                                                           |
-| **Workers Pipeline**       | `npm run test:workers`                                                                                   | Background workers (Argon2, cascade encryption, avatar & media)                                                                                        |
-| **Workers Isolated**       | `npx vitest run tests/unit/workers-pipeline.test.ts`                                                     | Direct execution of workers test suite                                                                                                                 |
-| **Vault Service Suite**    | `npm run test:vault:service`                                                                             | VaultService key rotation, settings sync, batch save & purge                                                                                           |
-| **Vault Core All**         | `npm run test:vault`                                                                                     | All vault unit test files in `tests/unit/vault-*`                                                                                                      |
-| **Interactive UI**         | `npm run test:ui`                                                                                        | Vitest browser dashboard GUI                                                                                                                           |
-| **Code Coverage**          | `npm run test:coverage:open`                                                                             | Generate coverage and open in browser                                                                                                                  |
-| **Watch Mode**             | `npm run test:watch`                                                                                     | Auto re-run on file change                                                                                                                             |
-| **Fast Fail**              | `npm run test:fast`                                                                                      | Stop on first failure                                                                                                                                  |
-| **Heap Tracking**          | `npm run test:heap`                                                                                      | Memory/heap usage per test file                                                                                                                        |
-| **Node Inspector**         | `npm run test:debug:brk`                                                                                 | Attach Chrome DevTools or VS Code                                                                                                                      |
-| **Typecheck Tests**        | `npx vitest typecheck`                                                                                   | Typecheck TypeScript test files                                                                                                                        |
-| **Stress Repeat**          | `npm run test:repeat 5`                                                                                  | Run test suite 5 times sequentially                                                                                                                    |
-| **Quick Verify**           | `npm run verify:quick`                                                                                   | Lint + Auth tests                                                                                                                                      |
-| **Full CI Verify**         | `npm run verify:ci`                                                                                      | Doctor + Lint + CI tests + Build                                                                                                                       |
-| **Local CI Simulation**    | `$env:CI="true"; npm run verify:ci`                                                                      | Replay strict CI pipeline locally                                                                                                                      |
-| **Complete Audit**         | `npm run verify:full`                                                                                    | Clean all + Doctor + Verify + All Tests                                                                                                                |
+| Category / Target            | Command                                                                                                  | Description                                                                                                                                            |
+| :--------------------------- | :------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Default Safe Run**         | `npm test`                                                                                               | Single-worker Vitest run (`--maxWorkers 1`)                                                                                                            |
+| **Parallel Fast Run**        | `npm run test:run`                                                                                       | Full suite across all CPU workers                                                                                                                      |
+| **Full Runner + Lint**       | `npm run test:all`                                                                                       | Lint + Vitest + custom crypto runner                                                                                                                   |
+| **CI Strict Test**           | `npm run test:ci`                                                                                        | Lint + Vitest --no-cache                                                                                                                               |
+| **Unit Tests**               | `npm run test:unit`                                                                                      | All 58 unit tests in `tests/unit/` (including OtherFilesVault)                                                                                         |
+| **Integration Tests**        | `npm run test:integration`                                                                               | All 4 integration tests in `tests/integration/`                                                                                                        |
+| **Client Source Tests**      | `npm run test:client`                                                                                    | All 37 component and lib tests in `src/`                                                                                                               |
+| **Server Tests**             | `npm run test:server`                                                                                    | Backend unit and integration                                                                                                                           |
+| **Backend Boot System**      | `npm run test:boot`                                                                                      | Production boot coordinator, duplicate startup lock, credential sanitization, graceful shutdown & readiness middleware                                 |
+| **Backend Boot Isolated**    | `npx vitest run tests/unit/boot-startup.test.ts`                                                         | Direct isolated execution of boot startup, lifecycle states & shutdown manager                                                                         |
+| **Backend Models Integrity** | `npm run test:models`                                                                                    | Complete database schema validation, TTL indexes, serialization sanitization & 16MB array limits                                                       |
+| **Backend Models Watch**     | `npm run test:models:watch`                                                                              | Auto re-run backend models integrity suite on file changes                                                                                             |
+| **Component Tests**          | `npm run test:components`                                                                                | All React UI component specs (`*.test.tsx`)                                                                                                            |
+| **Cryptography Suite**       | `npm run test:crypto`                                                                                    | AES-256-GCM, PQC Kyber, KDF & Key Rotation                                                                                                             |
+| **Manifest Schema Unit**     | `npm run test:schema`                                                                                    | Production JSON Schema Draft 2020-12 validation tests (project paths, 20 categories, VCAS01, multi-cluster)                                            |
+| **Schema CLI Validator**     | `npm run schema:validate`                                                                                | Standalone fast Ajv2020 schema validation for `metadata.json` and backup archives (`--all`)                                                            |
+| **Authentication Suite**     | `npm run test:auth`                                                                                      | Login, Register, Session & Token Revocation                                                                                                            |
+| **API Layer Suite**          | `npm run test:api`                                                                                       | Full API client + modular services suite (`apiClient.ts` + `apiModules.ts`)                                                                            |
+| **Session Revoked Modal**    | `npx vitest run src/components/auth/SessionRevokedModal.test.tsx`                                        | Production session revocation dialog, focus trap, safe timestamping, redirect sanitization & device polish                                             |
+| **Auth Feature UI**          | `npx vitest run src/components/auth src/features/auth`                                                   | SessionRevokedModal, VaultLoginForm & SecurityLayers UI suites                                                                                         |
+| **App Core Suite**           | `npx vitest run src/components/app`                                                                      | Complete app shell, navigation handler, gestures, loading screen & emergency access                                                                    |
+| **Gesture Controller**       | `npx vitest run src/components/app/__tests__/GestureController.test.ts`                                  | Mobile 60/120fps rAF swipe, left/right sidebar, resize breakpoint & cancel                                                                             |
+| **Navigation Handler**       | `npx vitest run src/components/app/__tests__/NavigationHandler.test.ts`                                  | Dual tab ID & route navigation, hash/query preserving, redundant guard                                                                                 |
+| **Vault Tab Switching**      | `npm run test:vault:tabs`                                                                                | Sidebar vault category switching, immediate route content swap without freeze, MediaVault key separation                                               |
+| **Vault Navigation Suite**   | `npm run test:vault:navigation`                                                                          | Combined vault tab switching integration + NavigationHandler unit tests                                                                                |
+| **Other Files Vault**        | `npm run test:vault:other`                                                                               | Multi-format vault UI, 16 file categories, audio/image metadata extraction, search, preview modal, pin & delete actions                                |
+| **Other Files Isolated**     | `npx vitest run tests/unit/other-files-vault.test.tsx`                                                   | Direct isolated execution of OtherFilesVault test suite                                                                                                |
+| **Other Files Watch**        | `npm run test:vault:other:watch`                                                                         | Watch mode for `other-files-vault.test.tsx`                                                                                                            |
+| **App Loading Screen**       | `npx vitest run src/components/app/__tests__/LoadingScreen.test.tsx`                                     | Status accessibility, timeout reload prompt & onRetry handling                                                                                         |
+| **Router & Navigation**      | `npx vitest run src/components/router`                                                                   | Full router suite: scroll restoration, POP/hash navigation, mobile bounce, quota recovery & RouteErrorBoundary                                         |
+| **ErrorBoundary Suite**      | `npm run test:error-boundary`                                                                            | Production ErrorBoundary & RouteErrorBoundary: Sentry telemetry, error normalization, resetKeys, fallback UI, retry & clipboard diagnostics            |
+| **ErrorBoundary Isolated**   | `npx vitest run src/components/__tests__/ErrorBoundary.test.tsx`                                         | Isolated test execution for root `ErrorBoundary` component with mocked Sentry, fallback tests & copy validation                                        |
+| **ErrorBoundary Watch**      | `npm run test:error-boundary:watch`                                                                      | Watch mode for root `ErrorBoundary.test.tsx`                                                                                                           |
+| **Layout Components**        | `npm run test:layout`                                                                                    | Production layout suite: Background particles/fallback, Footer smooth anchors, Sidebar ARIA radiogroup, VaultLayout responsive drawers & drag-and-drop |
+| **Layout Isolated**          | `npx vitest run tests/unit/layout-components.test.tsx`                                                   | Direct isolated execution of layout components test suite                                                                                              |
+| **Layout Watch Mode**        | `npm run test:layout:watch`                                                                              | Auto re-run layout component tests on file changes                                                                                                     |
+| **Vault Login Form**         | `npx vitest run src/features/auth/VaultLoginForm.test.tsx`                                               | Top error banner, validations & mode switching                                                                                                         |
+| **Hardened 2FA & Bot**       | `npx vitest run tests/unit/recaptchaMiddleware.test.ts tests/unit/two-factor-hardening.test.ts`          | 2FA rate limits, password checks & reCAPTCHA                                                                                                           |
+| **Security Boundaries**      | `npm run test:security`                                                                                  | Auth, Multipart, Streaming & UI Isolation                                                                                                              |
+| **Security Components**      | `npm run test:security:components`                                                                       | Complete security UI components suite (`RecaptchaField` + `VaultIntegrityAlarm` modal & banner)                                                        |
+| **reCAPTCHA Challenge**      | `npx vitest run src/components/security/__tests__/RecaptchaField.test.tsx`                               | Production reCAPTCHA v2 challenge, scaling, theme switching, auto-retry & error handling                                                               |
+| **Vault Integrity Alarm**    | `npx vitest run src/components/security/__tests__/VaultIntegrityAlarm.test.tsx`                          | Cryptographic Merkle tamper alarm banner & lockdown modal, focus trap, forensic hash copy                                                              |
+| **SmartAvatar Component**    | `npx vitest run src/components/__tests__/SmartAvatar.test.tsx`                                           | Production avatar component: CLS=0, BlurHash, monogram initials, Unicode/emoji safety, format/size validation, drag & drop, touch & badges             |
+| **SmartAvatar Watch**        | `npm run test:avatar:watch`                                                                              | Watch mode for SmartAvatar component test suite                                                                                                        |
+| **Avatar Full Suite**        | `npm run test:avatar`                                                                                    | Full avatar pipeline: SmartAvatar UI + useFastAvatar hook + backend avatar-pipeline + MongoDB Atlas                                                    |
+| **Cloud Sync & Stores**      | `npm run test:sync`                                                                                      | Delta sync, conflict handling & state integrity                                                                                                        |
+| **Store Layer Suite**        | `npm run test:stores`                                                                                    | All 7 Zustand state management stores (vault, activity, notification, theme, integrity, navigation, miniplayer)                                        |
+| **Media & Streaming**        | `npm run test:media`                                                                                     | HLS player, capture modal, video streaming                                                                                                             |
+| **Media Inspector Drawer**   | `npm run test:media:inspector`                                                                           | Deep photo/video inspection drawer, metadata specs, telemetry, EXIF privacy audit, JSON & export                                                       |
+| **Mini-Player Suite**        | `npx vitest run src/components/ui/GlobalVideoMiniPlayer.test.tsx src/store/videoMiniPlayerStore.test.ts` | Picture-in-picture floating video & store                                                                                                              |
+| **Mobile PDF & Docs**        | `npx vitest run tests/unit/mobile-pdf-document-handling.test.tsx`                                        | Mobile PDF rendering, anti-screenshot shield                                                                                                           |
+| **Workers Pipeline**         | `npm run test:workers`                                                                                   | Background workers (Argon2, cascade encryption, avatar & media)                                                                                        |
+| **Workers Isolated**         | `npx vitest run tests/unit/workers-pipeline.test.ts`                                                     | Direct execution of workers test suite                                                                                                                 |
+| **Vault Service Suite**      | `npm run test:vault:service`                                                                             | VaultService key rotation, settings sync, batch save & purge                                                                                           |
+| **Vault Core All**           | `npm run test:vault`                                                                                     | All vault unit test files in `tests/unit/vault-*`                                                                                                      |
+| **Interactive UI**           | `npm run test:ui`                                                                                        | Vitest browser dashboard GUI                                                                                                                           |
+| **Code Coverage**            | `npm run test:coverage:open`                                                                             | Generate coverage and open in browser                                                                                                                  |
+| **Watch Mode**               | `npm run test:watch`                                                                                     | Auto re-run on file change                                                                                                                             |
+| **Fast Fail**                | `npm run test:fast`                                                                                      | Stop on first failure                                                                                                                                  |
+| **Heap Tracking**            | `npm run test:heap`                                                                                      | Memory/heap usage per test file                                                                                                                        |
+| **Node Inspector**           | `npm run test:debug:brk`                                                                                 | Attach Chrome DevTools or VS Code                                                                                                                      |
+| **Typecheck Tests**          | `npx vitest typecheck`                                                                                   | Typecheck TypeScript test files                                                                                                                        |
+| **Stress Repeat**            | `npm run test:repeat 5`                                                                                  | Run test suite 5 times sequentially                                                                                                                    |
+| **Quick Verify**             | `npm run verify:quick`                                                                                   | Lint + Auth tests                                                                                                                                      |
+| **Full CI Verify**           | `npm run verify:ci`                                                                                      | Doctor + Lint + CI tests + Build                                                                                                                       |
+| **Local CI Simulation**      | `$env:CI="true"; npm run verify:ci`                                                                      | Replay strict CI pipeline locally                                                                                                                      |
+| **Complete Audit**           | `npm run verify:full`                                                                                    | Clean all + Doctor + Verify + All Tests                                                                                                                |
 
 ---
 
@@ -133,6 +137,8 @@ Comprehensive cheat sheet and execution manual for **every** Vitest, standalone,
 - [33. Local CI Simulation & Pre-Commit / Pre-Push Workflows](#33-local-ci-simulation--pre-commit--pre-push-workflows)
 - [34. Network, REST API & Supertest Backend Commands](#34-network-rest-api--supertest-backend-commands)
 - [35. Production Readiness & Build Verification Pipeline](#35-production-readiness--build-verification-pipeline)
+- [36. Backend Database Models & Mongoose Schema Integrity (npm & Vitest)](#36-backend-database-models--mongoose-schema-integrity-npm--vitest)
+- [37. Backend Boot System & Server Startup Lifecycle (npm & Vitest)](#37-backend-boot-system--server-startup-lifecycle-npm--vitest)
 
 ---
 
@@ -291,6 +297,12 @@ npx vitest run tests/unit/signed-url.test.ts
 
 # Upload MIME type, size, and filename validation
 npx vitest run tests/unit/upload-validation.test.ts
+
+# Backend models & database schema integrity (User, RefreshToken, Contact, VaultItem, Folder, MasterKey, VaultIntegrity, ActivityLog, Telemetry, TotalUser, Notification)
+npx vitest run tests/unit/models-schema-integrity.test.ts
+
+# Backend models watch mode
+npx vitest --watch tests/unit/models-schema-integrity.test.ts
 ```
 
 ### 1.5 Unit — Vault Core, UI State, Utilities & Monitoring
@@ -342,6 +354,11 @@ npx vitest run tests/unit/apiModules.test.ts
 
 # Environment variable parsing and validation
 npx vitest run tests/unit/env.test.ts
+
+# Backend boot system & server startup lifecycle (lifecycle states, shutdown manager, duplicate lock, credential sanitization)
+npm run test:boot
+npx vitest run tests/unit/boot-startup.test.ts
+npx vitest --watch tests/unit/boot-startup.test.ts
 
 # Fuzzy search algorithm correctness
 npx vitest run tests/unit/fuzzy.test.ts
@@ -1190,6 +1207,9 @@ npm run test:client
 
 # All server-related tests (server-, auth-, sentry-, logrocket- + integration)
 npm run test:server
+
+# Backend boot system and server startup lifecycle suite
+npm run test:boot
 
 # All React component tests (*.test.tsx)
 npm run test:components
@@ -2238,6 +2258,9 @@ npm cache clean --force
 | `npm run test:components:watch`     | `vitest --watch .test.tsx`                                                                                                                                                                                                                                                          |
 | `npm run test:client`               | `vitest run src`                                                                                                                                                                                                                                                                    |
 | `npm run test:server`               | `vitest run tests/unit/server- tests/unit/auth- tests/unit/sentry- tests/unit/logrocket- tests/integration`                                                                                                                                                                         |
+| `npm run test:boot`                 | `vitest run tests/unit/boot-startup.test.ts`                                                                                                                                                                                                                                        |
+| `npm run test:models`               | `vitest run tests/unit/models-schema-integrity.test.ts`                                                                                                                                                                                                                             |
+| `npm run test:models:watch`         | `vitest --watch tests/unit/models-schema-integrity.test.ts`                                                                                                                                                                                                                         |
 | `npm run test:e2e`                  | `vitest run tests/integration`                                                                                                                                                                                                                                                      |
 | `npm run test:auth`                 | `vitest run tests/integration/auth.integration.test.ts tests/unit/auth-`                                                                                                                                                                                                            |
 | `npm run test:auth:unit`            | `vitest run tests/unit/auth-`                                                                                                                                                                                                                                                       |
@@ -3101,4 +3124,151 @@ npm run build
 
 # 6. Full end-to-end production verification bundle
 npm run typecheck:all && npm run test:api && npm run build
+```
+
+---
+
+## 36. Backend Database Models & Mongoose Schema Integrity (npm & Vitest)
+
+Execution commands targeting all production database models located in `server/models/`:
+
+### 36.1 Full Models Integrity Suite (npm & Vitest)
+
+```bash
+# Run the complete database models schema integrity & security test suite (17 checks)
+npm run test:models
+
+# Direct Vitest execution of models schema integrity suite
+npx vitest run tests/unit/models-schema-integrity.test.ts
+
+# Watch mode for models schema integrity (auto re-tests on model edits)
+npm run test:models:watch
+# or direct:
+npx vitest --watch tests/unit/models-schema-integrity.test.ts
+```
+
+### 36.2 Model-Specific Test Execution
+
+```bash
+# Test User model: username lowercasing/trimming/regex, password/masterKey/2FA secret stripping in toJSON, 16MB array limits
+npx vitest run -t "User Model" tests/unit/models-schema-integrity.test.ts
+
+# Test RefreshToken model: required fields, TTL index (expires: 0), isValid() expiration & revocation logic
+npx vitest run -t "RefreshToken Model" tests/unit/models-schema-integrity.test.ts
+
+# Test Contact model: 12-char referenceId entropy (VLT-), security priority elevation, email validation
+npx vitest run -t "Contact Model" tests/unit/models-schema-integrity.test.ts
+
+# Test VaultItem model: collection name sanitization, category enums, softDelete() & restore()
+npx vitest run -t "VaultItem Model" tests/unit/models-schema-integrity.test.ts
+
+# Test Folder model: hierarchical parentId indexing, isolated collection naming, non-empty name validation
+npx vitest run -t "Folder Model" tests/unit/models-schema-integrity.test.ts
+
+# Test MasterKey model: encrypted AES-256-GCM schema validation, audit trail, 50-entry history bounding
+npx vitest run -t "MasterKey Model" tests/unit/models-schema-integrity.test.ts
+
+# Test VaultIntegrity model: Merkle root storage, tamper incident counter, 100-audit history bounding
+npx vitest run -t "VaultIntegrity Model" tests/unit/models-schema-integrity.test.ts
+
+# Test ActivityLog & Telemetry models: 90-day TTL indexes (7776000s) and metadata query indexes
+npx vitest run -t "ActivityLog & Telemetry" tests/unit/models-schema-integrity.test.ts
+
+# Test TotalUser & Notification models: username normalization, unique constraints, unread counters
+npx vitest run -t "TotalUser & Notification" tests/unit/models-schema-integrity.test.ts
+```
+
+### 36.3 Related Backend & Database Integration Tests
+
+```bash
+# Multi-cluster aggregator with dynamic model connection injection
+npx vitest run tests/unit/multi-cluster-aggregator.test.ts
+
+# Total user mirror upsert and 11000 duplicate key race-condition fallback
+npx vitest run tests/unit/total-user-mirror.test.ts
+
+# Server-side cryptographic Merkle tree integrity and bit-flip tamper response
+npx vitest run tests/unit/integrity-service.test.ts
+
+# Account session profile encryption & multi-cluster user projection
+npx vitest run tests/unit/account-session-profile-encryption.test.ts
+
+# Combined backend models & server unit tests
+npx vitest run tests/unit/models-schema-integrity.test.ts tests/unit/server-crypto.test.ts tests/unit/total-user-mirror.test.ts tests/unit/integrity-service.test.ts
+```
+
+### 36.4 Backend TypeScript Typecheck & Compilation Verification
+
+```bash
+# Typecheck backend server files with tsconfig.server.json
+npm run typecheck:server
+
+# Typecheck both frontend and backend configurations simultaneously
+npm run typecheck:all
+```
+
+---
+
+## 37. Backend Boot System & Server Startup Lifecycle (npm & Vitest)
+
+Verification commands for the production-grade server boot coordinator (`server/boot/startup.ts`), lifecycle state machine, duplicate boot lock, credential and token sanitization, graceful shutdown manager, and request readiness gatekeeper.
+
+### 37.1 Primary Boot & Startup Commands
+
+```bash
+# Run the complete backend boot system unit test suite
+npm run test:boot
+
+# Run direct isolated execution via Vitest
+npx vitest run tests/unit/boot-startup.test.ts
+
+# Watch mode — automatically re-run boot tests on changes
+npx vitest --watch tests/unit/boot-startup.test.ts
+```
+
+### 37.2 Filtered Test Execution by Capability
+
+```bash
+# Test boot lifecycle state transitions and duplicate startup prevention
+npx vitest run -t "Boot Lifecycle & Duplicate Startup Prevention" tests/unit/boot-startup.test.ts
+
+# Test credential, JWT, and encryption key sanitization (security against password leakage)
+npx vitest run -t "Startup Error Sanitization" tests/unit/boot-startup.test.ts
+
+# Test graceful shutdown: SIGINT/SIGTERM handlers, HTTP draining, MongoDB disconnect & timeouts
+npx vitest run -t "Graceful Shutdown Manager" tests/unit/boot-startup.test.ts
+
+# Test readiness gatekeeper: 503 response during boot & shutdown, passthrough on ready/health
+npx vitest run -t "Boot Readiness Middleware" tests/unit/boot-startup.test.ts
+
+# Test high-throughput O(1) latency ring buffer and metrics tracking
+npx vitest run -t "Runtime Metrics & Ring Buffer Performance" tests/unit/boot-startup.test.ts
+
+# Test ANSI-aware console formatting, visible width calculations & box borders
+npx vitest run -t "Console ANSI Stripping & Formatting" tests/unit/boot-startup.test.ts
+
+# Test health diagnostics, warnings evaluation, and safe score calculation
+npx vitest run -t "Health Warnings & Score Evaluation" tests/unit/boot-startup.test.ts
+
+# Test public URL normalization and environment validation badges
+npx vitest run -t "URL Normalization & Environment Validation Badges" tests/unit/boot-startup.test.ts
+
+# Test database status resolution and state mapping
+npx vitest run -t "Database Status Safety" tests/unit/boot-startup.test.ts
+
+# Test dev heartbeat and animator lifecycle
+npx vitest run -t "Dev Heartbeat & Animator Lifecycle" tests/unit/boot-startup.test.ts
+```
+
+### 37.3 Combined Server & Boot Verification
+
+```bash
+# Run all server tests combined with the boot system
+npx vitest run tests/unit/boot-startup.test.ts tests/unit/server- tests/unit/auth- tests/unit/sentry- tests/unit/logrocket-
+
+# Run environment validation and boot tests together
+npx vitest run tests/unit/env.test.ts tests/unit/boot-startup.test.ts
+
+# Verify backend TypeScript compilation after boot changes
+npm run typecheck:server
 ```

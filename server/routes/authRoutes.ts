@@ -195,6 +195,47 @@ const cloudUnlockCaptchaLimiter = rateLimit({
   },
 });
 
+const profileUpdateLimiter = rateLimit({
+  windowMs: authLimiterWindowMs,
+  max: isDev ? 120 : 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) =>
+    `${getClientIp(req)}:${normalizeRateLimitKeySegment((req as any).user?.userId)}:profile`,
+  message: {
+    success: false,
+    message: 'Too many profile update requests. Please try again later.',
+    error: { code: 'TOO_MANY_PROFILE_UPDATE_ATTEMPTS' },
+  },
+});
+
+const sessionMgmtLimiter = rateLimit({
+  windowMs: authLimiterWindowMs,
+  max: isDev ? 120 : 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) =>
+    `${getClientIp(req)}:${normalizeRateLimitKeySegment((req as any).user?.userId)}:session-mgmt`,
+  message: {
+    success: false,
+    message: 'Too many session management requests. Please try again later.',
+    error: { code: 'TOO_MANY_SESSION_MGMT_ATTEMPTS' },
+  },
+});
+
+const logoutLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: isDev ? 100 : 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:logout`,
+  message: {
+    success: false,
+    message: 'Too many logout requests. Please try again later.',
+    error: { code: 'TOO_MANY_LOGOUT_ATTEMPTS' },
+  },
+});
+
 // Routes
 authRouter.post(
   '/signup',
@@ -254,7 +295,7 @@ authRouter.post(
   refreshLimiter,
   asyncHandler(refreshSession),
 );
-authRouter.post('/logout', requireTrustedBrowserOrigin, asyncHandler(logout));
+authRouter.post('/logout', requireTrustedBrowserOrigin, logoutLimiter, asyncHandler(logout));
 authRouter.get('/me', requireAuth, asyncHandler(getMe));
 authRouter.get('/session-check', requireAuth, asyncHandler(checkSessionStatus));
 authRouter.get('/session-stream', requireAuth, asyncHandler(sessionStream));
@@ -263,6 +304,7 @@ authRouter.post(
   '/sessions/revoke',
   requireTrustedBrowserOrigin,
   requireAuth,
+  sessionMgmtLimiter,
   validateRequest(revokeSessionsValidation),
   asyncHandler(revokeSessions),
 );
@@ -270,6 +312,7 @@ authRouter.post(
   '/sessions/device-name',
   requireTrustedBrowserOrigin,
   requireAuth,
+  sessionMgmtLimiter,
   validateRequest(deviceSessionRenameValidation),
   asyncHandler(updateDeviceName),
 );
@@ -277,6 +320,7 @@ authRouter.post(
   '/profile',
   requireTrustedBrowserOrigin,
   requireAuth,
+  profileUpdateLimiter,
   validate(updateProfileSchema),
   asyncHandler(updateProfile),
 );
@@ -284,6 +328,7 @@ authRouter.put(
   '/profile',
   requireTrustedBrowserOrigin,
   requireAuth,
+  profileUpdateLimiter,
   validate(updateProfileSchema),
   asyncHandler(updateProfile),
 );
@@ -291,6 +336,7 @@ authRouter.patch(
   '/profile',
   requireTrustedBrowserOrigin,
   requireAuth,
+  profileUpdateLimiter,
   validate(updateProfileSchema),
   asyncHandler(updateProfile),
 );
@@ -298,6 +344,7 @@ authRouter.post(
   '/me/profile',
   requireTrustedBrowserOrigin,
   requireAuth,
+  profileUpdateLimiter,
   validate(updateProfileSchema),
   asyncHandler(updateProfile),
 );
@@ -305,6 +352,7 @@ authRouter.put(
   '/me',
   requireTrustedBrowserOrigin,
   requireAuth,
+  profileUpdateLimiter,
   validate(updateProfileSchema),
   asyncHandler(updateProfile),
 );
@@ -312,6 +360,7 @@ authRouter.patch(
   '/me',
   requireTrustedBrowserOrigin,
   requireAuth,
+  profileUpdateLimiter,
   validate(updateProfileSchema),
   asyncHandler(updateProfile),
 );

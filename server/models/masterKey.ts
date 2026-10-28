@@ -1,89 +1,173 @@
-import mongoose, { HydratedDocument, InferSchemaType, Model } from 'mongoose';
+import mongoose, { Document, HydratedDocument, Model, Schema } from 'mongoose';
 
 /**
- * Schema for encrypted master key storage on cloud
- * Stores user's master key encrypted with AES-256-GCM
+ * Interface representing an encrypted key structure (AES-256-GCM).
  */
-const encryptedKeySchema = new mongoose.Schema(
+export interface IEncryptedKeyPayload {
+  cipherText: string;
+  iv: string;
+  authTag: string;
+  salt?: string | null;
+  algorithm?: string;
+  keyVersion?: string;
+}
+
+export interface IMasterKeyHistoryEntry {
+  hash: IEncryptedKeyPayload;
+  changedAt: Date;
+  changedByDeviceId?: string | null;
+  changedByIp?: string | null;
+  changedByUserAgent?: string | null;
+}
+
+export interface IMasterKeyMetadata {
+  derivationAlgorithm?: string;
+  derivationParams?: {
+    memory?: number;
+    iterations?: number;
+    parallelism?: number;
+  };
+  createdAt?: Date;
+  updatedAt?: Date;
+  lastAccessedAt?: Date;
+  deviceId?: string;
+}
+
+export interface IMasterKeyAudit {
+  accessCount: number;
+  lastAccessedByDeviceId?: string | null;
+  failedDecryptionAttempts: number;
+  lastFailedAttempt?: Date | null;
+}
+
+/**
+ * Interface representing a MasterKey document.
+ */
+export interface IMasterKey extends Document {
+  userId: string;
+  encryptedMasterKey: IEncryptedKeyPayload;
+  recoveryPhrasesEncrypted?: string | null;
+  masterKeyHash: IEncryptedKeyPayload;
+  masterKeyHashHistory: IMasterKeyHistoryEntry[];
+  metadata: IMasterKeyMetadata;
+  audit: IMasterKeyAudit;
+  isActive: boolean;
+  isDeleted: boolean;
+  deletedAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type MasterKeyType = {
+  userId: string;
+  encryptedMasterKey: IEncryptedKeyPayload;
+  recoveryPhrasesEncrypted?: string | null;
+  masterKeyHash: IEncryptedKeyPayload;
+  masterKeyHashHistory?: IMasterKeyHistoryEntry[];
+  metadata?: IMasterKeyMetadata;
+  audit?: IMasterKeyAudit;
+  isActive?: boolean;
+  isDeleted?: boolean;
+  deletedAt?: Date | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+
+export type MasterKeyDocument = HydratedDocument<IMasterKey>;
+
+export interface MasterKeyModel extends Model<IMasterKey> {
+  recordAccess(userId: string, deviceId?: string): Promise<MasterKeyDocument | null>;
+  recordFailedAttempt(userId: string): Promise<MasterKeyDocument | null>;
+  findByUserIdActive(userId: string): Promise<MasterKeyDocument | null>;
+}
+
+/**
+ * Sub-schema for AES-256-GCM encrypted key payloads.
+ */
+const encryptedKeySchema = new Schema<IEncryptedKeyPayload>(
   {
     cipherText: {
       type: String,
-      required: true,
+      required: [true, 'cipherText is required'],
+      trim: true,
       description: 'AES-256-GCM encrypted master key',
     },
     iv: {
       type: String,
-      required: true,
+      required: [true, 'iv is required'],
+      trim: true,
       description: 'Initialization vector (base64)',
     },
     authTag: {
       type: String,
-      required: true,
+      required: [true, 'authTag is required'],
+      trim: true,
       description: 'Authentication tag for GCM mode',
     },
     salt: {
       type: String,
       required: false,
       default: null,
+      trim: true,
       description: 'Salt for key derivation',
     },
     algorithm: {
       type: String,
       default: 'aes-256-gcm',
+      trim: true,
       description: 'Encryption algorithm used',
     },
     keyVersion: {
       type: String,
       default: 'v1',
+      trim: true,
       description: 'Version of the encryption key',
     },
   },
   { _id: false },
 );
 
-const masterKeySchema = new mongoose.Schema(
+const masterKeySchema = new Schema<IMasterKey, MasterKeyModel>(
   {
-    userId: { type: String, required: true, unique: true, index: true },
-    /**
-     * Encrypted master key protected with AES-256-GCM
-     * Originally encrypted on client with cloud protection key
-     */
-    encryptedMasterKey: { type: encryptedKeySchema, required: true },
-    /**
-     * Backup codephrases for account recovery (optional, encrypted separately)
-     */
-    recoveryPhrasesEncrypted: { type: String, default: null },
-    /**
-     * Hash of the master key for verification across devices
-     * Allows clients to verify they have the correct decrypted key
-     */
-    masterKeyHash: { type: encryptedKeySchema, required: true },
-    /**
-     * Rolling history of prior master key hashes for audit/compliance.
-     * Values remain encrypted server-side and are truncated to a safe limit.
-     */
+    userId: {
+      type: String,
+      required: [true, 'userId is required'],
+      unique: true,
+      trim: true,
+    },
+    encryptedMasterKey: {
+      type: encryptedKeySchema,
+      required: [true, 'encryptedMasterKey is required'],
+    },
+    recoveryPhrasesEncrypted: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    masterKeyHash: {
+      type: encryptedKeySchema,
+      required: [true, 'masterKeyHash is required'],
+    },
     masterKeyHashHistory: {
       type: [
-        new mongoose.Schema(
+        new Schema<IMasterKeyHistoryEntry>(
           {
             hash: { type: encryptedKeySchema, required: true },
             changedAt: { type: Date, required: true, default: Date.now },
-            changedByDeviceId: { type: String, default: null },
-            changedByIp: { type: String, default: null },
-            changedByUserAgent: { type: String, default: null },
+            changedByDeviceId: { type: String, default: null, trim: true },
+            changedByIp: { type: String, default: null, trim: true },
+            changedByUserAgent: { type: String, default: null, trim: true },
           },
           { _id: false },
         ),
       ],
       default: [],
     },
-    /**
-     * Metadata about key creation and updates
-     */
     metadata: {
       derivationAlgorithm: {
         type: String,
         default: 'argon2id',
+        trim: true,
         description: 'Algorithm used to derive master key from password',
       },
       derivationParams: {
@@ -96,41 +180,79 @@ const masterKeySchema = new mongoose.Schema(
       lastAccessedAt: { type: Date, default: Date.now },
       deviceId: {
         type: String,
+        trim: true,
         description: 'Device that created/updated the key',
       },
     },
-    /**
-     * Security audit trail
-     */
     audit: {
-      accessCount: { type: Number, default: 0 },
-      lastAccessedByDeviceId: { type: String, default: null },
-      failedDecryptionAttempts: { type: Number, default: 0 },
+      accessCount: { type: Number, default: 0, min: 0 },
+      lastAccessedByDeviceId: { type: String, default: null, trim: true },
+      failedDecryptionAttempts: { type: Number, default: 0, min: 0 },
       lastFailedAttempt: { type: Date, default: null },
     },
-    /**
-     * Status tracking
-     */
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true, index: true },
+    isDeleted: { type: Boolean, default: false, index: true },
     deletedAt: { type: Date, default: null },
   },
-  { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } },
+  {
+    timestamps: true,
+    versionKey: false,
+  },
 );
 
-/**
- * Indexes for optimization
- */
-masterKeySchema.index({ userId: 1, isActive: 1 });
+/* ------------------ COMPOUND INDEXES ------------------ */
+masterKeySchema.index({ userId: 1, isActive: 1, isDeleted: 1 });
+masterKeySchema.index({ userId: 1, isDeleted: 1 });
 masterKeySchema.index({ 'metadata.createdAt': -1 });
+masterKeySchema.index({ 'metadata.deviceId': 1 });
 
-export type MasterKeyType = InferSchemaType<typeof masterKeySchema>;
-export type MasterKeyDocument = HydratedDocument<MasterKeyType>;
+/* ------------------ PRE-SAVE HOOKS ------------------ */
+// Bounding: Ensure masterKeyHashHistory does not exceed safe audit limit (50 entries)
+masterKeySchema.pre('save', function () {
+  if (Array.isArray(this.masterKeyHashHistory) && this.masterKeyHashHistory.length > 50) {
+    this.masterKeyHashHistory = this.masterKeyHashHistory.slice(-50);
+  }
+});
+
+/* ------------------ STATIC METHODS ------------------ */
+masterKeySchema.statics.recordAccess = function (userId: string, deviceId?: string) {
+  const update: Record<string, any> = {
+    $inc: { 'audit.accessCount': 1 },
+    $set: {
+      'metadata.lastAccessedAt': new Date(),
+      'audit.lastAccessedByDeviceId': deviceId || null,
+    },
+  };
+  return this.findOneAndUpdate({ userId: userId.trim(), isDeleted: false }, update, { new: true });
+};
+
+masterKeySchema.statics.recordFailedAttempt = function (userId: string) {
+  return this.findOneAndUpdate(
+    { userId: userId.trim(), isDeleted: false },
+    {
+      $inc: { 'audit.failedDecryptionAttempts': 1 },
+      $set: { 'audit.lastFailedAttempt': new Date() },
+    },
+    { new: true },
+  );
+};
+
+masterKeySchema.statics.findByUserIdActive = function (userId: string) {
+  return this.findOne({
+    userId: userId.trim(),
+    isActive: true,
+    isDeleted: false,
+  });
+};
 
 /**
  * Returns a user-specific MasterKey model using a dedicated collection.
+ * Supports passing an optional custom connection for multi-cluster querying.
  */
-export const getMasterKeyModel = (username: string): Model<MasterKeyType> => {
+export const getMasterKeyModel = (
+  username: string,
+  customConnection?: mongoose.Connection,
+): MasterKeyModel => {
   if (!username || !username.trim()) {
     throw new Error('Username is required for isolated master keys');
   }
@@ -141,12 +263,32 @@ export const getMasterKeyModel = (username: string): Model<MasterKeyType> => {
     .replace(/[^a-z0-9_-]/g, '_');
   const collectionName = `${normalized}.${normalized}_master_keys`;
 
-  if (mongoose.models[collectionName]) {
-    return mongoose.models[collectionName] as Model<MasterKeyType>;
+  if (customConnection) {
+    if (customConnection.models[collectionName]) {
+      return customConnection.models[collectionName] as MasterKeyModel;
+    }
+    const model = customConnection.model<IMasterKey, MasterKeyModel>(
+      collectionName,
+      masterKeySchema,
+      collectionName,
+    );
+    if (typeof model?.createIndexes === 'function') {
+      model.createIndexes().catch(() => {});
+    }
+    return model;
   }
 
-  return mongoose.model<MasterKeyType>(collectionName, masterKeySchema, collectionName);
-};
+  if (mongoose.models[collectionName]) {
+    return mongoose.models[collectionName] as MasterKeyModel;
+  }
 
-// Removed default MasterKey model to prevent automatic collection creation.
-// Code should use getMasterKeyModel(username) instead.
+  const model = mongoose.model<IMasterKey, MasterKeyModel>(
+    collectionName,
+    masterKeySchema,
+    collectionName,
+  );
+  if (typeof model?.createIndexes === 'function') {
+    model.createIndexes().catch(() => {});
+  }
+  return model;
+};

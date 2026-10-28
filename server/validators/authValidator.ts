@@ -1,8 +1,13 @@
 import { z } from 'zod';
+import {
+  USERNAME_PATTERN,
+  deviceIdSchema,
+  captchaTokenSchema,
+  hasPrototypePollutionKey,
+} from './commonValidator.ts';
 
-const USERNAME_PATTERN = /^[a-z0-9._-]+$/i;
-const STRONG_PASSWORD_PATTERN =
-  /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+=\[\];:,.<>?{}|\-])\S{16,64}$/;
+export const STRONG_PASSWORD_PATTERN =
+  /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+=\[\];:,.<>?{}|\-])\S{16,128}$/;
 
 const usernameSchema = z
   .string()
@@ -36,21 +41,19 @@ const masterKeySchema = z
     'Master Key must include uppercase, lowercase, number, and special character, and cannot contain spaces',
   );
 
-const deviceIdSchema = z.string().trim().min(1).max(128);
-const captchaTokenSchema = z
-  .string()
-  .trim()
-  .min(20, 'CAPTCHA token is invalid')
-  .max(4096, 'CAPTCHA token is invalid');
-
-export const loginSchema = z.object({
-  username: usernameSchema,
-  password: z.string().min(1, 'Password is required').max(128, 'Password is too long'),
-  masterKey: z.string().optional(),
-  pqcSalt: z.string().trim().min(8).max(128).optional(),
-  deviceId: deviceIdSchema.optional(),
-  captchaToken: captchaTokenSchema,
-});
+export const loginSchema = z
+  .object({
+    username: usernameSchema,
+    password: z.string().min(1, 'Password is required').max(128, 'Password is too long'),
+    masterKey: z.string().max(128, 'Master Key is too long').optional(),
+    pqcSalt: z.string().trim().min(8).max(128).optional(),
+    deviceId: deviceIdSchema.optional(),
+    captchaToken: captchaTokenSchema,
+  })
+  .strict()
+  .refine((val) => !hasPrototypePollutionKey(val), {
+    message: 'Payload contains forbidden keys',
+  });
 
 export const registerSchema = z
   .object({
@@ -60,6 +63,10 @@ export const registerSchema = z
     pqcSalt: z.string().trim().min(8).max(128).optional(),
     deviceId: deviceIdSchema.optional(),
     captchaToken: captchaTokenSchema,
+  })
+  .strict()
+  .refine((val) => !hasPrototypePollutionKey(val), {
+    message: 'Payload contains forbidden keys',
   })
   .refine((data) => data.password !== data.masterKey, {
     message: 'Account password and Master Key must not be identical',
@@ -75,23 +82,35 @@ export const changePasswordSchema = z
     newPassword: passwordSchema,
     captchaToken: captchaTokenSchema,
   })
+  .strict()
+  .refine((val) => !hasPrototypePollutionKey(val), {
+    message: 'Payload contains forbidden keys',
+  })
   .refine((data) => data.newPassword !== data.currentPassword, {
     message: 'New password must be different from current password',
     path: ['newPassword'],
   });
 
-export const masterKeyCaptchaSchema = z.object({
-  captchaToken: captchaTokenSchema,
-});
+export const masterKeyCaptchaSchema = z
+  .object({
+    captchaToken: captchaTokenSchema,
+  })
+  .strict();
 
-export const cloudUnlockCaptchaSchema = z.object({
-  captchaToken: captchaTokenSchema,
-});
+export const cloudUnlockCaptchaSchema = z
+  .object({
+    captchaToken: captchaTokenSchema,
+  })
+  .strict();
 
 const normalizeProfileName = z
   .string()
   .trim()
   .max(120, 'Profile name must be 120 characters or fewer')
+  .refine(
+    (val) => !/[\u0000-\u001f\u007f]/.test(val),
+    'Profile name contains invalid control characters',
+  )
   .transform((value) => (value.length === 0 ? 'none' : value));
 
 // ~50M chars covers up to ~35 MB image file encoded as base64
@@ -106,6 +125,24 @@ const normalizeProfilePhoto = z
       return 'none';
     }
 
+    // Explicitly disallow protocol-relative URLs (e.g. //attacker.com)
+    if (value.startsWith('//')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Protocol-relative URLs are not allowed.',
+      });
+      return z.NEVER;
+    }
+
+    // Disallow path traversal attempts
+    if (value.includes('..')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Path traversal sequences are not allowed.',
+      });
+      return z.NEVER;
+    }
+
     if (!value.startsWith('data:image/') && value.length > 2048) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -117,19 +154,19 @@ const normalizeProfilePhoto = z
     // Allow base64 data URIs for locally-uploaded images
     if (value.startsWith('data:image/')) {
       // Only permit safe image MIME types
-      const mimeMatch = value.match(/^data:(image\/[a-zA-Z0-9.+\-]+);base64,/);
+      const mimeMatch = value.match(/^data:(image\/(?:png|jpeg|jpg|webp|avif|gif));base64,/i);
       if (!mimeMatch) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Profile photo data URI must be a base64-encoded image.',
+          message:
+            'Profile photo data URI must be a valid base64-encoded image (png, jpeg, webp, avif, or gif).',
         });
         return z.NEVER;
       }
       return value;
     }
 
-    // Allow root-relative or relative paths (e.g. /api/avatar/raw/... or /uploads/...)
-    // Explicitly disallow protocol-relative URLs (e.g. //attacker.com)
+    // Allow safe root-relative or relative paths (e.g. /api/avatar/raw/... or ./uploads/...)
     if ((value.startsWith('/') && !value.startsWith('//')) || value.startsWith('./')) {
       return value;
     }
@@ -161,6 +198,10 @@ export const updateProfileSchema = z
     profileName: normalizeProfileName.optional(),
     profilePhoto: normalizeProfilePhoto.optional(),
   })
+  .strict()
+  .refine((val) => !hasPrototypePollutionKey(val), {
+    message: 'Payload contains forbidden keys',
+  })
   .refine(
     (value) => typeof value.profileName === 'string' || typeof value.profilePhoto === 'string',
     {
@@ -168,3 +209,10 @@ export const updateProfileSchema = z
       path: ['profileName'],
     },
   );
+
+export type LoginInput = z.infer<typeof loginSchema>;
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type MasterKeyCaptchaInput = z.infer<typeof masterKeyCaptchaSchema>;
+export type CloudUnlockCaptchaInput = z.infer<typeof cloudUnlockCaptchaSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

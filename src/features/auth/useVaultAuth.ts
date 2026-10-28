@@ -571,6 +571,10 @@ export const useVaultAuth = (options?: UseVaultAuthOptions) => {
         return true;
       }
 
+      if (!isKeyCheckError) {
+        throw unlockErr;
+      }
+
       const masterKeyErr = new Error(
         unlockErr?.message || 'Master key is incorrect or vault data could not be decrypted.',
       );

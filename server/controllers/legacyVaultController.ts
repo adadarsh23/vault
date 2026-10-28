@@ -2,7 +2,6 @@ import express from 'express';
 import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
-import { sendRequestError } from '../responses.ts';
 import {
   deleteScopedVaultItemByUsername,
   deleteLegacyVaultItem,
@@ -20,9 +19,11 @@ import {
   parseMetadataHeader,
   safeDecodeURIComponent,
 } from '../utils/vaultParsers.ts';
+import { sendSuccess } from '../responses.ts';
 
 const MAX_LEGACY_ID_LENGTH = 256;
 const SAFE_LEGACY_ID_PATTERN = /^[a-zA-Z0-9:_-]+$/;
+const SAFE_UPLOAD_ID_PATTERN = /^[a-zA-Z0-9:_-]{1,128}$/;
 const LEGACY_RAW_LIMIT = `${Number(process.env.LEGACY_RAW_LIMIT_MB || process.env.MAX_FILE_SIZE_MB || 4096)}mb`;
 const MAX_SCOPED_TEXT_PAYLOAD_BYTES = Math.max(
   1_000_000,
@@ -50,7 +51,9 @@ const ALLOWED_SCOPED_CATEGORIES = new Set([
   'video',
   'wifi',
 ]);
-const CHUNK_UPLOAD_ROOT = path.join(process.cwd(), 'vault-tmp', 'chunk-uploads');
+const CHUNK_UPLOAD_ROOT = path.resolve(
+  process.env.CHUNK_UPLOAD_ROOT || path.join(process.cwd(), 'vault-tmp', 'chunk-uploads'),
+);
 const CHUNK_UPLOAD_TTL_MS = Math.max(
   60_000,
   Number(process.env.CHUNK_UPLOAD_TTL_MS || 30 * 60 * 1000),
@@ -76,7 +79,11 @@ const CHUNK_COMPLETION_MARKER_PREFIX = 'completed-';
 
 const safeRm = async (targetPath: string) => {
   try {
-    await fs.rm(targetPath, { recursive: true, force: true });
+    const resolved = path.resolve(targetPath);
+    if (!resolved.startsWith(CHUNK_UPLOAD_ROOT) || resolved === CHUNK_UPLOAD_ROOT) {
+      return;
+    }
+    await fs.rm(resolved, { recursive: true, force: true });
   } catch (err) {
     logger.debug('safeRm failed to remove target path', { targetPath, error: err });
   }
@@ -84,7 +91,11 @@ const safeRm = async (targetPath: string) => {
 
 const safeUnlink = async (targetPath: string) => {
   try {
-    await fs.unlink(targetPath);
+    const resolved = path.resolve(targetPath);
+    if (!resolved.startsWith(CHUNK_UPLOAD_ROOT) || resolved === CHUNK_UPLOAD_ROOT) {
+      return;
+    }
+    await fs.unlink(resolved);
   } catch (err) {
     logger.debug('safeUnlink failed to unlink file', { targetPath, error: err });
   }
@@ -283,7 +294,12 @@ export const parseLegacyPayloadFromRequest = async (
     const isChunked = chunkedHeader === '1' || chunkedHeader === 'true' || chunkedHeader === 'yes';
 
     if (isChunked) {
-      const uploadId = String(req.headers['x-vault-upload-id'] || '').trim();
+      const rawUploadId = String(req.headers['x-vault-upload-id'] || '').trim();
+      if (!rawUploadId || !SAFE_UPLOAD_ID_PATTERN.test(rawUploadId)) {
+        throw new AppError(400, 'INVALID_CHUNK_HEADERS', 'Invalid or missing upload ID format.');
+      }
+      const uploadId = rawUploadId;
+
       const chunkIndex = Number.parseInt(String(req.headers['x-vault-chunk-index'] || '-1'), 10);
       const chunkCount = Number.parseInt(String(req.headers['x-vault-chunk-count'] || '-1'), 10);
       const declaredTotalSize = Number.parseInt(
@@ -292,7 +308,6 @@ export const parseLegacyPayloadFromRequest = async (
       );
 
       if (
-        !uploadId ||
         chunkIndex < 0 ||
         chunkCount <= 0 ||
         chunkIndex >= chunkCount ||
@@ -325,14 +340,16 @@ export const parseLegacyPayloadFromRequest = async (
       }
 
       const scopedUserId = (req as any)?.user?.userId || 'anon';
-      const userChunkRoot = path.join(CHUNK_UPLOAD_ROOT, String(scopedUserId));
+      const userChunkRoot = path.resolve(path.join(CHUNK_UPLOAD_ROOT, String(scopedUserId)));
       await fs.mkdir(userChunkRoot, { recursive: true });
       await cleanupExpiredChunkUploads(userChunkRoot);
+
       const routeItemId =
         typeof req.params?.itemId === 'string' && req.params.itemId.trim()
           ? req.params.itemId.trim()
           : null;
       const chunkUploadState = { uploadId, chunkIndex, chunkCount };
+
       if (routeItemId && (await wasChunkUploadCompleted(userChunkRoot, uploadId, routeItemId))) {
         return {
           payload: '',
@@ -345,7 +362,12 @@ export const parseLegacyPayloadFromRequest = async (
           chunkUploadCleanupPath: null,
         } as any;
       }
-      const uploadDir = path.join(userChunkRoot, uploadId);
+
+      const uploadDir = path.resolve(path.join(userChunkRoot, uploadId));
+      if (!uploadDir.startsWith(userChunkRoot)) {
+        throw new AppError(400, 'INVALID_CHUNK_HEADERS', 'Path traversal attempt detected.');
+      }
+
       await fs.mkdir(uploadDir, { recursive: true });
       const chunkPath = path.join(uploadDir, `${chunkIndex}.part`);
       const chunkBuffer = binaryPayload;
@@ -374,7 +396,6 @@ export const parseLegacyPayloadFromRequest = async (
       const lockPath = path.join(uploadDir, '.assembling.lock');
       const hasLock = await tryAcquireChunkAssemblyLock(lockPath);
       if (!hasLock) {
-        // Another request is assembling/finalizing right now.
         return {
           payload: '',
           category: parseCategory(req.headers['x-vault-category']),
@@ -479,7 +500,6 @@ export const parseLegacyPayloadFromRequest = async (
             ...JSON.parse(req.body.metadata),
           };
         } catch {
-          // Fallback if it's just raw text
           parsedMetadata = {
             ...parsedMetadata,
             _rawMetadata: req.body.metadata,
@@ -543,7 +563,6 @@ export const parseLegacyPayloadFromRequest = async (
     }
   }
 
-  // Also check metadata for folder if not found elsewhere
   if (!folder && metadata?.folder) {
     folder = String(metadata.folder);
   }
@@ -561,13 +580,15 @@ export const parseLegacyPayloadFromRequest = async (
 export const upsertLegacyVaultItem = async (req: express.Request, res: express.Response) => {
   const vaultId = getRouteParam(req.params.vaultId, 'vaultId');
   const itemId = getRouteParam(req.params.itemId, 'itemId');
+  const username = (req as any).user?.username;
+
+  if (!username) {
+    throw AppError.unauthorized('Authentication required', 'UNAUTHORIZED');
+  }
 
   const parsed = await parseLegacyPayloadFromRequest(req, res);
   if (!parsed) {
-    return sendRequestError(req, res, 400, {
-      code: 'INVALID_PAYLOAD',
-      message: 'Payload is required.',
-    });
+    throw AppError.badRequest('Payload is required.', 'INVALID_PAYLOAD');
   }
   if ((parsed as any).chunkUploadPending) {
     return res.status(202).json({
@@ -596,7 +617,7 @@ export const upsertLegacyVaultItem = async (req: express.Request, res: express.R
 
   const result = await saveLegacyVaultItem({
     vaultId,
-    username: (req as any).user.username,
+    username,
     itemId,
     payload: parsed.payload,
     category: parsed.category,
@@ -604,6 +625,7 @@ export const upsertLegacyVaultItem = async (req: express.Request, res: express.R
     title: parsed.title,
     metadata: parsedMetadata,
   });
+
   if (chunkMeta?.uploadId && chunkMeta.userChunkRoot && chunkMeta.routeItemId) {
     await markChunkUploadCompleted(
       chunkMeta.userChunkRoot,
@@ -616,12 +638,17 @@ export const upsertLegacyVaultItem = async (req: express.Request, res: express.R
     await safeRm((parsed as any).chunkUploadCleanupPath);
   }
 
-  return res.json({ success: true, data: result });
+  return sendSuccess(res, result, 'Legacy vault item saved successfully');
 };
 
 export const getLegacyVaultItems = async (req: express.Request, res: express.Response) => {
   const vaultId = getRouteParam(req.params.vaultId, 'vaultId');
-  const username = (req as any).user.username;
+  const username = (req as any).user?.username;
+
+  if (!username) {
+    throw AppError.unauthorized('Authentication required', 'UNAUTHORIZED');
+  }
+
   const items = await listLegacyVaultItems(vaultId, username);
   return res.json({ success: true, items });
 };
@@ -629,9 +656,14 @@ export const getLegacyVaultItems = async (req: express.Request, res: express.Res
 export const removeLegacyVaultItem = async (req: express.Request, res: express.Response) => {
   const vaultId = getRouteParam(req.params.vaultId, 'vaultId');
   const itemId = getRouteParam(req.params.itemId, 'itemId');
-  const username = (req as any).user.username;
+  const username = (req as any).user?.username;
+
+  if (!username) {
+    throw AppError.unauthorized('Authentication required', 'UNAUTHORIZED');
+  }
+
   const deleted = await deleteLegacyVaultItem(vaultId, itemId, username);
-  return res.json({ success: true, data: { deleted } });
+  return sendSuccess(res, { deleted }, 'Legacy vault item deleted successfully');
 };
 
 export const upsertScopedVaultItem = async (req: AuthenticatedRequest, res: express.Response) => {
@@ -639,10 +671,7 @@ export const upsertScopedVaultItem = async (req: AuthenticatedRequest, res: expr
 
   const parsed = await parseLegacyPayloadFromRequest(req, res);
   if (!parsed) {
-    return sendRequestError(req, res, 400, {
-      code: 'INVALID_PAYLOAD',
-      message: 'Payload is required.',
-    });
+    throw AppError.badRequest('Payload is required.', 'INVALID_PAYLOAD');
   }
 
   if ((parsed as any).chunkUploadPending) {
@@ -682,6 +711,7 @@ export const upsertScopedVaultItem = async (req: AuthenticatedRequest, res: expr
     title: parsed.title,
     metadata: parsedMetadata,
   });
+
   if (chunkMeta?.uploadId && chunkMeta.userChunkRoot && chunkMeta.routeItemId) {
     await markChunkUploadCompleted(
       chunkMeta.userChunkRoot,
@@ -694,7 +724,7 @@ export const upsertScopedVaultItem = async (req: AuthenticatedRequest, res: expr
     await safeRm((parsed as any).chunkUploadCleanupPath);
   }
 
-  return res.json({ success: true, data: result });
+  return sendSuccess(res, result, 'Scoped vault item saved successfully');
 };
 
 export const getScopedVaultItems = async (req: AuthenticatedRequest, res: express.Response) => {
@@ -705,7 +735,7 @@ export const getScopedVaultItems = async (req: AuthenticatedRequest, res: expres
 export const removeScopedVaultItem = async (req: AuthenticatedRequest, res: express.Response) => {
   const itemId = getRouteParam(req.params.itemId, 'itemId');
   const deleted = await deleteScopedVaultItemByUsername(req.user.userId, req.user.username, itemId);
-  return res.json({ success: true, data: { deleted } });
+  return sendSuccess(res, { deleted }, 'Scoped vault item deleted successfully');
 };
 
 export const toggleScopedVaultItemPin = async (
@@ -725,5 +755,5 @@ export const toggleScopedVaultItemPin = async (
     isPinned,
   );
 
-  return res.json({ success: true, data });
+  return sendSuccess(res, data, 'Item pin state toggled successfully');
 };

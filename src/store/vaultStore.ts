@@ -9,6 +9,7 @@ import {
   generateRSAKeyPair,
 } from '../lib/encryption';
 import { clearCryptoKeyCache } from '../lib/cryptoPrimitives';
+import { logger } from '../lib/logger';
 import {
   downloadAllFromCloud,
   downloadLogsFromCloud,
@@ -539,7 +540,11 @@ const normalizeImportedItem = (candidate: unknown, index: number): VaultItem | n
 const loadVaultSnapshot = async (masterKey: CryptoKey): Promise<LoadedVaultSnapshot> => {
   const snapshot = await downloadVaultSnapshotFromCloud(masterKey);
   if (!snapshot.hasKeyCheck) {
-    await uploadKeyCheckToCloud(masterKey);
+    await uploadKeyCheckToCloud(masterKey).catch((error) => {
+      logger.warn('[Auth] Failed to initialize key check record on cloud; continuing unlock', {
+        error,
+      });
+    });
   }
   const settings = snapshot.settings as CloudSettingsSnapshot | null;
 

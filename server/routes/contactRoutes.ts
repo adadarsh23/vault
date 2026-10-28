@@ -5,6 +5,8 @@ import { requireTrustedBrowserOrigin } from '../middleware/csrfOriginMiddleware.
 import { requireRecaptcha } from '../middleware/recaptchaMiddleware.ts';
 import { validate } from '../middleware/validate.ts';
 import { contactSchema } from '../validators/contactValidator.ts';
+import { asyncHandler } from '../utils/asyncHandler.ts';
+import { getClientIp } from '../utils/requestIp.ts';
 
 const router = Router();
 
@@ -12,6 +14,9 @@ const router = Router();
 const contactLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 5, // Limit each IP to 5 submissions per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:contact-submit`,
   message: {
     success: false,
     error: {
@@ -23,11 +28,17 @@ const contactLimiter = rateLimit({
 
 router.post(
   '/submit',
+  (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+  },
   requireTrustedBrowserOrigin,
   contactLimiter,
   validate(contactSchema),
   requireRecaptcha({ action: 'contact_submit' }),
-  submitContactForm,
+  asyncHandler(submitContactForm),
 );
 
 export { router as contactRouter };

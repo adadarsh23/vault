@@ -16,6 +16,15 @@ const TUS_SESSION_TTL_MS = Math.max(
   Number(process.env.TUS_SESSION_TTL_MS || 2 * 60 * 60 * 1000),
 );
 
+const SAFE_UPLOAD_ID_PATTERN = /^[a-zA-Z0-9:_-]{1,128}$/;
+
+const assertSafeUploadId = (id: unknown): string => {
+  if (typeof id !== 'string' || !SAFE_UPLOAD_ID_PATTERN.test(id)) {
+    throw AppError.badRequest('Invalid TUS upload identifier.', 'INVALID_UPLOAD_ID');
+  }
+  return id;
+};
+
 interface TusSession {
   uploadId: string;
   userId: string;
@@ -38,7 +47,10 @@ const cleanupExpiredTusSessions = async () => {
       if (session.filePath) {
         try {
           const uploadDir = path.dirname(session.filePath);
-          await fs.rm(uploadDir, { recursive: true, force: true });
+          const resolvedDir = path.resolve(uploadDir);
+          if (resolvedDir.startsWith(TUS_TMP_ROOT) && resolvedDir !== TUS_TMP_ROOT) {
+            await fs.rm(resolvedDir, { recursive: true, force: true });
+          }
         } catch {
           // Ignore cleanup errors
         }
@@ -55,6 +67,14 @@ const tusCleanupInterval = setInterval(
 );
 tusCleanupInterval.unref();
 
+export const optionsTusController = async (_req: express.Request, res: express.Response) => {
+  res.setHeader('Tus-Resumable', '1.0.0');
+  res.setHeader('Tus-Version', '1.0.0');
+  res.setHeader('Tus-Max-Size', MAX_TUS_FILE_SIZE.toString());
+  res.setHeader('Tus-Extension', 'creation,termination');
+  return res.status(204).end();
+};
+
 export const createTusUploadController = async (
   req: AuthenticatedRequest,
   res: express.Response,
@@ -70,9 +90,11 @@ export const createTusUploadController = async (
     10,
   );
   if (isNaN(fileSize) || fileSize <= 0) {
+    res.setHeader('Tus-Resumable', '1.0.0');
     throw AppError.badRequest('Missing or invalid Upload-Length header.', 'INVALID_TUS_LENGTH');
   }
   if (fileSize > MAX_TUS_FILE_SIZE) {
+    res.setHeader('Tus-Resumable', '1.0.0');
     throw AppError.badRequest(
       'TUS upload exceeds the configured file size limit.',
       'FILE_TOO_LARGE',
@@ -86,7 +108,7 @@ export const createTusUploadController = async (
     for (const pair of pairs) {
       const parts = pair.trim().split(' ');
       if (parts[0]) {
-        const key = parts[0];
+        const key = parts[0].replace(/[^a-zA-Z0-9_-]/g, '');
         const valB64 = parts[1] || '';
         try {
           metadata[key] = Buffer.from(valB64, 'base64').toString('utf-8');
@@ -125,21 +147,16 @@ export const createTusUploadController = async (
 };
 
 export const getTusOffsetController = async (req: AuthenticatedRequest, res: express.Response) => {
-  const uploadId = Array.isArray(req.params.uploadId)
-    ? req.params.uploadId[0]
-    : req.params.uploadId;
+  res.setHeader('Tus-Resumable', '1.0.0');
+
+  const rawId = Array.isArray(req.params.uploadId) ? req.params.uploadId[0] : req.params.uploadId;
+  const uploadId = assertSafeUploadId(rawId);
   const session = tusSessions.get(uploadId);
 
-  if (!session) {
-    res.setHeader('Tus-Resumable', '1.0.0');
-    return res.status(404).end();
-  }
-  if (session.userId !== req.user.userId) {
-    res.setHeader('Tus-Resumable', '1.0.0');
+  if (!session || session.userId !== req.user.userId) {
     return res.status(404).end();
   }
 
-  res.setHeader('Tus-Resumable', '1.0.0');
   res.setHeader('Upload-Offset', session.offset.toString());
   res.setHeader('Upload-Length', session.fileSize.toString());
   res.setHeader('Cache-Control', 'no-store');
@@ -150,26 +167,27 @@ export const uploadTusChunkController = async (
   req: AuthenticatedRequest,
   res: express.Response,
 ) => {
-  const uploadId = Array.isArray(req.params.uploadId)
-    ? req.params.uploadId[0]
-    : req.params.uploadId;
+  res.setHeader('Tus-Resumable', '1.0.0');
+
+  const rawId = Array.isArray(req.params.uploadId) ? req.params.uploadId[0] : req.params.uploadId;
+  const uploadId = assertSafeUploadId(rawId);
   const session = tusSessions.get(uploadId);
 
-  if (!session) {
-    throw AppError.notFound('TUS upload session not found.', 'TUS_SESSION_NOT_FOUND');
-  }
-  if (session.userId !== req.user.userId) {
+  if (!session || session.userId !== req.user.userId) {
     throw AppError.notFound('TUS upload session not found.', 'TUS_SESSION_NOT_FOUND');
   }
 
   const offsetHeader = req.headers['upload-offset'];
   const reqOffset = parseInt(
-    (Array.isArray(offsetHeader) ? offsetHeader[0] : offsetHeader) || '0',
+    (Array.isArray(offsetHeader) ? offsetHeader[0] : offsetHeader) || '-1',
     10,
   );
 
+  if (isNaN(reqOffset) || reqOffset < 0) {
+    throw AppError.badRequest('Missing or invalid Upload-Offset header.', 'INVALID_UPLOAD_OFFSET');
+  }
+
   if (reqOffset !== session.offset) {
-    res.setHeader('Tus-Resumable', '1.0.0');
     return res.status(409).json({
       error: 'Upload-Offset mismatch',
       currentOffset: session.offset,
@@ -198,7 +216,6 @@ export const uploadTusChunkController = async (
   }
   session.updatedAt = Date.now();
 
-  res.setHeader('Tus-Resumable', '1.0.0');
   res.setHeader('Upload-Offset', session.offset.toString());
   return res.status(204).end();
 };
@@ -207,6 +224,9 @@ export const getTusSessionBuffer = async (
   uploadId: string,
   userId?: string,
 ): Promise<Buffer | null> => {
+  if (!SAFE_UPLOAD_ID_PATTERN.test(uploadId)) {
+    return null;
+  }
   const session = tusSessions.get(uploadId);
   if (session) {
     if (userId && session.userId !== userId) return null;
@@ -216,7 +236,5 @@ export const getTusSessionBuffer = async (
       return null;
     }
   }
-  // Never serve a temporary upload from disk after its authenticated session
-  // is gone. Temporary files are not durable cloud storage.
   return null;
 };

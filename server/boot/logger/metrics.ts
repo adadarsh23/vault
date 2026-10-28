@@ -6,6 +6,8 @@ export type StartupPhaseTiming = {
   durationMs: number;
 };
 
+export type EventLoopDelayMonitor = ReturnType<typeof monitorEventLoopDelay>;
+
 export type RuntimeSnapshot = {
   totalRequests: number;
   totalErrors: number;
@@ -16,11 +18,18 @@ export type RuntimeSnapshot = {
   p95LatencyMs: number;
 };
 
-export const formatMemoryUsage = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+export const formatMemoryUsage = (bytes: number): string => {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0.0 MB';
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
-export const formatDurationMs = (ms: number) => `${Math.round(ms)} ms`;
+export const formatDurationMs = (ms: number): string => {
+  if (!Number.isFinite(ms) || ms < 0) return '0 ms';
+  return `${Math.round(ms)} ms`;
+};
 
-export const formatUptime = (seconds: number) => {
+export const formatUptime = (seconds: number): string => {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0s';
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
@@ -29,29 +38,116 @@ export const formatUptime = (seconds: number) => {
   return `${s}s`;
 };
 
-const eventLoopLagHistogram = monitorEventLoopDelay({ resolution: 20 });
-eventLoopLagHistogram.enable();
+// Managed event loop lag monitor (lazy initialized, gracefully stopped on demand)
+let globalEventLoopHistogram: EventLoopDelayMonitor | null = null;
 
-export const formatEventLoopLag = () => {
-  const meanMs = eventLoopLagHistogram.mean / 1e6;
-  return Number.isFinite(meanMs) ? `${Math.round(meanMs)} ms` : 'n/a';
+export const startEventLoopLagMonitor = (resolution = 20): EventLoopDelayMonitor => {
+  if (!globalEventLoopHistogram) {
+    try {
+      globalEventLoopHistogram = monitorEventLoopDelay({ resolution });
+      globalEventLoopHistogram.enable();
+    } catch {
+      // Fallback in case perf_hooks is restricted in the environment
+      globalEventLoopHistogram = null;
+    }
+  }
+  return globalEventLoopHistogram!;
 };
 
-export const createRuntimeMetrics = () => {
-  const startedAt = Date.now();
+export const stopEventLoopLagMonitor = (): void => {
+  if (globalEventLoopHistogram) {
+    try {
+      globalEventLoopHistogram.disable();
+    } catch {
+      // Ignore errors during shutdown
+    }
+    globalEventLoopHistogram = null;
+  }
+};
+
+export const getEventLoopLagMeanMs = (): number => {
+  if (!globalEventLoopHistogram) {
+    startEventLoopLagMonitor();
+  }
+  if (!globalEventLoopHistogram) return 0;
+  const meanNs = globalEventLoopHistogram.mean;
+  const meanMs = meanNs / 1e6;
+  return Number.isFinite(meanMs) ? meanMs : 0;
+};
+
+export const formatEventLoopLag = (): string => {
+  const lagMs = getEventLoopLagMeanMs();
+  return Number.isFinite(lagMs) ? `${Math.round(lagMs)} ms` : 'n/a';
+};
+
+/**
+ * High-performance, O(1) circular ring buffer for request latencies.
+ * Eliminates Array.prototype.shift() performance bottlenecks during high request volume.
+ */
+class LatencyReservoir {
+  private buffer: Float64Array;
+  private capacity: number;
+  private head = 0;
+  private count = 0;
+
+  constructor(capacity = 2000) {
+    this.capacity = Math.max(10, capacity);
+    this.buffer = new Float64Array(this.capacity);
+  }
+
+  add(value: number): void {
+    if (!Number.isFinite(value) || value < 0) return;
+    this.buffer[this.head] = value;
+    this.head = (this.head + 1) % this.capacity;
+    if (this.count < this.capacity) {
+      this.count++;
+    }
+  }
+
+  getSamples(): number[] {
+    const samples = new Array<number>(this.count);
+    for (let i = 0; i < this.count; i++) {
+      samples[i] = this.buffer[i];
+    }
+    return samples;
+  }
+
+  clear(): void {
+    this.head = 0;
+    this.count = 0;
+  }
+
+  get size(): number {
+    return this.count;
+  }
+}
+
+export interface ManagedRuntimeMetrics {
+  onRequestStart: () => (statusCode: number) => void;
+  onConnectionOpen: () => void;
+  onConnectionClose: () => void;
+  snapshot: () => RuntimeSnapshot;
+  reset: () => void;
+  stop: () => void;
+}
+
+export const createRuntimeMetrics = (reservoirCapacity = 2000): ManagedRuntimeMetrics => {
+  let startedAt = Date.now();
   let totalRequests = 0;
   let totalErrors = 0;
   let activeConnections = 0;
-  const latenciesMs: number[] = [];
+  const reservoir = new LatencyReservoir(reservoirCapacity);
 
   const onRequestStart = () => {
-    const started = process.hrtime.bigint();
+    const startHr = process.hrtime.bigint();
     return (statusCode: number) => {
       totalRequests += 1;
-      if (statusCode >= 400) totalErrors += 1;
-      const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6;
-      latenciesMs.push(elapsedMs);
-      if (latenciesMs.length > 5000) latenciesMs.shift();
+      if (statusCode >= 400) {
+        totalErrors += 1;
+      }
+      const elapsedNs = Number(process.hrtime.bigint() - startHr);
+      const elapsedMs = Math.max(0, elapsedNs / 1e6);
+      reservoir.add(elapsedMs);
     };
   };
 
@@ -65,11 +161,12 @@ export const createRuntimeMetrics = () => {
 
   const snapshot = (): RuntimeSnapshot => {
     const elapsedMinutes = Math.max((Date.now() - startedAt) / 60000, 1 / 60);
-    const sorted = [...latenciesMs].sort((a, b) => a - b);
+    const samples = reservoir.getSamples().sort((a, b) => a - b);
     const avgLatencyMs =
-      latenciesMs.length > 0 ? latenciesMs.reduce((sum, n) => sum + n, 0) / latenciesMs.length : 0;
+      samples.length > 0 ? samples.reduce((acc, curr) => acc + curr, 0) / samples.length : 0;
+
     const p95Index =
-      sorted.length > 0 ? Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95)) : -1;
+      samples.length > 0 ? Math.min(samples.length - 1, Math.floor(samples.length * 0.95)) : -1;
 
     return {
       totalRequests,
@@ -78,8 +175,21 @@ export const createRuntimeMetrics = () => {
       errorsPerMinute: totalErrors / elapsedMinutes,
       activeConnections,
       avgLatencyMs,
-      p95LatencyMs: p95Index >= 0 ? sorted[p95Index] : 0,
+      p95LatencyMs: p95Index >= 0 ? samples[p95Index] : 0,
     };
+  };
+
+  const reset = () => {
+    startedAt = Date.now();
+    totalRequests = 0;
+    totalErrors = 0;
+    activeConnections = 0;
+    reservoir.clear();
+  };
+
+  const stop = () => {
+    activeConnections = 0;
+    reservoir.clear();
   };
 
   return {
@@ -87,5 +197,7 @@ export const createRuntimeMetrics = () => {
     onConnectionOpen,
     onConnectionClose,
     snapshot,
+    reset,
+    stop,
   };
 };

@@ -1,8 +1,11 @@
 import { z } from 'zod';
+import {
+  USERNAME_PATTERN,
+  captchaTokenSchema,
+  hasPrototypePollutionKey,
+} from './commonValidator.ts';
 
-const USERNAME_PATTERN = /^[a-z0-9._-]+$/i;
-
-const CONTACT_SUBJECTS = [
+export const CONTACT_SUBJECTS = [
   'General Inquiry',
   'Technical Support',
   'Security Vulnerability',
@@ -12,11 +15,7 @@ const CONTACT_SUBJECTS = [
   'Other',
 ] as const;
 
-const captchaTokenSchema = z
-  .string()
-  .trim()
-  .min(20, 'CAPTCHA token is invalid')
-  .max(4096, 'CAPTCHA token is invalid');
+export type ContactSubject = (typeof CONTACT_SUBJECTS)[number];
 
 export const contactSchema = z
   .object({
@@ -24,7 +23,11 @@ export const contactSchema = z
       .string()
       .trim()
       .min(2, 'Full name must be between 2 and 100 characters.')
-      .max(100, 'Full name must be between 2 and 100 characters.'),
+      .max(100, 'Full name must be between 2 and 100 characters.')
+      .refine(
+        (v) => !/[\u0000-\u001f\u007f]/.test(v),
+        'Full name contains invalid control characters.',
+      ),
     email: z
       .string()
       .trim()
@@ -43,17 +46,20 @@ export const contactSchema = z
     subject: z
       .string()
       .refine(
-        (value): value is (typeof CONTACT_SUBJECTS)[number] =>
-          CONTACT_SUBJECTS.includes(value as (typeof CONTACT_SUBJECTS)[number]),
+        (value): value is ContactSubject => CONTACT_SUBJECTS.includes(value as ContactSubject),
         'Please select a valid query category.',
       ),
     message: z
       .string()
       .trim()
       .min(10, 'Message must be between 10 and 2000 characters.')
-      .max(2000, 'Message must be between 10 and 2000 characters.'),
+      .max(2000, 'Message must be between 10 and 2000 characters.')
+      .refine((v) => !/[\u0000]/.test(v), 'Message contains null byte characters.'),
     captchaToken: captchaTokenSchema,
   })
-  .strict();
+  .strict()
+  .refine((val) => !hasPrototypePollutionKey(val), {
+    message: 'Payload contains forbidden keys',
+  });
 
 export type ContactRequestInput = z.infer<typeof contactSchema>;

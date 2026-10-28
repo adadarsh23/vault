@@ -45,6 +45,12 @@ const CATEGORY_ALIAS_MAP: Record<string, string> = {
   settings: 'settings',
   system: 'system',
   users: 'users',
+  user: 'users',
+  card: 'card',
+  cards: 'card',
+  identity: 'identity',
+  identities: 'identity',
+  wifi: 'wifi',
   v2_items: 'file',
 };
 

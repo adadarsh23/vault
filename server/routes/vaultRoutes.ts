@@ -48,6 +48,7 @@ import {
   uploadTusChunkController,
 } from '../controllers/tusController.ts';
 import { requireAuth, resolveIdentity } from '../middleware/authMiddleware.ts';
+import { requireTrustedBrowserOrigin } from '../middleware/csrfOriginMiddleware.ts';
 import { validateRequest } from '../middleware/expressValidate.ts';
 import {
   activityLogBodyValidation,
@@ -98,14 +99,46 @@ const multipartCompleteLimiter = strictUserLimiter(
   Math.max(3, Number(process.env.MULTIPART_COMPLETE_LIMIT_PER_10MIN || 30)),
   'Too many upload completion requests. Please retry later.',
 );
+const vaultUploadLimiter = strictUserLimiter(
+  60 * 1000,
+  Math.max(30, Number(process.env.VAULT_UPLOAD_LIMIT_PER_MIN || 60)),
+  'Upload rate limit exceeded. Please wait a moment.',
+);
+const vaultItemWriteLimiter = strictUserLimiter(
+  60 * 1000,
+  Math.max(60, Number(process.env.VAULT_ITEM_WRITE_LIMIT_PER_MIN || 120)),
+  'Vault item modification rate limit exceeded. Please retry shortly.',
+);
+const folderLimiter = strictUserLimiter(
+  60 * 1000,
+  Math.max(30, Number(process.env.VAULT_FOLDER_LIMIT_PER_MIN || 60)),
+  'Folder operation rate limit exceeded. Please wait a moment.',
+);
+const activityLimiter = strictUserLimiter(
+  60 * 1000,
+  Math.max(60, Number(process.env.VAULT_ACTIVITY_LIMIT_PER_MIN || 120)),
+  'Activity rate limit exceeded.',
+);
 const multipartPartBodyLimitBytes =
   Math.max(5 * 1024 * 1024, Number(process.env.MULTIPART_PART_SIZE_BYTES || 8 * 1024 * 1024)) +
   32 * 1024;
 
+// Prevent browser/proxy caching of private encrypted vault items and sync data
+vaultRouter.use((req, res, next) => {
+  if (!req.path.includes('/media/segment/') && !req.path.includes('/files/access/')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  next();
+});
+
 // Legacy / Migration
 vaultRouter.post(
   '/legacy/:vaultId/items/:itemId',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest(vaultLegacyRouteParamsValidation),
   asyncHandler(upsertLegacyVaultItem),
 );
@@ -117,7 +150,9 @@ vaultRouter.get(
 );
 vaultRouter.delete(
   '/legacy/:vaultId/items/:itemId',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest(vaultLegacyRouteParamsValidation),
   asyncHandler(removeLegacyVaultItem),
 );
@@ -126,19 +161,25 @@ vaultRouter.delete(
 vaultRouter.get('/items', requireAuth, asyncHandler(getScopedVaultItems));
 vaultRouter.post(
   '/items/:itemId',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest(vaultItemRouteParamsValidation),
   asyncHandler(upsertScopedVaultItem),
 );
 vaultRouter.put(
   '/items/:itemId/pin',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest(vaultItemRouteParamsValidation),
   asyncHandler(toggleScopedVaultItemPin),
 );
 vaultRouter.delete(
   '/items/:itemId',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest(vaultItemRouteParamsValidation),
   asyncHandler(removeScopedVaultItem),
 );
@@ -149,9 +190,27 @@ vaultRouter.get('/sync', requireAuth, asyncHandler(syncVault));
 
 // Folders
 vaultRouter.get('/folders', requireAuth, asyncHandler(getFoldersController));
-vaultRouter.post('/folders', requireAuth, asyncHandler(createFolderController));
-vaultRouter.delete('/folders', requireAuth, asyncHandler(deleteFolderController));
-vaultRouter.post('/folders/init', requireAuth, asyncHandler(initializeFoldersController));
+vaultRouter.post(
+  '/folders',
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  folderLimiter,
+  asyncHandler(createFolderController),
+);
+vaultRouter.delete(
+  '/folders',
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  folderLimiter,
+  asyncHandler(deleteFolderController),
+);
+vaultRouter.post(
+  '/folders/init',
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  folderLimiter,
+  asyncHandler(initializeFoldersController),
+);
 
 // Activity Audit
 vaultRouter.get(
@@ -162,7 +221,9 @@ vaultRouter.get(
 );
 vaultRouter.post(
   '/activity',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  activityLimiter,
   validateRequest(activityLogBodyValidation),
   asyncHandler(saveUserActivityLog),
 );
@@ -196,6 +257,7 @@ vaultRouter.get(
 );
 vaultRouter.get(
   '/media/segment/:itemId/:segment',
+  resolveIdentity,
   validateRequest(vaultItemRouteParamsValidation),
   asyncHandler(getMediaSegment),
 );
@@ -236,6 +298,7 @@ vaultRouter.get(
 // Category Upserts
 vaultRouter.post(
   '/files/multipart/start',
+  requireTrustedBrowserOrigin,
   requireAuth,
   multipartStartLimiter,
   validateRequest(multipartStartBodyValidation),
@@ -243,6 +306,7 @@ vaultRouter.post(
 );
 vaultRouter.put(
   '/files/multipart/:uploadId/part/:partNumber',
+  requireTrustedBrowserOrigin,
   requireAuth,
   multipartPartLimiter,
   validateRequest(multipartRouteParamsValidation),
@@ -251,6 +315,7 @@ vaultRouter.put(
 );
 vaultRouter.post(
   '/files/multipart/:uploadId/complete',
+  requireTrustedBrowserOrigin,
   requireAuth,
   multipartCompleteLimiter,
   validateRequest([...multipartRouteParamsValidation, ...multipartCompleteBodyValidation]),
@@ -258,32 +323,52 @@ vaultRouter.post(
 );
 
 // TUS Protocol Endpoints
-vaultRouter.post('/files/tus', requireAuth, asyncHandler(createTusUploadController));
+vaultRouter.post(
+  '/files/tus',
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  vaultUploadLimiter,
+  asyncHandler(createTusUploadController),
+);
 vaultRouter.head('/files/tus/:uploadId', requireAuth, asyncHandler(getTusOffsetController));
-vaultRouter.patch('/files/tus/:uploadId', requireAuth, asyncHandler(uploadTusChunkController));
+vaultRouter.patch(
+  '/files/tus/:uploadId',
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  vaultUploadLimiter,
+  asyncHandler(uploadTusChunkController),
+);
 
 vaultRouter.post(
   '/files/:category',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultUploadLimiter,
   validateRequest(vaultCategoryRouteParamsValidation),
   uploadVaultFileMiddleware,
   asyncHandler(uploadVaultFile),
 );
 vaultRouter.post(
   '/:category',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest(vaultCategoryRouteParamsValidation),
   asyncHandler(upsertVaultEntry),
 );
 vaultRouter.put(
   '/:category/:itemId',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest([...vaultCategoryRouteParamsValidation, ...vaultItemRouteParamsValidation]),
   asyncHandler(upsertVaultEntry),
 );
 vaultRouter.delete(
   '/:category/:itemId',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest([...vaultCategoryRouteParamsValidation, ...vaultItemRouteParamsValidation]),
   asyncHandler(deleteVaultEntry),
 );

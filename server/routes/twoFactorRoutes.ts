@@ -11,12 +11,23 @@ import { login2FASchema, twoFactorTokenSchema } from '../validators/twoFactorVal
 
 const router = Router();
 
+// Prevent browser/proxy caching of sensitive 2FA setup secrets and tokens
+router.use((_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
 const twoFactorLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10, // Stricter limit for 2FA actions
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => `${getClientIp(req)}:${req.path}`,
+  keyGenerator: (req) => {
+    const userId = (req as any)?.user?.userId || 'anon';
+    return `${getClientIp(req)}:${userId}:${req.path}`;
+  },
   message: {
     success: false,
     message: 'Too many 2FA attempts. Please try again later.',
@@ -24,9 +35,16 @@ const twoFactorLimiter = rateLimit({
   },
 });
 
-router.post('/setup', requireAuth, twoFactorLimiter, asyncHandler(twoFactorController.setup2FA));
+router.post(
+  '/setup',
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  twoFactorLimiter,
+  asyncHandler(twoFactorController.setup2FA),
+);
 router.post(
   '/verify',
+  requireTrustedBrowserOrigin,
   requireAuth,
   twoFactorLimiter,
   validate(twoFactorTokenSchema),
@@ -42,6 +60,7 @@ router.post(
 );
 router.post(
   '/disable',
+  requireTrustedBrowserOrigin,
   requireAuth,
   twoFactorLimiter,
   validate(twoFactorTokenSchema),

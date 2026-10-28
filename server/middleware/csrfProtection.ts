@@ -1,12 +1,15 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import crypto from 'node:crypto';
+import { AppError } from '../utils/appError.ts';
+import { logger } from '../utils/logger.ts';
 
 type SameSitePolicy = 'strict' | 'lax' | 'none';
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const CSRF_COOKIE_NAME = process.env.CSRF_COOKIE_NAME?.trim() || 'vault_csrf_secret';
 const CSRF_COOKIE_PATH = process.env.CSRF_COOKIE_PATH?.trim() || '/';
+
 const resolveCsrfSecret = (): string => {
   const secret = process.env.CSRF_SECRET?.trim();
   if (secret) {
@@ -76,10 +79,18 @@ const generateTokenAndSecret = (): { secret: string; token: string } => {
 };
 
 const verifyToken = (secret: string | undefined, token: string | undefined): boolean => {
-  if (!secret || !token) return false;
+  if (!secret || !token || typeof secret !== 'string' || typeof token !== 'string') {
+    return false;
+  }
   try {
     const expectedToken = crypto.createHmac('sha256', CSRF_SECRET).update(secret).digest('hex');
-    return crypto.timingSafeEqual(Buffer.from(expectedToken), Buffer.from(token));
+    const expectedBuf = Buffer.from(expectedToken);
+    const tokenBuf = Buffer.from(token);
+
+    if (expectedBuf.length !== tokenBuf.length) {
+      return false;
+    }
+    return crypto.timingSafeEqual(expectedBuf, tokenBuf);
   } catch {
     return false;
   }
@@ -89,6 +100,35 @@ const writeCsrfTokenResponseHeaders = (res: express.Response) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
+};
+
+const extractHeaderToken = (req: express.Request): string | undefined => {
+  const headerCandidates = [
+    req.headers['x-csrf-token'],
+    req.headers['csrf-token'],
+    req.headers['x-xsrf-token'],
+  ];
+
+  for (const candidate of headerCandidates) {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+    if (
+      Array.isArray(candidate) &&
+      typeof candidate[0] === 'string' &&
+      candidate[0].trim().length > 0
+    ) {
+      return candidate[0].trim();
+    }
+  }
+
+  if (req.body && typeof req.body._csrf === 'string' && req.body._csrf.trim().length > 0) {
+    const bodyToken = req.body._csrf.trim();
+    delete req.body._csrf;
+    return bodyToken;
+  }
+
+  return undefined;
 };
 
 /**
@@ -133,28 +173,29 @@ export const installCsrfProtection = (app: express.Express): void => {
     }
 
     // Avatar presigned upload & presign endpoints authenticate via HMAC signature and query tokens
+    const currentUrl = req.originalUrl || req.path || '';
     if (
-      req.originalUrl.startsWith('/api/avatar/upload') ||
+      currentUrl.startsWith('/api/avatar/upload') ||
       req.path.startsWith('/avatar/upload') ||
-      req.originalUrl.startsWith('/api/avatar/presign') ||
+      currentUrl.startsWith('/api/avatar/presign') ||
       req.path.startsWith('/avatar/presign')
     ) {
       return next();
     }
 
     const secret = req.cookies?.[CSRF_COOKIE_NAME];
-    const headerToken =
-      (req.headers['x-csrf-token'] as string) ||
-      (req.headers['csrf-token'] as string) ||
-      (req.body && (req.body._csrf as string));
+    const token = extractHeaderToken(req);
 
-    if (!verifyToken(secret, headerToken)) {
-      const csrfError = new Error('Invalid or missing CSRF token.');
-      (csrfError as any).status = 403;
-      (csrfError as any).statusCode = 403;
-      (csrfError as any).code = 'CSRF_TOKEN_INVALID';
-      (csrfError as any).isOperational = true;
-      return next(csrfError);
+    if (!verifyToken(secret, token)) {
+      logger.warn('[CSRF] Invalid or missing CSRF token.', {
+        method: req.method,
+        path: req.originalUrl,
+        hasCookie: Boolean(secret),
+        hasToken: Boolean(token),
+        ip: req.ip,
+      });
+
+      return next(AppError.forbidden('Invalid or missing CSRF token.', 'CSRF_TOKEN_INVALID'));
     }
 
     next();

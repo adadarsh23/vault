@@ -15,6 +15,14 @@ import { requireTrustedBrowserOrigin } from '../middleware/csrfOriginMiddleware.
 
 export const masterKeyRouter = express.Router();
 
+// Never allow intermediary or browser caching of master-key material
+masterKeyRouter.use((_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
 const toPositiveInteger = (raw: string | undefined, fallback: number): number => {
   const parsed = Number.parseInt(raw || '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;

@@ -1,26 +1,122 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, HydratedDocument, Model, Schema } from 'mongoose';
 
-const TelemetrySchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  itemId: { type: String, required: true, index: true },
-  event: { type: String, required: true, index: true },
-  timestamp: { type: Date, default: Date.now, index: true },
-  metadata: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {},
+/**
+ * Interface representing a Telemetry document.
+ * Telemetry stores metrics, media playback tracking, error telemetry,
+ * and client performance diagnostics.
+ */
+export interface ITelemetry extends Document {
+  userId: mongoose.Types.ObjectId;
+  itemId: string;
+  event: string;
+  timestamp: Date;
+  metadata: Record<string, any>;
+  ip?: string;
+  userAgent?: string;
+  browser?: string;
+  platform?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export type TelemetryType = {
+  userId: mongoose.Types.ObjectId;
+  itemId: string;
+  event: string;
+  timestamp?: Date;
+  metadata?: Record<string, any>;
+  ip?: string;
+  userAgent?: string;
+  browser?: string;
+  platform?: string;
+};
+
+export type TelemetryDocument = HydratedDocument<ITelemetry>;
+
+export interface TelemetryModel extends Model<ITelemetry> {
+  recordEvent(data: TelemetryType): Promise<TelemetryDocument>;
+}
+
+const TelemetrySchema = new Schema<ITelemetry, TelemetryModel>(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'userId is required'],
+      index: true,
+    },
+    itemId: {
+      type: String,
+      required: [true, 'itemId is required'],
+      trim: true,
+      index: true,
+    },
+    event: {
+      type: String,
+      required: [true, 'event is required'],
+      trim: true,
+      index: true,
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now,
+      index: true,
+      // 90-day TTL index for automatic telemetry pruning
+      expires: 7776000,
+    },
+    metadata: {
+      type: Schema.Types.Mixed,
+      default: () => ({}),
+    },
+    ip: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    userAgent: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    browser: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    platform: {
+      type: String,
+      trim: true,
+      default: null,
+    },
   },
-  ip: String,
-  userAgent: String,
-  browser: String,
-  platform: String,
-});
+  {
+    timestamps: true,
+    versionKey: false,
+  },
+);
 
-export type TelemetryType = mongoose.InferSchemaType<typeof TelemetrySchema>;
+/* ------------------ COMPOUND INDEXES ------------------ */
+TelemetrySchema.index({ userId: 1, event: 1, timestamp: -1 });
+TelemetrySchema.index({ itemId: 1, timestamp: -1 });
+TelemetrySchema.index({ event: 1, timestamp: -1 });
+TelemetrySchema.index({ userId: 1, timestamp: -1 });
+
+/* ------------------ STATIC METHODS ------------------ */
+TelemetrySchema.statics.recordEvent = function (data: TelemetryType) {
+  return this.create({
+    ...data,
+    timestamp: data.timestamp || new Date(),
+  });
+};
 
 /**
  * Returns a user-specific Telemetry model using a dedicated collection.
+ * Supports passing an optional custom connection for multi-cluster querying.
  */
-export const getTelemetryModel = (username: string): mongoose.Model<TelemetryType> => {
+export const getTelemetryModel = (
+  username: string,
+  customConnection?: mongoose.Connection,
+): TelemetryModel => {
   if (!username || !username.trim()) {
     throw new Error('Username is required for isolated telemetry');
   }
@@ -31,12 +127,32 @@ export const getTelemetryModel = (username: string): mongoose.Model<TelemetryTyp
     .replace(/[^a-z0-9_-]/g, '_');
   const collectionName = `${normalized}.${normalized}_telemetry`;
 
-  if (mongoose.models[collectionName]) {
-    return mongoose.models[collectionName] as mongoose.Model<TelemetryType>;
+  if (customConnection) {
+    if (customConnection.models[collectionName]) {
+      return customConnection.models[collectionName] as TelemetryModel;
+    }
+    const model = customConnection.model<ITelemetry, TelemetryModel>(
+      collectionName,
+      TelemetrySchema,
+      collectionName,
+    );
+    if (typeof model?.createIndexes === 'function') {
+      model.createIndexes().catch(() => {});
+    }
+    return model;
   }
 
-  return mongoose.model<TelemetryType>(collectionName, TelemetrySchema, collectionName);
-};
+  if (mongoose.models[collectionName]) {
+    return mongoose.models[collectionName] as TelemetryModel;
+  }
 
-// Removed default Telemetry model to prevent automatic collection creation.
-// Code should use getTelemetryModel(username) instead.
+  const model = mongoose.model<ITelemetry, TelemetryModel>(
+    collectionName,
+    TelemetrySchema,
+    collectionName,
+  );
+  if (typeof model?.createIndexes === 'function') {
+    model.createIndexes().catch(() => {});
+  }
+  return model;
+};

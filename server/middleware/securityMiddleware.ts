@@ -1,7 +1,7 @@
 /**
  * Integrated Security Middleware
  *
- * Chains all security services:
+ * Chains security services:
  * - Fingerprinting
  * - Anomaly detection
  * - Adaptive rate limiting
@@ -12,6 +12,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
 import { logger } from '../utils/logger.ts';
+import { getClientIp } from '../utils/requestIp.ts';
 import { aiAnomalyDetectionService } from '../services/aiAnomalyDetectionService.ts';
 import { requestFingerprintService } from '../services/requestFingerprintService.ts';
 import { threatResponseService } from '../services/threatResponseService.ts';
@@ -26,14 +27,34 @@ interface SecurityContext {
   recommendedAction: 'allow' | 'challenge' | 'block';
 }
 
-interface RequestWithSecurity extends Request {
+export interface RequestWithSecurity extends Request {
   security?: SecurityContext;
   user?: AuthenticatedUser;
   files?: any;
+  file?: any;
+  requestId?: string;
 }
 
+const getOrCreateRequestId = (req: RequestWithSecurity): string => {
+  if (typeof req.requestId === 'string' && req.requestId.trim()) {
+    return req.requestId.trim();
+  }
+  const headerId = req.get('x-request-id');
+  if (headerId && typeof headerId === 'string' && headerId.trim()) {
+    return headerId.trim();
+  }
+  return `req_${randomUUID()}`;
+};
+
+const resolveBlacklistedIps = (): Set<string> => {
+  const envList = process.env.IP_BLACKLIST?.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return new Set(envList || []);
+};
+
 /**
- * Main security middleware that orchestrates all security checks
+ * Main security middleware that orchestrates security and anomaly checks
  */
 export const securityMiddleware = async (
   req: RequestWithSecurity,
@@ -41,15 +62,15 @@ export const securityMiddleware = async (
   next: NextFunction,
 ) => {
   try {
-    const requestId = `req_${randomUUID()}`;
-    const ip = (req.ip || req.socket.remoteAddress || 'unknown').replace(/^::ffff:/, '');
+    const requestId = getOrCreateRequestId(req);
+    req.requestId = requestId;
 
-    // Extract client data from headers + body
+    const ip = getClientIp(req);
     const clientData = extractClientData(req);
 
     // Step 1: Generate/validate device fingerprint
-    let fingerprintId = req.get('x-fingerprint-id');
-    let fingerprintResult = fingerprintId
+    const fingerprintId = req.get('x-fingerprint-id');
+    const fingerprintResult = fingerprintId
       ? await requestFingerprintService.validateFingerprint(
           req,
           req.user?.userId,
@@ -64,12 +85,12 @@ export const securityMiddleware = async (
         };
 
     // Step 2: Perform anomaly detection if authenticated
-    let anomalies: string[] = [...fingerprintResult.anomalies];
+    const anomalies: string[] = [...fingerprintResult.anomalies];
     let riskScore = Math.max(0, 100 - fingerprintResult.trustScore);
 
     if (req.user?.userId) {
       // Check if IP is blacklisted
-      const isBlacklisted = await checkIpBlacklist(ip);
+      const isBlacklisted = checkIpBlacklist(ip);
       if (isBlacklisted) {
         anomalies.push('IP_BLACKLISTED');
         riskScore += 100;
@@ -79,7 +100,7 @@ export const securityMiddleware = async (
       const loginAnomaly = await aiAnomalyDetectionService.analyzeLoginAttempt(
         req.user.userId,
         ip,
-        null, // Location would come from GeoIP lookup
+        null, // Location can be supplemented by GeoIP lookup
         fingerprintId || 'unknown',
         req.get('user-agent') || '',
       );
@@ -87,12 +108,12 @@ export const securityMiddleware = async (
       riskScore += loginAnomaly.loginRisk;
       anomalies.push(...loginAnomaly.factors);
 
-      // Analyze API usage
+      // Analyze non-GET or API operations
       if (req.method !== 'GET' || req.path.includes('/api')) {
         const apiAnalysis = await aiAnomalyDetectionService.analyzeApiUsage(
           req.user.userId,
           `${req.method} ${req.path}`,
-          0, // Will be updated on response
+          0,
         );
 
         if (apiAnalysis.isAnomalous) {
@@ -112,7 +133,7 @@ export const securityMiddleware = async (
       recommendedAction: riskScore > 70 ? 'block' : riskScore > 40 ? 'challenge' : 'allow',
     };
 
-    // Log security event
+    // Log security event for auditing and debugging
     logger.debug(`[SECURITY] Request processed`, {
       requestId,
       method: req.method,
@@ -126,7 +147,6 @@ export const securityMiddleware = async (
 
     // Handle high-risk requests
     if (req.security.recommendedAction === 'block') {
-      // Trigger threat response
       if (req.user?.userId) {
         await threatResponseService.processThreat({
           userId: req.user.userId,
@@ -138,32 +158,35 @@ export const securityMiddleware = async (
       }
 
       res.status(403).json({
-        error: 'Access Denied',
+        success: false,
         message: 'Your account has triggered security measures. Please contact support.',
-        requestId,
+        error: {
+          code: 'ACCESS_DENIED',
+          requestId,
+        },
       });
       return;
     }
 
     if (req.security.recommendedAction === 'challenge') {
-      // Require MFA/additional verification
       res.set('X-Security-Challenge', 'true');
     }
 
-    // Include security headers in response
+    // Include security tracking headers in response
     res.set('X-Request-ID', requestId);
     res.set('X-Risk-Score', riskScore.toString());
 
     next();
   } catch (error) {
     logger.error('[SECURITY] Error in security middleware', error);
-    // Fail open but log the error
+    // Fail open but preserve request continuation
     next();
   }
 };
 
 /**
  * Verify file upload security
+ * Inspects both req.file (single) and req.files (multiple/fields)
  */
 export const fileUploadSecurityMiddleware = async (
   req: RequestWithSecurity,
@@ -171,17 +194,22 @@ export const fileUploadSecurityMiddleware = async (
   next: NextFunction,
 ) => {
   try {
-    const rawFiles = req.files;
+    const rawFiles = req.files || (req.file ? [req.file] : null);
     if (!rawFiles) {
-      next();
-      return;
+      return next();
     }
 
-    const files: any[] = Array.isArray(rawFiles)
-      ? rawFiles
-      : typeof rawFiles === 'object'
-        ? Object.values(rawFiles).flat()
-        : [rawFiles];
+    const files: any[] = req.file
+      ? [req.file]
+      : Array.isArray(rawFiles)
+        ? rawFiles
+        : typeof rawFiles === 'object' && rawFiles !== null
+          ? Object.values(rawFiles).flat()
+          : [];
+
+    if (files.length === 0) {
+      return next();
+    }
 
     const dangerousExtensions = [
       '.exe',
@@ -199,15 +227,16 @@ export const fileUploadSecurityMiddleware = async (
       '.app',
     ];
 
+    const ip = getClientIp(req);
+    const requestId = getOrCreateRequestId(req);
+
     for (const file of files) {
       const fileName: string = file.name || file.originalname || '';
-      // Check file extension
       const ext = fileName.includes('.')
         ? fileName.substring(fileName.lastIndexOf('.')).toLowerCase()
         : '';
-      if (dangerousExtensions.includes(ext)) {
-        const ip = (req.ip || req.socket.remoteAddress || 'unknown').replace(/^::ffff:/, '');
 
+      if (dangerousExtensions.includes(ext)) {
         if (req.user?.userId) {
           await threatResponseService.handleMaliciousUpload(
             req.user.userId,
@@ -218,19 +247,27 @@ export const fileUploadSecurityMiddleware = async (
         }
 
         res.status(400).json({
-          error: 'File Upload Rejected',
+          success: false,
           message: `File type ${ext} is not allowed`,
+          error: {
+            code: 'FILE_UPLOAD_REJECTED',
+            requestId,
+          },
         });
         return;
       }
 
-      // Check file size
-      const maxSize = 500 * 1024 * 1024; // 500 MB
+      // Check file size (500 MB maximum)
+      const maxSize = 500 * 1024 * 1024;
       const fileSize = typeof file.size === 'number' ? file.size : 0;
       if (fileSize > maxSize) {
         res.status(400).json({
-          error: 'File Too Large',
+          success: false,
           message: 'Maximum file size is 500 MB',
+          error: {
+            code: 'FILE_TOO_LARGE',
+            requestId,
+          },
         });
         return;
       }
@@ -243,7 +280,6 @@ export const fileUploadSecurityMiddleware = async (
           'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*',
         );
         if (isEicar) {
-          const ip = (req.ip || req.socket.remoteAddress || 'unknown').replace(/^::ffff:/, '');
           if (req.user?.userId) {
             await threatResponseService.handleMaliciousUpload(
               req.user.userId,
@@ -253,8 +289,12 @@ export const fileUploadSecurityMiddleware = async (
             );
           }
           res.status(400).json({
-            error: 'File Upload Rejected',
+            success: false,
             message: 'Malware signature detected in uploaded file.',
+            error: {
+              code: 'MALWARE_DETECTED',
+              requestId,
+            },
           });
           return;
         }
@@ -270,6 +310,7 @@ export const fileUploadSecurityMiddleware = async (
 
 /**
  * Track request performance and detect slow/expensive endpoints
+ * Uses event listener on response finish rather than monkey-patching res.send
  */
 export const performanceSecurityMiddleware = (
   req: RequestWithSecurity,
@@ -278,33 +319,24 @@ export const performanceSecurityMiddleware = (
 ) => {
   const startTime = Date.now();
 
-  // Capture original send function
-  const originalSend = res.send;
-
-  res.send = function (data: any) {
+  res.on('finish', () => {
     const duration = Date.now() - startTime;
-
-    // Detect slow requests (potential DoS or inefficient queries)
     if (duration > 5000) {
       logger.warn(`[PERFORMANCE] Slow request detected`, {
         path: req.path,
         method: req.method,
         duration,
+        statusCode: res.statusCode,
         userId: req.user?.userId,
       });
-
-      // Could trigger additional monitoring
     }
-
-    // Continue with normal send
-    return originalSend.call(this, data);
-  };
+  });
 
   next();
 };
 
 /**
- * Extract client data from request
+ * Extract client telemetry data from request headers
  */
 function extractClientData(req: Request): Record<string, string> {
   return {
@@ -318,39 +350,32 @@ function extractClientData(req: Request): Record<string, string> {
 }
 
 /**
- * Check if IP is blacklisted
+ * Check if IP is blacklisted via environment or configured list
  */
-async function checkIpBlacklist(_ip: string): Promise<boolean> {
-  // In production, check Redis cache
-  // const blacklisted = await redisClient.exists(`blacklist:${_ip}`)
-  // return blacklisted === 1
-  return false;
+function checkIpBlacklist(ip: string): boolean {
+  const blacklist = resolveBlacklistedIps();
+  return blacklist.has(ip);
 }
 
 /**
- * Log security event to immutable audit trail
+ * Log security event to audit trail on response finish
  */
 export const auditLogMiddleware = (req: RequestWithSecurity, res: Response, next: NextFunction) => {
-  const originalSend = res.send;
+  const sensitivePaths = ['/auth/login', '/auth/register', '/api/vault/delete', '/api/users/me'];
 
-  res.send = function (data: any) {
-    // Log sensitive operations
-    const sensitivePaths = ['/auth/login', '/auth/register', '/api/vault/delete', '/api/users/me'];
-
-    if (sensitivePaths.some((p) => req.path.includes(p))) {
+  if (sensitivePaths.some((p) => req.path?.includes(p))) {
+    res.on('finish', () => {
       logger.info(`[AUDIT] Sensitive operation`, {
-        requestId: req.security?.requestId,
+        requestId: req.requestId || req.security?.requestId,
         method: req.method,
         path: req.path,
         userId: req.user?.userId,
-        ip: req.ip,
+        ip: getClientIp(req),
         statusCode: res.statusCode,
         timestamp: new Date().toISOString(),
       });
-    }
-
-    return originalSend.call(this, data);
-  };
+    });
+  }
 
   next();
 };

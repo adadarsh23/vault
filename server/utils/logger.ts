@@ -322,13 +322,3 @@ export const logger = {
 process.on('beforeExit', () => {
   logger.close();
 });
-
-process.on('SIGINT', () => {
-  logger.close();
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  logger.close();
-  process.exit(0);
-});

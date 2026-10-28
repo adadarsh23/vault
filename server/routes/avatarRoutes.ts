@@ -6,6 +6,7 @@ import path from 'path';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import fs from 'fs/promises';
+import rateLimit from 'express-rate-limit';
 import {
   getAvatarGridFsBucket,
   getContentTypeFromExt,
@@ -13,9 +14,51 @@ import {
   isValidImageMagicBytes,
 } from '../services/avatarStorageService.ts';
 import { requireAuth } from '../middleware/authMiddleware.ts';
+import { requireTrustedBrowserOrigin } from '../middleware/csrfOriginMiddleware.ts';
 import { AuthenticatedRequest } from '../utils/requestTypes.ts';
+import { asyncHandler } from '../utils/asyncHandler.ts';
+import { getClientIp } from '../utils/requestIp.ts';
 
 const router = Router();
+
+const ALLOWED_AVATAR_EXTENSIONS = new Set(['webp', 'avif', 'png', 'jpeg', 'jpg', 'gif']);
+
+const presignLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) =>
+    `${getClientIp(req)}:${(req as any)?.user?.userId || 'anon'}:avatar-presign`,
+  message: {
+    success: false,
+    error: 'Too many avatar upload URL requests. Please try again later.',
+  },
+});
+
+const avatarUploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${req.params.userId || 'anon'}:avatar-upload`,
+  message: {
+    success: false,
+    error: 'Too many avatar upload attempts. Please try again later.',
+  },
+});
+
+const avatarReadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 600,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:avatar-read`,
+  message: {
+    success: false,
+    error: 'Too many avatar requests. Please try again later.',
+  },
+});
 
 /**
  * Storage Health Check Endpoint
@@ -50,51 +93,62 @@ const AVATAR_SIGNING_SECRET = resolveAvatarSigningSecret();
 /**
  * Generates a short-lived presigned upload URL (5-minute expiry) with HMAC signature
  */
-router.post('/presign', requireAuth, (req: Request, res: Response) => {
-  const { userId, contentHash, mimeType } = req.body;
+router.post(
+  '/presign',
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  presignLimiter,
+  (req: Request, res: Response) => {
+    const { userId, contentHash, mimeType } = req.body || {};
 
-  if (!userId || !contentHash) {
-    return res.status(400).json({ success: false, error: 'userId and contentHash are required.' });
-  }
+    if (!userId || !contentHash) {
+      return res
+        .status(400)
+        .json({ success: false, error: 'userId and contentHash are required.' });
+    }
 
-  const authUserId = (req as AuthenticatedRequest).user?.userId;
-  if (!authUserId || String(authUserId) !== String(userId)) {
-    return res.status(403).json({
-      success: false,
-      error: 'Forbidden: Cannot generate avatar presign for another user.',
+    const authUserId = (req as AuthenticatedRequest).user?.userId;
+    if (!authUserId || String(authUserId) !== String(userId)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: Cannot generate avatar presign for another user.',
+      });
+    }
+
+    const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '');
+    const sanitizedHash = String(contentHash).replace(/[^a-zA-Z0-9_-]/g, '');
+    const ext = mimeType === 'image/avif' ? 'avif' : 'webp';
+
+    const forwardedProto = (req.get('x-forwarded-proto') || '').split(',')[0].trim();
+    const protocol = forwardedProto || req.protocol || 'http';
+    const host = req.get('x-forwarded-host') || req.get('host') || 'localhost:4000';
+    const expiresAt = Date.now() + 5 * 60 * 1000; // 5-minute expiry
+
+    const signature = crypto
+      .createHmac('sha256', AVATAR_SIGNING_SECRET || '')
+      .update(`avatar-upload:${sanitizedUserId}:${sanitizedHash}:${expiresAt}`)
+      .digest('hex');
+
+    const uploadPath = `/api/avatar/upload/${sanitizedUserId}/${sanitizedHash}?ext=${ext}&token=${signature}&expires=${expiresAt}`;
+    const publicPath = `/api/avatar/raw/${sanitizedUserId}/${sanitizedHash}.${ext}`;
+    const uploadUrl = `${protocol}://${host}${uploadPath}`;
+    const publicUrl = `${protocol}://${host}${publicPath}`;
+
+    return res.json({
+      success: true,
+      uploadUrl,
+      publicUrl,
+      uploadPath,
+      publicPath,
+      expiresAt,
     });
-  }
+  },
+);
 
-  const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '');
-  const sanitizedHash = String(contentHash).replace(/[^a-zA-Z0-9_-]/g, '');
-  const ext = mimeType === 'image/avif' ? 'avif' : 'webp';
-
-  const forwardedProto = (req.get('x-forwarded-proto') || '').split(',')[0].trim();
-  const protocol = forwardedProto || req.protocol || 'http';
-  const host = req.get('x-forwarded-host') || req.get('host') || 'localhost:4000';
-  const expiresAt = Date.now() + 5 * 60 * 1000; // 5-minute expiry
-
-  const signature = crypto
-    .createHmac('sha256', AVATAR_SIGNING_SECRET || '')
-    .update(`avatar-upload:${sanitizedUserId}:${sanitizedHash}:${expiresAt}`)
-    .digest('hex');
-
-  const uploadPath = `/api/avatar/upload/${sanitizedUserId}/${sanitizedHash}?ext=${ext}&token=${signature}&expires=${expiresAt}`;
-  const publicPath = `/api/avatar/raw/${sanitizedUserId}/${sanitizedHash}.${ext}`;
-  const uploadUrl = `${protocol}://${host}${uploadPath}`;
-  const publicUrl = `${protocol}://${host}${publicPath}`;
-
-  return res.json({
-    success: true,
-    uploadUrl,
-    publicUrl,
-    uploadPath,
-    publicPath,
-    expiresAt,
-  });
+const rawBodyParser = express.raw({
+  type: ['image/*', 'application/octet-stream'],
+  limit: '35mb',
 });
-
-const rawBodyParser = express.raw({ type: ['image/*', 'application/octet-stream'], limit: '35mb' });
 
 function expressRawBodyMiddleware(req: Request, res: Response, next: () => void) {
   if (
@@ -113,11 +167,19 @@ function expressRawBodyMiddleware(req: Request, res: Response, next: () => void)
  */
 router.put(
   '/upload/:userId/:contentHash',
+  avatarUploadLimiter,
   expressRawBodyMiddleware,
-  async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
     try {
       const { userId, contentHash } = req.params;
-      const ext = (req.query.ext as string) || 'webp';
+      const rawExt = (req.query.ext as string) || 'webp';
+      const cleanExt = rawExt.toLowerCase().replace(/^\./, '');
+      if (!ALLOWED_AVATAR_EXTENSIONS.has(cleanExt)) {
+        return res
+          .status(400)
+          .json({ success: false, error: 'Invalid or unsupported avatar image extension.' });
+      }
+
       const token = (req.query.token as string) || (req.headers['x-avatar-token'] as string);
       const expires = Number(req.query.expires || req.headers['x-avatar-expires']);
       const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '');
@@ -184,7 +246,12 @@ router.put(
       }
 
       // Stream directly to MongoDB Atlas GridFS when available; fallback to local disk
-      const { publicPath } = await storeAvatarBuffer(sanitizedUserId, buffer, ext, sanitizedHash);
+      const { publicPath } = await storeAvatarBuffer(
+        sanitizedUserId,
+        buffer,
+        cleanExt,
+        sanitizedHash,
+      );
 
       return res.status(200).json({ success: true, message: 'Avatar upload complete', publicPath });
     } catch (err: any) {
@@ -194,62 +261,79 @@ router.put(
         error: { code: 'AVATAR_UPLOAD_FAILED', message: 'Avatar upload failed.' },
       });
     }
-  },
+  }),
 );
 
 /**
  * Serves avatar binary files from MongoAtlas GridFS (or local disk fallback) with SLA HTTP Headers & ETag caching
  */
-router.get('/raw/:userId/:fileKey', async (req: Request, res: Response) => {
-  const { userId, fileKey } = req.params;
-  const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '');
-  const sanitizedFileKey = String(fileKey).replace(/[^a-zA-Z0-9_.-]/g, '');
-  const gridFsFilename = `${sanitizedUserId}/${sanitizedFileKey}`;
-  const ext = path.extname(sanitizedFileKey).toLowerCase();
-  const contentType = getContentTypeFromExt(ext);
-  const etagValue = `"${path.basename(sanitizedFileKey, ext)}"`;
+router.get(
+  '/raw/:userId/:fileKey',
+  avatarReadLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, fileKey } = req.params;
+    const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '');
+    const sanitizedFileKey = String(fileKey).replace(/[^a-zA-Z0-9_.-]/g, '');
 
-  // HTTP 304 Not Modified check
-  if (req.headers['if-none-match'] === etagValue) {
-    return res.status(304).end();
-  }
-
-  // Set strict CDN Cache-Control Headers
-  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-  res.setHeader('Content-Type', contentType);
-  res.setHeader('ETag', etagValue);
-
-  // 1. Try reading from MongoDB Atlas GridFS Cloud Storage
-  const bucket = getAvatarGridFsBucket();
-  if (bucket) {
-    try {
-      const files = await bucket.find({ filename: gridFsFilename }).toArray();
-      if (files.length > 0) {
-        const downloadStream = bucket.openDownloadStream(files[0]._id);
-        downloadStream.pipe(res);
-        return;
-      }
-    } catch (gridFsErr) {
-      console.warn('GridFS read attempt failed, attempting local disk fallback:', gridFsErr);
+    // Prevent path traversal
+    if (
+      sanitizedFileKey.includes('..') ||
+      sanitizedUserId.includes('..') ||
+      !sanitizedUserId ||
+      !sanitizedFileKey
+    ) {
+      return res.status(400).send('Invalid avatar path');
     }
-  }
 
-  // 2. Fallback: check local disk cache
-  try {
-    const localFilePath = path.join(
-      process.cwd(),
-      'uploads',
-      'avatars',
-      sanitizedUserId,
-      sanitizedFileKey,
-    );
-    const fileBuffer = await fs.readFile(localFilePath);
-    return res.send(fileBuffer);
-  } catch {
-    // Local fallback file doesn't exist
-  }
+    const gridFsFilename = `${sanitizedUserId}/${sanitizedFileKey}`;
+    const ext = path.extname(sanitizedFileKey).toLowerCase();
+    const contentType = getContentTypeFromExt(ext);
+    const etagValue = `"${path.basename(sanitizedFileKey, ext)}"`;
 
-  return res.status(404).send('Avatar not found');
-});
+    // HTTP 304 Not Modified check
+    if (req.headers['if-none-match'] === etagValue) {
+      return res.status(304).end();
+    }
+
+    // Set strict CDN Cache-Control Headers & Security Headers
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('ETag', etagValue);
+
+    // 1. Try reading from MongoDB Atlas GridFS Cloud Storage
+    const bucket = getAvatarGridFsBucket();
+    if (bucket) {
+      try {
+        const files = await bucket.find({ filename: gridFsFilename }).toArray();
+        if (files.length > 0) {
+          const downloadStream = bucket.openDownloadStream(files[0]._id);
+          downloadStream.pipe(res);
+          return;
+        }
+      } catch (gridFsErr) {
+        console.warn('GridFS read attempt failed, attempting local disk fallback:', gridFsErr);
+      }
+    }
+
+    // 2. Fallback: check local disk cache
+    try {
+      const avatarsRoot = path.resolve(process.cwd(), 'uploads', 'avatars');
+      const localFilePath = path.resolve(avatarsRoot, sanitizedUserId, sanitizedFileKey);
+
+      // Verify the resolved path stays inside avatarsRoot
+      if (!localFilePath.startsWith(avatarsRoot)) {
+        return res.status(400).send('Invalid avatar path traversal');
+      }
+
+      const fileBuffer = await fs.readFile(localFilePath);
+      return res.send(fileBuffer);
+    } catch {
+      // Local fallback file doesn't exist
+    }
+
+    return res.status(404).send('Avatar not found');
+  }),
+);
 
 export { router as avatarRouter };

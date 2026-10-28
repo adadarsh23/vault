@@ -1,6 +1,16 @@
+/**
+ * Production-ready LogRocket Server Monitoring Integration
+ *
+ * Provides safe exception capture, sanitized request telemetry,
+ * and lifecycle handlers for server-side observability.
+ *
+ * @module server/lib/logrocket
+ */
+
 import type express from 'express';
 import LogRocket from 'logrocket';
 import { logger } from '../utils/logger.ts';
+import { FILTERED_PLACEHOLDER, sanitizeTags, sanitizeUrl } from './sanitizer.ts';
 
 const appId = process.env.LOGROCKET_APP_ID?.trim();
 const isProd = process.env.NODE_ENV === 'production';
@@ -11,7 +21,18 @@ let processHandlersRegistered = false;
 
 const MONITORING_KEY = Symbol.for('vault.logrocket.monitoring.registered');
 
-export const initLogRocketServer = () => {
+/**
+ * Checks whether LogRocket server monitoring is configured and active.
+ */
+export const isLogRocketEnabled = (): boolean => isEnabled && initialized;
+
+/**
+ * Initializes the LogRocket server SDK if configured for the current environment.
+ * Safe to call multiple times (idempotent).
+ *
+ * @returns {boolean} True if successfully initialized; false otherwise.
+ */
+export const initLogRocketServer = (): boolean => {
   if (!isEnabled || initialized) {
     return false;
   }
@@ -22,79 +43,149 @@ export const initLogRocketServer = () => {
     logger.info('[LOGROCKET] Server monitoring enabled.');
     return true;
   } catch (error) {
-    logger.warn('[LOGROCKET] Server monitoring init failed.', { error });
+    logger.warn('[LOGROCKET] Server monitoring init failed.', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return false;
   }
 };
 
-export const captureServerException = (error: unknown, context?: Record<string, unknown>) => {
+/**
+ * Safely captures a server-side exception with sanitized context and tags.
+ * Ensures credentials, tokens, sensitive query params, and circular structures
+ * are never leaked into telemetry.
+ *
+ * @param {unknown} error - Error instance or thrown primitive/object.
+ * @param {Record<string, unknown>} [context] - Optional telemetry context or metadata.
+ */
+export const captureServerException = (error: unknown, context?: Record<string, unknown>): void => {
   if (!isEnabled || !initialized) {
     return;
   }
 
   try {
-    const normalizedError = error instanceof Error ? error : new Error(String(error));
-    const tags: Record<string, string | number | boolean> = {};
-    if (context) {
-      for (const [key, value] of Object.entries(context)) {
-        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-          tags[key] = value;
-        }
+    let normalizedError: Error;
+    if (error instanceof Error) {
+      normalizedError = error;
+      // If error message contains sensitive query strings, sanitize it
+      if (
+        normalizedError.message &&
+        (normalizedError.message.includes('?') || normalizedError.message.includes('Bearer'))
+      ) {
+        normalizedError = new Error(sanitizeUrl(normalizedError.message, FILTERED_PLACEHOLDER));
+        normalizedError.name = error.name;
+        normalizedError.stack = error.stack;
       }
+    } else {
+      normalizedError = new Error(sanitizeUrl(String(error), FILTERED_PLACEHOLDER));
     }
+
+    // Sanitize and extract only safe, primitive tags
+    const tags = context ? sanitizeTags(context) : {};
+
     LogRocket.captureException(normalizedError, { tags });
   } catch (captureError) {
     logger.warn('[LOGROCKET] Failed to capture server exception.', {
-      captureError,
+      error: captureError instanceof Error ? captureError.message : String(captureError),
     });
   }
 };
 
-export const registerLogRocketProcessHandlers = () => {
+/**
+ * Registers global Node.js process handlers for unhandled promise rejections
+ * and uncaught exceptions to report them to LogRocket.
+ * Idempotent: ensures event listeners are only attached once.
+ */
+export const registerLogRocketProcessHandlers = (): void => {
   if (!isEnabled || !initialized || processHandlersRegistered) {
     return;
   }
 
   processHandlersRegistered = true;
-  process.on('unhandledRejection', (reason) => {
+
+  process.on('unhandledRejection', (reason: unknown) => {
     captureServerException(reason, { source: 'unhandledRejection' });
   });
-  process.on('uncaughtExceptionMonitor', (error) => {
+
+  process.on('uncaughtExceptionMonitor', (error: unknown) => {
     captureServerException(error, { source: 'uncaughtExceptionMonitor' });
   });
 };
 
+/**
+ * Creates an Express request logging middleware that records API request duration
+ * and lifecycle status, with automatic sanitization of sensitive URL query parameters.
+ */
 export const logRocketRequestLogger = (): express.RequestHandler => {
-  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  return (req: express.Request, res: express.Response, next: express.NextFunction): void => {
     const startedAt = Date.now();
-    res.on('finish', () => {
+    let logged = false;
+
+    const recordLog = (): void => {
+      if (logged) return;
+      logged = true;
+
+      const rawUrl = req.originalUrl || req.url || '';
       logger.info('[API REQUEST]', {
-        requestId: (req as express.Request & { requestId?: string }).requestId,
+        requestId: (req as express.Request & { requestId?: string })?.requestId,
         method: req.method,
-        path: req.originalUrl,
+        path: sanitizeUrl(rawUrl, FILTERED_PLACEHOLDER),
         statusCode: res.statusCode,
-        durationMs: Date.now() - startedAt,
+        durationMs: Math.max(0, Date.now() - startedAt),
       });
-    });
+    };
+
+    const attachListener = (event: string, cb: () => void): void => {
+      if (typeof res?.once === 'function') {
+        res.once(event, cb);
+      } else if (typeof res?.on === 'function') {
+        res.on(event, cb);
+      }
+    };
+
+    attachListener('finish', recordLog);
+    attachListener('close', recordLog);
+
     next();
   };
 };
 
+/**
+ * Creates an Express error-handling middleware that captures unhandled route errors
+ * and forwards them to the next error middleware.
+ */
 export const logRocketErrorMiddleware = (): express.ErrorRequestHandler => {
-  return (error: any, req: express.Request, _res: express.Response, next: express.NextFunction) => {
+  return (
+    error: unknown,
+    req: express.Request,
+    _res: express.Response,
+    next: express.NextFunction,
+  ): void => {
+    const rawUrl = req?.originalUrl || req?.url || '';
     captureServerException(error, {
-      path: req.originalUrl,
-      method: req.method,
-      requestId: (req as express.Request & { requestId?: string }).requestId,
+      path: sanitizeUrl(rawUrl, FILTERED_PLACEHOLDER),
+      method: req?.method,
+      requestId: (req as express.Request & { requestId?: string })?.requestId,
     });
     next(error);
   };
 };
 
-export const registerLogRocketMiddleware = (app: express.Express) => {
+/**
+ * Mounts LogRocket monitoring middleware onto the Express application.
+ * Ensures middleware is only mounted once even if invoked repeatedly.
+ *
+ * @param {express.Express} app - Express application instance.
+ */
+export const registerLogRocketMiddleware = (app: express.Express): void => {
+  if (!app || typeof app.use !== 'function') {
+    return;
+  }
+
   const scopedApp = app as express.Express & {
     [MONITORING_KEY]?: boolean;
   };
+
   if (scopedApp[MONITORING_KEY]) {
     return;
   }

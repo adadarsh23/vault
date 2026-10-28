@@ -493,6 +493,14 @@ const userSchema = new mongoose.Schema(
         delete output.twoFactorTempSecret;
         delete output.twoFactorBackupCodes;
 
+        if (Array.isArray(output.sessions)) {
+          for (const session of output.sessions) {
+            if (session && typeof session === 'object') {
+              delete session.refreshTokenHash;
+            }
+          }
+        }
+
         if (output.history?.password) delete output.history.password;
 
         if (output.history?.masterKey) delete output.history.masterKey;
@@ -578,11 +586,32 @@ function updateTimestamp(this: any, next?: Function) {
 );
 
 userSchema.pre('save', async function () {
+  // 1. Array Bounding: prevent document explosion beyond MongoDB 16MB document limit
+  if (Array.isArray(this.loginHistory) && this.loginHistory.length > 100) {
+    this.loginHistory.splice(0, this.loginHistory.length - 100);
+  }
+  if (Array.isArray(this.activityLog) && this.activityLog.length > 100) {
+    this.activityLog.splice(0, this.activityLog.length - 100);
+  }
+  if (Array.isArray(this.sessions) && this.sessions.length > 100) {
+    this.sessions.splice(0, this.sessions.length - 100);
+  }
+
+  const historyObj = (this as any).history;
+  if (historyObj && Array.isArray(historyObj.password) && historyObj.password.length > 20) {
+    historyObj.password.splice(0, historyObj.password.length - 20);
+  }
+  if (historyObj && Array.isArray(historyObj.masterKey) && historyObj.masterKey.length > 20) {
+    historyObj.masterKey.splice(0, historyObj.masterKey.length - 20);
+  }
+
   if (this.isNew) return;
+
+  const userModel = this.constructor as Model<any>;
 
   if (this.isModified('password')) {
     try {
-      const oldDoc = await mongoose.model('User').findById(this._id).select('+password');
+      const oldDoc = await userModel.findById(this._id).select('+password');
       if (oldDoc && oldDoc.password) {
         const history = (this.history ??= {} as any) as any;
         if (!Array.isArray(history.password)) history.password = [];
@@ -598,8 +627,7 @@ userSchema.pre('save', async function () {
 
   if (this.isModified('meta.masterKey') || this.isModified('masterKey')) {
     try {
-      const oldDoc = await mongoose
-        .model('User')
+      const oldDoc = await userModel
         .findById(this._id)
         .select('+masterKey +meta.masterKey +meta.masterKeyHash');
       const oldMasterKey = oldDoc?.meta?.masterKey ?? oldDoc?.masterKey;
@@ -617,6 +645,20 @@ userSchema.pre('save', async function () {
     }
   }
 });
+
+/* ------------------ STATIC METHODS ------------------ */
+
+userSchema.statics.findByUsernameNormalized = function (username: string) {
+  return this.findOne({ username: String(username).trim().toLowerCase() });
+};
+
+userSchema.statics.findByEmailNormalized = function (email: string) {
+  return this.findOne({ email: String(email).trim().toLowerCase() });
+};
+
+userSchema.statics.findActiveById = function (userId: mongoose.Types.ObjectId | string) {
+  return this.findOne({ _id: userId, 'meta.accountStatus': { $ne: 'disabled' } });
+};
 
 /* ------------------ TYPES ------------------ */
 
@@ -648,18 +690,35 @@ export type UserShape = Omit<
   lastActiveAt?: Date | null;
 };
 export type UserDocument = HydratedDocument<UserShape>;
-export type UserModel = Model<UserShape>;
+export interface UserModel extends Model<UserShape> {
+  findByUsernameNormalized(username: string): Promise<UserDocument | null>;
+  findByEmailNormalized(email: string): Promise<UserDocument | null>;
+  findActiveById(userId: mongoose.Types.ObjectId | string): Promise<UserDocument | null>;
+}
 
 /* ------------------ MODEL ------------------ */
 
 export const getUserModel = (customConnection?: mongoose.Connection): UserModel => {
   if (customConnection) {
-    return (
-      (customConnection.models.User as UserModel) ||
-      (customConnection.model('User', userSchema) as unknown as UserModel)
-    );
+    if (customConnection.models.User) {
+      return customConnection.models.User as unknown as UserModel;
+    }
+    const model = customConnection.model('User', userSchema);
+    if (typeof model?.createIndexes === 'function') {
+      model.createIndexes().catch(() => {});
+    }
+    return model as unknown as UserModel;
   }
-  return (mongoose.models.User as UserModel) || mongoose.model<UserShape>('User', userSchema);
+
+  if (mongoose.models.User) {
+    return mongoose.models.User as unknown as UserModel;
+  }
+
+  const model = mongoose.model<UserShape>('User', userSchema);
+  if (typeof model?.createIndexes === 'function') {
+    model.createIndexes().catch(() => {});
+  }
+  return model as unknown as UserModel;
 };
 
-export const User = getUserModel();
+export const User: UserModel = getUserModel();

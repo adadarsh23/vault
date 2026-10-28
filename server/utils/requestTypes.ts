@@ -1,11 +1,8 @@
-import express from 'express';
+/**
+ * Request Types Re-export
+ *
+ * For backwards compatibility with existing imports across the codebase,
+ * this file re-exports from the centralized type system in server/types.
+ */
 
-export interface AuthenticatedUser {
-  userId: string;
-  username: string;
-  sessionId?: string;
-}
-
-export type RequestWithContext = express.Request & { requestId?: string };
-
-export type AuthenticatedRequest = RequestWithContext & { user: AuthenticatedUser };
+export * from '../types/index.ts';

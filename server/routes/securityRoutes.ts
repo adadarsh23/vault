@@ -10,8 +10,11 @@
  */
 
 import { Router, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.ts';
+import { requireTrustedBrowserOrigin } from '../middleware/csrfOriginMiddleware.ts';
 import { asyncHandler } from '../utils/asyncHandler.ts';
+import { getClientIp } from '../utils/requestIp.ts';
 import { aiAnomalyDetectionService } from '../services/aiAnomalyDetectionService.ts';
 import { requestFingerprintService } from '../services/requestFingerprintService.ts';
 import { securityDashboardService } from '../services/securityDashboardService.ts';
@@ -28,6 +31,81 @@ type Request = AuthenticatedRequest;
 
 const securityRouter = Router();
 
+// Anti-caching for sensitive security endpoints
+securityRouter.use((_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
+const loginVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${(req as any)?.user?.userId || 'anon'}:login-verify`,
+  message: {
+    success: false,
+    message: 'Too many verification attempts. Please try again later.',
+    error: { code: 'TOO_MANY_VERIFY_ATTEMPTS' },
+  },
+});
+
+const deviceVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) =>
+    `${getClientIp(req)}:${(req as any)?.user?.userId || 'anon'}:device-verify`,
+  message: {
+    success: false,
+    message: 'Too many device verification attempts. Please try again later.',
+    error: { code: 'TOO_MANY_DEVICE_VERIFY_ATTEMPTS' },
+  },
+});
+
+const securitySettingsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) =>
+    `${getClientIp(req)}:${(req as any)?.user?.userId || 'anon'}:security-settings`,
+  message: {
+    success: false,
+    message: 'Too many settings update requests. Please try again later.',
+    error: { code: 'TOO_MANY_SETTINGS_UPDATE_ATTEMPTS' },
+  },
+});
+
+const mfaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${(req as any)?.user?.userId || 'anon'}:mfa-mgmt`,
+  message: {
+    success: false,
+    message: 'Too many MFA attempts. Please try again later.',
+    error: { code: 'TOO_MANY_MFA_ATTEMPTS' },
+  },
+});
+
+const adminActionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${(req as any)?.user?.userId || 'anon'}:admin-action`,
+  message: {
+    success: false,
+    message: 'Too many admin action requests. Please try again later.',
+    error: { code: 'TOO_MANY_ADMIN_ACTION_ATTEMPTS' },
+  },
+});
+
 const getRouteParam = (value: string | string[] | undefined): string => {
   if (Array.isArray(value)) {
     return value[0] ?? '';
@@ -42,7 +120,9 @@ const getRouteParam = (value: string | string[] | undefined): string => {
  */
 securityRouter.post(
   '/login-verify',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  loginVerifyLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const { password } = req.body || {};
     if (!password || typeof password !== 'string') {
@@ -117,7 +197,9 @@ securityRouter.get(
  */
 securityRouter.post(
   '/devices/:id/verify',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  deviceVerifyLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
     const { token } = req.body || {};
@@ -148,6 +230,7 @@ securityRouter.post(
  */
 securityRouter.delete(
   '/devices/:id',
+  requireTrustedBrowserOrigin,
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -172,6 +255,7 @@ securityRouter.delete(
  */
 securityRouter.post(
   '/devices/forget-all',
+  requireTrustedBrowserOrigin,
   requireAuth,
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user.userId;
@@ -237,16 +321,41 @@ securityRouter.get(
 
 /**
  * POST /api/security/settings
- * Update security settings
+ * Update security settings (with strict field whitelist to prevent mass assignment)
  */
 securityRouter.post(
   '/settings',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  securitySettingsLimiter,
   asyncHandler(async (req: Request, res: Response) => {
-    const settings = req.body || {};
+    const rawSettings = req.body || {};
+    const allowedKeys = new Set([
+      'loginAlerts',
+      'suspiciousActivityAlerts',
+      'twoFactorRequired',
+      'sessionTimeout',
+      'theme',
+      'compactMode',
+      'autoLockTimeout',
+    ]);
+
+    const sanitizedPreferences: Record<string, any> = {};
+    for (const [key, val] of Object.entries(rawSettings)) {
+      if (allowedKeys.has(key)) {
+        if (
+          typeof val === 'boolean' ||
+          typeof val === 'string' ||
+          (typeof val === 'number' && Number.isFinite(val))
+        ) {
+          sanitizedPreferences[key] = val;
+        }
+      }
+    }
+
     await User.findByIdAndUpdate(req.user.userId, {
       $set: {
-        'meta.preferences': settings,
+        'meta.preferences': sanitizedPreferences,
         updatedAt: new Date(),
       },
     }).exec();
@@ -254,7 +363,7 @@ securityRouter.post(
     res.json({
       success: true,
       message: 'Settings updated',
-      data: settings,
+      data: sanitizedPreferences,
     });
   }),
 );
@@ -263,7 +372,13 @@ securityRouter.post(
  * POST /api/security/mfa/enable
  * Enable MFA for account (initiate setup)
  */
-securityRouter.post('/mfa/enable', requireAuth, asyncHandler(twoFactorController.setup2FA));
+securityRouter.post(
+  '/mfa/enable',
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  mfaLimiter,
+  asyncHandler(twoFactorController.setup2FA),
+);
 
 /**
  * POST /api/security/mfa/verify
@@ -271,7 +386,9 @@ securityRouter.post('/mfa/enable', requireAuth, asyncHandler(twoFactorController
  */
 securityRouter.post(
   '/mfa/verify',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  mfaLimiter,
   validate(twoFactorTokenSchema),
   asyncHandler(twoFactorController.verifyAndEnable2FA),
 );
@@ -282,7 +399,9 @@ securityRouter.post(
  */
 securityRouter.post(
   '/mfa/disable',
+  requireTrustedBrowserOrigin,
   requireAuth,
+  mfaLimiter,
   validate(twoFactorTokenSchema),
   asyncHandler(twoFactorController.disable2FA),
 );
@@ -342,10 +461,12 @@ securityRouter.get(
  */
 securityRouter.patch(
   '/admin/incidents/:id',
+  requireTrustedBrowserOrigin,
   requireAuth,
   requireAdmin,
+  adminActionLimiter,
   asyncHandler(async (req: Request, res: Response) => {
-    const { status, notes } = req.body;
+    const { status, notes } = req.body || {};
 
     await securityDashboardService.updateIncidentStatus(
       getRouteParam(req.params.id),
@@ -366,10 +487,12 @@ securityRouter.patch(
  */
 securityRouter.post(
   '/admin/actions',
+  requireTrustedBrowserOrigin,
   requireAuth,
   requireAdmin,
+  adminActionLimiter,
   asyncHandler(async (req: Request, res: Response) => {
-    const { action, target, duration } = req.body;
+    const { action, target, duration } = req.body || {};
 
     await securityDashboardService.applyManualAction(action, target, duration);
 

@@ -12,32 +12,40 @@ type ValidationIssue = {
  */
 export const validateRequest = (validations: ValidationChain[]) => {
   return async (req: express.Request, _res: express.Response, next: express.NextFunction) => {
-    await Promise.all(validations.map((validation) => validation.run(req)));
+    try {
+      if (!Array.isArray(validations) || validations.length === 0) {
+        return next();
+      }
 
-    const result = validationResult(req);
-    if (result.isEmpty()) {
-      return next();
+      await Promise.all(validations.map((validation) => validation.run(req)));
+
+      const result = validationResult(req);
+      if (result.isEmpty()) {
+        return next();
+      }
+
+      const details: ValidationIssue[] = result.array({ onlyFirstError: true }).map((rawError) => {
+        const error = rawError as unknown as { path?: unknown; param?: unknown; msg?: unknown };
+        const fieldPath =
+          typeof error.path === 'string'
+            ? error.path
+            : typeof error.param === 'string'
+              ? error.param
+              : 'request';
+        const message = typeof error.msg === 'string' ? error.msg : 'Invalid input.';
+
+        return { path: fieldPath, message };
+      });
+
+      const validationError = AppError.badRequest(
+        'Input validation failed.',
+        'VALIDATION_ERROR',
+      ) as AppError & { details?: ValidationIssue[] };
+      validationError.details = details;
+
+      return next(validationError);
+    } catch (error) {
+      return next(error);
     }
-
-    const details: ValidationIssue[] = result.array({ onlyFirstError: true }).map((error) => {
-      const fieldPath =
-        typeof (error as { path?: unknown }).path === 'string'
-          ? (error as { path: string }).path
-          : 'request';
-      const message =
-        typeof (error as { msg?: unknown }).msg === 'string'
-          ? (error as { msg: string }).msg
-          : 'Invalid input.';
-
-      return { path: fieldPath, message };
-    });
-
-    const validationError = AppError.badRequest(
-      'Input validation failed.',
-      'VALIDATION_ERROR',
-    ) as AppError & { details?: ValidationIssue[] };
-    validationError.details = details;
-
-    return next(validationError);
   };
 };

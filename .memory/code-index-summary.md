@@ -1,21 +1,21 @@
 # Code Memory Summary
 
-Generated: 2026-10-24T19:57:42.093Z
+Generated: 2026-10-28T05:10:22.690Z
 Schema: code-memory-index/v5
 
 ## Totals
-- Files Indexed: 611
-- Lines Indexed: 229286
-- Symbols: 3642
-- Imports: 2415
+- Files Indexed: 634
+- Lines Indexed: 201481
+- Symbols: 3850
+- Imports: 2530
 
 ## Changes
-- Added: 0
+- Added: 634
 - Removed: 0
-- Changed: 17
+- Changed: 0
 
 ## Risk Summary
-- Critical: 16
-- High: 59
-- Medium: 111
-- Low: 425
+- Critical: 17
+- High: 55
+- Medium: 122
+- Low: 440

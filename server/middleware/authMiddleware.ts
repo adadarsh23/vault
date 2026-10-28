@@ -12,7 +12,10 @@ const MAX_AUTH_TOKEN_LENGTH = (() => {
   return Number.isFinite(parsed) && parsed >= 512 ? parsed : 8192;
 })();
 
-const looksLikeJwt = (candidate: string): boolean => {
+const looksLikeJwt = (candidate: string | undefined): candidate is string => {
+  if (!candidate || typeof candidate !== 'string') {
+    return false;
+  }
   const token = candidate.trim();
   if (!token || token.length > MAX_AUTH_TOKEN_LENGTH) {
     return false;
@@ -33,6 +36,23 @@ const decodeQueryParamSafely = (value: string): string | null => {
 const hasMalformedAuthTokenQuery = (req: express.Request): boolean => {
   const match = req.url.match(/[?&]auth_token=([^&]*)/);
   return Boolean(match && decodeQueryParamSafely(match[1]) === null);
+};
+
+const isDatabaseError = (err: any): boolean => {
+  if (!err) return false;
+  const name = err.name || '';
+  const message = typeof err.message === 'string' ? err.message : '';
+  return (
+    name === 'MongoServerSelectionError' ||
+    name === 'MongooseServerSelectionError' ||
+    name === 'MongoClientClosedError' ||
+    name === 'MongoNetworkError' ||
+    name === 'MongoTimeoutError' ||
+    message.includes('client was closed') ||
+    message.includes('connection <monitor> closed') ||
+    message.includes('server selection') ||
+    message.includes('buffering timed out')
+  );
 };
 
 /**
@@ -61,7 +81,13 @@ const extractQueryAuthToken = (req: express.Request): string | undefined => {
   }
 
   if (typeof req.query.auth_token === 'string') {
-    return req.query.auth_token.trim();
+    const trimmed = req.query.auth_token.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  // Handle parameter pollution: reject ambiguous multiple tokens
+  if (Array.isArray(req.query.auth_token)) {
+    return undefined;
   }
 
   // Manual URL parsing fallback for strict media environments
@@ -81,74 +107,76 @@ const extractQueryAuthToken = (req: express.Request): string | undefined => {
   return decoded.trim();
 };
 
+const extractTokenFromRequest = (req: express.Request): string | undefined => {
+  const authHeader = req.get('authorization');
+  if (authHeader) {
+    const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+    if (bearerMatch?.[1]) {
+      const token = bearerMatch[1].trim();
+      if (token) return token;
+    }
+  }
+
+  // Fallback to query param if header is missing (e.g. for media streaming tags)
+  const queryToken = extractQueryAuthToken(req);
+  if (queryToken) {
+    return queryToken;
+  }
+
+  // Fallback: accept access token from cookie for browser sessions
+  const cookieToken = readCookie(req, 'vault_access_token');
+  if (cookieToken && looksLikeJwt(cookieToken)) {
+    return cookieToken.trim();
+  }
+
+  return undefined;
+};
+
 /**
- * Middleware to require authentication for routes.
- * Verifies JWT access token and checks session validity in database.
- */
-/**
- * Optional identification middleware - populates req.user if a token is present
- * but DOES NOT throw an error if it's missing or invalid.
+ * Optional identification middleware - populates req.user if a valid token is present
+ * but DOES NOT throw an error if missing or invalid.
  */
 export const resolveIdentity = (
   req: express.Request,
   _res: express.Response,
   next: express.NextFunction,
 ) => {
-  const authHeader = req.get('Authorization')?.split(' ')[1];
-  const token = authHeader || extractQueryAuthToken(req);
+  const token = extractTokenFromRequest(req);
 
-  if (token && typeof token === 'string' && token.includes('.')) {
+  if (token && looksLikeJwt(token)) {
     try {
       const payload = verifyAccessToken(token);
-      (req as any).user = {
+      (req as AuthenticatedRequest).user = {
         userId: payload.sub,
         username: payload.username,
         sessionId: payload.sessionId,
       };
-    } catch (e) {
-      // Quietly ignore parsing errors for optional resolution
+    } catch {
+      // Quietly ignore parsing errors for optional identification
     }
   }
   next();
 };
 
+/**
+ * Middleware to require authentication for routes.
+ * Verifies JWT access token and checks session validity in database.
+ */
 export const requireAuth = async (
   req: express.Request,
   _res: express.Response,
   next: express.NextFunction,
 ) => {
-  const authHeader = req.get('authorization');
-  let token: string | undefined;
-
-  if (authHeader) {
-    const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
-    if (bearerMatch?.[1]) {
-      token = bearerMatch[1].trim();
-    }
-  }
-
-  // Fallback to query param if header is missing (e.g. for media tags)
-  if (!token) {
-    token = extractQueryAuthToken(req);
-  }
-
-  // Fallback: accept bearer token from cookie for integrations that attach it as a cookie.
-  // Primary flow still uses Authorization header + refresh-cookie rotation.
-  if (!token) {
-    const cookieToken = readCookie(req, 'vault_access_token');
-    if (cookieToken && looksLikeJwt(cookieToken)) {
-      token = cookieToken.trim();
-    }
-  }
+  const token = extractTokenFromRequest(req);
 
   if (!token) {
-    // Express may omit a malformed query value while parsing the URL.  Preserve
-    // the distinction between no credentials and an invalid credential.
+    // Preserve distinction between missing credentials and malformed query parameter
     if (hasMalformedAuthTokenQuery(req)) {
       throw AppError.unauthorized('Authentication token is invalid.', 'INVALID_TOKEN');
     }
     throw AppError.unauthorized('Authentication token is required.', 'AUTH_REQUIRED');
   }
+
   if (!looksLikeJwt(token)) {
     throw AppError.unauthorized('Authentication token is invalid.', 'INVALID_TOKEN');
   }
@@ -215,16 +243,15 @@ export const requireAuth = async (
     }
 
     // Immediate token invalidation check if password/credentials changed after token issuance
-    if (
-      (userWithSession as any).meta?.lastCredentialChangeAt &&
-      (payload as any).iat &&
-      (payload as any).iat * 1000 <
-        new Date((userWithSession as any).meta.lastCredentialChangeAt).getTime()
-    ) {
-      throw AppError.unauthorized(
-        'Credentials have been updated. Please sign in again.',
-        'SESSION_REVOKED',
-      );
+    const lastCredChange = (userWithSession as any).meta?.lastCredentialChangeAt;
+    if (lastCredChange && (payload as any).iat) {
+      const changeTimeMs = new Date(lastCredChange).getTime();
+      if (Number.isFinite(changeTimeMs) && (payload as any).iat * 1000 < changeTimeMs) {
+        throw AppError.unauthorized(
+          'Credentials have been updated. Please sign in again.',
+          'SESSION_REVOKED',
+        );
+      }
     }
 
     (req as AuthenticatedRequest).user = {
@@ -238,10 +265,20 @@ export const requireAuth = async (
 
     return next();
   } catch (error) {
+    // If the database connection dropped, do not mask as auth failure or track brute-force!
+    if (isDatabaseError(error)) {
+      logger.error('[Auth] Database connection error during authentication check', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+
+    if (error instanceof AppError) {
+      throw error;
+    }
+
     // Security Intelligence: Track failed verification attempts for brute-force detection
     anomalyDetectionService.trackAuthFailure(getClientIp(req));
-
-    if (error instanceof AppError) throw error;
 
     const name = error instanceof Error ? error.name : 'UnknownError';
     const message =
@@ -275,6 +312,10 @@ export const requireAdmin = async (
     }
 
     const user = await User.findById(authUser.userId).select('+role username').lean().exec();
+    if (!user) {
+      throw AppError.unauthorized('User account not found.', 'USER_NOT_FOUND');
+    }
+
     const adminUsernames = (process.env.ADMIN_USERNAMES || '')
       .split(',')
       .map((s) => s.trim().toLowerCase())
@@ -285,7 +326,9 @@ export const requireAdmin = async (
       .filter(Boolean);
 
     const isRoleAdmin = (user as any)?.role === 'admin';
-    const isUsernameAdmin = user?.username && adminUsernames.includes(user.username.toLowerCase());
+    const isUsernameAdmin =
+      typeof user?.username === 'string' &&
+      adminUsernames.includes(user.username.trim().toLowerCase());
     const isIdAdmin = adminUserIds.includes(authUser.userId);
 
     if (!isRoleAdmin && !isUsernameAdmin && !isIdAdmin) {
@@ -294,6 +337,12 @@ export const requireAdmin = async (
 
     return next();
   } catch (error) {
+    if (isDatabaseError(error)) {
+      logger.error('[Auth] Database connection error during requireAdmin check', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return next(error);
+    }
     if (error instanceof AppError) {
       return next(error);
     }

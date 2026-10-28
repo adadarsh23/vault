@@ -33,36 +33,33 @@ export const requireRecaptcha = (options: RequireRecaptchaOptions) => {
   const tokenField = options.tokenField || 'captchaToken';
 
   return async (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    let tokenValue: unknown = undefined;
+
     try {
       if (!isRecord(req.body)) {
         throw AppError.badRequest('Request body must be a JSON object.', 'INVALID_REQUEST_BODY');
       }
 
-      const rawToken = req.body[tokenField];
+      tokenValue = req.body[tokenField];
       const hasToken =
-        typeof rawToken === 'string'
-          ? rawToken.trim().length > 0
-          : rawToken !== undefined && rawToken !== null;
+        typeof tokenValue === 'string'
+          ? tokenValue.trim().length > 0
+          : tokenValue !== undefined && tokenValue !== null;
 
       if (options.optional && !hasToken) {
-        delete req.body[tokenField];
         return next();
       }
 
-      const token = readRecaptchaTokenFromBody(req.body[tokenField]);
+      const token = readRecaptchaTokenFromBody(tokenValue);
       const verification = await verifyRecaptchaToken({
         token,
         remoteIp: getClientIp(req),
       });
 
-      // Always remove raw tokens from request body after verification.
-      delete req.body[tokenField];
-
       if (!verification.success) {
-        const code = hasTimeoutOrDuplicateCode(verification.errorCodes)
-          ? 'CAPTCHA_TOKEN_EXPIRED'
-          : 'CAPTCHA_VERIFICATION_FAILED';
-        const message = hasTimeoutOrDuplicateCode(verification.errorCodes)
+        const isTimeout = hasTimeoutOrDuplicateCode(verification.errorCodes);
+        const code = isTimeout ? 'CAPTCHA_TOKEN_EXPIRED' : 'CAPTCHA_VERIFICATION_FAILED';
+        const message = isTimeout
           ? 'CAPTCHA expired. Please complete it again.'
           : 'Security verification failed. Please retry the CAPTCHA challenge.';
 
@@ -98,8 +95,7 @@ export const requireRecaptcha = (options: RequireRecaptchaOptions) => {
         );
       }
 
-      // If the provider returns an action claim (v3/enterprise-style payloads),
-      // ensure it matches the server-expected action for this route.
+      // If provider returns an action claim, ensure it matches expected route action
       if (verification.action && verification.action !== options.action) {
         logger.warn('[SECURITY] reCAPTCHA action mismatch detected.', {
           action: options.action,
@@ -134,6 +130,11 @@ export const requireRecaptcha = (options: RequireRecaptchaOptions) => {
         });
       }
       next(error);
+    } finally {
+      // Ensure captcha token is always sanitized from request body to prevent leaking
+      if (isRecord(req.body) && tokenField in req.body) {
+        delete req.body[tokenField];
+      }
     }
   };
 };

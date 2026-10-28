@@ -1,12 +1,40 @@
 import express from 'express';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import rateLimit from 'express-rate-limit';
 import { logger } from '../utils/logger.ts';
 import { requireAuth } from '../middleware/authMiddleware.ts';
+import { requireTrustedBrowserOrigin } from '../middleware/csrfOriginMiddleware.ts';
 import { getUserActivityLogs, deleteUserActivityLogs } from '../services/activityLogService.ts';
+import { asyncHandler } from '../utils/asyncHandler.ts';
+import { getClientIp } from '../utils/requestIp.ts';
 
 const router = express.Router();
 const LOG_FILE = path.resolve(process.cwd(), 'logs/server.jsonl');
+
+const systemLogsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${(req as any)?.user?.userId || 'anon'}:system-logs`,
+  message: {
+    success: false,
+    message: 'Too many log requests. Please slow down.',
+    error: { code: 'TOO_MANY_LOG_REQUESTS' },
+  },
+});
+
+// Prevent browser/proxy caching of system and activity logs
+router.use((_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
+router.use(requireAuth);
+router.use(systemLogsLimiter);
 
 // Per-user clear log timestamps to ensure user independence when clearing logs
 const userClearedTimestamps = new Map<string, number>();
@@ -57,13 +85,16 @@ async function readLastLines(filePath: string, maxLines: number): Promise<string
  * @desc Get system & activity logs strictly isolated for the authenticated user
  * @access Private
  */
-router.get('/logs', requireAuth, async (req, res) => {
-  try {
+router.get(
+  '/logs',
+  asyncHandler(async (req, res) => {
     const userId = (req as any).user?.userId;
     const username = (req as any).user?.username || 'user';
-    const limit = parseInt(req.query.limit as string) || 50;
+    const rawLimit = Number.parseInt(req.query.limit as string, 10);
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 100) : 50;
     const cursorStr = req.query.cursor as string | undefined;
-    const offset = cursorStr ? parseInt(cursorStr) : 0;
+    const rawOffset = cursorStr ? Number.parseInt(cursorStr, 10) : 0;
+    const offset = Number.isFinite(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
 
     const clearedAt = userClearedTimestamps.get(userId) || 0;
 
@@ -139,19 +170,18 @@ router.get('/logs', requireAuth, async (req, res) => {
       hasMore,
       nextCursor,
     });
-  } catch (error) {
-    console.error('Error fetching system logs:', error);
-    res.status(500).json({ success: false, message: 'Failed to retrieve user logs' });
-  }
-});
+  }),
+);
 
 /**
  * @route POST /api/system/logs/clear
  * @desc Clear logs strictly for the requesting user
  * @access Private
  */
-router.post('/logs/clear', requireAuth, async (req, res) => {
-  try {
+router.post(
+  '/logs/clear',
+  requireTrustedBrowserOrigin,
+  asyncHandler(async (req, res) => {
     const userId = (req as any).user?.userId;
     const username = (req as any).user?.username || 'user';
 
@@ -163,10 +193,7 @@ router.post('/logs/clear', requireAuth, async (req, res) => {
     }
 
     res.json({ success: true, message: 'Your system logs cleared successfully' });
-  } catch (error) {
-    console.error('Error clearing system logs:', error);
-    res.status(500).json({ success: false, message: 'Failed to clear user logs' });
-  }
-});
+  }),
+);
 
 export { router as systemRouter };

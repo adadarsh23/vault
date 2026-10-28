@@ -20,9 +20,7 @@ export const errorHandler = (
 
   const requestId = (req as express.Request & { requestId?: string }).requestId;
 
-  // Ensure cross-origin resources can see the error response
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-
+  // Handle CORS headers safely on error responses
   const rawOrigin = req.get('origin') || req.get('referer');
   if (rawOrigin) {
     try {
@@ -30,27 +28,34 @@ export const errorHandler = (
       if (isAllowedCorsOrigin(candidate)) {
         res.setHeader('Access-Control-Allow-Origin', candidate);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
-      } else {
-        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
       }
     } catch {
-      res.setHeader('Access-Control-Allow-Origin', '*');
+      // Ignore invalid URL parse attempts; do not attach wildcard ACAO
     }
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
   }
 
-  // Default values
-  let statusCode = err.statusCode || err.status || 500;
-  let code = err.code || 'INTERNAL_SERVER_ERROR';
-  let message = err.message || 'An unexpected error occurred.';
+  // Normalize initial error values
+  let statusCode =
+    typeof err?.statusCode === 'number'
+      ? err.statusCode
+      : typeof err?.status === 'number'
+        ? err.status
+        : 500;
+  let code = err?.code ? String(err.code) : 'INTERNAL_SERVER_ERROR';
+  let message =
+    typeof err?.message === 'string' && err.message.trim()
+      ? err.message
+      : 'An unexpected error occurred.';
   let details: any = undefined;
+  let isOperational = Boolean(err?.isOperational);
 
   // Handle specific error types
   if (err instanceof SyntaxError && 'body' in err) {
     statusCode = 400;
     code = 'INVALID_JSON';
     message = 'Request body contains invalid JSON.';
+    isOperational = true;
   } else if (err instanceof ZodError) {
     statusCode = 400;
     code = 'VALIDATION_ERROR';
@@ -59,50 +64,67 @@ export const errorHandler = (
       path: e.path.join('.'),
       message: e.message,
     }));
-  } else if (err instanceof mongoose.Error.CastError) {
+    isOperational = true;
+  } else if (
+    err instanceof mongoose.Error.CastError ||
+    err?.name === 'BSONError' ||
+    err?.name === 'BSONTypeError'
+  ) {
     statusCode = 400;
     code = 'INVALID_ID';
-    message = `Invalid format for field '${err.path}'.`;
+    message =
+      err instanceof mongoose.Error.CastError
+        ? `Invalid format for field '${err.path}'.`
+        : 'Invalid identifier format.';
+    isOperational = true;
   } else if (err instanceof mongoose.Error.ValidationError) {
     statusCode = 400;
     code = 'VALIDATION_ERROR';
     const firstIssue = Object.values(err.errors)[0];
     message = firstIssue?.message || 'Validation failed.';
-  } else if (err.name === 'TokenExpiredError') {
+    isOperational = true;
+  } else if (err?.name === 'TokenExpiredError') {
     statusCode = 401;
     code = 'TOKEN_EXPIRED';
     message = 'Authentication token has expired.';
-  } else if (err.name === 'JsonWebTokenError') {
+    isOperational = true;
+  } else if (err?.name === 'JsonWebTokenError') {
     statusCode = 401;
     code = 'INVALID_TOKEN';
     message = 'Authentication token is invalid.';
-  } else if (err.type === 'entity.too.large' || err.status === 413) {
+    isOperational = true;
+  } else if (err?.type === 'entity.too.large' || statusCode === 413) {
     statusCode = 413;
     code = 'PAYLOAD_TOO_LARGE';
     message = 'Request payload exceeds maximum size limit.';
-  } else if (err.code === 11000) {
+    isOperational = true;
+  } else if (err?.code === 11000 || err?.code === '11000') {
     statusCode = 409;
     code = 'DUPLICATE_RESOURCE';
     message = 'The requested resource already exists.';
+    isOperational = true;
   } else if (
     err?.code === 'EBADCSRFTOKEN' ||
     err?.code === 'CSRF_TOKEN_INVALID' ||
     err?.message === 'invalid csrf token' ||
-    (err?.status === 403 &&
+    (statusCode === 403 &&
       typeof err?.message === 'string' &&
       err.message.toLowerCase().includes('csrf'))
   ) {
     statusCode = 403;
     code = 'CSRF_TOKEN_INVALID';
     message = 'Invalid or missing CSRF token.';
-  } else if (err.name === 'UnauthorizedError' || err.code === 'UNAUTHORIZED') {
+    isOperational = true;
+  } else if (err?.name === 'UnauthorizedError' || err?.code === 'UNAUTHORIZED') {
     statusCode = 401;
     code = 'UNAUTHORIZED';
     message = err.message || 'Authentication failed.';
-  } else if (err.message === 'Origin is not allowed by CORS.') {
+    isOperational = true;
+  } else if (err?.message === 'Origin is not allowed by CORS.') {
     statusCode = 403;
     code = 'CORS_FORBIDDEN';
     message = 'Request origin is not allowed.';
+    isOperational = true;
   } else if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       statusCode = 413;
@@ -113,12 +135,13 @@ export const errorHandler = (
       code = err.code;
       message = err.message;
     }
+    isOperational = true;
   } else if (
-    err.name === 'MongoServerSelectionError' ||
-    err.name === 'MongooseServerSelectionError' ||
-    err.name === 'MongoClientClosedError' ||
-    err.name === 'MongoNetworkError' ||
-    err.name === 'MongoTimeoutError' ||
+    err?.name === 'MongoServerSelectionError' ||
+    err?.name === 'MongooseServerSelectionError' ||
+    err?.name === 'MongoClientClosedError' ||
+    err?.name === 'MongoNetworkError' ||
+    err?.name === 'MongoTimeoutError' ||
     (typeof err?.message === 'string' &&
       (err.message.includes('client was closed') ||
         err.message.includes('connection <monitor> closed') ||
@@ -128,20 +151,28 @@ export const errorHandler = (
     statusCode = 503;
     code = 'DB_UNAVAILABLE';
     message = 'Vault database is temporarily unavailable or reconnecting.';
-    err.isOperational = true;
+    isOperational = true;
   } else if (err instanceof AppError) {
     statusCode = err.statusCode;
     code = err.code;
     message = err.message;
+    isOperational = true;
     if ((err as { details?: unknown }).details) {
       details = (err as { details?: unknown }).details;
     }
   }
 
-  // Log error (only critical/unexpected or detailed for debugging)
+  // Security Hardening: In production, never expose internal 500 error messages or paths to clients
+  const isProduction = process.env.NODE_ENV === 'production';
+  const clientFacingMessage =
+    isProduction && statusCode >= 500 && !isOperational
+      ? 'An unexpected server error occurred.'
+      : message;
+
+  // Log error with breadcrumbs and Sentry
   addBreadcrumb({
     category: 'error',
-    message: message,
+    message: clientFacingMessage,
     level: statusCode >= 500 ? 'error' : 'warning',
     data: {
       statusCode,
@@ -163,22 +194,20 @@ export const errorHandler = (
     extra: {
       requestId,
       details,
-      isOperational: Boolean(err?.isOperational),
+      isOperational,
     },
   });
 
-  // Log error (only critical/unexpected or detailed for debugging)
   const isClientError = statusCode >= 400 && statusCode < 500;
-  const isOperationalError = Boolean(err.isOperational);
-  if (!isOperationalError && (statusCode >= 500 || !isClientError)) {
+  if (!isOperational && (statusCode >= 500 || !isClientError)) {
     logger.error('Unhandled or non-operational server error.', {
       requestId,
       method: req.method,
       path: req.originalUrl,
       error: {
-        name: err.name,
-        message: err.message,
-        stack: process.env.NODE_ENV === 'production' ? undefined : err.stack,
+        name: err?.name || 'Error',
+        message: err?.message || String(err),
+        stack: isProduction ? undefined : err?.stack,
       },
       ipAddress: getClientIp(req),
     });
@@ -191,14 +220,14 @@ export const errorHandler = (
     });
   }
 
-  // Response format
+  // Consistent API response format
   return res.status(statusCode).json({
     success: false,
-    message,
+    message: clientFacingMessage,
     error: {
       code,
       requestId,
-      ...(process.env.NODE_ENV !== 'production' ? { stack: err.stack } : {}),
+      ...(!isProduction && err?.stack ? { stack: err.stack } : {}),
       ...(details ? { details } : {}),
     },
   });

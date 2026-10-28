@@ -765,9 +765,13 @@ export const getMediaPlaylist = async (req: express.Request, res: express.Respon
     res.setHeader('Content-Type', 'application/x-mpegURL');
     return res.send(playlist);
   } else {
-    const hlsDir = path.join(path.dirname(item.file.filePath), 'hls', itemId);
-    const variantId = variant?.replace('.m3u8', '') || '';
-    const playlistPath = path.join(hlsDir, `${variantId}.m3u8`);
+    const hlsDir = path.resolve(path.join(path.dirname(item.file.filePath), 'hls', itemId));
+    const variantId = variant?.replace('.m3u8', '').replace(/[^a-zA-Z0-9._-]/g, '') || '';
+    const playlistPath = path.resolve(path.join(hlsDir, `${variantId}.m3u8`));
+
+    if (!playlistPath.startsWith(hlsDir)) {
+      throw AppError.badRequest('Invalid playlist variant.', 'INVALID_PLAYLIST');
+    }
 
     if (!fs.existsSync(playlistPath)) {
       logger.error('Playlist variant not found on disk', { playlistPath, itemId, variant });
@@ -875,8 +879,12 @@ export const getMediaSegment = async (req: express.Request, res: express.Respons
     }
   }
 
-  const hlsDir = path.join(path.dirname(filePath), 'hls', itemId);
-  const segmentPath = path.join(hlsDir, segment);
+  const hlsDir = path.resolve(path.join(path.dirname(filePath), 'hls', itemId));
+  const segmentPath = path.resolve(path.join(hlsDir, segment));
+
+  if (!segmentPath.startsWith(hlsDir)) {
+    throw AppError.badRequest('Invalid media segment path.', 'INVALID_MEDIA_SEGMENT');
+  }
 
   if (!fs.existsSync(segmentPath)) {
     throw AppError.notFound('Segment not found');
@@ -1381,21 +1389,35 @@ export const createSignedUrl = async (req: express.Request, res: express.Respons
 };
 
 export const logPlaybackEvent = async (req: express.Request, res: express.Response) => {
-  const { itemId, event, metadata } = req.body;
+  const { itemId, event, metadata } = req.body || {};
   const userId = (req as any).user?.userId;
 
   if (!userId) throw AppError.unauthorized('Authentication required');
+  if (!itemId || typeof itemId !== 'string') {
+    throw AppError.badRequest('itemId is required.', 'ITEM_REQUIRED');
+  }
+  if (!event || typeof event !== 'string' || event.length > 64) {
+    throw AppError.badRequest('A valid event identifier is required.', 'INVALID_EVENT');
+  }
 
   const username = (req as any).user?.username;
   if (!username) throw AppError.unauthorized('Username required for isolated telemetry');
+
+  let sanitizedMetadata: Record<string, unknown> = {};
+  if (metadata && typeof metadata === 'object') {
+    const serialized = JSON.stringify(metadata);
+    if (serialized.length <= 10240) {
+      sanitizedMetadata = metadata;
+    }
+  }
 
   try {
     const DynamicTelemetryModel = getTelemetryModel(username);
     await DynamicTelemetryModel.create({
       userId,
       itemId,
-      event,
-      metadata,
+      event: event.trim(),
+      metadata: sanitizedMetadata,
       userAgent: req.get('user-agent'),
       ip: getClientIp(req),
     });

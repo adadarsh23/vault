@@ -49,6 +49,10 @@ import {
   renderStartupSummary,
   startDevHeartbeat,
   createRuntimeMetrics,
+  acquireBootLock,
+  setBootState,
+  sanitizeStartupError,
+  createShutdownManager,
   type StartupPhaseTiming,
 } from './server/boot/startup.ts';
 import {
@@ -532,6 +536,13 @@ const registerProcessErrorHandlers = () => {
 };
 
 async function startServer() {
+  if (!acquireBootLock()) {
+    logger.warn(
+      '[BOOT] Server startup is already in progress or completed. Ignoring duplicate startup call.',
+    );
+    return;
+  }
+
   initSentry();
   initLogRocketServer();
   registerProcessErrorHandlers();
@@ -873,6 +884,7 @@ async function startServer() {
     });
 
     startupAnimator.succeed('Startup complete', 'Vault runtime initialized');
+    setBootState('READY');
     renderStartupSummary({
       port,
       trustProxy,
@@ -891,10 +903,7 @@ async function startServer() {
     });
 
     // Graceful Shutdown
-    const runShutdownPhase = async (
-      phase: 'http_close' | 'mongo_disconnect' | 'socket_cleanup',
-      task: () => Promise<void> | void,
-    ) => {
+    const runShutdownPhase = async (phase: string, task: () => Promise<void> | void) => {
       const startedAt = Date.now();
       logger.info('[SHUTDOWN] Phase started.', { phase });
       try {
@@ -913,65 +922,29 @@ async function startServer() {
       }
     };
 
-    const shutdown = async (signal: string) => {
-      if (shutdownInProgress) {
-        return;
-      }
-      shutdownInProgress = true;
-      shutdownController.abort(new Error('Server shutdown in progress.'));
-      logger.warn(`[SHUTDOWN] Signal received: ${signal}`);
-      logger.info('[SHUTDOWN] Closing HTTP server...');
-      const forcedExitTimer = setTimeout(() => {
-        httpServer.closeIdleConnections?.();
-        httpServer.closeAllConnections?.();
-        exitProcess(1);
-      }, 10_000);
-      forcedExitTimer.unref();
-
-      try {
-        await runShutdownPhase('http_close', async () => {
-          await new Promise<void>((resolve, reject) => {
-            httpServer.close((error) => {
-              if (error) {
-                reject(error);
-                return;
-              }
-              resolve();
-            });
-          });
-        });
-        await runShutdownPhase('mongo_disconnect', async () => {
-          logger.info('[SHUTDOWN] Disconnecting MongoDB...');
-          await mongoose.disconnect();
-        });
-        await runShutdownPhase('socket_cleanup', () => {
-          clearInterval(eventLoopLagSampler);
-          httpServer.closeIdleConnections?.();
-          httpServer.closeAllConnections?.();
-          eventLoopDelayMonitor.disable();
-        });
-        logger.info('[SHUTDOWN] Cleanup complete.', {
-          phase: 'complete',
-        });
+    const shutdownManager = createShutdownManager({
+      httpServer,
+      timeoutMs: 10_000,
+      exitProcess,
+      logger,
+      onPhase: runShutdownPhase,
+      onComplete: async () => {
+        clearInterval(eventLoopLagSampler);
+        eventLoopDelayMonitor.disable();
         await flushSentry(2000);
-        exitProcess(0);
-      } catch (error) {
-        logger.error('[SHUTDOWN] Error during graceful shutdown.', { error });
-        await flushSentry(2000);
-        exitProcess(1);
-      } finally {
-        clearTimeout(forcedExitTimer);
-      }
-    };
+      },
+    });
 
-    process.on('SIGINT', () => shutdown('SIGINT'));
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    shutdownController.signal.addEventListener('abort', () => {
+      void shutdownManager.shutdown('ABORT_SIGNAL');
+    });
+
+    shutdownManager.registerSignalHandlers();
   } catch (error) {
-    startupAnimator.fail(
-      'Startup failed',
-      error instanceof Error ? error.message : 'Unknown error',
-    );
-    logger.error('Failed to start server.', { error });
+    setBootState('FAILED');
+    const { sanitizedMessage } = sanitizeStartupError(error);
+    startupAnimator.fail('Startup failed', sanitizedMessage);
+    logger.error('Failed to start server.', { error: sanitizedMessage });
     exitProcess(1);
   }
 }

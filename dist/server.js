@@ -244,14 +244,6 @@ var init_logger = __esm({
     process.on("beforeExit", () => {
       logger.close();
     });
-    process.on("SIGINT", () => {
-      logger.close();
-      process.exit(0);
-    });
-    process.on("SIGTERM", () => {
-      logger.close();
-      process.exit(0);
-    });
   }
 });
 
@@ -424,7 +416,7 @@ import cors from "cors";
 import compression3 from "compression";
 import helmet from "helmet";
 import morgan from "morgan";
-import rateLimit8, { ipKeyGenerator as ipKeyGenerator2 } from "express-rate-limit";
+import rateLimit12, { ipKeyGenerator as ipKeyGenerator2 } from "express-rate-limit";
 import os4 from "os";
 import { monitorEventLoopDelay as monitorEventLoopDelay2 } from "perf_hooks";
 import fs12 from "fs";
@@ -433,48 +425,70 @@ import path15 from "path";
 // server/middleware/mongoSanitize.ts
 var FORBIDDEN_KEYS = /* @__PURE__ */ new Set(["__proto__", "prototype", "constructor"]);
 var isDangerousKey = (key) => key.startsWith("$") || key.includes(".") || FORBIDDEN_KEYS.has(key);
-var customMongoSanitize = (req, _res, next) => {
-  const sanitize = (obj, seen = /* @__PURE__ */ new WeakSet()) => {
-    if (!obj || typeof obj !== "object" || Buffer.isBuffer(obj)) {
-      return;
-    }
-    if (seen.has(obj)) {
-      return;
-    }
-    seen.add(obj);
-    if (Array.isArray(obj)) {
-      for (let i = 0; i < obj.length; i++) {
-        sanitize(obj[i], seen);
-      }
-      return;
-    }
-    for (const key of Object.getOwnPropertyNames(obj)) {
-      if (isDangerousKey(key)) {
-        try {
-          delete obj[key];
-        } catch {
-          try {
-            obj[key] = void 0;
-          } catch {
-          }
-        }
-      } else {
-        sanitize(obj[key], seen);
-      }
-    }
-  };
-  if (req.body) sanitize(req.body);
-  if (req.params) sanitize(req.params);
-  try {
-    if (req.query) sanitize(req.query);
-  } catch {
+var sanitizeObject = (obj, seen = /* @__PURE__ */ new WeakSet()) => {
+  if (!obj || typeof obj !== "object" || Buffer.isBuffer(obj) || obj instanceof Date || obj instanceof RegExp) {
+    return;
   }
-  next();
+  if (seen.has(obj)) {
+    return;
+  }
+  seen.add(obj);
+  if (Array.isArray(obj)) {
+    for (let i = 0; i < obj.length; i++) {
+      try {
+        sanitizeObject(obj[i], seen);
+      } catch {
+      }
+    }
+    return;
+  }
+  let propertyNames;
+  try {
+    propertyNames = Object.getOwnPropertyNames(obj);
+  } catch {
+    return;
+  }
+  for (const key of propertyNames) {
+    if (isDangerousKey(key)) {
+      try {
+        delete obj[key];
+      } catch {
+        try {
+          obj[key] = void 0;
+        } catch {
+        }
+      }
+    } else {
+      try {
+        sanitizeObject(obj[key], seen);
+      } catch {
+      }
+    }
+  }
+};
+var customMongoSanitize = (req, _res, next) => {
+  try {
+    if (req.body) {
+      sanitizeObject(req.body);
+    }
+    if (req.params) {
+      sanitizeObject(req.params);
+    }
+    if (req.query) {
+      try {
+        sanitizeObject(req.query);
+      } catch {
+      }
+    }
+    next();
+  } catch {
+    next();
+  }
 };
 
 // server.ts
 import { randomUUID as randomUUID5 } from "crypto";
-import mongoose30 from "mongoose";
+import mongoose35 from "mongoose";
 
 // server/mongo.ts
 import dns from "dns";
@@ -716,7 +730,6 @@ var ensureMongoReady = async () => {
     return false;
   }
 };
-var getDbStatus = () => mongoose.connection.readyState.toString();
 
 // server/services/multiClusterPool.ts
 init_logger();
@@ -1767,6 +1780,13 @@ var userSchema = new mongoose3.Schema(
         delete output.twoFactorSecret;
         delete output.twoFactorTempSecret;
         delete output.twoFactorBackupCodes;
+        if (Array.isArray(output.sessions)) {
+          for (const session of output.sessions) {
+            if (session && typeof session === "object") {
+              delete session.refreshTokenHash;
+            }
+          }
+        }
         if (output.history?.password) delete output.history.password;
         if (output.history?.masterKey) delete output.history.masterKey;
         if (output.history && typeof output.history === "object" && Object.keys(output.history).length === 0) {
@@ -1828,10 +1848,27 @@ function updateTimestamp(next) {
   (schema) => schema.pre("save", updateTimestamp)
 );
 userSchema.pre("save", async function() {
+  if (Array.isArray(this.loginHistory) && this.loginHistory.length > 100) {
+    this.loginHistory.splice(0, this.loginHistory.length - 100);
+  }
+  if (Array.isArray(this.activityLog) && this.activityLog.length > 100) {
+    this.activityLog.splice(0, this.activityLog.length - 100);
+  }
+  if (Array.isArray(this.sessions) && this.sessions.length > 100) {
+    this.sessions.splice(0, this.sessions.length - 100);
+  }
+  const historyObj = this.history;
+  if (historyObj && Array.isArray(historyObj.password) && historyObj.password.length > 20) {
+    historyObj.password.splice(0, historyObj.password.length - 20);
+  }
+  if (historyObj && Array.isArray(historyObj.masterKey) && historyObj.masterKey.length > 20) {
+    historyObj.masterKey.splice(0, historyObj.masterKey.length - 20);
+  }
   if (this.isNew) return;
+  const userModel = this.constructor;
   if (this.isModified("password")) {
     try {
-      const oldDoc = await mongoose3.model("User").findById(this._id).select("+password");
+      const oldDoc = await userModel.findById(this._id).select("+password");
       if (oldDoc && oldDoc.password) {
         const history = this.history ??= {};
         if (!Array.isArray(history.password)) history.password = [];
@@ -1846,7 +1883,7 @@ userSchema.pre("save", async function() {
   }
   if (this.isModified("meta.masterKey") || this.isModified("masterKey")) {
     try {
-      const oldDoc = await mongoose3.model("User").findById(this._id).select("+masterKey +meta.masterKey +meta.masterKeyHash");
+      const oldDoc = await userModel.findById(this._id).select("+masterKey +meta.masterKey +meta.masterKeyHash");
       const oldMasterKey = oldDoc?.meta?.masterKey ?? oldDoc?.masterKey;
       if (oldDoc && oldMasterKey) {
         const history = this.history ??= {};
@@ -1862,11 +1899,36 @@ userSchema.pre("save", async function() {
     }
   }
 });
+userSchema.statics.findByUsernameNormalized = function(username) {
+  return this.findOne({ username: String(username).trim().toLowerCase() });
+};
+userSchema.statics.findByEmailNormalized = function(email) {
+  return this.findOne({ email: String(email).trim().toLowerCase() });
+};
+userSchema.statics.findActiveById = function(userId) {
+  return this.findOne({ _id: userId, "meta.accountStatus": { $ne: "disabled" } });
+};
 var getUserModel = (customConnection) => {
   if (customConnection) {
-    return customConnection.models.User || customConnection.model("User", userSchema);
+    if (customConnection.models.User) {
+      return customConnection.models.User;
+    }
+    const model3 = customConnection.model("User", userSchema);
+    if (typeof model3?.createIndexes === "function") {
+      model3.createIndexes().catch(() => {
+      });
+    }
+    return model3;
   }
-  return mongoose3.models.User || mongoose3.model("User", userSchema);
+  if (mongoose3.models.User) {
+    return mongoose3.models.User;
+  }
+  const model2 = mongoose3.model("User", userSchema);
+  if (typeof model2?.createIndexes === "function") {
+    model2.createIndexes().catch(() => {
+    });
+  }
+  return model2;
 };
 var User = getUserModel();
 
@@ -1970,35 +2032,37 @@ import fs2 from "fs/promises";
 import path3 from "path";
 import crypto2 from "crypto";
 
-// server/responses.ts
-var sendSuccess = (res, data, message = "Operation successful", status = 200) => {
-  return res.status(status).json({
-    success: true,
-    message,
-    data
-  });
-};
-var sendRequestError = (req, res, status, error) => {
-  const requestId = req.requestId;
-  return res.status(status).json({
-    success: false,
-    message: error.message,
-    error: {
-      code: error.code,
-      requestId
-    }
-  });
-};
-
 // server/models/vaultItem.ts
-import mongoose4 from "mongoose";
-var vaultItemSchema = new mongoose4.Schema(
+import mongoose4, { Schema } from "mongoose";
+var fileSubSchema = new Schema(
   {
-    userId: { type: mongoose4.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    itemId: { type: String, required: true, index: true },
+    fileName: { type: String, trim: true },
+    filePath: { type: String, trim: true },
+    mimeType: { type: String, trim: true, lowercase: true },
+    size: { type: Number, min: 0 },
+    encryptionIv: { type: String, trim: true },
+    encryptionTag: { type: String, trim: true }
+  },
+  { _id: false }
+);
+var vaultItemSchema = new Schema(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "userId is required"],
+      index: true
+    },
+    itemId: {
+      type: String,
+      required: [true, "itemId is required"],
+      trim: true,
+      index: true
+    },
     category: {
       type: String,
-      required: true,
+      required: [true, "category is required"],
+      trim: true,
       index: true,
       enum: [
         "photo",
@@ -2023,58 +2087,130 @@ var vaultItemSchema = new mongoose4.Schema(
         "wifi"
       ]
     },
-    folder: { type: String, trim: true, default: null, index: true },
-    title: { type: String, trim: true, default: "" },
-    // For encrypted text content
-    payload: { type: String, default: null },
-    // For files
-    file: {
-      fileName: { type: String },
-      filePath: { type: String },
-      mimeType: { type: String },
-      size: { type: Number },
-      encryptionIv: { type: String },
-      // Store for at-rest AES-GCM
-      encryptionTag: { type: String }
-      // Store for at-rest AES-GCM
+    folder: {
+      type: String,
+      trim: true,
+      default: null,
+      index: true
     },
-    // Modern structure (V2)
+    title: {
+      type: String,
+      trim: true,
+      default: ""
+    },
+    // Legacy encrypted text payload
+    payload: {
+      type: String,
+      default: null
+    },
+    // File attachments
+    file: {
+      type: fileSubSchema,
+      default: null
+    },
+    // Modern unified encrypted structure (V2)
     modernPayload: {
       type: String,
       default: null,
-      description: "Used for V2 encrypted payloads which might combine metadata and content"
+      description: "Used for V2 encrypted payloads combining metadata and content"
     },
     encoding: {
       type: String,
       default: "utf-8",
       enum: ["utf-8", "base64", "binary-base64", "gridfs-binary", "file-reference", "modern"]
     },
-    gridFsId: { type: String, default: null },
-    metadata: {
-      type: mongoose4.Schema.Types.Mixed,
-      default: {}
+    gridFsId: {
+      type: String,
+      default: null,
+      trim: true
     },
-    isDeleted: { type: Boolean, default: false, index: true },
-    deletedAt: { type: Date, default: null },
-    clientUpdatedAt: { type: Date, default: null },
-    isPinned: { type: Boolean, default: false, index: true },
-    pinnedAt: { type: Date, default: null },
-    // Tracking
-    deviceId: { type: String, default: "unknown" },
-    ipAddress: { type: String, default: "unknown" }
+    metadata: {
+      type: Schema.Types.Mixed,
+      default: () => ({})
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+    deletedAt: {
+      type: Date,
+      default: null
+    },
+    clientUpdatedAt: {
+      type: Date,
+      default: null
+    },
+    isPinned: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+    pinnedAt: {
+      type: Date,
+      default: null
+    },
+    // Security & Audit Tracking
+    deviceId: {
+      type: String,
+      default: "unknown",
+      trim: true
+    },
+    ipAddress: {
+      type: String,
+      default: "unknown",
+      trim: true
+    }
   },
   {
     timestamps: true,
+    versionKey: false,
     collection: "vault_items"
   }
 );
 vaultItemSchema.index({ userId: 1, itemId: 1 }, { unique: true });
-vaultItemSchema.index({ userId: 1, category: 1, isDeleted: 1 });
 vaultItemSchema.index({ userId: 1, category: 1, isDeleted: 1, updatedAt: -1 });
+vaultItemSchema.index({ userId: 1, folder: 1, isDeleted: 1, updatedAt: -1 });
+vaultItemSchema.index({ userId: 1, isPinned: 1, isDeleted: 1, updatedAt: -1 });
 vaultItemSchema.index({ userId: 1, isDeleted: 1, updatedAt: -1 });
 vaultItemSchema.index({ userId: 1, updatedAt: -1 });
+vaultItemSchema.index({ userId: 1, "file.mimeType": 1, isDeleted: 1 });
 vaultItemSchema.index({ isDeleted: 1, updatedAt: -1 });
 vaultItemSchema.index({ updatedAt: -1 });
+vaultItemSchema.methods.softDelete = function() {
+  this.isDeleted = true;
+  this.deletedAt = /* @__PURE__ */ new Date();
+  return this.save();
+};
+vaultItemSchema.methods.restore = function() {
+  this.isDeleted = false;
+  this.deletedAt = null;
+  return this.save();
+};
+vaultItemSchema.statics.findByItemId = function(userId, itemId) {
+  return this.findOne({ userId, itemId: itemId.trim() });
+};
+vaultItemSchema.statics.softDeleteItem = function(userId, itemId) {
+  return this.findOneAndUpdate(
+    { userId, itemId: itemId.trim(), isDeleted: false },
+    { $set: { isDeleted: true, deletedAt: /* @__PURE__ */ new Date() } },
+    { new: true }
+  );
+};
+vaultItemSchema.statics.restoreItem = function(userId, itemId) {
+  return this.findOneAndUpdate(
+    { userId, itemId: itemId.trim(), isDeleted: true },
+    { $set: { isDeleted: false, deletedAt: null } },
+    { new: true }
+  );
+};
+vaultItemSchema.statics.togglePin = async function(userId, itemId) {
+  const item = await this.findOne({ userId, itemId: itemId.trim() });
+  if (!item) return null;
+  item.isPinned = !item.isPinned;
+  item.pinnedAt = item.isPinned ? /* @__PURE__ */ new Date() : null;
+  return item.save();
+};
 var getVaultItemModel = (username, customConnection) => {
   if (!username || !username.trim()) {
     throw new Error("Username is required for isolated vault items");
@@ -3801,8 +3937,20 @@ var setScopedVaultItemPinByUsername = async (userId, username, itemId, isPinned)
 
 // server/controllers/legacyVaultController.ts
 init_logger();
+
+// server/responses.ts
+var sendSuccess = (res, data, message = "Operation successful", status = 200) => {
+  return res.status(status).json({
+    success: true,
+    message,
+    data
+  });
+};
+
+// server/controllers/legacyVaultController.ts
 var MAX_LEGACY_ID_LENGTH = 256;
 var SAFE_LEGACY_ID_PATTERN = /^[a-zA-Z0-9:_-]+$/;
+var SAFE_UPLOAD_ID_PATTERN = /^[a-zA-Z0-9:_-]{1,128}$/;
 var LEGACY_RAW_LIMIT = `${Number(process.env.LEGACY_RAW_LIMIT_MB || process.env.MAX_FILE_SIZE_MB || 4096)}mb`;
 var MAX_SCOPED_TEXT_PAYLOAD_BYTES = Math.max(
   1e6,
@@ -3830,7 +3978,9 @@ var ALLOWED_SCOPED_CATEGORIES = /* @__PURE__ */ new Set([
   "video",
   "wifi"
 ]);
-var CHUNK_UPLOAD_ROOT = path3.join(process.cwd(), "vault-tmp", "chunk-uploads");
+var CHUNK_UPLOAD_ROOT = path3.resolve(
+  process.env.CHUNK_UPLOAD_ROOT || path3.join(process.cwd(), "vault-tmp", "chunk-uploads")
+);
 var CHUNK_UPLOAD_TTL_MS = Math.max(
   6e4,
   Number(process.env.CHUNK_UPLOAD_TTL_MS || 30 * 60 * 1e3)
@@ -3855,14 +4005,22 @@ var CHUNK_ASSEMBLY_LOCK_STALE_MS = Math.max(
 var CHUNK_COMPLETION_MARKER_PREFIX = "completed-";
 var safeRm = async (targetPath) => {
   try {
-    await fs2.rm(targetPath, { recursive: true, force: true });
+    const resolved = path3.resolve(targetPath);
+    if (!resolved.startsWith(CHUNK_UPLOAD_ROOT) || resolved === CHUNK_UPLOAD_ROOT) {
+      return;
+    }
+    await fs2.rm(resolved, { recursive: true, force: true });
   } catch (err) {
     logger.debug("safeRm failed to remove target path", { targetPath, error: err });
   }
 };
 var safeUnlink = async (targetPath) => {
   try {
-    await fs2.unlink(targetPath);
+    const resolved = path3.resolve(targetPath);
+    if (!resolved.startsWith(CHUNK_UPLOAD_ROOT) || resolved === CHUNK_UPLOAD_ROOT) {
+      return;
+    }
+    await fs2.unlink(resolved);
   } catch (err) {
     logger.debug("safeUnlink failed to unlink file", { targetPath, error: err });
   }
@@ -4021,14 +4179,18 @@ var parseLegacyPayloadFromRequest = async (req, res) => {
     const chunkedHeader = String(req.headers["x-vault-chunked"] || "").trim().toLowerCase();
     const isChunked = chunkedHeader === "1" || chunkedHeader === "true" || chunkedHeader === "yes";
     if (isChunked) {
-      const uploadId = String(req.headers["x-vault-upload-id"] || "").trim();
+      const rawUploadId = String(req.headers["x-vault-upload-id"] || "").trim();
+      if (!rawUploadId || !SAFE_UPLOAD_ID_PATTERN.test(rawUploadId)) {
+        throw new AppError(400, "INVALID_CHUNK_HEADERS", "Invalid or missing upload ID format.");
+      }
+      const uploadId = rawUploadId;
       const chunkIndex = Number.parseInt(String(req.headers["x-vault-chunk-index"] || "-1"), 10);
       const chunkCount = Number.parseInt(String(req.headers["x-vault-chunk-count"] || "-1"), 10);
       const declaredTotalSize = Number.parseInt(
         String(req.headers["x-vault-total-size"] || "-1"),
         10
       );
-      if (!uploadId || chunkIndex < 0 || chunkCount <= 0 || chunkIndex >= chunkCount || chunkCount > CHUNK_UPLOAD_MAX_CHUNKS) {
+      if (chunkIndex < 0 || chunkCount <= 0 || chunkIndex >= chunkCount || chunkCount > CHUNK_UPLOAD_MAX_CHUNKS) {
         throw new AppError(400, "INVALID_CHUNK_HEADERS", "Invalid chunk upload headers.");
       }
       if (!Number.isFinite(declaredTotalSize) || declaredTotalSize <= 0 || declaredTotalSize > LEGACY_MAX_FILE_SIZE_BYTES) {
@@ -4050,7 +4212,7 @@ var parseLegacyPayloadFromRequest = async (req, res) => {
         );
       }
       const scopedUserId = req?.user?.userId || "anon";
-      const userChunkRoot = path3.join(CHUNK_UPLOAD_ROOT, String(scopedUserId));
+      const userChunkRoot = path3.resolve(path3.join(CHUNK_UPLOAD_ROOT, String(scopedUserId)));
       await fs2.mkdir(userChunkRoot, { recursive: true });
       await cleanupExpiredChunkUploads(userChunkRoot);
       const routeItemId = typeof req.params?.itemId === "string" && req.params.itemId.trim() ? req.params.itemId.trim() : null;
@@ -4067,7 +4229,10 @@ var parseLegacyPayloadFromRequest = async (req, res) => {
           chunkUploadCleanupPath: null
         };
       }
-      const uploadDir = path3.join(userChunkRoot, uploadId);
+      const uploadDir = path3.resolve(path3.join(userChunkRoot, uploadId));
+      if (!uploadDir.startsWith(userChunkRoot)) {
+        throw new AppError(400, "INVALID_CHUNK_HEADERS", "Path traversal attempt detected.");
+      }
       await fs2.mkdir(uploadDir, { recursive: true });
       const chunkPath = path3.join(uploadDir, `${chunkIndex}.part`);
       const chunkBuffer = binaryPayload;
@@ -4251,12 +4416,13 @@ var parseLegacyPayloadFromRequest = async (req, res) => {
 var upsertLegacyVaultItem = async (req, res) => {
   const vaultId = getRouteParam(req.params.vaultId, "vaultId");
   const itemId = getRouteParam(req.params.itemId, "itemId");
+  const username = req.user?.username;
+  if (!username) {
+    throw AppError.unauthorized("Authentication required", "UNAUTHORIZED");
+  }
   const parsed = await parseLegacyPayloadFromRequest(req, res);
   if (!parsed) {
-    return sendRequestError(req, res, 400, {
-      code: "INVALID_PAYLOAD",
-      message: "Payload is required."
-    });
+    throw AppError.badRequest("Payload is required.", "INVALID_PAYLOAD");
   }
   if (parsed.chunkUploadPending) {
     return res.status(202).json({
@@ -4279,7 +4445,7 @@ var upsertLegacyVaultItem = async (req, res) => {
   }
   const result = await saveLegacyVaultItem({
     vaultId,
-    username: req.user.username,
+    username,
     itemId,
     payload: parsed.payload,
     category: parsed.category,
@@ -4297,29 +4463,32 @@ var upsertLegacyVaultItem = async (req, res) => {
   if (typeof parsed.chunkUploadCleanupPath === "string") {
     await safeRm(parsed.chunkUploadCleanupPath);
   }
-  return res.json({ success: true, data: result });
+  return sendSuccess(res, result, "Legacy vault item saved successfully");
 };
 var getLegacyVaultItems = async (req, res) => {
   const vaultId = getRouteParam(req.params.vaultId, "vaultId");
-  const username = req.user.username;
+  const username = req.user?.username;
+  if (!username) {
+    throw AppError.unauthorized("Authentication required", "UNAUTHORIZED");
+  }
   const items = await listLegacyVaultItems(vaultId, username);
   return res.json({ success: true, items });
 };
 var removeLegacyVaultItem = async (req, res) => {
   const vaultId = getRouteParam(req.params.vaultId, "vaultId");
   const itemId = getRouteParam(req.params.itemId, "itemId");
-  const username = req.user.username;
+  const username = req.user?.username;
+  if (!username) {
+    throw AppError.unauthorized("Authentication required", "UNAUTHORIZED");
+  }
   const deleted = await deleteLegacyVaultItem(vaultId, itemId, username);
-  return res.json({ success: true, data: { deleted } });
+  return sendSuccess(res, { deleted }, "Legacy vault item deleted successfully");
 };
 var upsertScopedVaultItem = async (req, res) => {
   const itemId = getRouteParam(req.params.itemId, "itemId");
   const parsed = await parseLegacyPayloadFromRequest(req, res);
   if (!parsed) {
-    return sendRequestError(req, res, 400, {
-      code: "INVALID_PAYLOAD",
-      message: "Payload is required."
-    });
+    throw AppError.badRequest("Payload is required.", "INVALID_PAYLOAD");
   }
   if (parsed.chunkUploadPending) {
     return res.status(202).json({
@@ -4361,7 +4530,7 @@ var upsertScopedVaultItem = async (req, res) => {
   if (typeof parsed.chunkUploadCleanupPath === "string") {
     await safeRm(parsed.chunkUploadCleanupPath);
   }
-  return res.json({ success: true, data: result });
+  return sendSuccess(res, result, "Scoped vault item saved successfully");
 };
 var getScopedVaultItems = async (req, res) => {
   const items = await listScopedVaultItemsByUsername(req.user.userId, req.user.username);
@@ -4370,7 +4539,7 @@ var getScopedVaultItems = async (req, res) => {
 var removeScopedVaultItem = async (req, res) => {
   const itemId = getRouteParam(req.params.itemId, "itemId");
   const deleted = await deleteScopedVaultItemByUsername(req.user.userId, req.user.username, itemId);
-  return res.json({ success: true, data: { deleted } });
+  return sendSuccess(res, { deleted }, "Scoped vault item deleted successfully");
 };
 var toggleScopedVaultItemPin = async (req, res) => {
   const itemId = getRouteParam(req.params.itemId, "itemId");
@@ -4384,7 +4553,7 @@ var toggleScopedVaultItemPin = async (req, res) => {
     itemId,
     isPinned
   );
-  return res.json({ success: true, data });
+  return sendSuccess(res, data, "Item pin state toggled successfully");
 };
 
 // server/controllers/vaultController.ts
@@ -4394,30 +4563,34 @@ import crypto7 from "crypto";
 import { constants as bufferConstants } from "node:buffer";
 
 // server/models/activityLog.ts
-import mongoose6 from "mongoose";
-var encryptedActivityLogSchema = new mongoose6.Schema(
+import mongoose6, { Schema as Schema2 } from "mongoose";
+var encryptedActivityLogSchema = new Schema2(
   {
     userId: {
       type: String,
-      required: true,
+      required: [true, "userId is required"],
+      trim: true,
       index: true,
       description: "User who performed the action"
     },
     action: {
       type: String,
-      required: true,
+      required: [true, "action is required"],
+      trim: true,
       index: true,
       description: "Type of action performed"
     },
     category: {
       type: String,
-      required: true,
+      required: [true, "category is required"],
+      trim: true,
       index: true,
       description: "Vault category (auth, photos, notes, passwords, etc.)"
     },
     itemId: {
       type: String,
       default: null,
+      trim: true,
       description: "ID of affected vault item (if applicable)"
     },
     /**
@@ -4427,46 +4600,64 @@ var encryptedActivityLogSchema = new mongoose6.Schema(
     encryptedData: {
       cipherText: {
         type: String,
-        required: true,
+        required: [true, "cipherText is required"],
+        trim: true,
         description: "AES-256-GCM encrypted activity details"
       },
       iv: {
         type: String,
-        required: true,
+        required: [true, "iv is required"],
+        trim: true,
         description: "Initialization vector (base64)"
       },
       authTag: {
         type: String,
-        required: true,
+        required: [true, "authTag is required"],
+        trim: true,
         description: "Authentication tag for GCM mode"
       },
       algorithm: {
         type: String,
         default: "aes-256-gcm",
+        trim: true,
         description: "Encryption algorithm"
       }
     },
     /**
-     * Unencrypted metadata for querying
+     * Unencrypted metadata for querying and alerting
      */
     metadata: {
       deviceId: {
         type: String,
+        trim: true,
         description: "Device that performed the action"
       },
       ipAddress: {
         type: String,
+        trim: true,
         index: true,
         description: "IP address from which action was performed"
       },
-      userAgent: String,
+      userAgent: {
+        type: String,
+        trim: true
+      },
       status: {
         type: String,
         enum: ["SUCCESS", "FAILURE", "PARTIAL"],
-        default: "SUCCESS"
+        default: "SUCCESS",
+        index: true
       },
-      errorCode: String,
-      errorMessage: String
+      errorCode: {
+        type: String,
+        default: null,
+        trim: true
+      },
+      errorMessage: {
+        type: String,
+        default: null,
+        trim: true
+      }
     },
     /**
      * Timestamps and retention
@@ -4489,7 +4680,8 @@ var encryptedActivityLogSchema = new mongoose6.Schema(
     }
   },
   {
-    timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" }
+    timestamps: true,
+    versionKey: false
   }
 );
 encryptedActivityLogSchema.index({ userId: 1, isDeleted: 1, createdAt: -1 });
@@ -4497,11 +4689,24 @@ encryptedActivityLogSchema.index({ userId: 1, createdAt: -1 });
 encryptedActivityLogSchema.index({ userId: 1, action: 1, createdAt: -1 });
 encryptedActivityLogSchema.index({ userId: 1, "metadata.ipAddress": 1, createdAt: -1 });
 encryptedActivityLogSchema.index({ userId: 1, category: 1, createdAt: -1 });
+encryptedActivityLogSchema.index({ userId: 1, "metadata.status": 1, createdAt: -1 });
+encryptedActivityLogSchema.index({ userId: 1, itemId: 1, createdAt: -1 });
+encryptedActivityLogSchema.statics.findRecentByUser = function(userId, limit = 50) {
+  return this.find({ userId: userId.trim(), isDeleted: false }).sort({ createdAt: -1 }).limit(limit).allowDiskUse(true);
+};
+encryptedActivityLogSchema.statics.softDelete = function(userId, logId) {
+  return this.findOneAndUpdate(
+    { _id: logId, userId: userId.trim(), isDeleted: false },
+    { $set: { isDeleted: true, deletedAt: /* @__PURE__ */ new Date() } },
+    { new: true }
+  );
+};
 var getActivityLogModel = (username, customConnection) => {
   if (!username || !username.trim()) {
     throw new Error("Username is required for isolated activity logs");
   }
-  const collectionName = `${username.trim()}.${username.trim()}_activity_logs`;
+  const normalized = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "_");
+  const collectionName = `${normalized}.${normalized}_activity_logs`;
   if (customConnection) {
     if (customConnection.models[collectionName]) {
       return customConnection.models[collectionName];
@@ -4520,11 +4725,7 @@ var getActivityLogModel = (username, customConnection) => {
   if (mongoose6.models[collectionName]) {
     return mongoose6.models[collectionName];
   }
-  const model2 = mongoose6.model(
-    collectionName,
-    encryptedActivityLogSchema,
-    collectionName
-  );
+  const model2 = mongoose6.model(collectionName, encryptedActivityLogSchema, collectionName);
   if (typeof model2?.createIndexes === "function") {
     model2.createIndexes().catch(() => {
     });
@@ -4853,6 +5054,12 @@ var CATEGORY_ALIAS_MAP2 = {
   settings: "settings",
   system: "system",
   users: "users",
+  user: "users",
+  card: "card",
+  cards: "card",
+  identity: "identity",
+  identities: "identity",
+  wifi: "wifi",
   v2_items: "file"
 };
 var ALLOWED_SCOPED_CATEGORIES2 = /* @__PURE__ */ new Set([
@@ -5075,22 +5282,103 @@ var deleteVaultItemByCategory = async (input) => {
 };
 
 // server/models/totalUser.ts
-import mongoose9 from "mongoose";
-var totalUserSchema = new mongoose9.Schema(
+import mongoose9, { Schema as Schema3 } from "mongoose";
+var totalUserSchema = new Schema3(
   {
-    exists: { type: Boolean, required: true },
-    exactMatch: { type: Boolean, required: true },
-    username: { type: String, required: true, trim: true, lowercase: true },
-    userId: { type: String, default: null },
-    createdDate: { type: Date, default: null }
+    exists: {
+      type: Boolean,
+      required: true,
+      default: true
+    },
+    exactMatch: {
+      type: Boolean,
+      required: true,
+      default: true
+    },
+    username: {
+      type: String,
+      required: [true, "username is required"],
+      trim: true,
+      lowercase: true
+    },
+    userId: {
+      type: String,
+      default: null,
+      trim: true
+    },
+    createdDate: {
+      type: Date,
+      default: () => /* @__PURE__ */ new Date()
+    }
   },
   {
     collection: "total_users",
+    timestamps: true,
     versionKey: false
   }
 );
 totalUserSchema.index({ username: 1 }, { unique: true });
-var TotalUser = mongoose9.models.TotalUser || mongoose9.model("TotalUser", totalUserSchema);
+totalUserSchema.index({ userId: 1 }, { sparse: true });
+totalUserSchema.index({ exists: 1, exactMatch: 1 });
+totalUserSchema.statics.mirrorUser = async function(username, userId, createdDate) {
+  const normalized = username.trim().toLowerCase();
+  return this.findOneAndUpdate(
+    { username: normalized },
+    {
+      $set: {
+        exists: true,
+        exactMatch: true,
+        userId: userId.trim(),
+        createdDate: createdDate || /* @__PURE__ */ new Date()
+      }
+    },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true
+    }
+  );
+};
+totalUserSchema.statics.isRegistered = async function(username) {
+  const normalized = username.trim().toLowerCase();
+  const doc = await this.findOne({ username: normalized, exists: true }).select("_id").lean();
+  return Boolean(doc);
+};
+totalUserSchema.statics.findByUsernameNormalized = function(username) {
+  const normalized = username.trim().toLowerCase();
+  return this.findOne({ username: normalized });
+};
+var getTotalUserModel = (customConnection) => {
+  if (customConnection) {
+    if (customConnection.models.TotalUser) {
+      return customConnection.models.TotalUser;
+    }
+    const model3 = customConnection.model(
+      "TotalUser",
+      totalUserSchema,
+      "total_users"
+    );
+    if (typeof model3?.createIndexes === "function") {
+      model3.createIndexes().catch(() => {
+      });
+    }
+    return model3;
+  }
+  if (mongoose9.models.TotalUser) {
+    return mongoose9.models.TotalUser;
+  }
+  const model2 = mongoose9.model(
+    "TotalUser",
+    totalUserSchema,
+    "total_users"
+  );
+  if (typeof model2?.createIndexes === "function") {
+    model2.createIndexes().catch(() => {
+    });
+  }
+  return model2;
+};
+var TotalUser = getTotalUserModel();
 
 // server/services/vaultAuthService.ts
 init_logger();
@@ -5100,105 +5388,229 @@ import mongoose17 from "mongoose";
 import { createHash as createHash3 } from "crypto";
 
 // server/models/RefreshToken.ts
-import mongoose10, { Schema } from "mongoose";
-var refreshTokenSchema = new Schema(
+import mongoose10, { Schema as Schema4 } from "mongoose";
+var refreshTokenSchema = new Schema4(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    familyId: { type: String, required: true, index: true },
-    sessionId: { type: String, required: true, index: true },
-    tokenHash: { type: String, required: true, index: true },
-    isRevoked: { type: Boolean, default: false, index: true },
-    rotatedAt: { type: Date, default: null },
-    replacementTokenHash: { type: String, default: null },
-    ip: { type: String, default: "unknown" },
-    userAgent: { type: String, default: "unknown" },
-    expiresAt: { type: Date, required: true, index: true }
+    userId: {
+      type: Schema4.Types.ObjectId,
+      ref: "User",
+      required: [true, "userId is required"],
+      index: true
+    },
+    familyId: {
+      type: String,
+      required: [true, "familyId is required"],
+      trim: true,
+      index: true
+    },
+    sessionId: {
+      type: String,
+      required: [true, "sessionId is required"],
+      trim: true,
+      index: true
+    },
+    tokenHash: {
+      type: String,
+      required: [true, "tokenHash is required"],
+      trim: true,
+      index: true
+    },
+    isRevoked: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+    rotatedAt: {
+      type: Date,
+      default: null
+    },
+    replacementTokenHash: {
+      type: String,
+      default: null,
+      trim: true
+    },
+    ip: {
+      type: String,
+      default: "unknown",
+      trim: true
+    },
+    userAgent: {
+      type: String,
+      default: "unknown",
+      trim: true
+    },
+    expiresAt: {
+      type: Date,
+      required: [true, "expiresAt is required"],
+      // MongoDB TTL index: automatically deletes document once expiresAt has passed
+      expires: 0,
+      index: true
+    }
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    collection: "refreshtokens",
+    versionKey: false
+  }
 );
-var RefreshToken = mongoose10.models.RefreshToken || mongoose10.model("RefreshToken", refreshTokenSchema);
+refreshTokenSchema.index({ tokenHash: 1, isRevoked: 1 });
+refreshTokenSchema.index({ familyId: 1, isRevoked: 1 });
+refreshTokenSchema.index({ userId: 1, isRevoked: 1 });
+refreshTokenSchema.index({ sessionId: 1, isRevoked: 1 });
+refreshTokenSchema.index({ userId: 1, createdAt: -1 });
+refreshTokenSchema.methods.revoke = async function(replacementHash) {
+  this.isRevoked = true;
+  this.rotatedAt = /* @__PURE__ */ new Date();
+  if (replacementHash) {
+    this.replacementTokenHash = replacementHash;
+  }
+  return this.save();
+};
+refreshTokenSchema.methods.isValid = function() {
+  return !this.isRevoked && this.expiresAt.getTime() > Date.now();
+};
+refreshTokenSchema.statics.revokeFamily = function(familyId) {
+  return this.updateMany(
+    { familyId: familyId.trim(), isRevoked: false },
+    { $set: { isRevoked: true, rotatedAt: /* @__PURE__ */ new Date() } }
+  );
+};
+refreshTokenSchema.statics.revokeSession = function(sessionId) {
+  return this.updateMany(
+    { sessionId: sessionId.trim(), isRevoked: false },
+    { $set: { isRevoked: true, rotatedAt: /* @__PURE__ */ new Date() } }
+  );
+};
+refreshTokenSchema.statics.revokeUserTokens = function(userId) {
+  return this.updateMany(
+    { userId, isRevoked: false },
+    { $set: { isRevoked: true, rotatedAt: /* @__PURE__ */ new Date() } }
+  );
+};
+refreshTokenSchema.statics.findValidByTokenHash = function(tokenHash) {
+  return this.findOne({
+    tokenHash: tokenHash.trim(),
+    isRevoked: false,
+    expiresAt: { $gt: /* @__PURE__ */ new Date() }
+  });
+};
+var getRefreshTokenModel = (customConnection) => {
+  if (customConnection) {
+    if (customConnection.models.RefreshToken) {
+      return customConnection.models.RefreshToken;
+    }
+    const model3 = customConnection.model(
+      "RefreshToken",
+      refreshTokenSchema,
+      "refreshtokens"
+    );
+    if (typeof model3?.createIndexes === "function") {
+      model3.createIndexes().catch(() => {
+      });
+    }
+    return model3;
+  }
+  if (mongoose10.models.RefreshToken) {
+    return mongoose10.models.RefreshToken;
+  }
+  const model2 = mongoose10.model(
+    "RefreshToken",
+    refreshTokenSchema,
+    "refreshtokens"
+  );
+  if (typeof model2?.createIndexes === "function") {
+    model2.createIndexes().catch(() => {
+    });
+  }
+  return model2;
+};
+var RefreshToken = getRefreshTokenModel();
 
 // server/models/masterKey.ts
-import mongoose11 from "mongoose";
-var encryptedKeySchema = new mongoose11.Schema(
+import mongoose11, { Schema as Schema5 } from "mongoose";
+var encryptedKeySchema = new Schema5(
   {
     cipherText: {
       type: String,
-      required: true,
+      required: [true, "cipherText is required"],
+      trim: true,
       description: "AES-256-GCM encrypted master key"
     },
     iv: {
       type: String,
-      required: true,
+      required: [true, "iv is required"],
+      trim: true,
       description: "Initialization vector (base64)"
     },
     authTag: {
       type: String,
-      required: true,
+      required: [true, "authTag is required"],
+      trim: true,
       description: "Authentication tag for GCM mode"
     },
     salt: {
       type: String,
       required: false,
       default: null,
+      trim: true,
       description: "Salt for key derivation"
     },
     algorithm: {
       type: String,
       default: "aes-256-gcm",
+      trim: true,
       description: "Encryption algorithm used"
     },
     keyVersion: {
       type: String,
       default: "v1",
+      trim: true,
       description: "Version of the encryption key"
     }
   },
   { _id: false }
 );
-var masterKeySchema = new mongoose11.Schema(
+var masterKeySchema = new Schema5(
   {
-    userId: { type: String, required: true, unique: true, index: true },
-    /**
-     * Encrypted master key protected with AES-256-GCM
-     * Originally encrypted on client with cloud protection key
-     */
-    encryptedMasterKey: { type: encryptedKeySchema, required: true },
-    /**
-     * Backup codephrases for account recovery (optional, encrypted separately)
-     */
-    recoveryPhrasesEncrypted: { type: String, default: null },
-    /**
-     * Hash of the master key for verification across devices
-     * Allows clients to verify they have the correct decrypted key
-     */
-    masterKeyHash: { type: encryptedKeySchema, required: true },
-    /**
-     * Rolling history of prior master key hashes for audit/compliance.
-     * Values remain encrypted server-side and are truncated to a safe limit.
-     */
+    userId: {
+      type: String,
+      required: [true, "userId is required"],
+      unique: true,
+      trim: true
+    },
+    encryptedMasterKey: {
+      type: encryptedKeySchema,
+      required: [true, "encryptedMasterKey is required"]
+    },
+    recoveryPhrasesEncrypted: {
+      type: String,
+      default: null,
+      trim: true
+    },
+    masterKeyHash: {
+      type: encryptedKeySchema,
+      required: [true, "masterKeyHash is required"]
+    },
     masterKeyHashHistory: {
       type: [
-        new mongoose11.Schema(
+        new Schema5(
           {
             hash: { type: encryptedKeySchema, required: true },
             changedAt: { type: Date, required: true, default: Date.now },
-            changedByDeviceId: { type: String, default: null },
-            changedByIp: { type: String, default: null },
-            changedByUserAgent: { type: String, default: null }
+            changedByDeviceId: { type: String, default: null, trim: true },
+            changedByIp: { type: String, default: null, trim: true },
+            changedByUserAgent: { type: String, default: null, trim: true }
           },
           { _id: false }
         )
       ],
       default: []
     },
-    /**
-     * Metadata about key creation and updates
-     */
     metadata: {
       derivationAlgorithm: {
         type: String,
         default: "argon2id",
+        trim: true,
         description: "Algorithm used to derive master key from password"
       },
       derivationParams: {
@@ -5211,39 +5623,95 @@ var masterKeySchema = new mongoose11.Schema(
       lastAccessedAt: { type: Date, default: Date.now },
       deviceId: {
         type: String,
+        trim: true,
         description: "Device that created/updated the key"
       }
     },
-    /**
-     * Security audit trail
-     */
     audit: {
-      accessCount: { type: Number, default: 0 },
-      lastAccessedByDeviceId: { type: String, default: null },
-      failedDecryptionAttempts: { type: Number, default: 0 },
+      accessCount: { type: Number, default: 0, min: 0 },
+      lastAccessedByDeviceId: { type: String, default: null, trim: true },
+      failedDecryptionAttempts: { type: Number, default: 0, min: 0 },
       lastFailedAttempt: { type: Date, default: null }
     },
-    /**
-     * Status tracking
-     */
-    isActive: { type: Boolean, default: true },
-    isDeleted: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true, index: true },
+    isDeleted: { type: Boolean, default: false, index: true },
     deletedAt: { type: Date, default: null }
   },
-  { timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" } }
+  {
+    timestamps: true,
+    versionKey: false
+  }
 );
-masterKeySchema.index({ userId: 1, isActive: 1 });
+masterKeySchema.index({ userId: 1, isActive: 1, isDeleted: 1 });
+masterKeySchema.index({ userId: 1, isDeleted: 1 });
 masterKeySchema.index({ "metadata.createdAt": -1 });
-var getMasterKeyModel = (username) => {
+masterKeySchema.index({ "metadata.deviceId": 1 });
+masterKeySchema.pre("save", function() {
+  if (Array.isArray(this.masterKeyHashHistory) && this.masterKeyHashHistory.length > 50) {
+    this.masterKeyHashHistory = this.masterKeyHashHistory.slice(-50);
+  }
+});
+masterKeySchema.statics.recordAccess = function(userId, deviceId) {
+  const update = {
+    $inc: { "audit.accessCount": 1 },
+    $set: {
+      "metadata.lastAccessedAt": /* @__PURE__ */ new Date(),
+      "audit.lastAccessedByDeviceId": deviceId || null
+    }
+  };
+  return this.findOneAndUpdate({ userId: userId.trim(), isDeleted: false }, update, { new: true });
+};
+masterKeySchema.statics.recordFailedAttempt = function(userId) {
+  return this.findOneAndUpdate(
+    { userId: userId.trim(), isDeleted: false },
+    {
+      $inc: { "audit.failedDecryptionAttempts": 1 },
+      $set: { "audit.lastFailedAttempt": /* @__PURE__ */ new Date() }
+    },
+    { new: true }
+  );
+};
+masterKeySchema.statics.findByUserIdActive = function(userId) {
+  return this.findOne({
+    userId: userId.trim(),
+    isActive: true,
+    isDeleted: false
+  });
+};
+var getMasterKeyModel = (username, customConnection) => {
   if (!username || !username.trim()) {
     throw new Error("Username is required for isolated master keys");
   }
   const normalized = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "_");
   const collectionName = `${normalized}.${normalized}_master_keys`;
+  if (customConnection) {
+    if (customConnection.models[collectionName]) {
+      return customConnection.models[collectionName];
+    }
+    const model3 = customConnection.model(
+      collectionName,
+      masterKeySchema,
+      collectionName
+    );
+    if (typeof model3?.createIndexes === "function") {
+      model3.createIndexes().catch(() => {
+      });
+    }
+    return model3;
+  }
   if (mongoose11.models[collectionName]) {
     return mongoose11.models[collectionName];
   }
-  return mongoose11.model(collectionName, masterKeySchema, collectionName);
+  const model2 = mongoose11.model(
+    collectionName,
+    masterKeySchema,
+    collectionName
+  );
+  if (typeof model2?.createIndexes === "function") {
+    model2.createIndexes().catch(() => {
+    });
+  }
+  return model2;
 };
 
 // server/services/authService.ts
@@ -5252,32 +5720,107 @@ import mongoose15 from "mongoose";
 init_logger();
 
 // server/models/folder.ts
-import mongoose12, { Schema as Schema2 } from "mongoose";
-var folderSchema = new Schema2(
+import mongoose12, { Schema as Schema6 } from "mongoose";
+var folderSchema = new Schema6(
   {
-    userId: { type: String, required: true, index: true },
-    username: { type: String, required: true, index: true },
-    name: { type: Schema2.Types.Mixed, required: true },
-    nameHash: { type: String, required: false, index: true },
-    itemType: { type: String, required: true },
-    parentId: { type: String, default: null, index: true }
+    userId: {
+      type: String,
+      required: [true, "userId is required"],
+      trim: true,
+      index: true
+    },
+    username: {
+      type: String,
+      required: [true, "username is required"],
+      trim: true,
+      lowercase: true,
+      index: true
+    },
+    name: {
+      type: Schema6.Types.Mixed,
+      required: [true, "name is required"],
+      validate: {
+        validator: (v) => {
+          if (typeof v === "string") return v.trim().length > 0;
+          if (typeof v === "object" && v !== null) return Object.keys(v).length > 0;
+          return false;
+        },
+        message: "Folder name must be a non-empty string or encrypted object"
+      }
+    },
+    nameHash: {
+      type: String,
+      required: false,
+      trim: true,
+      index: true
+    },
+    itemType: {
+      type: String,
+      required: [true, "itemType is required"],
+      trim: true,
+      lowercase: true,
+      index: true
+    },
+    parentId: {
+      type: String,
+      default: null,
+      trim: true,
+      index: true
+    }
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false
+  }
 );
 folderSchema.index(
   { userId: 1, itemType: 1, nameHash: 1, parentId: 1 },
   { unique: true, partialFilterExpression: { nameHash: { $exists: true } } }
 );
-var getFolderModel = (username) => {
+folderSchema.index({ userId: 1, parentId: 1 });
+folderSchema.index({ userId: 1, itemType: 1 });
+folderSchema.index({ userId: 1, parentId: 1, itemType: 1 });
+folderSchema.index({ userId: 1, createdAt: -1 });
+folderSchema.statics.findUserFolders = function(userId) {
+  return this.find({ userId: userId.trim() }).sort({ createdAt: 1 });
+};
+folderSchema.statics.findSubfolders = function(userId, parentId) {
+  return this.find({ userId: userId.trim(), parentId }).sort({ createdAt: 1 });
+};
+var getFolderModel = (username, customConnection) => {
   if (!username || !username.trim()) {
     throw new Error("Username is required for isolated folders");
   }
   const normalized = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "_");
   const collectionName = `${normalized}.${normalized}_folders`;
+  if (customConnection) {
+    if (customConnection.models[collectionName]) {
+      return customConnection.models[collectionName];
+    }
+    const model3 = customConnection.model(
+      collectionName,
+      folderSchema,
+      collectionName
+    );
+    if (typeof model3?.createIndexes === "function") {
+      model3.createIndexes().catch(() => {
+      });
+    }
+    return model3;
+  }
   if (mongoose12.models[collectionName]) {
     return mongoose12.models[collectionName];
   }
-  return mongoose12.model(collectionName, folderSchema, collectionName);
+  const model2 = mongoose12.model(
+    collectionName,
+    folderSchema,
+    collectionName
+  );
+  if (typeof model2?.createIndexes === "function") {
+    model2.createIndexes().catch(() => {
+    });
+  }
+  return model2;
 };
 
 // server/services/folderService.ts
@@ -5399,30 +5942,85 @@ var initializeDefaultUserFolders = async (userId, username) => {
 import mongoose14 from "mongoose";
 
 // server/models/notification.ts
-import mongoose13 from "mongoose";
-var notificationSchema = new mongoose13.Schema(
+import mongoose13, { Schema as Schema7 } from "mongoose";
+var notificationSchema = new Schema7(
   {
-    userId: { type: mongoose13.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    userId: {
+      type: Schema7.Types.ObjectId,
+      ref: "User",
+      required: [true, "userId is required"],
+      index: true
+    },
     type: {
       type: String,
-      required: true,
-      enum: ["device_login", "sync_conflict", "security_alert"]
+      required: [true, "notification type is required"],
+      trim: true,
+      index: true
     },
-    title: { type: String, required: true },
-    message: { type: String, required: true },
-    metadata: { type: mongoose13.Schema.Types.Mixed, default: {} },
-    isRead: { type: Boolean, default: false, index: true }
+    title: {
+      type: String,
+      required: [true, "notification title is required"],
+      trim: true,
+      maxlength: 200
+    },
+    message: {
+      type: String,
+      required: [true, "notification message is required"],
+      trim: true,
+      maxlength: 2e3
+    },
+    metadata: {
+      type: Schema7.Types.Mixed,
+      default: () => ({})
+    },
+    isRead: {
+      type: Boolean,
+      default: false,
+      index: true
+    }
   },
   {
-    timestamps: true
+    timestamps: true,
+    versionKey: false
   }
 );
-var getNotificationModel = (username) => {
+notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
+notificationSchema.index({ userId: 1, createdAt: -1 });
+notificationSchema.index({ userId: 1, type: 1, createdAt: -1 });
+notificationSchema.statics.markAsRead = function(userId, notificationId) {
+  return this.findOneAndUpdate(
+    { _id: notificationId, userId },
+    { $set: { isRead: true } },
+    { new: true }
+  );
+};
+notificationSchema.statics.markAllAsRead = function(userId) {
+  return this.updateMany({ userId, isRead: false }, { $set: { isRead: true } });
+};
+notificationSchema.statics.getUnreadCount = function(userId) {
+  return this.countDocuments({ userId, isRead: false });
+};
+var getNotificationModel = (username, customConnection) => {
   if (!username || !username.trim()) {
     throw new Error("Username is required for isolated notifications");
   }
   const normalized = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "_");
   const collectionName = `${normalized}.${normalized}_notifications`;
+  if (customConnection) {
+    if (customConnection.models[collectionName]) {
+      return customConnection.models[collectionName];
+    }
+    const model3 = customConnection.model(
+      collectionName,
+      notificationSchema,
+      collectionName
+    );
+    if (typeof model3?.createIndexes === "function") {
+      model3.createIndexes().catch(() => {
+      });
+    }
+    return model3;
+  }
   if (mongoose13.models[collectionName]) {
     return mongoose13.models[collectionName];
   }
@@ -5431,16 +6029,32 @@ var getNotificationModel = (username) => {
     notificationSchema,
     collectionName
   );
-  model2.createIndexes().catch(() => {
-  });
+  if (typeof model2?.createIndexes === "function") {
+    model2.createIndexes().catch(() => {
+    });
+  }
   return model2;
 };
-var getLegacyNotificationModel = () => {
+var getLegacyNotificationModel = (customConnection) => {
   const collectionName = "notifications";
+  if (customConnection) {
+    if (customConnection.models[collectionName]) {
+      return customConnection.models[collectionName];
+    }
+    return customConnection.model(
+      collectionName,
+      notificationSchema,
+      collectionName
+    );
+  }
   if (mongoose13.models[collectionName]) {
     return mongoose13.models[collectionName];
   }
-  return mongoose13.model(collectionName, notificationSchema, collectionName);
+  return mongoose13.model(
+    collectionName,
+    notificationSchema,
+    collectionName
+  );
 };
 
 // server/services/notificationService.ts
@@ -7962,6 +8576,50 @@ var MULTIPART_SESSION_TTL_MS = Math.max(
 var MULTIPART_MAX_FILE_SIZE_BYTES = maxUploadFileSizeBytes;
 var MULTIPART_MAX_PARTS = Math.max(1, Number(process.env.MULTIPART_MAX_PARTS || 2e3));
 var FILE_CATEGORY_SET = /* @__PURE__ */ new Set(["photo", "video", "audio", "document", "other-files"]);
+var ALL_CATEGORY_SET = /* @__PURE__ */ new Set([
+  "photo",
+  "photos",
+  "video",
+  "videos",
+  "audio",
+  "audios",
+  "document",
+  "documents",
+  "file",
+  "files",
+  "other",
+  "other-files",
+  "other_files",
+  "otherfile",
+  "otherfiles",
+  "notes",
+  "note",
+  "chats",
+  "chat",
+  "todos",
+  "todo",
+  "passwords",
+  "password",
+  "secretKeys",
+  "secretkey",
+  "secretkeys",
+  "secret",
+  "secrets",
+  "contact",
+  "contacts",
+  "location",
+  "locations",
+  "card",
+  "cards",
+  "identity",
+  "identities",
+  "wifi",
+  "settings",
+  "system",
+  "users",
+  "user",
+  "v2_items"
+]);
 var MULTIPART_SECURE_CLEANUP = (process.env.MULTIPART_SECURE_CLEANUP?.trim().toLowerCase() || "true") === "true";
 var resolveMemoryOnlyMultipartUploads = () => {
   const explicit = process.env.MEMORY_ONLY_MULTIPART_UPLOADS?.trim().toLowerCase();
@@ -7974,6 +8632,7 @@ var resolveMemoryOnlyMultipartUploads = () => {
   return process.env.NODE_ENV === "test";
 };
 var MEMORY_ONLY_MULTIPART_UPLOADS = resolveMemoryOnlyMultipartUploads();
+var SAFE_ID_PATTERN = /^[a-zA-Z0-9:_-]{1,128}$/;
 var getRouteParam2 = (value) => {
   if (typeof value === "string") return value.trim();
   if (typeof value === "number" && Number.isFinite(value)) return String(value);
@@ -7983,6 +8642,12 @@ var getRouteParam2 = (value) => {
     if (typeof first === "number" && Number.isFinite(first)) return String(first);
   }
   return void 0;
+};
+var assertSafeId = (id, paramName) => {
+  if (typeof id !== "string" || !id.trim() || !SAFE_ID_PATTERN.test(id.trim())) {
+    throw AppError.badRequest(`Invalid format for ${paramName}.`, "INVALID_IDENTIFIER");
+  }
+  return id.trim();
 };
 var uploadAnomalyCounters = /* @__PURE__ */ new Map();
 var ANOMALY_WINDOW_MS = 10 * 60 * 1e3;
@@ -8012,15 +8677,21 @@ var recordUploadAnomaly = (userId, kind, context = {}) => {
     });
   }
 };
-var multipartSessionPath = (userId, uploadId) => path9.join(MULTIPART_ROOT, userId, uploadId, "session.json");
-var multipartPartsDir = (userId, uploadId) => path9.join(MULTIPART_ROOT, userId, uploadId, "parts");
+var multipartSessionPath = (userId, uploadId) => {
+  const safeUploadId = assertSafeId(uploadId, "uploadId");
+  return path9.join(MULTIPART_ROOT, userId, safeUploadId, "session.json");
+};
+var multipartPartsDir = (userId, uploadId) => {
+  const safeUploadId = assertSafeId(uploadId, "uploadId");
+  return path9.join(MULTIPART_ROOT, userId, safeUploadId, "parts");
+};
 var multipartMemorySessions = /* @__PURE__ */ new Map();
 var multipartMemoryParts = /* @__PURE__ */ new Map();
 var multipartMemoryKey = (userId, uploadId) => `${userId}:${uploadId}`;
 var multipartPartMemoryKey = (userId, uploadId, partNumber) => `${multipartMemoryKey(userId, uploadId)}:${partNumber}`;
 var safeRm2 = async (target) => {
   const absoluteTarget = path9.resolve(target);
-  if (!absoluteTarget.startsWith(MULTIPART_ROOT)) {
+  if (!absoluteTarget.startsWith(MULTIPART_ROOT) || absoluteTarget === MULTIPART_ROOT) {
     return { filesDeleted: 0, bytesDeleted: 0 };
   }
   let filesDeleted = 0;
@@ -8111,6 +8782,9 @@ var cleanupExpiredMultipartSessions = async (userId) => {
   );
 };
 var loadMultipartSession = async (userId, uploadId) => {
+  if (!SAFE_ID_PATTERN.test(uploadId)) {
+    return null;
+  }
   if (MEMORY_ONLY_MULTIPART_UPLOADS) {
     return multipartMemorySessions.get(multipartMemoryKey(userId, uploadId)) ?? null;
   }
@@ -8187,9 +8861,13 @@ var startMultipartUpload = async (req, res) => {
   const userId = getUserId(req);
   const username = getUsername(req);
   await cleanupExpiredMultipartSessions(userId);
-  const { category, folder, fileName, mimeType, fileSize, resumeUploadId, keepMetadata } = req.body || {};
-  if (typeof category !== "string" || typeof fileName !== "string" || typeof mimeType !== "string" || typeof fileSize !== "number" || fileSize <= 0) {
+  const { category, folder, fileName: rawFileName, mimeType, fileSize, resumeUploadId, keepMetadata } = req.body || {};
+  if (typeof category !== "string" || typeof rawFileName !== "string" || typeof mimeType !== "string" || typeof fileSize !== "number" || fileSize <= 0) {
     throw AppError.badRequest("Invalid multipart init payload.", "INVALID_MULTIPART_INIT");
+  }
+  const fileName = path9.basename(rawFileName.trim());
+  if (!fileName || fileName === "." || fileName === "..") {
+    throw AppError.badRequest("Invalid file name.", "INVALID_FILE_NAME");
   }
   if (!FILE_CATEGORY_SET.has(category)) {
     throw AppError.badRequest("Unsupported multipart category.", "UNSUPPORTED_FILE_CATEGORY");
@@ -8218,7 +8896,7 @@ var startMultipartUpload = async (req, res) => {
   if (fileSize >= LARGE_UPLOAD_BYTES) {
     recordUploadAnomaly(userId, "rapid_large_upload", { category, fileSize });
   }
-  if (typeof resumeUploadId === "string" && resumeUploadId.trim()) {
+  if (typeof resumeUploadId === "string" && resumeUploadId.trim() && SAFE_ID_PATTERN.test(resumeUploadId.trim())) {
     const existing = await loadMultipartSession(userId, resumeUploadId.trim());
     if (existing && existing.fileName === fileName && existing.fileSize === fileSize && existing.mimeType === mimeType && existing.category === category) {
       existing.updatedAt = Date.now();
@@ -8247,7 +8925,7 @@ var startMultipartUpload = async (req, res) => {
     userId,
     username,
     category,
-    folder: typeof folder === "string" && folder.trim() ? folder : null,
+    folder: typeof folder === "string" && folder.trim() ? folder.trim() : null,
     fileName,
     mimeType,
     fileSize,
@@ -8269,11 +8947,12 @@ var startMultipartUpload = async (req, res) => {
 };
 var uploadMultipartPart = async (req, res) => {
   const userId = getUserId(req);
-  const uploadId = getRouteParam2(req.params.uploadId);
+  const rawUploadId = getRouteParam2(req.params.uploadId);
   const partNumberRaw = getRouteParam2(req.params.partNumber);
-  if (!uploadId || !partNumberRaw) {
+  if (!rawUploadId || !partNumberRaw) {
     throw AppError.badRequest("uploadId and partNumber are required.", "MULTIPART_PART_REQUIRED");
   }
+  const uploadId = assertSafeId(rawUploadId, "uploadId");
   const partNumber = Number.parseInt(partNumberRaw, 10);
   if (!Number.isFinite(partNumber) || partNumber < 1) {
     throw AppError.badRequest("partNumber must be >= 1.", "INVALID_PART_NUMBER");
@@ -8331,10 +9010,11 @@ var uploadMultipartPart = async (req, res) => {
 };
 var completeMultipartUpload = async (req, res) => {
   const userId = getUserId(req);
-  const uploadId = getRouteParam2(req.params.uploadId);
-  if (!uploadId) {
+  const rawUploadId = getRouteParam2(req.params.uploadId);
+  if (!rawUploadId) {
     throw AppError.badRequest("uploadId is required.", "MULTIPART_COMPLETE_REQUIRED");
   }
+  const uploadId = assertSafeId(rawUploadId, "uploadId");
   const resolved = await findMultipartSessionForIdentity(userId, uploadId);
   if (!resolved) {
     throw AppError.notFound("Upload session not found.", "UPLOAD_SESSION_NOT_FOUND");
@@ -8457,10 +9137,12 @@ var completeMultipartUpload = async (req, res) => {
   );
 };
 var fetchVault = async (req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
   const snapshot = await getVaultSnapshot(getUserId(req), getUsername(req));
   return sendSuccess(res, snapshot, "Vault snapshot fetched successfully");
 };
 var syncVault = async (req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
   const snapshot = await getVaultSnapshot(getUserId(req), getUsername(req));
   return sendSuccess(res, snapshot, "Vault items synced successfully");
 };
@@ -8489,11 +9171,11 @@ var uploadVaultFile = async (req, res) => {
     userId: getUserId(req),
     username: getUsername(req),
     category,
-    folder: typeof req.body.folder === "string" ? req.body.folder : req.headers["x-vault-folder"],
+    folder: typeof req.body?.folder === "string" ? req.body.folder : req.headers["x-vault-folder"],
     file,
-    keepMetadata: req.body.keepMetadata === true || req.headers["x-keep-metadata"] === "true",
-    clientUpdatedAt: typeof req.body.clientUpdatedAt === "string" ? req.body.clientUpdatedAt : void 0,
-    deviceId: typeof req.body.deviceId === "string" ? req.body.deviceId : void 0,
+    keepMetadata: req.body?.keepMetadata === true || req.headers["x-keep-metadata"] === "true",
+    clientUpdatedAt: typeof req.body?.clientUpdatedAt === "string" ? req.body.clientUpdatedAt : void 0,
+    deviceId: typeof req.body?.deviceId === "string" ? req.body.deviceId : void 0,
     ipAddress: getClientIp(req)
   });
   const directFilePath = result?.file?.filePath || result?.filePath;
@@ -8509,9 +9191,7 @@ var uploadVaultFile = async (req, res) => {
       filePath,
       outputDir
     ).catch(
-      (err) => logger.error(`Background transcoding failed for ${result.itemId}`, {
-        err
-      })
+      (err) => logger.error(`Background transcoding failed for ${result.itemId}`, { err })
     );
   }
   return sendSuccess(res, result, "File uploaded to vault successfully", 201);
@@ -8519,17 +9199,30 @@ var uploadVaultFile = async (req, res) => {
 var upsertVaultEntry = async (req, res) => {
   const category = getRouteParam2(req.params.category);
   const itemId = getRouteParam2(req.params.itemId);
-  if (!category) {
-    throw AppError.badRequest("Vault category is required.", "CATEGORY_REQUIRED");
+  if (!category || !ALL_CATEGORY_SET.has(category)) {
+    throw AppError.badRequest("Vault category is required and must be valid.", "CATEGORY_REQUIRED");
   }
+  if (itemId) {
+    assertSafeId(itemId, "itemId");
+  }
+  const rawHeaderTitle = typeof req.headers["x-vault-title"] === "string" ? req.headers["x-vault-title"] : "";
+  let headerTitle = "";
+  if (rawHeaderTitle) {
+    try {
+      headerTitle = decodeURIComponent(rawHeaderTitle);
+    } catch {
+      headerTitle = rawHeaderTitle;
+    }
+  }
+  const payloadToSave = req.body && typeof req.body === "object" && !Array.isArray(req.body) ? { ...req.body, title: req.body.title || headerTitle || void 0 } : req.body;
   const result = await saveEncryptedVaultItem({
     userId: getUserId(req),
     username: getUsername(req),
     category,
-    folder: typeof req.body.folder === "string" ? req.body.folder : void 0,
+    folder: typeof req.body?.folder === "string" ? req.body.folder : void 0,
     itemId,
-    payload: req.body,
-    deviceId: typeof req.body.deviceId === "string" ? req.body.deviceId : void 0,
+    payload: payloadToSave,
+    deviceId: typeof req.body?.deviceId === "string" ? req.body.deviceId : void 0,
     ipAddress: getClientIp(req)
   });
   return sendSuccess(
@@ -8541,10 +9234,11 @@ var upsertVaultEntry = async (req, res) => {
 };
 var deleteVaultEntry = async (req, res) => {
   const category = getRouteParam2(req.params.category);
-  const itemId = getRouteParam2(req.params.itemId);
-  if (!category || !itemId) {
+  const rawItemId = getRouteParam2(req.params.itemId);
+  if (!category || !rawItemId) {
     throw AppError.badRequest("Vault category and item id are required.", "ITEM_REQUIRED");
   }
+  const itemId = assertSafeId(rawItemId, "itemId");
   const result = await deleteVaultItemByCategory({
     userId: getUserId(req),
     username: getUsername(req),
@@ -8557,25 +9251,38 @@ var deleteVaultEntry = async (req, res) => {
   return sendSuccess(res, result, "Vault entry deleted successfully");
 };
 var saveUserActivityLog = async (req, res) => {
+  let details = {};
+  if (req.body?.details && typeof req.body.details === "object") {
+    const serialized = JSON.stringify(req.body.details);
+    if (serialized.length <= 10240) {
+      details = req.body.details;
+    }
+  }
+  const action = typeof req.body?.action === "string" ? req.body.action.trim().slice(0, 64) : "OTHER";
+  const category = typeof req.body?.category === "string" ? req.body.category.trim().slice(0, 64) : "system";
+  const itemId = typeof req.body?.itemId === "string" ? req.body.itemId.trim().slice(0, 128) : null;
+  const status = typeof req.body?.status === "string" ? req.body.status.trim().slice(0, 32) : "SUCCESS";
   const result = await saveActivityLog({
     userId: getUserId(req),
     username: getUsername(req),
-    action: req.body.action || "OTHER",
-    category: req.body.category || "system",
-    itemId: req.body.itemId || null,
-    deviceId: typeof req.body.deviceId === "string" ? req.body.deviceId : void 0,
+    action,
+    category,
+    itemId,
+    deviceId: typeof req.body?.deviceId === "string" ? req.body.deviceId.trim().slice(0, 128) : void 0,
     ipAddress: getClientIp(req),
     userAgent: req.headers["user-agent"],
-    status: req.body.status || "SUCCESS",
-    errorCode: req.body.errorCode,
-    errorMessage: req.body.errorMessage,
-    details: req.body.details || {}
+    status,
+    errorCode: typeof req.body?.errorCode === "string" ? req.body.errorCode.trim().slice(0, 64) : void 0,
+    errorMessage: typeof req.body?.errorMessage === "string" ? req.body.errorMessage.trim().slice(0, 512) : void 0,
+    details
   });
   return sendSuccess(res, result, "Activity log saved successfully", 201);
 };
 var getUserActivityLogsController = async (req, res) => {
-  const limit = req.query.limit ? parseInt(req.query.limit) : 500;
-  const skip = req.query.skip ? parseInt(req.query.skip) : 0;
+  const parsedLimit = Number.parseInt(String(req.query.limit || "500"), 10);
+  const parsedSkip = Number.parseInt(String(req.query.skip || "0"), 10);
+  const limit = Math.min(Math.max(1, Number.isFinite(parsedLimit) ? parsedLimit : 500), 1e3);
+  const skip = Math.max(0, Number.isFinite(parsedSkip) ? parsedSkip : 0);
   const logs = await getUserActivityLogs(getUserId(req), getUsername(req), limit, skip);
   return sendSuccess(res, logs, "Activity logs fetched successfully");
 };
@@ -8617,8 +9324,8 @@ var storageService = {
     const secret = resolveSignedUrlSecret();
     const signature = crypto8.createHmac("sha256", secret).update(payload).digest("hex");
     const resolvePublicBaseUrl = () => {
-      const isProduction = process.env.NODE_ENV === "production";
-      if (isProduction && process.env.PUBLIC_URL && process.env.PUBLIC_URL.trim()) {
+      const isProduction2 = process.env.NODE_ENV === "production";
+      if (isProduction2 && process.env.PUBLIC_URL && process.env.PUBLIC_URL.trim()) {
         return process.env.PUBLIC_URL.trim().replace(/\/+$/, "");
       }
       const port = process.env.PORT || "4000";
@@ -8681,31 +9388,108 @@ var storageService = {
 };
 
 // server/models/telemetry.ts
-import mongoose19 from "mongoose";
-var TelemetrySchema = new mongoose19.Schema({
-  userId: { type: mongoose19.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-  itemId: { type: String, required: true, index: true },
-  event: { type: String, required: true, index: true },
-  timestamp: { type: Date, default: Date.now, index: true },
-  metadata: {
-    type: mongoose19.Schema.Types.Mixed,
-    default: {}
+import mongoose19, { Schema as Schema8 } from "mongoose";
+var TelemetrySchema = new Schema8(
+  {
+    userId: {
+      type: Schema8.Types.ObjectId,
+      ref: "User",
+      required: [true, "userId is required"],
+      index: true
+    },
+    itemId: {
+      type: String,
+      required: [true, "itemId is required"],
+      trim: true,
+      index: true
+    },
+    event: {
+      type: String,
+      required: [true, "event is required"],
+      trim: true,
+      index: true
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now,
+      index: true,
+      // 90-day TTL index for automatic telemetry pruning
+      expires: 7776e3
+    },
+    metadata: {
+      type: Schema8.Types.Mixed,
+      default: () => ({})
+    },
+    ip: {
+      type: String,
+      trim: true,
+      default: null
+    },
+    userAgent: {
+      type: String,
+      trim: true,
+      default: null
+    },
+    browser: {
+      type: String,
+      trim: true,
+      default: null
+    },
+    platform: {
+      type: String,
+      trim: true,
+      default: null
+    }
   },
-  ip: String,
-  userAgent: String,
-  browser: String,
-  platform: String
-});
-var getTelemetryModel = (username) => {
+  {
+    timestamps: true,
+    versionKey: false
+  }
+);
+TelemetrySchema.index({ userId: 1, event: 1, timestamp: -1 });
+TelemetrySchema.index({ itemId: 1, timestamp: -1 });
+TelemetrySchema.index({ event: 1, timestamp: -1 });
+TelemetrySchema.index({ userId: 1, timestamp: -1 });
+TelemetrySchema.statics.recordEvent = function(data) {
+  return this.create({
+    ...data,
+    timestamp: data.timestamp || /* @__PURE__ */ new Date()
+  });
+};
+var getTelemetryModel = (username, customConnection) => {
   if (!username || !username.trim()) {
     throw new Error("Username is required for isolated telemetry");
   }
   const normalized = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "_");
   const collectionName = `${normalized}.${normalized}_telemetry`;
+  if (customConnection) {
+    if (customConnection.models[collectionName]) {
+      return customConnection.models[collectionName];
+    }
+    const model3 = customConnection.model(
+      collectionName,
+      TelemetrySchema,
+      collectionName
+    );
+    if (typeof model3?.createIndexes === "function") {
+      model3.createIndexes().catch(() => {
+      });
+    }
+    return model3;
+  }
   if (mongoose19.models[collectionName]) {
     return mongoose19.models[collectionName];
   }
-  return mongoose19.model(collectionName, TelemetrySchema, collectionName);
+  const model2 = mongoose19.model(
+    collectionName,
+    TelemetrySchema,
+    collectionName
+  );
+  if (typeof model2?.createIndexes === "function") {
+    model2.createIndexes().catch(() => {
+    });
+  }
+  return model2;
 };
 
 // server/controllers/mediaController.ts
@@ -8863,6 +9647,13 @@ var TUS_SESSION_TTL_MS = Math.max(
   5 * 60 * 1e3,
   Number(process.env.TUS_SESSION_TTL_MS || 2 * 60 * 60 * 1e3)
 );
+var SAFE_UPLOAD_ID_PATTERN2 = /^[a-zA-Z0-9:_-]{1,128}$/;
+var assertSafeUploadId = (id) => {
+  if (typeof id !== "string" || !SAFE_UPLOAD_ID_PATTERN2.test(id)) {
+    throw AppError.badRequest("Invalid TUS upload identifier.", "INVALID_UPLOAD_ID");
+  }
+  return id;
+};
 var tusSessions = /* @__PURE__ */ new Map();
 var cleanupExpiredTusSessions = async () => {
   const now = Date.now();
@@ -8872,7 +9663,10 @@ var cleanupExpiredTusSessions = async () => {
       if (session.filePath) {
         try {
           const uploadDir = path10.dirname(session.filePath);
-          await fs7.rm(uploadDir, { recursive: true, force: true });
+          const resolvedDir = path10.resolve(uploadDir);
+          if (resolvedDir.startsWith(TUS_TMP_ROOT) && resolvedDir !== TUS_TMP_ROOT) {
+            await fs7.rm(resolvedDir, { recursive: true, force: true });
+          }
         } catch {
         }
       }
@@ -8896,9 +9690,11 @@ var createTusUploadController = async (req, res) => {
     10
   );
   if (isNaN(fileSize) || fileSize <= 0) {
+    res.setHeader("Tus-Resumable", "1.0.0");
     throw AppError.badRequest("Missing or invalid Upload-Length header.", "INVALID_TUS_LENGTH");
   }
   if (fileSize > MAX_TUS_FILE_SIZE) {
+    res.setHeader("Tus-Resumable", "1.0.0");
     throw AppError.badRequest(
       "TUS upload exceeds the configured file size limit.",
       "FILE_TOO_LARGE"
@@ -8911,7 +9707,7 @@ var createTusUploadController = async (req, res) => {
     for (const pair of pairs) {
       const parts = pair.trim().split(" ");
       if (parts[0]) {
-        const key = parts[0];
+        const key = parts[0].replace(/[^a-zA-Z0-9_-]/g, "");
         const valB64 = parts[1] || "";
         try {
           metadata[key] = Buffer.from(valB64, "base64").toString("utf-8");
@@ -8944,38 +9740,35 @@ var createTusUploadController = async (req, res) => {
   return res.status(201).end();
 };
 var getTusOffsetController = async (req, res) => {
-  const uploadId = Array.isArray(req.params.uploadId) ? req.params.uploadId[0] : req.params.uploadId;
-  const session = tusSessions.get(uploadId);
-  if (!session) {
-    res.setHeader("Tus-Resumable", "1.0.0");
-    return res.status(404).end();
-  }
-  if (session.userId !== req.user.userId) {
-    res.setHeader("Tus-Resumable", "1.0.0");
-    return res.status(404).end();
-  }
   res.setHeader("Tus-Resumable", "1.0.0");
+  const rawId = Array.isArray(req.params.uploadId) ? req.params.uploadId[0] : req.params.uploadId;
+  const uploadId = assertSafeUploadId(rawId);
+  const session = tusSessions.get(uploadId);
+  if (!session || session.userId !== req.user.userId) {
+    return res.status(404).end();
+  }
   res.setHeader("Upload-Offset", session.offset.toString());
   res.setHeader("Upload-Length", session.fileSize.toString());
   res.setHeader("Cache-Control", "no-store");
   return res.status(200).end();
 };
 var uploadTusChunkController = async (req, res) => {
-  const uploadId = Array.isArray(req.params.uploadId) ? req.params.uploadId[0] : req.params.uploadId;
+  res.setHeader("Tus-Resumable", "1.0.0");
+  const rawId = Array.isArray(req.params.uploadId) ? req.params.uploadId[0] : req.params.uploadId;
+  const uploadId = assertSafeUploadId(rawId);
   const session = tusSessions.get(uploadId);
-  if (!session) {
-    throw AppError.notFound("TUS upload session not found.", "TUS_SESSION_NOT_FOUND");
-  }
-  if (session.userId !== req.user.userId) {
+  if (!session || session.userId !== req.user.userId) {
     throw AppError.notFound("TUS upload session not found.", "TUS_SESSION_NOT_FOUND");
   }
   const offsetHeader = req.headers["upload-offset"];
   const reqOffset = parseInt(
-    (Array.isArray(offsetHeader) ? offsetHeader[0] : offsetHeader) || "0",
+    (Array.isArray(offsetHeader) ? offsetHeader[0] : offsetHeader) || "-1",
     10
   );
+  if (isNaN(reqOffset) || reqOffset < 0) {
+    throw AppError.badRequest("Missing or invalid Upload-Offset header.", "INVALID_UPLOAD_OFFSET");
+  }
   if (reqOffset !== session.offset) {
-    res.setHeader("Tus-Resumable", "1.0.0");
     return res.status(409).json({
       error: "Upload-Offset mismatch",
       currentOffset: session.offset
@@ -9002,11 +9795,13 @@ var uploadTusChunkController = async (req, res) => {
     }
   }
   session.updatedAt = Date.now();
-  res.setHeader("Tus-Resumable", "1.0.0");
   res.setHeader("Upload-Offset", session.offset.toString());
   return res.status(204).end();
 };
 var getTusSessionBuffer = async (uploadId, userId) => {
+  if (!SAFE_UPLOAD_ID_PATTERN2.test(uploadId)) {
+    return null;
+  }
   const session = tusSessions.get(uploadId);
   if (session) {
     if (userId && session.userId !== userId) return null;
@@ -9609,9 +10404,12 @@ var getMediaPlaylist = async (req, res) => {
     res.setHeader("Content-Type", "application/x-mpegURL");
     return res.send(playlist);
   } else {
-    const hlsDir = path11.join(path11.dirname(item.file.filePath), "hls", itemId);
-    const variantId = variant?.replace(".m3u8", "") || "";
-    const playlistPath = path11.join(hlsDir, `${variantId}.m3u8`);
+    const hlsDir = path11.resolve(path11.join(path11.dirname(item.file.filePath), "hls", itemId));
+    const variantId = variant?.replace(".m3u8", "").replace(/[^a-zA-Z0-9._-]/g, "") || "";
+    const playlistPath = path11.resolve(path11.join(hlsDir, `${variantId}.m3u8`));
+    if (!playlistPath.startsWith(hlsDir)) {
+      throw AppError.badRequest("Invalid playlist variant.", "INVALID_PLAYLIST");
+    }
     if (!fs8.existsSync(playlistPath)) {
       logger.error("Playlist variant not found on disk", { playlistPath, itemId, variant });
       throw AppError.notFound("Playlist variant not found");
@@ -9670,8 +10468,11 @@ var getMediaSegment = async (req, res) => {
       if (fs8.existsSync(legacyPath)) filePath = legacyPath;
     }
   }
-  const hlsDir = path11.join(path11.dirname(filePath), "hls", itemId);
-  const segmentPath = path11.join(hlsDir, segment);
+  const hlsDir = path11.resolve(path11.join(path11.dirname(filePath), "hls", itemId));
+  const segmentPath = path11.resolve(path11.join(hlsDir, segment));
+  if (!segmentPath.startsWith(hlsDir)) {
+    throw AppError.badRequest("Invalid media segment path.", "INVALID_MEDIA_SEGMENT");
+  }
   if (!fs8.existsSync(segmentPath)) {
     throw AppError.notFound("Segment not found");
   }
@@ -10100,18 +10901,31 @@ var createSignedUrl = async (req, res) => {
   return sendSuccess(res, { url }, "Signed URL generated successfully");
 };
 var logPlaybackEvent = async (req, res) => {
-  const { itemId, event, metadata } = req.body;
+  const { itemId, event, metadata } = req.body || {};
   const userId = req.user?.userId;
   if (!userId) throw AppError.unauthorized("Authentication required");
+  if (!itemId || typeof itemId !== "string") {
+    throw AppError.badRequest("itemId is required.", "ITEM_REQUIRED");
+  }
+  if (!event || typeof event !== "string" || event.length > 64) {
+    throw AppError.badRequest("A valid event identifier is required.", "INVALID_EVENT");
+  }
   const username = req.user?.username;
   if (!username) throw AppError.unauthorized("Username required for isolated telemetry");
+  let sanitizedMetadata = {};
+  if (metadata && typeof metadata === "object") {
+    const serialized = JSON.stringify(metadata);
+    if (serialized.length <= 10240) {
+      sanitizedMetadata = metadata;
+    }
+  }
   try {
     const DynamicTelemetryModel = getTelemetryModel(username);
     await DynamicTelemetryModel.create({
       userId,
       itemId,
-      event,
-      metadata,
+      event: event.trim(),
+      metadata: sanitizedMetadata,
       userAgent: req.get("user-agent"),
       ip: getClientIp(req)
     });
@@ -10170,7 +10984,14 @@ var getPlaybackInsights = async (req, res) => {
 };
 
 // server/controllers/drmController.ts
+import mongoose22 from "mongoose";
 init_logger();
+var SAFE_ID_PATTERN2 = /^[a-zA-Z0-9:_-]+$/;
+var assertSafeId2 = (id, paramName) => {
+  if (!id || id.length > 256 || !SAFE_ID_PATTERN2.test(id)) {
+    throw AppError.badRequest(`Invalid format for ${paramName}.`, "INVALID_IDENTIFIER");
+  }
+};
 var validateLicensePolicy = async (userId, username, itemId, deviceId) => {
   const DynamicVaultModel = getVaultItemModel(username);
   const item = await findVaultItemFlexible(DynamicVaultModel, userId, itemId, username);
@@ -10178,50 +10999,55 @@ var validateLicensePolicy = async (userId, username, itemId, deviceId) => {
     logger.warn("License Policy Failure: Item not found or unauthorized", { userId, itemId });
     throw AppError.notFound("Media content not found in vault");
   }
-  if (deviceId) {
-    const user = await User.findById(userId).select("sessions").lean();
-    const isDeviceRegistered = user?.sessions?.some((s) => s.deviceId === deviceId);
-    if (!isDeviceRegistered) {
-      logger.error("Security Alert: License requested from unregistered device", {
-        userId,
-        deviceId
-      });
-      throw AppError.forbidden(
-        "Playback not permitted on this device. Please sign in again.",
-        "DEVICE_UNAUTHORIZED"
-      );
+  if (deviceId && typeof deviceId === "string" && deviceId.trim()) {
+    const cleanDeviceId = deviceId.trim();
+    if (mongoose22.Types.ObjectId.isValid(userId)) {
+      const user = await User.findById(userId).select("sessions.deviceId").lean();
+      const isDeviceRegistered = user?.sessions?.some((s) => s.deviceId === cleanDeviceId);
+      if (!isDeviceRegistered) {
+        logger.error("Security Alert: License requested from unregistered device", {
+          userId,
+          deviceId: cleanDeviceId
+        });
+        throw AppError.forbidden(
+          "Playback not permitted on this device. Please sign in again.",
+          "DEVICE_UNAUTHORIZED"
+        );
+      }
     }
   }
 };
-var handleLicenseRequest = async (req, res) => {
-  const itemId = typeof req.params.itemId === "string" ? req.params.itemId : void 0;
-  const { drmType, deviceId } = req.body;
+var deliverLicense = async (req, res, drmTypeOverride) => {
+  const rawItemId = typeof req.params.itemId === "string" ? req.params.itemId.trim() : void 0;
+  if (!rawItemId) {
+    throw AppError.badRequest("itemId is required.", "ITEM_REQUIRED");
+  }
+  assertSafeId2(rawItemId, "itemId");
+  const body2 = req.body || {};
+  const query2 = req.query || {};
+  const drmType = drmTypeOverride || (typeof body2.drmType === "string" ? body2.drmType : void 0);
+  const deviceId = typeof body2.deviceId === "string" ? body2.deviceId.trim() : typeof query2.deviceId === "string" ? query2.deviceId.trim() : void 0;
   const userId = req.user?.userId;
   const username = req.user?.username;
   const clientIp = getClientIp(req);
-  if (!itemId) {
-    throw AppError.badRequest("itemId is required.", "ITEM_REQUIRED");
-  }
   if (!userId || !username) {
-    logger.warn("License access denied: Identification missing", {
-      itemId
-    });
+    logger.warn("License access denied: Identification missing", { itemId: rawItemId });
     throw AppError.unauthorized("License delivery requires a verified authenticated session.");
   }
-  anomalyDetectionService.trackMediaRequest(userId, itemId, clientIp);
+  anomalyDetectionService.trackMediaRequest(userId, rawItemId, clientIp);
   anomalyDetectionService.trackIpDrift(userId, clientIp);
-  await validateLicensePolicy(userId, username, itemId, deviceId);
-  const contentKey = await mediaService.getStreamingKey(userId, itemId);
+  await validateLicensePolicy(userId, username, rawItemId, deviceId);
+  const contentKey = await mediaService.getStreamingKey(userId, rawItemId);
   logger.info(`License delivered [${drmType || "standard"}]`, {
     userId,
-    itemId,
+    itemId: rawItemId,
     ip: clientIp,
     deviceId
   });
-  if (drmType === "widevine") {
-    res.setHeader("Content-Type", "application/octet-stream");
-    return res.send(contentKey);
-  } else if (drmType === "fairplay") {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  if (drmType === "widevine" || drmType === "fairplay") {
     res.setHeader("Content-Type", "application/octet-stream");
     return res.send(contentKey);
   }
@@ -10230,25 +11056,31 @@ var handleLicenseRequest = async (req, res) => {
     alg: "A128GCM"
   });
 };
+var handleLicenseRequest = async (req, res) => {
+  return deliverLicense(req, res);
+};
 var handleWidevineLicense = async (req, res) => {
-  req.body = req.body || {};
-  req.body.drmType = "widevine";
-  return handleLicenseRequest(req, res);
+  return deliverLicense(req, res, "widevine");
 };
 var handleFairPlayLicense = async (req, res) => {
-  req.body = req.body || {};
-  req.body.drmType = "fairplay";
-  return handleLicenseRequest(req, res);
+  return deliverLicense(req, res, "fairplay");
 };
 var getCencKey = async (req, res) => {
-  req.body = req.body || {};
-  return handleLicenseRequest(req, res);
+  return deliverLicense(req, res, "cenc");
 };
 
 // server/controllers/folderController.ts
+import mongoose23 from "mongoose";
 init_logger();
-var normalizeFolderName2 = (value) => String(value ?? "").trim();
-var normalizeFolderItemTypeInput = (value) => String(value ?? "").trim().toLowerCase();
+var MAX_FOLDER_NAME_LENGTH = 100;
+var normalizeFolderName2 = (value) => {
+  if (typeof value !== "string") return "";
+  return value.trim();
+};
+var normalizeFolderItemTypeInput = (value) => {
+  if (typeof value !== "string") return "";
+  return value.trim().toLowerCase();
+};
 var FOLDER_ITEM_TYPE_ALIASES = {
   note: ["note", "notes"],
   chat: ["chat", "chats"],
@@ -10302,7 +11134,7 @@ var hydrateFolder = (folder) => {
 };
 var loadHydratedFolders = async (username, userId) => {
   const Folder = getFolderModel(username);
-  const folders = await Folder.find({ userId }).lean();
+  const folders = await Folder.find({ userId }).lean().exec();
   const deduped = /* @__PURE__ */ new Map();
   for (const folder of folders.map(hydrateFolder)) {
     const folderName = normalizeFolderName2(folder.name).toLowerCase();
@@ -10316,62 +11148,55 @@ var loadHydratedFolders = async (username, userId) => {
   return Array.from(deduped.values());
 };
 var initializeFoldersController = async (req, res) => {
+  const { userId, username } = req.user;
   try {
-    await initializeDefaultUserFolders(req.user.userId, req.user.username);
-    const hydrated = await loadHydratedFolders(req.user.username, req.user.userId);
-    return res.json({ success: true, data: hydrated });
+    await initializeDefaultUserFolders(userId, username);
+    const hydrated = await loadHydratedFolders(username, userId);
+    return sendSuccess(res, hydrated, "Folders initialized successfully");
   } catch (error) {
-    logger.error("Failed to initialize folders", {
-      userId: req.user.userId,
-      username: req.user.username,
-      error
-    });
-    return res.status(500).json({
-      success: false,
-      error: { message: "Failed to initialize folders" }
-    });
+    logger.error("Failed to initialize folders", { userId, username, error });
+    throw AppError.internal("Failed to initialize folders", "FOLDER_INIT_FAILED");
   }
 };
 var getFoldersController = async (req, res) => {
+  const { userId, username } = req.user;
   try {
-    await initializeDefaultUserFolders(req.user.userId, req.user.username);
-    const hydrated = await loadHydratedFolders(req.user.username, req.user.userId);
-    return res.json({ success: true, data: hydrated });
+    await initializeDefaultUserFolders(userId, username);
+    const hydrated = await loadHydratedFolders(username, userId);
+    return sendSuccess(res, hydrated, "Folders fetched successfully");
   } catch (error) {
-    logger.error("Failed to fetch folders", {
-      userId: req.user.userId,
-      username: req.user.username,
-      error
-    });
-    return res.status(500).json({
-      success: false,
-      error: { message: "Failed to fetch folders" }
-    });
+    logger.error("Failed to fetch folders", { userId, username, error });
+    throw AppError.internal("Failed to fetch folders", "FOLDER_FETCH_FAILED");
   }
 };
 var createFolderController = async (req, res) => {
-  const { name, itemType, parentId } = req.body;
-  if (!name || !itemType) {
-    return res.status(400).json({ success: false, error: { message: "Name and itemType are required" } });
+  const { name, itemType, parentId } = req.body || {};
+  if (!name || typeof name !== "string" || !name.trim()) {
+    throw AppError.badRequest("Folder name is required", "FOLDER_NAME_REQUIRED");
+  }
+  if (!itemType || typeof itemType !== "string" || !itemType.trim()) {
+    throw AppError.badRequest("itemType is required", "ITEM_TYPE_REQUIRED");
   }
   const folderName = normalizeFolderName2(name);
+  if (folderName.length > MAX_FOLDER_NAME_LENGTH) {
+    throw AppError.badRequest(
+      `Folder name must not exceed ${MAX_FOLDER_NAME_LENGTH} characters`,
+      "FOLDER_NAME_TOO_LONG"
+    );
+  }
   const canonicalItemType = resolveCanonicalFolderItemType(itemType);
   const itemTypeCandidates = resolveFolderItemTypeCandidates(itemType);
-  if (!folderName) {
-    return res.status(400).json({ success: false, error: { message: "Folder name is required" } });
-  }
   if (!canonicalItemType) {
-    return res.status(400).json({ success: false, error: { message: "itemType is invalid" } });
+    throw AppError.badRequest("itemType is invalid", "INVALID_ITEM_TYPE");
   }
   if (isProtectedFolderName(folderName)) {
-    return res.status(403).json({
-      success: false,
-      error: { message: "Saved folders are reserved and cannot be created manually" }
-    });
+    throw AppError.forbidden(
+      "Saved folders are reserved and cannot be created manually",
+      "RESERVED_FOLDER_NAME"
+    );
   }
+  const { userId, username } = req.user;
   try {
-    const userId = req.user.userId;
-    const username = req.user.username;
     await initializeDefaultUserFolders(userId, username);
     const Folder = getFolderModel(username);
     const folderNameHash = hashFolderName(folderName);
@@ -10381,26 +11206,40 @@ var createFolderController = async (req, res) => {
       nameHash: hashFolderName("vault_items"),
       itemType: "system",
       parentId: null
-    });
+    }).lean().exec();
     if (!rootFolder) {
-      return res.status(500).json({ success: false, error: { message: "Root folder missing after initialization" } });
+      throw AppError.internal("Root folder missing after initialization", "ROOT_FOLDER_MISSING");
     }
     const userFolder = await Folder.findOne({
       userId,
       nameHash: hashFolderName(username),
       itemType: "system",
       parentId: rootFolder._id.toString()
-    });
+    }).lean().exec();
     if (!userFolder) {
-      return res.status(500).json({ success: false, error: { message: "User folder missing after initialization" } });
+      throw AppError.internal("User folder missing after initialization", "USER_FOLDER_MISSING");
     }
-    const targetParentId = parentId || userFolder._id.toString();
+    let targetParentId = userFolder._id.toString();
+    if (parentId && typeof parentId === "string" && parentId.trim()) {
+      const cleanParentId = parentId.trim();
+      if (cleanParentId !== targetParentId) {
+        const parentQuery = mongoose23.Types.ObjectId.isValid(cleanParentId) ? { _id: cleanParentId, userId } : { _id: cleanParentId, userId };
+        const parentExists = await Folder.findOne(parentQuery).lean().exec();
+        if (!parentExists) {
+          throw AppError.badRequest(
+            "Target parent folder does not exist or does not belong to you",
+            "INVALID_PARENT_FOLDER"
+          );
+        }
+        targetParentId = cleanParentId;
+      }
+    }
     const legacyAliasFolder = await Folder.findOne({
       userId,
       nameHash: folderNameHash,
       itemType: { $in: itemTypeCandidates },
       parentId: targetParentId
-    });
+    }).exec();
     if (legacyAliasFolder && legacyAliasFolder.itemType !== canonicalItemType) {
       legacyAliasFolder.itemType = canonicalItemType;
       await legacyAliasFolder.save();
@@ -10418,80 +11257,80 @@ var createFolderController = async (req, res) => {
       { upsert: true, returnDocument: "after" }
     );
     if (!newFolder) {
-      return res.status(500).json({
-        success: false,
-        error: { message: "Folder creation failed" }
-      });
+      throw AppError.internal("Folder creation failed", "FOLDER_CREATE_FAILED");
     }
     const safeFolder = {
       ...newFolder.toObject(),
       name: folderName
     };
-    return res.json({ success: true, data: safeFolder });
+    return sendSuccess(res, safeFolder, "Folder created successfully", 201);
   } catch (error) {
+    if (error instanceof AppError) throw error;
     logger.error("Folder creation error", {
-      userId: req.user.userId,
-      username: req.user.username,
+      userId,
+      username,
       itemType: canonicalItemType,
       folderName,
       error
     });
-    return res.status(500).json({ success: false, error: { message: "Failed to create folder" } });
+    throw AppError.internal("Failed to create folder", "FOLDER_CREATE_FAILED");
   }
 };
 var deleteFolderController = async (req, res) => {
   const { name, itemType } = req.query;
-  if (!name || !itemType) {
-    return res.status(400).json({ success: false, error: { message: "Name and itemType are required" } });
+  if (!name || typeof name !== "string" || !name.trim()) {
+    throw AppError.badRequest("Name is required", "FOLDER_NAME_REQUIRED");
+  }
+  if (!itemType || typeof itemType !== "string" || !itemType.trim()) {
+    throw AppError.badRequest("itemType is required", "ITEM_TYPE_REQUIRED");
   }
   const folderName = normalizeFolderName2(name);
   const canonicalItemType = resolveCanonicalFolderItemType(itemType);
   const itemTypeCandidates = resolveFolderItemTypeCandidates(itemType);
   const normalizedLowerName = folderName.toLowerCase();
   if (isProtectedFolderName(folderName)) {
-    return res.status(403).json({
-      success: false,
-      error: { message: "Saved folders are protected and cannot be deleted" }
-    });
+    throw AppError.forbidden(
+      "Saved folders are protected and cannot be deleted",
+      "PROTECTED_FOLDER"
+    );
   }
   if (!canonicalItemType) {
-    return res.status(400).json({ success: false, error: { message: "itemType is invalid" } });
+    throw AppError.badRequest("itemType is invalid", "INVALID_ITEM_TYPE");
   }
+  const { userId, username } = req.user;
   try {
-    const Folder = getFolderModel(req.user.username);
+    const Folder = getFolderModel(username);
     const folderNameHash = hashFolderName(folderName);
     const directDelete = await Folder.deleteMany({
-      userId: req.user.userId,
+      userId,
       itemType: { $in: itemTypeCandidates },
       $or: [{ nameHash: folderNameHash }, { name: folderName }]
     });
     if (directDelete.deletedCount && directDelete.deletedCount > 0) {
-      return res.json({ success: true });
+      return sendSuccess(res, { deleted: true }, "Folder deleted successfully");
     }
     const legacyCandidates = await Folder.find({
-      userId: req.user.userId,
+      userId,
       itemType: { $in: itemTypeCandidates }
-    });
+    }).lean().exec();
     const target = legacyCandidates.find((entry) => {
       const resolvedName = normalizeFolderName2(decryptFolderName(entry.name));
       return resolvedName.toLowerCase() === normalizedLowerName;
     });
     if (target) {
-      await Folder.deleteOne({ _id: target._id });
+      await Folder.deleteOne({ _id: target._id, userId });
     }
-    return res.json({ success: true });
+    return sendSuccess(res, { deleted: true }, "Folder deleted successfully");
   } catch (error) {
+    if (error instanceof AppError) throw error;
     logger.error("Folder deletion error", {
-      userId: req.user.userId,
-      username: req.user.username,
+      userId,
+      username,
       folderName,
       itemType: canonicalItemType,
       error
     });
-    return res.status(500).json({
-      success: false,
-      error: { message: "Failed to delete folder" }
-    });
+    throw AppError.internal("Failed to delete folder", "FOLDER_DELETE_FAILED");
   }
 };
 
@@ -10502,6 +11341,9 @@ var MAX_AUTH_TOKEN_LENGTH = (() => {
   return Number.isFinite(parsed) && parsed >= 512 ? parsed : 8192;
 })();
 var looksLikeJwt = (candidate) => {
+  if (!candidate || typeof candidate !== "string") {
+    return false;
+  }
   const token = candidate.trim();
   if (!token || token.length > MAX_AUTH_TOKEN_LENGTH) {
     return false;
@@ -10520,6 +11362,12 @@ var hasMalformedAuthTokenQuery = (req) => {
   const match = req.url.match(/[?&]auth_token=([^&]*)/);
   return Boolean(match && decodeQueryParamSafely(match[1]) === null);
 };
+var isDatabaseError = (err) => {
+  if (!err) return false;
+  const name = err.name || "";
+  const message = typeof err.message === "string" ? err.message : "";
+  return name === "MongoServerSelectionError" || name === "MongooseServerSelectionError" || name === "MongoClientClosedError" || name === "MongoNetworkError" || name === "MongoTimeoutError" || message.includes("client was closed") || message.includes("connection <monitor> closed") || message.includes("server selection") || message.includes("buffering timed out");
+};
 var extractQueryAuthToken = (req) => {
   const path16 = req.path || req.originalUrl || "";
   const isMediaStreamRoute = path16.includes("/media/") || path16.includes("/stream/") || path16.includes("/session-stream") || path16.includes("/hls/") || path16.includes("/files/access/") || path16.includes("/files/signed-url/") || path16.includes("/files/") || path16.includes("/avatar/");
@@ -10528,7 +11376,11 @@ var extractQueryAuthToken = (req) => {
     return void 0;
   }
   if (typeof req.query.auth_token === "string") {
-    return req.query.auth_token.trim();
+    const trimmed = req.query.auth_token.trim();
+    return trimmed.length > 0 ? trimmed : void 0;
+  }
+  if (Array.isArray(req.query.auth_token)) {
+    return void 0;
   }
   const match = req.url.match(/[?&]auth_token=([^&]+)/);
   if (!match) {
@@ -10543,10 +11395,28 @@ var extractQueryAuthToken = (req) => {
   }
   return decoded.trim();
 };
+var extractTokenFromRequest = (req) => {
+  const authHeader = req.get("authorization");
+  if (authHeader) {
+    const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+    if (bearerMatch?.[1]) {
+      const token = bearerMatch[1].trim();
+      if (token) return token;
+    }
+  }
+  const queryToken = extractQueryAuthToken(req);
+  if (queryToken) {
+    return queryToken;
+  }
+  const cookieToken = readCookie(req, "vault_access_token");
+  if (cookieToken && looksLikeJwt(cookieToken)) {
+    return cookieToken.trim();
+  }
+  return void 0;
+};
 var resolveIdentity = (req, _res, next) => {
-  const authHeader = req.get("Authorization")?.split(" ")[1];
-  const token = authHeader || extractQueryAuthToken(req);
-  if (token && typeof token === "string" && token.includes(".")) {
+  const token = extractTokenFromRequest(req);
+  if (token && looksLikeJwt(token)) {
     try {
       const payload = verifyAccessToken(token);
       req.user = {
@@ -10554,29 +11424,13 @@ var resolveIdentity = (req, _res, next) => {
         username: payload.username,
         sessionId: payload.sessionId
       };
-    } catch (e) {
+    } catch {
     }
   }
   next();
 };
 var requireAuth = async (req, _res, next) => {
-  const authHeader = req.get("authorization");
-  let token;
-  if (authHeader) {
-    const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
-    if (bearerMatch?.[1]) {
-      token = bearerMatch[1].trim();
-    }
-  }
-  if (!token) {
-    token = extractQueryAuthToken(req);
-  }
-  if (!token) {
-    const cookieToken = readCookie(req, "vault_access_token");
-    if (cookieToken && looksLikeJwt(cookieToken)) {
-      token = cookieToken.trim();
-    }
-  }
+  const token = extractTokenFromRequest(req);
   if (!token) {
     if (hasMalformedAuthTokenQuery(req)) {
       throw AppError.unauthorized("Authentication token is invalid.", "INVALID_TOKEN");
@@ -10637,11 +11491,15 @@ var requireAuth = async (req, _res, next) => {
         "SESSION_REVOKED"
       );
     }
-    if (userWithSession.meta?.lastCredentialChangeAt && payload.iat && payload.iat * 1e3 < new Date(userWithSession.meta.lastCredentialChangeAt).getTime()) {
-      throw AppError.unauthorized(
-        "Credentials have been updated. Please sign in again.",
-        "SESSION_REVOKED"
-      );
+    const lastCredChange = userWithSession.meta?.lastCredentialChangeAt;
+    if (lastCredChange && payload.iat) {
+      const changeTimeMs = new Date(lastCredChange).getTime();
+      if (Number.isFinite(changeTimeMs) && payload.iat * 1e3 < changeTimeMs) {
+        throw AppError.unauthorized(
+          "Credentials have been updated. Please sign in again.",
+          "SESSION_REVOKED"
+        );
+      }
     }
     req.user = {
       userId: payload.sub,
@@ -10650,8 +11508,16 @@ var requireAuth = async (req, _res, next) => {
     };
     return next();
   } catch (error) {
+    if (isDatabaseError(error)) {
+      logger.error("[Auth] Database connection error during authentication check", {
+        error: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
+    }
+    if (error instanceof AppError) {
+      throw error;
+    }
     anomalyDetectionService.trackAuthFailure(getClientIp(req));
-    if (error instanceof AppError) throw error;
     const name = error instanceof Error ? error.name : "UnknownError";
     const message = name === "TokenExpiredError" ? "Authentication token expired. Please sign in again." : "Authentication token is invalid.";
     const code = name === "TokenExpiredError" ? "TOKEN_EXPIRED" : "INVALID_TOKEN";
@@ -10670,16 +11536,25 @@ var requireAdmin = async (req, _res, next) => {
       throw AppError.unauthorized("Authentication required.", "UNAUTHORIZED");
     }
     const user = await User.findById(authUser.userId).select("+role username").lean().exec();
+    if (!user) {
+      throw AppError.unauthorized("User account not found.", "USER_NOT_FOUND");
+    }
     const adminUsernames = (process.env.ADMIN_USERNAMES || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
     const adminUserIds = (process.env.ADMIN_USER_IDS || "").split(",").map((s) => s.trim()).filter(Boolean);
     const isRoleAdmin = user?.role === "admin";
-    const isUsernameAdmin = user?.username && adminUsernames.includes(user.username.toLowerCase());
+    const isUsernameAdmin = typeof user?.username === "string" && adminUsernames.includes(user.username.trim().toLowerCase());
     const isIdAdmin = adminUserIds.includes(authUser.userId);
     if (!isRoleAdmin && !isUsernameAdmin && !isIdAdmin) {
       throw new AppError(403, "FORBIDDEN_ADMIN_ONLY", "Administrator privileges required.");
     }
     return next();
   } catch (error) {
+    if (isDatabaseError(error)) {
+      logger.error("[Auth] Database connection error during requireAdmin check", {
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return next(error);
+    }
     if (error instanceof AppError) {
       return next(error);
     }
@@ -10687,44 +11562,192 @@ var requireAdmin = async (req, _res, next) => {
   }
 };
 
+// server/middleware/csrfOriginMiddleware.ts
+init_logger();
+var parseOrigin = (value) => {
+  if (!value || typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "null") return null;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+};
+var requireTrustedBrowserOrigin = (req, _res, next) => {
+  const method = req.method.toUpperCase();
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    return next();
+  }
+  const rawOriginHeader = req.get("origin");
+  const rawRefererHeader = req.get("referer");
+  if (rawOriginHeader?.trim().toLowerCase() === "null") {
+    logger.warn('[CSRF] Blocked request with explicit "null" origin.', {
+      method,
+      path: req.originalUrl,
+      ip: req.ip
+    });
+    return next(AppError.forbidden("Null origin is not allowed.", "CSRF_BLOCKED"));
+  }
+  const origin = parseOrigin(rawOriginHeader);
+  const refererOrigin = parseOrigin(rawRefererHeader);
+  const candidateOrigin = origin || refererOrigin;
+  const fetchSite = req.get("sec-fetch-site")?.trim().toLowerCase();
+  if (fetchSite === "cross-site") {
+    logger.warn("[CSRF] Blocked cross-site browser request via Sec-Fetch-Site.", {
+      method,
+      path: req.originalUrl,
+      fetchSite
+    });
+    return next(AppError.forbidden("Cross-site request is not allowed.", "CSRF_BLOCKED"));
+  }
+  if (!candidateOrigin) {
+    const hasAuth = req.get("authorization") || req.get("x-vault-client");
+    if (hasAuth || process.env.NODE_ENV !== "production") {
+      return next();
+    }
+    logger.warn("[CSRF] Missing origin or referer header on state-changing request in production.", {
+      method,
+      path: req.originalUrl
+    });
+    return next(AppError.forbidden("Missing origin or referer header.", "CSRF_BLOCKED"));
+  }
+  if (!isAllowedCorsOrigin(candidateOrigin)) {
+    logger.warn("[CSRF] Blocked request from disallowed origin.", {
+      method,
+      path: req.originalUrl,
+      origin: candidateOrigin
+    });
+    return next(AppError.forbidden("Request origin is not allowed.", "ORIGIN_FORBIDDEN"));
+  }
+  return next();
+};
+
 // server/middleware/expressValidate.ts
 import { validationResult } from "express-validator";
 var validateRequest = (validations) => {
   return async (req, _res, next) => {
-    await Promise.all(validations.map((validation) => validation.run(req)));
-    const result = validationResult(req);
-    if (result.isEmpty()) {
-      return next();
+    try {
+      if (!Array.isArray(validations) || validations.length === 0) {
+        return next();
+      }
+      await Promise.all(validations.map((validation) => validation.run(req)));
+      const result = validationResult(req);
+      if (result.isEmpty()) {
+        return next();
+      }
+      const details = result.array({ onlyFirstError: true }).map((rawError) => {
+        const error = rawError;
+        const fieldPath = typeof error.path === "string" ? error.path : typeof error.param === "string" ? error.param : "request";
+        const message = typeof error.msg === "string" ? error.msg : "Invalid input.";
+        return { path: fieldPath, message };
+      });
+      const validationError = AppError.badRequest(
+        "Input validation failed.",
+        "VALIDATION_ERROR"
+      );
+      validationError.details = details;
+      return next(validationError);
+    } catch (error) {
+      return next(error);
     }
-    const details = result.array({ onlyFirstError: true }).map((error) => {
-      const fieldPath = typeof error.path === "string" ? error.path : "request";
-      const message = typeof error.msg === "string" ? error.msg : "Invalid input.";
-      return { path: fieldPath, message };
-    });
-    const validationError = AppError.badRequest(
-      "Input validation failed.",
-      "VALIDATION_ERROR"
-    );
-    validationError.details = details;
-    return next(validationError);
   };
 };
 
 // server/validators/requestChainValidator.ts
 import { body, param, query } from "express-validator";
-var USERNAME_PATTERN = /^[a-z0-9._-]+$/i;
-var SAFE_ID_PATTERN = /^[a-zA-Z0-9:_-]+$/;
-var SAFE_CATEGORY_PATTERN = /^[a-zA-Z0-9-]+$/;
+
+// server/validators/commonValidator.ts
+import { z } from "zod";
+var OBJECT_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
+var SAFE_ID_PATTERN3 = /^[a-zA-Z0-9:_-]+$/;
 var DEVICE_ID_PATTERN = /^[a-zA-Z0-9._:-]+$/;
-var HASH_HEX_64_PATTERN = /^[a-f0-9]{64}$/i;
-var UPLOAD_ID_PATTERN = /^[a-f0-9]{24}$/i;
+var USERNAME_PATTERN = /^[a-z0-9._-]+$/i;
+var HASH_HEX_64_PATTERN = /^[a-fA-F0-9]{64}$/;
+var hasPrototypePollutionKey = (value) => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  if (Array.isArray(value)) {
+    return value.some((item) => hasPrototypePollutionKey(item));
+  }
+  const proto = Object.getPrototypeOf(value);
+  if (proto !== null && proto !== Object.prototype && proto !== Array.prototype) {
+    return true;
+  }
+  const record = value;
+  const keys = Object.getOwnPropertyNames(record);
+  for (const key of keys) {
+    if (key === "__proto__" || key === "constructor" || key === "prototype") {
+      return true;
+    }
+    const child = record[key];
+    if (typeof child === "object" && child !== null && hasPrototypePollutionKey(child)) {
+      return true;
+    }
+  }
+  return false;
+};
+var hasNoSqlOperatorKey = (value) => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  if (Array.isArray(value)) {
+    return value.some((item) => hasNoSqlOperatorKey(item));
+  }
+  const record = value;
+  const keys = Object.keys(record);
+  for (const key of keys) {
+    if (key.startsWith("$")) {
+      return true;
+    }
+    const child = record[key];
+    if (typeof child === "object" && child !== null && hasNoSqlOperatorKey(child)) {
+      return true;
+    }
+  }
+  return false;
+};
+var objectIdSchema = z.string().trim().regex(OBJECT_ID_PATTERN, "Invalid MongoDB ObjectId format");
+var safeIdSchema = z.string().trim().min(1, "Identifier is required").max(256, "Identifier must not exceed 256 characters").regex(SAFE_ID_PATTERN3, "Identifier contains unsupported characters");
+var deviceIdSchema = z.string().trim().min(1, "deviceId is required").max(128, "deviceId must not exceed 128 characters").regex(DEVICE_ID_PATTERN, "deviceId format is invalid");
+var captchaTokenSchema = z.string().trim().min(20, "CAPTCHA token is invalid").max(4096, "CAPTCHA token is invalid");
+var sha256HexSchema = z.string().trim().regex(HASH_HEX_64_PATTERN, "Must be a valid 64-character hex SHA-256 hash");
+var paginationQuerySchema = z.object({
+  limit: z.coerce.number().int("limit must be an integer").min(1, "limit must be between 1 and 1000").max(1e3, "limit must be between 1 and 1000").default(50),
+  skip: z.coerce.number().int("skip must be an integer").min(0, "skip must be at least 0").max(1e6, "skip must not exceed 1000000").default(0),
+  cursor: z.string().trim().max(256).optional()
+}).strict();
+
+// server/validators/requestChainValidator.ts
+var SAFE_CATEGORY_PATTERN = /^[a-zA-Z0-9-]+$/;
+var UPLOAD_ID_PATTERN = /^[a-fA-F0-9]{24}$/;
+var MIME_TYPE_PATTERN = /^[a-zA-Z0-9.+_-]+\/[a-zA-Z0-9.+_-]+$/;
 var MULTIPART_CATEGORIES = ["photo", "video", "audio", "document", "other-files"];
 var usernameQueryValidation = [
-  query("username").exists({ values: "falsy" }).withMessage("Username is required.").bail().isString().withMessage("Username must be a string.").bail().trim().toLowerCase().isLength({ min: 3, max: 64 }).withMessage("Username must be between 3 and 64 characters.").bail().matches(USERNAME_PATTERN).withMessage("Username can only include letters, numbers, dots, underscores, and hyphens.")
+  query("username").exists({ values: "falsy" }).withMessage("Username is required.").bail().isString().withMessage("Username must be a string.").bail().trim().toLowerCase().isLength({ min: 3, max: 64 }).withMessage("Username must be between 3 and 64 characters.").bail().matches(USERNAME_PATTERN).withMessage("Username can only include letters, numbers, dots, underscores, and hyphens.").bail().custom((val) => !/[\u0000-\u001f\u007f]/.test(val)).withMessage("Username contains invalid control characters.")
 ];
 var revokeSessionsValidation = [
   body().isObject().withMessage("Request body must be a JSON object."),
-  body("sessionId").optional().isString().withMessage("sessionId must be a string.").bail().trim().isLength({ min: 1, max: 256 }).withMessage("sessionId must be between 1 and 256 characters."),
+  body().custom((value) => {
+    if (value && typeof value === "object") {
+      if (hasPrototypePollutionKey(value)) {
+        throw new Error("Payload contains forbidden prototype pollution keys.");
+      }
+      if (hasNoSqlOperatorKey(value)) {
+        throw new Error("Payload contains forbidden query operator keys.");
+      }
+      const allowedKeys = /* @__PURE__ */ new Set(["sessionId", "deviceId", "revokeAllOther", "revokeCurrent"]);
+      for (const key of Object.keys(value)) {
+        if (!allowedKeys.has(key)) {
+          throw new Error(`Unexpected field '${key}' is not permitted.`);
+        }
+      }
+    }
+    return true;
+  }),
+  body("sessionId").optional().isString().withMessage("sessionId must be a string.").bail().trim().isLength({ min: 1, max: 256 }).withMessage("sessionId must be between 1 and 256 characters.").bail().matches(SAFE_ID_PATTERN3).withMessage("sessionId contains invalid characters."),
   body("deviceId").optional().isString().withMessage("deviceId must be a string.").bail().trim().isLength({ min: 1, max: 128 }).withMessage("deviceId must be between 1 and 128 characters.").bail().matches(DEVICE_ID_PATTERN).withMessage("deviceId format is invalid."),
   body("revokeAllOther").optional().isBoolean().withMessage("revokeAllOther must be a boolean value.").toBoolean(),
   body("revokeCurrent").optional().isBoolean().withMessage("revokeCurrent must be a boolean value.").toBoolean(),
@@ -10745,15 +11768,29 @@ var revokeSessionsValidation = [
 ];
 var deviceSessionRenameValidation = [
   body().isObject().withMessage("Request body must be a JSON object."),
+  body().custom((value) => {
+    if (value && typeof value === "object") {
+      if (hasPrototypePollutionKey(value)) {
+        throw new Error("Payload contains forbidden prototype pollution keys.");
+      }
+      const allowedKeys = /* @__PURE__ */ new Set(["deviceId", "deviceName"]);
+      for (const key of Object.keys(value)) {
+        if (!allowedKeys.has(key)) {
+          throw new Error(`Unexpected field '${key}' is not permitted.`);
+        }
+      }
+    }
+    return true;
+  }),
   body("deviceId").exists({ values: "falsy" }).withMessage("deviceId is required.").bail().isString().withMessage("deviceId must be a string.").bail().trim().isLength({ min: 1, max: 128 }).withMessage("deviceId must be between 1 and 128 characters.").bail().matches(DEVICE_ID_PATTERN).withMessage("deviceId format is invalid."),
   body("deviceName").exists({ values: "falsy" }).withMessage("deviceName is required.").bail().isString().withMessage("deviceName must be a string.").bail().trim().isLength({ min: 1, max: 120 }).withMessage("deviceName must be between 1 and 120 characters.").custom((value) => !/[\u0000-\u001f\u007f]/.test(value)).withMessage("deviceName contains invalid control characters.")
 ];
 var vaultLegacyRouteParamsValidation = [
-  param("vaultId").isString().withMessage("vaultId is required.").bail().trim().isLength({ min: 1, max: 256 }).withMessage("vaultId must be between 1 and 256 characters.").bail().matches(SAFE_ID_PATTERN).withMessage("vaultId contains unsupported characters."),
-  param("itemId").optional().isString().withMessage("itemId must be a string.").bail().trim().isLength({ min: 1, max: 256 }).withMessage("itemId must be between 1 and 256 characters.").bail().matches(SAFE_ID_PATTERN).withMessage("itemId contains unsupported characters.")
+  param("vaultId").isString().withMessage("vaultId is required.").bail().trim().isLength({ min: 1, max: 256 }).withMessage("vaultId must be between 1 and 256 characters.").bail().matches(SAFE_ID_PATTERN3).withMessage("vaultId contains unsupported characters."),
+  param("itemId").optional().isString().withMessage("itemId must be a string.").bail().trim().isLength({ min: 1, max: 256 }).withMessage("itemId must be between 1 and 256 characters.").bail().matches(SAFE_ID_PATTERN3).withMessage("itemId contains unsupported characters.")
 ];
 var vaultItemRouteParamsValidation = [
-  param("itemId").isString().withMessage("itemId is required.").bail().trim().isLength({ min: 1, max: 256 }).withMessage("itemId must be between 1 and 256 characters.").bail().matches(SAFE_ID_PATTERN).withMessage("itemId contains unsupported characters.")
+  param("itemId").isString().withMessage("itemId is required.").bail().trim().isLength({ min: 1, max: 256 }).withMessage("itemId must be between 1 and 256 characters.").bail().matches(SAFE_ID_PATTERN3).withMessage("itemId contains unsupported characters.")
 ];
 var vaultCategoryRouteParamsValidation = [
   param("category").isString().withMessage("category is required.").bail().trim().isLength({ min: 1, max: 64 }).withMessage("category must be between 1 and 64 characters.").bail().matches(SAFE_CATEGORY_PATTERN).withMessage("category contains unsupported characters.")
@@ -10764,20 +11801,72 @@ var multipartRouteParamsValidation = [
 ];
 var multipartStartBodyValidation = [
   body().isObject().withMessage("Request body must be a JSON object."),
+  body().custom((value) => {
+    if (value && typeof value === "object") {
+      if (hasPrototypePollutionKey(value)) {
+        throw new Error("Payload contains forbidden prototype pollution keys.");
+      }
+      const allowed = /* @__PURE__ */ new Set([
+        "category",
+        "fileName",
+        "mimeType",
+        "fileSize",
+        "folder",
+        "resumeUploadId",
+        "keepMetadata"
+      ]);
+      for (const key of Object.keys(value)) {
+        if (!allowed.has(key)) {
+          throw new Error(`Unexpected field '${key}' is not permitted.`);
+        }
+      }
+    }
+    return true;
+  }),
   body("category").isString().withMessage("category is required.").bail().trim().isIn(MULTIPART_CATEGORIES).withMessage("Unsupported multipart category."),
-  body("fileName").isString().withMessage("fileName is required.").bail().trim().isLength({ min: 1, max: 512 }).withMessage("fileName must be between 1 and 512 characters."),
-  body("mimeType").isString().withMessage("mimeType is required.").bail().trim().isLength({ min: 1, max: 255 }).withMessage("mimeType must be between 1 and 255 characters."),
+  body("fileName").isString().withMessage("fileName is required.").bail().trim().isLength({ min: 1, max: 512 }).withMessage("fileName must be between 1 and 512 characters.").bail().custom((val) => !/[\u0000-\u001f\u007f]/.test(val) && !val.includes("..")).withMessage("fileName contains invalid characters or path traversal sequences."),
+  body("mimeType").isString().withMessage("mimeType is required.").bail().trim().isLength({ min: 1, max: 255 }).withMessage("mimeType must be between 1 and 255 characters.").bail().matches(MIME_TYPE_PATTERN).withMessage("mimeType format is invalid."),
   body("fileSize").isInt({ min: 1, max: maxUploadFileSizeBytes }).withMessage(`fileSize must be between 1 and ${maxUploadFileSizeBytes}.`).toInt(),
-  body("folder").optional({ values: "null" }).isString().withMessage("folder must be a string.").bail().trim().isLength({ max: 256 }).withMessage("folder must be 256 characters or fewer."),
+  body("folder").optional({ values: "null" }).isString().withMessage("folder must be a string.").bail().trim().isLength({ max: 256 }).withMessage("folder must be 256 characters or fewer.").bail().custom((val) => !/[\u0000-\u001f\u007f]/.test(val) && !val.includes("..")).withMessage("folder contains invalid characters or path traversal sequences."),
   body("resumeUploadId").optional({ values: "null" }).isString().withMessage("resumeUploadId must be a string.").bail().trim().matches(UPLOAD_ID_PATTERN).withMessage("resumeUploadId format is invalid."),
   body("keepMetadata").optional({ values: "null" }).isBoolean().withMessage("keepMetadata must be a boolean.").toBoolean()
 ];
 var multipartCompleteBodyValidation = [
   body().isObject().withMessage("Request body must be a JSON object."),
+  body().custom((value) => {
+    if (value && typeof value === "object") {
+      if (hasPrototypePollutionKey(value)) {
+        throw new Error("Payload contains forbidden prototype pollution keys.");
+      }
+      const allowed = /* @__PURE__ */ new Set(["fileSha256", "deviceId", "clientUpdatedAt", "metadata"]);
+      for (const key of Object.keys(value)) {
+        if (!allowed.has(key)) {
+          throw new Error(`Unexpected field '${key}' is not permitted.`);
+        }
+      }
+    }
+    return true;
+  }),
   body("fileSha256").optional({ values: "null" }).isString().withMessage("fileSha256 must be a string.").bail().trim().matches(HASH_HEX_64_PATTERN).withMessage("fileSha256 must be a 64-character hex hash."),
   body("deviceId").optional({ values: "null" }).isString().withMessage("deviceId must be a string.").bail().trim().isLength({ min: 1, max: 128 }).withMessage("deviceId must be between 1 and 128 characters.").bail().matches(DEVICE_ID_PATTERN).withMessage("deviceId format is invalid."),
   body("clientUpdatedAt").optional({ values: "null" }).isString().withMessage("clientUpdatedAt must be a string.").bail().trim().isLength({ min: 1, max: 128 }).withMessage("clientUpdatedAt is invalid."),
-  body("metadata").optional({ values: "null" }).isObject().withMessage("metadata must be an object.")
+  body("metadata").optional({ values: "null" }).custom((val) => {
+    if (val === null || val === void 0) return true;
+    if (typeof val !== "object" || Array.isArray(val)) {
+      throw new Error("metadata must be a JSON object.");
+    }
+    if (hasPrototypePollutionKey(val)) {
+      throw new Error("metadata contains forbidden prototype pollution keys.");
+    }
+    if (hasNoSqlOperatorKey(val)) {
+      throw new Error("metadata contains forbidden query operator keys.");
+    }
+    const serialized = JSON.stringify(val);
+    if (serialized.length > 65536) {
+      throw new Error("metadata exceeds maximum size limit of 64KB.");
+    }
+    return true;
+  })
 ];
 var activityLogQueryValidation = [
   query("limit").optional().isInt({ min: 1, max: 1e3 }).withMessage("limit must be an integer between 1 and 1000.").toInt(),
@@ -10785,14 +11874,53 @@ var activityLogQueryValidation = [
 ];
 var activityLogBodyValidation = [
   body().isObject().withMessage("Request body must be a JSON object."),
+  body().custom((value) => {
+    if (value && typeof value === "object") {
+      if (hasPrototypePollutionKey(value)) {
+        throw new Error("Payload contains forbidden prototype pollution keys.");
+      }
+      const allowed = /* @__PURE__ */ new Set([
+        "action",
+        "category",
+        "itemId",
+        "status",
+        "errorCode",
+        "errorMessage",
+        "deviceId",
+        "details"
+      ]);
+      for (const key of Object.keys(value)) {
+        if (!allowed.has(key)) {
+          throw new Error(`Unexpected field '${key}' is not permitted.`);
+        }
+      }
+    }
+    return true;
+  }),
   body("action").optional().isString().withMessage("action must be a string.").bail().trim().isLength({ min: 1, max: 64 }).withMessage("action must be between 1 and 64 characters."),
   body("category").optional().isString().withMessage("category must be a string.").bail().trim().isLength({ min: 1, max: 64 }).withMessage("category must be between 1 and 64 characters."),
-  body("itemId").optional({ values: "null" }).isString().withMessage("itemId must be a string.").bail().trim().isLength({ min: 1, max: 256 }).withMessage("itemId must be between 1 and 256 characters."),
+  body("itemId").optional({ values: "null" }).isString().withMessage("itemId must be a string.").bail().trim().isLength({ min: 1, max: 256 }).withMessage("itemId must be between 1 and 256 characters.").bail().matches(SAFE_ID_PATTERN3).withMessage("itemId contains unsupported characters."),
   body("status").optional().isString().withMessage("status must be a string.").bail().trim().isLength({ min: 1, max: 32 }).withMessage("status must be between 1 and 32 characters."),
   body("errorCode").optional().isString().withMessage("errorCode must be a string.").bail().trim().isLength({ min: 1, max: 128 }).withMessage("errorCode must be between 1 and 128 characters."),
   body("errorMessage").optional().isString().withMessage("errorMessage must be a string.").bail().trim().isLength({ min: 1, max: 2048 }).withMessage("errorMessage must be between 1 and 2048 characters."),
   body("deviceId").optional().isString().withMessage("deviceId must be a string.").bail().trim().isLength({ min: 1, max: 128 }).withMessage("deviceId must be between 1 and 128 characters.").bail().matches(DEVICE_ID_PATTERN).withMessage("deviceId format is invalid."),
-  body("details").optional().isObject().withMessage("details must be an object.")
+  body("details").optional().custom((val) => {
+    if (val === null || val === void 0) return true;
+    if (typeof val !== "object" || Array.isArray(val)) {
+      throw new Error("details must be a JSON object.");
+    }
+    if (hasPrototypePollutionKey(val)) {
+      throw new Error("details contains forbidden prototype pollution keys.");
+    }
+    if (hasNoSqlOperatorKey(val)) {
+      throw new Error("details contains forbidden query operator keys.");
+    }
+    const serialized = JSON.stringify(val);
+    if (serialized.length > 10240) {
+      throw new Error("details exceeds maximum size limit of 10KB.");
+    }
+    return true;
+  })
 ];
 
 // server/utils/asyncHandler.ts
@@ -10836,10 +11964,40 @@ var multipartCompleteLimiter = strictUserLimiter(
   Math.max(3, Number(process.env.MULTIPART_COMPLETE_LIMIT_PER_10MIN || 30)),
   "Too many upload completion requests. Please retry later."
 );
+var vaultUploadLimiter = strictUserLimiter(
+  60 * 1e3,
+  Math.max(30, Number(process.env.VAULT_UPLOAD_LIMIT_PER_MIN || 60)),
+  "Upload rate limit exceeded. Please wait a moment."
+);
+var vaultItemWriteLimiter = strictUserLimiter(
+  60 * 1e3,
+  Math.max(60, Number(process.env.VAULT_ITEM_WRITE_LIMIT_PER_MIN || 120)),
+  "Vault item modification rate limit exceeded. Please retry shortly."
+);
+var folderLimiter = strictUserLimiter(
+  60 * 1e3,
+  Math.max(30, Number(process.env.VAULT_FOLDER_LIMIT_PER_MIN || 60)),
+  "Folder operation rate limit exceeded. Please wait a moment."
+);
+var activityLimiter = strictUserLimiter(
+  60 * 1e3,
+  Math.max(60, Number(process.env.VAULT_ACTIVITY_LIMIT_PER_MIN || 120)),
+  "Activity rate limit exceeded."
+);
 var multipartPartBodyLimitBytes = Math.max(5 * 1024 * 1024, Number(process.env.MULTIPART_PART_SIZE_BYTES || 8 * 1024 * 1024)) + 32 * 1024;
+vaultRouter.use((req, res, next) => {
+  if (!req.path.includes("/media/segment/") && !req.path.includes("/files/access/")) {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+  }
+  next();
+});
 vaultRouter.post(
   "/legacy/:vaultId/items/:itemId",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest(vaultLegacyRouteParamsValidation),
   asyncHandler(upsertLegacyVaultItem)
 );
@@ -10851,35 +12009,61 @@ vaultRouter.get(
 );
 vaultRouter.delete(
   "/legacy/:vaultId/items/:itemId",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest(vaultLegacyRouteParamsValidation),
   asyncHandler(removeLegacyVaultItem)
 );
 vaultRouter.get("/items", requireAuth, asyncHandler(getScopedVaultItems));
 vaultRouter.post(
   "/items/:itemId",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest(vaultItemRouteParamsValidation),
   asyncHandler(upsertScopedVaultItem)
 );
 vaultRouter.put(
   "/items/:itemId/pin",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest(vaultItemRouteParamsValidation),
   asyncHandler(toggleScopedVaultItemPin)
 );
 vaultRouter.delete(
   "/items/:itemId",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest(vaultItemRouteParamsValidation),
   asyncHandler(removeScopedVaultItem)
 );
 vaultRouter.get("/", requireAuth, asyncHandler(fetchVault));
 vaultRouter.get("/sync", requireAuth, asyncHandler(syncVault));
 vaultRouter.get("/folders", requireAuth, asyncHandler(getFoldersController));
-vaultRouter.post("/folders", requireAuth, asyncHandler(createFolderController));
-vaultRouter.delete("/folders", requireAuth, asyncHandler(deleteFolderController));
-vaultRouter.post("/folders/init", requireAuth, asyncHandler(initializeFoldersController));
+vaultRouter.post(
+  "/folders",
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  folderLimiter,
+  asyncHandler(createFolderController)
+);
+vaultRouter.delete(
+  "/folders",
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  folderLimiter,
+  asyncHandler(deleteFolderController)
+);
+vaultRouter.post(
+  "/folders/init",
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  folderLimiter,
+  asyncHandler(initializeFoldersController)
+);
 vaultRouter.get(
   "/activity",
   requireAuth,
@@ -10888,7 +12072,9 @@ vaultRouter.get(
 );
 vaultRouter.post(
   "/activity",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  activityLimiter,
   validateRequest(activityLogBodyValidation),
   asyncHandler(saveUserActivityLog)
 );
@@ -10919,6 +12105,7 @@ vaultRouter.get(
 );
 vaultRouter.get(
   "/media/segment/:itemId/:segment",
+  resolveIdentity,
   validateRequest(vaultItemRouteParamsValidation),
   asyncHandler(getMediaSegment)
 );
@@ -10957,6 +12144,7 @@ vaultRouter.get(
 );
 vaultRouter.post(
   "/files/multipart/start",
+  requireTrustedBrowserOrigin,
   requireAuth,
   multipartStartLimiter,
   validateRequest(multipartStartBodyValidation),
@@ -10964,6 +12152,7 @@ vaultRouter.post(
 );
 vaultRouter.put(
   "/files/multipart/:uploadId/part/:partNumber",
+  requireTrustedBrowserOrigin,
   requireAuth,
   multipartPartLimiter,
   validateRequest(multipartRouteParamsValidation),
@@ -10972,36 +12161,57 @@ vaultRouter.put(
 );
 vaultRouter.post(
   "/files/multipart/:uploadId/complete",
+  requireTrustedBrowserOrigin,
   requireAuth,
   multipartCompleteLimiter,
   validateRequest([...multipartRouteParamsValidation, ...multipartCompleteBodyValidation]),
   asyncHandler(completeMultipartUpload)
 );
-vaultRouter.post("/files/tus", requireAuth, asyncHandler(createTusUploadController));
+vaultRouter.post(
+  "/files/tus",
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  vaultUploadLimiter,
+  asyncHandler(createTusUploadController)
+);
 vaultRouter.head("/files/tus/:uploadId", requireAuth, asyncHandler(getTusOffsetController));
-vaultRouter.patch("/files/tus/:uploadId", requireAuth, asyncHandler(uploadTusChunkController));
+vaultRouter.patch(
+  "/files/tus/:uploadId",
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  vaultUploadLimiter,
+  asyncHandler(uploadTusChunkController)
+);
 vaultRouter.post(
   "/files/:category",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultUploadLimiter,
   validateRequest(vaultCategoryRouteParamsValidation),
   uploadVaultFileMiddleware,
   asyncHandler(uploadVaultFile)
 );
 vaultRouter.post(
   "/:category",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest(vaultCategoryRouteParamsValidation),
   asyncHandler(upsertVaultEntry)
 );
 vaultRouter.put(
   "/:category/:itemId",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest([...vaultCategoryRouteParamsValidation, ...vaultItemRouteParamsValidation]),
   asyncHandler(upsertVaultEntry)
 );
 vaultRouter.delete(
   "/:category/:itemId",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  vaultItemWriteLimiter,
   validateRequest([...vaultCategoryRouteParamsValidation, ...vaultItemRouteParamsValidation]),
   asyncHandler(deleteVaultEntry)
 );
@@ -11239,9 +12449,13 @@ var login = async (req, res) => {
   }
 };
 var checkUsername = async (req, res) => {
-  const username = typeof req.query?.username === "string" ? req.query.username : req.body?.username;
-  if (!username) {
+  const rawUsername = typeof req.query?.username === "string" ? req.query.username : req.body?.username;
+  if (typeof rawUsername !== "string" || !rawUsername.trim()) {
     throw AppError.badRequest("Username is required.", "INVALID_USERNAME");
+  }
+  const username = rawUsername.trim().toLowerCase();
+  if (username.length > 64) {
+    throw AppError.badRequest("Username exceeds maximum allowed length.", "INVALID_USERNAME");
   }
   if (isMongoOptionalMode()) {
     return sendSuccess(res, { exists: false, exactMatch: false }, "Username check completed");
@@ -11250,10 +12464,11 @@ var checkUsername = async (req, res) => {
   return sendSuccess(res, result, "Username check completed");
 };
 var getSalt = async (req, res) => {
-  const username = typeof req.query?.username === "string" ? req.query.username.trim().toLowerCase() : "";
-  if (!username) {
+  const rawUsername = typeof req.query?.username === "string" ? req.query.username.trim().toLowerCase() : "";
+  if (!rawUsername) {
     throw AppError.badRequest("Username is required.", "INVALID_USERNAME");
   }
+  const username = rawUsername.slice(0, 64);
   const hmacSecret = process.env.JWT_SECRET || "dummy-secret-key-salt-derivation-fallback";
   const defaultDeterministicSalt = crypto10.createHmac("sha256", hmacSecret).update(username).digest("hex");
   if (isMongoOptionalMode()) {
@@ -11382,26 +12597,43 @@ var revokeSessions = async (req, res) => {
   return sendSuccess(res, result, "Sessions revoked successfully");
 };
 var changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (!currentPassword || typeof currentPassword !== "string") {
+    throw AppError.badRequest("Current password is required.", "MISSING_CREDENTIALS");
+  }
+  if (!newPassword || typeof newPassword !== "string" || newPassword.length < 8) {
+    throw AppError.badRequest("New password must be at least 8 characters.", "AUTH_WEAK_PASSWORD");
+  }
   const result = await changeAuthenticatedPassword({
     userId: req.user.userId,
-    currentPassword: req.body?.currentPassword,
-    newPassword: req.body?.newPassword,
+    currentPassword,
+    newPassword,
     ipAddress: getClientIp(req)
   });
   return sendSuccess(res, result, "Password changed successfully");
 };
 var updateDeviceName = async (req, res) => {
-  if (typeof req.body?.deviceId !== "string" || typeof req.body?.deviceName !== "string") {
-    throw AppError.badRequest("deviceId and deviceName are required.", "INVALID_INPUT");
+  const { deviceId, deviceName } = req.body || {};
+  if (typeof deviceId !== "string" || typeof deviceName !== "string") {
+    throw AppError.badRequest("deviceId and deviceName are required strings.", "INVALID_INPUT");
   }
-  const result = await renameDeviceSession(req.user.userId, req.body.deviceId, req.body.deviceName);
+  const cleanDeviceId = deviceId.trim().slice(0, 128);
+  const cleanDeviceName = deviceName.trim().slice(0, 100);
+  if (!cleanDeviceId || !cleanDeviceName) {
+    throw AppError.badRequest("deviceId and deviceName cannot be empty.", "INVALID_INPUT");
+  }
+  const result = await renameDeviceSession(req.user.userId, cleanDeviceId, cleanDeviceName);
   return sendSuccess(res, result, "Device name updated successfully");
 };
 var updateProfile = async (req, res) => {
+  const rawProfileName = req.body?.profileName;
+  const rawProfilePhoto = req.body?.profilePhoto;
+  const profileName = typeof rawProfileName === "string" ? rawProfileName.trim().slice(0, 100) : void 0;
+  const profilePhoto = typeof rawProfilePhoto === "string" ? rawProfilePhoto.trim().slice(0, 2048) : void 0;
   const result = await updateAuthenticatedUserProfile({
     userId: req.user.userId,
-    profileName: req.body?.profileName,
-    profilePhoto: req.body?.profilePhoto
+    profileName,
+    profilePhoto
   });
   return sendSuccess(res, result, "Profile updated successfully");
 };
@@ -11427,6 +12659,9 @@ data: ${initialPayload}
 
 `);
   sessionRealtimeService.registerSessionStream(userId, sessionId, res);
+  req.on("close", () => {
+    logger.debug("SSE connection closed by client", { userId, sessionId });
+  });
 };
 var checkSessionStatus = async (req, res) => {
   return sendSuccess(
@@ -11444,6 +12679,9 @@ var checkSessionStatus = async (req, res) => {
 
 // server/controllers/captchaController.ts
 var verifyMasterKeyCaptcha = async (_req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   return sendSuccess(
     res,
     {
@@ -11454,6 +12692,9 @@ var verifyMasterKeyCaptcha = async (_req, res) => {
   );
 };
 var verifyCloudUnlockCaptcha = async (_req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   return sendSuccess(
     res,
     {
@@ -11643,25 +12884,25 @@ var hasTimeoutOrDuplicateCode = (errorCodes) => errorCodes.includes("timeout-or-
 var requireRecaptcha = (options) => {
   const tokenField = options.tokenField || "captchaToken";
   return async (req, _res, next) => {
+    let tokenValue = void 0;
     try {
       if (!isRecord(req.body)) {
         throw AppError.badRequest("Request body must be a JSON object.", "INVALID_REQUEST_BODY");
       }
-      const rawToken = req.body[tokenField];
-      const hasToken = typeof rawToken === "string" ? rawToken.trim().length > 0 : rawToken !== void 0 && rawToken !== null;
+      tokenValue = req.body[tokenField];
+      const hasToken = typeof tokenValue === "string" ? tokenValue.trim().length > 0 : tokenValue !== void 0 && tokenValue !== null;
       if (options.optional && !hasToken) {
-        delete req.body[tokenField];
         return next();
       }
-      const token = readRecaptchaTokenFromBody(req.body[tokenField]);
+      const token = readRecaptchaTokenFromBody(tokenValue);
       const verification = await verifyRecaptchaToken({
         token,
         remoteIp: getClientIp(req)
       });
-      delete req.body[tokenField];
       if (!verification.success) {
-        const code = hasTimeoutOrDuplicateCode(verification.errorCodes) ? "CAPTCHA_TOKEN_EXPIRED" : "CAPTCHA_VERIFICATION_FAILED";
-        const message = hasTimeoutOrDuplicateCode(verification.errorCodes) ? "CAPTCHA expired. Please complete it again." : "Security verification failed. Please retry the CAPTCHA challenge.";
+        const isTimeout = hasTimeoutOrDuplicateCode(verification.errorCodes);
+        const code = isTimeout ? "CAPTCHA_TOKEN_EXPIRED" : "CAPTCHA_VERIFICATION_FAILED";
+        const message = isTimeout ? "CAPTCHA expired. Please complete it again." : "Security verification failed. Please retry the CAPTCHA challenge.";
         logger.warn("[SECURITY] reCAPTCHA verification failed.", {
           action: options.action,
           path: req.originalUrl,
@@ -11722,92 +12963,132 @@ var requireRecaptcha = (options) => {
         });
       }
       next(error);
+    } finally {
+      if (isRecord(req.body) && tokenField in req.body) {
+        delete req.body[tokenField];
+      }
     }
   };
 };
 
 // server/middleware/validate.ts
-var validate = (schema) => {
-  return (req, _res, next) => {
-    schema.parseAsync(req.body).then((parsed) => {
-      req.body = parsed;
-      next();
-    }).catch((error) => next(error));
+var validate = (schema, target = "body") => {
+  return async (req, _res, next) => {
+    try {
+      const dataToValidate = req[target] ?? {};
+      const parsed = await schema.parseAsync(dataToValidate);
+      if (target === "body") {
+        req.body = parsed;
+      } else if (target === "params") {
+        req.params = parsed;
+      } else if (target === "query") {
+        try {
+          req.query = parsed;
+        } catch {
+          if (req.query && typeof req.query === "object") {
+            Object.assign(req.query, parsed);
+          }
+        }
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
   };
 };
 
 // server/validators/authValidator.ts
-import { z } from "zod";
-var USERNAME_PATTERN2 = /^[a-z0-9._-]+$/i;
-var STRONG_PASSWORD_PATTERN2 = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+=\[\];:,.<>?{}|\-])\S{16,64}$/;
-var usernameSchema = z.string().trim().toLowerCase().transform((v) => v.normalize("NFKC")).refine((v) => v.length >= 3, "Username must be at least 3 characters").refine((v) => v.length <= 64, "Username must be at most 64 characters").refine(
-  (v) => USERNAME_PATTERN2.test(v),
+import { z as z2 } from "zod";
+var STRONG_PASSWORD_PATTERN2 = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+=\[\];:,.<>?{}|\-])\S{16,128}$/;
+var usernameSchema = z2.string().trim().toLowerCase().transform((v) => v.normalize("NFKC")).refine((v) => v.length >= 3, "Username must be at least 3 characters").refine((v) => v.length <= 64, "Username must be at most 64 characters").refine(
+  (v) => USERNAME_PATTERN.test(v),
   "Username can only include letters, numbers, dots, underscores, and hyphens"
 );
-var passwordSchema2 = z.string().transform((v) => v.normalize("NFKC")).refine((v) => v.length >= 16, "Password must be at least 16 characters").refine((v) => v.length <= 128, "Password must be at most 128 characters").refine(
+var passwordSchema2 = z2.string().transform((v) => v.normalize("NFKC")).refine((v) => v.length >= 16, "Password must be at least 16 characters").refine((v) => v.length <= 128, "Password must be at most 128 characters").refine(
   (v) => STRONG_PASSWORD_PATTERN2.test(v),
   "Password must include uppercase, lowercase, number, and special character, and cannot contain spaces"
 );
-var masterKeySchema2 = z.string().transform((v) => v.normalize("NFKC")).refine((v) => v.length >= 16, "Master Key must be at least 16 characters").refine((v) => v.length <= 128, "Master Key must be at most 128 characters").refine(
+var masterKeySchema2 = z2.string().transform((v) => v.normalize("NFKC")).refine((v) => v.length >= 16, "Master Key must be at least 16 characters").refine((v) => v.length <= 128, "Master Key must be at most 128 characters").refine(
   (v) => STRONG_PASSWORD_PATTERN2.test(v),
   "Master Key must include uppercase, lowercase, number, and special character, and cannot contain spaces"
 );
-var deviceIdSchema = z.string().trim().min(1).max(128);
-var captchaTokenSchema = z.string().trim().min(20, "CAPTCHA token is invalid").max(4096, "CAPTCHA token is invalid");
-var loginSchema = z.object({
+var loginSchema = z2.object({
   username: usernameSchema,
-  password: z.string().min(1, "Password is required").max(128, "Password is too long"),
-  masterKey: z.string().optional(),
-  pqcSalt: z.string().trim().min(8).max(128).optional(),
+  password: z2.string().min(1, "Password is required").max(128, "Password is too long"),
+  masterKey: z2.string().max(128, "Master Key is too long").optional(),
+  pqcSalt: z2.string().trim().min(8).max(128).optional(),
   deviceId: deviceIdSchema.optional(),
   captchaToken: captchaTokenSchema
+}).strict().refine((val) => !hasPrototypePollutionKey(val), {
+  message: "Payload contains forbidden keys"
 });
-var registerSchema = z.object({
+var registerSchema = z2.object({
   username: usernameSchema,
   password: passwordSchema2,
   masterKey: masterKeySchema2,
-  pqcSalt: z.string().trim().min(8).max(128).optional(),
+  pqcSalt: z2.string().trim().min(8).max(128).optional(),
   deviceId: deviceIdSchema.optional(),
   captchaToken: captchaTokenSchema
+}).strict().refine((val) => !hasPrototypePollutionKey(val), {
+  message: "Payload contains forbidden keys"
 }).refine((data) => data.password !== data.masterKey, {
   message: "Account password and Master Key must not be identical",
   path: ["masterKey"]
 });
-var changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required").max(128, "Current password is too long"),
+var changePasswordSchema = z2.object({
+  currentPassword: z2.string().min(1, "Current password is required").max(128, "Current password is too long"),
   newPassword: passwordSchema2,
   captchaToken: captchaTokenSchema
+}).strict().refine((val) => !hasPrototypePollutionKey(val), {
+  message: "Payload contains forbidden keys"
 }).refine((data) => data.newPassword !== data.currentPassword, {
   message: "New password must be different from current password",
   path: ["newPassword"]
 });
-var masterKeyCaptchaSchema = z.object({
+var masterKeyCaptchaSchema = z2.object({
   captchaToken: captchaTokenSchema
-});
-var cloudUnlockCaptchaSchema = z.object({
+}).strict();
+var cloudUnlockCaptchaSchema = z2.object({
   captchaToken: captchaTokenSchema
-});
-var normalizeProfileName = z.string().trim().max(120, "Profile name must be 120 characters or fewer").transform((value) => value.length === 0 ? "none" : value);
+}).strict();
+var normalizeProfileName = z2.string().trim().max(120, "Profile name must be 120 characters or fewer").refine(
+  (val) => !/[\u0000-\u001f\u007f]/.test(val),
+  "Profile name contains invalid control characters"
+).transform((value) => value.length === 0 ? "none" : value);
 var MAX_PROFILE_PHOTO_LENGTH2 = 5e7;
-var normalizeProfilePhoto = z.string().trim().max(MAX_PROFILE_PHOTO_LENGTH2, "Profile photo is too large (max ~35 MB).").transform((value, ctx) => {
+var normalizeProfilePhoto = z2.string().trim().max(MAX_PROFILE_PHOTO_LENGTH2, "Profile photo is too large (max ~35 MB).").transform((value, ctx) => {
   if (value.length === 0 || value.toLowerCase() === "none") {
     return "none";
   }
+  if (value.startsWith("//")) {
+    ctx.addIssue({
+      code: z2.ZodIssueCode.custom,
+      message: "Protocol-relative URLs are not allowed."
+    });
+    return z2.NEVER;
+  }
+  if (value.includes("..")) {
+    ctx.addIssue({
+      code: z2.ZodIssueCode.custom,
+      message: "Path traversal sequences are not allowed."
+    });
+    return z2.NEVER;
+  }
   if (!value.startsWith("data:image/") && value.length > 2048) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: z2.ZodIssueCode.custom,
       message: "Profile photo URL cannot exceed 2048 characters."
     });
-    return z.NEVER;
+    return z2.NEVER;
   }
   if (value.startsWith("data:image/")) {
-    const mimeMatch = value.match(/^data:(image\/[a-zA-Z0-9.+\-]+);base64,/);
+    const mimeMatch = value.match(/^data:(image\/(?:png|jpeg|jpg|webp|avif|gif));base64,/i);
     if (!mimeMatch) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Profile photo data URI must be a base64-encoded image."
+        code: z2.ZodIssueCode.custom,
+        message: "Profile photo data URI must be a valid base64-encoded image (png, jpeg, webp, avif, or gif)."
       });
-      return z.NEVER;
+      return z2.NEVER;
     }
     return value;
   }
@@ -11819,23 +13100,25 @@ var normalizeProfilePhoto = z.string().trim().max(MAX_PROFILE_PHOTO_LENGTH2, "Pr
     parsed = new URL(value);
   } catch {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: z2.ZodIssueCode.custom,
       message: 'Profile photo must be a valid HTTP/HTTPS URL, a base64 data URI, or "none".'
     });
-    return z.NEVER;
+    return z2.NEVER;
   }
   if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: z2.ZodIssueCode.custom,
       message: "Profile photo URL must use HTTP or HTTPS (or upload a file directly)."
     });
-    return z.NEVER;
+    return z2.NEVER;
   }
   return parsed.toString();
 });
-var updateProfileSchema = z.object({
+var updateProfileSchema = z2.object({
   profileName: normalizeProfileName.optional(),
   profilePhoto: normalizeProfilePhoto.optional()
+}).strict().refine((val) => !hasPrototypePollutionKey(val), {
+  message: "Payload contains forbidden keys"
 }).refine(
   (value) => typeof value.profileName === "string" || typeof value.profilePhoto === "string",
   {
@@ -11843,40 +13126,6 @@ var updateProfileSchema = z.object({
     path: ["profileName"]
   }
 );
-
-// server/middleware/csrfOriginMiddleware.ts
-var parseOrigin = (value) => {
-  if (!value || !value.trim()) return null;
-  try {
-    return new URL(value).origin;
-  } catch {
-    return null;
-  }
-};
-var requireTrustedBrowserOrigin = (req, _res, next) => {
-  const method = req.method.toUpperCase();
-  if (!["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
-    return next();
-  }
-  const origin = parseOrigin(req.get("origin"));
-  const refererOrigin = parseOrigin(req.get("referer"));
-  const candidateOrigin = origin || refererOrigin;
-  const fetchSite = req.get("sec-fetch-site")?.trim().toLowerCase();
-  if (fetchSite === "cross-site") {
-    throw AppError.forbidden("Cross-site request is not allowed.", "CSRF_BLOCKED");
-  }
-  if (!candidateOrigin) {
-    const hasAuth = req.get("authorization") || req.get("x-vault-client");
-    if (hasAuth || process.env.NODE_ENV !== "production") {
-      return next();
-    }
-    throw AppError.forbidden("Missing origin or referer header.", "CSRF_BLOCKED");
-  }
-  if (!isAllowedCorsOrigin(candidateOrigin)) {
-    throw AppError.forbidden("Request origin is not allowed.", "ORIGIN_FORBIDDEN");
-  }
-  return next();
-};
 
 // server/routes/authRoutes.ts
 var authRouter = express3.Router();
@@ -12014,6 +13263,42 @@ var cloudUnlockCaptchaLimiter = rateLimit3({
     error: { code: "TOO_MANY_UNLOCK_CAPTCHA_ATTEMPTS" }
   }
 });
+var profileUpdateLimiter = rateLimit3({
+  windowMs: authLimiterWindowMs,
+  max: isDev ? 120 : 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${normalizeRateLimitKeySegment(req.user?.userId)}:profile`,
+  message: {
+    success: false,
+    message: "Too many profile update requests. Please try again later.",
+    error: { code: "TOO_MANY_PROFILE_UPDATE_ATTEMPTS" }
+  }
+});
+var sessionMgmtLimiter = rateLimit3({
+  windowMs: authLimiterWindowMs,
+  max: isDev ? 120 : 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${normalizeRateLimitKeySegment(req.user?.userId)}:session-mgmt`,
+  message: {
+    success: false,
+    message: "Too many session management requests. Please try again later.",
+    error: { code: "TOO_MANY_SESSION_MGMT_ATTEMPTS" }
+  }
+});
+var logoutLimiter = rateLimit3({
+  windowMs: 5 * 60 * 1e3,
+  max: isDev ? 100 : 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:logout`,
+  message: {
+    success: false,
+    message: "Too many logout requests. Please try again later.",
+    error: { code: "TOO_MANY_LOGOUT_ATTEMPTS" }
+  }
+});
 authRouter.post(
   "/signup",
   requireTrustedBrowserOrigin,
@@ -12071,7 +13356,7 @@ authRouter.post(
   refreshLimiter,
   asyncHandler(refreshSession)
 );
-authRouter.post("/logout", requireTrustedBrowserOrigin, asyncHandler(logout));
+authRouter.post("/logout", requireTrustedBrowserOrigin, logoutLimiter, asyncHandler(logout));
 authRouter.get("/me", requireAuth, asyncHandler(getMe));
 authRouter.get("/session-check", requireAuth, asyncHandler(checkSessionStatus));
 authRouter.get("/session-stream", requireAuth, asyncHandler(sessionStream));
@@ -12080,6 +13365,7 @@ authRouter.post(
   "/sessions/revoke",
   requireTrustedBrowserOrigin,
   requireAuth,
+  sessionMgmtLimiter,
   validateRequest(revokeSessionsValidation),
   asyncHandler(revokeSessions)
 );
@@ -12087,6 +13373,7 @@ authRouter.post(
   "/sessions/device-name",
   requireTrustedBrowserOrigin,
   requireAuth,
+  sessionMgmtLimiter,
   validateRequest(deviceSessionRenameValidation),
   asyncHandler(updateDeviceName)
 );
@@ -12094,6 +13381,7 @@ authRouter.post(
   "/profile",
   requireTrustedBrowserOrigin,
   requireAuth,
+  profileUpdateLimiter,
   validate(updateProfileSchema),
   asyncHandler(updateProfile)
 );
@@ -12101,6 +13389,7 @@ authRouter.put(
   "/profile",
   requireTrustedBrowserOrigin,
   requireAuth,
+  profileUpdateLimiter,
   validate(updateProfileSchema),
   asyncHandler(updateProfile)
 );
@@ -12108,6 +13397,7 @@ authRouter.patch(
   "/profile",
   requireTrustedBrowserOrigin,
   requireAuth,
+  profileUpdateLimiter,
   validate(updateProfileSchema),
   asyncHandler(updateProfile)
 );
@@ -12115,6 +13405,7 @@ authRouter.post(
   "/me/profile",
   requireTrustedBrowserOrigin,
   requireAuth,
+  profileUpdateLimiter,
   validate(updateProfileSchema),
   asyncHandler(updateProfile)
 );
@@ -12122,6 +13413,7 @@ authRouter.put(
   "/me",
   requireTrustedBrowserOrigin,
   requireAuth,
+  profileUpdateLimiter,
   validate(updateProfileSchema),
   asyncHandler(updateProfile)
 );
@@ -12129,6 +13421,7 @@ authRouter.patch(
   "/me",
   requireTrustedBrowserOrigin,
   requireAuth,
+  profileUpdateLimiter,
   validate(updateProfileSchema),
   asyncHandler(updateProfile)
 );
@@ -12162,6 +13455,9 @@ authRouter.post(
 // server/routes/masterKeyRoutes.ts
 import express4 from "express";
 import rateLimit4 from "express-rate-limit";
+
+// server/controllers/masterKeyController.ts
+import mongoose24 from "mongoose";
 
 // server/services/masterKeyService.ts
 init_logger();
@@ -12520,461 +13816,253 @@ var getMasterKeyFullData = async (userId, username) => {
 };
 
 // server/controllers/masterKeyController.ts
-init_logger();
-var handleControllerError = (res, error, defaultCode, defaultMessage, logContext) => {
-  logger.error(`[MasterKeyController] Error in ${logContext}`, error);
-  if (error instanceof AppError) {
-    return res.status(error.statusCode).json({
-      success: false,
-      message: error.message,
-      error: {
-        code: error.code,
-        message: error.message
-      }
-    });
-  }
-  const statusCode = typeof error?.statusCode === "number" ? error.statusCode : typeof error?.status === "number" ? error.status : 500;
-  const code = typeof error?.code === "string" ? error.code : defaultCode;
-  const message = error instanceof Error ? error.message : defaultMessage;
-  return res.status(statusCode).json({
-    success: false,
-    message,
-    error: {
-      code,
-      message
-    }
-  });
-};
 var MAX_BASE64_FIELD_LENGTH = 8192;
 var MAX_MASTER_KEY_HASH_LENGTH = 256;
 var MAX_DEVICE_ID_LENGTH = 128;
 var MAX_RECOVERY_PAYLOAD_LENGTH = 32768;
 var BASE64_PATTERN = /^[A-Za-z0-9+/=]+$/;
 var isBase64WithinLimit = (value, maxLength) => {
-  if (typeof value !== "string") {
-    return false;
-  }
+  if (typeof value !== "string") return false;
   const normalized = value.trim();
-  if (normalized.length === 0 || normalized.length > maxLength) {
-    return false;
-  }
+  if (normalized.length === 0 || normalized.length > maxLength) return false;
   return BASE64_PATTERN.test(normalized);
 };
 var isValidDeviceId = (value) => {
-  if (typeof value !== "string") {
-    return false;
-  }
+  if (typeof value !== "string") return false;
   const normalized = value.trim();
-  if (normalized.length === 0 || normalized.length > MAX_DEVICE_ID_LENGTH) {
-    return false;
-  }
+  if (normalized.length === 0 || normalized.length > MAX_DEVICE_ID_LENGTH) return false;
   return /^[a-zA-Z0-9._:-]+$/.test(normalized);
 };
 var hasValidDerivationParams = (metadata) => {
-  if (!metadata?.derivationParams) {
-    return true;
-  }
+  if (!metadata?.derivationParams) return true;
   const { memory, iterations, parallelism } = metadata.derivationParams;
   const isValidMemory = memory === void 0 || Number.isInteger(memory) && memory >= 8192 && memory <= 1048576;
   const isValidIterations = iterations === void 0 || Number.isInteger(iterations) && iterations >= 1 && iterations <= 12;
   const isValidParallelism = parallelism === void 0 || Number.isInteger(parallelism) && parallelism >= 1 && parallelism <= 32;
   return isValidMemory && isValidIterations && isValidParallelism;
 };
+var writeMasterKeyHeaders = (res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+};
 var handleSaveMasterKey = async (req, res) => {
-  try {
-    const userId = req.user?.userId;
-    const username = req.user?.username;
-    const { encryptedMasterKey, masterKeyHash, deviceId, recoveryPhrasesEncrypted, metadata } = req.body;
-    if (!userId || !username) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required"
-        }
-      });
-    }
-    if (!encryptedMasterKey || !masterKeyHash || !deviceId) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_REQUEST",
-          message: "Missing required fields: encryptedMasterKey, masterKeyHash, or deviceId"
-        }
-      });
-    }
-    if (!encryptedMasterKey.cipherText || !encryptedMasterKey.iv || !encryptedMasterKey.authTag || !encryptedMasterKey.salt) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_REQUEST",
-          message: "Incomplete encrypted key payload"
-        }
-      });
-    }
-    if (!isValidDeviceId(deviceId)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_REQUEST",
-          message: "Invalid deviceId format or length"
-        }
-      });
-    }
-    if (!isBase64WithinLimit(masterKeyHash, MAX_MASTER_KEY_HASH_LENGTH)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_REQUEST",
-          message: "Invalid masterKeyHash format or length"
-        }
-      });
-    }
-    if (!isBase64WithinLimit(encryptedMasterKey.cipherText, MAX_BASE64_FIELD_LENGTH) || !isBase64WithinLimit(encryptedMasterKey.iv, MAX_BASE64_FIELD_LENGTH) || !isBase64WithinLimit(encryptedMasterKey.authTag, MAX_BASE64_FIELD_LENGTH) || !isBase64WithinLimit(encryptedMasterKey.salt, MAX_BASE64_FIELD_LENGTH)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_REQUEST",
-          message: "Encrypted master key payload is malformed or too large"
-        }
-      });
-    }
-    if (typeof recoveryPhrasesEncrypted === "string" && recoveryPhrasesEncrypted.length > MAX_RECOVERY_PAYLOAD_LENGTH) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_REQUEST",
-          message: "Recovery payload is too large"
-        }
-      });
-    }
-    if (!hasValidDerivationParams(metadata)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_REQUEST",
-          message: "Invalid metadata derivation parameters"
-        }
-      });
-    }
+  writeMasterKeyHeaders(res);
+  const userId = req.user?.userId;
+  const username = req.user?.username;
+  if (!userId || !username) {
+    throw AppError.unauthorized("Authentication required", "UNAUTHORIZED");
+  }
+  const { encryptedMasterKey, masterKeyHash, deviceId, recoveryPhrasesEncrypted, metadata } = req.body || {};
+  if (!encryptedMasterKey || !masterKeyHash || !deviceId) {
+    throw AppError.badRequest(
+      "Missing required fields: encryptedMasterKey, masterKeyHash, or deviceId",
+      "INVALID_REQUEST"
+    );
+  }
+  if (!encryptedMasterKey.cipherText || !encryptedMasterKey.iv || !encryptedMasterKey.authTag || !encryptedMasterKey.salt) {
+    throw AppError.badRequest("Incomplete encrypted key payload", "INVALID_REQUEST");
+  }
+  if (!isValidDeviceId(deviceId)) {
+    throw AppError.badRequest("Invalid deviceId format or length", "INVALID_REQUEST");
+  }
+  if (!isBase64WithinLimit(masterKeyHash, MAX_MASTER_KEY_HASH_LENGTH)) {
+    throw AppError.badRequest("Invalid masterKeyHash format or length", "INVALID_REQUEST");
+  }
+  if (!isBase64WithinLimit(encryptedMasterKey.cipherText, MAX_BASE64_FIELD_LENGTH) || !isBase64WithinLimit(encryptedMasterKey.iv, MAX_BASE64_FIELD_LENGTH) || !isBase64WithinLimit(encryptedMasterKey.authTag, MAX_BASE64_FIELD_LENGTH) || !isBase64WithinLimit(encryptedMasterKey.salt, MAX_BASE64_FIELD_LENGTH)) {
+    throw AppError.badRequest(
+      "Encrypted master key payload is malformed or too large",
+      "INVALID_REQUEST"
+    );
+  }
+  if (typeof recoveryPhrasesEncrypted === "string" && recoveryPhrasesEncrypted.length > MAX_RECOVERY_PAYLOAD_LENGTH) {
+    throw AppError.badRequest("Recovery payload is too large", "INVALID_REQUEST");
+  }
+  if (!hasValidDerivationParams(metadata)) {
+    throw AppError.badRequest("Invalid metadata derivation parameters", "INVALID_REQUEST");
+  }
+  if (mongoose24.Types.ObjectId.isValid(userId)) {
     const userDoc = await User.findById(userId).select("+password +meta.masterKey").lean().exec();
     if (userDoc?.password) {
-      try {
-        const passwordHash = typeof userDoc.password === "string" ? userDoc.password : decryptText(userDoc.password);
-        const currentAccountPassword = typeof req.body.password === "string" && req.body.password.trim() ? req.body.password.trim() : void 0;
-        const hasExistingMasterKey = Boolean(userDoc.meta?.masterKey?.cipherText);
-        if (hasExistingMasterKey && !currentAccountPassword) {
-          return res.status(400).json({
-            success: false,
-            error: {
-              code: "PASSWORD_REQUIRED",
-              message: "Current account password is required to update the cloud master key."
-            }
-          });
+      const passwordHash = typeof userDoc.password === "string" ? userDoc.password : decryptText(userDoc.password);
+      const currentAccountPassword = typeof req.body?.password === "string" && req.body.password.trim() ? req.body.password.trim() : void 0;
+      const hasExistingMasterKey = Boolean(userDoc.meta?.masterKey?.cipherText);
+      if (hasExistingMasterKey && !currentAccountPassword) {
+        throw AppError.badRequest(
+          "Current account password is required to update the cloud master key.",
+          "PASSWORD_REQUIRED"
+        );
+      }
+      if (currentAccountPassword) {
+        const isPasswordValid = await comparePassword(currentAccountPassword, passwordHash);
+        if (!isPasswordValid) {
+          throw AppError.unauthorized("Current password is incorrect.", "INVALID_CREDENTIALS");
         }
-        if (currentAccountPassword) {
-          const isPasswordValid = await comparePassword(currentAccountPassword, passwordHash);
-          if (!isPasswordValid) {
-            return res.status(401).json({
-              success: false,
-              error: {
-                code: "INVALID_CREDENTIALS",
-                message: "Current password is incorrect."
-              }
-            });
-          }
-        }
-        const rawKeyCandidate = typeof req.body.masterKey === "string" ? req.body.masterKey : void 0;
-        if (rawKeyCandidate) {
-          const isSameAsPassword = await comparePassword(rawKeyCandidate, passwordHash);
-          if (isSameAsPassword) {
-            return res.status(400).json({
-              success: false,
-              error: {
-                code: "AUTH_SAME_CREDENTIALS",
-                message: "Master key and account password must not be identical"
-              }
-            });
-          }
-        }
-      } catch (error) {
-        if (error?.statusCode || error?.code) {
-          throw error;
+      }
+      const rawKeyCandidate = typeof req.body?.masterKey === "string" ? req.body.masterKey : void 0;
+      if (rawKeyCandidate) {
+        const isSameAsPassword = await comparePassword(rawKeyCandidate, passwordHash);
+        if (isSameAsPassword) {
+          throw AppError.badRequest(
+            "Master key and account password must not be identical",
+            "AUTH_SAME_CREDENTIALS"
+          );
         }
       }
     }
-    await saveCloudMasterKey(userId, username, encryptedMasterKey, {
-      masterKeyHash,
-      deviceId,
-      recoveryPhrasesEncrypted,
-      metadata,
-      changeContext: {
-        ipAddress: getClientIp(req),
-        userAgent: req.get("user-agent") || void 0
-      }
-    });
-    return res.status(200).json({
-      success: true,
-      data: {
-        saved: true,
-        userId,
-        deviceId,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Master key saved to cloud successfully"
-      }
-    });
-  } catch (error) {
-    return handleControllerError(
-      res,
-      error,
-      "SAVE_FAILED",
-      "Failed to save master key",
-      "handleSaveMasterKey"
-    );
   }
+  await saveCloudMasterKey(userId, username, encryptedMasterKey, {
+    masterKeyHash,
+    deviceId,
+    recoveryPhrasesEncrypted,
+    metadata,
+    changeContext: {
+      ipAddress: getClientIp(req),
+      userAgent: req.get("user-agent") || void 0
+    }
+  });
+  return sendSuccess(
+    res,
+    {
+      saved: true,
+      userId,
+      deviceId,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      message: "Master key saved to cloud successfully"
+    },
+    "Master key saved to cloud successfully"
+  );
 };
 var handleRetrieveMasterKey = async (req, res) => {
-  try {
-    const userId = req.user?.userId;
-    const username = req.user?.username;
-    const deviceId = req.query.deviceId;
-    if (!userId || !username) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required"
-        }
-      });
-    }
-    if (!deviceId) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_REQUEST",
-          message: "Missing required query parameter: deviceId"
-        }
-      });
-    }
-    if (!isValidDeviceId(deviceId)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_REQUEST",
-          message: "Invalid deviceId format or length"
-        }
-      });
-    }
-    const encryptedKey = await getCloudMasterKey(userId, username, deviceId);
-    if (!encryptedKey) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: "NOT_FOUND",
-          message: "Master key not found in cloud"
-        }
-      });
-    }
-    return res.status(200).json({
-      success: true,
-      data: {
-        encryptedMasterKey: encryptedKey,
-        userId,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Master key retrieved successfully"
-      }
-    });
-  } catch (error) {
-    return handleControllerError(
-      res,
-      error,
-      "RETRIEVE_FAILED",
-      "Failed to retrieve master key",
-      "handleRetrieveMasterKey"
-    );
+  writeMasterKeyHeaders(res);
+  const userId = req.user?.userId;
+  const username = req.user?.username;
+  const deviceId = req.query.deviceId;
+  if (!userId || !username) {
+    throw AppError.unauthorized("Authentication required", "UNAUTHORIZED");
   }
+  if (!deviceId) {
+    throw AppError.badRequest("Missing required query parameter: deviceId", "INVALID_REQUEST");
+  }
+  if (!isValidDeviceId(deviceId)) {
+    throw AppError.badRequest("Invalid deviceId format or length", "INVALID_REQUEST");
+  }
+  const encryptedKey = await getCloudMasterKey(userId, username, deviceId);
+  if (!encryptedKey) {
+    throw AppError.notFound("Master key not found in cloud", "NOT_FOUND");
+  }
+  return sendSuccess(
+    res,
+    {
+      encryptedMasterKey: encryptedKey,
+      userId,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      message: "Master key retrieved successfully"
+    },
+    "Master key retrieved successfully"
+  );
 };
 var handleVerifyMasterKey = async (req, res) => {
-  try {
-    const userId = req.user?.userId;
-    const username = req.user?.username;
-    const { masterKeyHash } = req.body;
-    if (!userId || !username) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required"
-        }
-      });
-    }
-    if (!masterKeyHash) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_REQUEST",
-          message: "Missing required field: masterKeyHash"
-        }
-      });
-    }
-    if (!isBase64WithinLimit(masterKeyHash, MAX_MASTER_KEY_HASH_LENGTH)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_REQUEST",
-          message: "Invalid masterKeyHash format or length"
-        }
-      });
-    }
-    const isValid = await verifyMasterKeyHash(userId, username, masterKeyHash);
-    return res.status(200).json({
-      success: true,
-      data: {
-        isValid,
-        userId,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: isValid ? "Master key verified successfully" : "Master key hash mismatch"
-      }
-    });
-  } catch (error) {
-    return handleControllerError(
-      res,
-      error,
-      "VERIFY_FAILED",
-      "Failed to verify master key",
-      "handleVerifyMasterKey"
-    );
+  writeMasterKeyHeaders(res);
+  const userId = req.user?.userId;
+  const username = req.user?.username;
+  const { masterKeyHash } = req.body || {};
+  if (!userId || !username) {
+    throw AppError.unauthorized("Authentication required", "UNAUTHORIZED");
   }
+  if (!masterKeyHash) {
+    throw AppError.badRequest("Missing required field: masterKeyHash", "INVALID_REQUEST");
+  }
+  if (!isBase64WithinLimit(masterKeyHash, MAX_MASTER_KEY_HASH_LENGTH)) {
+    throw AppError.badRequest("Invalid masterKeyHash format or length", "INVALID_REQUEST");
+  }
+  const isValid = await verifyMasterKeyHash(userId, username, masterKeyHash);
+  return sendSuccess(
+    res,
+    {
+      isValid,
+      userId,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      message: isValid ? "Master key verified successfully" : "Master key hash mismatch"
+    },
+    isValid ? "Master key verified successfully" : "Master key hash mismatch"
+  );
 };
 var handleDeleteMasterKey = async (req, res) => {
-  try {
-    const userId = req.user?.userId;
-    const username = req.user?.username;
-    if (!userId || !username) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required"
-        }
-      });
-    }
-    const deleted = await deleteCloudMasterKey(userId, username);
-    if (!deleted) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: "NOT_FOUND",
-          message: "Master key not found or already deleted"
-        }
-      });
-    }
-    return res.status(200).json({
-      success: true,
-      data: {
-        deleted: true,
-        userId,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        message: "Master key deleted successfully"
-      }
-    });
-  } catch (error) {
-    return handleControllerError(
-      res,
-      error,
-      "DELETE_FAILED",
-      "Failed to delete master key",
-      "handleDeleteMasterKey"
-    );
+  writeMasterKeyHeaders(res);
+  const userId = req.user?.userId;
+  const username = req.user?.username;
+  if (!userId || !username) {
+    throw AppError.unauthorized("Authentication required", "UNAUTHORIZED");
   }
+  const deleted = await deleteCloudMasterKey(userId, username);
+  if (!deleted) {
+    throw AppError.notFound("Master key not found or already deleted", "NOT_FOUND");
+  }
+  return sendSuccess(
+    res,
+    {
+      deleted: true,
+      userId,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      message: "Master key deleted successfully"
+    },
+    "Master key deleted successfully"
+  );
 };
 var handleGetMasterKeyMetadata = async (req, res) => {
-  try {
-    const userId = req.user?.userId;
-    const username = req.user?.username;
-    if (!userId || !username) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required"
-        }
-      });
-    }
-    const metadata = await getMasterKeyMetadata(userId, username);
-    if (!metadata) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: "NOT_FOUND",
-          message: "Master key metadata not found"
-        }
-      });
-    }
-    return res.status(200).json({
-      success: true,
-      data: {
-        metadata: metadata.metadata,
-        audit: metadata.audit,
-        userId,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString()
-      }
-    });
-  } catch (error) {
-    return handleControllerError(
-      res,
-      error,
-      "GET_METADATA_FAILED",
-      "Failed to get metadata",
-      "handleGetMasterKeyMetadata"
-    );
+  writeMasterKeyHeaders(res);
+  const userId = req.user?.userId;
+  const username = req.user?.username;
+  if (!userId || !username) {
+    throw AppError.unauthorized("Authentication required", "UNAUTHORIZED");
   }
+  const metadata = await getMasterKeyMetadata(userId, username);
+  if (!metadata) {
+    throw AppError.notFound("Master key metadata not found", "NOT_FOUND");
+  }
+  return sendSuccess(
+    res,
+    {
+      metadata: metadata.metadata,
+      audit: metadata.audit,
+      userId,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    },
+    "Master key metadata retrieved successfully"
+  );
 };
 var handleGetMasterKeyFullData = async (req, res) => {
-  try {
-    const userId = req.user?.userId;
-    const username = req.user?.username;
-    if (!userId || !username) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Authentication required"
-        }
-      });
-    }
-    const fullData = await getMasterKeyFullData(userId, username);
-    if (!fullData) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: "NOT_FOUND",
-          message: "Master key data not found"
-        }
-      });
-    }
-    return res.status(200).json({
-      success: true,
-      data: {
-        userId,
-        masterKey: fullData,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        note: "Encrypted data is safe - only encrypted components and hashes are shown, actual key material remains encrypted"
-      }
-    });
-  } catch (error) {
-    return handleControllerError(
-      res,
-      error,
-      "GET_FULLDATA_FAILED",
-      "Failed to get full data",
-      "handleGetMasterKeyFullData"
-    );
+  writeMasterKeyHeaders(res);
+  const userId = req.user?.userId;
+  const username = req.user?.username;
+  if (!userId || !username) {
+    throw AppError.unauthorized("Authentication required", "UNAUTHORIZED");
   }
+  const fullData = await getMasterKeyFullData(userId, username);
+  if (!fullData) {
+    throw AppError.notFound("Master key data not found", "NOT_FOUND");
+  }
+  return sendSuccess(
+    res,
+    {
+      userId,
+      masterKey: fullData,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      note: "Encrypted data is safe - only encrypted components and hashes are shown, actual key material remains encrypted"
+    },
+    "Master key full data retrieved successfully"
+  );
 };
 
 // server/routes/masterKeyRoutes.ts
 var masterKeyRouter = express4.Router();
+masterKeyRouter.use((_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
 var toPositiveInteger2 = (raw, fallback) => {
   const parsed = Number.parseInt(raw || "", 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -13072,7 +14160,7 @@ var masterKeyRoutes_default = masterKeyRouter;
 import { Router } from "express";
 
 // server/models/Contact.ts
-import mongoose22, { Schema as Schema3 } from "mongoose";
+import mongoose25, { Schema as Schema9 } from "mongoose";
 import crypto11 from "crypto";
 var ContactStatus = /* @__PURE__ */ ((ContactStatus2) => {
   ContactStatus2["UNREAD"] = "unread";
@@ -13097,7 +14185,7 @@ var ContactSubject = /* @__PURE__ */ ((ContactSubject2) => {
   ContactSubject2["OTHER"] = "Other";
   return ContactSubject2;
 })(ContactSubject || {});
-var ContactSchema = new Schema3(
+var ContactSchema = new Schema9(
   {
     name: {
       type: String,
@@ -13122,23 +14210,28 @@ var ContactSchema = new Schema3(
     subject: {
       type: String,
       enum: Object.values(ContactSubject),
-      required: true,
+      required: [true, "Subject is required"],
       index: true
     },
     message: {
       type: String,
-      required: true,
-      minlength: 10,
-      maxlength: 2e3,
+      required: [true, "Message is required"],
+      minlength: [10, "Message must be at least 10 characters"],
+      maxlength: [2e3, "Message cannot exceed 2000 characters"],
       trim: true
     },
     ipAddress: {
       type: String,
+      trim: true,
       index: true
     },
-    userAgent: String,
+    userAgent: {
+      type: String,
+      trim: true
+    },
     geolocation: {
-      type: Schema3.Types.Mixed
+      type: Schema9.Types.Mixed,
+      default: null
     },
     status: {
       type: String,
@@ -13155,7 +14248,7 @@ var ContactSchema = new Schema3(
     referenceId: {
       type: String,
       unique: true,
-      index: true
+      trim: true
     },
     isDeleted: {
       type: Boolean,
@@ -13169,16 +14262,20 @@ var ContactSchema = new Schema3(
   },
   {
     timestamps: true,
-    // auto createdAt & updatedAt
-    versionKey: false
+    versionKey: false,
+    collection: "contacts"
   }
 );
 ContactSchema.index({ createdAt: -1 });
 ContactSchema.index({ email: 1, status: 1 });
 ContactSchema.index({ subject: 1, priority: 1 });
+ContactSchema.index({ isDeleted: 1, status: 1, createdAt: -1 });
+ContactSchema.index({ isDeleted: 1, priority: 1, createdAt: -1 });
+ContactSchema.index({ username: 1, createdAt: -1 });
+ContactSchema.index({ ipAddress: 1, createdAt: -1 });
 ContactSchema.pre("save", function() {
   if (!this.referenceId) {
-    this.referenceId = "VLT-" + crypto11.randomBytes(4).toString("hex").toUpperCase();
+    this.referenceId = "VLT-" + crypto11.randomBytes(6).toString("hex").toUpperCase();
   }
   switch (this.subject) {
     case "Security Vulnerability" /* SECURITY */:
@@ -13192,129 +14289,163 @@ ContactSchema.pre("save", function() {
       this.priority = "low" /* LOW */;
   }
 });
+ContactSchema.methods.markRead = async function() {
+  this.status = "read" /* READ */;
+  return this.save();
+};
+ContactSchema.methods.markReplied = async function() {
+  this.status = "replied" /* REPLIED */;
+  return this.save();
+};
 ContactSchema.statics.findActive = function() {
   return this.find({ isDeleted: false }).sort({ createdAt: -1 }).allowDiskUse(true);
 };
-var Contact = mongoose22.model("Contact", ContactSchema);
+ContactSchema.statics.findByReference = function(referenceId) {
+  return this.findOne({ referenceId: referenceId.trim().toUpperCase(), isDeleted: false });
+};
+ContactSchema.statics.softDelete = function(referenceId) {
+  return this.findOneAndUpdate(
+    { referenceId: referenceId.trim().toUpperCase(), isDeleted: false },
+    { $set: { isDeleted: true, deletedAt: /* @__PURE__ */ new Date() } },
+    { new: true }
+  );
+};
+var getContactModel = (customConnection) => {
+  const collectionName = "contacts";
+  if (customConnection) {
+    if (customConnection.models.Contact) {
+      return customConnection.models.Contact;
+    }
+    const model3 = customConnection.model(
+      "Contact",
+      ContactSchema,
+      collectionName
+    );
+    if (typeof model3?.createIndexes === "function") {
+      model3.createIndexes().catch(() => {
+      });
+    }
+    return model3;
+  }
+  if (mongoose25.models.Contact) {
+    return mongoose25.models.Contact;
+  }
+  const model2 = mongoose25.model("Contact", ContactSchema, collectionName);
+  if (typeof model2?.createIndexes === "function") {
+    model2.createIndexes().catch(() => {
+    });
+  }
+  return model2;
+};
+var Contact = getContactModel();
 
 // server/controllers/contactController.ts
 init_logger();
+var MAX_STRING_LENGTH = {
+  name: 120,
+  email: 254,
+  username: 64,
+  subject: 150,
+  message: 5e3
+};
+var EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+var sanitizeString = (value, maxLength) => {
+  if (typeof value !== "string") return "";
+  return value.trim().slice(0, maxLength);
+};
 var submitContactForm = async (req, res) => {
+  const rawBody = req.body || {};
+  const name = sanitizeString(rawBody.name, MAX_STRING_LENGTH.name);
+  const email = sanitizeString(rawBody.email, MAX_STRING_LENGTH.email).toLowerCase();
+  const username = sanitizeString(rawBody.username, MAX_STRING_LENGTH.username);
+  const subjectRaw = sanitizeString(rawBody.subject, MAX_STRING_LENGTH.subject);
+  const message = sanitizeString(rawBody.message, MAX_STRING_LENGTH.message);
+  if (!name || !email || !username || !subjectRaw || !message) {
+    throw AppError.badRequest("All required fields must be provided.", "MISSING_FIELDS");
+  }
+  if (!EMAIL_REGEX.test(email)) {
+    throw AppError.badRequest("Please provide a valid email address.", "INVALID_EMAIL");
+  }
+  if (message.length < 5) {
+    throw AppError.badRequest("Message must be at least 5 characters long.", "MESSAGE_TOO_SHORT");
+  }
+  const validSubjects = Object.values(ContactSubject);
+  const subject = validSubjects.includes(subjectRaw) ? subjectRaw : "General Inquiry" /* GENERAL */;
+  const ipAddress = getClientIp(req);
+  const userAgent = (req.get("user-agent") || "unknown").slice(0, 512);
+  let geolocation = null;
   try {
-    const { name, email, username, subject, message } = req.body;
-    if (!name || !email || !username || !subject || !message) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "MISSING_FIELDS",
-          message: "All required fields must be provided."
-        }
+    if (ipAddress && ipAddress !== "unknown" && ipAddress !== "127.0.0.1" && ipAddress !== "::1" && !ipAddress.startsWith("10.") && !ipAddress.startsWith("192.168.") && !ipAddress.startsWith("172.")) {
+      const geoUrl = `https://free.freeipapi.com/api/json/${encodeURIComponent(ipAddress)}`;
+      const geoResponse = await fetch(geoUrl, {
+        signal: AbortSignal.timeout(2500)
       });
-    }
-    const ipAddress = getClientIp(req);
-    const userAgent = req.get("user-agent") || "unknown";
-    let geolocation = null;
-    try {
-      if (ipAddress !== "unknown" && ipAddress !== "127.0.0.1" && ipAddress !== "::1") {
-        const geoUrl = `https://free.freeipapi.com/api/json/${ipAddress}`;
-        const geoResponse = await fetch(geoUrl, {
-          signal: AbortSignal.timeout(8e3)
-        });
-        if (geoResponse.ok) {
-          geolocation = await geoResponse.json();
-        }
+      if (geoResponse.ok) {
+        const geoData = await geoResponse.json();
+        geolocation = {
+          countryName: geoData.countryName,
+          countryCode: geoData.countryCode,
+          cityName: geoData.cityName,
+          regionName: geoData.regionName,
+          latitude: geoData.latitude,
+          longitude: geoData.longitude
+        };
       }
-    } catch (e) {
-      logger.warn("Failed to fetch geolocation for contact submission", {
-        ipAddress,
-        error: e instanceof Error ? e.message : "Unknown"
-      });
     }
-    const newContact = new Contact({
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      username: username.trim(),
-      subject,
-      message: message.trim(),
+  } catch (geoError) {
+    logger.debug("Failed to fetch geolocation for contact submission", {
       ipAddress,
-      userAgent,
-      geolocation
-    });
-    let savedContact;
-    try {
-      savedContact = await newContact.save();
-    } catch (saveError) {
-      if (saveError.code === 11e3 && saveError.keyPattern?.referenceId) {
-        logger.warn("Reference ID collision occurred, retrying...", {
-          collisionId: newContact.referenceId
-        });
-        newContact.referenceId = void 0;
-        savedContact = await newContact.save();
-      } else {
-        throw saveError;
-      }
-    }
-    logger.info("Contact form submission successful", {
-      referenceId: savedContact.referenceId,
-      email: savedContact.email,
-      requestId: req.requestId
-    });
-    return res.status(201).json({
-      success: true,
-      message: "Your message has been received successfully.",
-      referenceId: savedContact.referenceId
-    });
-  } catch (error) {
-    const requestId = req.requestId;
-    if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "VALIDATION_ERROR",
-          message: messages[0] || "Invalid data provided.",
-          requestId
-        }
-      });
-    }
-    if (error.code === 11e3 || error.name === "MongoServerError") {
-      logger.error("Contact form terminal database error", {
-        error: error.message,
-        code: error.code,
-        keyPattern: error.keyPattern,
-        requestId
-      });
-      return res.status(500).json({
-        success: false,
-        error: {
-          code: "DATABASE_ERROR",
-          message: "An internal storage error occurred. Please try again or contact support directly.",
-          requestId
-        }
-      });
-    }
-    logger.error("Unexpected error in contact form submission", {
-      error: error.message,
-      stack: error.stack,
-      requestId
-    });
-    return res.status(500).json({
-      success: false,
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: process.env.NODE_ENV === "development" ? `Server Error: ${error.message}` : "An unexpected error occurred. Please try again later.",
-        requestId
-      }
+      error: geoError instanceof Error ? geoError.message : "Unknown"
     });
   }
+  const newContact = new Contact({
+    name,
+    email,
+    username,
+    subject,
+    message,
+    ipAddress,
+    userAgent,
+    geolocation
+  });
+  let savedContact;
+  try {
+    savedContact = await newContact.save();
+  } catch (saveError) {
+    if (saveError.code === 11e3 && saveError.keyPattern?.referenceId) {
+      logger.warn("Reference ID collision occurred, retrying with new referenceId", {
+        collisionId: newContact.referenceId
+      });
+      newContact.referenceId = void 0;
+      savedContact = await newContact.save();
+    } else {
+      logger.error("Failed to save contact message to database", {
+        error: saveError?.message,
+        code: saveError?.code
+      });
+      throw AppError.internal(
+        "An error occurred while saving your message. Please try again.",
+        "STORAGE_ERROR"
+      );
+    }
+  }
+  logger.info("Contact form submission successful", {
+    referenceId: savedContact.referenceId,
+    requestId: req.requestId
+  });
+  return res.status(201).json({
+    success: true,
+    message: "Your message has been received successfully.",
+    referenceId: savedContact.referenceId,
+    data: { referenceId: savedContact.referenceId }
+  });
 };
 
 // server/routes/contactRoutes.ts
 import rateLimit5 from "express-rate-limit";
 
 // server/validators/contactValidator.ts
-import { z as z2 } from "zod";
-var USERNAME_PATTERN3 = /^[a-z0-9._-]+$/i;
+import { z as z3 } from "zod";
 var CONTACT_SUBJECTS = [
   "General Inquiry",
   "Technical Support",
@@ -13324,21 +14455,25 @@ var CONTACT_SUBJECTS = [
   "Privacy Request",
   "Other"
 ];
-var captchaTokenSchema2 = z2.string().trim().min(20, "CAPTCHA token is invalid").max(4096, "CAPTCHA token is invalid");
-var contactSchema = z2.object({
-  name: z2.string().trim().min(2, "Full name must be between 2 and 100 characters.").max(100, "Full name must be between 2 and 100 characters."),
-  email: z2.string().trim().toLowerCase().email("A valid email address is required.").max(254, "A valid email address is required."),
-  username: z2.string().trim().min(3, "Username must be 3 to 64 characters.").max(64, "Username must be 3 to 64 characters.").regex(
-    USERNAME_PATTERN3,
+var contactSchema = z3.object({
+  name: z3.string().trim().min(2, "Full name must be between 2 and 100 characters.").max(100, "Full name must be between 2 and 100 characters.").refine(
+    (v) => !/[\u0000-\u001f\u007f]/.test(v),
+    "Full name contains invalid control characters."
+  ),
+  email: z3.string().trim().toLowerCase().email("A valid email address is required.").max(254, "A valid email address is required."),
+  username: z3.string().trim().min(3, "Username must be 3 to 64 characters.").max(64, "Username must be 3 to 64 characters.").regex(
+    USERNAME_PATTERN,
     "Username can only include letters, numbers, dots, underscores, and hyphens."
   ),
-  subject: z2.string().refine(
+  subject: z3.string().refine(
     (value) => CONTACT_SUBJECTS.includes(value),
     "Please select a valid query category."
   ),
-  message: z2.string().trim().min(10, "Message must be between 10 and 2000 characters.").max(2e3, "Message must be between 10 and 2000 characters."),
-  captchaToken: captchaTokenSchema2
-}).strict();
+  message: z3.string().trim().min(10, "Message must be between 10 and 2000 characters.").max(2e3, "Message must be between 10 and 2000 characters.").refine((v) => !/[\u0000]/.test(v), "Message contains null byte characters."),
+  captchaToken: captchaTokenSchema
+}).strict().refine((val) => !hasPrototypePollutionKey(val), {
+  message: "Payload contains forbidden keys"
+});
 
 // server/routes/contactRoutes.ts
 var router = Router();
@@ -13347,6 +14482,9 @@ var contactLimiter = rateLimit5({
   // 1 hour
   max: 5,
   // Limit each IP to 5 submissions per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:contact-submit`,
   message: {
     success: false,
     error: {
@@ -13357,11 +14495,17 @@ var contactLimiter = rateLimit5({
 });
 router.post(
   "/submit",
+  (_req, res, next) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    next();
+  },
   requireTrustedBrowserOrigin,
   contactLimiter,
   validate(contactSchema),
   requireRecaptcha({ action: "contact_submit" }),
-  submitContactForm
+  asyncHandler(submitContactForm)
 );
 
 // server/routes/systemRoutes.ts
@@ -13369,8 +14513,29 @@ init_logger();
 import express5 from "express";
 import fs9 from "node:fs/promises";
 import path12 from "node:path";
+import rateLimit6 from "express-rate-limit";
 var router2 = express5.Router();
 var LOG_FILE2 = path12.resolve(process.cwd(), "logs/server.jsonl");
+var systemLogsLimiter = rateLimit6({
+  windowMs: 60 * 1e3,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${req?.user?.userId || "anon"}:system-logs`,
+  message: {
+    success: false,
+    message: "Too many log requests. Please slow down.",
+    error: { code: "TOO_MANY_LOG_REQUESTS" }
+  }
+});
+router2.use((_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
+router2.use(requireAuth);
+router2.use(systemLogsLimiter);
 var userClearedTimestamps = /* @__PURE__ */ new Map();
 async function readLastLines(filePath, maxLines) {
   let fileHandle;
@@ -13410,13 +14575,16 @@ async function readLastLines(filePath, maxLines) {
     await fileHandle?.close();
   }
 }
-router2.get("/logs", requireAuth, async (req, res) => {
-  try {
+router2.get(
+  "/logs",
+  asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
     const username = req.user?.username || "user";
-    const limit = parseInt(req.query.limit) || 50;
+    const rawLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 100) : 50;
     const cursorStr = req.query.cursor;
-    const offset = cursorStr ? parseInt(cursorStr) : 0;
+    const rawOffset = cursorStr ? Number.parseInt(cursorStr, 10) : 0;
+    const offset = Number.isFinite(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
     const clearedAt = userClearedTimestamps.get(userId) || 0;
     let mappedActivityLogs = [];
     try {
@@ -13469,13 +14637,12 @@ router2.get("/logs", requireAuth, async (req, res) => {
       hasMore,
       nextCursor
     });
-  } catch (error) {
-    console.error("Error fetching system logs:", error);
-    res.status(500).json({ success: false, message: "Failed to retrieve user logs" });
-  }
-});
-router2.post("/logs/clear", requireAuth, async (req, res) => {
-  try {
+  })
+);
+router2.post(
+  "/logs/clear",
+  requireTrustedBrowserOrigin,
+  asyncHandler(async (req, res) => {
     const userId = req.user?.userId;
     const username = req.user?.username || "user";
     if (userId) {
@@ -13485,14 +14652,14 @@ router2.post("/logs/clear", requireAuth, async (req, res) => {
       });
     }
     res.json({ success: true, message: "Your system logs cleared successfully" });
-  } catch (error) {
-    console.error("Error clearing system logs:", error);
-    res.status(500).json({ success: false, message: "Failed to clear user logs" });
-  }
-});
+  })
+);
 
 // server/routes/twoFactorRoutes.ts
 import { Router as Router2 } from "express";
+
+// server/controllers/twoFactorController.ts
+import mongoose26 from "mongoose";
 
 // server/services/twoFactorService.ts
 import speakeasy from "speakeasy";
@@ -13723,27 +14890,43 @@ var verifyLoginOTP = async (userId, token) => {
 
 // server/controllers/twoFactorController.ts
 init_logger();
+var sanitizeToken = (token) => {
+  if (typeof token !== "string") return "";
+  return token.trim().replace(/\s/g, "");
+};
 var setup2FA2 = async (req, res) => {
   const result = await setup2FA(req.user.userId, req.user.username);
   return sendSuccess(res, result, "2FA setup initiated. Scan the QR code.");
 };
 var verifyAndEnable2FA2 = async (req, res) => {
-  const { token } = req.body;
-  if (!token) throw AppError.badRequest("OTP token is required.");
+  const token = sanitizeToken(req.body?.token);
+  if (!token || token.length < 6 || token.length > 32) {
+    throw AppError.badRequest("A valid OTP verification token is required.", "INVALID_TOKEN");
+  }
   const result = await verifyAndEnable2FA(req.user.userId, token);
   return sendSuccess(res, result, "2FA has been enabled. Save your backup codes.");
 };
 var login2FA = async (req, res) => {
-  const { userId, token, deviceId, mfaToken } = req.body;
-  if (!userId || !token || !mfaToken) {
-    throw AppError.badRequest("UserId, OTP token, and MFA token are required.");
+  const { userId, token: rawToken, deviceId, mfaToken } = req.body || {};
+  if (!userId || typeof userId !== "string" || !rawToken || !mfaToken) {
+    throw AppError.badRequest("UserId, OTP token, and MFA token are required.", "INVALID_INPUT");
+  }
+  if (!mongoose26.Types.ObjectId.isValid(userId)) {
+    throw AppError.badRequest("Invalid userId format.", "INVALID_USER_ID");
+  }
+  const token = sanitizeToken(rawToken);
+  if (!token || token.length < 6 || token.length > 32) {
+    throw AppError.badRequest("Invalid OTP token format.", "INVALID_TOKEN");
+  }
+  if (typeof mfaToken !== "string") {
+    throw AppError.badRequest("Invalid MFA token format.", "INVALID_MFA_TOKEN");
   }
   try {
     const decoded = verifyMfaToken(mfaToken);
     if (decoded.sub !== userId) {
       throw new Error("MFA token mismatch.");
     }
-  } catch (error) {
+  } catch {
     logger.warn("MFA token verification failed during login", { userId, ip: getClientIp(req) });
     throw AppError.unauthorized(
       "Authentication session expired. Please sign in again.",
@@ -13758,8 +14941,9 @@ var login2FA = async (req, res) => {
   anomalyDetectionService.clearOTPAttempts(userId);
   const user = await User.findById(userId);
   if (!user) throw AppError.notFound("User not found");
+  const cleanDeviceId = typeof deviceId === "string" && deviceId.trim() ? deviceId.trim().slice(0, 128) : "unknown";
   const session = issueUserSession(user, {
-    deviceId: deviceId || "unknown",
+    deviceId: cleanDeviceId,
     ipAddress: getClientIp(req),
     userAgent: req.get("user-agent")
   });
@@ -13770,12 +14954,18 @@ var login2FA = async (req, res) => {
       user._id.toString(),
       "device_login",
       "New Device Login (2FA)",
-      `A new session was established on device "${deviceId || "Web Client"}" from IP: ${ip} (2FA verified)`
+      `A new session was established on device "${cleanDeviceId}" from IP: ${ip} (2FA verified)`
     );
   } catch (err) {
     logger.warn("Failed to create 2FA login notification", { error: err });
   }
   applyRefreshCookie(req, res, session.refreshToken);
+  const safeUser = {
+    id: user._id,
+    username: user.username,
+    twoFactorEnabled: true,
+    profileName: user.profileName || user.username
+  };
   return sendSuccess(
     res,
     {
@@ -13783,60 +14973,79 @@ var login2FA = async (req, res) => {
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,
       sessionId: session.sessionId,
-      user: {
-        id: user._id,
-        username: user.username,
-        twoFactorEnabled: true,
-        meta: user.meta
-      }
+      user: safeUser
     },
     "2FA verification successful"
   );
 };
 var disable2FA2 = async (req, res) => {
-  const { token, password } = req.body;
-  if (!token) throw AppError.badRequest("OTP token is required to disable 2FA.");
+  const token = sanitizeToken(req.body?.token);
+  const password = typeof req.body?.password === "string" ? req.body.password.trim() : "";
+  if (!token) {
+    throw AppError.badRequest("OTP token is required to disable 2FA.", "TOKEN_REQUIRED");
+  }
+  if (!password) {
+    throw AppError.badRequest("Current password is required to disable 2FA.", "PASSWORD_REQUIRED");
+  }
   const result = await disable2FA(req.user.userId, token, password);
   return sendSuccess(res, result, "2FA has been disabled.");
 };
 
 // server/routes/twoFactorRoutes.ts
-import rateLimit6 from "express-rate-limit";
+import rateLimit7 from "express-rate-limit";
 
 // server/validators/twoFactorValidator.ts
-import { z as z3 } from "zod";
-var captchaTokenSchema3 = z3.string().trim().min(20, "CAPTCHA token is invalid").max(4096, "CAPTCHA token is invalid");
-var deviceIdSchema2 = z3.string().trim().min(1).max(128);
-var otpTokenSchema = z3.string().trim().min(1, "OTP token is required").max(32, "OTP token is invalid").regex(/^\d{6}$|^[A-Za-z0-9]{8}$/, "OTP token format is invalid");
-var login2FASchema = z3.object({
-  userId: z3.string().trim().min(1, "UserId is required").max(128),
+import { z as z4 } from "zod";
+var otpTokenSchema = z4.string().trim().min(1, "OTP token is required").max(32, "OTP token is invalid").regex(/^\d{6}$|^[A-Za-z0-9]{8}$/, "OTP token format is invalid");
+var login2FASchema = z4.object({
+  userId: objectIdSchema,
   token: otpTokenSchema,
-  mfaToken: z3.string().trim().min(1, "MFA token is required").max(2048),
-  deviceId: deviceIdSchema2.optional(),
-  captchaToken: captchaTokenSchema3.optional()
+  mfaToken: z4.string().trim().min(1, "MFA token is required").max(2048),
+  deviceId: deviceIdSchema.optional(),
+  captchaToken: captchaTokenSchema.optional()
+}).strict().refine((val) => !hasPrototypePollutionKey(val), {
+  message: "Payload contains forbidden keys"
 });
-var twoFactorTokenSchema = z3.object({
+var twoFactorTokenSchema = z4.object({
   token: otpTokenSchema
+}).strict().refine((val) => !hasPrototypePollutionKey(val), {
+  message: "Payload contains forbidden keys"
 });
 
 // server/routes/twoFactorRoutes.ts
 var router3 = Router2();
-var twoFactorLimiter = rateLimit6({
+router3.use((_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
+var twoFactorLimiter = rateLimit7({
   windowMs: 15 * 60 * 1e3,
   max: 10,
   // Stricter limit for 2FA actions
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => `${getClientIp(req)}:${req.path}`,
+  keyGenerator: (req) => {
+    const userId = req?.user?.userId || "anon";
+    return `${getClientIp(req)}:${userId}:${req.path}`;
+  },
   message: {
     success: false,
     message: "Too many 2FA attempts. Please try again later.",
     error: { code: "TOO_MANY_2FA_ATTEMPTS" }
   }
 });
-router3.post("/setup", requireAuth, twoFactorLimiter, asyncHandler(setup2FA2));
+router3.post(
+  "/setup",
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  twoFactorLimiter,
+  asyncHandler(setup2FA2)
+);
 router3.post(
   "/verify",
+  requireTrustedBrowserOrigin,
   requireAuth,
   twoFactorLimiter,
   validate(twoFactorTokenSchema),
@@ -13852,6 +15061,7 @@ router3.post(
 );
 router3.post(
   "/disable",
+  requireTrustedBrowserOrigin,
   requireAuth,
   twoFactorLimiter,
   validate(twoFactorTokenSchema),
@@ -13861,6 +15071,7 @@ var twoFactorRouter = router3;
 
 // server/routes/securityRoutes.ts
 import { Router as Router3 } from "express";
+import rateLimit8 from "express-rate-limit";
 
 // server/services/aiAnomalyDetectionService.ts
 var AIAnomalyDetectionService = class {
@@ -14327,7 +15538,7 @@ var requestFingerprintService = new RequestFingerprintService();
 
 // server/services/securityDashboardService.ts
 init_logger();
-import mongoose23 from "mongoose";
+import mongoose27 from "mongoose";
 var SecurityDashboardService = class {
   io = null;
   METRICS_RETENTION_MS = 864e5;
@@ -14408,7 +15619,7 @@ var SecurityDashboardService = class {
     const now = Date.now();
     const oneDayAgo = now - this.METRICS_RETENTION_MS;
     try {
-      const IncidentModel2 = mongoose23.model("SecurityIncident");
+      const IncidentModel2 = mongoose27.model("SecurityIncident");
       const recentIncidents = await IncidentModel2.find({
         timestamp: { $gte: oneDayAgo }
       }).sort({ timestamp: -1 }).allowDiskUse(true).limit(50).lean();
@@ -14468,7 +15679,7 @@ var SecurityDashboardService = class {
    * Get incident details for admin review
    */
   async getIncidentDetails(incidentId) {
-    const IncidentModel2 = mongoose23.model("SecurityIncident");
+    const IncidentModel2 = mongoose27.model("SecurityIncident");
     const incident = await IncidentModel2.findOne({ id: incidentId }).lean();
     if (!incident) {
       throw new Error(`Incident not found: ${incidentId}`);
@@ -14484,7 +15695,7 @@ var SecurityDashboardService = class {
    * Manual incident management by admin
    */
   async updateIncidentStatus(incidentId, status, notes) {
-    const IncidentModel2 = mongoose23.model("SecurityIncident");
+    const IncidentModel2 = mongoose27.model("SecurityIncident");
     await IncidentModel2.findOneAndUpdate(
       { id: incidentId },
       {
@@ -14526,7 +15737,7 @@ var SecurityDashboardService = class {
    * Export security report
    */
   async generateSecurityReport(startDate, endDate) {
-    const IncidentModel2 = mongoose23.model("SecurityIncident");
+    const IncidentModel2 = mongoose27.model("SecurityIncident");
     const incidents = await IncidentModel2.find({
       timestamp: { $gte: startDate.getTime(), $lte: endDate.getTime() }
     }).lean();
@@ -14560,7 +15771,7 @@ var SecurityDashboardService = class {
     }
   }
   async findRelatedIncidents(incident) {
-    const IncidentModel2 = mongoose23.model("SecurityIncident");
+    const IncidentModel2 = mongoose27.model("SecurityIncident");
     return await IncidentModel2.find({
       $or: [{ ip: incident.ip }, { userId: incident.userId }],
       id: { $ne: incident.id }
@@ -14586,6 +15797,72 @@ var securityDashboardService = new SecurityDashboardService();
 
 // server/routes/securityRoutes.ts
 var securityRouter = Router3();
+securityRouter.use((_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
+var loginVerifyLimiter = rateLimit8({
+  windowMs: 15 * 60 * 1e3,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${req?.user?.userId || "anon"}:login-verify`,
+  message: {
+    success: false,
+    message: "Too many verification attempts. Please try again later.",
+    error: { code: "TOO_MANY_VERIFY_ATTEMPTS" }
+  }
+});
+var deviceVerifyLimiter = rateLimit8({
+  windowMs: 15 * 60 * 1e3,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${req?.user?.userId || "anon"}:device-verify`,
+  message: {
+    success: false,
+    message: "Too many device verification attempts. Please try again later.",
+    error: { code: "TOO_MANY_DEVICE_VERIFY_ATTEMPTS" }
+  }
+});
+var securitySettingsLimiter = rateLimit8({
+  windowMs: 15 * 60 * 1e3,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${req?.user?.userId || "anon"}:security-settings`,
+  message: {
+    success: false,
+    message: "Too many settings update requests. Please try again later.",
+    error: { code: "TOO_MANY_SETTINGS_UPDATE_ATTEMPTS" }
+  }
+});
+var mfaLimiter = rateLimit8({
+  windowMs: 15 * 60 * 1e3,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${req?.user?.userId || "anon"}:mfa-mgmt`,
+  message: {
+    success: false,
+    message: "Too many MFA attempts. Please try again later.",
+    error: { code: "TOO_MANY_MFA_ATTEMPTS" }
+  }
+});
+var adminActionLimiter = rateLimit8({
+  windowMs: 15 * 60 * 1e3,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${req?.user?.userId || "anon"}:admin-action`,
+  message: {
+    success: false,
+    message: "Too many admin action requests. Please try again later.",
+    error: { code: "TOO_MANY_ADMIN_ACTION_ATTEMPTS" }
+  }
+});
 var getRouteParam3 = (value) => {
   if (Array.isArray(value)) {
     return value[0] ?? "";
@@ -14594,7 +15871,9 @@ var getRouteParam3 = (value) => {
 };
 securityRouter.post(
   "/login-verify",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  loginVerifyLimiter,
   asyncHandler(async (req, res) => {
     const { password } = req.body || {};
     if (!password || typeof password !== "string") {
@@ -14650,7 +15929,9 @@ securityRouter.get(
 );
 securityRouter.post(
   "/devices/:id/verify",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  deviceVerifyLimiter,
   asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { token } = req.body || {};
@@ -14672,6 +15953,7 @@ securityRouter.post(
 );
 securityRouter.delete(
   "/devices/:id",
+  requireTrustedBrowserOrigin,
   requireAuth,
   asyncHandler(async (req, res) => {
     const { id } = req.params;
@@ -14688,6 +15970,7 @@ securityRouter.delete(
 );
 securityRouter.post(
   "/devices/forget-all",
+  requireTrustedBrowserOrigin,
   requireAuth,
   asyncHandler(async (req, res) => {
     const userId = req.user.userId;
@@ -14734,32 +16017,61 @@ securityRouter.get(
 );
 securityRouter.post(
   "/settings",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  securitySettingsLimiter,
   asyncHandler(async (req, res) => {
-    const settings = req.body || {};
+    const rawSettings = req.body || {};
+    const allowedKeys = /* @__PURE__ */ new Set([
+      "loginAlerts",
+      "suspiciousActivityAlerts",
+      "twoFactorRequired",
+      "sessionTimeout",
+      "theme",
+      "compactMode",
+      "autoLockTimeout"
+    ]);
+    const sanitizedPreferences = {};
+    for (const [key, val] of Object.entries(rawSettings)) {
+      if (allowedKeys.has(key)) {
+        if (typeof val === "boolean" || typeof val === "string" || typeof val === "number" && Number.isFinite(val)) {
+          sanitizedPreferences[key] = val;
+        }
+      }
+    }
     await User.findByIdAndUpdate(req.user.userId, {
       $set: {
-        "meta.preferences": settings,
+        "meta.preferences": sanitizedPreferences,
         updatedAt: /* @__PURE__ */ new Date()
       }
     }).exec();
     res.json({
       success: true,
       message: "Settings updated",
-      data: settings
+      data: sanitizedPreferences
     });
   })
 );
-securityRouter.post("/mfa/enable", requireAuth, asyncHandler(setup2FA2));
+securityRouter.post(
+  "/mfa/enable",
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  mfaLimiter,
+  asyncHandler(setup2FA2)
+);
 securityRouter.post(
   "/mfa/verify",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  mfaLimiter,
   validate(twoFactorTokenSchema),
   asyncHandler(verifyAndEnable2FA2)
 );
 securityRouter.post(
   "/mfa/disable",
+  requireTrustedBrowserOrigin,
   requireAuth,
+  mfaLimiter,
   validate(twoFactorTokenSchema),
   asyncHandler(disable2FA2)
 );
@@ -14798,10 +16110,12 @@ securityRouter.get(
 );
 securityRouter.patch(
   "/admin/incidents/:id",
+  requireTrustedBrowserOrigin,
   requireAuth,
   requireAdmin,
+  adminActionLimiter,
   asyncHandler(async (req, res) => {
-    const { status, notes } = req.body;
+    const { status, notes } = req.body || {};
     await securityDashboardService.updateIncidentStatus(
       getRouteParam3(req.params.id),
       status,
@@ -14815,10 +16129,12 @@ securityRouter.patch(
 );
 securityRouter.post(
   "/admin/actions",
+  requireTrustedBrowserOrigin,
   requireAuth,
   requireAdmin,
+  adminActionLimiter,
   asyncHandler(async (req, res) => {
-    const { action, target, duration } = req.body;
+    const { action, target, duration } = req.body || {};
     await securityDashboardService.applyManualAction(action, target, duration);
     res.json({
       success: true,
@@ -14842,95 +16158,170 @@ securityRouter.get(
 
 // server/routes/notificationRoutes.ts
 import express6 from "express";
-import mongoose24 from "mongoose";
+import mongoose28 from "mongoose";
+import rateLimit9 from "express-rate-limit";
 var router4 = express6.Router();
-router4.get("/", requireAuth, async (req, res) => {
-  const { userId, username } = req.user;
-  if (mongoose24.connection.readyState !== 1) {
-    throw AppError.serviceUnavailable(
-      "Database service is temporarily unavailable or reconnecting.",
-      "SERVICE_UNAVAILABLE"
-    );
+var notificationLimiter = rateLimit9({
+  windowMs: 60 * 1e3,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${req?.user?.userId || "anon"}:notif`,
+  message: {
+    success: false,
+    message: "Too many notification requests. Please slow down.",
+    error: { code: "TOO_MANY_NOTIFICATION_REQUESTS" }
   }
-  const Notification = getNotificationModel(username);
-  const notifications = await Notification.find({ userId }).sort({ createdAt: -1 }).allowDiskUse(true).limit(50).lean().exec();
-  return sendSuccess(res, notifications, "Notifications fetched successfully");
 });
-router4.post("/read", requireAuth, async (req, res) => {
-  const { userId, username } = req.user;
-  const Notification = getNotificationModel(username);
-  const { id } = req.body;
-  if (id) {
-    if (!mongoose24.Types.ObjectId.isValid(id)) {
+router4.use((_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
+router4.use(requireAuth);
+router4.use(notificationLimiter);
+router4.get(
+  "/",
+  asyncHandler(async (req, res) => {
+    const { userId, username } = req.user;
+    if (mongoose28.connection.readyState !== 1) {
+      throw AppError.serviceUnavailable(
+        "Database service is temporarily unavailable or reconnecting.",
+        "SERVICE_UNAVAILABLE"
+      );
+    }
+    const Notification = getNotificationModel(username);
+    const notifications = await Notification.find({ userId }).sort({ createdAt: -1 }).allowDiskUse(true).limit(50).lean().exec();
+    return sendSuccess(res, notifications, "Notifications fetched successfully");
+  })
+);
+router4.post(
+  "/read",
+  requireTrustedBrowserOrigin,
+  asyncHandler(async (req, res) => {
+    const { userId, username } = req.user;
+    const Notification = getNotificationModel(username);
+    const { id } = req.body || {};
+    if (id) {
+      if (!mongoose28.Types.ObjectId.isValid(id)) {
+        throw AppError.badRequest("Invalid notification ID format");
+      }
+      const updated = await Notification.findOneAndUpdate(
+        { _id: new mongoose28.Types.ObjectId(id), userId },
+        { isRead: true },
+        { new: true }
+      );
+      if (!updated) {
+        throw AppError.notFound("Notification not found");
+      }
+      return sendSuccess(res, updated, "Notification marked as read");
+    }
+    await Notification.updateMany({ userId, isRead: false }, { $set: { isRead: true } });
+    return sendSuccess(res, null, "All notifications marked as read");
+  })
+);
+router4.post(
+  "/clear",
+  requireTrustedBrowserOrigin,
+  asyncHandler(async (req, res) => {
+    const { userId, username } = req.user;
+    const Notification = getNotificationModel(username);
+    await Notification.deleteMany({ userId });
+    return sendSuccess(res, null, "Notifications cleared successfully");
+  })
+);
+router4.delete(
+  "/:id",
+  requireTrustedBrowserOrigin,
+  asyncHandler(async (req, res) => {
+    const { userId, username } = req.user;
+    const Notification = getNotificationModel(username);
+    const rawId = req.params.id;
+    const id = Array.isArray(rawId) ? rawId[0] : rawId;
+    if (!id || !mongoose28.Types.ObjectId.isValid(id)) {
       throw AppError.badRequest("Invalid notification ID format");
     }
-    const updated = await Notification.findOneAndUpdate(
-      { _id: new mongoose24.Types.ObjectId(id), userId },
-      { isRead: true },
-      { new: true }
-    );
-    if (!updated) {
-      throw AppError.notFound("Notification not found");
+    const deleted = await Notification.findOneAndDelete({
+      _id: new mongoose28.Types.ObjectId(id),
+      userId
+    });
+    if (!deleted) {
+      throw AppError.notFound("Notification not found or access denied");
     }
-    return sendSuccess(res, updated, "Notification marked as read");
-  }
-  await Notification.updateMany({ userId, isRead: false }, { $set: { isRead: true } });
-  return sendSuccess(res, null, "All notifications marked as read");
-});
-router4.post("/clear", requireAuth, async (req, res) => {
-  const { userId, username } = req.user;
-  const Notification = getNotificationModel(username);
-  await Notification.deleteMany({ userId });
-  return sendSuccess(res, null, "Notifications cleared successfully");
-});
-router4.delete("/:id", requireAuth, async (req, res) => {
-  const { userId, username } = req.user;
-  const Notification = getNotificationModel(username);
-  const rawId = req.params.id;
-  const id = Array.isArray(rawId) ? rawId[0] : rawId;
-  if (!id || !mongoose24.Types.ObjectId.isValid(id)) {
-    throw AppError.badRequest("Invalid notification ID format");
-  }
-  const deleted = await Notification.findOneAndDelete({
-    _id: new mongoose24.Types.ObjectId(id),
-    userId
-  });
-  if (!deleted) {
-    throw AppError.notFound("Notification not found or access denied");
-  }
-  return sendSuccess(res, null, "Notification deleted successfully");
-});
-router4.post("/delete", requireAuth, async (req, res) => {
-  const { userId, username } = req.user;
-  const Notification = getNotificationModel(username);
-  const rawId = req.body?.id;
-  const id = typeof rawId === "string" ? rawId : void 0;
-  if (!id || !mongoose24.Types.ObjectId.isValid(id)) {
-    throw AppError.badRequest("Valid notification ID is required");
-  }
-  const deleted = await Notification.findOneAndDelete({
-    _id: new mongoose24.Types.ObjectId(id),
-    userId
-  });
-  if (!deleted) {
-    throw AppError.notFound("Notification not found or access denied");
-  }
-  return sendSuccess(res, null, "Notification deleted successfully");
-});
+    return sendSuccess(res, null, "Notification deleted successfully");
+  })
+);
+router4.post(
+  "/delete",
+  requireTrustedBrowserOrigin,
+  asyncHandler(async (req, res) => {
+    const { userId, username } = req.user;
+    const Notification = getNotificationModel(username);
+    const rawId = req.body?.id;
+    const id = typeof rawId === "string" ? rawId : void 0;
+    if (!id || !mongoose28.Types.ObjectId.isValid(id)) {
+      throw AppError.badRequest("Valid notification ID is required");
+    }
+    const deleted = await Notification.findOneAndDelete({
+      _id: new mongoose28.Types.ObjectId(id),
+      userId
+    });
+    if (!deleted) {
+      throw AppError.notFound("Notification not found or access denied");
+    }
+    return sendSuccess(res, null, "Notification deleted successfully");
+  })
+);
 
 // server/routes/avatarRoutes.ts
 import express7, { Router as Router4 } from "express";
 import path13 from "path";
 import crypto14 from "crypto";
-import mongoose25 from "mongoose";
+import mongoose29 from "mongoose";
 import fs10 from "fs/promises";
+import rateLimit10 from "express-rate-limit";
 var router5 = Router4();
+var ALLOWED_AVATAR_EXTENSIONS = /* @__PURE__ */ new Set(["webp", "avif", "png", "jpeg", "jpg", "gif"]);
+var presignLimiter = rateLimit10({
+  windowMs: 15 * 60 * 1e3,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${req?.user?.userId || "anon"}:avatar-presign`,
+  message: {
+    success: false,
+    error: "Too many avatar upload URL requests. Please try again later."
+  }
+});
+var avatarUploadLimiter = rateLimit10({
+  windowMs: 15 * 60 * 1e3,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:${req.params.userId || "anon"}:avatar-upload`,
+  message: {
+    success: false,
+    error: "Too many avatar upload attempts. Please try again later."
+  }
+});
+var avatarReadLimiter = rateLimit10({
+  windowMs: 60 * 1e3,
+  max: 600,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${getClientIp(req)}:avatar-read`,
+  message: {
+    success: false,
+    error: "Too many avatar requests. Please try again later."
+  }
+});
 router5.get("/status", (_req, res) => {
   const bucket = getAvatarGridFsBucket();
   return res.json({
     success: true,
     storageMode: bucket ? "MongoDB Atlas GridFS (Cloud)" : "MongoDB Atlas GridFS (Cloud) - unavailable",
-    mongoReady: mongoose25.connection.readyState === 1,
+    mongoReady: mongoose29.connection.readyState === 1,
     localCacheDirectory: null
   });
 });
@@ -14947,40 +16338,49 @@ var resolveAvatarSigningSecret = () => {
   return "dev-avatar-signing-secret-non-prod";
 };
 var AVATAR_SIGNING_SECRET = resolveAvatarSigningSecret();
-router5.post("/presign", requireAuth, (req, res) => {
-  const { userId, contentHash, mimeType } = req.body;
-  if (!userId || !contentHash) {
-    return res.status(400).json({ success: false, error: "userId and contentHash are required." });
-  }
-  const authUserId = req.user?.userId;
-  if (!authUserId || String(authUserId) !== String(userId)) {
-    return res.status(403).json({
-      success: false,
-      error: "Forbidden: Cannot generate avatar presign for another user."
+router5.post(
+  "/presign",
+  requireTrustedBrowserOrigin,
+  requireAuth,
+  presignLimiter,
+  (req, res) => {
+    const { userId, contentHash, mimeType } = req.body || {};
+    if (!userId || !contentHash) {
+      return res.status(400).json({ success: false, error: "userId and contentHash are required." });
+    }
+    const authUserId = req.user?.userId;
+    if (!authUserId || String(authUserId) !== String(userId)) {
+      return res.status(403).json({
+        success: false,
+        error: "Forbidden: Cannot generate avatar presign for another user."
+      });
+    }
+    const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, "");
+    const sanitizedHash = String(contentHash).replace(/[^a-zA-Z0-9_-]/g, "");
+    const ext = mimeType === "image/avif" ? "avif" : "webp";
+    const forwardedProto = (req.get("x-forwarded-proto") || "").split(",")[0].trim();
+    const protocol = forwardedProto || req.protocol || "http";
+    const host = req.get("x-forwarded-host") || req.get("host") || "localhost:4000";
+    const expiresAt = Date.now() + 5 * 60 * 1e3;
+    const signature = crypto14.createHmac("sha256", AVATAR_SIGNING_SECRET || "").update(`avatar-upload:${sanitizedUserId}:${sanitizedHash}:${expiresAt}`).digest("hex");
+    const uploadPath = `/api/avatar/upload/${sanitizedUserId}/${sanitizedHash}?ext=${ext}&token=${signature}&expires=${expiresAt}`;
+    const publicPath = `/api/avatar/raw/${sanitizedUserId}/${sanitizedHash}.${ext}`;
+    const uploadUrl = `${protocol}://${host}${uploadPath}`;
+    const publicUrl = `${protocol}://${host}${publicPath}`;
+    return res.json({
+      success: true,
+      uploadUrl,
+      publicUrl,
+      uploadPath,
+      publicPath,
+      expiresAt
     });
   }
-  const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, "");
-  const sanitizedHash = String(contentHash).replace(/[^a-zA-Z0-9_-]/g, "");
-  const ext = mimeType === "image/avif" ? "avif" : "webp";
-  const forwardedProto = (req.get("x-forwarded-proto") || "").split(",")[0].trim();
-  const protocol = forwardedProto || req.protocol || "http";
-  const host = req.get("x-forwarded-host") || req.get("host") || "localhost:4000";
-  const expiresAt = Date.now() + 5 * 60 * 1e3;
-  const signature = crypto14.createHmac("sha256", AVATAR_SIGNING_SECRET || "").update(`avatar-upload:${sanitizedUserId}:${sanitizedHash}:${expiresAt}`).digest("hex");
-  const uploadPath = `/api/avatar/upload/${sanitizedUserId}/${sanitizedHash}?ext=${ext}&token=${signature}&expires=${expiresAt}`;
-  const publicPath = `/api/avatar/raw/${sanitizedUserId}/${sanitizedHash}.${ext}`;
-  const uploadUrl = `${protocol}://${host}${uploadPath}`;
-  const publicUrl = `${protocol}://${host}${publicPath}`;
-  return res.json({
-    success: true,
-    uploadUrl,
-    publicUrl,
-    uploadPath,
-    publicPath,
-    expiresAt
-  });
+);
+var rawBodyParser = express7.raw({
+  type: ["image/*", "application/octet-stream"],
+  limit: "35mb"
 });
-var rawBodyParser = express7.raw({ type: ["image/*", "application/octet-stream"], limit: "35mb" });
 function expressRawBodyMiddleware(req, res, next) {
   if (req.is("application/octet-stream") || req.is("image/*") || req.headers["content-type"]?.includes("image/")) {
     rawBodyParser(req, res, next);
@@ -14990,11 +16390,16 @@ function expressRawBodyMiddleware(req, res, next) {
 }
 router5.put(
   "/upload/:userId/:contentHash",
+  avatarUploadLimiter,
   expressRawBodyMiddleware,
-  async (req, res) => {
+  asyncHandler(async (req, res) => {
     try {
       const { userId, contentHash } = req.params;
-      const ext = req.query.ext || "webp";
+      const rawExt = req.query.ext || "webp";
+      const cleanExt = rawExt.toLowerCase().replace(/^\./, "");
+      if (!ALLOWED_AVATAR_EXTENSIONS.has(cleanExt)) {
+        return res.status(400).json({ success: false, error: "Invalid or unsupported avatar image extension." });
+      }
       const token = req.query.token || req.headers["x-avatar-token"];
       const expires = Number(req.query.expires || req.headers["x-avatar-expires"]);
       const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, "");
@@ -15038,7 +16443,12 @@ router5.put(
       if (!isValidImageMagicBytes(buffer)) {
         return res.status(400).json({ success: false, error: "Invalid image format or corrupted image payload." });
       }
-      const { publicPath } = await storeAvatarBuffer(sanitizedUserId, buffer, ext, sanitizedHash);
+      const { publicPath } = await storeAvatarBuffer(
+        sanitizedUserId,
+        buffer,
+        cleanExt,
+        sanitizedHash
+      );
       return res.status(200).json({ success: true, message: "Avatar upload complete", publicPath });
     } catch (err) {
       console.error("Avatar upload failed", err);
@@ -15047,95 +16457,213 @@ router5.put(
         error: { code: "AVATAR_UPLOAD_FAILED", message: "Avatar upload failed." }
       });
     }
-  }
+  })
 );
-router5.get("/raw/:userId/:fileKey", async (req, res) => {
-  const { userId, fileKey } = req.params;
-  const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, "");
-  const sanitizedFileKey = String(fileKey).replace(/[^a-zA-Z0-9_.-]/g, "");
-  const gridFsFilename = `${sanitizedUserId}/${sanitizedFileKey}`;
-  const ext = path13.extname(sanitizedFileKey).toLowerCase();
-  const contentType = getContentTypeFromExt(ext);
-  const etagValue = `"${path13.basename(sanitizedFileKey, ext)}"`;
-  if (req.headers["if-none-match"] === etagValue) {
-    return res.status(304).end();
-  }
-  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-  res.setHeader("Content-Type", contentType);
-  res.setHeader("ETag", etagValue);
-  const bucket = getAvatarGridFsBucket();
-  if (bucket) {
-    try {
-      const files = await bucket.find({ filename: gridFsFilename }).toArray();
-      if (files.length > 0) {
-        const downloadStream = bucket.openDownloadStream(files[0]._id);
-        downloadStream.pipe(res);
-        return;
-      }
-    } catch (gridFsErr) {
-      console.warn("GridFS read attempt failed, attempting local disk fallback:", gridFsErr);
+router5.get(
+  "/raw/:userId/:fileKey",
+  avatarReadLimiter,
+  asyncHandler(async (req, res) => {
+    const { userId, fileKey } = req.params;
+    const sanitizedUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, "");
+    const sanitizedFileKey = String(fileKey).replace(/[^a-zA-Z0-9_.-]/g, "");
+    if (sanitizedFileKey.includes("..") || sanitizedUserId.includes("..") || !sanitizedUserId || !sanitizedFileKey) {
+      return res.status(400).send("Invalid avatar path");
     }
-  }
-  try {
-    const localFilePath = path13.join(
-      process.cwd(),
-      "uploads",
-      "avatars",
-      sanitizedUserId,
-      sanitizedFileKey
-    );
-    const fileBuffer = await fs10.readFile(localFilePath);
-    return res.send(fileBuffer);
-  } catch {
-  }
-  return res.status(404).send("Avatar not found");
-});
+    const gridFsFilename = `${sanitizedUserId}/${sanitizedFileKey}`;
+    const ext = path13.extname(sanitizedFileKey).toLowerCase();
+    const contentType = getContentTypeFromExt(ext);
+    const etagValue = `"${path13.basename(sanitizedFileKey, ext)}"`;
+    if (req.headers["if-none-match"] === etagValue) {
+      return res.status(304).end();
+    }
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("ETag", etagValue);
+    const bucket = getAvatarGridFsBucket();
+    if (bucket) {
+      try {
+        const files = await bucket.find({ filename: gridFsFilename }).toArray();
+        if (files.length > 0) {
+          const downloadStream = bucket.openDownloadStream(files[0]._id);
+          downloadStream.pipe(res);
+          return;
+        }
+      } catch (gridFsErr) {
+        console.warn("GridFS read attempt failed, attempting local disk fallback:", gridFsErr);
+      }
+    }
+    try {
+      const avatarsRoot = path13.resolve(process.cwd(), "uploads", "avatars");
+      const localFilePath = path13.resolve(avatarsRoot, sanitizedUserId, sanitizedFileKey);
+      if (!localFilePath.startsWith(avatarsRoot)) {
+        return res.status(400).send("Invalid avatar path traversal");
+      }
+      const fileBuffer = await fs10.readFile(localFilePath);
+      return res.send(fileBuffer);
+    } catch {
+    }
+    return res.status(404).send("Avatar not found");
+  })
+);
 
 // server/routes/integrityRoutes.ts
 import { Router as Router5 } from "express";
-import rateLimit7 from "express-rate-limit";
+import rateLimit11 from "express-rate-limit";
 
 // server/services/integrityService.ts
 import { randomUUID as randomUUID4 } from "crypto";
-import mongoose27 from "mongoose";
+import mongoose31 from "mongoose";
 
 // server/models/vaultIntegrity.ts
-import mongoose26, { Schema as Schema4 } from "mongoose";
-var MerkleAuditSchema = new Schema4(
+import mongoose30, { Schema as Schema10 } from "mongoose";
+var MerkleAuditSchema = new Schema10(
   {
-    auditId: { type: String, required: true },
+    auditId: { type: String, required: [true, "auditId is required"], trim: true },
     timestamp: { type: Date, default: Date.now },
-    status: { type: String, enum: ["clean", "corrupted", "warning"], required: true },
-    itemCount: { type: Number, default: 0 },
-    rootHash: { type: String, required: true },
-    algorithm: { type: String, enum: ["blake3", "sha512", "sha256"], default: "blake3" },
-    corruptedItemIds: [{ type: String }],
-    details: { type: Schema4.Types.Mixed }
+    status: {
+      type: String,
+      enum: ["clean", "corrupted", "warning"],
+      required: [true, "status is required"]
+    },
+    itemCount: { type: Number, default: 0, min: 0 },
+    rootHash: { type: String, required: [true, "rootHash is required"], trim: true },
+    algorithm: {
+      type: String,
+      enum: ["blake3", "sha512", "sha256"],
+      default: "blake3",
+      trim: true
+    },
+    corruptedItemIds: [{ type: String, trim: true }],
+    details: { type: Schema10.Types.Mixed, default: () => ({}) }
   },
   { _id: false }
 );
-var VaultIntegritySchema = new Schema4(
+var VaultIntegritySchema = new Schema10(
   {
-    userId: { type: Schema4.Types.ObjectId, ref: "User", required: true, index: true, unique: true },
-    username: { type: String, required: true, index: true },
-    activeRootHash: { type: String, default: "" },
-    algorithm: { type: String, enum: ["blake3", "sha512", "sha256"], default: "blake3" },
-    totalLeaves: { type: Number, default: 0 },
-    treeDepth: { type: Number, default: 0 },
-    lastAuditAt: { type: Date, default: Date.now },
-    lastAuditStatus: { type: String, enum: ["clean", "corrupted", "warning"], default: "clean" },
-    tamperIncidentCount: { type: Number, default: 0 },
-    auditHistory: [MerkleAuditSchema]
+    userId: {
+      type: Schema10.Types.ObjectId,
+      ref: "User",
+      required: [true, "userId is required"],
+      unique: true
+    },
+    username: {
+      type: String,
+      required: [true, "username is required"],
+      trim: true,
+      lowercase: true,
+      index: true
+    },
+    activeRootHash: {
+      type: String,
+      default: "",
+      trim: true
+    },
+    algorithm: {
+      type: String,
+      enum: ["blake3", "sha512", "sha256"],
+      default: "blake3",
+      trim: true
+    },
+    totalLeaves: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    treeDepth: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    lastAuditAt: {
+      type: Date,
+      default: Date.now,
+      index: true
+    },
+    lastAuditStatus: {
+      type: String,
+      enum: ["clean", "corrupted", "warning"],
+      default: "clean",
+      index: true
+    },
+    tamperIncidentCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+      index: true
+    },
+    auditHistory: {
+      type: [MerkleAuditSchema],
+      default: []
+    }
   },
   {
     timestamps: true,
-    collection: "vault_integrities"
+    collection: "vault_integrities",
+    versionKey: false
   }
 );
-var VaultIntegrity = mongoose26.model(
-  "VaultIntegrity",
-  VaultIntegritySchema
-);
+VaultIntegritySchema.index({ username: 1, lastAuditStatus: 1 });
+VaultIntegritySchema.index({ lastAuditAt: -1 });
+VaultIntegritySchema.index({ tamperIncidentCount: -1 });
+VaultIntegritySchema.pre("save", function() {
+  if (Array.isArray(this.auditHistory) && this.auditHistory.length > 100) {
+    this.auditHistory = this.auditHistory.slice(-100);
+  }
+});
+VaultIntegritySchema.methods.recordAudit = async function(auditRecord) {
+  this.lastAuditAt = auditRecord.timestamp || /* @__PURE__ */ new Date();
+  this.lastAuditStatus = auditRecord.status;
+  this.activeRootHash = auditRecord.rootHash;
+  this.algorithm = auditRecord.algorithm;
+  this.totalLeaves = auditRecord.itemCount;
+  if (auditRecord.status === "corrupted") {
+    this.tamperIncidentCount += 1;
+  }
+  if (!Array.isArray(this.auditHistory)) {
+    this.auditHistory = [];
+  }
+  this.auditHistory.push(auditRecord);
+  if (this.auditHistory.length > 100) {
+    this.auditHistory = this.auditHistory.slice(-100);
+  }
+  return this.save();
+};
+VaultIntegritySchema.statics.findByUserId = function(userId) {
+  return this.findOne({ userId });
+};
+var getVaultIntegrityModel = (customConnection) => {
+  const collectionName = "vault_integrities";
+  if (customConnection) {
+    if (customConnection.models.VaultIntegrity) {
+      return customConnection.models.VaultIntegrity;
+    }
+    const model3 = customConnection.model(
+      "VaultIntegrity",
+      VaultIntegritySchema,
+      collectionName
+    );
+    if (typeof model3?.createIndexes === "function") {
+      model3.createIndexes().catch(() => {
+      });
+    }
+    return model3;
+  }
+  if (mongoose30.models.VaultIntegrity) {
+    return mongoose30.models.VaultIntegrity;
+  }
+  const model2 = mongoose30.model(
+    "VaultIntegrity",
+    VaultIntegritySchema,
+    collectionName
+  );
+  if (typeof model2?.createIndexes === "function") {
+    model2.createIndexes().catch(() => {
+    });
+  }
+  return model2;
+};
+var VaultIntegrity = getVaultIntegrityModel();
 
 // server/utils/merkleTree.ts
 import crypto15 from "crypto";
@@ -15275,9 +16803,9 @@ var MerkleTree = class {
 
 // server/services/threatResponseService.ts
 init_logger();
-import { Schema as Schema5, model } from "mongoose";
+import { Schema as Schema11, model } from "mongoose";
 import { randomUUID as randomUUID3 } from "crypto";
-var incidentSchema = new Schema5(
+var incidentSchema = new Schema11(
   {
     id: { type: String, unique: true, index: true },
     timestamp: { type: Number, index: true },
@@ -15285,7 +16813,7 @@ var incidentSchema = new Schema5(
     type: { type: String, index: true },
     userId: { type: String, index: true },
     ip: { type: String, index: true },
-    details: { type: Schema5.Types.Mixed },
+    details: { type: Schema11.Types.Mixed },
     status: {
       type: String,
       enum: ["open", "investigating", "mitigated", "resolved"],
@@ -15296,7 +16824,7 @@ var incidentSchema = new Schema5(
         action: String,
         timestamp: Number,
         success: Boolean,
-        details: Schema5.Types.Mixed
+        details: Schema11.Types.Mixed
       }
     ],
     adminNotes: String
@@ -15604,7 +17132,7 @@ var IntegrityService = class {
   async buildUserMerkleTree(userId, username, algorithm = "blake3") {
     const DynamicVaultModel = getVaultItemModel(username);
     const rawItems = await DynamicVaultModel.find({
-      userId: new mongoose27.Types.ObjectId(userId),
+      userId: new mongoose31.Types.ObjectId(userId),
       isDeleted: false
     }).lean().exec();
     const leafItems = [];
@@ -15638,9 +17166,9 @@ var IntegrityService = class {
     const tree = new MerkleTree(algorithm);
     const rootHash = await tree.build(leafItems);
     await VaultIntegrity.findOneAndUpdate(
-      { userId: new mongoose27.Types.ObjectId(userId) },
+      { userId: new mongoose31.Types.ObjectId(userId) },
       {
-        userId: new mongoose27.Types.ObjectId(userId),
+        userId: new mongoose31.Types.ObjectId(userId),
         username,
         activeRootHash: rootHash,
         algorithm,
@@ -15656,7 +17184,7 @@ var IntegrityService = class {
    */
   async getStatus(userId, username) {
     const record = await VaultIntegrity.findOne({
-      userId: new mongoose27.Types.ObjectId(userId)
+      userId: new mongoose31.Types.ObjectId(userId)
     }).lean().exec();
     if (!record) {
       const { rootHash, tree } = await this.buildUserMerkleTree(userId, username);
@@ -15688,7 +17216,7 @@ var IntegrityService = class {
     const auditId = `audit_${randomUUID4()}`;
     const DynamicVaultModel = getVaultItemModel(username);
     const items = await DynamicVaultModel.find({
-      userId: new mongoose27.Types.ObjectId(userId),
+      userId: new mongoose31.Types.ObjectId(userId),
       isDeleted: false
     }).lean().exec();
     const corruptedItems = [];
@@ -15772,9 +17300,9 @@ var IntegrityService = class {
       }
     };
     await VaultIntegrity.findOneAndUpdate(
-      { userId: new mongoose27.Types.ObjectId(userId) },
+      { userId: new mongoose31.Types.ObjectId(userId) },
       {
-        userId: new mongoose27.Types.ObjectId(userId),
+        userId: new mongoose31.Types.ObjectId(userId),
         username,
         activeRootHash: currentRoot,
         algorithm,
@@ -15848,14 +17376,35 @@ var IntegrityService = class {
 var integrityService = new IntegrityService();
 
 // server/controllers/integrityController.ts
+var ALLOWED_ALGORITHMS = /* @__PURE__ */ new Set(["blake3", "sha512", "sha256"]);
+var SAFE_ID_PATTERN4 = /^[a-zA-Z0-9:_-]+$/;
+var HEX_HASH_PATTERN = /^[a-fA-F0-9]{32,128}$/;
 var getUserId2 = (req) => req.user.userId;
 var getUsername2 = (req) => req.user.username;
+var assertValidAlgorithm = (algorithm) => {
+  if (typeof algorithm !== "string" || !ALLOWED_ALGORITHMS.has(algorithm.toLowerCase())) {
+    throw AppError.badRequest(
+      "Invalid hash algorithm. Allowed algorithms: blake3, sha512, sha256.",
+      "INVALID_ALGORITHM"
+    );
+  }
+  return algorithm.toLowerCase();
+};
+var assertSafeId3 = (id, paramName) => {
+  if (typeof id !== "string" || !id.trim() || id.length > 256 || !SAFE_ID_PATTERN4.test(id.trim())) {
+    throw AppError.badRequest(`Invalid format for ${paramName}.`, "INVALID_IDENTIFIER");
+  }
+  return id.trim();
+};
 var getIntegrityStatusController = async (req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
   const status = await integrityService.getStatus(getUserId2(req), getUsername2(req));
   return sendSuccess(res, status, "Merkle Tree integrity status fetched successfully");
 };
 var verifyVaultIntegrityController = async (req, res) => {
-  const algorithm = req.body?.algorithm || "blake3";
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  const rawAlgo = req.body?.algorithm || "blake3";
+  const algorithm = assertValidAlgorithm(rawAlgo);
   const ip = getClientIp(req);
   const result = await integrityService.auditVault(getUserId2(req), getUsername2(req), ip, algorithm);
   return sendSuccess(
@@ -15866,14 +17415,11 @@ var verifyVaultIntegrityController = async (req, res) => {
   );
 };
 var getMerkleProofController = async (req, res) => {
-  const itemId = Array.isArray(req.params.itemId) ? req.params.itemId[0] : req.params.itemId;
-  if (!itemId) {
-    throw AppError.badRequest(
-      "Item ID is required for Merkle proof generation.",
-      "ITEM_ID_REQUIRED"
-    );
-  }
-  const algorithm = req.query?.algorithm || "blake3";
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  const rawItemId = Array.isArray(req.params.itemId) ? req.params.itemId[0] : req.params.itemId;
+  const itemId = assertSafeId3(rawItemId, "itemId");
+  const rawAlgo = req.query?.algorithm || "blake3";
+  const algorithm = assertValidAlgorithm(rawAlgo);
   const proof = await integrityService.getProof(
     getUserId2(req),
     getUsername2(req),
@@ -15886,19 +17432,28 @@ var getMerkleProofController = async (req, res) => {
   return sendSuccess(res, proof, "Merkle proof generated successfully");
 };
 var reportTamperController = async (req, res) => {
-  const { itemId, expectedHash, actualHash, details } = req.body || {};
-  if (!itemId || !expectedHash || !actualHash) {
+  const { itemId: rawItemId, expectedHash, actualHash, details } = req.body || {};
+  const itemId = assertSafeId3(rawItemId, "itemId");
+  if (typeof expectedHash !== "string" || typeof actualHash !== "string" || !HEX_HASH_PATTERN.test(expectedHash) || !HEX_HASH_PATTERN.test(actualHash)) {
     throw AppError.badRequest(
-      "Item ID, expectedHash, and actualHash are required.",
+      "expectedHash and actualHash must be valid hex hash strings between 32 and 128 characters.",
       "TAMPER_PAYLOAD_INVALID"
     );
+  }
+  let sanitizedDetails = {};
+  if (details && typeof details === "object") {
+    const rawJson = JSON.stringify(details);
+    if (rawJson.length > 10240) {
+      throw AppError.badRequest("details payload exceeds maximum size limit (10KB).", "PAYLOAD_TOO_LARGE");
+    }
+    sanitizedDetails = details;
   }
   const ip = getClientIp(req);
   await integrityService.reportTamper(getUserId2(req), getUsername2(req), ip, {
     itemId,
     expectedHash,
     actualHash,
-    details
+    details: sanitizedDetails
   });
   return sendSuccess(
     res,
@@ -15910,17 +17465,45 @@ var reportTamperController = async (req, res) => {
 
 // server/routes/integrityRoutes.ts
 var integrityRouter = Router5();
-var integrityLimiter = rateLimit7({
+var integrityLimiter = rateLimit11({
   windowMs: 60 * 1e3,
   max: 60,
-  message: { error: "Too many integrity requests. Please slow down." }
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const userId = req?.user?.userId || "anonymous";
+    return `${getClientIp(req)}:${userId}:integrity`;
+  },
+  message: {
+    success: false,
+    message: "Too many integrity requests. Please slow down.",
+    error: { code: "TOO_MANY_INTEGRITY_REQUESTS" }
+  }
+});
+integrityRouter.use((_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
 });
 integrityRouter.use(requireAuth);
 integrityRouter.use(integrityLimiter);
 integrityRouter.get("/status", asyncHandler(getIntegrityStatusController));
-integrityRouter.post("/verify", asyncHandler(verifyVaultIntegrityController));
-integrityRouter.get("/proof/:itemId", asyncHandler(getMerkleProofController));
-integrityRouter.post("/report-tamper", asyncHandler(reportTamperController));
+integrityRouter.post(
+  "/verify",
+  requireTrustedBrowserOrigin,
+  asyncHandler(verifyVaultIntegrityController)
+);
+integrityRouter.get(
+  "/proof/:itemId",
+  validateRequest(vaultItemRouteParamsValidation),
+  asyncHandler(getMerkleProofController)
+);
+integrityRouter.post(
+  "/report-tamper",
+  requireTrustedBrowserOrigin,
+  asyncHandler(reportTamperController)
+);
 
 // server/vite.ts
 init_logger();
@@ -16095,7 +17678,20 @@ var setupProductionMiddleware = (app) => {
   const buildRoot = path14.resolve(process.cwd(), "build");
   const indexHtmlPath = path14.join(buildRoot, "index.html");
   if (!fs11.existsSync(indexHtmlPath)) {
-    throw new Error(`Frontend build not found at: ${indexHtmlPath}`);
+    logger.warn(`Frontend build not found at: ${indexHtmlPath}. Running in standalone API production mode.`);
+    app.get(/.*/, (req, res, next) => {
+      if (req.path.startsWith("/api") || req.path === "/health" || req.path === "/ready") {
+        return next();
+      }
+      res.status(200).json({
+        success: true,
+        message: "Vault Production API Server is running.",
+        status: "online",
+        path: req.path,
+        timestamp: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    });
+    return;
   }
   app.use((req, res, next) => {
     if (req.method !== "GET" && req.method !== "HEAD") {
@@ -16172,8 +17768,8 @@ var setupProductionMiddleware = (app) => {
   logger.info("Production frontend middleware initialized successfully");
 };
 var setupFrontendMiddleware = async (app, httpServer) => {
-  const isProduction = process.env.NODE_ENV === "production";
-  if (!isProduction) {
+  const isProduction2 = process.env.NODE_ENV === "production";
+  if (!isProduction2) {
     await setupDevelopmentMiddleware(app, httpServer);
     return;
   }
@@ -16183,43 +17779,67 @@ var setupFrontendMiddleware = async (app, httpServer) => {
 // server/middleware/bodyParsers.ts
 import express9 from "express";
 init_logger();
-var JSON_LIMIT = `${Math.max(1, Number.parseInt(process.env.MAX_JSON_BODY_MB || "100", 10))}mb`;
-var jsonParser = express9.json({ limit: JSON_LIMIT });
+var parseBodyLimit = () => {
+  const parsed = Number.parseInt(process.env.MAX_JSON_BODY_MB || "100", 10);
+  const mb = Number.isFinite(parsed) && parsed > 0 ? parsed : 100;
+  return `${mb}mb`;
+};
+var BODY_LIMIT = parseBodyLimit();
+var jsonParser = express9.json({ limit: BODY_LIMIT });
 var urlencodedParser = express9.urlencoded({
-  limit: JSON_LIMIT,
+  limit: BODY_LIMIT,
   extended: true,
   parameterLimit: 100
 });
+var handleBodyParseError = (err, req, parserType, next) => {
+  const status = typeof err?.status === "number" ? err.status : 400;
+  const isTooLarge = status === 413 || err?.message?.toLowerCase()?.includes("too large") || err?.type === "entity.too.large";
+  const requestId = req.requestId;
+  logger.warn(`Request ${parserType} body parsing failed.`, {
+    method: req.method,
+    path: req.originalUrl,
+    requestId,
+    status,
+    parserType,
+    error: err instanceof Error ? err.message : String(err)
+  });
+  return next(
+    new AppError(
+      isTooLarge ? 413 : 400,
+      isTooLarge ? "PAYLOAD_TOO_LARGE" : "INVALID_JSON",
+      isTooLarge ? "Request payload exceeded the server limit." : `Request body contains invalid ${parserType === "json" ? "JSON" : "form encoding"}.`
+    )
+  );
+};
 var installBodyParsers = (app) => {
   app.use((req, res, next) => {
+    if (res.headersSent) {
+      return next();
+    }
     jsonParser(req, res, (err) => {
       if (err) {
-        const status = typeof err.status === "number" ? err.status : 400;
-        const isTooLarge = status === 413 || err.message.toLowerCase().includes("too large");
-        logger.warn("Request body parsing failed.", {
-          method: req.method,
-          path: req.originalUrl,
-          requestId: req.requestId,
-          status,
-          error: err
-        });
-        return next(
-          new AppError(
-            isTooLarge ? 413 : 400,
-            isTooLarge ? "PAYLOAD_TOO_LARGE" : "INVALID_JSON",
-            isTooLarge ? "Request payload exceeded the server limit." : "Request body contains invalid JSON."
-          )
-        );
+        return handleBodyParseError(err, req, "json", next);
       }
       next();
     });
   });
-  app.use(urlencodedParser);
+  app.use((req, res, next) => {
+    if (res.headersSent) {
+      return next();
+    }
+    urlencodedParser(req, res, (err) => {
+      if (err) {
+        return handleBodyParseError(err, req, "urlencoded", next);
+      }
+      next();
+    });
+  });
 };
 
 // server/middleware/csrfProtection.ts
 import cookieParser from "cookie-parser";
 import crypto16 from "node:crypto";
+init_logger();
 var IS_PRODUCTION3 = process.env.NODE_ENV === "production";
 var CSRF_COOKIE_NAME = process.env.CSRF_COOKIE_NAME?.trim() || "vault_csrf_secret";
 var CSRF_COOKIE_PATH = process.env.CSRF_COOKIE_PATH?.trim() || "/";
@@ -16281,10 +17901,17 @@ var generateTokenAndSecret = () => {
   return { secret, token };
 };
 var verifyToken = (secret, token) => {
-  if (!secret || !token) return false;
+  if (!secret || !token || typeof secret !== "string" || typeof token !== "string") {
+    return false;
+  }
   try {
     const expectedToken = crypto16.createHmac("sha256", CSRF_SECRET).update(secret).digest("hex");
-    return crypto16.timingSafeEqual(Buffer.from(expectedToken), Buffer.from(token));
+    const expectedBuf = Buffer.from(expectedToken);
+    const tokenBuf = Buffer.from(token);
+    if (expectedBuf.length !== tokenBuf.length) {
+      return false;
+    }
+    return crypto16.timingSafeEqual(expectedBuf, tokenBuf);
   } catch {
     return false;
   }
@@ -16293,6 +17920,27 @@ var writeCsrfTokenResponseHeaders = (res) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
+};
+var extractHeaderToken = (req) => {
+  const headerCandidates = [
+    req.headers["x-csrf-token"],
+    req.headers["csrf-token"],
+    req.headers["x-xsrf-token"]
+  ];
+  for (const candidate of headerCandidates) {
+    if (typeof candidate === "string" && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+    if (Array.isArray(candidate) && typeof candidate[0] === "string" && candidate[0].trim().length > 0) {
+      return candidate[0].trim();
+    }
+  }
+  if (req.body && typeof req.body._csrf === "string" && req.body._csrf.trim().length > 0) {
+    const bodyToken = req.body._csrf.trim();
+    delete req.body._csrf;
+    return bodyToken;
+  }
+  return void 0;
 };
 var installCsrfProtection = (app) => {
   app.use(cookieParser());
@@ -16325,18 +17973,21 @@ var installCsrfProtection = (app) => {
     if (["GET", "HEAD", "OPTIONS"].includes(method)) {
       return next();
     }
-    if (req.originalUrl.startsWith("/api/avatar/upload") || req.path.startsWith("/avatar/upload") || req.originalUrl.startsWith("/api/avatar/presign") || req.path.startsWith("/avatar/presign")) {
+    const currentUrl = req.originalUrl || req.path || "";
+    if (currentUrl.startsWith("/api/avatar/upload") || req.path.startsWith("/avatar/upload") || currentUrl.startsWith("/api/avatar/presign") || req.path.startsWith("/avatar/presign")) {
       return next();
     }
     const secret = req.cookies?.[CSRF_COOKIE_NAME];
-    const headerToken = req.headers["x-csrf-token"] || req.headers["csrf-token"] || req.body && req.body._csrf;
-    if (!verifyToken(secret, headerToken)) {
-      const csrfError = new Error("Invalid or missing CSRF token.");
-      csrfError.status = 403;
-      csrfError.statusCode = 403;
-      csrfError.code = "CSRF_TOKEN_INVALID";
-      csrfError.isOperational = true;
-      return next(csrfError);
+    const token = extractHeaderToken(req);
+    if (!verifyToken(secret, token)) {
+      logger.warn("[CSRF] Invalid or missing CSRF token.", {
+        method: req.method,
+        path: req.originalUrl,
+        hasCookie: Boolean(secret),
+        hasToken: Boolean(token),
+        ip: req.ip
+      });
+      return next(AppError.forbidden("Invalid or missing CSRF token.", "CSRF_TOKEN_INVALID"));
     }
     next();
   });
@@ -16344,102 +17995,302 @@ var installCsrfProtection = (app) => {
 
 // server/middleware/errorHandler.ts
 import multer2 from "multer";
-import mongoose28 from "mongoose";
+import mongoose32 from "mongoose";
 import { ZodError } from "zod";
 init_logger();
 
 // server/lib/sentry.js
 import * as Sentry from "@sentry/node";
 import { nodeProfilingIntegration } from "@sentry/profiling-node";
+
+// server/lib/sanitizer.ts
+var FILTERED_PLACEHOLDER = "[Filtered]";
+var CIRCULAR_PLACEHOLDER = "[CircularReference]";
+var MAX_DEPTH_PLACEHOLDER = "[MaxDepthExceeded]";
+var SENSITIVE_QUERY_PARAM_PATTERN2 = /((?:^|[?&])(?:auth_token|access_token|refresh_token|token|signature|sig|api_key|apikey|secret|key|password|passphrase|code|totp|dek|kek|salt|candidatepin|decoypin)=)[^&#]*/gi;
+var BASIC_AUTH_PATTERN = /^(https?:\/\/)([^:@\s]+):([^@\s]+)@/i;
+var SENSITIVE_KEY_SUBSTRING_PATTERN = /(?:password|token|authoriz|cookie|secret|private|masterkey|ciphertext|authtag|mnemonic|passphrase|totp|recovery|backup|dek|kek|salt|credential)/i;
+var SENSITIVE_KEYS_SET = /* @__PURE__ */ new Set([
+  "password",
+  "token",
+  "authorization",
+  "cookie",
+  "set-cookie",
+  "masterkey",
+  "secret",
+  "secretkey",
+  "privatekey",
+  "apikey",
+  "ciphertext",
+  "authtag",
+  "iv",
+  "payload",
+  "binarypayload",
+  "modernpayload",
+  "dek",
+  "kek",
+  "mnemonic",
+  "seedphrase",
+  "passphrase",
+  "pqcsalt",
+  "salt",
+  "totp",
+  "totpsecret",
+  "recoverycodes",
+  "backupcodes",
+  "twofactorsecret",
+  "twofactorcode",
+  "encryptedmetadata",
+  "refreshtoken",
+  "refreshtokenhash",
+  "tokenfingerprint",
+  "accesstoken",
+  "clientsecret",
+  "signature",
+  "candidatepin",
+  "decoypin",
+  "decoypassword",
+  "x-vault-key",
+  "x-vault-metadata",
+  "encryptionkey"
+]);
+var URL_LIKE_KEY_NAMES = /* @__PURE__ */ new Set([
+  "url",
+  "path",
+  "originalurl",
+  "referer",
+  "referrer",
+  "location"
+]);
+var DANGEROUS_PROTO_KEYS = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
+function isSensitiveKey(key, customKeys) {
+  if (typeof key !== "string") return false;
+  const normalized = key.toLowerCase().trim();
+  if (customKeys && customKeys.has(normalized)) return true;
+  if (SENSITIVE_KEYS_SET.has(normalized)) return true;
+  return SENSITIVE_KEY_SUBSTRING_PATTERN.test(normalized);
+}
+function sanitizeUrl(url, placeholder = FILTERED_PLACEHOLDER) {
+  if (typeof url !== "string" || !url) {
+    return typeof url === "string" ? url : "";
+  }
+  let sanitized = url;
+  if (BASIC_AUTH_PATTERN.test(sanitized)) {
+    sanitized = sanitized.replace(BASIC_AUTH_PATTERN, `$1$2:${placeholder}@`);
+  }
+  if (sanitized.includes("=")) {
+    sanitized = sanitized.replace(SENSITIVE_QUERY_PARAM_PATTERN2, `$1${placeholder}`);
+  }
+  return sanitized;
+}
+function redactSensitiveData(input, options) {
+  const placeholder = options?.placeholder ?? FILTERED_PLACEHOLDER;
+  const maxDepth = options?.maxDepth ?? 8;
+  const maxArrayLength = options?.maxArrayLength ?? 100;
+  const customKeys = options?.customSensitiveKeys ? new Set(options.customSensitiveKeys.map((k) => k.toLowerCase().trim())) : void 0;
+  const seen = /* @__PURE__ */ new WeakSet();
+  function walk(value, depth, keyHint) {
+    if (value === null || value === void 0) return value;
+    const valType = typeof value;
+    if (valType === "number" || valType === "boolean" || valType === "bigint") {
+      return value;
+    }
+    if (valType === "string") {
+      const strVal = value;
+      if (keyHint && URL_LIKE_KEY_NAMES.has(keyHint.toLowerCase())) {
+        return sanitizeUrl(strVal, placeholder);
+      }
+      return strVal;
+    }
+    if (valType === "function") {
+      const fn = value;
+      return `[Function: ${fn.name || "anonymous"}]`;
+    }
+    if (valType !== "object") {
+      return String(value);
+    }
+    const obj = value;
+    if (seen.has(obj)) {
+      return CIRCULAR_PLACEHOLDER;
+    }
+    if (depth > maxDepth) {
+      return MAX_DEPTH_PLACEHOLDER;
+    }
+    if (obj instanceof Date) {
+      return Number.isNaN(obj.getTime()) ? "Invalid Date" : new Date(obj.getTime());
+    }
+    if (typeof Buffer !== "undefined" && Buffer.isBuffer(obj)) {
+      return `[Buffer: ${obj.length} bytes]`;
+    }
+    if (ArrayBuffer.isView(obj)) {
+      return `[TypedArray: ${obj.byteLength} bytes]`;
+    }
+    if (obj instanceof Error) {
+      seen.add(obj);
+      const errorObj = {
+        name: obj.name,
+        message: sanitizeUrl(obj.message, placeholder),
+        stack: obj.stack
+      };
+      for (const [k, v] of Object.entries(obj)) {
+        if (DANGEROUS_PROTO_KEYS.has(k)) continue;
+        if (isSensitiveKey(k, customKeys)) {
+          errorObj[k] = placeholder;
+        } else {
+          errorObj[k] = walk(v, depth + 1, k);
+        }
+      }
+      return errorObj;
+    }
+    seen.add(obj);
+    if (Array.isArray(obj)) {
+      const truncated = obj.slice(0, maxArrayLength);
+      return truncated.map((item) => walk(item, depth + 1, keyHint));
+    }
+    const result = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (DANGEROUS_PROTO_KEYS.has(k)) {
+        continue;
+      }
+      if (isSensitiveKey(k, customKeys)) {
+        result[k] = placeholder;
+        continue;
+      }
+      if (v && typeof v === "object") {
+        result[k] = walk(v, depth + 1, k);
+      } else if (typeof v === "string" && URL_LIKE_KEY_NAMES.has(k.toLowerCase())) {
+        result[k] = sanitizeUrl(v, placeholder);
+      } else {
+        result[k] = walk(v, depth + 1, k);
+      }
+    }
+    return result;
+  }
+  return walk(input, 0);
+}
+function sanitizeUserContext(user) {
+  if (!user || typeof user !== "object") {
+    return null;
+  }
+  const userObj = user;
+  const safeUser = {};
+  const SAFE_IDENTITY_FIELDS = [
+    "id",
+    "_id",
+    "userId",
+    "username",
+    "email",
+    "role",
+    "ip_address",
+    "createdAt",
+    "updatedAt"
+  ];
+  for (const field of SAFE_IDENTITY_FIELDS) {
+    if (field in userObj && userObj[field] !== void 0) {
+      const val = userObj[field];
+      if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
+        safeUser[field] = val;
+      } else if (val && typeof val === "object" && "toString" in val) {
+        safeUser[field] = String(val);
+      }
+    }
+  }
+  return Object.keys(safeUser).length > 0 ? safeUser : null;
+}
+function sanitizeTags(context, maxTagLength = 256) {
+  const tags = {};
+  if (!context || typeof context !== "object") {
+    return tags;
+  }
+  for (const [key, value] of Object.entries(context)) {
+    if (DANGEROUS_PROTO_KEYS.has(key)) continue;
+    if (isSensitiveKey(key)) continue;
+    if (typeof value === "boolean" || typeof value === "number") {
+      tags[key] = value;
+    } else if (typeof value === "string") {
+      const sanitized = URL_LIKE_KEY_NAMES.has(key.toLowerCase()) ? sanitizeUrl(value) : value;
+      tags[key] = sanitized.length > maxTagLength ? `${sanitized.substring(0, maxTagLength)}...` : sanitized;
+    }
+  }
+  return tags;
+}
+
+// server/lib/sentry.js
 var env = process.env.NODE_ENV || "development";
 var isProd = env === "production";
 var enabledFlag = process.env.SENTRY_ENABLED === "true";
 var dsn = process.env.SENTRY_DSN;
 var isEnabled = Boolean(dsn) && (enabledFlag || isProd);
-var toNumber = (value, fallback) => {
+var toNumber = (value, fallback, min = 0, max = 1) => {
   const parsed = Number.parseFloat(value ?? "");
-  return Number.isFinite(parsed) ? parsed : fallback;
+  return Number.isFinite(parsed) ? Math.max(min, Math.min(max, parsed)) : fallback;
 };
 var initialized = false;
-var redactSensitiveData = (input) => {
-  if (!input || typeof input !== "object") return input;
-  const hiddenKeys = [
-    "password",
-    "token",
-    "authorization",
-    "cookie",
-    "set-cookie",
-    "masterkey",
-    "secret",
-    "secretkey",
-    "privatekey",
-    "apikey",
-    "ciphertext",
-    "authtag",
-    "iv",
-    "payload",
-    "binarypayload",
-    "dek",
-    "kek",
-    "mnemonic",
-    "seedphrase",
-    "passphrase",
-    "pqcsalt",
-    "salt",
-    "totp",
-    "totpsecret",
-    "recoverycodes",
-    "backupcodes",
-    "twofactorsecret",
-    "twofactorcode",
-    "encryptedmetadata"
-  ];
-  const clone = Array.isArray(input) ? [...input] : { ...input };
-  for (const [key, value] of Object.entries(clone)) {
-    const normalizedKey = key.toLowerCase();
-    if (hiddenKeys.includes(normalizedKey) || hiddenKeys.some((k) => normalizedKey.includes(k))) {
-      clone[key] = "[Filtered]";
-      continue;
-    }
-    if (value && typeof value === "object") {
-      clone[key] = redactSensitiveData(value);
-    }
-  }
-  return clone;
-};
 var initSentry = () => {
   if (!isEnabled || initialized) return false;
-  Sentry.init({
-    dsn,
-    enabled: isEnabled,
-    environment: process.env.SENTRY_ENVIRONMENT || env,
-    release: process.env.SENTRY_RELEASE || process.env.npm_package_version,
-    integrations: [
-      Sentry.httpIntegration(),
-      Sentry.expressIntegration(),
-      nodeProfilingIntegration()
-    ],
-    tracesSampleRate: toNumber(process.env.SENTRY_TRACES_SAMPLE_RATE, 0.1),
-    profilesSampleRate: toNumber(process.env.SENTRY_PROFILES_SAMPLE_RATE, 0),
-    beforeSend(event) {
-      if (event.request) {
-        event.request.data = redactSensitiveData(event.request.data);
-        event.request.headers = redactSensitiveData(event.request.headers);
+  try {
+    Sentry.init({
+      dsn,
+      enabled: isEnabled,
+      environment: process.env.SENTRY_ENVIRONMENT || env,
+      release: process.env.SENTRY_RELEASE || process.env.npm_package_version,
+      integrations: [
+        Sentry.httpIntegration(),
+        Sentry.expressIntegration(),
+        nodeProfilingIntegration()
+      ],
+      tracesSampleRate: toNumber(process.env.SENTRY_TRACES_SAMPLE_RATE, 0.1),
+      profilesSampleRate: toNumber(process.env.SENTRY_PROFILES_SAMPLE_RATE, 0),
+      beforeSend(event) {
+        try {
+          if (event.request) {
+            if (event.request.data) {
+              event.request.data = redactSensitiveData(event.request.data);
+            }
+            if (event.request.headers) {
+              event.request.headers = redactSensitiveData(event.request.headers);
+            }
+            if (event.request.url) {
+              event.request.url = sanitizeUrl(event.request.url);
+            }
+            if (event.request.query_string) {
+              event.request.query_string = sanitizeUrl(event.request.query_string);
+            }
+            if (event.request.cookies) {
+              event.request.cookies = redactSensitiveData(event.request.cookies);
+            }
+          }
+          if (event.extra) {
+            event.extra = redactSensitiveData(event.extra);
+          }
+          if (event.user) {
+            event.user = sanitizeUserContext(event.user);
+          }
+          if (Array.isArray(event.breadcrumbs)) {
+            event.breadcrumbs = event.breadcrumbs.map((b) => {
+              if (b && b.data && typeof b.data === "object") {
+                return { ...b, data: redactSensitiveData(b.data) };
+              }
+              return b;
+            });
+          }
+        } catch {
+        }
+        return event;
       }
-      if (event.extra) {
-        event.extra = redactSensitiveData(event.extra);
-      }
-      return event;
-    }
-  });
-  initialized = true;
-  return true;
+    });
+    initialized = true;
+    return true;
+  } catch {
+    return false;
+  }
 };
 var sentryRequestHandler = () => {
   if (!isEnabled) return (_req, _res, next) => next();
   return (req, _res, next) => {
     Sentry.withScope((scope) => {
-      scope.setTag("request_id", req.requestId || "unknown");
+      const requestId = req && req.requestId ? req.requestId : "unknown";
+      scope.setTag("request_id", requestId);
       next();
     });
   };
@@ -16447,16 +18298,33 @@ var sentryRequestHandler = () => {
 var sentryTracingHandler = () => {
   if (!isEnabled) return (_req, _res, next) => next();
   return (req, res, next) => {
+    const rawPath = req?.path || req?.url || "unknown";
+    const method = req?.method || "GET";
+    const sanitizedPath = sanitizeUrl(rawPath);
     Sentry.startSpanManual(
       {
         op: "http.server",
-        name: `${req.method} ${req.path}`
+        name: `${method} ${sanitizedPath}`
       },
       (span) => {
-        res.on("finish", () => {
-          span.setAttribute("http.status_code", res.statusCode);
+        let spanEnded = false;
+        const endSpan = (status) => {
+          if (spanEnded) return;
+          spanEnded = true;
+          if (typeof status === "number") {
+            span.setAttribute("http.status_code", status);
+          }
           span.end();
-        });
+        };
+        const attachListener = (event, cb) => {
+          if (typeof res?.once === "function") {
+            res.once(event, cb);
+          } else if (typeof res?.on === "function") {
+            res.on(event, cb);
+          }
+        };
+        attachListener("finish", () => endSpan(res?.statusCode));
+        attachListener("close", () => endSpan(res?.statusCode || 499));
         next();
       }
     );
@@ -16470,15 +18338,31 @@ var sentryErrorHandler = () => {
 };
 var captureException2 = (error, context) => {
   if (!isEnabled) return null;
-  return Sentry.captureException(error, context);
+  try {
+    const safeContext = context ? redactSensitiveData(context) : void 0;
+    return Sentry.captureException(error, safeContext);
+  } catch {
+    return null;
+  }
 };
 var addBreadcrumb2 = (breadcrumb) => {
-  if (!isEnabled) return;
-  Sentry.addBreadcrumb(breadcrumb);
+  if (!isEnabled || !breadcrumb || typeof breadcrumb !== "object") return;
+  try {
+    const safeBreadcrumb = { ...breadcrumb };
+    if (safeBreadcrumb.data && typeof safeBreadcrumb.data === "object") {
+      safeBreadcrumb.data = redactSensitiveData(safeBreadcrumb.data);
+    }
+    Sentry.addBreadcrumb(safeBreadcrumb);
+  } catch {
+  }
 };
 var flushSentry = async (timeoutMs = 2e3) => {
   if (!isEnabled) return true;
-  return Sentry.close(timeoutMs);
+  try {
+    return await Sentry.close(timeoutMs);
+  } catch {
+    return false;
+  }
 };
 
 // server/middleware/errorHandler.ts
@@ -16487,7 +18371,6 @@ var errorHandler = (err, req, res, _next) => {
     return _next(err);
   }
   const requestId = req.requestId;
-  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
   const rawOrigin = req.get("origin") || req.get("referer");
   if (rawOrigin) {
     try {
@@ -16495,23 +18378,21 @@ var errorHandler = (err, req, res, _next) => {
       if (isAllowedCorsOrigin(candidate)) {
         res.setHeader("Access-Control-Allow-Origin", candidate);
         res.setHeader("Access-Control-Allow-Credentials", "true");
-      } else {
-        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
       }
     } catch {
-      res.setHeader("Access-Control-Allow-Origin", "*");
     }
-  } else {
-    res.setHeader("Access-Control-Allow-Origin", "*");
   }
-  let statusCode = err.statusCode || err.status || 500;
-  let code = err.code || "INTERNAL_SERVER_ERROR";
-  let message = err.message || "An unexpected error occurred.";
+  let statusCode = typeof err?.statusCode === "number" ? err.statusCode : typeof err?.status === "number" ? err.status : 500;
+  let code = err?.code ? String(err.code) : "INTERNAL_SERVER_ERROR";
+  let message = typeof err?.message === "string" && err.message.trim() ? err.message : "An unexpected error occurred.";
   let details = void 0;
+  let isOperational = Boolean(err?.isOperational);
   if (err instanceof SyntaxError && "body" in err) {
     statusCode = 400;
     code = "INVALID_JSON";
     message = "Request body contains invalid JSON.";
+    isOperational = true;
   } else if (err instanceof ZodError) {
     statusCode = 400;
     code = "VALIDATION_ERROR";
@@ -16520,43 +18401,53 @@ var errorHandler = (err, req, res, _next) => {
       path: e.path.join("."),
       message: e.message
     }));
-  } else if (err instanceof mongoose28.Error.CastError) {
+    isOperational = true;
+  } else if (err instanceof mongoose32.Error.CastError || err?.name === "BSONError" || err?.name === "BSONTypeError") {
     statusCode = 400;
     code = "INVALID_ID";
-    message = `Invalid format for field '${err.path}'.`;
-  } else if (err instanceof mongoose28.Error.ValidationError) {
+    message = err instanceof mongoose32.Error.CastError ? `Invalid format for field '${err.path}'.` : "Invalid identifier format.";
+    isOperational = true;
+  } else if (err instanceof mongoose32.Error.ValidationError) {
     statusCode = 400;
     code = "VALIDATION_ERROR";
     const firstIssue = Object.values(err.errors)[0];
     message = firstIssue?.message || "Validation failed.";
-  } else if (err.name === "TokenExpiredError") {
+    isOperational = true;
+  } else if (err?.name === "TokenExpiredError") {
     statusCode = 401;
     code = "TOKEN_EXPIRED";
     message = "Authentication token has expired.";
-  } else if (err.name === "JsonWebTokenError") {
+    isOperational = true;
+  } else if (err?.name === "JsonWebTokenError") {
     statusCode = 401;
     code = "INVALID_TOKEN";
     message = "Authentication token is invalid.";
-  } else if (err.type === "entity.too.large" || err.status === 413) {
+    isOperational = true;
+  } else if (err?.type === "entity.too.large" || statusCode === 413) {
     statusCode = 413;
     code = "PAYLOAD_TOO_LARGE";
     message = "Request payload exceeds maximum size limit.";
-  } else if (err.code === 11e3) {
+    isOperational = true;
+  } else if (err?.code === 11e3 || err?.code === "11000") {
     statusCode = 409;
     code = "DUPLICATE_RESOURCE";
     message = "The requested resource already exists.";
-  } else if (err?.code === "EBADCSRFTOKEN" || err?.code === "CSRF_TOKEN_INVALID" || err?.message === "invalid csrf token" || err?.status === 403 && typeof err?.message === "string" && err.message.toLowerCase().includes("csrf")) {
+    isOperational = true;
+  } else if (err?.code === "EBADCSRFTOKEN" || err?.code === "CSRF_TOKEN_INVALID" || err?.message === "invalid csrf token" || statusCode === 403 && typeof err?.message === "string" && err.message.toLowerCase().includes("csrf")) {
     statusCode = 403;
     code = "CSRF_TOKEN_INVALID";
     message = "Invalid or missing CSRF token.";
-  } else if (err.name === "UnauthorizedError" || err.code === "UNAUTHORIZED") {
+    isOperational = true;
+  } else if (err?.name === "UnauthorizedError" || err?.code === "UNAUTHORIZED") {
     statusCode = 401;
     code = "UNAUTHORIZED";
     message = err.message || "Authentication failed.";
-  } else if (err.message === "Origin is not allowed by CORS.") {
+    isOperational = true;
+  } else if (err?.message === "Origin is not allowed by CORS.") {
     statusCode = 403;
     code = "CORS_FORBIDDEN";
     message = "Request origin is not allowed.";
+    isOperational = true;
   } else if (err instanceof multer2.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
       statusCode = 413;
@@ -16567,22 +18458,26 @@ var errorHandler = (err, req, res, _next) => {
       code = err.code;
       message = err.message;
     }
-  } else if (err.name === "MongoServerSelectionError" || err.name === "MongooseServerSelectionError" || err.name === "MongoClientClosedError" || err.name === "MongoNetworkError" || err.name === "MongoTimeoutError" || typeof err?.message === "string" && (err.message.includes("client was closed") || err.message.includes("connection <monitor> closed") || err.message.includes("server selection") || err.message.includes("buffering timed out"))) {
+    isOperational = true;
+  } else if (err?.name === "MongoServerSelectionError" || err?.name === "MongooseServerSelectionError" || err?.name === "MongoClientClosedError" || err?.name === "MongoNetworkError" || err?.name === "MongoTimeoutError" || typeof err?.message === "string" && (err.message.includes("client was closed") || err.message.includes("connection <monitor> closed") || err.message.includes("server selection") || err.message.includes("buffering timed out"))) {
     statusCode = 503;
     code = "DB_UNAVAILABLE";
     message = "Vault database is temporarily unavailable or reconnecting.";
-    err.isOperational = true;
+    isOperational = true;
   } else if (err instanceof AppError) {
     statusCode = err.statusCode;
     code = err.code;
     message = err.message;
+    isOperational = true;
     if (err.details) {
       details = err.details;
     }
   }
+  const isProduction2 = process.env.NODE_ENV === "production";
+  const clientFacingMessage = isProduction2 && statusCode >= 500 && !isOperational ? "An unexpected server error occurred." : message;
   addBreadcrumb2({
     category: "error",
-    message,
+    message: clientFacingMessage,
     level: statusCode >= 500 ? "error" : "warning",
     data: {
       statusCode,
@@ -16603,20 +18498,19 @@ var errorHandler = (err, req, res, _next) => {
     extra: {
       requestId,
       details,
-      isOperational: Boolean(err?.isOperational)
+      isOperational
     }
   });
   const isClientError = statusCode >= 400 && statusCode < 500;
-  const isOperationalError = Boolean(err.isOperational);
-  if (!isOperationalError && (statusCode >= 500 || !isClientError)) {
+  if (!isOperational && (statusCode >= 500 || !isClientError)) {
     logger.error("Unhandled or non-operational server error.", {
       requestId,
       method: req.method,
       path: req.originalUrl,
       error: {
-        name: err.name,
-        message: err.message,
-        stack: process.env.NODE_ENV === "production" ? void 0 : err.stack
+        name: err?.name || "Error",
+        message: err?.message || String(err),
+        stack: isProduction2 ? void 0 : err?.stack
       },
       ipAddress: getClientIp(req)
     });
@@ -16630,18 +18524,19 @@ var errorHandler = (err, req, res, _next) => {
   }
   return res.status(statusCode).json({
     success: false,
-    message,
+    message: clientFacingMessage,
     error: {
       code,
       requestId,
-      ...process.env.NODE_ENV !== "production" ? { stack: err.stack } : {},
+      ...!isProduction2 && err?.stack ? { stack: err.stack } : {},
       ...details ? { details } : {}
     }
   });
 };
 
 // server/controllers/healthController.ts
-import mongoose29 from "mongoose";
+import mongoose33 from "mongoose";
+init_logger();
 var DEFAULT_DB_NAME = process.env.MONGODB_DB_NAME?.trim() || "vault";
 var writeHealthHeaders = (res) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
@@ -16659,24 +18554,42 @@ var isMongoOptionalMode2 = () => {
   const skipMongo = raw === "1" || raw === "true" || raw === "yes" || raw === "on";
   return skipMongo && !isTestRuntime2();
 };
+var sanitizeDatabaseHost = (host) => {
+  if (!host) return null;
+  if (process.env.NODE_ENV === "production") {
+    return host.includes(".") ? `***.${host.split(".").slice(-2).join(".")}` : "configured";
+  }
+  return host;
+};
 var getHealthStatus = async (_req, res) => {
-  const ready = isMongoOptionalMode2() ? true : await ensureMongoReady();
   writeHealthHeaders(res);
-  const clusterSummaries = multiClusterPool.getAllNodes().map((n) => ({
-    id: n.id,
-    name: n.name,
-    host: n.host,
-    healthy: n.isHealthy,
-    full: n.isFull,
-    lastPingMs: n.lastPingMs
-  }));
+  let ready = false;
+  try {
+    ready = isMongoOptionalMode2() ? true : await ensureMongoReady();
+  } catch (error) {
+    logger.warn("[HealthController] ensureMongoReady check failed", { error });
+    ready = false;
+  }
+  let clusterSummaries = [];
+  try {
+    clusterSummaries = multiClusterPool.getAllNodes().map((n) => ({
+      id: n.id,
+      name: n.name,
+      host: sanitizeDatabaseHost(n.host) || "unknown",
+      healthy: n.isHealthy,
+      full: n.isFull,
+      lastPingMs: n.lastPingMs
+    }));
+  } catch (poolErr) {
+    logger.debug("[HealthController] multiClusterPool.getAllNodes failed", { poolErr });
+  }
   return res.status(ready ? 200 : 503).json({
     success: ready,
     status: ready ? "connected" : "disconnected",
     database: {
-      name: mongoose29.connection.name || DEFAULT_DB_NAME,
-      readyState: mongoose29.connection.readyState,
-      host: mongoose29.connection.host || null,
+      name: mongoose33.connection.name || DEFAULT_DB_NAME,
+      readyState: mongoose33.connection.readyState,
+      host: sanitizeDatabaseHost(mongoose33.connection.host),
       multiCluster: {
         totalConfigured: clusterSummaries.length,
         healthyCount: clusterSummaries.filter((c) => c.healthy).length,
@@ -16687,12 +18600,18 @@ var getHealthStatus = async (_req, res) => {
   });
 };
 var getReadinessStatus = async (_req, res) => {
+  writeHealthHeaders(res);
   const mongoOptional = isMongoOptionalMode2();
-  const mongoReady = mongoOptional ? true : await ensureMongoReady();
+  let mongoReady = false;
+  try {
+    mongoReady = mongoOptional ? true : await ensureMongoReady();
+  } catch (error) {
+    logger.warn("[HealthController] ensureMongoReady check failed in readiness", { error });
+    mongoReady = false;
+  }
   const hasJwtSecret = Boolean(process.env.JWT_SECRET?.trim());
   const hasMongoUri = mongoOptional ? true : Boolean(process.env.MONGODB_URI?.trim() || process.env.MONGODB_URL?.trim());
   const ready = mongoReady && hasJwtSecret && hasMongoUri;
-  writeHealthHeaders(res);
   return res.status(ready ? 200 : 503).json({
     success: ready,
     status: ready ? "ready" : "not_ready",
@@ -16708,32 +18627,47 @@ var getReadinessStatus = async (_req, res) => {
 // server/middleware/originProtection.ts
 import ipRangeCheck from "ip-range-check";
 init_logger();
-var ALLOWED_CDN_RANGES = ["74.220.48.0/24", "74.220.56.0/24"];
-var LOCALHOST_IPS = ["127.0.0.1", "::1", "::ffff:127.0.0.1"];
+var DEFAULT_CDN_RANGES = ["74.220.48.0/24", "74.220.56.0/24"];
+var resolveAllowedCdnRanges = () => {
+  const envRanges = process.env.ALLOWED_CDN_RANGES?.split(",").map((s) => s.trim()).filter(Boolean);
+  return envRanges && envRanges.length > 0 ? envRanges : DEFAULT_CDN_RANGES;
+};
+var LOCALHOST_IPS = /* @__PURE__ */ new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
+var isHealthCheckPath = (pathname) => {
+  return pathname === "/health" || pathname === "/ready" || pathname === "/api/health" || pathname === "/api/ready";
+};
 var originProtection = (req, _res, next) => {
-  const isProduction = process.env.NODE_ENV === "production";
+  const isProduction2 = process.env.NODE_ENV === "production";
   const disableOriginProtection = process.env.DISABLE_ORIGIN_PROTECTION === "1" || process.env.DISABLE_ORIGIN_PROTECTION?.toLowerCase() === "true";
-  if (disableOriginProtection) {
+  if (disableOriginProtection || !isProduction2) {
     return next();
   }
-  const connectingIp = req.socket.remoteAddress || "unknown";
+  const connectingIp = req.socket?.remoteAddress || "unknown";
   const normalizedIp = connectingIp.replace(/^::ffff:/, "");
+  if (LOCALHOST_IPS.has(normalizedIp) || isHealthCheckPath(req.path)) {
+    return next();
+  }
+  const isMediaRoute = req.path.startsWith("/api/vault/files/access/") || req.path.startsWith("/api/vault/files/") || req.path.startsWith("/api/vault/media/") || req.path.startsWith("/api/vault/avatar/") || req.path.startsWith("/api/avatar/");
+  if (isMediaRoute) {
+    return next();
+  }
   const rawOrigin = req.get("origin") || req.get("referer");
-  let isAllowedOrigin = false;
   if (rawOrigin) {
     try {
       const candidate = new URL(rawOrigin).origin;
       if (isAllowedCorsOrigin(candidate)) {
-        isAllowedOrigin = true;
+        return next();
       }
     } catch {
     }
   }
-  const isMediaRoute = req.path.startsWith("/api/vault/files/access/") || req.path.startsWith("/api/vault/files/") || req.path.startsWith("/api/vault/media/") || req.path.startsWith("/api/vault/avatar/") || req.path.startsWith("/api/avatar/");
-  if (LOCALHOST_IPS.includes(normalizedIp) || !isProduction || req.path === "/health" || isMediaRoute || isAllowedOrigin) {
-    return next();
+  const cdnRanges = resolveAllowedCdnRanges();
+  let isFromCDN = false;
+  try {
+    isFromCDN = Boolean(normalizedIp && ipRangeCheck(normalizedIp, cdnRanges));
+  } catch {
+    isFromCDN = false;
   }
-  const isFromCDN = ipRangeCheck(normalizedIp, ALLOWED_CDN_RANGES);
   if (!isFromCDN) {
     logger.warn("Origin Protection: Blocked direct access attempt", {
       ip: normalizedIp,
@@ -16741,13 +18675,15 @@ var originProtection = (req, _res, next) => {
       path: req.path,
       userAgent: req.headers["user-agent"]
     });
-    throw new AppError(
-      403,
-      "ORIGIN_PROTECTED",
-      "Direct access to origin server is prohibited. Please use the designated CDN endpoint."
+    return next(
+      new AppError(
+        403,
+        "ORIGIN_PROTECTED",
+        "Direct access to origin server is prohibited. Please use the designated CDN endpoint."
+      )
     );
   }
-  next();
+  return next();
 };
 
 // server/keep-alive.ts
@@ -16901,8 +18837,9 @@ var validateRuntimeEnv = () => {
 
 // server/boot/startup.ts
 import os3 from "os";
-import process5 from "process";
+import process6 from "process";
 import v8 from "v8";
+import mongoose34 from "mongoose";
 
 // server/boot/logger/colors.ts
 import process2 from "process";
@@ -16910,30 +18847,60 @@ var ansi = Object.freeze({
   reset: "\x1B[0m",
   bold: "\x1B[1m",
   dim: "\x1B[2m",
-  cyan: "\x1B[36m",
+  red: "\x1B[31m",
   green: "\x1B[32m",
   yellow: "\x1B[33m",
+  cyan: "\x1B[36m",
   magenta: "\x1B[35m",
   gray: "\x1B[90m"
 });
+var isProduction = () => process2.env.NODE_ENV === "production";
 var isProd2 = process2.env.NODE_ENV === "production";
-var noColor = process2.env.NO_COLOR === "true" || process2.env.NO_COLOR === "1" || process2.env.NO_COLOR === "yes";
-var supportsAnimatedTerminal = Boolean(process2.stdout.isTTY) && process2.env.CI !== "true" && !noColor;
-var colorize = (value, color) => supportsAnimatedTerminal ? `${color}${value}${ansi.reset}` : value;
+var isNoColorSet = () => process2.env.NO_COLOR !== void 0 && process2.env.NO_COLOR !== "";
+var supportsColor = () => {
+  if (isNoColorSet()) return false;
+  if (process2.env.FORCE_COLOR === "1" || process2.env.FORCE_COLOR === "true") return true;
+  return Boolean(process2.stdout?.isTTY) && process2.env.CI !== "true";
+};
+var checkAnimatedTerminal = () => {
+  if (isNoColorSet()) return false;
+  if (process2.env.CI === "true") return false;
+  return Boolean(process2.stdout?.isTTY);
+};
+var supportsAnimatedTerminal = checkAnimatedTerminal();
+var colorize = (value, color) => supportsColor() ? `${color}${value}${ansi.reset}` : value;
 
 // server/boot/logger/console.ts
 import process3 from "process";
+var ANSI_REGEX = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
+var stripAnsi = (str) => typeof str === "string" ? str.replace(ANSI_REGEX, "") : "";
+var visibleLength = (str) => stripAnsi(str).length;
 var log = {
   info: (msg) => console.log(msg),
-  error: (msg) => console.error(msg)
+  warn: (msg) => console.warn(msg),
+  error: (msg) => console.error(msg),
+  debug: (msg) => console.debug(msg)
 };
-var padRight = (value, length) => value.length >= length ? value : `${value}${" ".repeat(length - value.length)}`;
-var truncate = (value, max = 140) => value.length <= max ? value : `${value.slice(0, max - 3)}...`;
-var getTerminalWidth = () => Math.max(process3.stdout.columns || 100, 60);
+var padRight = (value, length) => {
+  const vLen = visibleLength(value);
+  return vLen >= length ? value : `${value}${" ".repeat(length - vLen)}`;
+};
+var truncate = (value, max = 140) => {
+  const vLen = visibleLength(value);
+  if (vLen <= max) return value;
+  const plain = stripAnsi(value);
+  return `${plain.slice(0, Math.max(max - 3, 1))}...`;
+};
+var getTerminalWidth = () => {
+  const cols = process3.stdout?.columns;
+  if (!cols || !Number.isFinite(cols)) return 100;
+  return Math.min(Math.max(cols, 60), 120);
+};
 var getInnerWidth = () => Math.max(getTerminalWidth() - 6, 32);
 var fit = (value, width) => {
-  const plain = value;
-  if (plain.length <= width) return `${plain}${" ".repeat(width - plain.length)}`;
+  const vLen = visibleLength(value);
+  if (vLen <= width) return `${value}${" ".repeat(width - vLen)}`;
+  const plain = stripAnsi(value);
   return `${plain.slice(0, Math.max(width - 3, 1))}...`;
 };
 var kv = (key, value) => `  | ${fit(`${padRight(key, 13)} : ${value}`, getInnerWidth())} |`;
@@ -16944,9 +18911,7 @@ var section = (title) => {
   return colorize(`  +${label}${dashes}+`, `${ansi.bold}${ansi.cyan}`);
 };
 var sectionEnd = () => colorize(`  +${"-".repeat(getInnerWidth())}+`, ansi.gray);
-var hr = () => {
-  return colorize(`  +${"=".repeat(getInnerWidth())}+`, ansi.gray);
-};
+var hr = () => colorize(`  +${"=".repeat(getInnerWidth())}+`, ansi.gray);
 var row = (value) => `  | ${fit(value, getInnerWidth())} |`;
 var titleBox = (title, subtitle) => {
   const inner = getInnerWidth();
@@ -16961,7 +18926,7 @@ var badge = (label, message) => {
   return row(`${colorize(`[${label}]`, color)} ${message}`);
 };
 var meter = (label, percent, width = 24) => {
-  const clamped = Math.max(0, Math.min(100, percent));
+  const clamped = Number.isFinite(percent) ? Math.max(0, Math.min(100, percent)) : 0;
   const filled = Math.round(clamped / 100 * width);
   const bar = `${"#".repeat(filled)}${"-".repeat(Math.max(width - filled, 0))}`;
   return row(`${padRight(label, 13)} : [${bar}] ${clamped.toFixed(1)}%`);
@@ -16970,9 +18935,16 @@ var meter = (label, percent, width = 24) => {
 // server/boot/logger/metrics.ts
 import process4 from "process";
 import { monitorEventLoopDelay } from "perf_hooks";
-var formatMemoryUsage = (bytes) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-var formatDurationMs = (ms) => `${Math.round(ms)} ms`;
+var formatMemoryUsage = (bytes) => {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0.0 MB";
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+var formatDurationMs = (ms) => {
+  if (!Number.isFinite(ms) || ms < 0) return "0 ms";
+  return `${Math.round(ms)} ms`;
+};
 var formatUptime = (seconds) => {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0s";
   const h = Math.floor(seconds / 3600);
   const m = Math.floor(seconds % 3600 / 60);
   const s = Math.floor(seconds % 60);
@@ -16980,26 +18952,88 @@ var formatUptime = (seconds) => {
   if (m > 0) return `${m}m ${s}s`;
   return `${s}s`;
 };
-var eventLoopLagHistogram = monitorEventLoopDelay({ resolution: 20 });
-eventLoopLagHistogram.enable();
-var formatEventLoopLag = () => {
-  const meanMs = eventLoopLagHistogram.mean / 1e6;
-  return Number.isFinite(meanMs) ? `${Math.round(meanMs)} ms` : "n/a";
+var globalEventLoopHistogram = null;
+var startEventLoopLagMonitor = (resolution = 20) => {
+  if (!globalEventLoopHistogram) {
+    try {
+      globalEventLoopHistogram = monitorEventLoopDelay({ resolution });
+      globalEventLoopHistogram.enable();
+    } catch {
+      globalEventLoopHistogram = null;
+    }
+  }
+  return globalEventLoopHistogram;
 };
-var createRuntimeMetrics = () => {
-  const startedAt = Date.now();
+var stopEventLoopLagMonitor = () => {
+  if (globalEventLoopHistogram) {
+    try {
+      globalEventLoopHistogram.disable();
+    } catch {
+    }
+    globalEventLoopHistogram = null;
+  }
+};
+var getEventLoopLagMeanMs = () => {
+  if (!globalEventLoopHistogram) {
+    startEventLoopLagMonitor();
+  }
+  if (!globalEventLoopHistogram) return 0;
+  const meanNs = globalEventLoopHistogram.mean;
+  const meanMs = meanNs / 1e6;
+  return Number.isFinite(meanMs) ? meanMs : 0;
+};
+var formatEventLoopLag = () => {
+  const lagMs = getEventLoopLagMeanMs();
+  return Number.isFinite(lagMs) ? `${Math.round(lagMs)} ms` : "n/a";
+};
+var LatencyReservoir = class {
+  buffer;
+  capacity;
+  head = 0;
+  count = 0;
+  constructor(capacity = 2e3) {
+    this.capacity = Math.max(10, capacity);
+    this.buffer = new Float64Array(this.capacity);
+  }
+  add(value) {
+    if (!Number.isFinite(value) || value < 0) return;
+    this.buffer[this.head] = value;
+    this.head = (this.head + 1) % this.capacity;
+    if (this.count < this.capacity) {
+      this.count++;
+    }
+  }
+  getSamples() {
+    const samples = new Array(this.count);
+    for (let i = 0; i < this.count; i++) {
+      samples[i] = this.buffer[i];
+    }
+    return samples;
+  }
+  clear() {
+    this.head = 0;
+    this.count = 0;
+  }
+  get size() {
+    return this.count;
+  }
+};
+var createRuntimeMetrics = (reservoirCapacity = 2e3) => {
+  let startedAt = Date.now();
   let totalRequests = 0;
   let totalErrors = 0;
   let activeConnections = 0;
-  const latenciesMs = [];
+  const reservoir = new LatencyReservoir(reservoirCapacity);
   const onRequestStart = () => {
-    const started = process4.hrtime.bigint();
+    const startHr = process4.hrtime.bigint();
     return (statusCode) => {
       totalRequests += 1;
-      if (statusCode >= 400) totalErrors += 1;
-      const elapsedMs = Number(process4.hrtime.bigint() - started) / 1e6;
-      latenciesMs.push(elapsedMs);
-      if (latenciesMs.length > 5e3) latenciesMs.shift();
+      if (statusCode >= 400) {
+        totalErrors += 1;
+      }
+      const elapsedNs = Number(process4.hrtime.bigint() - startHr);
+      const elapsedMs = Math.max(0, elapsedNs / 1e6);
+      reservoir.add(elapsedMs);
     };
   };
   const onConnectionOpen = () => {
@@ -17010,9 +19044,9 @@ var createRuntimeMetrics = () => {
   };
   const snapshot = () => {
     const elapsedMinutes = Math.max((Date.now() - startedAt) / 6e4, 1 / 60);
-    const sorted = [...latenciesMs].sort((a, b) => a - b);
-    const avgLatencyMs = latenciesMs.length > 0 ? latenciesMs.reduce((sum, n) => sum + n, 0) / latenciesMs.length : 0;
-    const p95Index = sorted.length > 0 ? Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95)) : -1;
+    const samples = reservoir.getSamples().sort((a, b) => a - b);
+    const avgLatencyMs = samples.length > 0 ? samples.reduce((acc, curr) => acc + curr, 0) / samples.length : 0;
+    const p95Index = samples.length > 0 ? Math.min(samples.length - 1, Math.floor(samples.length * 0.95)) : -1;
     return {
       totalRequests,
       totalErrors,
@@ -17020,37 +19054,92 @@ var createRuntimeMetrics = () => {
       errorsPerMinute: totalErrors / elapsedMinutes,
       activeConnections,
       avgLatencyMs,
-      p95LatencyMs: p95Index >= 0 ? sorted[p95Index] : 0
+      p95LatencyMs: p95Index >= 0 ? samples[p95Index] : 0
     };
+  };
+  const reset = () => {
+    startedAt = Date.now();
+    totalRequests = 0;
+    totalErrors = 0;
+    activeConnections = 0;
+    reservoir.clear();
+  };
+  const stop = () => {
+    activeConnections = 0;
+    reservoir.clear();
   };
   return {
     onRequestStart,
     onConnectionOpen,
     onConnectionClose,
-    snapshot
+    snapshot,
+    reset,
+    stop
   };
 };
 
 // server/boot/logger/health.ts
 var getWarnings = (input) => {
+  const isProd4 = isProduction();
   const warnings = [];
-  if (isProd2 && !input.jwtConfigured) warnings.push("JWT_SECRET missing in production");
-  if (isProd2 && !input.publicUrlConfigured)
+  if (isProd4 && !input.jwtConfigured) {
+    warnings.push("JWT_SECRET missing in production");
+  }
+  if (isProd4 && !input.publicUrlConfigured) {
     warnings.push("PUBLIC_URL not configured in production");
-  if (input.heapPercent > 85) warnings.push(`High heap usage: ${input.heapPercent.toFixed(1)}%`);
-  if ((input.p95LatencyMs ?? 0) > 1e3) {
-    warnings.push(`High API latency p95: ${Math.round(input.p95LatencyMs || 0)} ms`);
+  }
+  if (isProd4 && input.mongoConnected === false) {
+    warnings.push("MongoDB is not connected in production");
+  }
+  if (isProd4 && input.refreshTokenConfigured === false) {
+    warnings.push("REFRESH_TOKEN_SECRET missing in production");
+  }
+  if (isProd4 && input.encryptionKeyConfigured === false) {
+    warnings.push("VAULT_ENCRYPTION_KEY missing in production");
+  }
+  if (Number.isFinite(input.heapPercent) && input.heapPercent > 85) {
+    warnings.push(`High heap usage: ${input.heapPercent.toFixed(1)}%`);
+  }
+  if (input.p95LatencyMs !== void 0 && input.p95LatencyMs > 1e3) {
+    warnings.push(`High API latency p95: ${Math.round(input.p95LatencyMs)} ms`);
+  }
+  if (input.eventLoopLagMs !== void 0 && input.eventLoopLagMs > 150) {
+    warnings.push(`High event loop lag: ${Math.round(input.eventLoopLagMs)} ms`);
   }
   return warnings;
 };
-var getHealthScore = (signals) => `${signals.filter(Boolean).length}/${signals.length}`;
+var getHealthScore = (signals) => {
+  if (!Array.isArray(signals) || signals.length === 0) {
+    return "0/0";
+  }
+  const passed = signals.filter(Boolean).length;
+  return `${passed}/${signals.length}`;
+};
+var calculateHealthPercent = (signals) => {
+  if (!Array.isArray(signals) || signals.length === 0) {
+    return 0;
+  }
+  const passed = signals.filter(Boolean).length;
+  return passed / signals.length * 100;
+};
 
 // server/boot/logger/runtime.ts
+import process5 from "process";
 var normalizePublicUrl = (value) => {
-  if (!value) return null;
+  if (!value || typeof value !== "string") return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
-  return trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return null;
+    }
+    const cleanOrigin = parsed.origin;
+    const cleanPath = parsed.pathname === "/" ? "" : parsed.pathname.replace(/\/+$/, "");
+    return `${cleanOrigin}${cleanPath}`;
+  } catch {
+    return null;
+  }
 };
 var toHealthUrl = (value) => {
   const base = normalizePublicUrl(value);
@@ -17058,37 +19147,89 @@ var toHealthUrl = (value) => {
   return `${base}/health`;
 };
 var envFlag = (name, required = false) => {
-  const present = Boolean(process.env[name]?.trim());
+  const present = Boolean(process5.env[name]?.trim());
   const badge2 = present ? colorize("[OK]", ansi.green) : required ? colorize("[MISS]", ansi.yellow) : colorize("[N/A]", ansi.gray);
   return `${badge2} ${name}`;
 };
-var envEitherFlag = (names, required = false) => {
-  const present = names.some((name) => Boolean(process.env[name]?.trim()));
-  const badge2 = present ? colorize("[OK]", ansi.green) : required ? colorize("[MISS]", ansi.yellow) : colorize("[N/A]", ansi.gray);
+var envEitherFlag = (names, required = false, isOptional = false) => {
+  const present = names.some((name) => Boolean(process5.env[name]?.trim()));
+  const badge2 = present ? colorize("[OK]", ansi.green) : isOptional ? colorize("[SKIP]", ansi.cyan) : required ? colorize("[MISS]", ansi.yellow) : colorize("[N/A]", ansi.gray);
   return `${badge2} ${names.join(" | ")}`;
 };
-var getEnvChecks = () => [
-  envFlag("JWT_SECRET", true),
-  envFlag("REFRESH_TOKEN_SECRET", isProd2),
-  envEitherFlag(["MONGODB_URI", "MONGODB_URL"], true),
-  envFlag("PUBLIC_URL", isProd2),
-  envFlag("CLIENT_URL", isProd2),
-  envFlag("VITE_APP_PUBLIC_URL", isProd2),
-  envFlag("VAULT_ENCRYPTION_KEY", isProd2),
-  envFlag("AUTH_PEPPER", isProd2),
-  envFlag("TRUST_PROXY", false)
-];
+var getEnvChecks = () => {
+  const isProd4 = isProduction();
+  const rawSkipMongo = process5.env.SKIP_MONGO_CONNECT?.trim().toLowerCase();
+  const isSkipMongo = !isProd4 && (rawSkipMongo === "1" || rawSkipMongo === "true" || rawSkipMongo === "yes" || rawSkipMongo === "on");
+  return [
+    envFlag("JWT_SECRET", true),
+    envFlag("REFRESH_TOKEN_SECRET", isProd4),
+    envEitherFlag(["MONGODB_URI", "MONGODB_URL", "MONGO_URI", "MONGO_URL"], true, isSkipMongo),
+    envFlag("CLIENT_URL", isProd4),
+    envFlag("PUBLIC_URL", isProd4),
+    envFlag("VITE_APP_PUBLIC_URL", isProd4),
+    envFlag("RECAPTCHA_SECRET_KEY", isProd4),
+    envFlag("VAULT_ENCRYPTION_KEY", isProd4),
+    envFlag("AUTH_PEPPER", isProd4),
+    envFlag("CSRF_SECRET", isProd4),
+    envFlag("SIGNED_URL_SECRET", isProd4),
+    envFlag("TRUST_PROXY", false)
+  ];
+};
 
 // server/boot/startup.ts
 var DB_STATE_MAP = {
   "0": "disconnected",
   "1": "connected",
   "2": "connecting",
-  "3": "disconnecting"
+  "3": "disconnecting",
+  "99": "uninitialized"
 };
-var getDbStatusLabel = (state) => DB_STATE_MAP[state] ?? `state-${state}`;
+var getDbStatusSafe = () => {
+  try {
+    return mongoose34.connection?.readyState !== void 0 ? String(mongoose34.connection.readyState) : "0";
+  } catch {
+    return "0";
+  }
+};
+var getDbStatusLabel = (state) => {
+  const resolvedState = state !== void 0 ? String(state) : getDbStatusSafe();
+  return DB_STATE_MAP[resolvedState] ?? `state-${resolvedState}`;
+};
+var currentBootState = "UNINITIALIZED";
+var bootLock = false;
+var setBootState = (state) => {
+  currentBootState = state;
+  if (state === "READY" || state === "FAILED" || state === "TERMINATED") {
+    bootLock = false;
+  }
+};
+var acquireBootLock = () => {
+  if (bootLock || currentBootState === "INITIALIZING" || currentBootState === "READY") {
+    return false;
+  }
+  bootLock = true;
+  currentBootState = "INITIALIZING";
+  return true;
+};
+var sanitizeStartupError = (error) => {
+  const rawMessage = error instanceof Error ? error.message : String(error || "Unknown error");
+  let sanitized = rawMessage.replace(
+    /(mongodb(?:\+srv)?:\/\/)([^:@\s]+):([^@\s]+)@/gi,
+    "$1$2:***@"
+  );
+  sanitized = sanitized.replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "[REDACTED_JWT]");
+  sanitized = sanitized.replace(/\b[0-9a-fA-F]{32,64}\b/g, "[REDACTED_KEY]");
+  return {
+    message: rawMessage,
+    sanitizedMessage: sanitized
+  };
+};
 var renderStartupBanner = () => {
-  const mode = isProd2 ? "PRODUCTION" : "DEVELOPMENT";
+  const prod = isProduction();
+  if (prod && process6.env.SUPPRESS_STARTUP_BANNER === "true") {
+    return;
+  }
+  const mode = prod ? "PRODUCTION" : "DEVELOPMENT";
   log.info(
     [
       "",
@@ -17097,8 +19238,8 @@ var renderStartupBanner = () => {
       colorize("  Operational Visibility Profile", `${ansi.dim}${ansi.gray}`),
       "",
       `  ${colorize("Mode", ansi.magenta)}     ${mode}`,
-      `  ${colorize("Process", ansi.magenta)}  PID ${process5.pid}`,
-      `  ${colorize("Node", ansi.magenta)}     ${process5.version}`,
+      `  ${colorize("Process", ansi.magenta)}  PID ${process6.pid}`,
+      `  ${colorize("Node", ansi.magenta)}     ${process6.version}`,
       `  ${colorize("Host", ansi.magenta)}     ${os3.hostname()}`,
       `  ${colorize("Time", ansi.magenta)}     ${(/* @__PURE__ */ new Date()).toISOString()}`,
       ""
@@ -17113,60 +19254,72 @@ var createBootAnimator = () => {
   let detail = "";
   const safeWrite = (text) => {
     try {
-      process5.stdout.write(text);
+      process6.stdout.write(text);
     } catch {
       console.log(text);
     }
   };
   const render = () => {
-    if (!supportsAnimatedTerminal) return;
+    if (!checkAnimatedTerminal()) return;
     const frame = bootFrames[frameIndex++ % bootFrames.length];
     safeWrite(
       `\r  ${colorize(frame, ansi.cyan)} ${colorize(padRight(label, 28), ansi.bold)} ${colorize(detail, `${ansi.dim}${ansi.gray}`)}`
     );
   };
   const stop = () => {
-    if (interval) clearInterval(interval);
-    interval = null;
+    if (interval) {
+      clearInterval(interval);
+      interval = null;
+    }
   };
   return {
     start(initialLabel, initialDetail) {
       label = initialLabel;
       detail = initialDetail;
-      if (!supportsAnimatedTerminal) return log.info(`  > ${label} (${detail})`);
+      if (!checkAnimatedTerminal()) {
+        return log.info(`  > ${label} (${detail})`);
+      }
       render();
       interval = setInterval(render, 90);
     },
     update(nextLabel, nextDetail) {
       label = nextLabel;
       detail = nextDetail;
-      if (!supportsAnimatedTerminal) log.info(`  > ${label} (${detail})`);
+      if (!checkAnimatedTerminal()) {
+        log.info(`  > ${label} (${detail})`);
+      }
     },
     succeed(finalLabel, finalDetail) {
       stop();
       const message = `  ${colorize("OK", ansi.green)} ${padRight(finalLabel, 28)} ${finalDetail}`;
-      supportsAnimatedTerminal ? safeWrite(`\r${message}
+      checkAnimatedTerminal() ? safeWrite(`\r${message}
 `) : log.info(message);
     },
     fail(finalLabel, finalDetail) {
       stop();
-      const message = `  ${colorize("ERR", ansi.yellow)} ${padRight(finalLabel, 28)} ${finalDetail}`;
-      supportsAnimatedTerminal ? safeWrite(`\r${message}
+      const sanitized = sanitizeStartupError(finalDetail).sanitizedMessage;
+      const message = `  ${colorize("ERR", ansi.yellow)} ${padRight(finalLabel, 28)} ${sanitized}`;
+      checkAnimatedTerminal() ? safeWrite(`\r${message}
 `) : log.error(message);
-    }
+    },
+    stop
   };
 };
 var renderStartupSummary = (input) => {
-  const memory = process5.memoryUsage();
-  const dbStatus = getDbStatusLabel(getDbStatus());
+  const prod = isProduction();
+  if (prod && process6.env.SUPPRESS_STARTUP_SUMMARY === "true") {
+    return;
+  }
+  const memory = process6.memoryUsage();
+  const dbStatus = getDbStatusLabel(getDbStatusSafe());
   const cpuCount = os3.cpus()?.length ?? 0;
   const loadAvg = os3.loadavg();
   const totalMem = formatMemoryUsage(os3.totalmem());
   const freeMem = formatMemoryUsage(os3.freemem());
-  const uptime = formatUptime(process5.uptime());
+  const uptime = formatUptime(process6.uptime());
   const uploadRoot3 = getUploadRoot();
   const allowedOrigins = getAllowedCorsOrigins();
-  const publicUrl = normalizePublicUrl(process5.env.PUBLIC_URL);
+  const publicUrl = normalizePublicUrl(process6.env.PUBLIC_URL);
   const keepAliveHealthTarget = toHealthUrl(input.keepAliveTarget);
   const envChecks = getEnvChecks();
   const envPresentCount = envChecks.filter((line) => line.includes("[OK]")).length;
@@ -17174,20 +19327,28 @@ var renderStartupSummary = (input) => {
   const heapLimit = v8.getHeapStatistics().heap_size_limit;
   const heapLimitPercent = heapLimit > 0 ? memory.heapUsed / heapLimit * 100 : 0;
   const warnings = getWarnings({
-    jwtConfigured: Boolean(process5.env.JWT_SECRET),
+    jwtConfigured: Boolean(process6.env.JWT_SECRET),
     publicUrlConfigured: Boolean(publicUrl),
     heapPercent: heapLimitPercent,
-    p95LatencyMs: input.runtimeMetrics?.p95LatencyMs
+    p95LatencyMs: input.runtimeMetrics?.p95LatencyMs,
+    mongoConnected: dbStatus === "connected",
+    refreshTokenConfigured: Boolean(process6.env.REFRESH_TOKEN_SECRET),
+    encryptionKeyConfigured: Boolean(process6.env.VAULT_ENCRYPTION_KEY)
   });
   const healthScore = getHealthScore([
     dbStatus === "connected",
-    Boolean(process5.env.JWT_SECRET),
-    Boolean(publicUrl) || !isProd2,
+    Boolean(process6.env.JWT_SECRET),
+    Boolean(publicUrl) || !prod,
     heapLimitPercent < 85,
     uploadRoot3 === "cloud-only" || uploadRoot3.length > 0
   ]);
-  const [healthOk, healthTotal] = healthScore.split("/").map((n) => Number.parseInt(n, 10));
-  const healthPercent = Number.isFinite(healthOk) && Number.isFinite(healthTotal) && healthTotal > 0 ? healthOk / healthTotal * 100 : 0;
+  const healthPercent = calculateHealthPercent([
+    dbStatus === "connected",
+    Boolean(process6.env.JWT_SECRET),
+    Boolean(publicUrl) || !prod,
+    heapLimitPercent < 85,
+    uploadRoot3 === "cloud-only" || uploadRoot3.length > 0
+  ]);
   const latencyP95 = input.runtimeMetrics?.p95LatencyMs ?? 0;
   const latencyPressurePercent = Math.min(latencyP95 / 1e3 * 100, 100);
   const lines = [
@@ -17197,23 +19358,23 @@ var renderStartupSummary = (input) => {
       colorize("FULL RUNTIME SNAPSHOT", `${ansi.dim}${ansi.gray}`)
     ),
     badge("UP", `Mongo ${dbStatus}`),
-    badge("INFO", `Mode ${isProd2 ? "PRODUCTION" : "DEVELOPMENT"}`),
+    badge("INFO", `Mode ${prod ? "PRODUCTION" : "DEVELOPMENT"}`),
     ...warnings.length > 0 ? [badge("WARN", `${warnings.length} runtime warning(s) detected`)] : [badge("UP", "No critical runtime warnings detected")],
     hr(),
     "",
     section("Runtime"),
     kv(
       "Mode",
-      `${isProd2 ? "PRODUCTION" : "DEVELOPMENT"} (${isProd2 ? "hardened" : "developer-friendly"})`
+      `${prod ? "PRODUCTION" : "DEVELOPMENT"} (${prod ? "hardened" : "developer-friendly"})`
     ),
-    kv("Node", process5.version),
-    kv("PID", String(process5.pid)),
+    kv("Node", process6.version),
+    kv("PID", String(process6.pid)),
     kv("Uptime", uptime),
     kv("UTC Time", (/* @__PURE__ */ new Date()).toISOString()),
     kv("Local Time", (/* @__PURE__ */ new Date()).toString()),
     kv("TZ", Intl.DateTimeFormat().resolvedOptions().timeZone || "unknown"),
-    kv("CWD", process5.cwd()),
-    kv("Exec Path", process5.execPath),
+    kv("CWD", process6.cwd()),
+    kv("Exec Path", process6.execPath),
     sectionEnd(),
     "",
     section("System"),
@@ -17266,10 +19427,10 @@ var renderStartupSummary = (input) => {
       "Origin List",
       truncate(allowedOrigins.length > 0 ? allowedOrigins.join(", ") : "none", 220)
     ),
-    kv("JWT Secret", process5.env.JWT_SECRET ? "configured" : "missing"),
+    kv("JWT Secret", process6.env.JWT_SECRET ? "configured" : "missing"),
     kv(
       "Refresh Secret",
-      process5.env.REFRESH_TOKEN_SECRET ? "configured" : "fallback-to-jwt-or-missing"
+      process6.env.REFRESH_TOKEN_SECRET ? "configured" : "fallback-to-jwt-or-missing"
     ),
     sectionEnd(),
     "",
@@ -17304,14 +19465,124 @@ var renderStartupSummary = (input) => {
   log.info(lines.join("\n"));
 };
 var startDevHeartbeat = (input) => {
-  if (isProd2 || !supportsAnimatedTerminal) return;
+  if (isProduction() || !checkAnimatedTerminal()) {
+    return { stop: () => {
+    } };
+  }
   const interval = setInterval(() => {
-    const memory = process5.memoryUsage();
+    const memory = process6.memoryUsage();
     log.info(
-      `  ${colorize("HEARTBEAT", ansi.magenta)} ${(/* @__PURE__ */ new Date()).toISOString()} req:${input.requestCounter()} heap:${formatMemoryUsage(memory.heapUsed)} loop:${formatEventLoopLag()} db:${getDbStatusLabel(getDbStatus())} http://localhost:${input.port}`
+      `  ${colorize("HEARTBEAT", ansi.magenta)} ${(/* @__PURE__ */ new Date()).toISOString()} req:${input.requestCounter()} heap:${formatMemoryUsage(memory.heapUsed)} loop:${formatEventLoopLag()} db:${getDbStatusLabel(getDbStatusSafe())} http://localhost:${input.port}`
     );
   }, 45e3);
   interval.unref();
+  return {
+    stop: () => clearInterval(interval)
+  };
+};
+var createShutdownManager = (options = {}) => {
+  const timeoutMs = options.timeoutMs ?? 1e4;
+  const exit = options.exitProcess ?? ((code) => process6.exit(code));
+  const logInfo = options.logger?.info ?? ((msg) => console.log(msg));
+  const logWarn = options.logger?.warn ?? ((msg) => console.warn(msg));
+  const logError = options.logger?.error ?? ((msg, meta) => console.error(msg, meta));
+  let shutdownInProgress = false;
+  const runPhase = async (phase, task) => {
+    if (options.onPhase) {
+      await options.onPhase(phase, task);
+    } else {
+      const startedAt = Date.now();
+      logInfo(`[SHUTDOWN] Phase started: ${phase}`);
+      try {
+        await task();
+        logInfo(`[SHUTDOWN] Phase completed: ${phase} (${Date.now() - startedAt}ms)`);
+      } catch (err) {
+        logError(`[SHUTDOWN] Phase failed: ${phase}`, err);
+        throw err;
+      }
+    }
+  };
+  const shutdown = async (signal) => {
+    if (shutdownInProgress) {
+      logWarn(`[SHUTDOWN] Shutdown already in progress. Ignoring signal: ${signal}`);
+      return;
+    }
+    shutdownInProgress = true;
+    setBootState("SHUTTING_DOWN");
+    logWarn(`[SHUTDOWN] Graceful shutdown initiated by signal: ${signal}`);
+    const forcedTimer = setTimeout(() => {
+      logError(`[SHUTDOWN] Graceful shutdown timed out after ${timeoutMs}ms. Forcing exit.`);
+      try {
+        options.httpServer?.closeIdleConnections?.();
+        options.httpServer?.closeAllConnections?.();
+      } catch {
+      }
+      exit(1);
+    }, timeoutMs);
+    forcedTimer.unref();
+    try {
+      if (options.httpServer) {
+        await runPhase("http_close", async () => {
+          logInfo("[SHUTDOWN] Closing HTTP server...");
+          await new Promise((resolve, reject) => {
+            options.httpServer.close((err) => {
+              if (err) {
+                if (err.code === "ERR_SERVER_NOT_RUNNING") {
+                  resolve();
+                  return;
+                }
+                reject(err);
+                return;
+              }
+              resolve();
+            });
+          });
+          options.httpServer.closeIdleConnections?.();
+          options.httpServer.closeAllConnections?.();
+        });
+      }
+      await runPhase("mongo_disconnect", async () => {
+        logInfo("[SHUTDOWN] Disconnecting MongoDB...");
+        try {
+          if (mongoose34.connection && mongoose34.connection.readyState !== 0) {
+            await mongoose34.disconnect();
+          }
+        } catch (err) {
+          logError("[SHUTDOWN] MongoDB disconnect error:", err);
+        }
+      });
+      await runPhase("resource_cleanup", () => {
+        stopEventLoopLagMonitor();
+      });
+      if (options.onComplete) {
+        await options.onComplete();
+      }
+      clearTimeout(forcedTimer);
+      setBootState("TERMINATED");
+      logInfo("[SHUTDOWN] Graceful shutdown completed cleanly.");
+      exit(0);
+    } catch (err) {
+      clearTimeout(forcedTimer);
+      logError("[SHUTDOWN] Error encountered during shutdown sequence:", err);
+      setBootState("FAILED");
+      exit(1);
+    }
+  };
+  const registerSignalHandlers = () => {
+    const handleSigint = () => void shutdown("SIGINT");
+    const handleSigterm = () => void shutdown("SIGTERM");
+    process6.once("SIGINT", handleSigint);
+    process6.once("SIGTERM", handleSigterm);
+    return () => {
+      process6.removeListener("SIGINT", handleSigint);
+      process6.removeListener("SIGTERM", handleSigterm);
+    };
+  };
+  return {
+    shutdown,
+    isShuttingDown: () => shutdownInProgress,
+    registerSignalHandlers
+  };
 };
 
 // server/lib/logrocket.ts
@@ -17332,7 +19603,9 @@ var initLogRocketServer = () => {
     logger.info("[LOGROCKET] Server monitoring enabled.");
     return true;
   } catch (error) {
-    logger.warn("[LOGROCKET] Server monitoring init failed.", { error });
+    logger.warn("[LOGROCKET] Server monitoring init failed.", {
+      error: error instanceof Error ? error.message : String(error)
+    });
     return false;
   }
 };
@@ -17341,48 +19614,68 @@ var captureServerException = (error, context) => {
     return;
   }
   try {
-    const normalizedError = error instanceof Error ? error : new Error(String(error));
-    const tags = {};
-    if (context) {
-      for (const [key, value] of Object.entries(context)) {
-        if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-          tags[key] = value;
-        }
+    let normalizedError;
+    if (error instanceof Error) {
+      normalizedError = error;
+      if (normalizedError.message && (normalizedError.message.includes("?") || normalizedError.message.includes("Bearer"))) {
+        normalizedError = new Error(sanitizeUrl(normalizedError.message, FILTERED_PLACEHOLDER));
+        normalizedError.name = error.name;
+        normalizedError.stack = error.stack;
       }
+    } else {
+      normalizedError = new Error(sanitizeUrl(String(error), FILTERED_PLACEHOLDER));
     }
+    const tags = context ? sanitizeTags(context) : {};
     LogRocket.captureException(normalizedError, { tags });
   } catch (captureError) {
     logger.warn("[LOGROCKET] Failed to capture server exception.", {
-      captureError
+      error: captureError instanceof Error ? captureError.message : String(captureError)
     });
   }
 };
 var logRocketRequestLogger = () => {
   return (req, res, next) => {
     const startedAt = Date.now();
-    res.on("finish", () => {
+    let logged = false;
+    const recordLog = () => {
+      if (logged) return;
+      logged = true;
+      const rawUrl = req.originalUrl || req.url || "";
       logger.info("[API REQUEST]", {
-        requestId: req.requestId,
+        requestId: req?.requestId,
         method: req.method,
-        path: req.originalUrl,
+        path: sanitizeUrl(rawUrl, FILTERED_PLACEHOLDER),
         statusCode: res.statusCode,
-        durationMs: Date.now() - startedAt
+        durationMs: Math.max(0, Date.now() - startedAt)
       });
-    });
+    };
+    const attachListener = (event, cb) => {
+      if (typeof res?.once === "function") {
+        res.once(event, cb);
+      } else if (typeof res?.on === "function") {
+        res.on(event, cb);
+      }
+    };
+    attachListener("finish", recordLog);
+    attachListener("close", recordLog);
     next();
   };
 };
 var logRocketErrorMiddleware = () => {
   return (error, req, _res, next) => {
+    const rawUrl = req?.originalUrl || req?.url || "";
     captureServerException(error, {
-      path: req.originalUrl,
-      method: req.method,
-      requestId: req.requestId
+      path: sanitizeUrl(rawUrl, FILTERED_PLACEHOLDER),
+      method: req?.method,
+      requestId: req?.requestId
     });
     next(error);
   };
 };
 var registerLogRocketMiddleware = (app) => {
+  if (!app || typeof app.use !== "function") {
+    return;
+  }
   const scopedApp = app;
   if (scopedApp[MONITORING_KEY]) {
     return;
@@ -17393,7 +19686,7 @@ var registerLogRocketMiddleware = (app) => {
 
 // server.ts
 var buildHelmetConfig = () => {
-  const isProduction = process.env.NODE_ENV === "production";
+  const isProduction2 = process.env.NODE_ENV === "production";
   const configuredOrigins = getAllowedCorsOrigins();
   const selfAndConfiguredOrigins = ["'self'", ...configuredOrigins];
   const mediaAndImageSources = [...selfAndConfiguredOrigins, "blob:", "data:", "https:"];
@@ -17490,7 +19783,7 @@ var buildHelmetConfig = () => {
     "blob:",
     "data:",
     "wss:",
-    ...isProduction ? [] : ["ws:"],
+    ...isProduction2 ? [] : ["ws:"],
     ...mapSources,
     ...securityAndAuthSources,
     ...documentViewerSources,
@@ -17562,7 +19855,7 @@ var buildHelmetConfig = () => {
     hidePoweredBy: true,
     ieNoOpen: true,
     referrerPolicy: {
-      policy: isProduction ? "no-referrer" : "strict-origin-when-cross-origin"
+      policy: isProduction2 ? "no-referrer" : "strict-origin-when-cross-origin"
     },
     contentSecurityPolicy: {
       useDefaults: false,
@@ -17575,7 +19868,7 @@ var buildHelmetConfig = () => {
         connectSrc: connectSources,
         imgSrc: mediaAndImageSources,
         mediaSrc: mediaAndImageSources,
-        scriptSrc: isProduction ? ["'self'", "'wasm-unsafe-eval'", "'unsafe-eval'", ...scriptSources] : ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", "'unsafe-eval'", ...scriptSources],
+        scriptSrc: isProduction2 ? ["'self'", "'wasm-unsafe-eval'", "'unsafe-eval'", ...scriptSources] : ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", "'unsafe-eval'", ...scriptSources],
         styleSrc: [
           "'self'",
           "'unsafe-inline'",
@@ -17598,10 +19891,10 @@ var buildHelmetConfig = () => {
         workerSrc: workerSources,
         childSrc: childSources,
         objectSrc: ["'none'"],
-        ...isProduction ? { upgradeInsecureRequests: [] } : {}
+        ...isProduction2 ? { upgradeInsecureRequests: [] } : {}
       }
     },
-    hsts: isProduction ? { maxAge: 31536e3, includeSubDomains: true, preload: true } : false
+    hsts: isProduction2 ? { maxAge: 31536e3, includeSubDomains: true, preload: true } : false
   };
 };
 var resolveTrustProxy = () => {
@@ -17718,7 +20011,7 @@ var setOverloadResponseHeaders = (res) => {
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
 };
-var apiLimiter = rateLimit8({
+var apiLimiter = rateLimit12({
   windowMs: Number.parseInt(process.env.API_RATE_LIMIT_WINDOW_MS || "", 10) || 15 * 60 * 1e3,
   max: () => {
     const configured = Number.parseInt(process.env.API_RATE_LIMIT_MAX || "", 10);
@@ -17781,6 +20074,10 @@ var registerProcessErrorHandlers = () => {
   });
 };
 async function startServer() {
+  if (!acquireBootLock()) {
+    logger.warn("[BOOT] Server startup is already in progress or completed. Ignoring duplicate startup call.");
+    return;
+  }
   initSentry();
   initLogRocketServer();
   registerProcessErrorHandlers();
@@ -17848,10 +20145,10 @@ async function startServer() {
     httpServer.on("error", (error) => {
       logger.error("[HTTP SERVER ERROR]", { error });
     });
-    mongoose30.connection.on("disconnected", () => {
+    mongoose35.connection.on("disconnected", () => {
       logger.warn("[MONGO] Connection disconnected.");
     });
-    mongoose30.connection.on("error", (error) => {
+    mongoose35.connection.on("error", (error) => {
       logger.error("[MONGO] Connection error.", { error });
     });
     await runPhase("Middleware Init", () => {
@@ -18069,6 +20366,7 @@ async function startServer() {
       silentWhenDisabled: true
     });
     startupAnimator.succeed("Startup complete", "Vault runtime initialized");
+    setBootState("READY");
     renderStartupSummary({
       port,
       trustProxy,
@@ -18100,63 +20398,27 @@ async function startServer() {
         throw error;
       }
     };
-    const shutdown = async (signal) => {
-      if (shutdownInProgress) {
-        return;
-      }
-      shutdownInProgress = true;
-      shutdownController.abort(new Error("Server shutdown in progress."));
-      logger.warn(`[SHUTDOWN] Signal received: ${signal}`);
-      logger.info("[SHUTDOWN] Closing HTTP server...");
-      const forcedExitTimer = setTimeout(() => {
-        httpServer.closeIdleConnections?.();
-        httpServer.closeAllConnections?.();
-        exitProcess(1);
-      }, 1e4);
-      forcedExitTimer.unref();
-      try {
-        await runShutdownPhase("http_close", async () => {
-          await new Promise((resolve, reject) => {
-            httpServer.close((error) => {
-              if (error) {
-                reject(error);
-                return;
-              }
-              resolve();
-            });
-          });
-        });
-        await runShutdownPhase("mongo_disconnect", async () => {
-          logger.info("[SHUTDOWN] Disconnecting MongoDB...");
-          await mongoose30.disconnect();
-        });
-        await runShutdownPhase("socket_cleanup", () => {
-          clearInterval(eventLoopLagSampler);
-          httpServer.closeIdleConnections?.();
-          httpServer.closeAllConnections?.();
-          eventLoopDelayMonitor.disable();
-        });
-        logger.info("[SHUTDOWN] Cleanup complete.", {
-          phase: "complete"
-        });
+    const shutdownManager = createShutdownManager({
+      httpServer,
+      timeoutMs: 1e4,
+      exitProcess,
+      logger,
+      onPhase: runShutdownPhase,
+      onComplete: async () => {
+        clearInterval(eventLoopLagSampler);
+        eventLoopDelayMonitor.disable();
         await flushSentry(2e3);
-        exitProcess(0);
-      } catch (error) {
-        logger.error("[SHUTDOWN] Error during graceful shutdown.", { error });
-        await flushSentry(2e3);
-        exitProcess(1);
-      } finally {
-        clearTimeout(forcedExitTimer);
       }
-    };
-    process.on("SIGINT", () => shutdown("SIGINT"));
-    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    });
+    shutdownController.signal.addEventListener("abort", () => {
+      void shutdownManager.shutdown("ABORT_SIGNAL");
+    });
+    shutdownManager.registerSignalHandlers();
   } catch (error) {
-    startupAnimator.fail(
-      "Startup failed",
-      error instanceof Error ? error.message : "Unknown error"
-    );
-    logger.error("Failed to start server.", { error });
+    setBootState("FAILED");
+    const { sanitizedMessage } = sanitizeStartupError(error);
+    startupAnimator.fail("Startup failed", sanitizedMessage);
+    logger.error("Failed to start server.", { error: sanitizedMessage });
     exitProcess(1);
   }
 }

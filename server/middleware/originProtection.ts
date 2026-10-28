@@ -2,7 +2,6 @@ import express from 'express';
 import ipRangeCheck from 'ip-range-check';
 import { AppError } from '../utils/appError.ts';
 import { logger } from '../utils/logger.ts';
-
 import { isAllowedCorsOrigin } from '../utils/cors.ts';
 
 /**
@@ -13,9 +12,25 @@ import { isAllowedCorsOrigin } from '../utils/cors.ts';
  * or DDoS protection by hitting the server's public IP directly.
  */
 
-const ALLOWED_CDN_RANGES = ['74.220.48.0/24', '74.220.56.0/24'];
+const DEFAULT_CDN_RANGES = ['74.220.48.0/24', '74.220.56.0/24'];
 
-const LOCALHOST_IPS = ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
+const resolveAllowedCdnRanges = (): string[] => {
+  const envRanges = process.env.ALLOWED_CDN_RANGES?.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return envRanges && envRanges.length > 0 ? envRanges : DEFAULT_CDN_RANGES;
+};
+
+const LOCALHOST_IPS = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
+
+const isHealthCheckPath = (pathname: string): boolean => {
+  return (
+    pathname === '/health' ||
+    pathname === '/ready' ||
+    pathname === '/api/health' ||
+    pathname === '/api/ready'
+  );
+};
 
 export const originProtection = (
   req: express.Request,
@@ -27,28 +42,20 @@ export const originProtection = (
     process.env.DISABLE_ORIGIN_PROTECTION === '1' ||
     process.env.DISABLE_ORIGIN_PROTECTION?.toLowerCase() === 'true';
 
-  if (disableOriginProtection) {
+  if (disableOriginProtection || !isProduction) {
     return next();
   }
 
-  // Extract the actual connecting IP (not the X-Forwarded-For)
-  const connectingIp = req.socket.remoteAddress || 'unknown';
+  // Extract the actual connecting IP (not X-Forwarded-For)
+  const connectingIp = req.socket?.remoteAddress || 'unknown';
   const normalizedIp = connectingIp.replace(/^::ffff:/, '');
 
-  const rawOrigin = req.get('origin') || req.get('referer');
-  let isAllowedOrigin = false;
-  if (rawOrigin) {
-    try {
-      const candidate = new URL(rawOrigin).origin;
-      if (isAllowedCorsOrigin(candidate)) {
-        isAllowedOrigin = true;
-      }
-    } catch {
-      // Ignored
-    }
+  // 1. Always allow localhost and container/load balancer health checks
+  if (LOCALHOST_IPS.has(normalizedIp) || isHealthCheckPath(req.path)) {
+    return next();
   }
 
-  // 1. Always allow localhost, health checks, media streaming routes, or requests from allowed CORS origins
+  // 2. Allow media streaming & access routes
   const isMediaRoute =
     req.path.startsWith('/api/vault/files/access/') ||
     req.path.startsWith('/api/vault/files/') ||
@@ -56,18 +63,31 @@ export const originProtection = (
     req.path.startsWith('/api/vault/avatar/') ||
     req.path.startsWith('/api/avatar/');
 
-  if (
-    LOCALHOST_IPS.includes(normalizedIp) ||
-    !isProduction ||
-    req.path === '/health' ||
-    isMediaRoute ||
-    isAllowedOrigin
-  ) {
+  if (isMediaRoute) {
     return next();
   }
 
-  // 2. Check if the connecting IP is within the trusted CDN ranges
-  const isFromCDN = ipRangeCheck(normalizedIp, ALLOWED_CDN_RANGES);
+  // 3. Allow requests originating from authorized CORS origins
+  const rawOrigin = req.get('origin') || req.get('referer');
+  if (rawOrigin) {
+    try {
+      const candidate = new URL(rawOrigin).origin;
+      if (isAllowedCorsOrigin(candidate)) {
+        return next();
+      }
+    } catch {
+      // Ignore invalid URL formatting
+    }
+  }
+
+  // 4. Verify whether connecting IP is within trusted CDN CIDR ranges
+  const cdnRanges = resolveAllowedCdnRanges();
+  let isFromCDN = false;
+  try {
+    isFromCDN = Boolean(normalizedIp && ipRangeCheck(normalizedIp, cdnRanges));
+  } catch {
+    isFromCDN = false;
+  }
 
   if (!isFromCDN) {
     logger.warn('Origin Protection: Blocked direct access attempt', {
@@ -77,13 +97,14 @@ export const originProtection = (
       userAgent: req.headers['user-agent'],
     });
 
-    // Throw a 403 Forbidden - the server is effectively invisible to public traffic
-    throw new AppError(
-      403,
-      'ORIGIN_PROTECTED',
-      'Direct access to origin server is prohibited. Please use the designated CDN endpoint.',
+    return next(
+      new AppError(
+        403,
+        'ORIGIN_PROTECTED',
+        'Direct access to origin server is prohibited. Please use the designated CDN endpoint.',
+      ),
     );
   }
 
-  next();
+  return next();
 };

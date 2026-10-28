@@ -340,4 +340,12 @@ export const ensureMongoReady = async (): Promise<boolean> => {
   }
 };
 
+export const disconnectFromMongo = async (): Promise<void> => {
+  try {
+    await mongoose.disconnect();
+  } finally {
+    connectionPromise = null;
+  }
+};
+
 export const getDbStatus = (): string => mongoose.connection.readyState.toString();

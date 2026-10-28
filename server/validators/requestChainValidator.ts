@@ -1,15 +1,46 @@
 import { body, param, query } from 'express-validator';
 import { maxUploadFileSizeBytes } from '../utils/fileStorage.ts';
+import {
+  USERNAME_PATTERN,
+  SAFE_ID_PATTERN,
+  DEVICE_ID_PATTERN,
+  HASH_HEX_64_PATTERN,
+  hasPrototypePollutionKey,
+  hasNoSqlOperatorKey,
+} from './commonValidator.ts';
 
-const USERNAME_PATTERN = /^[a-z0-9._-]+$/i;
-const SAFE_ID_PATTERN = /^[a-zA-Z0-9:_-]+$/;
 const SAFE_CATEGORY_PATTERN = /^[a-zA-Z0-9-]+$/;
-const DEVICE_ID_PATTERN = /^[a-zA-Z0-9._:-]+$/;
-const HASH_HEX_64_PATTERN = /^[a-f0-9]{64}$/i;
-const UPLOAD_ID_PATTERN = /^[a-f0-9]{24}$/i;
+const UPLOAD_ID_PATTERN = /^[a-fA-F0-9]{24}$/;
+const MIME_TYPE_PATTERN = /^[a-zA-Z0-9.+_-]+\/[a-zA-Z0-9.+_-]+$/;
 
-const MULTIPART_CATEGORIES = ['photo', 'video', 'audio', 'document', 'other-files'] as const;
+export const MULTIPART_CATEGORIES = ['photo', 'video', 'audio', 'document', 'other-files'] as const;
 
+export const ALL_VAULT_CATEGORIES = [
+  'photo',
+  'video',
+  'audio',
+  'document',
+  'other-files',
+  'file',
+  'other',
+  'note',
+  'chat',
+  'todo',
+  'password',
+  'secret',
+  'contact',
+  'location',
+  'card',
+  'identity',
+  'wifi',
+  'system',
+  'settings',
+  'users',
+] as const;
+
+/**
+ * Validates GET username query parameter.
+ */
 export const usernameQueryValidation = [
   query('username')
     .exists({ values: 'falsy' })
@@ -24,11 +55,34 @@ export const usernameQueryValidation = [
     .withMessage('Username must be between 3 and 64 characters.')
     .bail()
     .matches(USERNAME_PATTERN)
-    .withMessage('Username can only include letters, numbers, dots, underscores, and hyphens.'),
+    .withMessage('Username can only include letters, numbers, dots, underscores, and hyphens.')
+    .bail()
+    .custom((val: string) => !/[\u0000-\u001f\u007f]/.test(val))
+    .withMessage('Username contains invalid control characters.'),
 ];
 
+/**
+ * Validates POST session revocation payload.
+ */
 export const revokeSessionsValidation = [
   body().isObject().withMessage('Request body must be a JSON object.'),
+  body().custom((value: unknown) => {
+    if (value && typeof value === 'object') {
+      if (hasPrototypePollutionKey(value)) {
+        throw new Error('Payload contains forbidden prototype pollution keys.');
+      }
+      if (hasNoSqlOperatorKey(value)) {
+        throw new Error('Payload contains forbidden query operator keys.');
+      }
+      const allowedKeys = new Set(['sessionId', 'deviceId', 'revokeAllOther', 'revokeCurrent']);
+      for (const key of Object.keys(value)) {
+        if (!allowedKeys.has(key)) {
+          throw new Error(`Unexpected field '${key}' is not permitted.`);
+        }
+      }
+    }
+    return true;
+  }),
   body('sessionId')
     .optional()
     .isString()
@@ -36,7 +90,10 @@ export const revokeSessionsValidation = [
     .bail()
     .trim()
     .isLength({ min: 1, max: 256 })
-    .withMessage('sessionId must be between 1 and 256 characters.'),
+    .withMessage('sessionId must be between 1 and 256 characters.')
+    .bail()
+    .matches(SAFE_ID_PATTERN)
+    .withMessage('sessionId contains invalid characters.'),
   body('deviceId')
     .optional()
     .isString()
@@ -83,8 +140,25 @@ export const revokeSessionsValidation = [
   }),
 ];
 
+/**
+ * Validates device session rename payload.
+ */
 export const deviceSessionRenameValidation = [
   body().isObject().withMessage('Request body must be a JSON object.'),
+  body().custom((value: unknown) => {
+    if (value && typeof value === 'object') {
+      if (hasPrototypePollutionKey(value)) {
+        throw new Error('Payload contains forbidden prototype pollution keys.');
+      }
+      const allowedKeys = new Set(['deviceId', 'deviceName']);
+      for (const key of Object.keys(value)) {
+        if (!allowedKeys.has(key)) {
+          throw new Error(`Unexpected field '${key}' is not permitted.`);
+        }
+      }
+    }
+    return true;
+  }),
   body('deviceId')
     .exists({ values: 'falsy' })
     .withMessage('deviceId is required.')
@@ -112,6 +186,9 @@ export const deviceSessionRenameValidation = [
     .withMessage('deviceName contains invalid control characters.'),
 ];
 
+/**
+ * Validates legacy vault route params (:vaultId and optional :itemId).
+ */
 export const vaultLegacyRouteParamsValidation = [
   param('vaultId')
     .isString()
@@ -136,6 +213,9 @@ export const vaultLegacyRouteParamsValidation = [
     .withMessage('itemId contains unsupported characters.'),
 ];
 
+/**
+ * Validates vault item route param (:itemId).
+ */
 export const vaultItemRouteParamsValidation = [
   param('itemId')
     .isString()
@@ -149,6 +229,9 @@ export const vaultItemRouteParamsValidation = [
     .withMessage('itemId contains unsupported characters.'),
 ];
 
+/**
+ * Validates vault category route param (:category).
+ */
 export const vaultCategoryRouteParamsValidation = [
   param('category')
     .isString()
@@ -162,6 +245,9 @@ export const vaultCategoryRouteParamsValidation = [
     .withMessage('category contains unsupported characters.'),
 ];
 
+/**
+ * Validates multipart route params (:uploadId and optional :partNumber).
+ */
 export const multipartRouteParamsValidation = [
   param('uploadId')
     .isString()
@@ -176,8 +262,33 @@ export const multipartRouteParamsValidation = [
     .withMessage('partNumber must be an integer between 1 and 2000.'),
 ];
 
+/**
+ * Validates multipart upload initialization body.
+ */
 export const multipartStartBodyValidation = [
   body().isObject().withMessage('Request body must be a JSON object.'),
+  body().custom((value: unknown) => {
+    if (value && typeof value === 'object') {
+      if (hasPrototypePollutionKey(value)) {
+        throw new Error('Payload contains forbidden prototype pollution keys.');
+      }
+      const allowed = new Set([
+        'category',
+        'fileName',
+        'mimeType',
+        'fileSize',
+        'folder',
+        'resumeUploadId',
+        'keepMetadata',
+      ]);
+      for (const key of Object.keys(value)) {
+        if (!allowed.has(key)) {
+          throw new Error(`Unexpected field '${key}' is not permitted.`);
+        }
+      }
+    }
+    return true;
+  }),
   body('category')
     .isString()
     .withMessage('category is required.')
@@ -191,14 +302,20 @@ export const multipartStartBodyValidation = [
     .bail()
     .trim()
     .isLength({ min: 1, max: 512 })
-    .withMessage('fileName must be between 1 and 512 characters.'),
+    .withMessage('fileName must be between 1 and 512 characters.')
+    .bail()
+    .custom((val: string) => !/[\u0000-\u001f\u007f]/.test(val) && !val.includes('..'))
+    .withMessage('fileName contains invalid characters or path traversal sequences.'),
   body('mimeType')
     .isString()
     .withMessage('mimeType is required.')
     .bail()
     .trim()
     .isLength({ min: 1, max: 255 })
-    .withMessage('mimeType must be between 1 and 255 characters.'),
+    .withMessage('mimeType must be between 1 and 255 characters.')
+    .bail()
+    .matches(MIME_TYPE_PATTERN)
+    .withMessage('mimeType format is invalid.'),
   body('fileSize')
     .isInt({ min: 1, max: maxUploadFileSizeBytes })
     .withMessage(`fileSize must be between 1 and ${maxUploadFileSizeBytes}.`)
@@ -210,7 +327,10 @@ export const multipartStartBodyValidation = [
     .bail()
     .trim()
     .isLength({ max: 256 })
-    .withMessage('folder must be 256 characters or fewer.'),
+    .withMessage('folder must be 256 characters or fewer.')
+    .bail()
+    .custom((val: string) => !/[\u0000-\u001f\u007f]/.test(val) && !val.includes('..'))
+    .withMessage('folder contains invalid characters or path traversal sequences.'),
   body('resumeUploadId')
     .optional({ values: 'null' })
     .isString()
@@ -226,8 +346,25 @@ export const multipartStartBodyValidation = [
     .toBoolean(),
 ];
 
+/**
+ * Validates multipart upload completion body.
+ */
 export const multipartCompleteBodyValidation = [
   body().isObject().withMessage('Request body must be a JSON object.'),
+  body().custom((value: unknown) => {
+    if (value && typeof value === 'object') {
+      if (hasPrototypePollutionKey(value)) {
+        throw new Error('Payload contains forbidden prototype pollution keys.');
+      }
+      const allowed = new Set(['fileSha256', 'deviceId', 'clientUpdatedAt', 'metadata']);
+      for (const key of Object.keys(value)) {
+        if (!allowed.has(key)) {
+          throw new Error(`Unexpected field '${key}' is not permitted.`);
+        }
+      }
+    }
+    return true;
+  }),
   body('fileSha256')
     .optional({ values: 'null' })
     .isString()
@@ -257,10 +394,28 @@ export const multipartCompleteBodyValidation = [
     .withMessage('clientUpdatedAt is invalid.'),
   body('metadata')
     .optional({ values: 'null' })
-    .isObject()
-    .withMessage('metadata must be an object.'),
+    .custom((val: unknown) => {
+      if (val === null || val === undefined) return true;
+      if (typeof val !== 'object' || Array.isArray(val)) {
+        throw new Error('metadata must be a JSON object.');
+      }
+      if (hasPrototypePollutionKey(val)) {
+        throw new Error('metadata contains forbidden prototype pollution keys.');
+      }
+      if (hasNoSqlOperatorKey(val)) {
+        throw new Error('metadata contains forbidden query operator keys.');
+      }
+      const serialized = JSON.stringify(val);
+      if (serialized.length > 65536) {
+        throw new Error('metadata exceeds maximum size limit of 64KB.');
+      }
+      return true;
+    }),
 ];
 
+/**
+ * Validates activity log pagination query.
+ */
 export const activityLogQueryValidation = [
   query('limit')
     .optional()
@@ -274,8 +429,34 @@ export const activityLogQueryValidation = [
     .toInt(),
 ];
 
+/**
+ * Validates user activity log submission body.
+ */
 export const activityLogBodyValidation = [
   body().isObject().withMessage('Request body must be a JSON object.'),
+  body().custom((value: unknown) => {
+    if (value && typeof value === 'object') {
+      if (hasPrototypePollutionKey(value)) {
+        throw new Error('Payload contains forbidden prototype pollution keys.');
+      }
+      const allowed = new Set([
+        'action',
+        'category',
+        'itemId',
+        'status',
+        'errorCode',
+        'errorMessage',
+        'deviceId',
+        'details',
+      ]);
+      for (const key of Object.keys(value)) {
+        if (!allowed.has(key)) {
+          throw new Error(`Unexpected field '${key}' is not permitted.`);
+        }
+      }
+    }
+    return true;
+  }),
   body('action')
     .optional()
     .isString()
@@ -299,7 +480,10 @@ export const activityLogBodyValidation = [
     .bail()
     .trim()
     .isLength({ min: 1, max: 256 })
-    .withMessage('itemId must be between 1 and 256 characters.'),
+    .withMessage('itemId must be between 1 and 256 characters.')
+    .bail()
+    .matches(SAFE_ID_PATTERN)
+    .withMessage('itemId contains unsupported characters.'),
   body('status')
     .optional()
     .isString()
@@ -335,5 +519,23 @@ export const activityLogBodyValidation = [
     .bail()
     .matches(DEVICE_ID_PATTERN)
     .withMessage('deviceId format is invalid.'),
-  body('details').optional().isObject().withMessage('details must be an object.'),
+  body('details')
+    .optional()
+    .custom((val: unknown) => {
+      if (val === null || val === undefined) return true;
+      if (typeof val !== 'object' || Array.isArray(val)) {
+        throw new Error('details must be a JSON object.');
+      }
+      if (hasPrototypePollutionKey(val)) {
+        throw new Error('details contains forbidden prototype pollution keys.');
+      }
+      if (hasNoSqlOperatorKey(val)) {
+        throw new Error('details contains forbidden query operator keys.');
+      }
+      const serialized = JSON.stringify(val);
+      if (serialized.length > 10240) {
+        throw new Error('details exceeds maximum size limit of 10KB.');
+      }
+      return true;
+    }),
 ];

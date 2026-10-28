@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import { getFolderModel } from '../models/folder.ts';
 import { AuthenticatedRequest } from '../utils/requestTypes.ts';
 import { initializeDefaultUserFolders, isProtectedFolderName } from '../services/folderService.ts';
@@ -8,12 +9,20 @@ import {
   encryptFolderName,
   hashFolderName,
 } from '../services/folderCryptoService.ts';
+import { AppError } from '../utils/appError.ts';
+import { sendSuccess } from '../responses.ts';
 
-const normalizeFolderName = (value: unknown): string => String(value ?? '').trim();
-const normalizeFolderItemTypeInput = (value: unknown): string =>
-  String(value ?? '')
-    .trim()
-    .toLowerCase();
+const MAX_FOLDER_NAME_LENGTH = 100;
+
+const normalizeFolderName = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const normalizeFolderItemTypeInput = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim().toLowerCase();
+};
 
 const FOLDER_ITEM_TYPE_ALIASES: Record<string, string[]> = {
   note: ['note', 'notes'],
@@ -74,7 +83,7 @@ const hydrateFolder = (folder: any) => {
 
 const loadHydratedFolders = async (username: string, userId: string) => {
   const Folder = getFolderModel(username);
-  const folders = await Folder.find({ userId }).lean();
+  const folders = await Folder.find({ userId }).lean().exec();
   const deduped = new Map<string, any>();
 
   for (const folder of folders.map(hydrateFolder)) {
@@ -94,67 +103,64 @@ export const initializeFoldersController = async (
   req: AuthenticatedRequest,
   res: express.Response,
 ) => {
+  const { userId, username } = req.user;
   try {
-    await initializeDefaultUserFolders(req.user.userId, req.user.username);
-    const hydrated = await loadHydratedFolders(req.user.username, req.user.userId);
-    return res.json({ success: true, data: hydrated });
+    await initializeDefaultUserFolders(userId, username);
+    const hydrated = await loadHydratedFolders(username, userId);
+    return sendSuccess(res, hydrated, 'Folders initialized successfully');
   } catch (error) {
-    logger.error('Failed to initialize folders', {
-      userId: req.user.userId,
-      username: req.user.username,
-      error,
-    });
-    return res.status(500).json({
-      success: false,
-      error: { message: 'Failed to initialize folders' },
-    });
+    logger.error('Failed to initialize folders', { userId, username, error });
+    throw AppError.internal('Failed to initialize folders', 'FOLDER_INIT_FAILED');
   }
 };
 
 export const getFoldersController = async (req: AuthenticatedRequest, res: express.Response) => {
+  const { userId, username } = req.user;
   try {
-    await initializeDefaultUserFolders(req.user.userId, req.user.username);
-    const hydrated = await loadHydratedFolders(req.user.username, req.user.userId);
-    return res.json({ success: true, data: hydrated });
+    await initializeDefaultUserFolders(userId, username);
+    const hydrated = await loadHydratedFolders(username, userId);
+    return sendSuccess(res, hydrated, 'Folders fetched successfully');
   } catch (error) {
-    logger.error('Failed to fetch folders', {
-      userId: req.user.userId,
-      username: req.user.username,
-      error,
-    });
-    return res.status(500).json({
-      success: false,
-      error: { message: 'Failed to fetch folders' },
-    });
+    logger.error('Failed to fetch folders', { userId, username, error });
+    throw AppError.internal('Failed to fetch folders', 'FOLDER_FETCH_FAILED');
   }
 };
 
 export const createFolderController = async (req: AuthenticatedRequest, res: express.Response) => {
-  const { name, itemType, parentId } = req.body;
-  if (!name || !itemType) {
-    return res
-      .status(400)
-      .json({ success: false, error: { message: 'Name and itemType are required' } });
-  }
-  const folderName = normalizeFolderName(name);
-  const canonicalItemType = resolveCanonicalFolderItemType(itemType);
-  const itemTypeCandidates = resolveFolderItemTypeCandidates(itemType);
-  if (!folderName) {
-    return res.status(400).json({ success: false, error: { message: 'Folder name is required' } });
-  }
-  if (!canonicalItemType) {
-    return res.status(400).json({ success: false, error: { message: 'itemType is invalid' } });
-  }
-  if (isProtectedFolderName(folderName)) {
-    return res.status(403).json({
-      success: false,
-      error: { message: 'Saved folders are reserved and cannot be created manually' },
-    });
+  const { name, itemType, parentId } = req.body || {};
+
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    throw AppError.badRequest('Folder name is required', 'FOLDER_NAME_REQUIRED');
   }
 
+  if (!itemType || typeof itemType !== 'string' || !itemType.trim()) {
+    throw AppError.badRequest('itemType is required', 'ITEM_TYPE_REQUIRED');
+  }
+
+  const folderName = normalizeFolderName(name);
+  if (folderName.length > MAX_FOLDER_NAME_LENGTH) {
+    throw AppError.badRequest(
+      `Folder name must not exceed ${MAX_FOLDER_NAME_LENGTH} characters`,
+      'FOLDER_NAME_TOO_LONG',
+    );
+  }
+
+  const canonicalItemType = resolveCanonicalFolderItemType(itemType);
+  const itemTypeCandidates = resolveFolderItemTypeCandidates(itemType);
+
+  if (!canonicalItemType) {
+    throw AppError.badRequest('itemType is invalid', 'INVALID_ITEM_TYPE');
+  }
+
+  if (isProtectedFolderName(folderName)) {
+    throw AppError.forbidden(
+      'Saved folders are reserved and cannot be created manually',
+      'RESERVED_FOLDER_NAME',
+    );
+  }
+
+  const { userId, username } = req.user;
   try {
-    const userId = req.user.userId;
-    const username = req.user.username;
     await initializeDefaultUserFolders(userId, username);
 
     const Folder = getFolderModel(username);
@@ -167,11 +173,12 @@ export const createFolderController = async (req: AuthenticatedRequest, res: exp
       nameHash: hashFolderName('vault_items'),
       itemType: 'system',
       parentId: null,
-    });
+    })
+      .lean()
+      .exec();
+
     if (!rootFolder) {
-      return res
-        .status(500)
-        .json({ success: false, error: { message: 'Root folder missing after initialization' } });
+      throw AppError.internal('Root folder missing after initialization', 'ROOT_FOLDER_MISSING');
     }
 
     // 2. Resolve username folder inside "vault_items"
@@ -180,15 +187,32 @@ export const createFolderController = async (req: AuthenticatedRequest, res: exp
       nameHash: hashFolderName(username),
       itemType: 'system',
       parentId: rootFolder._id.toString(),
-    });
+    })
+      .lean()
+      .exec();
+
     if (!userFolder) {
-      return res
-        .status(500)
-        .json({ success: false, error: { message: 'User folder missing after initialization' } });
+      throw AppError.internal('User folder missing after initialization', 'USER_FOLDER_MISSING');
     }
 
-    // 3. Create the requested folder inside the username folder if no parentId is provided
-    const targetParentId = parentId || userFolder._id.toString();
+    // 3. Validate parentId authorization: if provided, verify it belongs to this user
+    let targetParentId = userFolder._id.toString();
+    if (parentId && typeof parentId === 'string' && parentId.trim()) {
+      const cleanParentId = parentId.trim();
+      if (cleanParentId !== targetParentId) {
+        const parentQuery = mongoose.Types.ObjectId.isValid(cleanParentId)
+          ? { _id: cleanParentId, userId }
+          : { _id: cleanParentId, userId };
+        const parentExists = await Folder.findOne(parentQuery).lean().exec();
+        if (!parentExists) {
+          throw AppError.badRequest(
+            'Target parent folder does not exist or does not belong to you',
+            'INVALID_PARENT_FOLDER',
+          );
+        }
+        targetParentId = cleanParentId;
+      }
+    }
 
     // Normalize legacy alias rows (for example `todos`) to canonical item types.
     const legacyAliasFolder = await Folder.findOne({
@@ -196,7 +220,8 @@ export const createFolderController = async (req: AuthenticatedRequest, res: exp
       nameHash: folderNameHash,
       itemType: { $in: itemTypeCandidates },
       parentId: targetParentId,
-    });
+    }).exec();
+
     if (legacyAliasFolder && legacyAliasFolder.itemType !== canonicalItemType) {
       legacyAliasFolder.itemType = canonicalItemType;
       await legacyAliasFolder.save();
@@ -214,69 +239,78 @@ export const createFolderController = async (req: AuthenticatedRequest, res: exp
       },
       { upsert: true, returnDocument: 'after' },
     );
+
     if (!newFolder) {
-      return res.status(500).json({
-        success: false,
-        error: { message: 'Folder creation failed' },
-      });
+      throw AppError.internal('Folder creation failed', 'FOLDER_CREATE_FAILED');
     }
+
     const safeFolder = {
       ...newFolder.toObject(),
       name: folderName,
     };
-    return res.json({ success: true, data: safeFolder });
+    return sendSuccess(res, safeFolder, 'Folder created successfully', 201);
   } catch (error) {
+    if (error instanceof AppError) throw error;
     logger.error('Folder creation error', {
-      userId: req.user.userId,
-      username: req.user.username,
+      userId,
+      username,
       itemType: canonicalItemType,
       folderName,
       error,
     });
-    return res.status(500).json({ success: false, error: { message: 'Failed to create folder' } });
+    throw AppError.internal('Failed to create folder', 'FOLDER_CREATE_FAILED');
   }
 };
 
 export const deleteFolderController = async (req: AuthenticatedRequest, res: express.Response) => {
   const { name, itemType } = req.query;
-  if (!name || !itemType) {
-    return res
-      .status(400)
-      .json({ success: false, error: { message: 'Name and itemType are required' } });
+
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    throw AppError.badRequest('Name is required', 'FOLDER_NAME_REQUIRED');
   }
+
+  if (!itemType || typeof itemType !== 'string' || !itemType.trim()) {
+    throw AppError.badRequest('itemType is required', 'ITEM_TYPE_REQUIRED');
+  }
+
   const folderName = normalizeFolderName(name);
   const canonicalItemType = resolveCanonicalFolderItemType(itemType);
   const itemTypeCandidates = resolveFolderItemTypeCandidates(itemType);
   const normalizedLowerName = folderName.toLowerCase();
+
   if (isProtectedFolderName(folderName)) {
-    return res.status(403).json({
-      success: false,
-      error: { message: 'Saved folders are protected and cannot be deleted' },
-    });
-  }
-  if (!canonicalItemType) {
-    return res.status(400).json({ success: false, error: { message: 'itemType is invalid' } });
+    throw AppError.forbidden(
+      'Saved folders are protected and cannot be deleted',
+      'PROTECTED_FOLDER',
+    );
   }
 
+  if (!canonicalItemType) {
+    throw AppError.badRequest('itemType is invalid', 'INVALID_ITEM_TYPE');
+  }
+
+  const { userId, username } = req.user;
   try {
-    const Folder = getFolderModel(req.user.username);
+    const Folder = getFolderModel(username);
     const folderNameHash = hashFolderName(folderName);
 
     const directDelete = await Folder.deleteMany({
-      userId: req.user.userId,
+      userId,
       itemType: { $in: itemTypeCandidates },
       $or: [{ nameHash: folderNameHash }, { name: folderName }],
     });
 
     if (directDelete.deletedCount && directDelete.deletedCount > 0) {
-      return res.json({ success: true });
+      return sendSuccess(res, { deleted: true }, 'Folder deleted successfully');
     }
 
     // Legacy fallback: old rows may be plaintext with case variations and no hash.
     const legacyCandidates = await Folder.find({
-      userId: req.user.userId,
+      userId,
       itemType: { $in: itemTypeCandidates },
-    });
+    })
+      .lean()
+      .exec();
 
     const target = legacyCandidates.find((entry: any) => {
       const resolvedName = normalizeFolderName(decryptFolderName(entry.name));
@@ -284,21 +318,19 @@ export const deleteFolderController = async (req: AuthenticatedRequest, res: exp
     });
 
     if (target) {
-      await Folder.deleteOne({ _id: target._id });
+      await Folder.deleteOne({ _id: target._id, userId });
     }
 
-    return res.json({ success: true });
+    return sendSuccess(res, { deleted: true }, 'Folder deleted successfully');
   } catch (error) {
+    if (error instanceof AppError) throw error;
     logger.error('Folder deletion error', {
-      userId: req.user.userId,
-      username: req.user.username,
+      userId,
+      username,
       folderName,
       itemType: canonicalItemType,
       error,
     });
-    return res.status(500).json({
-      success: false,
-      error: { message: 'Failed to delete folder' },
-    });
+    throw AppError.internal('Failed to delete folder', 'FOLDER_DELETE_FAILED');
   }
 };

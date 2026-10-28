@@ -201,9 +201,24 @@ const setupProductionMiddleware = (app: Express): void => {
   const buildRoot = path.resolve(process.cwd(), 'build');
   const indexHtmlPath = path.join(buildRoot, 'index.html');
 
-  // Ensure build exists
+  // Fallback gracefully if frontend has not been built, allowing standalone API operation
   if (!fs.existsSync(indexHtmlPath)) {
-    throw new Error(`Frontend build not found at: ${indexHtmlPath}`);
+    logger.warn(
+      `Frontend build not found at: ${indexHtmlPath}. Running in standalone API production mode.`,
+    );
+    app.get(/.*/, (req: Request, res: Response, next: NextFunction) => {
+      if (req.path.startsWith('/api') || req.path === '/health' || req.path === '/ready') {
+        return next();
+      }
+      res.status(200).json({
+        success: true,
+        message: 'Vault Production API Server is running.',
+        status: 'online',
+        path: req.path,
+        timestamp: new Date().toISOString(),
+      });
+    });
+    return;
   }
 
   app.use((req: Request, res: Response, next: NextFunction) => {

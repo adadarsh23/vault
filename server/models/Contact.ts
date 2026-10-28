@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import mongoose, { Schema, Document, Model, HydratedDocument } from 'mongoose';
 import crypto from 'crypto';
 
 // ─────────────────────────────────────────────
@@ -46,6 +46,18 @@ export interface IContact extends Document {
   deletedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
+
+  // Instance methods
+  markRead(): Promise<this>;
+  markReplied(): Promise<this>;
+}
+
+export type ContactDocument = HydratedDocument<IContact>;
+
+export interface ContactModel extends Model<IContact> {
+  findActive(): Promise<IContact[]>;
+  findByReference(referenceId: string): Promise<IContact | null>;
+  softDelete(referenceId: string): Promise<IContact | null>;
 }
 
 /**
@@ -56,7 +68,7 @@ export interface IContact extends Document {
 // ─────────────────────────────────────────────
 // Schema
 // ─────────────────────────────────────────────
-const ContactSchema = new Schema<IContact>(
+const ContactSchema = new Schema<IContact, ContactModel>(
   {
     name: {
       type: String,
@@ -84,27 +96,32 @@ const ContactSchema = new Schema<IContact>(
     subject: {
       type: String,
       enum: Object.values(ContactSubject),
-      required: true,
+      required: [true, 'Subject is required'],
       index: true,
     },
 
     message: {
       type: String,
-      required: true,
-      minlength: 10,
-      maxlength: 2000,
+      required: [true, 'Message is required'],
+      minlength: [10, 'Message must be at least 10 characters'],
+      maxlength: [2000, 'Message cannot exceed 2000 characters'],
       trim: true,
     },
 
     ipAddress: {
       type: String,
+      trim: true,
       index: true,
     },
 
-    userAgent: String,
+    userAgent: {
+      type: String,
+      trim: true,
+    },
 
     geolocation: {
       type: Schema.Types.Mixed,
+      default: null,
     },
 
     status: {
@@ -124,7 +141,7 @@ const ContactSchema = new Schema<IContact>(
     referenceId: {
       type: String,
       unique: true,
-      index: true,
+      trim: true,
     },
 
     isDeleted: {
@@ -138,8 +155,9 @@ const ContactSchema = new Schema<IContact>(
     },
   },
   {
-    timestamps: true, // auto createdAt & updatedAt
+    timestamps: true,
     versionKey: false,
+    collection: 'contacts',
   },
 );
 
@@ -149,17 +167,21 @@ const ContactSchema = new Schema<IContact>(
 ContactSchema.index({ createdAt: -1 });
 ContactSchema.index({ email: 1, status: 1 });
 ContactSchema.index({ subject: 1, priority: 1 });
+ContactSchema.index({ isDeleted: 1, status: 1, createdAt: -1 });
+ContactSchema.index({ isDeleted: 1, priority: 1, createdAt: -1 });
+ContactSchema.index({ username: 1, createdAt: -1 });
+ContactSchema.index({ ipAddress: 1, createdAt: -1 });
 
 // ─────────────────────────────────────────────
 // Pre-save Hook
 // ─────────────────────────────────────────────
-ContactSchema.pre<IContact>('save', function () {
-  // Generate reference ID safely
+ContactSchema.pre('save', function () {
+  // Generate high-entropy reference ID safely if not present
   if (!this.referenceId) {
-    this.referenceId = 'VLT-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+    this.referenceId = 'VLT-' + crypto.randomBytes(6).toString('hex').toUpperCase();
   }
 
-  // Auto priority logic
+  // Auto priority logic based on security criticality
   switch (this.subject) {
     case ContactSubject.SECURITY:
       this.priority = ContactPriority.HIGH;
@@ -174,17 +196,65 @@ ContactSchema.pre<IContact>('save', function () {
 });
 
 // ─────────────────────────────────────────────
+// Instance Methods
+// ─────────────────────────────────────────────
+ContactSchema.methods.markRead = async function () {
+  this.status = ContactStatus.READ;
+  return this.save();
+};
+
+ContactSchema.methods.markReplied = async function () {
+  this.status = ContactStatus.REPLIED;
+  return this.save();
+};
+
+// ─────────────────────────────────────────────
 // Static Methods (clean API layer)
 // ─────────────────────────────────────────────
-interface ContactModel extends Model<IContact> {
-  findActive(): Promise<IContact[]>;
-}
-
 ContactSchema.statics.findActive = function () {
   return this.find({ isDeleted: false }).sort({ createdAt: -1 }).allowDiskUse(true);
 };
 
+ContactSchema.statics.findByReference = function (referenceId: string) {
+  return this.findOne({ referenceId: referenceId.trim().toUpperCase(), isDeleted: false });
+};
+
+ContactSchema.statics.softDelete = function (referenceId: string) {
+  return this.findOneAndUpdate(
+    { referenceId: referenceId.trim().toUpperCase(), isDeleted: false },
+    { $set: { isDeleted: true, deletedAt: new Date() } },
+    { new: true },
+  );
+};
+
 // ─────────────────────────────────────────────
-// Model Export
+// Model Factory & Export
 // ─────────────────────────────────────────────
-export const Contact = mongoose.model<IContact, ContactModel>('Contact', ContactSchema);
+export const getContactModel = (customConnection?: mongoose.Connection): ContactModel => {
+  const collectionName = 'contacts';
+  if (customConnection) {
+    if (customConnection.models.Contact) {
+      return customConnection.models.Contact as ContactModel;
+    }
+    const model = customConnection.model<IContact, ContactModel>(
+      'Contact',
+      ContactSchema,
+      collectionName,
+    );
+    if (typeof model?.createIndexes === 'function') {
+      model.createIndexes().catch(() => {});
+    }
+    return model;
+  }
+
+  if (mongoose.models.Contact) {
+    return mongoose.models.Contact as ContactModel;
+  }
+  const model = mongoose.model<IContact, ContactModel>('Contact', ContactSchema, collectionName);
+  if (typeof model?.createIndexes === 'function') {
+    model.createIndexes().catch(() => {});
+  }
+  return model;
+};
+
+export const Contact: ContactModel = getContactModel();
