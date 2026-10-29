@@ -10,7 +10,7 @@
  */
 
 import { execSync } from 'child_process';
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, renameSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -22,7 +22,7 @@ const REPORT_PATH = join(REPORT_DIR, 'test-report.json');
 const NO_EMAIL = process.argv.includes('--no-email');
 
 // ─── Project meta ────────────────────────────────────────────────────────────
-const pkg = JSON.parse((await import('fs')).readFileSync(join(ROOT, 'package.json'), 'utf8'));
+const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 
 const PROJECT = {
   name: pkg.name,
@@ -126,12 +126,16 @@ let passed = 0;
 let failed = 0;
 
 for (const { label, cmd } of TEST_COMMANDS) {
+  const startedAt = new Date().toISOString();
   const start = Date.now();
   process.stdout.write(`  ⏳  ${label.padEnd(40)}`);
 
   let status = 'PASS';
   let output = '';
   let error = '';
+  let exitCode = 0;
+  let signal = null;
+  let timedOut = false;
 
   try {
     output = execSync(cmd, {
@@ -140,23 +144,36 @@ for (const { label, cmd } of TEST_COMMANDS) {
       timeout: 300_000, // 5 min per suite
       stdio: ['pipe', 'pipe', 'pipe'],
     });
-    passed++;
-    process.stdout.write(`✅  PASS\n`);
   } catch (err) {
     status = 'FAIL';
-    output = err.stdout ?? '';
-    error = err.stderr ?? err.message ?? '';
-    failed++;
-    process.stdout.write(`❌  FAIL\n`);
+    const stdout = typeof err.stdout === 'string' ? err.stdout : '';
+    const stderr = typeof err.stderr === 'string' ? err.stderr : '';
+    output = stdout;
+    error = stderr || err.message || 'Command failed without error output';
+    exitCode = Number.isInteger(err.status) ? err.status : 1;
+    signal = err.signal ?? null;
+    timedOut = err.killed === true;
   }
 
-  const duration = ((Date.now() - start) / 1000).toFixed(2);
+  if (status === 'PASS') {
+    passed++;
+    process.stdout.write(`✅  PASS\n`);
+  } else {
+    failed++;
+    process.stdout.write(`❌  FAIL (exit ${exitCode}${timedOut ? ', timeout' : ''})\n`);
+  }
+
+  const durationMs = Date.now() - start;
 
   results.push({
     label,
     cmd,
     status,
-    duration: `${duration}s`,
+    startedAt,
+    durationMs,
+    exitCode,
+    signal,
+    timedOut,
     output: output.slice(-3000), // trim to last 3k chars
     error: error.slice(-2000),
   });
@@ -173,25 +190,31 @@ console.log(`${'─'.repeat(55)}\n`);
 
 // ─── Write JSON report ────────────────────────────────────────────────────────
 const report = {
+  schemaVersion: 1,
   project: PROJECT,
   summary: { total, passed, failed, overallStatus },
   results,
 };
 
-writeFileSync(REPORT_PATH, JSON.stringify(report, null, 2), 'utf8');
+const temporaryReportPath = `${REPORT_PATH}.tmp`;
+writeFileSync(temporaryReportPath, JSON.stringify(report, null, 2), 'utf8');
+renameSync(temporaryReportPath, REPORT_PATH);
 console.log(`📄  Report written → ${REPORT_PATH}`);
 
 // ─── Send email ───────────────────────────────────────────────────────────────
 if (!NO_EMAIL) {
   console.log(`\n📧  Sending Gmail report…`);
   try {
-    execSync(`node ${join(__dirname, 'send-gmail-report.mjs')}`, {
+    execSync(`"${process.execPath}" "${join(__dirname, 'send-gmail-report.mjs')}"`, {
       cwd: ROOT,
       stdio: 'inherit',
       timeout: 60_000,
     });
-  } catch {
-    console.error('⚠️  Email send failed. Check GMAIL_USER / GMAIL_APP_PASSWORD in .env');
+  } catch (err) {
+    console.error(
+      `⚠️  Email send failed${err.status ? ` (exit ${err.status})` : ''}. ` +
+        'Check GMAIL_USER, GMAIL_APP_PASSWORD, and GMAIL_TO in .env.',
+    );
     process.exit(1);
   }
 }

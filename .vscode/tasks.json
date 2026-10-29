@@ -1,0 +1,51 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run full test report without email",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:report:no-email"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Check auth integration using fork workers",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:auth:integration",
+				"--",
+				"--pool=forks",
+				"--maxWorkers=1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Run integration tests with fork workers",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:integration",
+				"--",
+				"--pool=forks",
+				"--maxWorkers=1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Verify full report on Windows forks",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:report:no-email"
+			],
+			"isBackground": false
+		}
+	]
+}

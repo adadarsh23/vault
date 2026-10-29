@@ -154,7 +154,7 @@
     "test:env": "vitest run tests/unit/env.test.ts",
     "test:backup": "vitest run tests/unit/backup.test.ts",
     "test:lighthouse": "vitest run tests/unit/lighthouse-runner.test.ts",
-    "test:reports": "vitest run tests/unit/open-report.test.ts",
+    "test:reports": "vitest run tests/unit/open-report.test.ts tests/unit/test-report-automation.test.ts",
     "test:schema": "vitest run tests/unit/vault-manifest-schema.test.ts",
     "schema:validate": "node scripts/validate-schema.mjs",
     "doctor": "node scripts/doctor.mjs",

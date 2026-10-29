@@ -55,6 +55,11 @@ Vault provides purpose-built npm scripts for developers, security auditors, and 
 | **`npm run test:ui`**            | Interactive Web Dashboard          | Launches the Vitest visual browser interface with live watch graphs. |
 | **`npm run test:coverage:open`** | Coverage Report                    | Generates V8 code coverage report and opens HTML summary in browser. |
 
+On Windows, Vitest defaults to one forked worker to avoid intermittent native
+access violations during thread-pool teardown. Set `VITEST_MAX_THREADS` or
+`VITEST_WORKERS` to override the concurrency limit, or `VITEST_POOL=threads` to
+select the thread pool.
+
 ### 2.2 Security & Domain Test Suites
 
 | Domain                    | Dedicated Command       | Target Files & Scenarios                                                        |

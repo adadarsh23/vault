@@ -20,6 +20,10 @@ const calculateMaxConcurrency = (): number => {
     }
   }
 
+  if (isWindows) {
+    return 1;
+  }
+
   const cpuCount = os.cpus().length || 2;
   if (isCI) {
     // In CI environments, limit concurrency to prevent memory exhaustion / OOM kills
@@ -44,10 +48,8 @@ export default defineConfig({
   },
 
   test: {
-    // Platform-aware pool selection:
-    // Worker threads avoid child_process IPC teardown instabilities on Windows.
-    // Vitest 4 top-level concurrency options:
-    pool: isWindows ? 'threads' : (process.env.VITEST_POOL as 'threads' | 'forks') || 'forks',
+    // Fork workers avoid native thread-pool teardown access violations on Windows.
+    pool: (process.env.VITEST_POOL as 'threads' | 'forks') || 'forks',
     maxWorkers: maxConcurrency,
     isolate: true,
 

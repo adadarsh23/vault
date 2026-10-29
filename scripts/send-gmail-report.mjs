@@ -2,11 +2,12 @@
 /**
  * send-gmail-report.mjs
  * Reads test-results/test-report.json and sends a formatted HTML email
- * to adrajpu523@gmail.com via Gmail using an App Password.
+ * through Gmail using an App Password.
  *
  * Required env vars (add to .env):
  *   GMAIL_USER          — your Gmail address (sender)
  *   GMAIL_APP_PASSWORD  — 16-char Google App Password (NOT your main password)
+ *   GMAIL_TO            — report recipient (defaults to GMAIL_USER)
  *
  * Gmail App Password setup:
  *   1. Go to https://myaccount.google.com/apppasswords
@@ -18,6 +19,12 @@ import nodemailer from 'nodemailer';
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import {
+  escapeHtml,
+  formatDuration,
+  isValidTestReport,
+  repositoryUrl,
+} from './test-report-utils.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -46,7 +53,7 @@ loadEnv();
 
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
-const RECIPIENT = 'adrajpu523@gmail.com';
+const RECIPIENT = process.env.GMAIL_TO || GMAIL_USER;
 
 if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
   console.error(
@@ -62,7 +69,17 @@ if (!existsSync(REPORT_PATH)) {
   process.exit(1);
 }
 
-const report = JSON.parse(readFileSync(REPORT_PATH, 'utf8'));
+let report;
+try {
+  report = JSON.parse(readFileSync(REPORT_PATH, 'utf8'));
+} catch (err) {
+  console.error(`❌  Could not read a valid test report: ${err.message}`);
+  process.exit(1);
+}
+if (!isValidTestReport(report)) {
+  console.error('❌  Test report is missing required fields or has an unsupported schema.');
+  process.exit(1);
+}
 const { project, summary, results } = report;
 
 // ─── Build HTML email ─────────────────────────────────────────────────────────
@@ -76,9 +93,9 @@ function rowsHtml() {
     .map(
       (r) => `
       <tr style="border-bottom:1px solid #e5e7eb;">
-        <td style="padding:8px 12px;font-size:13px;">${r.label}</td>
+        <td style="padding:8px 12px;font-size:13px;">${escapeHtml(r.label)}</td>
         <td style="padding:8px 12px;text-align:center;">${statusBadge(r.status)}</td>
-        <td style="padding:8px 12px;text-align:center;color:#6b7280;font-size:12px;">${r.duration}</td>
+        <td style="padding:8px 12px;text-align:center;color:#6b7280;font-size:12px;">${escapeHtml(formatDuration(r.durationMs))}</td>
         <td style="padding:8px 12px;font-family:monospace;font-size:11px;color:#374151;max-width:300px;word-break:break-all;">
           ${r.status === 'FAIL' ? `<details><summary style="cursor:pointer;color:#ef4444;">Error</summary><pre style="white-space:pre-wrap;font-size:10px;">${escapeHtml(r.error.slice(0, 800))}</pre></details>` : ''}
         </td>
@@ -87,12 +104,9 @@ function rowsHtml() {
     .join('');
 }
 
-function escapeHtml(str) {
-  return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
 const overallColor = summary.failed === 0 ? '#22c55e' : '#ef4444';
 const overallIcon = summary.failed === 0 ? '✅' : '❌';
+const repoUrl = repositoryUrl(project.repo);
 
 const html = `
 <!DOCTYPE html>
@@ -110,7 +124,7 @@ const html = `
               ${overallIcon} Vault — Test Report
             </h1>
             <p style="margin:6px 0 0;color:rgba(255,255,255,.85);font-size:14px;">
-              ${summary.overallStatus} &nbsp;·&nbsp; ${new Date(project.runAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST
+              ${escapeHtml(summary.overallStatus)} &nbsp;·&nbsp; ${escapeHtml(new Date(project.runAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }))} IST
             </p>
           </td>
         </tr>
@@ -122,14 +136,14 @@ const html = `
               <tr>
                 <td style="width:50%;vertical-align:top;">
                   <p style="margin:0 0 6px;font-size:12px;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">Project</p>
-                  <p style="margin:0;font-size:15px;font-weight:600;color:#111827;">${project.name} <span style="font-weight:400;color:#6b7280;">v${project.version}</span></p>
-                  <p style="margin:4px 0 0;font-size:13px;color:#6b7280;">${project.description}</p>
+                  <p style="margin:0;font-size:15px;font-weight:600;color:#111827;">${escapeHtml(project.name)} <span style="font-weight:400;color:#6b7280;">v${escapeHtml(project.version)}</span></p>
+                  <p style="margin:4px 0 0;font-size:13px;color:#6b7280;">${escapeHtml(project.description)}</p>
                 </td>
                 <td style="width:50%;vertical-align:top;padding-left:24px;">
                   <p style="margin:0 0 6px;font-size:12px;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;">Environment</p>
-                  <p style="margin:0;font-size:13px;color:#374151;">Node.js ${project.node}</p>
-                  <p style="margin:4px 0 0;font-size:13px;color:#374151;">Author: ${project.author}</p>
-                  <p style="margin:4px 0 0;font-size:13px;"><a href="${project.repo}" style="color:#3b82f6;text-decoration:none;">GitHub Repository</a></p>
+                  <p style="margin:0;font-size:13px;color:#374151;">Node.js ${escapeHtml(project.node)}</p>
+                  <p style="margin:4px 0 0;font-size:13px;color:#374151;">Author: ${escapeHtml(project.author)}</p>
+                  <p style="margin:4px 0 0;font-size:13px;">${repoUrl ? `<a href="${escapeHtml(repoUrl)}" style="color:#3b82f6;text-decoration:none;">GitHub Repository</a>` : 'Repository unavailable'}</p>
                 </td>
               </tr>
             </table>
@@ -183,7 +197,7 @@ const html = `
         <tr>
           <td style="background:#f9fafb;padding:16px 32px;border-top:1px solid #f3f4f6;">
             <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
-              Generated automatically by <strong>Vault Pre-Push Hook</strong> · ${project.repo}
+              Generated automatically by <strong>Vault Test Report Automation</strong>
             </p>
           </td>
         </tr>
@@ -202,7 +216,7 @@ const plain = [
   `Total: ${summary.total} | Passed: ${summary.passed} | Failed: ${summary.failed}`,
   '',
   'RESULTS:',
-  ...results.map((r) => `  [${r.status}] ${r.label} (${r.duration})`),
+  ...results.map((r) => `  [${r.status}] ${r.label} (${formatDuration(r.durationMs)})`),
 ].join('\n');
 
 // ─── Send via nodemailer ──────────────────────────────────────────────────────

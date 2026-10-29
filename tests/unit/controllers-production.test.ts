@@ -31,6 +31,49 @@ import {
 } from '../../server/controllers/tusController.ts';
 import { AppError } from '../../server/utils/appError.ts';
 
+const controllerMocks = vi.hoisted(() => ({
+  ensureMongoReady: vi.fn().mockResolvedValue(true),
+  integrityGetStatus: vi.fn().mockResolvedValue({
+    activeRootHash: 'root-hash',
+    algorithm: 'blake3',
+    totalLeaves: 0,
+    treeDepth: 0,
+    lastAuditAt: null,
+    lastAuditStatus: 'clean',
+    tamperIncidentCount: 0,
+  }),
+}));
+
+vi.mock('../../server/mongo.ts', () => ({
+  ensureMongoReady: controllerMocks.ensureMongoReady,
+}));
+
+vi.mock('../../server/models/folder.ts', () => ({
+  getFolderModel: vi.fn(() => ({
+    findOneAndUpdate: vi.fn().mockResolvedValue({
+      _id: { toString: () => 'folder-id' },
+    }),
+    find: vi.fn(() => ({
+      lean: () => ({
+        exec: vi.fn().mockResolvedValue([
+          {
+            _id: 'folder-id',
+            name: 'Notes',
+            itemType: 'notes',
+            parentId: 'root',
+          },
+        ]),
+      }),
+    })),
+  })),
+}));
+
+vi.mock('../../server/services/integrityService.ts', () => ({
+  integrityService: {
+    getStatus: controllerMocks.integrityGetStatus,
+  },
+}));
+
 const createMockResponse = () => {
   const res: Partial<Response> & {
     _status?: number;
@@ -110,7 +153,7 @@ describe('Production Controller Tests', () => {
         'Cache-Control',
         'no-store, no-cache, must-revalidate, proxy-revalidate',
       );
-      expect(res._status === 200 || res._status === 503).toBe(true);
+      expect(res._status).toBe(200);
       expect(res._json).toHaveProperty('status');
       expect(res._json).toHaveProperty('database');
     });
@@ -209,6 +252,14 @@ describe('Production Controller Tests', () => {
       await getFoldersController(req, res);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res._json?.success).toBe(true);
+      expect(res._json?.data).toEqual([
+        {
+          _id: 'folder-id',
+          name: 'Notes',
+          itemType: 'note',
+          parentId: 'root',
+        },
+      ]);
     });
   });
 
@@ -226,6 +277,15 @@ describe('Production Controller Tests', () => {
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res._json?.success).toBe(true);
+      expect(res._json?.data).toEqual({
+        activeRootHash: 'root-hash',
+        algorithm: 'blake3',
+        totalLeaves: 0,
+        treeDepth: 0,
+        lastAuditAt: null,
+        lastAuditStatus: 'clean',
+        tamperIncidentCount: 0,
+      });
     });
 
     it('verifyVaultIntegrityController rejects invalid hash algorithm', async () => {
